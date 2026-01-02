@@ -66,6 +66,7 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.constrains.withContentPadding
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.extensions.websiteUrl
 
 @Composable
@@ -100,7 +101,7 @@ internal fun CredentialsPane(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.peppol_connect_title_with_provider, state.provider.displayName),
+                text = stringResource(Res.string.peppol_connect_title_with_provider, state.provider.localized),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -195,7 +196,7 @@ private fun InstructionsPane(provider: PeppolProvider) {
         Spacer(Modifier.height(16.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            InstructionStep(1, stringResource(Res.string.peppol_instruction_visit_site, provider.displayName))
+            InstructionStep(1, stringResource(Res.string.peppol_instruction_visit_site, provider.localized))
             InstructionStep(2, stringResource(Res.string.peppol_instruction_create_account))
             InstructionStep(3, stringResource(Res.string.peppol_instruction_navigate_api))
             InstructionStep(4, stringResource(Res.string.peppol_instruction_generate_keys))
@@ -205,7 +206,7 @@ private fun InstructionsPane(provider: PeppolProvider) {
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = stringResource(Res.string.peppol_open_provider, provider.displayName),
+            text = stringResource(Res.string.peppol_open_provider, provider.localized),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Medium,
@@ -340,7 +341,7 @@ internal fun NoCompaniesPane(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = stringResource(Res.string.peppol_no_companies_hint, state.provider.displayName),
+                text = stringResource(Res.string.peppol_no_companies_hint, state.provider.localized),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -351,7 +352,7 @@ internal fun NoCompaniesPane(
             PPrimaryButton(
                 text = stringResource(
                     Res.string.peppol_create_company_on_provider,
-                    state.provider.displayName
+                    state.provider.localized
                 ),
                 onClick = { onIntent(PeppolConnectIntent.CreateCompanyClicked) },
                 modifier = Modifier.fillMaxWidth()

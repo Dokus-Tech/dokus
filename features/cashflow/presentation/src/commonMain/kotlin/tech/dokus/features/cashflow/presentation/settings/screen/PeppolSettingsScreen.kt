@@ -14,7 +14,6 @@ import tech.dokus.aura.resources.peppol_delete_settings
 import tech.dokus.aura.resources.peppol_delete_warning
 import tech.dokus.aura.resources.peppol_more_providers_coming
 import tech.dokus.aura.resources.peppol_not_configured
-import tech.dokus.aura.resources.peppol_provider_recommand_description
 import tech.dokus.aura.resources.peppol_select_provider_hint
 import tech.dokus.aura.resources.peppol_settings_title
 import tech.dokus.aura.resources.profile_danger_zone
@@ -24,6 +23,9 @@ import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.extensions.description
+import tech.dokus.foundation.aura.extensions.iconized
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.domain.model.PeppolProvider
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,7 +43,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -284,8 +285,8 @@ private fun SettingsContent(
                     // Provider cards
                     ProviderCard(
                         provider = PeppolProvider.Recommand,
-                        icon = Icons.Outlined.Receipt,
-                        description = stringResource(Res.string.peppol_provider_recommand_description),
+                        icon = PeppolProvider.Recommand.iconized,
+                        description = PeppolProvider.Recommand.description,
                         onClick = {
                             onIntent(PeppolSettingsIntent.SelectProvider(PeppolProvider.Recommand))
                         },
@@ -369,13 +370,13 @@ private fun ProviderCard(
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = provider.displayName,
+                contentDescription = provider.localized,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(40.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = provider.displayName,
+                text = provider.localized,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = contentColor

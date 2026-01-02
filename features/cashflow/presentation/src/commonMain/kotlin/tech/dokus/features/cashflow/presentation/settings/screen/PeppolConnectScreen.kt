@@ -10,6 +10,7 @@ import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.features.cashflow.presentation.settings.components.CompanyListPane
@@ -42,7 +43,7 @@ internal fun PeppolConnectScreen(
     Scaffold(
         topBar = {
             PTopAppBar(
-                title = stringResource(Res.string.peppol_connect_title_with_provider, provider.displayName)
+                title = stringResource(Res.string.peppol_connect_title_with_provider, provider.localized)
             )
         }
     ) { contentPadding ->
@@ -96,4 +97,3 @@ internal fun PeppolConnectScreen(
         }
     }
 }
-
