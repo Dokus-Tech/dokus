@@ -34,18 +34,20 @@ import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.LocalThemeManager
 import tech.dokus.foundation.aura.style.ThemeMode
 
 /**
  * Appearance settings screen with top bar.
- * For mobile navigation flow.
+ * Pure UI composable - conditionally shows top bar on mobile.
  */
 @Composable
-fun AppearanceSettingsScreen() {
+internal fun AppearanceSettingsScreen() {
+    val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
         topBar = {
-            PTopAppBar(Res.string.appearance_settings_title)
+            if (!isLargeScreen) PTopAppBar(Res.string.appearance_settings_title)
         }
     ) { contentPadding ->
         AppearanceSettingsContent(

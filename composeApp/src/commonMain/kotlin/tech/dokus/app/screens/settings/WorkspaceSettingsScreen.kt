@@ -97,137 +97,54 @@ import tech.dokus.app.viewmodel.WorkspaceSettingsSuccess
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.domain.exceptions.DokusException
 
 /**
- * Workspace/Company settings screen with top bar using FlowMVI Container pattern.
- * For mobile navigation flow.
+ * Workspace/Company settings screen with top bar.
+ * Pure UI composable that takes state and callbacks.
  */
 @Composable
 internal fun WorkspaceSettingsScreen(
-    container: WorkspaceSettingsContainer = container()
+    state: WorkspaceSettingsState,
+    snackbarHostState: SnackbarHostState,
+    onIntent: (WorkspaceSettingsIntent) -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingSuccess by remember { mutableStateOf<WorkspaceSettingsSuccess?>(null) }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
-
-    val successMessage = pendingSuccess?.let { success ->
-        when (success) {
-            WorkspaceSettingsSuccess.SettingsSaved ->
-                stringResource(Res.string.settings_saved_successfully)
-        }
-    }
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(successMessage) {
-        if (successMessage != null) {
-            snackbarHostState.showSnackbar(successMessage)
-            pendingSuccess = null
-        }
-    }
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is WorkspaceSettingsAction.ShowSuccess -> {
-                pendingSuccess = action.success
-            }
-
-            is WorkspaceSettingsAction.ShowError -> {
-                pendingError = action.error
-            }
-        }
-    }
-
-    // Load settings on first composition
-    LaunchedEffect(Unit) {
-        container.store.intent(WorkspaceSettingsIntent.Load)
-    }
-
+    val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
         topBar = {
-            PTopAppBar(
-                title = stringResource(Res.string.workspace_settings_title)
-            )
+            if (!isLargeScreen) PTopAppBar(Res.string.workspace_settings_title)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        WorkspaceSettingsContentInternal(
+        WorkspaceSettingsContent(
             state = state,
-            onIntent = { container.store.intent(it) },
+            onIntent = onIntent,
             modifier = Modifier.padding(contentPadding)
         )
     }
 }
 
 /**
- * Workspace settings content without scaffold using FlowMVI Container pattern.
- * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
+ * Workspace settings content without scaffold.
+ * Can be embedded in split-pane layout for desktop.
  */
 @Composable
-internal fun WorkspaceSettingsContent(
-    container: WorkspaceSettingsContainer = container(),
+fun WorkspaceSettingsContent(
+    state: WorkspaceSettingsState,
+    onIntent: (WorkspaceSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingSuccess by remember { mutableStateOf<WorkspaceSettingsSuccess?>(null) }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
-
-    val successMessage = pendingSuccess?.let { success ->
-        when (success) {
-            WorkspaceSettingsSuccess.SettingsSaved ->
-                stringResource(Res.string.settings_saved_successfully)
-        }
-    }
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(successMessage) {
-        if (successMessage != null) {
-            snackbarHostState.showSnackbar(successMessage)
-            pendingSuccess = null
-        }
-    }
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is WorkspaceSettingsAction.ShowSuccess -> {
-                pendingSuccess = action.success
-            }
-
-            is WorkspaceSettingsAction.ShowError -> {
-                pendingError = action.error
-            }
-        }
-    }
-
-    // Load settings on first composition
-    LaunchedEffect(Unit) {
-        container.store.intent(WorkspaceSettingsIntent.Load)
-    }
-
     WorkspaceSettingsContentInternal(
         state = state,
-        onIntent = { container.store.intent(it) },
+        onIntent = onIntent,
         modifier = modifier.padding(contentPadding)
     )
 }
 
 @Composable
-private fun WorkspaceSettingsContentInternal(
+internal fun WorkspaceSettingsContentInternal(
     state: WorkspaceSettingsState,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
     modifier: Modifier = Modifier
