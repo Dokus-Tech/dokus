@@ -1,32 +1,5 @@
 package tech.dokus.features.cashflow.presentation.settings.screen
 
-import tech.dokus.features.cashflow.mvi.PeppolSettingsIntent
-import tech.dokus.features.cashflow.mvi.PeppolSettingsState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_cancel
-import tech.dokus.aura.resources.action_delete
-import tech.dokus.aura.resources.common_vat_value
-import tech.dokus.aura.resources.peppol_connect_title
-import tech.dokus.aura.resources.peppol_connected
-import tech.dokus.aura.resources.peppol_connected_to
-import tech.dokus.aura.resources.peppol_connection_status
-import tech.dokus.aura.resources.peppol_delete_settings
-import tech.dokus.aura.resources.peppol_delete_warning
-import tech.dokus.aura.resources.peppol_more_providers_coming
-import tech.dokus.aura.resources.peppol_not_configured
-import tech.dokus.aura.resources.peppol_select_provider_hint
-import tech.dokus.aura.resources.peppol_settings_title
-import tech.dokus.aura.resources.profile_danger_zone
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.components.POutlinedButton
-import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
-import tech.dokus.foundation.aura.extensions.description
-import tech.dokus.foundation.aura.extensions.iconized
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.domain.model.PeppolProvider
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,7 +27,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -62,7 +34,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.action_delete
+import tech.dokus.aura.resources.common_vat_value
+import tech.dokus.aura.resources.peppol_connect_title
+import tech.dokus.aura.resources.peppol_connected
+import tech.dokus.aura.resources.peppol_connected_to
+import tech.dokus.aura.resources.peppol_connection_status
+import tech.dokus.aura.resources.peppol_delete_settings
+import tech.dokus.aura.resources.peppol_delete_warning
+import tech.dokus.aura.resources.peppol_more_providers_coming
+import tech.dokus.aura.resources.peppol_not_configured
+import tech.dokus.aura.resources.peppol_select_provider_hint
+import tech.dokus.aura.resources.peppol_settings_title
+import tech.dokus.aura.resources.profile_danger_zone
+import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.domain.model.RecommandCompanySummary
+import tech.dokus.features.cashflow.mvi.PeppolSettingsIntent
+import tech.dokus.features.cashflow.mvi.PeppolSettingsState
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.extensions.description
+import tech.dokus.foundation.aura.extensions.iconized
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
  * Peppol E-Invoicing settings screen with top bar.
@@ -77,11 +77,10 @@ fun PeppolSettingsScreen(
     onDeleteDismiss: () -> Unit,
     onDeleteConfirm: () -> Unit
 ) {
+    val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
         topBar = {
-            PTopAppBar(
-                title = stringResource(Res.string.peppol_settings_title)
-            )
+            if (!isLargeScreen) PTopAppBar(Res.string.peppol_settings_title)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
@@ -140,6 +139,7 @@ fun PeppolSettingsContent(
                 CircularProgressIndicator()
             }
         }
+
         is PeppolSettingsState.NotConfigured -> {
             SettingsContent(
                 isConnected = false,
@@ -150,6 +150,7 @@ fun PeppolSettingsContent(
                 contentPadding = contentPadding
             )
         }
+
         is PeppolSettingsState.Connected -> {
             SettingsContent(
                 isConnected = true,
@@ -160,6 +161,7 @@ fun PeppolSettingsContent(
                 contentPadding = contentPadding
             )
         }
+
         is PeppolSettingsState.Deleting -> {
             SettingsContent(
                 isConnected = true,
@@ -170,6 +172,7 @@ fun PeppolSettingsContent(
                 contentPadding = contentPadding
             )
         }
+
         is PeppolSettingsState.Error -> {
             // Show not configured state with error handling
             SettingsContent(
@@ -222,7 +225,7 @@ private fun SettingsContent(
                         imageVector = if (isConnected) Icons.Default.Check else Icons.Default.Close,
                         contentDescription = null,
                         tint = if (isConnected) MaterialTheme.colorScheme.primary
-                               else MaterialTheme.colorScheme.error,
+                        else MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
@@ -232,7 +235,7 @@ private fun SettingsContent(
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isConnected) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.error
                     )
                 }
 

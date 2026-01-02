@@ -1,55 +1,5 @@
 package tech.dokus.app.screens.settings
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_confirm
-import tech.dokus.aura.resources.action_save
-import tech.dokus.aura.resources.cancel
-import tech.dokus.aura.resources.role_accountant
-import tech.dokus.aura.resources.role_accountant_desc
-import tech.dokus.aura.resources.role_admin
-import tech.dokus.aura.resources.role_admin_desc
-import tech.dokus.aura.resources.role_editor
-import tech.dokus.aura.resources.role_editor_desc
-import tech.dokus.aura.resources.role_owner
-import tech.dokus.aura.resources.role_viewer
-import tech.dokus.aura.resources.role_viewer_desc
-import tech.dokus.aura.resources.state_sending
-import tech.dokus.aura.resources.team_cancel_invitation
-import tech.dokus.aura.resources.team_change_role
-import tech.dokus.aura.resources.team_expires
-import tech.dokus.aura.resources.team_invite_cancelled
-import tech.dokus.aura.resources.team_invite_email
-import tech.dokus.aura.resources.team_invite_member
-import tech.dokus.aura.resources.team_invite_role
-import tech.dokus.aura.resources.team_invite_success
-import tech.dokus.aura.resources.team_invited_by
-import tech.dokus.aura.resources.team_joined
-import tech.dokus.aura.resources.team_member_removed_success
-import tech.dokus.aura.resources.team_members
-import tech.dokus.aura.resources.team_no_invitations
-import tech.dokus.aura.resources.team_no_members
-import tech.dokus.aura.resources.team_owner_badge
-import tech.dokus.aura.resources.team_ownership_transferred_success
-import tech.dokus.aura.resources.team_pending_invitations
-import tech.dokus.aura.resources.team_remove_confirm
-import tech.dokus.aura.resources.team_remove_member
-import tech.dokus.aura.resources.team_role_update_success
-import tech.dokus.aura.resources.team_send_invitation
-import tech.dokus.aura.resources.team_settings_title
-import tech.dokus.aura.resources.team_transfer_confirm
-import tech.dokus.aura.resources.team_transfer_ownership
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.components.POutlinedButton
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -95,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
@@ -104,7 +55,57 @@ import tech.dokus.app.viewmodel.TeamSettingsContainer
 import tech.dokus.app.viewmodel.TeamSettingsIntent
 import tech.dokus.app.viewmodel.TeamSettingsState
 import tech.dokus.app.viewmodel.TeamSettingsSuccess
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_confirm
+import tech.dokus.aura.resources.action_save
+import tech.dokus.aura.resources.cancel
+import tech.dokus.aura.resources.role_accountant
+import tech.dokus.aura.resources.role_accountant_desc
+import tech.dokus.aura.resources.role_admin
+import tech.dokus.aura.resources.role_admin_desc
+import tech.dokus.aura.resources.role_editor
+import tech.dokus.aura.resources.role_editor_desc
+import tech.dokus.aura.resources.role_owner
+import tech.dokus.aura.resources.role_viewer
+import tech.dokus.aura.resources.role_viewer_desc
+import tech.dokus.aura.resources.state_sending
+import tech.dokus.aura.resources.team_cancel_invitation
+import tech.dokus.aura.resources.team_change_role
+import tech.dokus.aura.resources.team_expires
+import tech.dokus.aura.resources.team_invite_cancelled
+import tech.dokus.aura.resources.team_invite_email
+import tech.dokus.aura.resources.team_invite_member
+import tech.dokus.aura.resources.team_invite_role
+import tech.dokus.aura.resources.team_invite_success
+import tech.dokus.aura.resources.team_invited_by
+import tech.dokus.aura.resources.team_joined
+import tech.dokus.aura.resources.team_member_removed_success
+import tech.dokus.aura.resources.team_members
+import tech.dokus.aura.resources.team_no_invitations
+import tech.dokus.aura.resources.team_no_members
+import tech.dokus.aura.resources.team_owner_badge
+import tech.dokus.aura.resources.team_ownership_transferred_success
+import tech.dokus.aura.resources.team_pending_invitations
+import tech.dokus.aura.resources.team_remove_confirm
+import tech.dokus.aura.resources.team_remove_member
+import tech.dokus.aura.resources.team_role_update_success
+import tech.dokus.aura.resources.team_send_invitation
+import tech.dokus.aura.resources.team_settings_title
+import tech.dokus.aura.resources.team_transfer_confirm
+import tech.dokus.aura.resources.team_transfer_ownership
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.TeamMember
+import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.extensions.localized
 
 /**
  * Team settings screen with top bar using FlowMVI Container pattern.
@@ -166,9 +167,7 @@ internal fun TeamSettingsScreen(
 
     Scaffold(
         topBar = {
-            PTopAppBar(
-                title = stringResource(Res.string.team_settings_title)
-            )
+            PTopAppBar(Res.string.team_settings_title)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
@@ -713,7 +712,7 @@ private fun formatDate(dateTime: LocalDateTime): String {
         val format = LocalDateTime.Format {
             monthName(MonthNames.ENGLISH_ABBREVIATED)
             char(' ')
-            dayOfMonth()
+            day(padding = Padding.ZERO)
             chars(", ")
             year()
         }

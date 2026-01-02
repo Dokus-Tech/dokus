@@ -1,17 +1,5 @@
 package tech.dokus.app.screens.settings
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.appearance_settings_title
-import tech.dokus.aura.resources.appearance_theme
-import tech.dokus.aura.resources.appearance_theme_dark
-import tech.dokus.aura.resources.appearance_theme_light
-import tech.dokus.aura.resources.appearance_theme_system
-import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
-import tech.dokus.foundation.aura.local.LocalThemeManager
-import tech.dokus.foundation.aura.style.ThemeMode
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -36,6 +24,18 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.appearance_settings_title
+import tech.dokus.aura.resources.appearance_theme
+import tech.dokus.aura.resources.appearance_theme_dark
+import tech.dokus.aura.resources.appearance_theme_light
+import tech.dokus.aura.resources.appearance_theme_system
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.local.LocalThemeManager
+import tech.dokus.foundation.aura.style.ThemeMode
 
 /**
  * Appearance settings screen with top bar.
@@ -45,9 +45,7 @@ import org.jetbrains.compose.resources.stringResource
 fun AppearanceSettingsScreen() {
     Scaffold(
         topBar = {
-            PTopAppBar(
-                title = stringResource(Res.string.appearance_settings_title)
-            )
+            PTopAppBar(Res.string.appearance_settings_title)
         }
     ) { contentPadding ->
         AppearanceSettingsContent(
