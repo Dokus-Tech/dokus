@@ -4,9 +4,9 @@ import tech.dokus.app.screens.EmptyScreen
 import tech.dokus.app.screens.HomeScreen
 import tech.dokus.app.screens.SplashScreen
 import tech.dokus.app.screens.UnderDevelopmentScreen
-import tech.dokus.app.screens.settings.AppearanceSettingsScreen
-import tech.dokus.app.screens.settings.TeamSettingsScreen
-import tech.dokus.app.screens.settings.WorkspaceSettingsScreen
+import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
+import tech.dokus.app.screens.settings.route.TeamSettingsRoute
+import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.AppDestination
 import tech.dokus.navigation.destinations.CoreDestination
@@ -30,13 +30,13 @@ internal object AppNavigationProvider : NavigationProvider {
         }
         // Settings screens
         composable<SettingsDestination.WorkspaceSettings> {
-            WorkspaceSettingsScreen()
+            WorkspaceSettingsRoute()
         }
         composable<SettingsDestination.TeamSettings> {
-            TeamSettingsScreen()
+            TeamSettingsRoute()
         }
         composable<SettingsDestination.AppearanceSettings> {
-            AppearanceSettingsScreen()
+            AppearanceSettingsRoute()
         }
     }
 }

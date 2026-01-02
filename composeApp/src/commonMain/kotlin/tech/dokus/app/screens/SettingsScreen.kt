@@ -43,9 +43,9 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.screens.settings.AppearanceSettingsContent
-import tech.dokus.app.screens.settings.TeamSettingsContent
-import tech.dokus.app.screens.settings.WorkspaceSettingsContent
+import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
+import tech.dokus.app.screens.settings.route.TeamSettingsRoute
+import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
 import tech.dokus.app.settingsGroupsCombined
 import tech.dokus.app.viewmodel.SettingsAction
 import tech.dokus.app.viewmodel.SettingsContainer
@@ -353,15 +353,15 @@ private fun SettingsContentPane(
                 }
 
                 is SettingsDestination.WorkspaceSettings -> {
-                    WorkspaceSettingsContent()
+                    WorkspaceSettingsRoute()
                 }
 
                 is SettingsDestination.TeamSettings -> {
-                    TeamSettingsContent()
+                    TeamSettingsRoute()
                 }
 
                 is SettingsDestination.AppearanceSettings -> {
-                    AppearanceSettingsContent()
+                    AppearanceSettingsRoute()
                 }
 
                 is SettingsDestination.PeppolSettings -> {

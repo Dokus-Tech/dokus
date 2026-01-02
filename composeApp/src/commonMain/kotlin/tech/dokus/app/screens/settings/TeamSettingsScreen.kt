@@ -106,152 +106,61 @@ import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
- * Team settings screen with top bar using FlowMVI Container pattern.
- * For mobile navigation flow.
+ * Team settings screen with top bar.
+ * Pure UI composable that takes state and callbacks.
  */
 @Composable
 internal fun TeamSettingsScreen(
-    container: TeamSettingsContainer = container()
+    state: TeamSettingsState,
+    snackbarHostState: SnackbarHostState,
+    showInviteDialog: Boolean,
+    onShowInviteDialog: (Boolean) -> Unit,
+    onIntent: (TeamSettingsIntent) -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingSuccess by remember { mutableStateOf<TeamSettingsSuccess?>(null) }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
-    var showInviteDialog by remember { mutableStateOf(false) }
-
-    val successMessage = pendingSuccess?.let { success ->
-        when (success) {
-            TeamSettingsSuccess.InviteSent -> stringResource(Res.string.team_invite_success)
-            TeamSettingsSuccess.InviteCancelled -> stringResource(Res.string.team_invite_cancelled)
-            TeamSettingsSuccess.RoleUpdated -> stringResource(Res.string.team_role_update_success)
-            TeamSettingsSuccess.MemberRemoved -> stringResource(Res.string.team_member_removed_success)
-            TeamSettingsSuccess.OwnershipTransferred ->
-                stringResource(Res.string.team_ownership_transferred_success)
-        }
-    }
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(successMessage) {
-        if (successMessage != null) {
-            snackbarHostState.showSnackbar(successMessage)
-            pendingSuccess = null
-        }
-    }
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is TeamSettingsAction.ShowSuccess -> {
-                pendingSuccess = action.success
-            }
-            is TeamSettingsAction.ShowError -> {
-                pendingError = action.error
-            }
-            TeamSettingsAction.DismissInviteDialog -> {
-                showInviteDialog = false
-            }
-        }
-    }
-
-    // Load data on first composition
-    LaunchedEffect(Unit) {
-        container.store.intent(TeamSettingsIntent.Load)
-    }
-
+    val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
         topBar = {
-            PTopAppBar(Res.string.team_settings_title)
+            if (!isLargeScreen) PTopAppBar(Res.string.team_settings_title)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        TeamSettingsContentInternal(
+        TeamSettingsContent(
             state = state,
             showInviteDialog = showInviteDialog,
-            onShowInviteDialog = { showInviteDialog = it },
-            onIntent = { container.store.intent(it) },
+            onShowInviteDialog = onShowInviteDialog,
+            onIntent = onIntent,
             modifier = Modifier.padding(contentPadding)
         )
     }
 }
 
 /**
- * Team settings content without scaffold using FlowMVI Container pattern.
- * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
+ * Team settings content without scaffold.
+ * Can be embedded in split-pane layout for desktop.
  */
 @Composable
-internal fun TeamSettingsContent(
-    container: TeamSettingsContainer = container(),
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+fun TeamSettingsContent(
+    state: TeamSettingsState,
+    showInviteDialog: Boolean,
+    onShowInviteDialog: (Boolean) -> Unit,
+    onIntent: (TeamSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    var pendingSuccess by remember { mutableStateOf<TeamSettingsSuccess?>(null) }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
-    var showInviteDialog by remember { mutableStateOf(false) }
-
-    val successMessage = pendingSuccess?.let { success ->
-        when (success) {
-            TeamSettingsSuccess.InviteSent -> stringResource(Res.string.team_invite_success)
-            TeamSettingsSuccess.InviteCancelled -> stringResource(Res.string.team_invite_cancelled)
-            TeamSettingsSuccess.RoleUpdated -> stringResource(Res.string.team_role_update_success)
-            TeamSettingsSuccess.MemberRemoved -> stringResource(Res.string.team_member_removed_success)
-            TeamSettingsSuccess.OwnershipTransferred ->
-                stringResource(Res.string.team_ownership_transferred_success)
-        }
-    }
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(successMessage) {
-        if (successMessage != null) {
-            snackbarHostState.showSnackbar(successMessage)
-            pendingSuccess = null
-        }
-    }
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is TeamSettingsAction.ShowSuccess -> {
-                pendingSuccess = action.success
-            }
-            is TeamSettingsAction.ShowError -> {
-                pendingError = action.error
-            }
-            TeamSettingsAction.DismissInviteDialog -> {
-                showInviteDialog = false
-            }
-        }
-    }
-
-    // Load data on first composition
-    LaunchedEffect(Unit) {
-        container.store.intent(TeamSettingsIntent.Load)
-    }
-
     TeamSettingsContentInternal(
         state = state,
         showInviteDialog = showInviteDialog,
-        onShowInviteDialog = { showInviteDialog = it },
-        onIntent = { container.store.intent(it) },
+        onShowInviteDialog = onShowInviteDialog,
+        onIntent = onIntent,
         modifier = modifier.padding(contentPadding)
     )
 }
 
 @Composable
-private fun TeamSettingsContentInternal(
+internal fun TeamSettingsContentInternal(
     state: TeamSettingsState,
     showInviteDialog: Boolean,
     onShowInviteDialog: (Boolean) -> Unit,
