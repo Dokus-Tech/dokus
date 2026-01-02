@@ -1,9 +1,5 @@
 package tech.dokus.features.ai.agents
 
-import tech.dokus.features.ai.services.RAGService
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.repository.RetrievedChunk
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
@@ -12,6 +8,10 @@ import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.repository.RetrievedChunk
+import tech.dokus.features.ai.services.RAGService
 
 /**
  * Agent responsible for RAG-backed document Q&A with citations.

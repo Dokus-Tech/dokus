@@ -1,5 +1,6 @@
 package tech.dokus.features.ai.service
 
+import tech.dokus.domain.model.ai.AiProvider
 import tech.dokus.features.ai.agents.BillExtractionAgent
 import tech.dokus.features.ai.agents.CategorySuggestionAgent
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
@@ -13,7 +14,6 @@ import tech.dokus.features.ai.models.DocumentClassification
 import tech.dokus.features.ai.models.ExtractedBillData
 import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.models.ExtractedReceiptData
-import tech.dokus.domain.model.ai.AiProvider
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.ModelPurpose
 import tech.dokus.foundation.backend.utils.loggerFor

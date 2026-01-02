@@ -16,3 +16,10 @@ complexity:
   CyclomaticComplexMethod:
     active: true
     threshold: 15
+
+naming:
+  FunctionNaming:
+    active: true
+    functionPattern: '[a-z][a-zA-Z0-9]*'
+    ignoreAnnotated:
+      - Composable

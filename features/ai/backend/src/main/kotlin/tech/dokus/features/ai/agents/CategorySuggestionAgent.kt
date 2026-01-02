@@ -1,12 +1,12 @@
 package tech.dokus.features.ai.agents
 
-import tech.dokus.features.ai.models.CategorySuggestion
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.json.Json
+import tech.dokus.features.ai.models.CategorySuggestion
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
