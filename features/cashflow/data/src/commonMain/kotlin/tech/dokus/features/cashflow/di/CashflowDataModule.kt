@@ -12,7 +12,7 @@ import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSourceImpl
 import tech.dokus.features.cashflow.datasource.ChatRemoteDataSource
 import tech.dokus.features.cashflow.datasource.ChatRemoteDataSourceImpl
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SendChatMessageUseCase
+import tech.dokus.features.cashflow.usecase.SendChatMessageUseCase
 import tech.dokus.features.cashflow.repository.CashflowDataRepository
 import tech.dokus.features.cashflow.repository.ChatRepositoryImpl
 

@@ -1,6 +1,5 @@
 @file:Suppress(
     "TooManyFunctions", // Container handles contact details workflow
-    "MagicNumber", // Timeout constants
     "TooGenericExceptionCaught", // Network errors need catch-all
     "LongParameterList" // DI requires many use cases
 )

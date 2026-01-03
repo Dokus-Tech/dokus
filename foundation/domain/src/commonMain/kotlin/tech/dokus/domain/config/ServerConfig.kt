@@ -1,11 +1,19 @@
 @file:Suppress(
-    "MagicNumber", // Port ranges and network constants are self-documenting
     "ReturnCount" // URL parsing requires multiple early returns for validation
 )
 
 package tech.dokus.domain.config
 
 import kotlinx.serialization.Serializable
+
+// Network port constants
+private const val HttpsDefaultPort = 443
+private const val HttpDefaultPort = 80
+private const val PortRangeMin = 1
+private const val PortRangeMax = 65535
+
+// Parsing constants
+private const val ParamSplitLimit = 2
 
 /**
  * Configuration for connecting to a Dokus server.
@@ -38,9 +46,9 @@ data class ServerConfig(
      */
     val baseUrl: String
         get() = when (protocol) {
-            "https" if port == 443 -> "$protocol://$host"
+            "https" if port == HttpsDefaultPort -> "$protocol://$host"
             // Standard HTTP port doesn't need explicit port
-            "http" if port == 80 -> "$protocol://$host"
+            "http" if port == HttpDefaultPort -> "$protocol://$host"
             // Non-standard ports need explicit port
             else -> "$protocol://$host:$port"
         }
@@ -52,7 +60,7 @@ data class ServerConfig(
          */
         val Cloud = ServerConfig(
             host = "app.dokus.tech",
-            port = 443,
+            port = HttpsDefaultPort,
             protocol = "https",
             name = "Dokus Cloud",
             isCloud = true
@@ -78,8 +86,8 @@ data class ServerConfig(
                 val queryString = url.substring(queryStart + 1)
                 val params = queryString.split('&')
                     .mapNotNull { param ->
-                        val parts = param.split('=', limit = 2)
-                        if (parts.size == 2) parts[0] to parts[1] else null
+                        val parts = param.split('=', limit = ParamSplitLimit)
+                        if (parts.size == ParamSplitLimit) parts[0] to parts[1] else null
                     }
                     .toMap()
 
@@ -92,7 +100,7 @@ data class ServerConfig(
                 if (protocol !in listOf("http", "https")) return null
 
                 // Validate port range
-                if (port !in 1..65535) return null
+                if (port !in PortRangeMin..PortRangeMax) return null
 
                 ServerConfig(
                     host = host,

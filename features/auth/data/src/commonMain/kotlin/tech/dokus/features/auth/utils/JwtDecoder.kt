@@ -1,5 +1,4 @@
 @file:Suppress(
-    "MagicNumber", // JWT structure constants
     "ReturnCount", // JWT decoding requires multiple validation returns
     "TooGenericExceptionCaught" // JWT parsing can fail in various ways
 )
@@ -26,6 +25,21 @@ import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+/** Number of parts in a valid JWT (header.payload.signature) */
+private const val JwtPartsCount = 3
+
+/** JWT delimiter character */
+private const val JwtDelimiter = "."
+
+/** Base64 padding modulo value indicating 2 padding chars needed */
+private const val Base64PaddingMod2 = 2
+
+/** Base64 padding modulo value indicating 1 padding char needed */
+private const val Base64PaddingMod3 = 3
+
+/** Base64 block size for padding calculation */
+private const val Base64BlockSize = 4
+
 @OptIn(ExperimentalEncodingApi::class, ExperimentalTime::class, ExperimentalUuidApi::class)
 class JwtDecoder {
 
@@ -37,14 +51,14 @@ class JwtDecoder {
 
     fun decode(token: String): JwtClaims? {
         return try {
-            val parts = token.split(".")
-            if (parts.size != 3) return null
+            val parts = token.split(JwtDelimiter)
+            if (parts.size != JwtPartsCount) return null
 
             val payload = parts[1]
             val normalizedPayload = payload.replace('-', '+').replace('_', '/')
-            val paddedPayload = when (normalizedPayload.length % 4) {
-                2 -> "$normalizedPayload=="
-                3 -> "$normalizedPayload="
+            val paddedPayload = when (normalizedPayload.length % Base64BlockSize) {
+                Base64PaddingMod2 -> "$normalizedPayload=="
+                Base64PaddingMod3 -> "$normalizedPayload="
                 else -> normalizedPayload
             }
             val decodedPayload = Base64.decode(paddedPayload).decodeToString()
