@@ -91,7 +91,7 @@ internal fun ContactFormScreen(
                 is ContactFormState.Editing -> {
                     if (currentState.ui.showDeleteConfirmation) {
                         DeleteContactConfirmationDialog(
-                            contactName = currentState.formData.name,
+                            contactName = currentState.formData.name.value,
                             isDeleting = currentState.isDeleting,
                             onConfirm = { onIntent(ContactFormIntent.Delete) }
                         ) { onIntent(ContactFormIntent.HideDeleteConfirmation) }

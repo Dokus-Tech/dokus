@@ -476,7 +476,7 @@ internal class ContactsContainer(
             contact.name.value.lowercase().contains(query) ||
                 contact.email?.value?.lowercase()?.contains(query) == true ||
                 contact.vatNumber?.value?.lowercase()?.contains(query) == true ||
-                contact.phone?.lowercase()?.contains(query) == true
+                contact.phone?.value?.lowercase()?.contains(query) == true
         }
     }
 

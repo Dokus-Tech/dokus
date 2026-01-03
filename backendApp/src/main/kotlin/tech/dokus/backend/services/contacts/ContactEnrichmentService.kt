@@ -1,9 +1,14 @@
 package tech.dokus.backend.services.contacts
 
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.City
+import tech.dokus.domain.Email
+import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.ContactAddress
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -160,7 +165,7 @@ class ContactEnrichmentService(
 
         // Phone
         if (!data.phone.isNullOrBlank()) {
-            if (contact.phone.isNullOrBlank()) {
+            if (contact.phone?.value.isNullOrBlank()) {
                 toEnrich.add("phone" to data.phone)
             } else {
                 toSkip.add("phone")
@@ -187,7 +192,7 @@ class ContactEnrichmentService(
 
         // City
         if (!data.city.isNullOrBlank()) {
-            if (contact.city.isNullOrBlank()) {
+            if (contact.city?.value.isNullOrBlank()) {
                 toEnrich.add("city" to data.city)
             } else {
                 toSkip.add("city")
@@ -257,20 +262,43 @@ class ContactEnrichmentService(
     private fun buildUpdateRequest(fieldsToEnrich: List<Pair<String, String>>): UpdateContactRequest {
         var request = UpdateContactRequest()
 
+        // Collect address fields separately
+        var addressLine1: String? = null
+        var addressLine2: String? = null
+        var city: String? = null
+        var postalCode: String? = null
+        var country: String? = null
+
         for ((field, value) in fieldsToEnrich) {
             request = when (field) {
-                "email" -> request.copy(email = value)
-                "phone" -> request.copy(phone = value)
-                "addressLine1" -> request.copy(addressLine1 = value)
-                "addressLine2" -> request.copy(addressLine2 = value)
-                "city" -> request.copy(city = value)
-                "postalCode" -> request.copy(postalCode = value)
-                "country" -> request.copy(country = value)
+                "email" -> request.copy(email = Email(value))
+                "phone" -> request.copy(phone = PhoneNumber(value))
+                "addressLine1" -> { addressLine1 = value; request }
+                "addressLine2" -> { addressLine2 = value; request }
+                "city" -> { city = value; request }
+                "postalCode" -> { postalCode = value; request }
+                "country" -> { country = value; request }
                 "peppolId" -> request.copy(peppolId = value)
                 "companyNumber" -> request.copy(companyNumber = value)
                 "contactPerson" -> request.copy(contactPerson = value)
-                "vatNumber" -> request.copy(vatNumber = value)
+                "vatNumber" -> request.copy(vatNumber = VatNumber(value))
                 else -> request
+            }
+        }
+
+        // Build ContactAddress if any address fields are present
+        if (addressLine1 != null || city != null || postalCode != null || country != null) {
+            // For enrichment, we only set address if we have the required fields
+            if (addressLine1 != null && city != null && postalCode != null && country != null) {
+                request = request.copy(
+                    address = ContactAddress(
+                        streetLine1 = addressLine1,
+                        streetLine2 = addressLine2,
+                        city = City(city),
+                        postalCode = postalCode,
+                        country = country
+                    )
+                )
             }
         }
 

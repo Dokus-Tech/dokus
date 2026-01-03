@@ -72,7 +72,7 @@ internal fun ContactMergeMiniCard(
         val vatNumber = contact.vatNumber?.value ?: stringResource(Res.string.common_empty_value)
         val companyNumber = contact.companyNumber ?: stringResource(Res.string.common_empty_value)
         val contactPerson = contact.contactPerson ?: stringResource(Res.string.common_empty_value)
-        val phone = contact.phone ?: stringResource(Res.string.common_empty_value)
+        val phone = contact.phone?.value ?: stringResource(Res.string.common_empty_value)
         val email = contact.email?.value ?: stringResource(Res.string.common_empty_value)
 
         ContactMergeMiniRow(label = stringResource(Res.string.contacts_vat_number), value = vatNumber)

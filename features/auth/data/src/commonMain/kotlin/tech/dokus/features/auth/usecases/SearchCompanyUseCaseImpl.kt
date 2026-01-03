@@ -1,5 +1,7 @@
 package tech.dokus.features.auth.usecases
 
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookupResponse
 import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.features.auth.datasource.LookupRemoteDataSource
@@ -20,18 +22,21 @@ class SearchCompanyUseCaseImpl(
     /**
      * Search for companies matching the given query.
      *
-     * @param query Company name or VAT number (minimum 3 characters for name search)
+     * @param this@invoke Company name or VAT number (minimum 3 characters for name search)
      * @return List of matching companies wrapped in Result
      */
-    override suspend fun invoke(query: String): Result<EntityLookupResponse> {
-        logger.d { "Searching for company: $query" }
+    override suspend fun invoke(
+        name: LegalName?,
+        number: VatNumber?
+    ): Result<EntityLookupResponse> {
+        logger.d { "Searching for company: $name, $number" }
 
-        return lookupDataSource.searchCompany(query)
+        return lookupDataSource.searchCompany(name, number)
             .onSuccess { response ->
-                logger.d { "Found ${response.totalCount} companies for '$query'" }
+                logger.d { "Found ${response.totalCount} companies for '${name}'" }
             }
             .onFailure { error ->
-                logger.e(error) { "Company search failed for '$query'" }
+                logger.e(error) { "Company search failed for '${name}'" }
             }
     }
 }

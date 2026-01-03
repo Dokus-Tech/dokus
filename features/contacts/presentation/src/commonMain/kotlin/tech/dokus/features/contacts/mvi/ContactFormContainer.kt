@@ -14,10 +14,16 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.City
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.contact.ContactAddress
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
@@ -179,24 +185,25 @@ internal class ContactFormContainer(
     // ============================================================================
 
     private suspend fun ContactFormCtx.handleUpdateName(value: String) {
-        updateFormData { copy(name = value, errors = errors - "name") }
+        updateFormData { copy(name = Name(value), errors = errors - "name") }
         checkDuplicatesDebounced()
     }
 
     private suspend fun ContactFormCtx.handleUpdateEmail(value: String) {
+        val emailValue = Email(value)
         updateFormData {
-            val errors = if (value.isNotBlank() && !value.contains("@")) {
+            val errors = if (value.isNotBlank() && !emailValue.isValid) {
                 errors + ("email" to DokusException.Validation.InvalidEmail)
             } else {
                 errors - "email"
             }
-            copy(email = value, errors = errors)
+            copy(email = emailValue, errors = errors)
         }
         checkDuplicatesDebounced()
     }
 
     private suspend fun ContactFormCtx.handleUpdatePhone(value: String) {
-        updateFormData { copy(phone = value) }
+        updateFormData { copy(phone = PhoneNumber(value)) }
     }
 
     private suspend fun ContactFormCtx.handleUpdateContactPerson(value: String) {
@@ -208,7 +215,7 @@ internal class ContactFormContainer(
     // ============================================================================
 
     private suspend fun ContactFormCtx.handleUpdateVatNumber(value: String) {
-        updateFormData { copy(vatNumber = value, errors = errors - "vatNumber") }
+        updateFormData { copy(vatNumber = VatNumber(value), errors = errors - "vatNumber") }
         checkDuplicatesDebounced()
     }
 
@@ -234,7 +241,7 @@ internal class ContactFormContainer(
     }
 
     private suspend fun ContactFormCtx.handleUpdateCity(value: String) {
-        updateFormData { copy(city = value) }
+        updateFormData { copy(city = City(value)) }
     }
 
     private suspend fun ContactFormCtx.handleUpdatePostalCode(value: String) {
@@ -390,7 +397,7 @@ internal class ContactFormContainer(
             val editingId = contactId
 
             // Skip check if no meaningful data to search
-            if (form.name.length < 2 && form.email.isBlank() && form.vatNumber.isBlank()) {
+            if (form.name.value.length < 2 && form.email.value.isBlank() && form.vatNumber.value.isBlank()) {
                 updateState { copy(duplicates = emptyList(), isDuplicateCheckInProgress = false) }
                 return@withState
             }
@@ -400,11 +407,11 @@ internal class ContactFormContainer(
             val foundDuplicates = mutableListOf<PotentialDuplicate>()
 
             // Check by VAT number (highest confidence)
-            if (form.vatNumber.isNotBlank()) {
-                listContacts(search = form.vatNumber, limit = 5).fold(
+            if (form.vatNumber.value.isNotBlank()) {
+                listContacts(search = form.vatNumber.value, limit = 5).fold(
                     onSuccess = { contacts ->
                         contacts
-                            .filter { it.id != editingId && it.vatNumber?.value == form.vatNumber }
+                            .filter { it.id != editingId && it.vatNumber?.value == form.vatNumber.value }
                             .forEach { foundDuplicates.add(PotentialDuplicate(it, DuplicateReason.VatNumber)) }
                     },
                     onFailure = { /* ignore errors during duplicate check */ }
@@ -412,11 +419,11 @@ internal class ContactFormContainer(
             }
 
             // Check by email (high confidence)
-            if (form.email.isNotBlank() && form.email.contains("@")) {
-                listContacts(search = form.email, limit = 5).fold(
+            if (form.email.value.isNotBlank() && form.email.value.contains("@")) {
+                listContacts(search = form.email.value, limit = 5).fold(
                     onSuccess = { contacts ->
                         contacts
-                            .filter { it.id != editingId && it.email?.value.equals(form.email, ignoreCase = true) }
+                            .filter { it.id != editingId && it.email?.value.equals(form.email.value, ignoreCase = true) }
                             .filter { dup -> foundDuplicates.none { it.contact.id == dup.id } }
                             .forEach { foundDuplicates.add(PotentialDuplicate(it, DuplicateReason.Email)) }
                     },
@@ -425,13 +432,13 @@ internal class ContactFormContainer(
             }
 
             // Check by name + country (medium confidence)
-            if (form.name.length >= 3 && form.country.isNotBlank()) {
-                listContacts(search = form.name, limit = 10).fold(
+            if (form.name.value.length >= 3 && form.country.isNotBlank()) {
+                listContacts(search = form.name.value, limit = 10).fold(
                     onSuccess = { contacts ->
                         contacts
                             .filter { it.id != editingId }
                             .filter {
-                                it.name.value.equals(form.name, ignoreCase = true) &&
+                                it.name.value.equals(form.name.value, ignoreCase = true) &&
                                     it.country.equals(form.country, ignoreCase = true)
                             }
                             .filter { dup -> foundDuplicates.none { it.contact.id == dup.id } }
@@ -455,12 +462,12 @@ internal class ContactFormContainer(
         val errors = mutableMapOf<String, DokusException>()
 
         // Required field: name
-        if (formData.name.isBlank()) {
+        if (formData.name.value.isBlank()) {
             errors["name"] = DokusException.Validation.ContactNameRequired
         }
 
         // Optional validation: email format
-        if (formData.email.isNotBlank() && !formData.email.contains("@")) {
+        if (formData.email.value.isNotBlank() && !formData.email.isValid) {
             errors["email"] = DokusException.Validation.InvalidEmail
         }
 
@@ -633,16 +640,16 @@ internal class ContactFormContainer(
  * Convert ContactDto to ContactFormData for editing.
  */
 private fun ContactDto.toFormData(): ContactFormData = ContactFormData(
-    name = name.value,
-    email = email?.value ?: "",
-    phone = phone ?: "",
+    name = name,
+    email = email ?: Email.Empty,
+    phone = phone ?: PhoneNumber.Empty,
     contactPerson = contactPerson ?: "",
-    vatNumber = vatNumber?.value ?: "",
+    vatNumber = vatNumber ?: VatNumber.Empty,
     companyNumber = companyNumber ?: "",
     businessType = businessType,
     addressLine1 = addressLine1 ?: "",
     addressLine2 = addressLine2 ?: "",
-    city = city ?: "",
+    city = city ?: City(""),
     postalCode = postalCode ?: "",
     country = country ?: "",
     peppolId = peppolId ?: "",
@@ -658,15 +665,11 @@ private fun ContactDto.toFormData(): ContactFormData = ContactFormData(
  */
 private fun ContactFormData.toCreateRequest(): CreateContactRequest = CreateContactRequest(
     name = name,
-    email = email.takeIf { it.isNotBlank() },
-    phone = phone.takeIf { it.isNotBlank() },
-    vatNumber = vatNumber.takeIf { it.isNotBlank() },
+    email = email.takeIf { it.value.isNotBlank() },
+    phone = phone.takeIf { it.value.isNotBlank() },
+    vatNumber = vatNumber.takeIf { it.value.isNotBlank() },
     businessType = businessType,
-    addressLine1 = addressLine1.takeIf { it.isNotBlank() },
-    addressLine2 = addressLine2.takeIf { it.isNotBlank() },
-    city = city.takeIf { it.isNotBlank() },
-    postalCode = postalCode.takeIf { it.isNotBlank() },
-    country = country.takeIf { it.isNotBlank() },
+    address = toContactAddress(),
     contactPerson = contactPerson.takeIf { it.isNotBlank() },
     companyNumber = companyNumber.takeIf { it.isNotBlank() },
     defaultPaymentTerms = defaultPaymentTerms,
@@ -682,15 +685,11 @@ private fun ContactFormData.toCreateRequest(): CreateContactRequest = CreateCont
  */
 private fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateContactRequest(
     name = name,
-    email = email.takeIf { it.isNotBlank() },
-    phone = phone.takeIf { it.isNotBlank() },
-    vatNumber = vatNumber.takeIf { it.isNotBlank() },
+    email = email.takeIf { it.value.isNotBlank() },
+    phone = phone.takeIf { it.value.isNotBlank() },
+    vatNumber = vatNumber.takeIf { it.value.isNotBlank() },
     businessType = businessType,
-    addressLine1 = addressLine1.takeIf { it.isNotBlank() },
-    addressLine2 = addressLine2.takeIf { it.isNotBlank() },
-    city = city.takeIf { it.isNotBlank() },
-    postalCode = postalCode.takeIf { it.isNotBlank() },
-    country = country.takeIf { it.isNotBlank() },
+    address = toContactAddress(),
     contactPerson = contactPerson.takeIf { it.isNotBlank() },
     companyNumber = companyNumber.takeIf { it.isNotBlank() },
     defaultPaymentTerms = defaultPaymentTerms,
@@ -700,3 +699,20 @@ private fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateCont
     tags = tags.takeIf { it.isNotBlank() },
     isActive = isActive
 )
+
+/**
+ * Convert address fields to ContactAddress if valid.
+ * Returns null if required address fields are missing.
+ */
+private fun ContactFormData.toContactAddress(): ContactAddress? {
+    if (addressLine1.isBlank() || city.value.isBlank() || postalCode.isBlank() || country.isBlank()) {
+        return null
+    }
+    return ContactAddress(
+        streetLine1 = addressLine1,
+        streetLine2 = addressLine2.takeIf { it.isNotBlank() },
+        city = city,
+        postalCode = postalCode,
+        country = country
+    )
+}

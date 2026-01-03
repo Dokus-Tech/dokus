@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.domain.LegalName
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.exceptions.DokusException
@@ -16,8 +17,6 @@ import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
 import tech.dokus.features.auth.presentation.auth.model.LookupState
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.app.state.DokusState
-
-private const val MinCompanyNameLength = 3
 
 /**
  * Contract for Workspace Creation wizard screen.
@@ -52,7 +51,7 @@ sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
         val tenantType: TenantType = TenantType.Company,
         val hasFreelancerWorkspace: Boolean = false,
         val userName: String = "",
-        val companyName: String = "",
+        val companyName: LegalName = LegalName.Empty,
         val lookupState: LookupState = LookupState.Idle,
         val confirmationState: EntityConfirmationState = EntityConfirmationState.Hidden,
         val selectedEntity: EntityLookup? = null,
@@ -64,7 +63,7 @@ sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
         val canProceed: Boolean
             get() = when (step) {
                 WorkspaceWizardStep.TypeSelection -> true
-                WorkspaceWizardStep.CompanyName -> companyName.length >= MinCompanyNameLength
+                WorkspaceWizardStep.CompanyName -> companyName.isValid
                 WorkspaceWizardStep.VatAndAddress -> vatNumber.isValid && address.isValid
             }
 
@@ -86,7 +85,7 @@ sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
      */
     data class Creating(
         val tenantType: TenantType,
-        val companyName: String,
+        val companyName: LegalName,
         val userName: String,
         val vatNumber: VatNumber,
         val address: AddressFormState,
@@ -116,7 +115,7 @@ sealed interface WorkspaceCreateIntent : MVIIntent {
     data class SelectType(val type: TenantType) : WorkspaceCreateIntent
 
     /** User changed the company name */
-    data class UpdateCompanyName(val name: String) : WorkspaceCreateIntent
+    data class UpdateCompanyName(val name: LegalName) : WorkspaceCreateIntent
 
     /** User clicked to lookup the company */
     data object LookupCompany : WorkspaceCreateIntent

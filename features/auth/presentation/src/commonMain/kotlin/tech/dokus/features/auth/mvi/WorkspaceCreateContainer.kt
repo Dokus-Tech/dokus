@@ -1,5 +1,3 @@
-@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
-
 package tech.dokus.features.auth.mvi
 
 import pro.respawn.flowmvi.api.Container
@@ -27,14 +25,11 @@ import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.features.auth.repository.AuthRepository
 import tech.dokus.foundation.platform.Logger
 
-private const val MinCompanyNameLength = 3
-
-internal typealias WorkspaceCreateCtx =
-    PipelineContext<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction>
+typealias WorkspaceCreateCtx = PipelineContext<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction>
 
 /**
  * Container for Workspace Creation wizard using FlowMVI.
- * Manages the multi-step workspace creation flow.
+ * Manages the multistep workspace creation flow.
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
@@ -126,7 +121,7 @@ internal class WorkspaceCreateContainer(
         }
     }
 
-    private suspend fun WorkspaceCreateCtx.handleUpdateCompanyName(name: String) {
+    private suspend fun WorkspaceCreateCtx.handleUpdateCompanyName(name: LegalName) {
         withState<WorkspaceCreateState.Wizard, _> {
             updateState {
                 copy(
@@ -139,21 +134,24 @@ internal class WorkspaceCreateContainer(
 
     private suspend fun WorkspaceCreateCtx.handleLookupCompany() {
         withState<WorkspaceCreateState.Wizard, _> {
-            val name = companyName.trim()
-            if (name.length < MinCompanyNameLength) return@withState
-
-            val currentState = this
+            if (!companyName.isValid) return@withState
 
             updateState { copy(lookupState = LookupState.Loading) }
 
-            logger.d { "Looking up company: $name" }
-            searchCompanyUseCase(name).fold(
+            logger.d { "Looking up company: $companyName" }
+            searchCompanyUseCase(companyName, null).fold(
                 onSuccess = { response ->
                     logger.d { "Company lookup returned ${response.results.size} results" }
                     updateState {
                         val newConfirmation = when {
-                            response.results.size == 1 -> EntityConfirmationState.SingleResult(response.results.first())
-                            response.results.isNotEmpty() -> EntityConfirmationState.MultipleResults(response.results)
+                            response.results.size == 1 -> EntityConfirmationState.SingleResult(
+                                response.results.first()
+                            )
+
+                            response.results.isNotEmpty() -> EntityConfirmationState.MultipleResults(
+                                response.results
+                            )
+
                             else -> EntityConfirmationState.Hidden
                         }
                         copy(
@@ -185,15 +183,13 @@ internal class WorkspaceCreateContainer(
 
     private suspend fun WorkspaceCreateCtx.handleSelectEntity(entity: EntityLookup) {
         withState<WorkspaceCreateState.Wizard, _> {
-            // Prefill state with entity data
-            val currentState = this
-            val newAddress = entity.address?.let { addr ->
+            val newAddress = entity.address?.let { address ->
                 AddressFormState(
-                    streetLine1 = addr.streetLine1,
-                    streetLine2 = addr.streetLine2 ?: "",
-                    city = addr.city,
-                    postalCode = addr.postalCode,
-                    country = addr.country,
+                    streetLine1 = address.streetLine1,
+                    streetLine2 = address.streetLine2 ?: "",
+                    city = address.city,
+                    postalCode = address.postalCode,
+                    country = address.country,
                 )
             } ?: address
 
@@ -201,7 +197,7 @@ internal class WorkspaceCreateContainer(
                 copy(
                     selectedEntity = entity,
                     companyName = entity.name,
-                    vatNumber = entity.vatNumber ?: VatNumber(""),
+                    vatNumber = entity.vatNumber,
                     address = newAddress,
                     confirmationState = EntityConfirmationState.Hidden
                 )
@@ -252,10 +248,12 @@ internal class WorkspaceCreateContainer(
                     }
                     updateState { copy(step = nextStep) }
                 }
+
                 WorkspaceWizardStep.CompanyName -> {
                     // Trigger lookup, dialog will handle navigation
                     handleLookupCompany()
                 }
+
                 WorkspaceWizardStep.VatAndAddress -> {
                     createWorkspace()
                 }
@@ -306,14 +304,14 @@ internal class WorkspaceCreateContainer(
             val effectiveLegalName = if (currentState.tenantType.legalNameFromUser) {
                 LegalName(currentState.userName)
             } else {
-                LegalName(currentState.companyName)
+                currentState.companyName
             }
 
             // For freelancer, display name equals legal name
             val effectiveDisplayName = if (!currentState.tenantType.requiresDisplayName) {
                 DisplayName(effectiveLegalName.value)
             } else {
-                DisplayName(currentState.companyName)
+                DisplayName(currentState.companyName.value)
             }
 
             val addressRequest = UpsertTenantAddressRequest(

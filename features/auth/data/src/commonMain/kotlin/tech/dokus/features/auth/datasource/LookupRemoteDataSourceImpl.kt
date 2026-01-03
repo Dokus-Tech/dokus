@@ -3,6 +3,8 @@ package tech.dokus.features.auth.datasource
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.resources.get
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookupResponse
 import tech.dokus.domain.routes.Lookup
 
@@ -14,9 +16,12 @@ internal class LookupRemoteDataSourceImpl(
     private val httpClient: HttpClient,
 ) : LookupRemoteDataSource {
 
-    override suspend fun searchCompany(name: String): Result<EntityLookupResponse> {
+    override suspend fun searchCompany(
+        name: LegalName?,
+        number: VatNumber?
+    ): Result<EntityLookupResponse> {
         return runCatching {
-            httpClient.get(Lookup.Company(name = name)).body()
+            httpClient.get(Lookup.Company(name = name, number = number)).body()
         }
     }
 }

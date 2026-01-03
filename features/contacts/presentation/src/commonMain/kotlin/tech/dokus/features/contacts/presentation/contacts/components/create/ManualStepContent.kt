@@ -203,7 +203,7 @@ private fun BusinessFields(
                 Res.string.field_required,
                 stringResource(Res.string.contacts_company_name)
             ),
-            value = formData.companyName,
+            value = formData.companyName.value,
             error = formData.errors["companyName"],
             onValueChange = { onFieldChanged("companyName", it) },
             modifier = Modifier.fillMaxWidth()
@@ -221,7 +221,7 @@ private fun BusinessFields(
                 Res.string.field_optional,
                 stringResource(Res.string.contacts_vat_number)
             ),
-            value = formData.vatNumber,
+            value = formData.vatNumber.value,
             onValueChange = { onFieldChanged("vatNumber", it) },
             modifier = Modifier.fillMaxWidth()
         )
@@ -231,7 +231,7 @@ private fun BusinessFields(
                 Res.string.field_optional,
                 stringResource(Res.string.contacts_email)
             ),
-            value = Email(formData.email),
+            value = formData.email,
             onValueChange = { onFieldChanged("email", it.value) },
             modifier = Modifier.fillMaxWidth()
         )
@@ -253,7 +253,7 @@ private fun IndividualFields(
                 Res.string.field_required,
                 stringResource(Res.string.contacts_full_name)
             ),
-            value = formData.fullName,
+            value = formData.fullName.value,
             error = formData.errors["fullName"],
             onValueChange = { onFieldChanged("fullName", it) },
             modifier = Modifier.fillMaxWidth()
@@ -261,7 +261,7 @@ private fun IndividualFields(
 
         PTextFieldEmail(
             fieldName = stringResource(Res.string.contacts_email),
-            value = Email(formData.personEmail),
+            value = formData.personEmail,
             error = formData.errors["contact"],
             onValueChange = { onFieldChanged("personEmail", it.value) },
             modifier = Modifier.fillMaxWidth()
@@ -269,7 +269,7 @@ private fun IndividualFields(
 
         PTextFieldPhone(
             fieldName = stringResource(Res.string.contacts_phone),
-            value = PhoneNumber(formData.personPhone),
+            value = formData.personPhone,
             error = formData.errors["contact"],
             onValueChange = { onFieldChanged("personPhone", it.value) },
             modifier = Modifier.fillMaxWidth()
@@ -315,8 +315,8 @@ private fun Country.localizedName(): String =
 
 private fun isFormValid(type: ClientType, data: ManualContactFormData): Boolean {
     return if (type == ClientType.Business) {
-        data.companyName.isNotBlank()
+        data.companyName.value.isNotBlank()
     } else {
-        data.fullName.isNotBlank() && (data.personEmail.isNotBlank() || data.personPhone.isNotBlank())
+        data.fullName.value.isNotBlank() && (data.personEmail.value.isNotBlank() || data.personPhone.value.isNotBlank())
     }
 }

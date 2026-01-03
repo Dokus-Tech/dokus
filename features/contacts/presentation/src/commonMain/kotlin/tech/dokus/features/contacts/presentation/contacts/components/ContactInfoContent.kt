@@ -97,7 +97,7 @@ internal fun ContactInfoContent(
             ContactInfoRow(
                 icon = Icons.Default.Phone,
                 label = stringResource(Res.string.contacts_phone),
-                value = it
+                value = it.value
             )
         }
 

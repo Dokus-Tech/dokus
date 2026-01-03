@@ -217,7 +217,7 @@ private fun EntityCard(
                 .fillMaxWidth()
         ) {
             Text(
-                text = entity.name,
+                text = entity.name.value,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,

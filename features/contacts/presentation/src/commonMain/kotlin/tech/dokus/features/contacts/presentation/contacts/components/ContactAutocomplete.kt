@@ -72,6 +72,7 @@ import tech.dokus.aura.resources.contacts_searching
 import tech.dokus.aura.resources.contacts_selected
 import tech.dokus.aura.resources.contacts_supplier
 import tech.dokus.aura.resources.contacts_vendor
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
 import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
@@ -207,9 +208,9 @@ fun ContactAutocomplete(
                 delay(DebounceDelayMs) // Debounce delay
                 isSearching = true
 
-                val normalizedVat = normalizeVatQuery(searchQuery)
-                val searchResult = if (isVatLike(normalizedVat)) {
-                    findContactsByVat(normalizedVat, limit = SearchLimit)
+                val vatNumber = VatNumber(searchQuery)
+                val searchResult = if (vatNumber.isValid) {
+                    findContactsByVat(vatNumber, limit = SearchLimit)
                 } else {
                     findContactsByName(searchQuery, limit = SearchLimit)
                 }
@@ -291,7 +292,7 @@ fun ContactAutocomplete(
                                 vatNumber = contact.vatNumber?.value,
                                 addressLine1 = contact.addressLine1,
                                 addressLine2 = contact.addressLine2,
-                                city = contact.city,
+                                city = contact.city?.value,
                                 postalCode = contact.postalCode,
                                 country = contact.country,
                                 defaultPaymentTerms = contact.defaultPaymentTerms,
@@ -723,12 +724,3 @@ fun ContactAutocompleteSimple(
     )
 }
 
-private fun normalizeVatQuery(value: String): String {
-    return value.trim()
-        .uppercase()
-        .replace(Regex("[^A-Z0-9]"), "")
-}
-
-private fun isVatLike(normalized: String): Boolean {
-    return normalized.length >= MinSearchLength && normalized.matches(Regex("^[A-Z]{2}[0-9A-Z]{4,}$"))
-}

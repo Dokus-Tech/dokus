@@ -2,8 +2,10 @@ package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
+import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
@@ -49,10 +51,10 @@ object Mocks {
         peppolId = "0208:0123456789",
         peppolEnabled = true,
         addressLine1 = "123 Business Street",
-        city = "Brussels",
+        city = City("Brussels"),
         postalCode = "1000",
         country = "BE",
-        phone = "+32 2 123 4567",
+        phone = PhoneNumber("+32 2 123 4567"),
         createdAt = now,
         updatedAt = now
     )
@@ -67,7 +69,7 @@ object Mocks {
         peppolId = null,
         peppolEnabled = false,
         addressLine1 = "456 Commerce Lane",
-        city = "Antwerp",
+        city = City("Antwerp"),
         postalCode = "2000",
         country = "BE",
         phone = null,
