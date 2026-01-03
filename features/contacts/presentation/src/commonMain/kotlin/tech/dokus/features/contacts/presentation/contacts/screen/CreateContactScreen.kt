@@ -20,6 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_create_contact
+import tech.dokus.aura.resources.contacts_resolve_counterparty
 import tech.dokus.features.contacts.mvi.CreateContactIntent
 import tech.dokus.features.contacts.mvi.CreateContactState
 import tech.dokus.features.contacts.presentation.contacts.components.create.ConfirmStepContent
@@ -169,6 +173,10 @@ private fun CreateContactContent(
     onExistingContactSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isResolveFlow = origin == ContactCreateOrigin.DocumentReview
+    val headerTitle = stringResource(
+        if (isResolveFlow) Res.string.contacts_resolve_counterparty else Res.string.contacts_create_contact
+    )
     var manualPrefillApplied by remember(prefillCompanyName, prefillVat, prefillAddress, origin) {
         mutableStateOf(false)
     }
@@ -192,7 +200,9 @@ private fun CreateContactContent(
             state = state,
             onIntent = onIntent,
             initialQuery = prefillVat?.takeIf { it.isNotBlank() } ?: prefillCompanyName,
-            onExistingContactSelected = if (origin == ContactCreateOrigin.DocumentReview) {
+            headerTitle = headerTitle,
+            isResolveFlow = isResolveFlow,
+            onExistingContactSelected = if (isResolveFlow) {
                 onExistingContactSelected
             } else {
                 null
@@ -202,12 +212,14 @@ private fun CreateContactContent(
 
         is CreateContactState.ConfirmStep -> ConfirmStepContent(
             state = state,
+            headerTitle = headerTitle,
             onIntent = onIntent,
             modifier = modifier
         )
 
         is CreateContactState.ManualStep -> ManualStepContent(
             state = state,
+            headerTitle = headerTitle,
             onIntent = onIntent,
             modifier = modifier
         )

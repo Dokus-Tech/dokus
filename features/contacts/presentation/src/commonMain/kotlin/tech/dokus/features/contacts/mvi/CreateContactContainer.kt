@@ -221,8 +221,17 @@ internal class CreateContactContainer(
 
     private suspend fun CreateContactCtx.handleSelectResult(entity: EntityLookup) {
         logger.d { "Selected entity: ${entity.name}" }
+        val country = entity.address?.country ?: Country.Belgium
+        // Manual form has no address fields, so we prefill name/VAT/country only.
         updateState {
-            CreateContactState.ConfirmStep(selectedEntity = entity)
+            CreateContactState.ManualStep(
+                contactType = ClientType.Business,
+                formData = ManualContactFormData(
+                    companyName = entity.name,
+                    country = country,
+                    vatNumber = entity.vatNumber,
+                )
+            )
         }
     }
 

@@ -1,6 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components.create
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,12 +14,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,10 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import kotlinx.coroutines.FlowPreview
@@ -46,23 +47,17 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
-import tech.dokus.aura.resources.contacts_add_contact
-import tech.dokus.aura.resources.contacts_add_new_contact
-import tech.dokus.aura.resources.contacts_add_without_vat
-import tech.dokus.aura.resources.contacts_autocomplete_no_results_for
-import tech.dokus.aura.resources.contacts_lookup_empty
+import tech.dokus.aura.resources.contacts_create_contact
 import tech.dokus.aura.resources.contacts_lookup_hint
 import tech.dokus.aura.resources.contacts_lookup_label
-import tech.dokus.aura.resources.contacts_lookup_location
-import tech.dokus.aura.resources.contacts_lookup_no_results
+import tech.dokus.aura.resources.contacts_lookup_no_matches
 import tech.dokus.aura.resources.contacts_lookup_query_hint
 import tech.dokus.aura.resources.contacts_lookup_search_failed
-import tech.dokus.aura.resources.contacts_select_contact
-import tech.dokus.aura.resources.country_belgium
-import tech.dokus.aura.resources.country_france
-import tech.dokus.aura.resources.country_netherlands
+import tech.dokus.aura.resources.contacts_resolve_counterparty_create
+import tech.dokus.aura.resources.contacts_trust_external
+import tech.dokus.aura.resources.contacts_trust_local
+import tech.dokus.aura.resources.contacts_trust_verified
 import tech.dokus.aura.resources.state_retry
-import tech.dokus.domain.enums.Country
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.VatNumber
@@ -74,7 +69,6 @@ import tech.dokus.features.contacts.mvi.LookupUiState
 import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
 import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains
@@ -94,6 +88,8 @@ private const val MIN_SEARCH_LENGTH = 3
 fun LookupStepContent(
     state: CreateContactState.LookupStep,
     onIntent: (CreateContactIntent) -> Unit,
+    headerTitle: String,
+    isResolveFlow: Boolean,
     initialQuery: String? = null,
     onExistingContactSelected: ((String) -> Unit)? = null,
     findContactsByName: FindContactsByNameUseCase = koinInject(),
@@ -104,7 +100,6 @@ fun LookupStepContent(
     var query by rememberSaveable { mutableStateOf(initialQuery.orEmpty()) }
     var existingContacts by remember { mutableStateOf(emptyList<ContactDto>()) }
     var isExistingLoading by remember { mutableStateOf(false) }
-    var selectedExistingId by remember { mutableStateOf<ContactId?>(null) }
 
     LaunchedEffect(initialQuery) {
         if (!initialQuery.isNullOrBlank() && query.isBlank()) {
@@ -118,22 +113,19 @@ fun LookupStepContent(
             .distinctUntilChanged()
             .debounce(SEARCH_DEBOUNCE_MS)
             .collect { searchQuery ->
-                selectedExistingId = null
                 if (searchQuery.length >= MIN_SEARCH_LENGTH) {
                     onIntent(CreateContactIntent.Search(searchQuery))
-                    if (onExistingContactSelected != null) {
-                        isExistingLoading = true
-                        val vatNumber = VatNumber(searchQuery)
-                        val searchResult = if (vatNumber.isValid) {
-                            findContactsByVat(vatNumber, limit = 10)
-                        } else {
-                            findContactsByName(searchQuery, limit = 10)
-                        }
-                        searchResult
-                            .onSuccess { existingContacts = it }
-                            .onFailure { existingContacts = emptyList() }
-                        isExistingLoading = false
+                    isExistingLoading = true
+                    val vatNumber = VatNumber(searchQuery)
+                    val searchResult = if (vatNumber.isValid) {
+                        findContactsByVat(vatNumber, limit = 10)
+                    } else {
+                        findContactsByName(searchQuery, limit = 10)
                     }
+                    searchResult
+                        .onSuccess { existingContacts = it }
+                        .onFailure { existingContacts = emptyList() }
+                    isExistingLoading = false
                 } else {
                     onIntent(CreateContactIntent.ClearSearch)
                     existingContacts = emptyList()
@@ -149,18 +141,11 @@ fun LookupStepContent(
     ) {
         // Header
         LookupHeader(
+            title = headerTitle,
             onClose = { onIntent(CreateContactIntent.Cancel) }
         )
 
         Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
-
-        // Step indicator
-        StepIndicator(
-            currentStep = CreateContactStep.Search,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
         // Search field - uses local state, NOT MVI state
         PTextFieldStandard(
@@ -181,23 +166,6 @@ fun LookupStepContent(
 
         Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
 
-        if (onExistingContactSelected != null) {
-            ExistingContactsSection(
-                query = query,
-                contacts = existingContacts,
-                isLoading = isExistingLoading,
-                selectedId = selectedExistingId,
-                onSelect = { selectedExistingId = it },
-                onConfirm = {
-                    selectedExistingId?.let { onExistingContactSelected(it.toString()) }
-                },
-                onCreateNew = { onIntent(CreateContactIntent.GoToManualEntry) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
-        }
-
         // Duplicate VAT warning (hard block)
         val duplicateVat = state.duplicateVat
         if (duplicateVat != null) {
@@ -215,159 +183,140 @@ fun LookupStepContent(
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-            when (val lookupState = state.lookupState) {
-                is LookupUiState.Idle -> {
-                    // Show hint text when query is empty
-                    if (query.isEmpty() && duplicateVat == null) {
-                        LookupHint()
-                    }
-                }
-                is LookupUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is LookupUiState.Success -> {
-                    LookupResultsList(
-                        results = lookupState.results,
-                        onSelect = { onIntent(CreateContactIntent.SelectResult(it)) },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-                is LookupUiState.Empty -> {
-                    LookupEmptyState(
-                        query = query,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-                is LookupUiState.Error -> {
-                    LookupErrorState(
-                        exception = lookupState.exception,
-                        onRetry = { onIntent(CreateContactIntent.Search(query)) },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+            if (query.isEmpty() && duplicateVat == null) {
+                LookupHint()
+            } else if (query.length < MIN_SEARCH_LENGTH) {
+                LookupHint()
+            } else {
+                UnifiedResultsList(
+                    query = query,
+                    lookupState = state.lookupState,
+                    existingContacts = existingContacts,
+                    isExistingLoading = isExistingLoading,
+                    onSelectExisting = { contactId ->
+                        if (onExistingContactSelected != null) {
+                            onExistingContactSelected(contactId.toString())
+                        } else {
+                            onIntent(CreateContactIntent.ViewExistingContact(contactId))
+                        }
+                    },
+                    onSelectRegistry = { onIntent(CreateContactIntent.SelectResult(it)) },
+                    onRetryRegistry = { onIntent(CreateContactIntent.Search(query)) },
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
 
-        // "Add without VAT" link at bottom
-        TextButton(
-            onClick = { onIntent(CreateContactIntent.GoToManualEntry) },
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        ) {
-            Text(
-                text = if (onExistingContactSelected != null) {
-                    stringResource(Res.string.contacts_add_new_contact)
+        val hasResults = remember(existingContacts, state.lookupState) {
+            val externalCount = (state.lookupState as? LookupUiState.Success)?.results?.size ?: 0
+            existingContacts.isNotEmpty() || externalCount > 0
+        }
+        if (!hasResults && state.lookupState !is LookupUiState.Loading && !isExistingLoading) {
+            PPrimaryButton(
+                text = if (isResolveFlow) {
+                    stringResource(Res.string.contacts_resolve_counterparty_create)
                 } else {
-                    stringResource(Res.string.contacts_add_without_vat)
+                    stringResource(Res.string.contacts_create_contact)
                 },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                onClick = { onIntent(CreateContactIntent.GoToManualEntry) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(Constrains.Height.button)
             )
+        } else {
+            TextButton(
+                onClick = { onIntent(CreateContactIntent.GoToManualEntry) },
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                enabled = state.lookupState !is LookupUiState.Loading
+            ) {
+                Text(
+                    text = stringResource(Res.string.contacts_create_contact),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ExistingContactsSection(
+private fun UnifiedResultsList(
     query: String,
-    contacts: List<ContactDto>,
-    isLoading: Boolean,
-    selectedId: ContactId?,
-    onSelect: (ContactId) -> Unit,
-    onConfirm: () -> Unit,
-    onCreateNew: () -> Unit,
+    lookupState: LookupUiState,
+    existingContacts: List<ContactDto>,
+    isExistingLoading: Boolean,
+    onSelectExisting: (ContactId) -> Unit,
+    onSelectRegistry: (EntityLookup) -> Unit,
+    onRetryRegistry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    val queryVat = VatNumber(query).takeIf { it.isValid }
+    val unifiedItems = buildUnifiedItems(existingContacts, lookupState, queryVat, query)
+    val hasResults = unifiedItems.isNotEmpty()
+    val isLoading = isExistingLoading || lookupState is LookupUiState.Loading
+    LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
     ) {
-        Text(
-            text = stringResource(Res.string.contacts_select_contact),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
         when {
-            isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+            isLoading && !hasResults -> {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
-            query.length >= MIN_SEARCH_LENGTH && contacts.isEmpty() -> {
-                Text(
-                    text = stringResource(Res.string.contacts_autocomplete_no_results_for, query),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                POutlinedButton(
-                    text = stringResource(Res.string.contacts_add_new_contact),
-                    onClick = onCreateNew,
-                    modifier = Modifier.align(Alignment.Start)
-                )
-            }
-            contacts.isNotEmpty() -> {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
-                ) {
-                    contacts.forEach { contact ->
-                        val isSelected = contact.id == selectedId
-                        DokusCardSurface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSelect(contact.id) }
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(Constrains.Spacing.medium),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = contact.name.value,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                    val secondary = listOfNotNull(
-                                        contact.vatNumber?.value,
-                                        contact.email?.value
-                                    ).joinToString(" • ")
-                                    if (secondary.isNotBlank()) {
-                                        Text(
-                                            text = secondary,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                                if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    PPrimaryButton(
-                        text = stringResource(Res.string.contacts_select_contact),
-                        enabled = selectedId != null,
-                        onClick = onConfirm,
+            !hasResults && lookupState is LookupUiState.Error -> {
+                item {
+                    LookupErrorState(
+                        exception = lookupState.exception,
+                        onRetry = onRetryRegistry,
                         modifier = Modifier.fillMaxWidth()
                     )
+                }
+            }
+            !hasResults -> {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Constrains.Spacing.xLarge),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.contacts_lookup_no_matches),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            else -> {
+                items(unifiedItems, key = { it.key }) { item ->
+                    when (item) {
+                        is UnifiedLookupItem.Local -> {
+                            LookupUnifiedRow(
+                                name = item.name,
+                                secondary = item.secondary,
+                                trustTag = item.trustTag,
+                                onClick = { onSelectExisting(item.contactId) }
+                            )
+                        }
+                        is UnifiedLookupItem.External -> {
+                            LookupUnifiedRow(
+                                name = item.name,
+                                secondary = item.secondary,
+                                trustTag = item.trustTag,
+                                onClick = { onSelectRegistry(item.entity) }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -376,6 +325,7 @@ private fun ExistingContactsSection(
 
 @Composable
 private fun LookupHeader(
+    title: String,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -385,7 +335,7 @@ private fun LookupHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = stringResource(Res.string.contacts_add_contact),
+            text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -430,27 +380,10 @@ private fun LookupHint(
 }
 
 @Composable
-private fun LookupResultsList(
-    results: List<EntityLookup>,
-    onSelect: (EntityLookup) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LazyColumn(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
-    ) {
-        items(results) { entity ->
-            LookupResultCard(
-                entity = entity,
-                onClick = { onSelect(entity) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun LookupResultCard(
-    entity: EntityLookup,
+private fun LookupUnifiedRow(
+    name: String,
+    secondary: String?,
+    trustTag: TrustTag,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -458,58 +391,29 @@ private fun LookupResultCard(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick,
     ) {
-        Column(
-            modifier = Modifier.padding(Constrains.Spacing.medium)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Constrains.Spacing.medium),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = entity.name.value,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            val vatNumber = entity.vatNumber
-            if (vatNumber != null) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = vatNumber.value,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+                if (!secondary.isNullOrBlank()) {
+                    Text(
+                        text = secondary,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            val address = entity.address
-            if (address != null) {
-                Text(
-                    text = stringResource(
-                        Res.string.contacts_lookup_location,
-                        address.city,
-                        address.country.localizedName()
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            TrustTagPill(tag = trustTag)
         }
-    }
-}
-
-@Composable
-private fun LookupEmptyState(
-    query: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.padding(Constrains.Spacing.xLarge),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = stringResource(Res.string.contacts_lookup_empty),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = stringResource(Res.string.contacts_lookup_no_results, query),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
     }
 }
 
@@ -541,10 +445,147 @@ private fun LookupErrorState(
     }
 }
 
+private sealed interface UnifiedLookupItem {
+    val key: String
+    val name: String
+    val secondary: String?
+    val trustTag: TrustTag
+    val hasVatExactMatch: Boolean
+    val isLocal: Boolean
+    val isVerified: Boolean
+    val nameScore: Int
+    val originalIndex: Int
+
+    data class Local(
+        override val key: String,
+        override val name: String,
+        override val secondary: String?,
+        override val trustTag: TrustTag,
+        override val hasVatExactMatch: Boolean,
+        override val isLocal: Boolean,
+        override val isVerified: Boolean,
+        override val nameScore: Int,
+        override val originalIndex: Int,
+        val contactId: ContactId,
+    ) : UnifiedLookupItem
+
+    data class External(
+        override val key: String,
+        override val name: String,
+        override val secondary: String?,
+        override val trustTag: TrustTag,
+        override val hasVatExactMatch: Boolean,
+        override val isLocal: Boolean,
+        override val isVerified: Boolean,
+        override val nameScore: Int,
+        override val originalIndex: Int,
+        val entity: EntityLookup,
+    ) : UnifiedLookupItem
+}
+
+private enum class TrustTag {
+    Local,
+    Verified,
+    External,
+}
+
 @Composable
-private fun Country.localizedName(): String =
-    when (this) {
-        Country.Belgium -> stringResource(Res.string.country_belgium)
-        Country.Netherlands -> stringResource(Res.string.country_netherlands)
-        Country.France -> stringResource(Res.string.country_france)
+private fun TrustTagPill(tag: TrustTag, modifier: Modifier = Modifier) {
+    val label = when (tag) {
+        TrustTag.Local -> stringResource(Res.string.contacts_trust_local)
+        TrustTag.Verified -> stringResource(Res.string.contacts_trust_verified)
+        TrustTag.External -> stringResource(Res.string.contacts_trust_external)
     }
+    val borderColor = MaterialTheme.colorScheme.outlineVariant
+    Surface(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.small),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
+        shape = MaterialTheme.shapes.small
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.2.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
+    }
+}
+
+private fun buildUnifiedItems(
+    existingContacts: List<ContactDto>,
+    lookupState: LookupUiState,
+    queryVat: VatNumber?,
+    query: String
+): List<UnifiedLookupItem> {
+    val normalizedQueryVat = queryVat?.value?.let(::normalizeVatValue)
+    val queryText = if (queryVat == null) query.trim().ifBlank { null } else null
+    val externalResults = (lookupState as? LookupUiState.Success)?.results.orEmpty()
+    val localItems = existingContacts.mapIndexed { index, contact ->
+        val contactVat = contact.vatNumber?.value?.let(::normalizeVatValue)
+        val hasVatExactMatch = normalizedQueryVat != null && contactVat == normalizedQueryVat
+        val nameScore = nameScore(queryText, contact.name.value)
+        UnifiedLookupItem.Local(
+            key = "local-${contact.id}",
+            name = contact.name.value,
+            secondary = listOfNotNull(contact.vatNumber?.value, contact.email?.value).joinToString(" • ")
+                .takeIf { it.isNotBlank() },
+            trustTag = TrustTag.Local,
+            hasVatExactMatch = hasVatExactMatch,
+            isLocal = true,
+            isVerified = false,
+            nameScore = nameScore,
+            originalIndex = index,
+            contactId = contact.id
+        )
+    }
+    val externalItems = externalResults.mapIndexed { index, entity ->
+        val entityVat = entity.vatNumber.value.let(::normalizeVatValue)
+        val hasVatExactMatch = normalizedQueryVat != null && entityVat == normalizedQueryVat
+        val isVerified = hasVatExactMatch
+        val nameScore = nameScore(queryText, entity.name.value)
+        val secondary = buildList {
+            add(entity.vatNumber.value)
+            entity.address?.let { address ->
+                add(
+                    "${address.city}, ${address.country.name}"
+                )
+            }
+        }.joinToString(" • ").takeIf { it.isNotBlank() }
+        UnifiedLookupItem.External(
+            key = "external-${entity.enterpriseNumber}",
+            name = entity.name.value,
+            secondary = secondary,
+            trustTag = if (isVerified) TrustTag.Verified else TrustTag.External,
+            hasVatExactMatch = hasVatExactMatch,
+            isLocal = false,
+            isVerified = isVerified,
+            nameScore = nameScore,
+            originalIndex = index,
+            entity = entity
+        )
+    }
+    return (localItems + externalItems).sortedWith(
+        compareByDescending<UnifiedLookupItem> { it.hasVatExactMatch }
+            .thenByDescending { if (it.hasVatExactMatch) it.isLocal else false }
+            .thenByDescending { it.isVerified }
+            .thenByDescending { it.nameScore }
+            .thenBy { it.originalIndex }
+    )
+}
+
+private fun nameScore(query: String?, name: String): Int {
+    if (query.isNullOrBlank()) return 0
+    val normalizedQuery = query.trim().lowercase()
+    val normalizedName = name.trim().lowercase()
+    return when {
+        normalizedName.startsWith(normalizedQuery) -> 2
+        normalizedName.contains(normalizedQuery) -> 1
+        else -> 0
+    }
+}
+
+private fun normalizeVatValue(value: String): String {
+    return value.trim().uppercase().replace(Regex("[^A-Z0-9]"), "")
+}
