@@ -1,6 +1,5 @@
 @file:Suppress(
     "TooManyFunctions", // Container handles invoice creation workflow
-    "MagicNumber", // VAT and date calculation constants
     "MaxLineLength" // Complex function signatures
 )
 
@@ -30,6 +29,9 @@ import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.Validate
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+
+/** Default number of days from issue date to due date for new invoices */
+private const val DefaultPaymentTermDays = 30
 
 internal typealias CreateInvoiceCtx = PipelineContext<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction>
 
@@ -437,7 +439,7 @@ internal class CreateInvoiceContainer(
                 is CreateInvoiceState.Editing -> CreateInvoiceState.Editing(
                     formState = CreateInvoiceFormState(
                         issueDate = today,
-                        dueDate = today.plus(30, DateTimeUnit.DAY),
+                        dueDate = today.plus(DefaultPaymentTermDays, DateTimeUnit.DAY),
                         items = listOf(firstItem)
                     ),
                     uiState = CreateInvoiceUiState(expandedItemId = firstItem.id),
@@ -551,7 +553,7 @@ internal class CreateInvoiceContainer(
         return CreateInvoiceState.Editing(
             formState = CreateInvoiceFormState(
                 issueDate = today,
-                dueDate = today.plus(30, DateTimeUnit.DAY),
+                dueDate = today.plus(DefaultPaymentTermDays, DateTimeUnit.DAY),
                 items = listOf(firstItem)
             ),
             uiState = CreateInvoiceUiState(

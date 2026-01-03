@@ -1,6 +1,5 @@
 @file:Suppress(
-    "TooManyFunctions", // Container handles contact creation workflow
-    "MagicNumber" // Timeout constants
+    "TooManyFunctions" // Container handles contact creation workflow
 )
 
 package tech.dokus.features.contacts.mvi
@@ -26,6 +25,10 @@ import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.features.contacts.usecases.CreateContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.platform.Logger
+
+// Duplicate detection constants
+private const val MinNameLengthForDuplicateCheck = 3
+private const val DuplicateSearchLimit = 5
 
 internal typealias CreateContactCtx = PipelineContext<CreateContactState, CreateContactIntent, CreateContactAction>
 
@@ -450,7 +453,7 @@ internal class CreateContactContainer(
     // VALIDATION HELPERS
     // ============================================================================
 
-    private suspend fun validateManualForm(
+    private fun validateManualForm(
         type: ClientType,
         data: ManualContactFormData
     ): Map<String, DokusException> {
@@ -477,9 +480,9 @@ internal class CreateContactContainer(
         data: ManualContactFormData
     ): List<SoftDuplicateUi> {
         val name = if (type == ClientType.Business) data.companyName else data.fullName
-        if (name.length < 3) return emptyList()
+        if (name.length < MinNameLengthForDuplicateCheck) return emptyList()
 
-        return listContacts(search = name, limit = 5).fold(
+        return listContacts(search = name, limit = DuplicateSearchLimit).fold(
             onSuccess = { contacts ->
                 contacts
                     .filter { contact ->

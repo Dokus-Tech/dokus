@@ -1,5 +1,4 @@
 @file:Suppress(
-    "MagicNumber", // Port range validation constants
     "TooGenericExceptionCaught" // Network validation can fail in various ways
 )
 
@@ -18,6 +17,12 @@ import tech.dokus.domain.config.ServerInfo
 import tech.dokus.domain.config.ServerStatus
 import tech.dokus.domain.config.ServerValidationResult
 import tech.dokus.foundation.platform.Logger
+
+/** Timeout for the entire HTTP request in milliseconds */
+private const val RequestTimeoutMs = 10_000L
+
+/** Timeout for establishing connection in milliseconds */
+private const val ConnectTimeoutMs = 5_000L
 
 /**
  * Validates that a server is a compatible Dokus instance.
@@ -52,8 +57,8 @@ class ValidateServerUseCase {
                 )
             }
             install(HttpTimeout) {
-                requestTimeoutMillis = 10_000
-                connectTimeoutMillis = 5_000
+                requestTimeoutMillis = RequestTimeoutMs
+                connectTimeoutMillis = ConnectTimeoutMs
             }
         }
 

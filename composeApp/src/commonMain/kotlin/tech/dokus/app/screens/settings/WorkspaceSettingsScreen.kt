@@ -89,8 +89,17 @@ import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
-@Suppress("MagicNumber") // Invoice padding configuration options
-private val INVOICE_PADDING_OPTIONS = listOf(3, 4, 5, 6)
+// Invoice padding configuration options (number of digits)
+private const val InvoicePaddingMin = 3
+private const val InvoicePaddingDefault = 4
+private const val InvoicePaddingMedium = 5
+private const val InvoicePaddingMax = 6
+private val InvoicePaddingOptions = listOf(
+    InvoicePaddingMin,
+    InvoicePaddingDefault,
+    InvoicePaddingMedium,
+    InvoicePaddingMax
+)
 
 /**
  * Workspace/Company settings screen with top bar.
@@ -398,7 +407,7 @@ internal fun WorkspaceSettingsContentInternal(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            INVOICE_PADDING_OPTIONS.forEach { padding ->
+                            InvoicePaddingOptions.forEach { padding ->
                                 TextButton(
                                     onClick = {
                                         onIntent(

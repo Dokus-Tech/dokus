@@ -1,6 +1,5 @@
 @file:Suppress(
-    "TooManyFunctions", // Implementation mirrors interface methods
-    "MagicNumber" // HTTP and pagination constants
+    "TooManyFunctions" // Implementation mirrors interface methods
 )
 
 package tech.dokus.features.cashflow.datasource
@@ -71,6 +70,12 @@ import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.domain.routes.Peppol
+
+/** HTTP status code indicating the resource was not found */
+private const val HttpNotFound = 404
+
+/** Limit for fetching a single Peppol transmission for an invoice */
+private const val SingleTransmissionLimit = 1
 
 /**
  * HTTP-based implementation of CashflowRemoteDataSource.
@@ -661,7 +666,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun getPeppolSettings(): Result<PeppolSettingsDto?> {
         return runCatching {
             val response = httpClient.get(Peppol.Settings())
-            if (response.status.value == 404) {
+            if (response.status.value == HttpNotFound) {
                 null
             } else {
                 response.body<PeppolSettingsDto>()
@@ -755,7 +760,7 @@ internal class CashflowRemoteDataSourceImpl(
             val transmissions = httpClient.get(
                 Peppol.Transmissions(
                     invoiceId = invoiceId.toString(),
-                    limit = 1
+                    limit = SingleTransmissionLimit
                 )
             ).body<List<PeppolTransmissionDto>>()
             transmissions.firstOrNull()

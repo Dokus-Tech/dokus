@@ -51,8 +51,8 @@ import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
 
-@Suppress("MagicNumber") // Gold color hex value
-private val GoldAccent = Color(0xFFD4AF37)
+private const val GoldAccentHex = 0xFFD4AF37
+private val GoldAccent = Color(GoldAccentHex)
 
 private val BootstrapStepType.localized: String
     @Composable get() = when (this) {

@@ -1,5 +1,4 @@
 @file:Suppress(
-    "MagicNumber", // Financial constants are self-documenting
     "ReturnCount" // Parsing functions require multiple early returns for validation
 )
 
@@ -8,6 +7,22 @@ package tech.dokus.domain
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.exceptions.DokusException
 import kotlin.jvm.JvmInline
+
+// Money conversion constants
+private const val CentsPerUnit = 100
+private const val CentsPerUnitDouble = 100.0
+
+// Decimal parsing constants
+private const val DecimalPlaces = 2
+private const val SingleDigitMultiplier = 10
+private const val NoDecimalDigits = 0
+private const val OneDecimalDigit = 1
+private const val TwoDecimalDigits = 2
+
+// Percentage/VAT basis points constants
+private const val BasisPointsPerPercent = 100
+private const val BasisPointsPerFull = 10000
+private const val BasisPointsPerFullDouble = 10000.0
 
 /**
  * Money represented in minor units (cents for EUR/USD/GBP).
@@ -30,10 +45,10 @@ value class Money(val minor: Long) : Comparable<Money> {
     fun toDisplayString(): String {
         val isNegative = minor < 0
         val absMinor = if (minor < 0) -minor else minor
-        val whole = absMinor / 100
-        val cents = absMinor % 100
+        val whole = absMinor / CentsPerUnit
+        val cents = absMinor % CentsPerUnit
         val sign = if (isNegative) "-" else ""
-        return "$sign$whole.${cents.toString().padStart(2, '0')}"
+        return "$sign$whole.${cents.toString().padStart(DecimalPlaces, '0')}"
     }
 
     override fun toString(): String = toDisplayString()
@@ -65,7 +80,7 @@ value class Money(val minor: Long) : Comparable<Money> {
      * Convert to Double value in major units.
      * Example: Money(12345).toDouble() = 123.45
      */
-    fun toDouble(): Double = minor / 100.0
+    fun toDouble(): Double = minor / CentsPerUnitDouble
 
     companion object {
         val ZERO = Money(0L)
@@ -101,22 +116,22 @@ value class Money(val minor: Long) : Comparable<Money> {
                     1 -> {
                         // No decimal part: "123" -> 12300
                         val whole = parts[0].toLongOrNull() ?: return null
-                        val minor = whole * 100
+                        val minor = whole * CentsPerUnit
                         Money(if (isNegative) -minor else minor)
                     }
                     2 -> {
                         // Has decimal part: "123.45" -> 12345
                         val whole = parts[0].toLongOrNull() ?: return null
                         val decimalPart = parts[1]
-                        if (decimalPart.length > 2) return null // Too many decimals
+                        if (decimalPart.length > DecimalPlaces) return null // Too many decimals
 
                         val cents = when (decimalPart.length) {
-                            0 -> 0L
-                            1 -> (decimalPart.toLongOrNull() ?: return null) * 10
-                            2 -> decimalPart.toLongOrNull() ?: return null
+                            NoDecimalDigits -> 0L
+                            OneDecimalDigit -> (decimalPart.toLongOrNull() ?: return null) * SingleDigitMultiplier
+                            TwoDecimalDigits -> decimalPart.toLongOrNull() ?: return null
                             else -> return null
                         }
-                        val minor = whole * 100 + cents
+                        val minor = whole * CentsPerUnit + cents
                         Money(if (isNegative) -minor else minor)
                     }
                     else -> null // Multiple decimal points
@@ -133,7 +148,7 @@ value class Money(val minor: Long) : Comparable<Money> {
          * @param value The amount in major units (e.g., 123.45)
          */
         fun fromDouble(value: Double): Money {
-            val minor = kotlin.math.round(value * 100).toLong()
+            val minor = kotlin.math.round(value * CentsPerUnit).toLong()
             return Money(minor)
         }
 
@@ -142,7 +157,7 @@ value class Money(val minor: Long) : Comparable<Money> {
          *
          * @param value The amount in major units (e.g., 123 becomes €123.00)
          */
-        fun fromInt(value: Int): Money = Money(value.toLong() * 100)
+        fun fromInt(value: Int): Money = Money(value.toLong() * CentsPerUnit)
 
         /**
          * Parse a string with validation, throwing if invalid.
@@ -173,9 +188,9 @@ value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
      * Examples: "21.00", "6.00", "0.00"
      */
     fun toDisplayString(): String {
-        val whole = basisPoints / 100
-        val fraction = basisPoints % 100
-        return "$whole.${fraction.toString().padStart(2, '0')}"
+        val whole = basisPoints / BasisPointsPerPercent
+        val fraction = basisPoints % BasisPointsPerPercent
+        return "$whole.${fraction.toString().padStart(DecimalPlaces, '0')}"
     }
 
     override fun toString(): String = toDisplayString()
@@ -186,27 +201,27 @@ value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
      * Convert to decimal multiplier for calculations.
      * 21.00% -> 0.21
      */
-    fun toMultiplier(): Double = basisPoints / 10000.0
+    fun toMultiplier(): Double = basisPoints / BasisPointsPerFullDouble
 
     /**
      * Apply this VAT rate to a money amount.
      * Returns the VAT amount (not the total including VAT).
      */
     fun applyTo(amount: Money): Money {
-        val vatMinor = (amount.minor * basisPoints) / 10000
+        val vatMinor = (amount.minor * basisPoints) / BasisPointsPerFull
         return Money(vatMinor)
     }
 
     /**
      * Check if this is a valid VAT rate (0-100%).
      */
-    val isValid: Boolean get() = basisPoints in 0..10000
+    val isValid: Boolean get() = basisPoints in 0..BasisPointsPerFull
 
     /**
      * Convert to percentage as Double.
      * Example: VatRate(2100).toPercentDouble() = 21.0
      */
-    fun toPercentDouble(): Double = basisPoints / 100.0
+    fun toPercentDouble(): Double = basisPoints / BasisPointsPerPercent.toDouble()
 
     companion object {
         val ZERO = VatRate(0)
@@ -226,20 +241,20 @@ value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
                 when (parts.size) {
                     1 -> {
                         val whole = parts[0].toIntOrNull() ?: return null
-                        VatRate(whole * 100)
+                        VatRate(whole * BasisPointsPerPercent)
                     }
                     2 -> {
                         val whole = parts[0].toIntOrNull() ?: return null
                         val decimalPart = parts[1]
-                        if (decimalPart.length > 2) return null
+                        if (decimalPart.length > DecimalPlaces) return null
 
                         val fraction = when (decimalPart.length) {
-                            0 -> 0
-                            1 -> (decimalPart.toIntOrNull() ?: return null) * 10
-                            2 -> decimalPart.toIntOrNull() ?: return null
+                            NoDecimalDigits -> 0
+                            OneDecimalDigit -> (decimalPart.toIntOrNull() ?: return null) * SingleDigitMultiplier
+                            TwoDecimalDigits -> decimalPart.toIntOrNull() ?: return null
                             else -> return null
                         }
-                        VatRate(whole * 100 + fraction)
+                        VatRate(whole * BasisPointsPerPercent + fraction)
                     }
                     else -> null
                 }
@@ -252,7 +267,7 @@ value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
          * Create from a decimal multiplier (0.21 -> 21.00%).
          */
         fun fromMultiplier(multiplier: Double): VatRate {
-            val bp = kotlin.math.round(multiplier * 10000).toInt()
+            val bp = kotlin.math.round(multiplier * BasisPointsPerFull).toInt()
             return VatRate(bp)
         }
 
@@ -284,9 +299,9 @@ value class Percentage(val basisPoints: Int) : Comparable<Percentage> {
      * Examples: "100.00", "50.00", "33.33"
      */
     fun toDisplayString(): String {
-        val whole = basisPoints / 100
-        val fraction = basisPoints % 100
-        return "$whole.${fraction.toString().padStart(2, '0')}"
+        val whole = basisPoints / BasisPointsPerPercent
+        val fraction = basisPoints % BasisPointsPerPercent
+        return "$whole.${fraction.toString().padStart(DecimalPlaces, '0')}"
     }
 
     override fun toString(): String = toDisplayString()
@@ -297,20 +312,20 @@ value class Percentage(val basisPoints: Int) : Comparable<Percentage> {
      * Convert to decimal multiplier for calculations.
      * 50.00% -> 0.50
      */
-    fun toMultiplier(): Double = basisPoints / 10000.0
+    fun toMultiplier(): Double = basisPoints / BasisPointsPerFullDouble
 
     /**
      * Apply this percentage to a money amount.
      */
     fun applyTo(amount: Money): Money {
-        val result = (amount.minor * basisPoints) / 10000
+        val result = (amount.minor * basisPoints) / BasisPointsPerFull
         return Money(result)
     }
 
     /**
      * Check if this is a valid percentage (0-100%).
      */
-    val isValid: Boolean get() = basisPoints in 0..10000
+    val isValid: Boolean get() = basisPoints in 0..BasisPointsPerFull
 
     companion object {
         val ZERO = Percentage(0)
@@ -330,20 +345,20 @@ value class Percentage(val basisPoints: Int) : Comparable<Percentage> {
                 when (parts.size) {
                     1 -> {
                         val whole = parts[0].toIntOrNull() ?: return null
-                        Percentage(whole * 100)
+                        Percentage(whole * BasisPointsPerPercent)
                     }
                     2 -> {
                         val whole = parts[0].toIntOrNull() ?: return null
                         val decimalPart = parts[1]
-                        if (decimalPart.length > 2) return null
+                        if (decimalPart.length > DecimalPlaces) return null
 
                         val fraction = when (decimalPart.length) {
-                            0 -> 0
-                            1 -> (decimalPart.toIntOrNull() ?: return null) * 10
-                            2 -> decimalPart.toIntOrNull() ?: return null
+                            NoDecimalDigits -> 0
+                            OneDecimalDigit -> (decimalPart.toIntOrNull() ?: return null) * SingleDigitMultiplier
+                            TwoDecimalDigits -> decimalPart.toIntOrNull() ?: return null
                             else -> return null
                         }
-                        Percentage(whole * 100 + fraction)
+                        Percentage(whole * BasisPointsPerPercent + fraction)
                     }
                     else -> null
                 }
@@ -356,7 +371,7 @@ value class Percentage(val basisPoints: Int) : Comparable<Percentage> {
          * Create from a decimal multiplier (0.50 -> 50.00%).
          */
         fun fromMultiplier(multiplier: Double): Percentage {
-            val bp = kotlin.math.round(multiplier * 10000).toInt()
+            val bp = kotlin.math.round(multiplier * BasisPointsPerFull).toInt()
             return Percentage(bp)
         }
 

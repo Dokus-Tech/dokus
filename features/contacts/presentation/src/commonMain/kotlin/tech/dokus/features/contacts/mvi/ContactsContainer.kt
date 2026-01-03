@@ -1,6 +1,5 @@
 @file:Suppress(
     "TooManyFunctions", // Container handles contacts list workflow
-    "MagicNumber", // Timeout/delay constants
     "TooGenericExceptionCaught", // Network errors need catch-all
     "DestructuringDeclarationWithTooManyEntries" // Contact model has many fields
 )

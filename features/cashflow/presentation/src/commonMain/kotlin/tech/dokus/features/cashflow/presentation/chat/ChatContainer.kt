@@ -1,7 +1,6 @@
 @file:Suppress(
     "TooManyFunctions", // Container handles chat workflow
-    "TooGenericExceptionCaught", // Network errors need catch-all
-    "MagicNumber" // Delay/retry constants
+    "TooGenericExceptionCaught" // Network errors need catch-all
 )
 
 package tech.dokus.features.cashflow.presentation.chat
@@ -28,11 +27,17 @@ import tech.dokus.domain.model.ai.ChatResponse
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.MessageRole
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SendChatMessageUseCase
+import tech.dokus.features.cashflow.usecase.SendChatMessageUseCase
 import tech.dokus.features.cashflow.repository.ChatRepositoryImpl
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+
+/** Maximum number of messages to load from session history */
+private const val SessionHistoryLimit = 100
+
+/** Maximum number of recent sessions to display in picker */
+private const val RecentSessionsLimit = 10
 
 internal typealias ChatCtx = PipelineContext<ChatState, ChatIntent, ChatAction>
 
@@ -152,7 +157,7 @@ internal class ChatContainer(
             chatRepository.getSessionHistory(
                 sessionId = sessionId,
                 page = 0,
-                limit = 100,
+                limit = SessionHistoryLimit,
                 descending = false
             ).fold(
                 onSuccess = { history ->
@@ -435,7 +440,7 @@ internal class ChatContainer(
                     scope = scope.takeIf { it == ChatScope.AllDocs },
                     documentId = documentId,
                     page = 0,
-                    limit = 10
+                    limit = RecentSessionsLimit
                 ).fold(
                     onSuccess = { response ->
                         logger.d { "Loaded ${response.items.size} recent sessions" }

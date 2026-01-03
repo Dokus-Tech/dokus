@@ -20,6 +20,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_amount_with_currency
+import tech.dokus.aura.resources.common_empty_value
+import tech.dokus.aura.resources.currency_symbol_eur
+import tech.dokus.aura.resources.invoice_amount
+import tech.dokus.aura.resources.invoice_bill_to
+import tech.dokus.aura.resources.invoice_description
+import tech.dokus.aura.resources.invoice_due_date
+import tech.dokus.aura.resources.invoice_issue_date
+import tech.dokus.aura.resources.invoice_no_items
+import tech.dokus.aura.resources.invoice_price
+import tech.dokus.aura.resources.invoice_qty
+import tech.dokus.aura.resources.invoice_select_client
+import tech.dokus.aura.resources.invoice_subtotal
+import tech.dokus.aura.resources.invoice_total
+import tech.dokus.aura.resources.invoice_vat
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
+import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.PDashedDivider
 
 // Card spacing
 private val CardOuterPadding = 8.dp
@@ -48,28 +70,6 @@ private const val MaxDescriptionLines = 2
 private const val CentsMultiplier = 100
 private const val RoundingOffset = 0.5
 private const val DecimalPadLength = 2
-import org.jetbrains.compose.resources.stringResource
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_amount_with_currency
-import tech.dokus.aura.resources.common_empty_value
-import tech.dokus.aura.resources.currency_symbol_eur
-import tech.dokus.aura.resources.invoice_amount
-import tech.dokus.aura.resources.invoice_bill_to
-import tech.dokus.aura.resources.invoice_description
-import tech.dokus.aura.resources.invoice_due_date
-import tech.dokus.aura.resources.invoice_issue_date
-import tech.dokus.aura.resources.invoice_no_items
-import tech.dokus.aura.resources.invoice_price
-import tech.dokus.aura.resources.invoice_qty
-import tech.dokus.aura.resources.invoice_select_client
-import tech.dokus.aura.resources.invoice_subtotal
-import tech.dokus.aura.resources.invoice_total
-import tech.dokus.aura.resources.invoice_vat
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
-import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.PDashedDivider
 
 /**
  * Displays an invoice preview that looks like a real paper invoice.

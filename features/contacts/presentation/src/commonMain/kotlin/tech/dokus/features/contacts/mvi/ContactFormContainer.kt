@@ -1,6 +1,5 @@
 @file:Suppress(
     "TooManyFunctions", // Container handles form validation
-    "MagicNumber", // Timeout constants
     "CyclomaticComplexMethod" // Duplicate checking has many field checks
 )
 

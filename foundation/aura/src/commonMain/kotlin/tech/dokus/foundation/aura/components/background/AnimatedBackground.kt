@@ -69,42 +69,32 @@ private const val WarpPhase3Start = 0.5f
 private const val WarpFadeStart = 0.7f
 private const val WarpCompletionThreshold = 0.95f
 
-// Color palette - Neutral metallic tones (hex codes are standard color notation)
-@Suppress("MagicNumber")
-private val ColorGold = Color(0xFFD4AF37)
+// Color palette - Neutral metallic tones
+private const val ColorGoldHex = 0xFFD4AF37
+private const val ColorSilverHex = 0xFFC0C0C0
+private const val ColorLightSilverHex = 0xFFE8E8E8
+private const val ColorGainsboroHex = 0xFFDCDCDC
+private const val ColorLightGrayHex = 0xFFD3D3D3
+private const val ColorMediumLightGrayHex = 0xFFC8C8C8
+private const val ColorGrayHex = 0xFFBDBDBD
+private const val ColorMediumSilverHex = 0xFFB8B8B8
+private const val ColorDarkGrayHex = 0xFFA9A9A9
+private const val ColorNeutralGrayHex = 0xFFCCCCCC
+private const val ColorPaleGrayHex = 0xFFE0E0E0
+private const val ColorSilverGrayHex = 0xFFD4D4D4
 
-@Suppress("MagicNumber")
-private val ColorSilver = Color(0xFFC0C0C0)
-
-@Suppress("MagicNumber")
-private val ColorLightSilver = Color(0xFFE8E8E8)
-
-@Suppress("MagicNumber")
-private val ColorGainsboro = Color(0xFFDCDCDC)
-
-@Suppress("MagicNumber")
-private val ColorLightGray = Color(0xFFD3D3D3)
-
-@Suppress("MagicNumber")
-private val ColorMediumLightGray = Color(0xFFC8C8C8)
-
-@Suppress("MagicNumber")
-private val ColorGray = Color(0xFFBDBDBD)
-
-@Suppress("MagicNumber")
-private val ColorMediumSilver = Color(0xFFB8B8B8)
-
-@Suppress("MagicNumber")
-private val ColorDarkGray = Color(0xFFA9A9A9)
-
-@Suppress("MagicNumber")
-private val ColorNeutralGray = Color(0xFFCCCCCC)
-
-@Suppress("MagicNumber")
-private val ColorPaleGray = Color(0xFFE0E0E0)
-
-@Suppress("MagicNumber")
-private val ColorSilverGray = Color(0xFFD4D4D4)
+private val ColorGold = Color(ColorGoldHex)
+private val ColorSilver = Color(ColorSilverHex)
+private val ColorLightSilver = Color(ColorLightSilverHex)
+private val ColorGainsboro = Color(ColorGainsboroHex)
+private val ColorLightGray = Color(ColorLightGrayHex)
+private val ColorMediumLightGray = Color(ColorMediumLightGrayHex)
+private val ColorGray = Color(ColorGrayHex)
+private val ColorMediumSilver = Color(ColorMediumSilverHex)
+private val ColorDarkGray = Color(ColorDarkGrayHex)
+private val ColorNeutralGray = Color(ColorNeutralGrayHex)
+private val ColorPaleGray = Color(ColorPaleGrayHex)
+private val ColorSilverGray = Color(ColorSilverGrayHex)
 
 // Animation alphas and multipliers
 private const val SpotlightMainAlpha = 0.7f

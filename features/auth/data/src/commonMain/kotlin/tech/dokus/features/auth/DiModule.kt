@@ -68,7 +68,7 @@ val authNetworkModule = module {
 
 val authDataModule = module {
     // Database
-    singleOf(AuthDb::create) bind AuthDb::class
+    single { AuthDb.create() }
     single<AuthDatabase> { get<AuthDb>().get() }
 
     singleOf(::AuthManagerImpl) binds arrayOf(AuthManager::class, AuthManagerMutable::class)
