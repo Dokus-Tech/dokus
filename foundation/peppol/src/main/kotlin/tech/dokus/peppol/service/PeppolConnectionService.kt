@@ -48,7 +48,7 @@ class PeppolConnectionService(
         }
 
         val matchingCompanies = companies
-            .filter { normalizeVat(it.vatNumber) == vatNormalized }
+            .filter { VatNumber(it.vatNumber).normalized == vatNormalized }
             .sortedBy { it.name.lowercase() }
 
         val selectedCompany = when {
@@ -136,10 +136,6 @@ class PeppolConnectionService(
         enterpriseNumber = enterpriseNumber
     )
 
-    private fun normalizeVat(raw: String): String = raw
-        .replace(".", "")
-        .replace(" ", "")
-        .uppercase()
 }
 
 private class MissingCompanyAddressException : RuntimeException()

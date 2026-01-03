@@ -37,7 +37,7 @@ internal fun Route.lookupRoutes() {
             } else Result.success(emptyList())
             val numberResults = if (number.isValid) {
                 cbeApiClient.searchByVat(number)
-            } else Result.success(emptyList())
+            } else Result.failure(DokusException.Validation.InvalidVatNumber)
 
             if (nameResults.isFailure && numberResults.isFailure) {
                 logger.error(
@@ -48,7 +48,7 @@ internal fun Route.lookupRoutes() {
             }
 
             val results = buildList {
-                numberResults.onSuccess { addAll(it) }
+                numberResults.onSuccess { add(it) }
                 nameResults.onSuccess { addAll(it) }
             }
             val response = EntityLookupResponse(

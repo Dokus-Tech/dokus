@@ -41,7 +41,7 @@ class CbeApiClient(
             header("Authorization", "Bearer $apiSecret")
         }
 
-        val cbeResponse = response.body<CbeSearchResponse>()
+        val cbeResponse = response.body<CbeSearchByNameResponse>()
         logger.debug("CBE returned ${cbeResponse.data.size} results for '$name'")
 
         cbeResponse.data.map { it.toEntityLookup() }
@@ -54,17 +54,17 @@ class CbeApiClient(
      * @param number Company VAT number to search for (min 3 characters)
      * @return List of matching entities
      */
-    suspend fun searchByVat(number: VatNumber): Result<List<EntityLookup>> = runCatching {
+    suspend fun searchByVat(number: VatNumber): Result<EntityLookup> = runCatching {
         logger.debug("Searching CBE for company: $number")
 
-        val response = httpClient.get("$baseUrl/v1/company/search/${number}") {
+        val response = httpClient.get("$baseUrl/v1/company/${number.normalized}") {
             header("Authorization", "Bearer $apiSecret")
         }
 
-        val cbeResponse = response.body<CbeSearchResponse>()
-        logger.debug("CBE returned ${cbeResponse.data.size} results for '$number'")
+        val cbeResponse = response.body<CbeSearchVatResponse>()
+        logger.debug("CBE returned results for '$number'")
 
-        cbeResponse.data.map { it.toEntityLookup() }
+        cbeResponse.data.toEntityLookup()
     }.onFailure { e ->
         logger.error("CBE API search failed for '$number'", e)
     }
@@ -75,8 +75,13 @@ class CbeApiClient(
 // ============================================================================
 
 @Serializable
-private data class CbeSearchResponse(
+private data class CbeSearchByNameResponse(
     val data: List<CbeCompany> = emptyList(),
+)
+
+@Serializable
+private data class CbeSearchVatResponse(
+    val data: CbeCompany,
 )
 
 @Serializable
@@ -114,11 +119,7 @@ private data class CbeAddress(
 
 private fun CbeCompany.toEntityLookup(): EntityLookup {
     // Format enterprise number to VAT number (BE + digits only)
-    val vatNumber = cbeNumber
-        .replace(".", "")
-        .replace(" ", "")
-        .let { "BE$it" }
-        .let { VatNumber(it) }
+    val vatNumber = VatNumber.fromCountryAndCompanyNumber("BE", cbeNumber)
 
     // Use denomination, commercial name, or abbreviation as the name
     val companyName = denomination ?: commercialName ?: abbreviation ?: cbeNumber

@@ -89,11 +89,7 @@ object ValidateVatNumberUseCase : Validator<VatNumber> {
     override operator fun invoke(value: VatNumber): Boolean {
         if (value.value.isBlank()) return false
 
-        val cleaned = value.value
-            .replace(".", "")
-            .replace(" ", "")
-            .replace("-", "")
-            .uppercase()
+        val cleaned = VatNumber.normalize(value.value)
 
         // Must have at least country code + 1 character
         if (cleaned.length < 3) return false
