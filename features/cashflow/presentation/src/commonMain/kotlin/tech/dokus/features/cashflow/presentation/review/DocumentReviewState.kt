@@ -4,14 +4,18 @@ import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_confirm_select_contact
 import tech.dokus.aura.resources.cashflow_confirm_missing_fields
 import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.Money
 import tech.dokus.foundation.app.state.DokusState
 
 private const val MinConfidenceThreshold = 0.0
@@ -38,9 +42,12 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val selectedContactSnapshot: ContactSnapshot? = null,
         val contactSelectionState: ContactSelectionState = ContactSelectionState.NoContact,
         val isContactRequired: Boolean = false,
+        val counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
         val contactValidationError: DokusException? = null,
         val isBindingContact: Boolean = false,
+        val isRejecting: Boolean = false,
         val isDocumentConfirmed: Boolean = false,
+        val isDocumentRejected: Boolean = false,
         val showPreviewSheet: Boolean = false,
     ) : DocumentReviewState {
 
@@ -52,13 +59,20 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                     ) &&
                     !isConfirming &&
                     !isSaving &&
+                    !isRejecting &&
                     !isBindingContact &&
-                    editableData.isValid
+                    confirmBlockedReason == null
                 return baseValid
             }
 
         val confirmBlockedReason: StringResource?
             get() = when {
+                isDocumentConfirmed || isDocumentRejected -> null
+                editableData.documentType.isUnknown -> Res.string.cashflow_confirm_missing_fields
+                !editableData.hasRequiredDates -> Res.string.cashflow_confirm_missing_fields
+                !editableData.hasCoherentAmounts -> Res.string.cashflow_confirm_missing_fields
+                counterpartyIntent == CounterpartyIntent.Pending -> Res.string.cashflow_confirm_select_contact
+                isContactRequired && selectedContactId == null -> Res.string.cashflow_confirm_select_contact
                 !editableData.isValid -> Res.string.cashflow_confirm_missing_fields
                 else -> null
             }
@@ -66,7 +80,9 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val showConfidence: Boolean
             get() {
                 val conf = document.latestIngestion?.confidence
-                return conf != null && conf > MinConfidenceThreshold
+                val status = document.draft?.draftStatus
+                val statusAllowsConfidence = status != DraftStatus.NeedsReview && status != DraftStatus.Rejected
+                return conf != null && conf > MinConfidenceThreshold && statusAllowsConfidence
             }
 
         val confidencePercent: Int
@@ -78,3 +94,39 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         override val retryHandler: RetryHandler,
     ) : DocumentReviewState, DokusState.Error<Nothing>
 }
+
+private val DocumentType.isUnknown: Boolean
+    get() = this == DocumentType.Unknown
+
+private val EditableExtractedData.hasRequiredDates: Boolean
+    get() = when (documentType) {
+        DocumentType.Invoice -> invoice?.issueDate != null
+        DocumentType.Bill -> bill?.issueDate != null
+        DocumentType.Expense -> expense?.date != null
+        else -> false
+    }
+
+private val EditableExtractedData.hasCoherentAmounts: Boolean
+    get() {
+        return when (documentType) {
+            DocumentType.Invoice -> {
+                val invoiceData = invoice ?: return false
+                val subtotal = Money.parse(invoiceData.subtotalAmount)
+                val vat = Money.parse(invoiceData.vatAmount)
+                val total = Money.parse(invoiceData.totalAmount)
+                if (subtotal == null) return false
+                if (total == null || vat == null) return true
+                val expected = subtotal + vat
+                kotlin.math.abs(expected.minor - total.minor) <= 1L
+            }
+            DocumentType.Bill -> {
+                val billData = bill ?: return false
+                Money.parse(billData.amount) != null
+            }
+            DocumentType.Expense -> {
+                val expenseData = expense ?: return false
+                Money.parse(expenseData.amount) != null
+            }
+            else -> false
+        }
+    }

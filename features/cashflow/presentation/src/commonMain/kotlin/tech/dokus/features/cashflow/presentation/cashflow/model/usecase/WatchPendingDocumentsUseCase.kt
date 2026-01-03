@@ -43,18 +43,28 @@ class WatchPendingDocumentsUseCase(
             .flatMapLatest {
                 flow {
                     emit(DokusState.loading())
-                    dataSource.listDocuments(
-                        draftStatus = DraftStatus.NeedsReview,
-                        page = 0,
-                        limit = limit.coerceAtMost(DEFAULT_DOCUMENT_LIMIT)
-                    ).fold(
-                        onSuccess = { response ->
-                            emit(DokusState.success(response.items))
-                        },
-                        onFailure = { e ->
-                            emit(DokusState.error(e.asDokusException) { refresh() })
-                        }
+                    val statuses = listOf(
+                        DraftStatus.NeedsReview,
+                        DraftStatus.Ready,
+                        DraftStatus.NeedsInput
                     )
+                    val collected = mutableListOf<DocumentRecordDto>()
+                    for (status in statuses) {
+                        val result = dataSource.listDocuments(
+                            draftStatus = status,
+                            page = 0,
+                            limit = limit.coerceAtMost(DEFAULT_DOCUMENT_LIMIT)
+                        )
+                        val failed = result.exceptionOrNull()
+                        if (failed != null) {
+                            emit(DokusState.error(failed.asDokusException) { refresh() })
+                            return@flow
+                        }
+                        collected += result.getOrThrow().items
+                    }
+
+                    val unique = collected.distinctBy { it.document.id }
+                    emit(DokusState.success(unique))
                 }
             }
     }

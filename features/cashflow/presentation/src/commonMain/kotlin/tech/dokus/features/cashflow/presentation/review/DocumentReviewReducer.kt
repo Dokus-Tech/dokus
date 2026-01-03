@@ -22,7 +22,7 @@ internal class DocumentReviewReducer(
     private val preview = DocumentReviewPreview(dataSource, logger)
     private val lineItems = DocumentReviewLineItems()
     private val provenance = DocumentReviewProvenance()
-    private val actions = DocumentReviewActions(logger)
+    private val actions = DocumentReviewActions(dataSource, mapper, logger)
 
     suspend fun DocumentReviewCtx.handleLoadDocument(documentId: DocumentId) =
         with(loader) { handleLoadDocument(documentId) }
@@ -50,6 +50,9 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleContactCreated(contactId: ContactId) =
         with(contactBinder) { handleContactCreated(contactId) }
+
+    suspend fun DocumentReviewCtx.handleSetCounterpartyIntent(intent: tech.dokus.domain.enums.CounterpartyIntent) =
+        with(contactBinder) { handleSetCounterpartyIntent(intent) }
 
     suspend fun DocumentReviewCtx.handleOpenPreviewSheet() =
         with(preview) { handleOpenPreviewSheet() }
@@ -81,11 +84,17 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleDiscardChanges() =
         with(actions) { handleDiscardChanges() }
 
+    suspend fun DocumentReviewCtx.handleConfirmDiscardChanges() =
+        with(actions) { handleConfirmDiscardChanges() }
+
     suspend fun DocumentReviewCtx.handleConfirm() =
         with(actions) { handleConfirm() }
 
     suspend fun DocumentReviewCtx.handleReject() =
         with(actions) { handleReject() }
+
+    suspend fun DocumentReviewCtx.handleConfirmReject(reason: tech.dokus.domain.enums.DocumentRejectReason) =
+        with(actions) { handleConfirmReject(reason) }
 
     suspend fun DocumentReviewCtx.handleOpenChat() =
         with(actions) { handleOpenChat() }

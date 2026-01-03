@@ -81,6 +81,48 @@ enum class DraftStatus(override val dbValue: String) : DbEnum {
 }
 
 /**
+ * Counterparty intent for document drafts.
+ * Tracks whether the user has explicitly chosen to link or skip a counterparty.
+ */
+@Serializable
+enum class CounterpartyIntent(override val dbValue: String) : DbEnum {
+    @SerialName("NONE")
+    None("NONE"),
+
+    @SerialName("PENDING")
+    Pending("PENDING");
+
+    companion object {
+        fun fromDbValue(value: String): CounterpartyIntent = entries.find { it.dbValue == value }!!
+    }
+}
+
+/**
+ * Reason for rejecting a document during confirmation.
+ */
+@Serializable
+enum class DocumentRejectReason(override val dbValue: String) : DbEnum {
+    @SerialName("NOT_MY_BUSINESS")
+    NotMyBusiness("NOT_MY_BUSINESS"),
+
+    @SerialName("DUPLICATE")
+    Duplicate("DUPLICATE"),
+
+    @SerialName("SPAM")
+    Spam("SPAM"),
+
+    @SerialName("TEST")
+    Test("TEST"),
+
+    @SerialName("OTHER")
+    Other("OTHER");
+
+    companion object {
+        fun fromDbValue(value: String): DocumentRejectReason = entries.find { it.dbValue == value }!!
+    }
+}
+
+/**
  * Status of document chunk indexing (RAG preparation).
  * Tracked separately from ingestion status to allow retry of indexing.
  */

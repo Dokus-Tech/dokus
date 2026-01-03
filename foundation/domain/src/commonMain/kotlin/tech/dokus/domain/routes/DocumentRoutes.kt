@@ -104,6 +104,14 @@ class Documents {
         class Confirm(val parent: Id)
 
         /**
+         * POST /api/v1/documents/{id}/reject
+         * Reject extraction with a reason (idempotent).
+         */
+        @Serializable
+        @Resource("reject")
+        class Reject(val parent: Id)
+
+        /**
          * POST /api/v1/documents/{id}/chat
          * Send a chat message for single-document Q&A
          */

@@ -16,6 +16,8 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.DocumentDraftsTable
+import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.ids.ContactId
@@ -47,6 +49,9 @@ data class DraftSummary(
     val suggestedContactId: ContactId?,
     val contactSuggestionConfidence: Float?,
     val contactSuggestionReason: String?,
+    val linkedContactId: ContactId?,
+    val counterpartyIntent: CounterpartyIntent,
+    val rejectReason: DocumentRejectReason?,
     val lastSuccessfulRunId: IngestionRunId?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
@@ -192,6 +197,14 @@ class DocumentDraftRepository : DraftStatusChecker {
         } ?: emptyList()
         val allCorrections = existingCorrections + corrections
 
+        val currentStatus = current[DocumentDraftsTable.draftStatus]
+        val nextStatus = if (currentStatus == DraftStatus.Confirmed) {
+            // If a confirmed draft is edited, require review again.
+            DraftStatus.NeedsReview
+        } else {
+            currentStatus
+        }
+
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq docIdUuid) and
                 (DocumentDraftsTable.tenantId eq tenantIdUuid)
@@ -201,6 +214,9 @@ class DocumentDraftRepository : DraftStatusChecker {
             it[draftVersion] = newVersion
             it[draftEditedAt] = now
             it[draftEditedBy] = UUID.fromString(userId.toString())
+            if (nextStatus != currentStatus) {
+                it[draftStatus] = nextStatus
+            }
             it[updatedAt] = now
         }
 
@@ -222,6 +238,73 @@ class DocumentDraftRepository : DraftStatusChecker {
                 (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
             it[draftStatus] = status
+            if (status != DraftStatus.Rejected) {
+                it[rejectReason] = null
+            }
+            it[updatedAt] = now
+        } > 0
+    }
+
+    /**
+     * Update linked contact and/or counterparty intent.
+     * If the draft was previously confirmed, it transitions to NeedsReview.
+     */
+    suspend fun updateCounterparty(
+        documentId: DocumentId,
+        tenantId: TenantId,
+        contactId: ContactId?,
+        intent: CounterpartyIntent?
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val docIdUuid = UUID.fromString(documentId.toString())
+        val tenantIdUuid = UUID.fromString(tenantId.toString())
+
+        val current = DocumentDraftsTable.selectAll()
+            .where {
+                (DocumentDraftsTable.documentId eq docIdUuid) and
+                    (DocumentDraftsTable.tenantId eq tenantIdUuid)
+            }
+            .singleOrNull() ?: return@newSuspendedTransaction false
+
+        val currentStatus = current[DocumentDraftsTable.draftStatus]
+        val shouldReview = currentStatus == DraftStatus.Confirmed
+
+        DocumentDraftsTable.update({
+            (DocumentDraftsTable.documentId eq docIdUuid) and
+                (DocumentDraftsTable.tenantId eq tenantIdUuid)
+        }) {
+            if (contactId != null) {
+                it[linkedContactId] = UUID.fromString(contactId.toString())
+                it[counterpartyIntent] = CounterpartyIntent.None
+            } else if (intent != null) {
+                it[counterpartyIntent] = intent
+                if (intent == CounterpartyIntent.None || intent == CounterpartyIntent.Pending) {
+                    it[linkedContactId] = null
+                }
+            }
+            if (shouldReview) {
+                it[draftStatus] = DraftStatus.NeedsReview
+            }
+            it[updatedAt] = now
+        } > 0
+    }
+
+    /**
+     * Reject a draft with a reason.
+     * CRITICAL: Must filter by tenantId.
+     */
+    suspend fun rejectDraft(
+        documentId: DocumentId,
+        tenantId: TenantId,
+        reason: DocumentRejectReason
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        DocumentDraftsTable.update({
+            (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
+                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            it[draftStatus] = DraftStatus.Rejected
+            it[rejectReason] = reason
             it[updatedAt] = now
         } > 0
     }
@@ -340,6 +423,9 @@ class DocumentDraftRepository : DraftStatusChecker {
             suggestedContactId = this[DocumentDraftsTable.suggestedContactId]?.let { ContactId(it.toKotlinUuid()) },
             contactSuggestionConfidence = this[DocumentDraftsTable.contactSuggestionConfidence],
             contactSuggestionReason = this[DocumentDraftsTable.contactSuggestionReason],
+            linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it.toKotlinUuid()) },
+            counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
+            rejectReason = this[DocumentDraftsTable.rejectReason],
             lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]
                 ?.let { IngestionRunId.parse(it.toString()) },
             createdAt = this[DocumentDraftsTable.createdAt],

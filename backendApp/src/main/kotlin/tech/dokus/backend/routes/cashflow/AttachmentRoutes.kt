@@ -102,7 +102,8 @@ internal fun Route.attachmentRoutes() {
                 filename = uploadResult.filename,
                 contentType = uploadResult.contentType,
                 sizeBytes = uploadResult.sizeBytes,
-                storageKey = uploadResult.key
+                storageKey = uploadResult.key,
+                contentHash = null
             )
 
             // Link document to invoice by updating invoice's documentId
@@ -196,7 +197,8 @@ internal fun Route.attachmentRoutes() {
                 filename = uploadResult.filename,
                 contentType = uploadResult.contentType,
                 sizeBytes = uploadResult.sizeBytes,
-                storageKey = uploadResult.key
+                storageKey = uploadResult.key,
+                contentHash = null
             )
 
             // Link document to expense by updating expense's documentId

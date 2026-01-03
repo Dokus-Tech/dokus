@@ -86,6 +86,7 @@ class InvoiceRepository(
                 it[paidAmount] = BigDecimal.ZERO
                 it[status] = InvoiceStatus.Draft
                 it[notes] = request.notes
+                it[documentId] = request.documentId?.let { docId -> UUID.fromString(docId.toString()) }
             }
 
             // Insert invoice items
@@ -401,6 +402,9 @@ class InvoiceRepository(
                 request.issueDate?.let { date -> it[issueDate] = date }
                 request.dueDate?.let { date -> it[dueDate] = date }
                 it[notes] = request.notes
+                request.documentId?.let { docId ->
+                    it[documentId] = UUID.fromString(docId.toString())
+                }
             }
 
             // Delete existing items

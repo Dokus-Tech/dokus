@@ -89,8 +89,8 @@ internal fun ReviewTopBar(
                 PBackButton(onBackPress = onBackClick)
             },
             actions = {
-                if (content != null && isLargeScreen && !content.isDocumentConfirmed) {
-                    val isBusy = content.isConfirming || content.isSaving || content.isBindingContact
+                if (content != null && isLargeScreen && !content.isDocumentConfirmed && !content.isDocumentRejected) {
+                    val isBusy = content.isConfirming || content.isSaving || content.isBindingContact || content.isRejecting
                     Row(horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {
                         POutlinedButton(
                             text = stringResource(Res.string.action_reject),

@@ -77,7 +77,8 @@ val contactsPresentationModule = module {
     container<CreateContactContainer, CreateContactState, CreateContactIntent, CreateContactAction> {
         CreateContactContainer(
             searchCompanyUseCase = get(),
-            listContacts = get(),
+            findContactsByName = get(),
+            findContactsByVat = get(),
             createContact = get()
         )
     }

@@ -18,6 +18,10 @@ import tech.dokus.features.contacts.usecases.DeleteContactNoteUseCase
 import tech.dokus.features.contacts.usecases.DeleteContactNoteUseCaseImpl
 import tech.dokus.features.contacts.usecases.DeleteContactUseCase
 import tech.dokus.features.contacts.usecases.DeleteContactUseCaseImpl
+import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
+import tech.dokus.features.contacts.usecases.FindContactsByNameUseCaseImpl
+import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
+import tech.dokus.features.contacts.usecases.FindContactsByVatUseCaseImpl
 import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
 import tech.dokus.features.contacts.usecases.GetCachedContactsUseCaseImpl
 import tech.dokus.features.contacts.usecases.GetContactActivityUseCase
@@ -71,6 +75,8 @@ val contactsDomainModule = module {
     single<ListContactsUseCase> { ListContactsUseCaseImpl(get()) }
     single<ListCustomersUseCase> { ListCustomersUseCaseImpl(get()) }
     single<ListVendorsUseCase> { ListVendorsUseCaseImpl(get()) }
+    single<FindContactsByNameUseCase> { FindContactsByNameUseCaseImpl(get()) }
+    single<FindContactsByVatUseCase> { FindContactsByVatUseCaseImpl(get()) }
 
     // CRUD use cases
     single<GetContactUseCase> { GetContactUseCaseImpl(get()) }

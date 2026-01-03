@@ -6,10 +6,9 @@ import androidx.compose.ui.graphics.Color
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.draft_status_confirmed
-import tech.dokus.aura.resources.draft_status_needs_input
 import tech.dokus.aura.resources.draft_status_needs_review
-import tech.dokus.aura.resources.draft_status_ready
 import tech.dokus.aura.resources.draft_status_rejected
+import tech.dokus.aura.resources.draft_status_unconfirmed
 import tech.dokus.domain.enums.DraftStatus
 
 /**
@@ -25,9 +24,9 @@ import tech.dokus.domain.enums.DraftStatus
  */
 val DraftStatus.localized: String
     @Composable get() = when (this) {
-        DraftStatus.NeedsInput -> stringResource(Res.string.draft_status_needs_input)
+        DraftStatus.NeedsInput -> stringResource(Res.string.draft_status_unconfirmed)
         DraftStatus.NeedsReview -> stringResource(Res.string.draft_status_needs_review)
-        DraftStatus.Ready -> stringResource(Res.string.draft_status_ready)
+        DraftStatus.Ready -> stringResource(Res.string.draft_status_unconfirmed)
         DraftStatus.Confirmed -> stringResource(Res.string.draft_status_confirmed)
         DraftStatus.Rejected -> stringResource(Res.string.draft_status_rejected)
     }

@@ -60,9 +60,8 @@ data class EditableInvoiceFields(
     val bankAccount: String = "",
 ) {
     val isValid: Boolean
-        get() = invoiceNumber.isNotBlank() &&
-            issueDate != null &&
-            totalAmount.isNotBlank()
+        get() = issueDate != null &&
+            subtotalAmount.isNotBlank()
 
     companion object {
         fun fromExtracted(data: ExtractedInvoiceFields): EditableInvoiceFields {
@@ -109,7 +108,8 @@ data class EditableBillFields(
     val isValid: Boolean
         get() = supplierName.isNotBlank() &&
             issueDate != null &&
-            amount.isNotBlank()
+            amount.isNotBlank() &&
+            category != null
 
     companion object {
         fun fromExtracted(data: ExtractedBillFields): EditableBillFields {
@@ -155,7 +155,8 @@ data class EditableExpenseFields(
     val isValid: Boolean
         get() = merchant.isNotBlank() &&
             date != null &&
-            amount.isNotBlank()
+            amount.isNotBlank() &&
+            category != null
 
     companion object {
         fun fromExtracted(data: ExtractedExpenseFields): EditableExpenseFields {

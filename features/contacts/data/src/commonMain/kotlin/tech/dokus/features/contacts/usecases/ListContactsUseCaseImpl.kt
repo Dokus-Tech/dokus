@@ -54,3 +54,45 @@ internal class ListVendorsUseCaseImpl(
         )
     }
 }
+
+internal class FindContactsByNameUseCaseImpl(
+    private val remoteDataSource: ContactRemoteDataSource
+) : FindContactsByNameUseCase {
+    override suspend fun invoke(
+        query: String,
+        limit: Int
+    ): Result<List<ContactDto>> {
+        return remoteDataSource.listContacts(
+            search = query,
+            limit = limit,
+            offset = 0
+        )
+    }
+}
+
+internal class FindContactsByVatUseCaseImpl(
+    private val remoteDataSource: ContactRemoteDataSource
+) : FindContactsByVatUseCase {
+    override suspend fun invoke(
+        vat: String,
+        limit: Int
+    ): Result<List<ContactDto>> {
+        val normalizedVat = normalizeVat(vat)
+        return remoteDataSource.listContacts(
+            search = normalizedVat,
+            limit = limit,
+            offset = 0
+        ).map { contacts ->
+            contacts.filter { contact ->
+                val existingVat = contact.vatNumber?.value?.let { normalizeVat(it) }
+                existingVat == normalizedVat
+            }
+        }
+    }
+}
+
+private fun normalizeVat(value: String): String {
+    return value.trim()
+        .uppercase()
+        .replace(Regex("[^A-Z0-9]"), "")
+}

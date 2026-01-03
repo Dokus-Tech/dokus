@@ -17,6 +17,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.ContactId
@@ -26,6 +27,7 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.ConfirmDocumentRequest
+import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
@@ -445,7 +447,8 @@ interface CashflowRemoteDataSource {
      */
     suspend fun updateDocumentDraftContact(
         documentId: DocumentId,
-        contactId: ContactId?
+        contactId: ContactId?,
+        counterpartyIntent: CounterpartyIntent? = null
     ): Result<Unit>
 
     /**
@@ -468,6 +471,15 @@ interface CashflowRemoteDataSource {
     suspend fun confirmDocument(
         documentId: DocumentId,
         request: ConfirmDocumentRequest
+    ): Result<DocumentRecordDto>
+
+    /**
+     * Reject a document draft with a reason.
+     * POST /api/v1/documents/{id}/reject
+     */
+    suspend fun rejectDocument(
+        documentId: DocumentId,
+        request: RejectDocumentRequest
     ): Result<DocumentRecordDto>
 
     /**

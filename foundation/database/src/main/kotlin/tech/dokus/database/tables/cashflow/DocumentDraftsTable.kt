@@ -8,6 +8,8 @@ import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.foundation.backend.database.dbEnumeration
 
@@ -99,6 +101,18 @@ object DocumentDraftsTable : Table("document_drafts") {
     val contactSuggestionConfidence = float("contact_suggestion_confidence").nullable()
     val contactSuggestionReason = varchar("contact_suggestion_reason", 255).nullable()
 
+    // User-linked contact (explicit selection)
+    val linkedContactId = uuid("linked_contact_id")
+        .references(ContactsTable.id, onDelete = ReferenceOption.SET_NULL)
+        .nullable()
+
+    // Counterparty intent (NONE/PENDING)
+    val counterpartyIntent = dbEnumeration<CounterpartyIntent>("counterparty_intent")
+        .default(CounterpartyIntent.None)
+
+    // Rejection reason (if draftStatus == Rejected)
+    val rejectReason = dbEnumeration<DocumentRejectReason>("reject_reason").nullable()
+
     // ============================================
     // Run Reference
     // ============================================
@@ -126,5 +140,6 @@ object DocumentDraftsTable : Table("document_drafts") {
 
         // For contact activity queries
         index(false, tenantId, suggestedContactId)
+        index(false, tenantId, linkedContactId)
     }
 }
