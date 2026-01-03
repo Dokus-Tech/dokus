@@ -6,11 +6,20 @@ import tech.dokus.domain.database.DbEnum
 
 @Serializable
 enum class DeviceType(override val dbValue: String) : DbEnum {
-    @SerialName("ANDROID") Android("ANDROID"),
-    @SerialName("IOS") Ios("IOS"),
-    @SerialName("DESKTOP") Desktop("DESKTOP"),
-    @SerialName("WEB") Web("WEB"),
-    @SerialName("TABLET") Tablet("TABLET");
+    @SerialName("ANDROID")
+    Android("ANDROID"),
+
+    @SerialName("IOS")
+    Ios("IOS"),
+
+    @SerialName("DESKTOP")
+    Desktop("DESKTOP"),
+
+    @SerialName("WEB")
+    Web("WEB"),
+
+    @SerialName("TABLET")
+    Tablet("TABLET");
 
     companion object {
         fun fromAgent(agent: String?): DeviceType {

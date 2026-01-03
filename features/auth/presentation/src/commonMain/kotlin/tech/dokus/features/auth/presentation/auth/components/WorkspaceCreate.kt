@@ -1,22 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_your_name
-import tech.dokus.aura.resources.workspace_create_button
-import tech.dokus.aura.resources.workspace_create_title
-import tech.dokus.aura.resources.workspace_display_name
-import tech.dokus.aura.resources.workspace_legal_name
-import tech.dokus.aura.resources.workspace_type_company
-import tech.dokus.aura.resources.workspace_type_freelancer
-import tech.dokus.aura.resources.workspace_vat_number
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
-import tech.dokus.foundation.aura.components.fields.PTextFieldWorkspaceName
-import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.domain.DisplayName
-import tech.dokus.domain.LegalName
-import tech.dokus.domain.enums.TenantType
-import tech.dokus.domain.ids.VatNumber
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -31,6 +14,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_your_name
+import tech.dokus.aura.resources.workspace_create_button
+import tech.dokus.aura.resources.workspace_create_title
+import tech.dokus.aura.resources.workspace_display_name
+import tech.dokus.aura.resources.workspace_legal_name
+import tech.dokus.aura.resources.workspace_type_company
+import tech.dokus.aura.resources.workspace_type_freelancer
+import tech.dokus.aura.resources.workspace_vat_number
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
+import tech.dokus.foundation.aura.components.fields.PTextFieldWorkspaceName
+import tech.dokus.foundation.aura.components.text.SectionTitle
 
 /**
  * Internal data class for workspace creation form fields.

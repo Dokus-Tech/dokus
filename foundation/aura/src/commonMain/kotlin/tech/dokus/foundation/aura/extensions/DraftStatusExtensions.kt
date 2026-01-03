@@ -1,15 +1,15 @@
 package tech.dokus.foundation.aura.extensions
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.draft_status_confirmed
 import tech.dokus.aura.resources.draft_status_needs_input
 import tech.dokus.aura.resources.draft_status_needs_review
 import tech.dokus.aura.resources.draft_status_ready
 import tech.dokus.aura.resources.draft_status_rejected
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.enums.DraftStatus
 
 /**

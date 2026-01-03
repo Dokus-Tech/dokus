@@ -1,10 +1,10 @@
 package tech.dokus.features.auth.manager
 
-import tech.dokus.domain.asbtractions.AuthManager
-import tech.dokus.domain.model.auth.AuthEvent
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import tech.dokus.domain.asbtractions.AuthManager
+import tech.dokus.domain.model.auth.AuthEvent
 
 interface AuthManagerMutable : AuthManager {
     suspend fun onUserLogout()

@@ -1,16 +1,5 @@
 package tech.dokus.database.repository.payment
 
-import tech.dokus.database.tables.payment.PaymentsTable
-import tech.dokus.domain.Money
-import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.toDbDecimal
-import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.PaymentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.TransactionId
-import tech.dokus.domain.model.PaymentDto
-import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -23,6 +12,17 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.payment.PaymentsTable
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.PaymentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.TransactionId
+import tech.dokus.domain.model.PaymentDto
+import tech.dokus.domain.toDbDecimal
+import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -77,7 +77,7 @@ class PaymentRepository {
         dbQuery {
             PaymentsTable.selectAll().where {
                 (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
-                (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.toPaymentDto()
         }
     }
@@ -151,7 +151,7 @@ class PaymentRepository {
         dbQuery {
             PaymentsTable.deleteWhere {
                 (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
-                (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             } > 0
         }
     }
@@ -167,7 +167,7 @@ class PaymentRepository {
         dbQuery {
             PaymentsTable.update({
                 (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
-                (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[PaymentsTable.transactionId] = transactionId.value
             } > 0

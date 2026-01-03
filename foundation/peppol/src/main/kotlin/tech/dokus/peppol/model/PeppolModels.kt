@@ -72,10 +72,10 @@ data class PeppolLineItem(
     val name: String,
     val description: String? = null,
     val quantity: Double,
-    val unitCode: String = "C62",  // Default: "unit", HUR=hours, DAY=days
+    val unitCode: String = "C62", // Default: "unit", HUR=hours, DAY=days
     val unitPrice: Double,
     val lineTotal: Double,
-    val taxCategory: String,  // S, Z, E, AE, K, G, O
+    val taxCategory: String, // S, Z, E, AE, K, G, O
     val taxPercent: Double
 )
 
@@ -83,8 +83,8 @@ data class PeppolLineItem(
 data class PeppolPaymentInfo(
     val iban: String?,
     val bic: String?,
-    val paymentMeansCode: String = "30",  // 30 = Credit transfer
-    val paymentId: String? = null  // Structured reference
+    val paymentMeansCode: String = "30", // 30 = Credit transfer
+    val paymentId: String? = null // Structured reference
 )
 
 // ============================================================================

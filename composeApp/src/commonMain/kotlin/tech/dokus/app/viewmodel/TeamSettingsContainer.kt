@@ -1,6 +1,11 @@
 package tech.dokus.app.viewmodel
 
-import tech.dokus.features.auth.datasource.TeamRemoteDataSource
+import pro.respawn.flowmvi.api.Container
+import pro.respawn.flowmvi.api.PipelineContext
+import pro.respawn.flowmvi.api.Store
+import pro.respawn.flowmvi.dsl.store
+import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Email
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
@@ -8,13 +13,8 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
+import tech.dokus.features.auth.datasource.TeamRemoteDataSource
 import tech.dokus.foundation.platform.Logger
-import pro.respawn.flowmvi.api.Container
-import pro.respawn.flowmvi.api.PipelineContext
-import pro.respawn.flowmvi.api.Store
-import pro.respawn.flowmvi.dsl.store
-import pro.respawn.flowmvi.dsl.withState
-import pro.respawn.flowmvi.plugins.reduce
 
 internal typealias TeamSettingsCtx = PipelineContext<TeamSettingsState, TeamSettingsIntent, TeamSettingsAction>
 
@@ -211,7 +211,11 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Invitation cancelled: $invitationId" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success(TeamSettingsSuccess.InviteCancelled))
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(
+                                TeamSettingsSuccess.InviteCancelled
+                            )
+                        )
                     }
                     action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.InviteCancelled))
 
@@ -244,7 +248,9 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Role updated for $userId to $newRole" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success(TeamSettingsSuccess.RoleUpdated))
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(TeamSettingsSuccess.RoleUpdated)
+                        )
                     }
                     action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.RoleUpdated))
 
@@ -277,7 +283,11 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Member removed: $userId" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success(TeamSettingsSuccess.MemberRemoved))
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(
+                                TeamSettingsSuccess.MemberRemoved
+                            )
+                        )
                     }
                     action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.MemberRemoved))
 
@@ -310,7 +320,11 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Ownership transferred to $newOwnerId" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success(TeamSettingsSuccess.OwnershipTransferred))
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(
+                                TeamSettingsSuccess.OwnershipTransferred
+                            )
+                        )
                     }
                     action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.OwnershipTransferred))
 

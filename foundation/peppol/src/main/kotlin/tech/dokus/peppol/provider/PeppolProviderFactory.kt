@@ -1,9 +1,9 @@
 package tech.dokus.peppol.provider
 
+import io.ktor.client.HttpClient
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandProvider
-import io.ktor.client.HttpClient
 
 /**
  * Factory for creating Peppol provider instances.
@@ -51,12 +51,12 @@ class PeppolProviderFactory(
         val factory = providerFactories[credentials.providerId]
             ?: throw IllegalArgumentException(
                 "Unknown Peppol provider: ${credentials.providerId}. " +
-                        "Available providers: ${getAvailableProviders()}"
+                    "Available providers: ${getAvailableProviders()}"
             )
 
         return factory().apply {
             configure(credentials)
-            logger.debug("Created ${providerName} provider for Peppol ID: ${credentials.peppolId}")
+            logger.debug("Created $providerName provider for Peppol ID: ${credentials.peppolId}")
         }
     }
 

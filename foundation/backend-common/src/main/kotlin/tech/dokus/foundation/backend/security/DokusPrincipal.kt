@@ -1,10 +1,10 @@
 package tech.dokus.foundation.backend.security
 
+import io.ktor.server.auth.Principal
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.AuthenticationInfo
-import io.ktor.server.auth.Principal
 
 /**
  * JWT Principal representing an authenticated user in Dokus.

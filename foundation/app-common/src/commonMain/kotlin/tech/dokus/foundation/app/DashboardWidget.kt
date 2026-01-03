@@ -38,19 +38,19 @@ data class DashboardWidget(
  * Widgets are displayed in order from Critical to Low priority.
  */
 enum class DashboardWidgetPriority {
-    Critical,  // Always shown first, for critical system information
-    High,      // Important metrics and alerts
-    Medium,    // Standard widgets (default)
-    Low        // Secondary information
+    Critical, // Always shown first, for critical system information
+    High, // Important metrics and alerts
+    Medium, // Standard widgets (default)
+    Low // Secondary information
 }
 
 /**
  * Defines the horizontal span of a widget in the dashboard grid.
  */
 enum class DashboardWidgetSpan {
-    Single,    // Occupies 1 column width (~300dp minimum)
-    Double,    // Occupies 2 columns width (~600dp minimum)
-    Full       // Occupies full row width
+    Single, // Occupies 1 column width (~300dp minimum)
+    Double, // Occupies 2 columns width (~600dp minimum)
+    Full // Occupies full row width
 }
 
 /**

@@ -2,10 +2,10 @@ package tech.dokus.features.cashflow.presentation.review
 
 import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.StringResource
+import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_confirm_missing_fields
 import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -13,7 +13,9 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.foundation.app.state.DokusState
-import pro.respawn.flowmvi.api.MVIState
+
+private const val MinConfidenceThreshold = 0.0
+private const val PercentageMultiplier = 100
 
 @Immutable
 sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
@@ -44,8 +46,10 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 
         val canConfirm: Boolean
             get() {
-                val baseValid = (document.draft?.draftStatus == DraftStatus.NeedsReview ||
-                    document.draft?.draftStatus == DraftStatus.Ready) &&
+                val baseValid = (
+                    document.draft?.draftStatus == DraftStatus.NeedsReview ||
+                        document.draft?.draftStatus == DraftStatus.Ready
+                    ) &&
                     !isConfirming &&
                     !isSaving &&
                     !isBindingContact &&
@@ -62,11 +66,11 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val showConfidence: Boolean
             get() {
                 val conf = document.latestIngestion?.confidence
-                return conf != null && conf > 0.0
+                return conf != null && conf > MinConfidenceThreshold
             }
 
         val confidencePercent: Int
-            get() = ((document.latestIngestion?.confidence ?: 0.0) * 100).toInt()
+            get() = ((document.latestIngestion?.confidence ?: MinConfidenceThreshold) * PercentageMultiplier).toInt()
     }
 
     data class Error(

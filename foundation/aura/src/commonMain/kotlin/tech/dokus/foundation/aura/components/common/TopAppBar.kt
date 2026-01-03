@@ -33,7 +33,10 @@ fun PTopAppBar(
     Column(modifier = modifier) {
         TopAppBar(
             navigationIcon = {
-                if (navController == null || navController.currentBackStackEntry == null || !showBackButton) return@TopAppBar
+                val showNav = navController != null &&
+                    navController.currentBackStackEntry != null &&
+                    showBackButton
+                if (!showNav) return@TopAppBar
                 IconButton(
                     onClick = { navController.popBackStack() }
                 ) {

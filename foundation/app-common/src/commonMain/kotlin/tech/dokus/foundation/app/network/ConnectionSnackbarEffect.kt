@@ -1,9 +1,5 @@
 package tech.dokus.foundation.app.network
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.connection_connected
-import tech.dokus.aura.resources.connection_server_unreachable
-import tech.dokus.aura.resources.state_retry
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -14,6 +10,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.connection_connected
+import tech.dokus.aura.resources.connection_server_unreachable
+import tech.dokus.aura.resources.state_retry
 
 /**
  * Effect that shows a snackbar when server connection state changes.

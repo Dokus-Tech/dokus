@@ -2,13 +2,6 @@
 
 package tech.dokus.foundation.backend.security
 
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.auth.AuthenticationInfo
-import tech.dokus.domain.model.auth.JwtClaims
-import tech.dokus.domain.model.auth.TenantClaimDto
-import tech.dokus.foundation.backend.config.JwtConfig
-import tech.dokus.foundation.backend.utils.loggerFor
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
@@ -16,6 +9,13 @@ import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.Payload
 import kotlinx.serialization.json.Json
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.auth.AuthenticationInfo
+import tech.dokus.domain.model.auth.JwtClaims
+import tech.dokus.domain.model.auth.TenantClaimDto
+import tech.dokus.foundation.backend.config.JwtConfig
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

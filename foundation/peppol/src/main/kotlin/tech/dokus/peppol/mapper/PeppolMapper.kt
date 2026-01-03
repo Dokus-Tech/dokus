@@ -1,16 +1,17 @@
 package tech.dokus.peppol.mapper
 
+import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.model.PeppolDocumentType
 import tech.dokus.peppol.model.PeppolInvoiceData
@@ -19,7 +20,6 @@ import tech.dokus.peppol.model.PeppolParty
 import tech.dokus.peppol.model.PeppolPaymentInfo
 import tech.dokus.peppol.model.PeppolReceivedDocument
 import tech.dokus.peppol.model.PeppolSendRequest
-import kotlinx.datetime.LocalDate
 
 /**
  * Maps between domain models and provider-agnostic Peppol models.
@@ -106,7 +106,7 @@ class PeppolMapper {
             name = item.description,
             description = item.description,
             quantity = item.quantity,
-            unitCode = "C62",  // Unit. Use HUR for hours, DAY for days
+            unitCode = "C62", // Unit. Use HUR for hours, DAY for days
             unitPrice = item.unitPrice.toDouble(),
             lineTotal = item.lineTotal.toDouble(),
             taxCategory = vatCategory,
@@ -123,7 +123,7 @@ class PeppolMapper {
         return PeppolPaymentInfo(
             iban = iban.value,
             bic = settings.companyBic?.value,
-            paymentMeansCode = "30",  // Credit transfer
+            paymentMeansCode = "30", // Credit transfer
             paymentId = null
         )
     }
@@ -133,8 +133,8 @@ class PeppolMapper {
      */
     private fun mapVatRateToCategory(vatRate: VatRate): String {
         return when {
-            vatRate.basisPoints == 0 -> "Z"  // Zero rated
-            else -> "S"  // Standard rate
+            vatRate.basisPoints == 0 -> "Z" // Zero rated
+            else -> "S" // Standard rate
         }
     }
 
@@ -224,5 +224,4 @@ class PeppolMapper {
             else -> ExpenseCategory.Other
         }
     }
-
 }

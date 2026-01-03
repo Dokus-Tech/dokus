@@ -1,3 +1,5 @@
+@file:Suppress("UnusedParameter") // Reserved parameters for future features
+
 package tech.dokus.features.cashflow.presentation.chat.components
 
 import androidx.compose.animation.AnimatedVisibility
@@ -6,8 +8,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

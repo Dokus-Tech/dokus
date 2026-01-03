@@ -1,5 +1,7 @@
 package tech.dokus.foundation.aura.extensions
 
+import androidx.compose.runtime.Composable
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_type_bill
 import tech.dokus.aura.resources.document_type_expense
@@ -7,8 +9,6 @@ import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.document_type_unknown
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.MediaDocumentType
-import androidx.compose.runtime.Composable
-import org.jetbrains.compose.resources.stringResource
 
 /**
  * Extension property to get a localized display name for a MediaDocumentType.

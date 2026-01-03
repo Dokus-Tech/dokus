@@ -1,8 +1,5 @@
 package tech.dokus.foundation.aura.components.chat
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.chat_send_message
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +32,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chat_send_message
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Default values for ChatInputField components.

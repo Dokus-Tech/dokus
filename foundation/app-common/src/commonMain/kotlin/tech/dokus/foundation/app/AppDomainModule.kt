@@ -8,7 +8,7 @@ interface AppDomainModule {
 }
 
 interface AppDomainModuleDi {
-    val useCases: Module?  // Business logic, validators
+    val useCases: Module? // Business logic, validators
 }
 
 val AppDomainModuleDi.allModules: List<Module>

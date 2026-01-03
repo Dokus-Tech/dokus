@@ -1,21 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_collapse
-import tech.dokus.aura.resources.cashflow_amount_with_currency
-import tech.dokus.aura.resources.common_empty_value
-import tech.dokus.aura.resources.common_percent_value
-import tech.dokus.aura.resources.currency_symbol_eur
-import tech.dokus.aura.resources.invoice_add_description_hint
-import tech.dokus.aura.resources.invoice_description
-import tech.dokus.aura.resources.invoice_line_total
-import tech.dokus.aura.resources.invoice_price_with_currency
-import tech.dokus.aura.resources.invoice_qty
-import tech.dokus.aura.resources.invoice_remove
-import tech.dokus.aura.resources.invoice_vat_rate
-import tech.dokus.aura.resources.invoice_vat_with_rate
-import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -59,6 +43,44 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_collapse
+import tech.dokus.aura.resources.cashflow_amount_with_currency
+import tech.dokus.aura.resources.common_empty_value
+import tech.dokus.aura.resources.common_percent_value
+import tech.dokus.aura.resources.currency_symbol_eur
+import tech.dokus.aura.resources.invoice_add_description_hint
+import tech.dokus.aura.resources.invoice_description
+import tech.dokus.aura.resources.invoice_line_total
+import tech.dokus.aura.resources.invoice_price_with_currency
+import tech.dokus.aura.resources.invoice_qty
+import tech.dokus.aura.resources.invoice_remove
+import tech.dokus.aura.resources.invoice_vat_rate
+import tech.dokus.aura.resources.invoice_vat_with_rate
+import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+
+private const val ExpandedBackgroundAlpha = 0.3f
+private const val HoveredBackgroundAlpha = 0.5f
+private val RowPadding = 12.dp
+private val QuantityColumnWidth = 48.dp
+private val PriceColumnWidth = 80.dp
+private val ExpandButtonSize = 32.dp
+private val ExpandedContentTopPadding = 16.dp
+private val FieldSpacing = 16.dp
+private val DeleteIconSize = 18.dp
+private val ButtonSpacing = 4.dp
+private val LabelBottomPadding = 4.dp
+private const val DecimalMultiplier = 100
+private const val DecimalPadLength = 2
+private const val RoundingOffset = 0.5
+
+// Belgian VAT rates
+private const val VatRateStandard = 21
+private const val VatRateReduced = 12
+private const val VatRateSuperReduced = 6
+private const val VatRateZero = 0
+private val VatRateOptions = listOf(VatRateStandard, VatRateReduced, VatRateSuperReduced, VatRateZero)
 
 /**
  * Expandable line item row for the interactive invoice.
@@ -87,8 +109,8 @@ fun ExpandableLineItemRow(
             .clip(MaterialTheme.shapes.small)
             .background(
                 when {
-                    isExpanded -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                    isHovered -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    isExpanded -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = ExpandedBackgroundAlpha)
+                    isHovered -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = HoveredBackgroundAlpha)
                     else -> MaterialTheme.colorScheme.surface
                 }
             )
@@ -105,7 +127,7 @@ fun ExpandableLineItemRow(
                     Modifier
                 }
             )
-            .padding(12.dp)
+            .padding(RowPadding)
     ) {
         // Compact row (always visible)
         Row(
@@ -135,7 +157,7 @@ fun ExpandableLineItemRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.End,
-                modifier = Modifier.width(48.dp)
+                modifier = Modifier.width(QuantityColumnWidth)
             )
 
             // Unit price
@@ -152,7 +174,7 @@ fun ExpandableLineItemRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.End,
-                modifier = Modifier.width(80.dp)
+                modifier = Modifier.width(PriceColumnWidth)
             )
 
             // Line total
@@ -170,14 +192,14 @@ fun ExpandableLineItemRow(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.End,
-                modifier = Modifier.width(80.dp)
+                modifier = Modifier.width(PriceColumnWidth)
             )
 
             // Expand/collapse icon
             if (isExpanded) {
                 IconButton(
                     onClick = onCollapse,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(ExpandButtonSize)
                 ) {
                     Icon(
                         imageVector = Icons.Default.ExpandLess,
@@ -186,7 +208,7 @@ fun ExpandableLineItemRow(
                     )
                 }
             } else {
-                Box(modifier = Modifier.width(32.dp)) // Placeholder for alignment
+                Box(modifier = Modifier.width(ExpandButtonSize)) // Placeholder for alignment
             }
         }
 
@@ -199,8 +221,8 @@ fun ExpandableLineItemRow(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(top = ExpandedContentTopPadding),
+                verticalArrangement = Arrangement.spacedBy(FieldSpacing)
             ) {
                 // Description field
                 PTextFieldStandard(
@@ -213,7 +235,7 @@ fun ExpandableLineItemRow(
                 // Row: Quantity, Unit Price, VAT Rate
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FieldSpacing)
                 ) {
                     // Quantity
                     PTextFieldStandard(
@@ -290,10 +312,10 @@ fun ExpandableLineItemRow(
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(DeleteIconSize),
                                 tint = MaterialTheme.colorScheme.error
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(ButtonSpacing))
                             Text(
                                 text = stringResource(Res.string.invoice_remove),
                                 color = MaterialTheme.colorScheme.error
@@ -316,7 +338,6 @@ private fun VatRateSelector(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val rates = listOf(21, 12, 6, 0)
 
     Box(modifier = modifier) {
         Column {
@@ -324,7 +345,7 @@ private fun VatRateSelector(
                 text = stringResource(Res.string.invoice_vat_rate),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 4.dp)
+                modifier = Modifier.padding(bottom = LabelBottomPadding)
             )
             OutlinedButton(
                 onClick = { expanded = true },
@@ -339,7 +360,7 @@ private fun VatRateSelector(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            rates.forEach { rate ->
+            VatRateOptions.forEach { rate ->
                 DropdownMenuItem(
                     text = { Text(stringResource(Res.string.common_percent_value, rate)) },
                     onClick = {
@@ -367,8 +388,8 @@ private fun formatQuantity(value: Double): String {
  * Format a double to 2 decimal places.
  */
 private fun formatDecimal(value: Double): String {
-    val rounded = kotlin.math.round(value * 100) / 100
+    val rounded = kotlin.math.round(value * DecimalMultiplier) / DecimalMultiplier
     val intPart = rounded.toLong()
-    val decPart = ((kotlin.math.abs(rounded - intPart) * 100) + 0.5).toInt()
-    return "$intPart.${decPart.toString().padStart(2, '0')}"
+    val decPart = ((kotlin.math.abs(rounded - intPart) * DecimalMultiplier) + RoundingOffset).toInt()
+    return "$intPart.${decPart.toString().padStart(DecimalPadLength, '0')}"
 }

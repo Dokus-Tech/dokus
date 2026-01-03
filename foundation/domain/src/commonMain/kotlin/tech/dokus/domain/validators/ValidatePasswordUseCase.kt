@@ -115,6 +115,7 @@ object ValidatePasswordUseCase : Validator<Password> {
     /**
      * Detailed validation with custom requirements.
      */
+    @Suppress("CyclomaticComplexMethod") // Password validation requires checking multiple criteria
     fun validateDetailed(
         value: Password,
         requirements: PasswordRequirements
@@ -181,7 +182,8 @@ object ValidatePasswordUseCase : Validator<Password> {
             PasswordFailure.NoLowercase -> "Password must contain at least one lowercase letter"
             PasswordFailure.NoDigit -> "Password must contain at least one digit"
             PasswordFailure.NoSpecialChar -> "Password must contain at least one special character (!@#\$%^&*...)"
-            PasswordFailure.TooManyConsecutiveRepeats -> "Password cannot have more than ${requirements.maxConsecutiveRepeats} consecutive repeating characters"
+            PasswordFailure.TooManyConsecutiveRepeats ->
+                "Password cannot have more than ${requirements.maxConsecutiveRepeats} consecutive repeating characters"
             PasswordFailure.CommonPassword -> "This password is too common. Please choose a more unique password"
         }
     }

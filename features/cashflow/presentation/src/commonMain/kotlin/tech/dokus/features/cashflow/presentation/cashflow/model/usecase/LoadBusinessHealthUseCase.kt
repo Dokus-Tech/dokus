@@ -1,10 +1,12 @@
+@file:Suppress("TooGenericExceptionCaught") // Network errors need catch-all
+
 package tech.dokus.features.cashflow.presentation.cashflow.model.usecase
 
-import tech.dokus.features.cashflow.presentation.cashflow.components.BusinessHealthData
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.domain.exceptions.DokusException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.cashflow.presentation.cashflow.components.BusinessHealthData
+import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Use case for loading business health metrics.

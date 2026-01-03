@@ -1,8 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review.components.forms
 
-import tech.dokus.features.cashflow.presentation.review.BillField
-import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
-import tech.dokus.features.cashflow.presentation.review.EditableBillFields
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,9 +10,9 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_bill_details_section
 import tech.dokus.aura.resources.cashflow_invoice_number
-import tech.dokus.aura.resources.cashflow_select_category
 import tech.dokus.aura.resources.cashflow_section_additional_information
 import tech.dokus.aura.resources.cashflow_section_amounts
+import tech.dokus.aura.resources.cashflow_select_category
 import tech.dokus.aura.resources.cashflow_supplier_information
 import tech.dokus.aura.resources.cashflow_supplier_name
 import tech.dokus.aura.resources.cashflow_vat_amount
@@ -33,6 +30,9 @@ import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.invoice_vat_rate
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.features.cashflow.presentation.review.BillField
+import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
+import tech.dokus.features.cashflow.presentation.review.EditableBillFields
 import tech.dokus.foundation.aura.components.fields.PDateField
 import tech.dokus.foundation.aura.components.fields.PDropdownField
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard

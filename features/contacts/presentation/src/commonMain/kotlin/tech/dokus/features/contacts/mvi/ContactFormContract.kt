@@ -1,20 +1,20 @@
 package tech.dokus.features.contacts.mvi
 
 import androidx.compose.runtime.Immutable
+import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_duplicate_match_email
+import tech.dokus.aura.resources.contacts_duplicate_match_name_country
+import tech.dokus.aura.resources.contacts_duplicate_match_vat
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_duplicate_match_email
-import tech.dokus.aura.resources.contacts_duplicate_match_name_country
-import tech.dokus.aura.resources.contacts_duplicate_match_vat
-import org.jetbrains.compose.resources.StringResource
 
 /**
  * Contract for Contact Form screen (Create/Edit).

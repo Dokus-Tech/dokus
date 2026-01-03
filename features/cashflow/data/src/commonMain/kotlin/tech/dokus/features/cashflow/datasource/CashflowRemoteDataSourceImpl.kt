@@ -1,3 +1,8 @@
+@file:Suppress(
+    "TooManyFunctions", // Implementation mirrors interface methods
+    "MagicNumber" // HTTP and pagination constants
+)
+
 package tech.dokus.features.cashflow.datasource
 
 import io.ktor.client.HttpClient
@@ -16,6 +21,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.datetime.LocalDate
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
@@ -65,7 +71,6 @@ import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.domain.routes.Peppol
-import tech.dokus.domain.config.DynamicDokusEndpointProvider
 
 /**
  * HTTP-based implementation of CashflowRemoteDataSource.

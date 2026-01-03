@@ -1,14 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_search
-import tech.dokus.aura.resources.cashflow_create_invoice
-import tech.dokus.aura.resources.cashflow_search_placeholder
-import tech.dokus.aura.resources.cashflow_upload_document
-import tech.dokus.foundation.aura.components.PButton
-import tech.dokus.foundation.aura.components.PButtonVariant
-import tech.dokus.foundation.aura.components.PIconPosition
-import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -31,7 +22,16 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.UploadCloud
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_search
+import tech.dokus.aura.resources.cashflow_create_invoice
+import tech.dokus.aura.resources.cashflow_search_placeholder
+import tech.dokus.aura.resources.cashflow_upload_document
 import tech.dokus.foundation.app.network.rememberIsOnline
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.PIconPosition
+import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 
 /**
  * Search content for the Cashflow screen top app bar.

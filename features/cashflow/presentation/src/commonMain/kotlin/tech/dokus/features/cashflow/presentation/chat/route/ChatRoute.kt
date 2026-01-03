@@ -1,10 +1,6 @@
 package tech.dokus.features.cashflow.presentation.chat.route
 
-import tech.dokus.features.cashflow.presentation.chat.ChatAction
-import tech.dokus.features.cashflow.presentation.chat.ChatContainer
-import tech.dokus.features.cashflow.presentation.chat.ChatIntent
-import tech.dokus.features.cashflow.presentation.chat.ChatState
-import tech.dokus.features.cashflow.presentation.chat.screen.ChatScreen
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,12 +9,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.lazy.rememberLazyListState
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.features.cashflow.presentation.chat.ChatAction
+import tech.dokus.features.cashflow.presentation.chat.ChatContainer
+import tech.dokus.features.cashflow.presentation.chat.ChatIntent
+import tech.dokus.features.cashflow.presentation.chat.screen.ChatScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize

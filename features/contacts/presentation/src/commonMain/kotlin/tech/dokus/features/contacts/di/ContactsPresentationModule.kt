@@ -35,7 +35,8 @@ val contactsPresentationModule = module {
             getCurrentTenantId = get()
         )
     }
-    container<ContactDetailsContainer, ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> { (params: ContactDetailsContainer.Companion.Params) ->
+    container<ContactDetailsContainer, ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> {
+            (params: ContactDetailsContainer.Companion.Params) ->
         ContactDetailsContainer(
             contactId = params.contactId,
             getContact = get(),
@@ -50,7 +51,8 @@ val contactsPresentationModule = module {
             getCurrentTenantId = get()
         )
     }
-    container<ContactFormContainer, ContactFormState, ContactFormIntent, ContactFormAction> { (params: ContactFormContainer.Companion.Params) ->
+    container<ContactFormContainer, ContactFormState, ContactFormIntent, ContactFormAction> {
+            (params: ContactFormContainer.Companion.Params) ->
         ContactFormContainer(
             contactId = params.contactId,
             getContact = get(),
@@ -60,7 +62,8 @@ val contactsPresentationModule = module {
             deleteContact = get()
         )
     }
-    container<ContactMergeContainer, ContactMergeState, ContactMergeIntent, ContactMergeAction> { (params: ContactMergeContainer.Params) ->
+    container<ContactMergeContainer, ContactMergeState, ContactMergeIntent, ContactMergeAction> {
+            (params: ContactMergeContainer.Params) ->
         ContactMergeContainer(
             sourceContact = params.sourceContact,
             sourceActivity = params.sourceActivity,

@@ -1,9 +1,5 @@
 package tech.dokus.foundation.aura.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_back
-import tech.dokus.aura.resources.arrow_left
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,6 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_back
+import tech.dokus.aura.resources.arrow_left
+import tech.dokus.foundation.aura.constrains.Constrains
 
 enum class PButtonVariant {
     Default,
@@ -100,7 +100,9 @@ fun PButton(
                         Icon(
                             imageVector = icon,
                             contentDescription = contentDescription,
-                            modifier = Modifier.size(Constrains.IconSize.medium).padding(start = Constrains.Spacing.small)
+                            modifier = Modifier.size(
+                                Constrains.IconSize.medium
+                            ).padding(start = Constrains.Spacing.small)
                         )
                     }
                 }
@@ -217,7 +219,6 @@ fun POutlinedButton(
         }
     }
 }
-
 
 @Composable
 fun PBackButton(

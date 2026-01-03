@@ -1,9 +1,9 @@
 package tech.dokus.features.auth
 
-import tech.dokus.features.auth.repository.AuthRepository
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import tech.dokus.features.auth.repository.AuthRepository
 
 /**
  * Initializer for the authentication system.

@@ -1,7 +1,7 @@
 package tech.dokus.features.contacts.datasource
 
-import tech.dokus.features.contacts.cache.ContactsCacheDatabase
 import tech.dokus.domain.model.common.Feature
+import tech.dokus.features.contacts.cache.ContactsCacheDatabase
 import tech.dokus.foundation.app.database.DatabaseWrapper
 
 /**

@@ -75,10 +75,13 @@ class ChatAgent(
     enum class DocumentState {
         /** Document is ready, chunks indexed, and confirmed */
         READY,
+
         /** Document is still being processed */
         PROCESSING,
+
         /** Document is not indexed for chat */
         NOT_INDEXED,
+
         /** Document has not been confirmed by the user - chat not allowed */
         NOT_CONFIRMED
     }

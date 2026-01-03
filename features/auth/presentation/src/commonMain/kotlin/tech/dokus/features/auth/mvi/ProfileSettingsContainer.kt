@@ -1,7 +1,5 @@
 package tech.dokus.features.auth.mvi
 
-import tech.dokus.features.auth.repository.AuthRepository
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -12,8 +10,11 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Name
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.features.auth.repository.AuthRepository
+import tech.dokus.foundation.platform.Logger
 
-internal typealias ProfileSettingsCtx = PipelineContext<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction>
+internal typealias ProfileSettingsCtx =
+    PipelineContext<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction>
 
 /**
  * Container for Profile Settings screen using FlowMVI.

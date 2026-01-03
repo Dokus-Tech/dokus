@@ -11,10 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +42,27 @@ import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 
+// UI dimension constants
+private val SpacingSmall = 4.dp
+private val SpacingDefault = 8.dp
+private val SpacingMedium = 16.dp
+private val SpacingLarge = 24.dp
+private val ErrorPaddingVertical = 32.dp
+private val CardPadding = 12.dp
+private val IconSizeSmall = 16.dp
+private val IconSizeMedium = 18.dp
+private val IconSizeLarge = 32.dp
+private val ShimmerWidthMedium = 120.dp
+
+// Alpha constants
+private const val IconAlphaDisabled = 0.6f
+
+// Skeleton repeat count
+private const val SkeletonItemCount = 3
+
+// Shimmer fill fraction
+private const val ShimmerFillFraction = 0.8f
+
 @Composable
 internal fun NotesSection(
     state: DokusState<List<ContactNoteDto>>,
@@ -56,7 +77,7 @@ internal fun NotesSection(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(SpacingMedium)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -73,9 +94,9 @@ internal fun NotesSection(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(IconSizeMedium)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(SpacingSmall))
                     Text(stringResource(Res.string.contacts_add_note))
                 }
             }
@@ -99,7 +120,7 @@ internal fun NotesSection(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 32.dp),
+                            .padding(vertical = ErrorPaddingVertical),
                         contentAlignment = Alignment.Center
                     ) {
                         DokusErrorContent(
@@ -120,7 +141,7 @@ private fun NotesContent(
     onDeleteNote: (ContactNoteDto) -> Unit
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(SpacingDefault)
     ) {
         notes.forEach { note ->
             NoteItem(
@@ -142,8 +163,8 @@ private fun NoteItem(
         variant = DokusCardVariant.Soft,
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(CardPadding),
+            verticalArrangement = Arrangement.spacedBy(SpacingDefault)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -153,12 +174,12 @@ private fun NoteItem(
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(SpacingDefault)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Note,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(IconSizeSmall),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
@@ -175,7 +196,7 @@ private fun NoteItem(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(SpacingDefault))
 
                     Text(
                         text = note.content,
@@ -207,16 +228,16 @@ private fun NotesEmptyState() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 24.dp),
+            .padding(vertical = SpacingLarge),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.Note,
             contentDescription = null,
-            modifier = Modifier.size(32.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            modifier = Modifier.size(IconSizeLarge),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = IconAlphaDisabled)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(SpacingDefault))
         Text(
             text = stringResource(Res.string.contacts_no_notes),
             style = MaterialTheme.typography.bodyMedium,
@@ -229,25 +250,25 @@ private fun NotesEmptyState() {
 @Composable
 private fun NotesSkeleton() {
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(SpacingDefault)
     ) {
-        repeat(3) {
+        repeat(SkeletonItemCount) {
             DokusCardSurface(
                 variant = DokusCardVariant.Soft
             ) {
                 Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(CardPadding),
+                    verticalArrangement = Arrangement.spacedBy(SpacingDefault)
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        ShimmerLine(modifier = Modifier.width(120.dp), height = 12.dp)
-                        ShimmerLine(modifier = Modifier.size(16.dp), height = 16.dp)
+                        ShimmerLine(modifier = Modifier.width(ShimmerWidthMedium), height = CardPadding)
+                        ShimmerLine(modifier = Modifier.size(IconSizeSmall), height = IconSizeSmall)
                     }
-                    ShimmerLine(modifier = Modifier.fillMaxWidth(), height = 16.dp)
-                    ShimmerLine(modifier = Modifier.fillMaxWidth(0.8f), height = 16.dp)
+                    ShimmerLine(modifier = Modifier.fillMaxWidth(), height = IconSizeSmall)
+                    ShimmerLine(modifier = Modifier.fillMaxWidth(ShimmerFillFraction), height = IconSizeSmall)
                 }
             }
         }

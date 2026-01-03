@@ -1,16 +1,5 @@
 package tech.dokus.database.repository.cashflow
 
-import tech.dokus.database.tables.cashflow.DocumentDraftsTable
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.IngestionRunId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ExtractedDocumentData
-import tech.dokus.domain.model.TrackedCorrection
-import tech.dokus.domain.repository.DraftStatusChecker
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -24,8 +13,19 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.cashflow.DocumentDraftsTable
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.TrackedCorrection
+import tech.dokus.domain.repository.DraftStatusChecker
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -92,7 +92,7 @@ class DocumentDraftRepository : DraftStatusChecker {
         val existing = DocumentDraftsTable.selectAll()
             .where {
                 (DocumentDraftsTable.documentId eq docIdUuid) and
-                (DocumentDraftsTable.tenantId eq tenantIdUuid)
+                    (DocumentDraftsTable.tenantId eq tenantIdUuid)
             }
             .singleOrNull()
 
@@ -119,7 +119,7 @@ class DocumentDraftRepository : DraftStatusChecker {
 
             DocumentDraftsTable.update({
                 (DocumentDraftsTable.documentId eq docIdUuid) and
-                (DocumentDraftsTable.tenantId eq tenantIdUuid)
+                    (DocumentDraftsTable.tenantId eq tenantIdUuid)
             }) {
                 // ai_draft_data: set only if null (immutable)
                 if (!hasAiDraft) {
@@ -151,7 +151,7 @@ class DocumentDraftRepository : DraftStatusChecker {
         DocumentDraftsTable.selectAll()
             .where {
                 (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
-                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             .map { it.toDraftSummary() }
             .singleOrNull()
@@ -179,7 +179,7 @@ class DocumentDraftRepository : DraftStatusChecker {
         val current = DocumentDraftsTable.selectAll()
             .where {
                 (DocumentDraftsTable.documentId eq docIdUuid) and
-                (DocumentDraftsTable.tenantId eq tenantIdUuid)
+                    (DocumentDraftsTable.tenantId eq tenantIdUuid)
             }
             .singleOrNull() ?: return@newSuspendedTransaction null
 
@@ -194,7 +194,7 @@ class DocumentDraftRepository : DraftStatusChecker {
 
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq docIdUuid) and
-            (DocumentDraftsTable.tenantId eq tenantIdUuid)
+                (DocumentDraftsTable.tenantId eq tenantIdUuid)
         }) {
             it[extractedData] = json.encodeToString(updatedData)
             it[userCorrections] = json.encodeToString(allCorrections)
@@ -219,7 +219,7 @@ class DocumentDraftRepository : DraftStatusChecker {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
-            (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
             it[draftStatus] = status
             it[updatedAt] = now
@@ -277,7 +277,7 @@ class DocumentDraftRepository : DraftStatusChecker {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
-            (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
             it[suggestedContactId] = contactId?.let { id -> UUID.fromString(id.toString()) }
             it[contactSuggestionConfidence] = confidence
@@ -296,7 +296,7 @@ class DocumentDraftRepository : DraftStatusChecker {
     ): Boolean = newSuspendedTransaction {
         DocumentDraftsTable.deleteWhere {
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
-            (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         } > 0
     }
 
@@ -317,7 +317,7 @@ class DocumentDraftRepository : DraftStatusChecker {
         val draft = DocumentDraftsTable.selectAll()
             .where {
                 (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
-                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             .singleOrNull()
 
@@ -332,14 +332,16 @@ class DocumentDraftRepository : DraftStatusChecker {
             documentType = this[DocumentDraftsTable.documentType],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
             aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },
-            aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]?.let { IngestionRunId.parse(it.toString()) },
+            aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]
+                ?.let { IngestionRunId.parse(it.toString()) },
             draftVersion = this[DocumentDraftsTable.draftVersion],
             draftEditedAt = this[DocumentDraftsTable.draftEditedAt],
             draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
             suggestedContactId = this[DocumentDraftsTable.suggestedContactId]?.let { ContactId(it.toKotlinUuid()) },
             contactSuggestionConfidence = this[DocumentDraftsTable.contactSuggestionConfidence],
             contactSuggestionReason = this[DocumentDraftsTable.contactSuggestionReason],
-            lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(it.toString()) },
+            lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]
+                ?.let { IngestionRunId.parse(it.toString()) },
             createdAt = this[DocumentDraftsTable.createdAt],
             updatedAt = this[DocumentDraftsTable.updatedAt]
         )

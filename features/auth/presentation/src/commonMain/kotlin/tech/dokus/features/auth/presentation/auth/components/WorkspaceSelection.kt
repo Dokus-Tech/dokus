@@ -1,13 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.workspace_select_title
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
-import tech.dokus.foundation.aura.components.tiles.CompanyTile
-import tech.dokus.domain.model.Tenant
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -22,6 +14,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.workspace_select_title
+import tech.dokus.domain.model.Tenant
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
+import tech.dokus.foundation.aura.components.tiles.CompanyTile
 
 @Stable
 private fun Modifier.widthInWorkspaceItem(): Modifier = widthIn(min = 140.dp, max = 320.dp)

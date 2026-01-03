@@ -1,5 +1,17 @@
 package tech.dokus.features.auth
 
+import io.ktor.client.HttpClient
+import org.koin.core.module.Module
+import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.Qualifier
+import org.koin.core.qualifier.qualifier
+import org.koin.dsl.bind
+import org.koin.dsl.binds
+import org.koin.dsl.module
+import tech.dokus.domain.asbtractions.AuthManager
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.model.common.Feature
+import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.features.auth.database.AuthDatabase
 import tech.dokus.features.auth.database.AuthDb
 import tech.dokus.features.auth.datasource.AccountRemoteDataSource
@@ -31,21 +43,9 @@ import tech.dokus.features.auth.usecases.SearchCompanyUseCaseImpl
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCaseImpl
 import tech.dokus.features.auth.usecases.ValidateServerUseCase
-import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.features.auth.utils.JwtDecoder
-import tech.dokus.domain.asbtractions.AuthManager
-import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.model.common.Feature
-import tech.dokus.foundation.sstorage.SecureStorage
-import io.ktor.client.HttpClient
-import org.koin.core.module.Module
-import org.koin.core.module.dsl.singleOf
-import org.koin.core.qualifier.Qualifier
-import org.koin.core.qualifier.qualifier
-import org.koin.dsl.bind
-import org.koin.dsl.binds
-import org.koin.dsl.module
 import tech.dokus.foundation.app.SharedQualifiers
+import tech.dokus.foundation.sstorage.SecureStorage
 
 internal object Qualifiers {
     val secureStorageAuth: Qualifier = qualifier(Feature.Auth)

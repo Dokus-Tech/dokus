@@ -1,21 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.screen
 
-import tech.dokus.features.contacts.presentation.contacts.components.ContactFormActionButtonsCompact
-import tech.dokus.features.contacts.presentation.contacts.components.ContactFormContent
-import tech.dokus.features.contacts.presentation.contacts.components.ContactFormFields
-import tech.dokus.features.contacts.presentation.contacts.components.DuplicateWarningBanner
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_cancel
-import tech.dokus.aura.resources.action_delete
-import tech.dokus.aura.resources.contacts_delete_confirmation
-import tech.dokus.aura.resources.contacts_delete_contact
-import tech.dokus.aura.resources.contacts_delete_warning
-import tech.dokus.aura.resources.contacts_deleting
-import tech.dokus.aura.resources.contacts_edit_contact
-import tech.dokus.aura.resources.contacts_update_mobile_hint
-import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.domain.ids.ContactId
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,8 +30,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.action_delete
+import tech.dokus.aura.resources.contacts_delete_confirmation
+import tech.dokus.aura.resources.contacts_delete_contact
+import tech.dokus.aura.resources.contacts_delete_warning
+import tech.dokus.aura.resources.contacts_deleting
+import tech.dokus.aura.resources.contacts_edit_contact
+import tech.dokus.aura.resources.contacts_update_mobile_hint
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.features.contacts.mvi.ContactFormIntent
 import tech.dokus.features.contacts.mvi.ContactFormState
+import tech.dokus.features.contacts.presentation.contacts.components.ContactFormActionButtonsCompact
+import tech.dokus.features.contacts.presentation.contacts.components.ContactFormContent
+import tech.dokus.features.contacts.presentation.contacts.components.ContactFormFields
+import tech.dokus.features.contacts.presentation.contacts.components.DuplicateWarningBanner
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
  * Screen for editing an existing contact.
@@ -278,7 +278,7 @@ private fun MobileFormLayout(
                 onTagsChange = { onIntent(ContactFormIntent.UpdateTags(it)) },
                 onInitialNoteChange = { onIntent(ContactFormIntent.UpdateInitialNote(it)) },
                 onIsActiveChange = { onIntent(ContactFormIntent.UpdateIsActive(it)) },
-                showInitialNote = false  // Initial note is only for create mode (use CreateContactScreen)
+                showInitialNote = false // Initial note is only for create mode (use CreateContactScreen)
             )
 
             Spacer(modifier = Modifier.height(16.dp))

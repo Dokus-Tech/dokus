@@ -1,16 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_due_prefix
-import tech.dokus.aura.resources.invoice_status_cancelled
-import tech.dokus.aura.resources.invoice_status_draft
-import tech.dokus.aura.resources.invoice_status_overdue
-import tech.dokus.aura.resources.invoice_status_paid
-import tech.dokus.aura.resources.invoice_status_sent
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +13,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_due_prefix
+import tech.dokus.aura.resources.invoice_status_cancelled
+import tech.dokus.aura.resources.invoice_status_draft
+import tech.dokus.aura.resources.invoice_status_overdue
+import tech.dokus.aura.resources.invoice_status_paid
+import tech.dokus.aura.resources.invoice_status_sent
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
 
 @Composable
 internal fun InvoiceCard(
@@ -84,7 +84,8 @@ private fun InvoiceStatusBadge(
         InvoiceStatus.Sent -> MaterialTheme.colorScheme.primary to stringResource(Res.string.invoice_status_sent)
         InvoiceStatus.Paid -> MaterialTheme.colorScheme.tertiary to stringResource(Res.string.invoice_status_paid)
         InvoiceStatus.Overdue -> MaterialTheme.colorScheme.error to stringResource(Res.string.invoice_status_overdue)
-        InvoiceStatus.Cancelled -> MaterialTheme.colorScheme.onSurfaceVariant to stringResource(Res.string.invoice_status_cancelled)
+        InvoiceStatus.Cancelled ->
+            MaterialTheme.colorScheme.onSurfaceVariant to stringResource(Res.string.invoice_status_cancelled)
         else -> MaterialTheme.colorScheme.onSurfaceVariant to status.name
     }
 

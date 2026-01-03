@@ -1,15 +1,5 @@
 package tech.dokus.database.repository.ai
 
-import tech.dokus.database.tables.ai.DocumentChunksTable
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ChunkMetadata
-import tech.dokus.domain.model.DocumentChunkDto
-import tech.dokus.domain.model.DocumentChunkId
-import tech.dokus.domain.repository.ChunkRepository
-import tech.dokus.domain.repository.ChunkSearchResult
-import tech.dokus.domain.repository.ChunkWithEmbedding
-import tech.dokus.domain.repository.RetrievedChunk
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -24,6 +14,16 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.slf4j.LoggerFactory
+import tech.dokus.database.tables.ai.DocumentChunksTable
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.ChunkMetadata
+import tech.dokus.domain.model.DocumentChunkDto
+import tech.dokus.domain.model.DocumentChunkId
+import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ChunkSearchResult
+import tech.dokus.domain.repository.ChunkWithEmbedding
+import tech.dokus.domain.repository.RetrievedChunk
 import java.sql.Connection
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
@@ -97,7 +97,9 @@ class DocumentChunksRepository : ChunkRepository {
             append("LEFT JOIN documents d ON dc.document_id = d.id ")
             if (confirmedOnly) {
                 // Join with drafts table to filter by Confirmed status
-                append("INNER JOIN document_drafts dd ON dc.document_id = dd.document_id AND dc.tenant_id = dd.tenant_id ")
+                append(
+                    "INNER JOIN document_drafts dd ON dc.document_id = dd.document_id AND dc.tenant_id = dd.tenant_id "
+                )
             }
             append("WHERE dc.tenant_id = '$tenantUuid' ")
             append("AND dc.embedding IS NOT NULL ")
@@ -202,7 +204,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                (DocumentChunksTable.documentId eq documentUuid)
+                    (DocumentChunksTable.documentId eq documentUuid)
             }
             .limit(1)
             .singleOrNull()
@@ -223,7 +225,7 @@ class DocumentChunksRepository : ChunkRepository {
 
         val deleted = DocumentChunksTable.deleteWhere {
             (DocumentChunksTable.tenantId eq tenantUuid) and
-                    (DocumentChunksTable.documentId eq documentUuid)
+                (DocumentChunksTable.documentId eq documentUuid)
         }
 
         logger.debug("Deleted $deleted chunks")
@@ -248,7 +250,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                        (DocumentChunksTable.documentId eq documentUuid)
+                    (DocumentChunksTable.documentId eq documentUuid)
             }
             .orderBy(DocumentChunksTable.chunkIndex to SortOrder.ASC)
             .map { it.toChunkDto() }
@@ -268,7 +270,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.id eq chunkUuid) and
-                        (DocumentChunksTable.tenantId eq tenantUuid)
+                    (DocumentChunksTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
             ?.toChunkDto()
@@ -288,7 +290,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                        (DocumentChunksTable.documentId eq documentUuid)
+                    (DocumentChunksTable.documentId eq documentUuid)
             }
             .count()
     }

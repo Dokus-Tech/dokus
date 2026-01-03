@@ -1,17 +1,27 @@
 package tech.dokus.features.cashflow.mvi.model
 
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.contact.ContactDto
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.contact.ContactDto
 import kotlin.math.absoluteValue
 import kotlin.math.round
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+
+// Invoice defaults
+private const val DefaultDueDateOffsetDays = 30
+private const val DefaultQuantity = 1.0
+private const val DefaultVatRatePercent = 21
+
+// Money formatting
+private const val CentsMultiplier = 100
+private const val RoundingOffset = 0.5
+private const val DecimalPadLength = 2
 
 // ============================================================================
 // DELIVERY METHOD
@@ -102,7 +112,7 @@ data class CreateInvoiceFormState(
      */
     val isClientBelgian: Boolean
         get() = selectedClient?.country?.equals("BE", ignoreCase = true) == true ||
-                selectedClient?.country?.equals("Belgium", ignoreCase = true) == true
+            selectedClient?.country?.equals("Belgium", ignoreCase = true) == true
 
     /**
      * Check if selected client has Peppol ID configured.
@@ -127,7 +137,7 @@ data class CreateInvoiceFormState(
             expandedItemId(firstItem.id)
             return CreateInvoiceFormState(
                 issueDate = today,
-                dueDate = today.plus(30, DateTimeUnit.DAY),
+                dueDate = today.plus(DefaultDueDateOffsetDays, DateTimeUnit.DAY),
                 items = listOf(firstItem)
             )
         }
@@ -140,9 +150,9 @@ data class CreateInvoiceFormState(
 data class InvoiceLineItem(
     val id: String = Random.nextLong().toString(),
     val description: String = "",
-    val quantity: Double = 1.0,
-    val unitPrice: String = "",  // Stored as string for form input
-    val vatRatePercent: Int = 21  // 21%, 12%, 6%, 0%
+    val quantity: Double = DefaultQuantity,
+    val unitPrice: String = "", // Stored as string for form input
+    val vatRatePercent: Int = DefaultVatRatePercent // 21%, 12%, 6%, 0%
 ) {
     val unitPriceDouble: Double
         get() = unitPrice.toDoubleOrNull() ?: 0.0
@@ -151,7 +161,7 @@ data class InvoiceLineItem(
         get() = unitPriceDouble * quantity
 
     val vatRateDecimal: Double
-        get() = vatRatePercent / 100.0
+        get() = vatRatePercent / CentsMultiplier.toDouble()
 
     val vatAmountDouble: Double
         get() = lineTotalDouble * vatRateDecimal
@@ -171,11 +181,11 @@ data class InvoiceLineItem(
  * Multiplatform-compatible formatting.
  */
 fun formatMoney(value: Double): String {
-    val rounded = round(value * 100) / 100
+    val rounded = round(value * CentsMultiplier) / CentsMultiplier
     val isNegative = rounded < 0
     val absValue = rounded.absoluteValue
     val intPart = absValue.toLong()
-    val decPart = ((absValue - intPart) * 100 + 0.5).toInt()
+    val decPart = ((absValue - intPart) * CentsMultiplier + RoundingOffset).toInt()
     val sign = if (isNegative) "-" else ""
-    return "$sign€$intPart.${decPart.toString().padStart(2, '0')}"
+    return "$sign€$intPart.${decPart.toString().padStart(DecimalPadLength, '0')}"
 }

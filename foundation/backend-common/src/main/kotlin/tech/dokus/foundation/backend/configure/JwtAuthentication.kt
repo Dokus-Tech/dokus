@@ -1,12 +1,5 @@
 package tech.dokus.foundation.backend.configure
 
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.auth.JwtClaims
-import tech.dokus.foundation.backend.security.AuthMethod
-import tech.dokus.foundation.backend.security.DokusPrincipal
-import tech.dokus.foundation.backend.security.JwtValidator
-import tech.dokus.foundation.backend.security.TokenBlacklistService
-import tech.dokus.foundation.backend.utils.loggerFor
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -14,6 +7,13 @@ import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.response.respond
 import org.koin.ktor.ext.inject
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.auth.JwtClaims
+import tech.dokus.foundation.backend.security.AuthMethod
+import tech.dokus.foundation.backend.security.DokusPrincipal
+import tech.dokus.foundation.backend.security.JwtValidator
+import tech.dokus.foundation.backend.security.TokenBlacklistService
+import tech.dokus.foundation.backend.utils.loggerFor
 
 private val logger = loggerFor("JwtAuthentication")
 

@@ -1,8 +1,8 @@
 package tech.dokus.features.auth.usecases
 
-import tech.dokus.features.auth.datasource.TenantRemoteDataSource
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.model.Tenant
+import tech.dokus.features.auth.datasource.TenantRemoteDataSource
 import tech.dokus.foundation.platform.Logger
 
 /**

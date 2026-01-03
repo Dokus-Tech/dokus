@@ -1,12 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_add_line_item
-import tech.dokus.aura.resources.invoice_amount
-import tech.dokus.aura.resources.invoice_description
-import tech.dokus.aura.resources.invoice_price
-import tech.dokus.aura.resources.invoice_qty
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +22,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_add_line_item
+import tech.dokus.aura.resources.invoice_amount
+import tech.dokus.aura.resources.invoice_description
+import tech.dokus.aura.resources.invoice_price
+import tech.dokus.aura.resources.invoice_qty
+import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
 
 /**
  * Table component for invoice line items.

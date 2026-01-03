@@ -1,7 +1,7 @@
 package tech.dokus.features.auth.storage
 
-import tech.dokus.foundation.sstorage.SecureStorage
 import kotlinx.coroutines.flow.Flow
+import tech.dokus.foundation.sstorage.SecureStorage
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 

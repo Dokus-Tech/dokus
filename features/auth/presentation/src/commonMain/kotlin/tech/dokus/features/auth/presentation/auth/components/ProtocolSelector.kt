@@ -1,9 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_protocol_http
-import tech.dokus.aura.resources.auth_protocol_https
-import tech.dokus.aura.resources.auth_protocol_selector
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -32,6 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_protocol_http
+import tech.dokus.aura.resources.auth_protocol_https
+import tech.dokus.aura.resources.auth_protocol_selector
 
 /**
  * Protocol options for server connection.
@@ -111,7 +111,11 @@ fun ProtocolSelector(
                     text = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = if (option == ProtocolOption.HTTPS) Icons.Default.Lock else Icons.Default.LockOpen,
+                                imageVector = if (option == ProtocolOption.HTTPS) {
+                                    Icons.Default.Lock
+                                } else {
+                                    Icons.Default.LockOpen
+                                },
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp),
                                 tint = if (option == selected) {

@@ -8,15 +8,15 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
-import tech.dokus.features.contacts.presentation.contacts.components.ContactDetailsContent
-import tech.dokus.features.contacts.presentation.contacts.components.ContactDetailsTopBar
-import tech.dokus.features.contacts.presentation.contacts.components.EnrichmentSuggestionsDialog
-import tech.dokus.features.contacts.mvi.ContactDetailsIntent
-import tech.dokus.features.contacts.mvi.ContactDetailsState
-import tech.dokus.features.contacts.mvi.EnrichmentSuggestion
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.features.contacts.mvi.ContactDetailsIntent
+import tech.dokus.features.contacts.mvi.ContactDetailsState
+import tech.dokus.features.contacts.mvi.EnrichmentSuggestion
+import tech.dokus.features.contacts.presentation.contacts.components.ContactDetailsContent
+import tech.dokus.features.contacts.presentation.contacts.components.ContactDetailsTopBar
+import tech.dokus.features.contacts.presentation.contacts.components.EnrichmentSuggestionsDialog
 import tech.dokus.foundation.app.state.DokusState
 
 @OptIn(ExperimentalMaterial3Api::class)

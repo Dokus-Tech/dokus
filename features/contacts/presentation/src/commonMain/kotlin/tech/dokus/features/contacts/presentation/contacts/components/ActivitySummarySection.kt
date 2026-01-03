@@ -42,6 +42,24 @@ import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 
+// UI dimension constants
+private val SectionSpacing = 16.dp
+private val ContentSpacing = 12.dp
+private val StatCardIconSize = 24.dp
+private val StatCardSpacing = 4.dp
+private val LastActivityIconSize = 16.dp
+private val LastActivitySpacing = 8.dp
+private val PendingPadding = 12.dp
+private val SkeletonIconSize = 24.dp
+private val SkeletonCountWidth = 40.dp
+private val SkeletonCountHeight = 28.dp
+private val SkeletonLabelWidth = 50.dp
+private val SkeletonLabelHeight = 12.dp
+private val SkeletonTotalWidth = 60.dp
+private val SkeletonTotalHeight = 12.dp
+private val ErrorPaddingVertical = 32.dp
+private const val SkeletonRepeatCount = 3
+
 @Composable
 internal fun ActivitySummarySection(
     state: DokusState<ContactActivitySummary>,
@@ -53,7 +71,7 @@ internal fun ActivitySummarySection(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(SectionSpacing)
         ) {
             Text(
                 text = stringResource(Res.string.contacts_activity_summary),
@@ -72,7 +90,7 @@ internal fun ActivitySummarySection(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 32.dp),
+                            .padding(vertical = ErrorPaddingVertical),
                         contentAlignment = Alignment.Center
                     ) {
                         DokusErrorContent(
@@ -91,11 +109,11 @@ private fun ActivitySummaryContent(
     activity: ContactActivitySummary
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(ContentSpacing)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(SectionSpacing)
         ) {
             ActivityStatCard(
                 icon = Icons.Default.Description,
@@ -130,13 +148,13 @@ private fun ActivitySummaryContent(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(LastActivitySpacing),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Default.Schedule,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(LastActivityIconSize),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
@@ -160,8 +178,8 @@ private fun ActivitySummaryContent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        .padding(PendingPadding),
+                    horizontalArrangement = Arrangement.spacedBy(LastActivitySpacing),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -190,12 +208,12 @@ private fun ActivityStatCard(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(StatCardSpacing)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(StatCardIconSize),
                 tint = color
             )
             Text(
@@ -222,22 +240,22 @@ private fun ActivityStatCard(
 private fun ActivitySummarySkeleton() {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(SectionSpacing)
     ) {
-        repeat(3) {
+        repeat(SkeletonRepeatCount) {
             DokusCardSurface(
                 modifier = Modifier.weight(1f),
                 variant = DokusCardVariant.Soft,
             ) {
                 Column(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.padding(PendingPadding),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(StatCardSpacing)
                 ) {
-                    ShimmerLine(modifier = Modifier.size(24.dp), height = 24.dp)
-                    ShimmerLine(modifier = Modifier.width(40.dp), height = 28.dp)
-                    ShimmerLine(modifier = Modifier.width(50.dp), height = 12.dp)
-                    ShimmerLine(modifier = Modifier.width(60.dp), height = 12.dp)
+                    ShimmerLine(modifier = Modifier.size(SkeletonIconSize), height = SkeletonIconSize)
+                    ShimmerLine(modifier = Modifier.width(SkeletonCountWidth), height = SkeletonCountHeight)
+                    ShimmerLine(modifier = Modifier.width(SkeletonLabelWidth), height = SkeletonLabelHeight)
+                    ShimmerLine(modifier = Modifier.width(SkeletonTotalWidth), height = SkeletonTotalHeight)
                 }
             }
         }

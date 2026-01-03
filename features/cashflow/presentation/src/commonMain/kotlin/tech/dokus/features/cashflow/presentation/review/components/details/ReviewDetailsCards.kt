@@ -1,10 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review.components.details
 
-import tech.dokus.features.cashflow.presentation.review.BillField
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.review.ExpenseField
-import tech.dokus.features.cashflow.presentation.review.InvoiceField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,11 +19,11 @@ import tech.dokus.aura.resources.cashflow_action_link_contact
 import tech.dokus.aura.resources.cashflow_action_save_new_contact
 import tech.dokus.aura.resources.cashflow_bill_details_section
 import tech.dokus.aura.resources.cashflow_bound_to
+import tech.dokus.aura.resources.cashflow_client_name
 import tech.dokus.aura.resources.cashflow_confidence_high
 import tech.dokus.aura.resources.cashflow_confidence_label
 import tech.dokus.aura.resources.cashflow_confidence_low
 import tech.dokus.aura.resources.cashflow_confidence_medium
-import tech.dokus.aura.resources.cashflow_client_name
 import tech.dokus.aura.resources.cashflow_contact_label
 import tech.dokus.aura.resources.cashflow_counterparty_ai_extracted
 import tech.dokus.aura.resources.cashflow_expense_details_section
@@ -41,10 +36,20 @@ import tech.dokus.aura.resources.cashflow_unknown_document_type
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_vat_number
-import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.invoice_due_date
+import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.invoice_status_draft
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.features.cashflow.presentation.review.BillField
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.EditableBillFields
+import tech.dokus.features.cashflow.presentation.review.EditableExpenseFields
+import tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields
+import tech.dokus.features.cashflow.presentation.review.ExpenseField
+import tech.dokus.features.cashflow.presentation.review.InvoiceField
+import tech.dokus.features.cashflow.presentation.review.components.forms.DetailBlock
+import tech.dokus.features.cashflow.presentation.review.components.forms.DetailRow
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
@@ -52,8 +57,14 @@ import tech.dokus.foundation.aura.components.StatusBadge
 import tech.dokus.foundation.aura.components.fields.PDateField
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.features.cashflow.presentation.review.components.forms.DetailBlock
-import tech.dokus.features.cashflow.presentation.review.components.forms.DetailRow
+
+// Confidence thresholds for AI extraction
+private const val ConfidenceHighThreshold = 0.8
+private const val ConfidenceMediumThreshold = 0.5
+private const val ConfidenceMinimum = 0.0
+
+// Badge styling
+private const val ConfidenceBadgeBackgroundAlpha = 0.15f
 
 @Composable
 internal fun CounterpartyCard(
@@ -81,20 +92,22 @@ internal fun CounterpartyCard(
         else -> stringResource(Res.string.cashflow_contact_label)
     }
 
-    val confidence = (state.originalData?.overallConfidence
-        ?: state.document.latestIngestion?.confidence)
-        ?.takeIf { it > 0.0 }
+    val confidence = (
+        state.originalData?.overallConfidence
+            ?: state.document.latestIngestion?.confidence
+        )
+        ?.takeIf { it > ConfidenceMinimum }
     val confidenceLabelRes = confidence?.let {
         when {
-            it >= 0.8 -> Res.string.cashflow_confidence_high
-            it >= 0.5 -> Res.string.cashflow_confidence_medium
+            it >= ConfidenceHighThreshold -> Res.string.cashflow_confidence_high
+            it >= ConfidenceMediumThreshold -> Res.string.cashflow_confidence_medium
             else -> Res.string.cashflow_confidence_low
         }
     }
     val confidenceColor = when {
         confidence == null -> MaterialTheme.colorScheme.onSurfaceVariant
-        confidence >= 0.8 -> MaterialTheme.colorScheme.tertiary
-        confidence >= 0.5 -> MaterialTheme.colorScheme.secondary
+        confidence >= ConfidenceHighThreshold -> MaterialTheme.colorScheme.tertiary
+        confidence >= ConfidenceMediumThreshold -> MaterialTheme.colorScheme.secondary
         else -> MaterialTheme.colorScheme.error
     }
 
@@ -161,7 +174,7 @@ internal fun CounterpartyCard(
                     )
                     StatusBadge(
                         text = stringResource(confidenceLabelRes),
-                        backgroundColor = confidenceColor.copy(alpha = 0.15f),
+                        backgroundColor = confidenceColor.copy(alpha = ConfidenceBadgeBackgroundAlpha),
                         textColor = confidenceColor,
                     )
                 }
@@ -224,7 +237,7 @@ internal fun InvoiceDetailsCard(
 
             when (state.editableData.documentType) {
                 DocumentType.Invoice -> {
-                    val fields = state.editableData.invoice ?: tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields()
+                    val fields = state.editableData.invoice ?: EditableInvoiceFields()
                     PTextFieldStandard(
                         fieldName = stringResource(Res.string.cashflow_invoice_number),
                         value = fields.invoiceNumber,
@@ -249,7 +262,7 @@ internal fun InvoiceDetailsCard(
                     )
                 }
                 DocumentType.Bill -> {
-                    val fields = state.editableData.bill ?: tech.dokus.features.cashflow.presentation.review.EditableBillFields()
+                    val fields = state.editableData.bill ?: EditableBillFields()
                     PTextFieldStandard(
                         fieldName = stringResource(Res.string.cashflow_invoice_number),
                         value = fields.invoiceNumber,
@@ -274,7 +287,7 @@ internal fun InvoiceDetailsCard(
                     )
                 }
                 DocumentType.Expense -> {
-                    val fields = state.editableData.expense ?: tech.dokus.features.cashflow.presentation.review.EditableExpenseFields()
+                    val fields = state.editableData.expense ?: EditableExpenseFields()
                     PTextFieldStandard(
                         fieldName = stringResource(Res.string.cashflow_receipt_number),
                         value = fields.receiptNumber,

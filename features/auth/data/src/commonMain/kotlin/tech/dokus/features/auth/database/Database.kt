@@ -1,7 +1,7 @@
 package tech.dokus.features.auth.database
 
-import tech.dokus.foundation.app.database.DatabaseWrapper
 import tech.dokus.domain.model.common.Feature
+import tech.dokus.foundation.app.database.DatabaseWrapper
 
 class AuthDb private constructor() : DatabaseWrapper<AuthDatabase> by DatabaseWrapper(
     feature = Feature.Auth,

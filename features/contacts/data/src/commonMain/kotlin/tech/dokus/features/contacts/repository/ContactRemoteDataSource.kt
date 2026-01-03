@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // Contact API requires many endpoints
+
 package tech.dokus.features.contacts.repository
 
 import tech.dokus.domain.ids.ContactId

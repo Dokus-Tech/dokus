@@ -23,7 +23,16 @@ subprojects {
             buildUponDefaultConfig = true
             config.setFrom(detektConfig)
             baseline = file("$rootDir/config/detekt/baseline${path.replace(":", "_")}.xml")
-            autoCorrect = false
+            autoCorrect = true
+            source.setFrom(
+                "src/commonMain/kotlin",
+                "src/androidMain/kotlin",
+                "src/iosMain/kotlin",
+                "src/desktopMain/kotlin",
+                "src/wasmJsMain/kotlin",
+                "src/jvmMain/kotlin",
+                "src/main/kotlin"
+            )
         }
         dependencies {
             add("detektPlugins", libs.detekt.formatting)
@@ -37,6 +46,13 @@ subprojects {
     pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
         apply(plugin = "io.gitlab.arturbosch.detekt")
         configureDetekt()
+
+        // Exclude generated code from KMP detekt tasks
+        tasks.matching { it.name.startsWith("detekt") }.configureEach {
+            if (this is Detekt) {
+                exclude { it.file.path.contains("/build/") }
+            }
+        }
     }
     pluginManager.withPlugin("org.jetbrains.kotlin.android") {
         apply(plugin = "io.gitlab.arturbosch.detekt")
@@ -118,8 +134,18 @@ tasks.register("detektAll") {
     dependsOn(subprojects.mapNotNull { it.tasks.findByName("detekt") })
 }
 
+tasks.register("detektKmp") {
+    group = "verification"
+    description = "Runs detekt on all KMP commonMain source sets."
+    subprojects.forEach { subproject ->
+        subproject.tasks.matching {
+            it.name == "detektMetadataCommonMain"
+        }.forEach { dependsOn(it) }
+    }
+}
+
 tasks.register("checkAll") {
     group = "verification"
     description = "Runs detekt and custom guardrails."
-    dependsOn("detektAll", "checkKotlinFileSize", "checkNoNavInComponents")
+    dependsOn("detektAll", "detektKmp", "checkKotlinFileSize", "checkNoNavInComponents")
 }

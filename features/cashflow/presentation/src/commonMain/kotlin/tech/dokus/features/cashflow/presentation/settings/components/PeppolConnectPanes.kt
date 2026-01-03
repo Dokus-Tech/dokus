@@ -69,14 +69,32 @@ import tech.dokus.foundation.aura.constrains.withContentPadding
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.extensions.websiteUrl
 
+// Icon sizes
+private val LargeIconSize = 64.dp
+private val SmallProgressIndicatorSize = 24.dp
+
+// Spacing constants
+private val SpacingSmall = 4.dp
+private val SpacingMedium = 8.dp
+private val SpacingDefault = 16.dp
+private val SpacingLarge = 24.dp
+private val SpacingXLarge = 32.dp
+
+// Company card layout
+private val CompanyCardPadding = 16.dp
+private val CompanyListItemSpacing = 12.dp
+
+// Enterprise number alpha
+private const val EnterpriseNumberAlpha = 0.7f
+
 @Composable
 internal fun CredentialsPane(
     state: PeppolConnectState,
     onIntent: (PeppolConnectIntent) -> Unit
 ) {
     val isLoading = state is PeppolConnectState.LoadingCompanies ||
-            state is PeppolConnectState.Connecting ||
-            state is PeppolConnectState.CreatingCompany
+        state is PeppolConnectState.Connecting ||
+        state is PeppolConnectState.CreatingCompany
 
     val fieldsError = state.exceptionIfError()
 
@@ -95,10 +113,10 @@ internal fun CredentialsPane(
                 imageVector = Icons.Outlined.Receipt,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(64.dp)
+                modifier = Modifier.size(LargeIconSize)
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(SpacingDefault))
 
             Text(
                 text = stringResource(Res.string.peppol_connect_title_with_provider, state.provider.localized),
@@ -106,7 +124,7 @@ internal fun CredentialsPane(
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(SpacingXLarge))
 
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.peppol_api_key),
@@ -116,7 +134,7 @@ internal fun CredentialsPane(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(SpacingDefault))
 
             PTextFieldPassword(
                 fieldName = stringResource(Res.string.peppol_api_secret),
@@ -124,12 +142,12 @@ internal fun CredentialsPane(
                 onValueChange = { onIntent(PeppolConnectIntent.UpdateApiSecret(it.value)) },
                 error = fieldsError.takeIf {
                     it is DokusException.Validation.ApiSecretRequired ||
-                    it is DokusException.Validation.InvalidApiCredentials
+                        it is DokusException.Validation.InvalidApiCredentials
                 },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(SpacingXLarge))
 
             PPrimaryButton(
                 text = when {
@@ -142,12 +160,13 @@ internal fun CredentialsPane(
             )
 
             if (isLoading) {
-                Spacer(Modifier.height(16.dp))
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                Spacer(Modifier.height(SpacingDefault))
+                CircularProgressIndicator(modifier = Modifier.size(SmallProgressIndicatorSize))
             }
         }
     }
 }
+
 @Composable
 internal fun RightPane(
     state: PeppolConnectState,
@@ -177,6 +196,7 @@ internal fun RightPane(
         }
     }
 }
+
 @Composable
 private fun InstructionsPane(provider: PeppolProvider) {
     val uriHandler = LocalUriHandler.current
@@ -193,17 +213,23 @@ private fun InstructionsPane(provider: PeppolProvider) {
             fontWeight = FontWeight.SemiBold
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(SpacingDefault))
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            InstructionStep(1, stringResource(Res.string.peppol_instruction_visit_site, provider.localized))
-            InstructionStep(2, stringResource(Res.string.peppol_instruction_create_account))
-            InstructionStep(3, stringResource(Res.string.peppol_instruction_navigate_api))
-            InstructionStep(4, stringResource(Res.string.peppol_instruction_generate_keys))
-            InstructionStep(5, stringResource(Res.string.peppol_instruction_copy_credentials))
+        val instructions = listOf(
+            stringResource(Res.string.peppol_instruction_visit_site, provider.localized),
+            stringResource(Res.string.peppol_instruction_create_account),
+            stringResource(Res.string.peppol_instruction_navigate_api),
+            stringResource(Res.string.peppol_instruction_generate_keys),
+            stringResource(Res.string.peppol_instruction_copy_credentials),
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(SpacingMedium)) {
+            instructions.forEachIndexed { index, instruction ->
+                InstructionStep(number = index + 1, text = instruction)
+            }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(SpacingDefault))
 
         Text(
             text = stringResource(Res.string.peppol_open_provider, provider.localized),
@@ -249,7 +275,7 @@ internal fun CompanyListPane(
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(SpacingMedium))
 
             Text(
                 text = stringResource(Res.string.peppol_multiple_companies_hint),
@@ -258,10 +284,10 @@ internal fun CompanyListPane(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(SpacingLarge))
 
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(CompanyListItemSpacing),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(state.companies) { company ->
@@ -285,13 +311,13 @@ private fun CompanyCard(
         modifier = Modifier.fillMaxWidth(),
         variant = DokusCardVariant.Soft,
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(CompanyCardPadding)) {
             Text(
                 text = company.name,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(SpacingSmall))
             Text(
                 text = stringResource(Res.string.common_vat_value, company.vatNumber),
                 style = MaterialTheme.typography.bodyMedium,
@@ -301,7 +327,7 @@ private fun CompanyCard(
                 Text(
                     text = stringResource(Res.string.peppol_enterprise_value, company.enterpriseNumber),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = EnterpriseNumberAlpha)
                 )
             }
         }
@@ -327,10 +353,10 @@ internal fun NoCompaniesPane(
                 imageVector = Icons.Outlined.Business,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(64.dp)
+                modifier = Modifier.size(LargeIconSize)
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(SpacingDefault))
 
             Text(
                 text = stringResource(Res.string.peppol_no_companies_title),
@@ -338,7 +364,7 @@ internal fun NoCompaniesPane(
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(SpacingMedium))
 
             Text(
                 text = stringResource(Res.string.peppol_no_companies_hint, state.provider.localized),
@@ -347,7 +373,7 @@ internal fun NoCompaniesPane(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(SpacingXLarge))
 
             PPrimaryButton(
                 text = stringResource(
@@ -371,7 +397,7 @@ internal fun LoadingPane(message: String) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CircularProgressIndicator()
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(SpacingDefault))
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyLarge,

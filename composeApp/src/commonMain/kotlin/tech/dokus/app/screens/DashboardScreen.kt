@@ -1,21 +1,5 @@
 package tech.dokus.app.screens
 
-import tech.dokus.features.cashflow.presentation.cashflow.components.PendingDocumentsCard
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_search
-import tech.dokus.aura.resources.search_placeholder
-import tech.dokus.aura.resources.settings_select_workspace
-import tech.dokus.aura.resources.settings_switch_workspace
-import tech.dokus.foundation.aura.components.AvatarShape
-import tech.dokus.foundation.aura.components.AvatarSize
-import tech.dokus.foundation.aura.components.CompanyAvatarImage
-import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
-import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.navigation.destinations.AuthDestination
-import tech.dokus.navigation.local.LocalNavController
-import tech.dokus.navigation.navigateTo
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -57,16 +41,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
+import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.viewmodel.DashboardAction
 import tech.dokus.app.viewmodel.DashboardContainer
 import tech.dokus.app.viewmodel.DashboardIntent
 import tech.dokus.app.viewmodel.DashboardState
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_search
+import tech.dokus.aura.resources.search_placeholder
+import tech.dokus.aura.resources.settings_select_workspace
+import tech.dokus.aura.resources.settings_switch_workspace
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.cashflow.presentation.cashflow.components.PendingDocumentsCard
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.domain.exceptions.DokusException
-import org.jetbrains.compose.resources.stringResource
+import tech.dokus.foundation.aura.components.AvatarShape
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
+import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 
 /**
  * Dashboard screen using FlowMVI Container pattern.

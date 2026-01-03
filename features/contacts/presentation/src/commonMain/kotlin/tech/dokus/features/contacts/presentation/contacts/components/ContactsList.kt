@@ -1,17 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_add_first
-import tech.dokus.aura.resources.contacts_add_first_hint
-import tech.dokus.aura.resources.contacts_empty
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.ShimmerBox
-import tech.dokus.foundation.aura.components.common.ShimmerLine
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,9 +31,50 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
-import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.flow.filter
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_add_first
+import tech.dokus.aura.resources.contacts_add_first_hint
+import tech.dokus.aura.resources.contacts_empty
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerBox
+import tech.dokus.foundation.aura.components.common.ShimmerLine
+
+// UI dimension constants
+private val ErrorPaddingVertical = 48.dp
+private val ListItemSpacing = 12.dp
+private val EmptyStatePadding = 32.dp
+private val EmptyStateIconSize = 64.dp
+private val EmptyStateSpacingMedium = 16.dp
+private val EmptyStateSpacingSmall = 8.dp
+private val EmptyStateSpacingLarge = 24.dp
+private val CtaCardPadding = 16.dp
+private val CtaIconSpacing = 8.dp
+private val SkeletonShimmerLineHeight = 20.dp
+private val SkeletonShimmerBoxWidth = 50.dp
+private val SkeletonShimmerBoxHeight = 16.dp
+private val SkeletonCornerRadius = 4.dp
+private val SkeletonRowSpacing = 16.dp
+private val SkeletonSpacingSmall = 8.dp
+private val SkeletonEmailHeight = 14.dp
+private val SkeletonTagWidth = 60.dp
+private val SkeletonTagWidthSmall = 50.dp
+private val SkeletonTagHeight = 20.dp
+private val SkeletonTagSpacing = 4.dp
+private val LoadingMorePadding = 16.dp
+private const val SkeletonItemCount = 6
+private const val InfiniteScrollThreshold = 5
+private const val EmptyStateIconAlpha = 0.6f
+private const val EmptyStateHintAlpha = 0.7f
+private const val SkeletonNameWeight = 0.6f
+private const val SkeletonEmailWidthFraction = 0.7f
 
 /**
  * ContactsList component with scrollable list and empty state.
@@ -81,9 +110,9 @@ internal fun ContactsList(
         }
             .distinctUntilChanged()
             .filter { (last, total) ->
-                (last + 1) > (total - 5) &&
-                        paginationState.hasMorePages &&
-                        !paginationState.isLoadingMore
+                (last + 1) > (total - InfiniteScrollThreshold) &&
+                    paginationState.hasMorePages &&
+                    !paginationState.isLoadingMore
             }
             .collect { onLoadMore() }
     }
@@ -119,7 +148,7 @@ internal fun ContactsList(
                 modifier = modifier
                     .fillMaxSize()
                     .padding(contentPadding)
-                    .padding(vertical = 48.dp),
+                    .padding(vertical = ErrorPaddingVertical),
                 contentAlignment = Alignment.Center
             ) {
                 DokusErrorContent(
@@ -147,7 +176,7 @@ private fun ContactsListContent(
         modifier = modifier.fillMaxSize(),
         state = listState,
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(ListItemSpacing)
     ) {
         items(
             items = contacts,
@@ -186,18 +215,18 @@ private fun ContactsEmptyState(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(32.dp)
+            modifier = Modifier.padding(EmptyStatePadding)
         ) {
             Icon(
                 imageVector = Icons.Default.PersonAdd,
                 contentDescription = null,
                 modifier = Modifier
-                    .height(64.dp)
-                    .width(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    .height(EmptyStateIconSize)
+                    .width(EmptyStateIconSize),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = EmptyStateIconAlpha)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(EmptyStateSpacingMedium))
 
             Text(
                 text = stringResource(Res.string.contacts_empty),
@@ -206,16 +235,16 @@ private fun ContactsEmptyState(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(EmptyStateSpacingSmall))
 
             Text(
                 text = stringResource(Res.string.contacts_add_first_hint),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = EmptyStateHintAlpha),
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(EmptyStateSpacingLarge))
 
             // Empty state CTA card
             DokusCardSurface(
@@ -225,7 +254,7 @@ private fun ContactsEmptyState(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(CtaCardPadding),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -234,7 +263,7 @@ private fun ContactsEmptyState(
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(CtaIconSpacing))
                     Text(
                         text = stringResource(Res.string.contacts_add_first),
                         style = MaterialTheme.typography.labelLarge,
@@ -257,9 +286,9 @@ private fun ContactsListSkeleton(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(ListItemSpacing)
     ) {
-        items(6) {
+        items(SkeletonItemCount) {
             ContactCardSkeleton()
         }
     }
@@ -286,43 +315,43 @@ private fun ContactCardSkeleton(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ShimmerLine(
-                    modifier = Modifier.weight(0.6f),
-                    height = 20.dp
+                    modifier = Modifier.weight(SkeletonNameWeight),
+                    height = SkeletonShimmerLineHeight
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(SkeletonRowSpacing))
                 ShimmerBox(
                     modifier = Modifier
-                        .width(50.dp)
-                        .height(16.dp),
-                    shape = RoundedCornerShape(4.dp)
+                        .width(SkeletonShimmerBoxWidth)
+                        .height(SkeletonShimmerBoxHeight),
+                    shape = RoundedCornerShape(SkeletonCornerRadius)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(SkeletonSpacingSmall))
 
             // Email line
             ShimmerLine(
-                modifier = Modifier.fillMaxWidth(0.7f),
-                height = 14.dp
+                modifier = Modifier.fillMaxWidth(SkeletonEmailWidthFraction),
+                height = SkeletonEmailHeight
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(SkeletonSpacingSmall))
 
             // Tags row
             Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(SkeletonTagSpacing)
             ) {
                 ShimmerBox(
                     modifier = Modifier
-                        .width(60.dp)
-                        .height(20.dp),
-                    shape = RoundedCornerShape(4.dp)
+                        .width(SkeletonTagWidth)
+                        .height(SkeletonTagHeight),
+                    shape = RoundedCornerShape(SkeletonCornerRadius)
                 )
                 ShimmerBox(
                     modifier = Modifier
-                        .width(50.dp)
-                        .height(20.dp),
-                    shape = RoundedCornerShape(4.dp)
+                        .width(SkeletonTagWidthSmall)
+                        .height(SkeletonTagHeight),
+                    shape = RoundedCornerShape(SkeletonCornerRadius)
                 )
             }
         }
@@ -339,7 +368,7 @@ private fun ContactsLoadingMoreIndicator(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(vertical = LoadingMorePadding),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {

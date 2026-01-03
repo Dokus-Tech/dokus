@@ -1,20 +1,5 @@
 package tech.dokus.features.contacts.repository
 
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.ContactNoteId
-import tech.dokus.domain.model.contact.ContactActivitySummary
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactMergeResult
-import tech.dokus.domain.model.contact.ContactNoteDto
-import tech.dokus.domain.model.contact.ContactStats
-import tech.dokus.domain.model.contact.CreateContactNoteRequest
-import tech.dokus.domain.model.contact.CreateContactRequest
-import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.domain.model.contact.UpdateContactNoteRequest
-import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
-import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.domain.routes.Contacts
-import tech.dokus.foundation.platform.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.resources.delete
@@ -25,6 +10,21 @@ import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactMergeResult
+import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.domain.model.contact.ContactStats
+import tech.dokus.domain.model.contact.CreateContactNoteRequest
+import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactNoteRequest
+import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
+import tech.dokus.domain.routes.Contacts
+import tech.dokus.foundation.platform.Logger
 
 /**
  * Ktor implementation of ContactRemoteDataSource.

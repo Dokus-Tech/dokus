@@ -1,7 +1,5 @@
 package tech.dokus.foundation.aura.components.common
 
-import tech.dokus.foundation.aura.components.PButton
-import tech.dokus.foundation.aura.components.PButtonVariant
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -11,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Briefcase
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

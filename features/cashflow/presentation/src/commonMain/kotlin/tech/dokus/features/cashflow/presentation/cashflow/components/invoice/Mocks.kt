@@ -1,23 +1,43 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
-import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
+import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+
+// Mock date constants
+private const val MockYear = 2024
+private const val MockMonth = 12
+private const val MockDay = 13
+private const val MockHour = 12
+private const val MockMinute = 0
+
+// Mock invoice line item values
+private const val WebDevQuantity = 40.0
+private const val WebDevUnitPrice = "85.00"
+private const val UiUxQuantity = 16.0
+private const val UiUxUnitPrice = "75.00"
+private const val ConsultingQuantity = 8.0
+private const val ConsultingUnitPrice = "120.00"
+private const val DefaultVatRatePercent = 21
+
+// Due date offset
+private const val DueDateYear = 2025
+private const val DueDateMonth = 1
 
 /**
  * Mock data for invoice component previews.
  */
 object Mocks {
 
-    private val now = LocalDateTime(2024, 12, 13, 12, 0)
+    private val now = LocalDateTime(MockYear, MockMonth, MockDay, MockHour, MockMinute)
 
     @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
     val sampleClient = ContactDto(
@@ -59,16 +79,16 @@ object Mocks {
         InvoiceLineItem(
             id = "1",
             description = "Web Development Services",
-            quantity = 40.0,
-            unitPrice = "85.00",
-            vatRatePercent = 21
+            quantity = WebDevQuantity,
+            unitPrice = WebDevUnitPrice,
+            vatRatePercent = DefaultVatRatePercent
         ),
         InvoiceLineItem(
             id = "2",
             description = "UI/UX Design",
-            quantity = 16.0,
-            unitPrice = "75.00",
-            vatRatePercent = 21
+            quantity = UiUxQuantity,
+            unitPrice = UiUxUnitPrice,
+            vatRatePercent = DefaultVatRatePercent
         )
     )
 
@@ -76,24 +96,24 @@ object Mocks {
         InvoiceLineItem(
             id = "1",
             description = "Consulting Services",
-            quantity = 8.0,
-            unitPrice = "120.00",
-            vatRatePercent = 21
+            quantity = ConsultingQuantity,
+            unitPrice = ConsultingUnitPrice,
+            vatRatePercent = DefaultVatRatePercent
         )
     )
 
     val sampleFormState = CreateInvoiceFormState(
         selectedClient = sampleClient,
-        issueDate = LocalDate(2024, 12, 13),
-        dueDate = LocalDate(2025, 1, 13),
+        issueDate = LocalDate(MockYear, MockMonth, MockDay),
+        dueDate = LocalDate(DueDateYear, DueDateMonth, MockDay),
         items = sampleLineItems,
         notes = "Thank you for your business!"
     )
 
     val sampleFormStateWithWarning = CreateInvoiceFormState(
         selectedClient = sampleClientWithoutPeppol,
-        issueDate = LocalDate(2024, 12, 13),
-        dueDate = LocalDate(2025, 1, 13),
+        issueDate = LocalDate(MockYear, MockMonth, MockDay),
+        dueDate = LocalDate(DueDateYear, DueDateMonth, MockDay),
         items = sampleSingleLineItem,
         notes = ""
     )

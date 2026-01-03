@@ -1,13 +1,13 @@
 package tech.dokus.foundation.backend.configure
 
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.foundation.backend.utils.loggerFor
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 

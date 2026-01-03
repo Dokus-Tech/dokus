@@ -1,14 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.InvoiceItemDto
-import tech.dokus.domain.model.RecordPaymentRequest
-import tech.dokus.domain.routes.Invoices
-import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveNullable
@@ -21,6 +12,15 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.cashflow.InvoiceService
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.RecordPaymentRequest
+import tech.dokus.domain.routes.Invoices
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

@@ -21,7 +21,8 @@ import java.lang.management.ManagementFactory
 fun Routing.healthRoutes() {
     get("/health/live") {
         call.respond(
-            HttpStatusCode.OK, HealthStatus(
+            HttpStatusCode.OK,
+            HealthStatus(
                 status = ServerStatus.UP,
                 checks = mapOf(
                     "service" to HealthCheck(ServerStatus.UP, "Service is running")
@@ -57,7 +58,8 @@ fun Routing.healthRoutes() {
             if (overallStatus == ServerStatus.UP) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable
 
         call.respond(
-            statusCode, HealthStatus(
+            statusCode,
+            HealthStatus(
                 status = overallStatus,
                 checks = checks
             )

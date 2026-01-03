@@ -1,23 +1,11 @@
+@file:Suppress(
+    "TooManyFunctions", // Container handles multiple intents
+    "LongParameterList", // DI requires multiple use cases
+    "UnusedParameter" // Reserved parameters
+)
+
 package tech.dokus.features.cashflow.mvi
 
-import tech.dokus.features.cashflow.presentation.cashflow.components.BusinessHealthData
-import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentSortOption
-import tech.dokus.features.cashflow.presentation.cashflow.components.VatSummaryData
-import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.FilterDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadBusinessHealthUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadCashflowDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadVatSummaryUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SearchCashflowDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.WatchPendingDocumentsUseCase
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -29,7 +17,25 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.features.cashflow.presentation.cashflow.components.BusinessHealthData
+import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentSortOption
+import tech.dokus.features.cashflow.presentation.cashflow.components.VatSummaryData
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
+import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.FilterDocumentsUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadBusinessHealthUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadCashflowDocumentsUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadVatSummaryUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SearchCashflowDocumentsUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.platform.Logger
 
 internal typealias CashflowCtx = PipelineContext<CashflowState, CashflowIntent, CashflowAction>
 

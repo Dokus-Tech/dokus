@@ -87,7 +87,10 @@ class DocumentProcessingWorker(
             return
         }
 
-        logger.info("Starting document processing worker (interval=${config.pollingInterval}ms, batch=${config.batchSize}, RAG=${isRagEnabled})")
+        logger.info(
+            "Starting worker: interval=${config.pollingInterval}ms, " +
+                "batch=${config.batchSize}, RAG=$isRagEnabled"
+        )
 
         pollingJob = scope.launch {
             while (isActive && isRunning.get()) {
@@ -197,8 +200,8 @@ class DocumentProcessingWorker(
                     ocrResult.timeoutDetails?.let { details ->
                         logger.error(
                             "Timeout details: stage=${details.stage}, " +
-                            "timeoutMs=${details.timeoutMs}, " +
-                            "pagesProcessed=${details.pagesProcessed}/${details.totalPages ?: "?"}"
+                                "timeoutMs=${details.timeoutMs}, " +
+                                "pagesProcessed=${details.pagesProcessed}/${details.totalPages ?: "?"}"
                         )
                     }
 
@@ -244,7 +247,10 @@ class DocumentProcessingWorker(
                 force = false // Don't overwrite user edits
             )
 
-            logger.info("Successfully processed document $documentId: type=$documentType, confidence=${result.confidence}, meetsThreshold=$meetsThreshold")
+            logger.info(
+                "Processed doc $documentId: type=$documentType, " +
+                    "conf=${result.confidence}, threshold=$meetsThreshold"
+            )
 
             // RAG preparation: chunk and embed the extracted text
             // This is independent of draft creation - chunks are created for all docs with rawText
@@ -271,7 +277,6 @@ class DocumentProcessingWorker(
                     )
                 }
             }
-
         } catch (e: Exception) {
             logger.error("Unexpected error processing document $documentId", e)
             ingestionRepository.markAsFailed(runId, "Processing error: ${e.message}")
@@ -331,7 +336,7 @@ class DocumentProcessingWorker(
         // Step 3: Delete old chunks if they exist (content has changed)
         if (existingHash != null) {
             val deletedCount = chunkRepo.deleteChunksForDocument(tenantIdParsed, documentIdParsed)
-            logger.info("Deleted $deletedCount old chunks for document $documentId (old hash=$existingHash, new hash=$contentHash)")
+            logger.info("Deleted $deletedCount chunks for doc $documentId (hash changed)")
         }
 
         // Step 4: Chunk the text
@@ -356,9 +361,8 @@ class DocumentProcessingWorker(
             throw e // Re-throw to track as failure
         }
 
-        if (embeddings.size != chunkingResult.chunks.size) {
-            logger.error("Embedding count mismatch: expected ${chunkingResult.chunks.size}, got ${embeddings.size}")
-            throw IllegalStateException("Embedding count mismatch: expected ${chunkingResult.chunks.size}, got ${embeddings.size}")
+        check(embeddings.size == chunkingResult.chunks.size) {
+            "Embedding count mismatch: expected ${chunkingResult.chunks.size}, got ${embeddings.size}"
         }
 
         val embeddingModel = embeddings.firstOrNull()?.model ?: "unknown"
@@ -387,7 +391,7 @@ class DocumentProcessingWorker(
                 contentHash = contentHash,
                 chunks = chunksWithEmbeddings
             )
-            logger.info("Stored ${chunksWithEmbeddings.size} chunks with embeddings for document $documentId (hash=$contentHash)")
+            logger.info("Stored ${chunksWithEmbeddings.size} chunks for doc $documentId")
             return chunksWithEmbeddings.size
         } catch (e: Exception) {
             logger.error("Failed to store chunks for document $documentId: ${e.message}", e)

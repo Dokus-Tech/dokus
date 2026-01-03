@@ -1,12 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_no_documents
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.ShimmerLine
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +16,40 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_no_documents
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerLine
+
+// Section layout dimensions
+private val SectionItemSpacing = 16.dp
+private val DesktopErrorVerticalPadding = 48.dp
+private val MobileErrorVerticalPadding = 32.dp
+
+// Table skeleton dimensions
+private val SkeletonRowSpacing = 8.dp
+private val SkeletonHeaderVerticalPadding = 12.dp
+private val SkeletonHeaderHorizontalSpacing = 16.dp
+private val SkeletonHeaderLineHeight = 14.dp
+private val SkeletonRowVerticalPadding = 16.dp
+private val SkeletonRowLineHeight = 16.dp
+private const val TableColumnCount = 5
+private const val TableRowCount = 5
+
+// Mobile skeleton dimensions
+private const val MobileSkeletonRowCount = 6
+private val MobileSkeletonHorizontalPadding = 16.dp
+private val MobileSkeletonSpacerWidth = 16.dp
+private val MobileSkeletonDateWidth = 60.dp
+private val MobileSkeletonAmountWidth = 70.dp
+private val MobileSkeletonAmountHeight = 22.dp
+
+// Empty and loading states
+private val EmptyStateVerticalPadding = 48.dp
+private val LoadingMoreVerticalPadding = 16.dp
 
 /**
  * Documents table section with its own loading/error handling.
@@ -42,7 +69,7 @@ fun CashflowDocumentsTableSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(SectionItemSpacing)
     ) {
         when (state) {
             is DokusState.Loading, is DokusState.Idle -> {
@@ -71,7 +98,7 @@ fun CashflowDocumentsTableSection(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 48.dp),
+                        .padding(vertical = DesktopErrorVerticalPadding),
                     contentAlignment = Alignment.Center
                 ) {
                     DokusErrorContent(
@@ -100,7 +127,7 @@ fun CashflowMobileDocumentsSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(SectionItemSpacing)
     ) {
         when (state) {
             is DokusState.Loading, is DokusState.Idle -> {
@@ -128,7 +155,7 @@ fun CashflowMobileDocumentsSection(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 32.dp),
+                        .padding(vertical = MobileErrorVerticalPadding),
                     contentAlignment = Alignment.Center
                 ) {
                     DokusErrorContent(
@@ -148,35 +175,35 @@ fun CashflowMobileDocumentsSection(
 private fun DocumentsTableSkeleton() {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(SkeletonRowSpacing)
     ) {
         // Table header skeleton
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(vertical = SkeletonHeaderVerticalPadding),
+            horizontalArrangement = Arrangement.spacedBy(SkeletonHeaderHorizontalSpacing)
         ) {
-            repeat(5) {
+            repeat(TableColumnCount) {
                 ShimmerLine(
                     modifier = Modifier.weight(1f),
-                    height = 14.dp
+                    height = SkeletonHeaderLineHeight
                 )
             }
         }
 
         // Table rows skeleton
-        repeat(5) {
+        repeat(TableRowCount) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(vertical = SkeletonRowVerticalPadding),
+                horizontalArrangement = Arrangement.spacedBy(SkeletonHeaderHorizontalSpacing)
             ) {
-                repeat(5) {
+                repeat(TableColumnCount) {
                     ShimmerLine(
                         modifier = Modifier.weight(1f),
-                        height = 16.dp
+                        height = SkeletonRowLineHeight
                     )
                 }
             }
@@ -191,29 +218,29 @@ private fun DocumentsTableSkeleton() {
 private fun MobileDocumentsListSkeleton() {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(SkeletonRowSpacing)
     ) {
-        repeat(6) {
+        repeat(MobileSkeletonRowCount) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                    .padding(vertical = SkeletonHeaderVerticalPadding, horizontal = MobileSkeletonHorizontalPadding),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ShimmerLine(
                     modifier = Modifier.weight(1f),
-                    height = 16.dp
+                    height = SkeletonRowLineHeight
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(MobileSkeletonSpacerWidth))
                 ShimmerLine(
-                    modifier = Modifier.width(60.dp),
-                    height = 16.dp
+                    modifier = Modifier.width(MobileSkeletonDateWidth),
+                    height = SkeletonRowLineHeight
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(MobileSkeletonSpacerWidth))
                 ShimmerLine(
-                    modifier = Modifier.width(70.dp),
-                    height = 22.dp
+                    modifier = Modifier.width(MobileSkeletonAmountWidth),
+                    height = MobileSkeletonAmountHeight
                 )
             }
         }
@@ -230,7 +257,7 @@ fun EmptyDocumentsState(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 48.dp),
+            .padding(vertical = EmptyStateVerticalPadding),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -251,7 +278,7 @@ fun LoadingMoreIndicator(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(vertical = LoadingMoreVerticalPadding),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {

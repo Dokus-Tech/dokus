@@ -1,11 +1,12 @@
 @file:OptIn(DelicateCoroutinesApi::class)
+@file:Suppress("MaxLineLength") // Long email template lines
 
 package tech.dokus.backend.services.auth
 
-import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.Properties
 import javax.mail.Authenticator
 import javax.mail.Message
@@ -41,7 +42,9 @@ class SmtpEmailService(
     private val session: Session by lazy { createSession() }
 
     init {
-        logger.info("SMTP Email Service initialized (host: ${config.smtp.host}, port: ${config.smtp.port}, TLS: ${config.smtp.enableTls})")
+        logger.info(
+            "SMTP Email Service initialized (host: ${config.smtp.host}, port: ${config.smtp.port}, TLS: ${config.smtp.enableTls})"
+        )
     }
 
     override suspend fun sendPasswordResetEmail(
@@ -165,14 +168,18 @@ class SmtpEmailService(
             // Create multipart content with both HTML and text
             val multipart = MimeMultipart("alternative").apply {
                 // Add text version first (fallback)
-                addBodyPart(MimeBodyPart().apply {
-                    setText(textContent, "UTF-8")
-                })
+                addBodyPart(
+                    MimeBodyPart().apply {
+                        setText(textContent, "UTF-8")
+                    }
+                )
 
                 // Add HTML version second (preferred)
-                addBodyPart(MimeBodyPart().apply {
-                    setContent(htmlContent, "text/html; charset=UTF-8")
-                })
+                addBodyPart(
+                    MimeBodyPart().apply {
+                        setContent(htmlContent, "text/html; charset=UTF-8")
+                    }
+                )
             }
 
             setContent(multipart)
@@ -198,11 +205,14 @@ class SmtpEmailService(
         }
 
         return if (config.smtp.enableAuth) {
-            Session.getInstance(props, object : Authenticator() {
-                override fun getPasswordAuthentication(): PasswordAuthentication {
-                    return PasswordAuthentication(config.smtp.username, config.smtp.password)
+            Session.getInstance(
+                props,
+                object : Authenticator() {
+                    override fun getPasswordAuthentication(): PasswordAuthentication {
+                        return PasswordAuthentication(config.smtp.username, config.smtp.password)
+                    }
                 }
-            })
+            )
         } else {
             Session.getInstance(props)
         }
@@ -328,7 +338,7 @@ class SmtpEmailService(
             </div>
         </body>
         </html>
-    """.trimIndent()
+        """.trimIndent()
 
     private fun buildEmailVerificationText(verificationUrl: String, expirationHours: Int): String =
         """
@@ -345,7 +355,7 @@ class SmtpEmailService(
         Need help? Contact us at ${config.templates.supportEmail}
 
         © ${java.time.Year.now().value} Dokus. All rights reserved.
-    """.trimIndent()
+        """.trimIndent()
 
     private fun buildWelcomeEmailHtml(userName: String): String = """
         <!DOCTYPE html>

@@ -1,10 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review.components.details
 
-import tech.dokus.features.cashflow.presentation.review.BillField
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.review.ExpenseField
-import tech.dokus.features.cashflow.presentation.review.InvoiceField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +17,11 @@ import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total_amount
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.features.cashflow.presentation.review.BillField
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.ExpenseField
+import tech.dokus.features.cashflow.presentation.review.InvoiceField
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains

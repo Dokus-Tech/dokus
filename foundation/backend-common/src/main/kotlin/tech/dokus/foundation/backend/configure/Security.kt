@@ -1,6 +1,5 @@
 package tech.dokus.foundation.backend.configure
 
-import tech.dokus.foundation.backend.config.SecurityConfig
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application
@@ -12,6 +11,7 @@ import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
 import io.ktor.server.plugins.forwardedheaders.XForwardedHeaders
 import io.ktor.server.plugins.hsts.HSTS
 import io.ktor.server.plugins.requestvalidation.RequestValidation
+import tech.dokus.foundation.backend.config.SecurityConfig
 import kotlin.time.Duration.Companion.days
 
 fun Application.configureSecurity(securityConfig: SecurityConfig) {

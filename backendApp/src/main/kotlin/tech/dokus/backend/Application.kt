@@ -32,11 +32,13 @@ fun main() {
         module(appConfig)
     }
 
-    Runtime.getRuntime().addShutdownHook(Thread {
-        logger.info("Shutting down Dokus Server gracefully...")
-        server.stop(5000, 10000)
-        logger.info("Server shutdown complete")
-    })
+    Runtime.getRuntime().addShutdownHook(
+        Thread {
+            logger.info("Shutting down Dokus Server gracefully...")
+            server.stop(5000, 10000)
+            logger.info("Server shutdown complete")
+        }
+    )
 
     server.start(wait = true)
 }

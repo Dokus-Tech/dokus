@@ -1,8 +1,8 @@
 package tech.dokus.domain.routes
 
-import tech.dokus.domain.enums.InvitationStatus
 import io.ktor.resources.*
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.InvitationStatus
 
 /**
  * Type-safe route definitions for Team Management API.

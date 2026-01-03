@@ -1,17 +1,5 @@
 package tech.dokus.backend.routes.contacts
 
-import tech.dokus.database.repository.contacts.ContactRepository
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.ContactNoteId
-import tech.dokus.domain.model.contact.CreateContactNoteRequest
-import tech.dokus.domain.model.contact.CreateContactRequest
-import tech.dokus.domain.model.contact.UpdateContactNoteRequest
-import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
-import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.domain.routes.Contacts
-import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -24,6 +12,18 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.model.contact.CreateContactNoteRequest
+import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactNoteRequest
+import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
+import tech.dokus.domain.routes.Contacts
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 
 /**
  * Contact API Routes using Ktor Type-Safe Routing
@@ -203,7 +203,11 @@ fun Route.contactRoutes() {
                 tenantId = tenantId,
                 peppolId = request.peppolId,
                 peppolEnabled = request.peppolEnabled
-            ).getOrElse { throw DokusException.InternalError("Failed to update contact Peppol settings: ${it.message}") }
+            ).getOrElse {
+                throw DokusException.InternalError(
+                    "Failed to update contact Peppol settings: ${it.message}"
+                )
+            }
 
             call.respond(HttpStatusCode.OK, contact)
         }
@@ -264,7 +268,7 @@ fun Route.contactRoutes() {
                     ex.message?.contains("not found") == true ->
                         throw DokusException.NotFound(ex.message ?: "Contact not found")
                     ex.message?.contains("VAT numbers") == true ||
-                    ex.message?.contains("system contact") == true ->
+                        ex.message?.contains("system contact") == true ->
                         throw DokusException.BadRequest(ex.message ?: "Merge not allowed")
                     else ->
                         throw DokusException.InternalError("Failed to merge contacts: ${ex.message}")

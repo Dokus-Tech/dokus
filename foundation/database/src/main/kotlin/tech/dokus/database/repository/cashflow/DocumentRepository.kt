@@ -1,17 +1,5 @@
 package tech.dokus.database.repository.cashflow
 
-import tech.dokus.database.tables.cashflow.DocumentDraftsTable
-import tech.dokus.database.tables.cashflow.DocumentIngestionRunsTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
-import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.IngestionRunId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.DocumentDto
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -26,6 +14,18 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.tables.cashflow.DocumentDraftsTable
+import tech.dokus.database.tables.cashflow.DocumentIngestionRunsTable
+import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.DocumentDto
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -85,7 +85,7 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                    (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -100,7 +100,7 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.storageKey eq storageKey) and
-                    (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -169,7 +169,7 @@ class DocumentRepository {
         // Apply search filter on filename (case-insensitive)
         val filteredQuery = if (!search.isNullOrBlank()) {
             documentsQuery.andWhere {
-                DocumentsTable.filename like "%${search}%"
+                DocumentsTable.filename like "%$search%"
             }
         } else {
             documentsQuery
@@ -180,7 +180,7 @@ class DocumentRepository {
         val statusFilteredQuery = if (draftStatus != null) {
             filteredQuery.andWhere {
                 DocumentDraftsTable.tenantId.isNull() or
-                (DocumentDraftsTable.draftStatus eq draftStatus)
+                    (DocumentDraftsTable.draftStatus eq draftStatus)
             }
         } else {
             filteredQuery
@@ -190,7 +190,7 @@ class DocumentRepository {
         val typeFilteredQuery = if (documentType != null) {
             statusFilteredQuery.andWhere {
                 DocumentDraftsTable.tenantId.isNull() or
-                (DocumentDraftsTable.documentType eq documentType)
+                    (DocumentDraftsTable.documentType eq documentType)
             }
         } else {
             statusFilteredQuery
@@ -262,8 +262,8 @@ class DocumentRepository {
         val processing = DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             }
             .map { it.toIngestionRunSummary() }
             .firstOrNull()
@@ -274,8 +274,8 @@ class DocumentRepository {
         val finished = DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                (DocumentIngestionRunsTable.status inList listOf(IngestionStatus.Succeeded, IngestionStatus.Failed))
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status inList listOf(IngestionStatus.Succeeded, IngestionStatus.Failed))
             }
             .orderBy(DocumentIngestionRunsTable.finishedAt, SortOrder.DESC_NULLS_LAST)
             .map { it.toIngestionRunSummary() }
@@ -287,8 +287,8 @@ class DocumentRepository {
         return DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
             .map { it.toIngestionRunSummary() }
@@ -318,14 +318,22 @@ class DocumentRepository {
             documentType = this[DocumentDraftsTable.documentType],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
             aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },
-            aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]?.let { IngestionRunId.parse(it.toString()) },
+            aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]?.let {
+                IngestionRunId.parse(
+                    it.toString()
+                )
+            },
             draftVersion = this[DocumentDraftsTable.draftVersion],
             draftEditedAt = this[DocumentDraftsTable.draftEditedAt],
             draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
             suggestedContactId = this[DocumentDraftsTable.suggestedContactId]?.let { ContactId(it.toKotlinUuid()) },
             contactSuggestionConfidence = this[DocumentDraftsTable.contactSuggestionConfidence],
             contactSuggestionReason = this[DocumentDraftsTable.contactSuggestionReason],
-            lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(it.toString()) },
+            lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let {
+                IngestionRunId.parse(
+                    it.toString()
+                )
+            },
             createdAt = this[DocumentDraftsTable.createdAt],
             updatedAt = this[DocumentDraftsTable.updatedAt]
         )
@@ -341,7 +349,7 @@ class DocumentRepository {
         newSuspendedTransaction {
             DocumentsTable.deleteWhere {
                 (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             } > 0
         }
 
@@ -354,7 +362,7 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                    (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
                 .count() > 0
         }

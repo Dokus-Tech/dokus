@@ -1,16 +1,7 @@
+@file:Suppress("LongMethod") // Mock data and long setup functions
+
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.Money
-import tech.dokus.domain.enums.Currency
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.InvoiceNumber
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -20,6 +11,27 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.InvoiceNumber
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+
+// Preview layout constants
+private val PreviewPadding = 24.dp
+
+// Preview mock data date constants
+private const val PreviewYear = 2024
+private const val PreviewMonth = 5
+private const val PreviewDay = 25
+private const val PreviewHour = 12
+private const val PreviewMinute = 0
 
 /**
  * Preview for FinancialDocumentTable component.
@@ -36,7 +48,7 @@ fun FinancialDocumentTablePreview(
             onMoreClick = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(PreviewPadding)
         )
     }
 }
@@ -46,8 +58,8 @@ fun FinancialDocumentTablePreview(
  */
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
-    val now = LocalDateTime(2024, 5, 25, 12, 0)
-    val date = LocalDate(2024, 5, 25)
+    val now = LocalDateTime(PreviewYear, PreviewMonth, PreviewDay, PreviewHour, PreviewMinute)
+    val date = LocalDate(PreviewYear, PreviewMonth, PreviewDay)
 
     return listOf(
         // Invoice with alert (Sent status)

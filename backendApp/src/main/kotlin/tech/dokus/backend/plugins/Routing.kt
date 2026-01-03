@@ -1,6 +1,5 @@
 package tech.dokus.backend.plugins
 
-import tech.dokus.foundation.backend.config.AppBaseConfig
 import io.ktor.server.application.Application
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.auth.configureAuthRoutes
@@ -8,6 +7,7 @@ import tech.dokus.backend.routes.cashflow.configureCashflowRoutes
 import tech.dokus.backend.routes.common.configureCommonRoutes
 import tech.dokus.backend.routes.contacts.configureContactsRoutes
 import tech.dokus.backend.routes.payment.configurePaymentRoutes
+import tech.dokus.foundation.backend.config.AppBaseConfig
 
 private val logger = LoggerFactory.getLogger("Routing")
 

@@ -56,26 +56,26 @@ data class ExtractedBillData(
 
     // Bill identification
     val invoiceNumber: String? = null,
-    val issueDate: String? = null,       // ISO format YYYY-MM-DD
+    val issueDate: String? = null, // ISO format YYYY-MM-DD
     val dueDate: String? = null,
 
     // Amounts
-    val currency: String? = null,        // EUR, USD, etc.
-    val amount: String? = null,          // Total amount before VAT
+    val currency: String? = null, // EUR, USD, etc.
+    val amount: String? = null, // Total amount before VAT
     val vatAmount: String? = null,
-    val vatRate: String? = null,         // e.g., "21%"
-    val totalAmount: String? = null,     // Total including VAT
+    val vatRate: String? = null, // e.g., "21%"
+    val totalAmount: String? = null, // Total including VAT
 
     // Line items (optional, some bills don't have itemized breakdown)
     val lineItems: List<BillLineItem> = emptyList(),
 
     // Categorization
-    val category: String? = null,        // Expense category suggestion
+    val category: String? = null, // Expense category suggestion
     val description: String? = null,
 
     // Payment information
-    val paymentTerms: String? = null,    // e.g., "Net 30"
-    val bankAccount: String? = null,     // IBAN or account number
+    val paymentTerms: String? = null, // e.g., "Net 30"
+    val bankAccount: String? = null, // IBAN or account number
 
     // Additional notes
     val notes: String? = null,
@@ -95,6 +95,6 @@ data class BillLineItem(
     val description: String,
     val quantity: Double? = null,
     val unitPrice: String? = null,
-    val vatRate: String? = null,         // e.g., "21%"
+    val vatRate: String? = null, // e.g., "21%"
     val total: String? = null
 )

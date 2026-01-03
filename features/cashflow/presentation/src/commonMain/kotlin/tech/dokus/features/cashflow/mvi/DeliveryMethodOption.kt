@@ -1,6 +1,12 @@
 package tech.dokus.features.cashflow.mvi
 
-import tech.dokus.features.cashflow.mvi.model.InvoiceDeliveryMethod
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.delivery_email_description
 import tech.dokus.aura.resources.delivery_export_pdf
@@ -9,13 +15,7 @@ import tech.dokus.aura.resources.delivery_peppol_description
 import tech.dokus.aura.resources.delivery_peppol_warning
 import tech.dokus.aura.resources.delivery_send_email
 import tech.dokus.aura.resources.delivery_send_peppol
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.vector.ImageVector
-import org.jetbrains.compose.resources.stringResource
+import tech.dokus.features.cashflow.mvi.model.InvoiceDeliveryMethod
 
 /**
  * Sealed interface representing available delivery method options for invoices.

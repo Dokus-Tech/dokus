@@ -1,9 +1,5 @@
 package tech.dokus.foundation.aura.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_cash_in
-import tech.dokus.aura.resources.cashflow_cash_out
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -11,6 +7,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_cash_in
+import tech.dokus.aura.resources.cashflow_cash_out
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Type of cashflow transaction badge

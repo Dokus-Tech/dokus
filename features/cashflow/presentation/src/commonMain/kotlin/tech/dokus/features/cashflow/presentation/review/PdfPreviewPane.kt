@@ -1,14 +1,7 @@
+@file:Suppress("UnusedParameter") // reserved params
+
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_document_preview_title
-import tech.dokus.aura.resources.cashflow_preview_highlight_hint
-import tech.dokus.aura.resources.cashflow_preview_load_more
-import tech.dokus.aura.resources.cashflow_preview_page_failed
-import tech.dokus.aura.resources.cashflow_preview_page_label
-import tech.dokus.aura.resources.state_retry
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,8 +33,34 @@ import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import coil3.compose.SubcomposeAsyncImage
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_document_preview_title
+import tech.dokus.aura.resources.cashflow_preview_highlight_hint
+import tech.dokus.aura.resources.cashflow_preview_load_more
+import tech.dokus.aura.resources.cashflow_preview_page_failed
+import tech.dokus.aura.resources.cashflow_preview_page_label
+import tech.dokus.aura.resources.state_retry
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentPagePreviewDto
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.extensions.localized
+
+// Layout dimensions
+private val ErrorPadding = 32.dp
+private val RetryButtonTopPadding = 16.dp
+private val RetryIconEndPadding = 8.dp
+private val PreviewMaxWidth = 920.dp
+private val PreviewContentPadding = 12.dp
+private val PageSpacing = 12.dp
+private val LoadMoreButtonVerticalPadding = 8.dp
+private val PlaceholderPadding = 32.dp
+private val PlaceholderIconBottomPadding = 16.dp
+private val HintTopPadding = 8.dp
+
+// Page constants
+private const val A4AspectRatio = 0.707f
+private const val HintTextAlpha = 0.7f
+private const val PageBatchSize = 10
 
 /**
  * PDF preview pane that displays rendered page images.
@@ -116,7 +135,7 @@ private fun ErrorPreview(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(ErrorPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -127,12 +146,12 @@ private fun ErrorPreview(
         )
         Button(
             onClick = onRetry,
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(top = RetryButtonTopPadding)
         ) {
             Icon(
                 imageVector = Icons.Default.Refresh,
                 contentDescription = null,
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(end = RetryIconEndPadding)
             )
             Text(stringResource(Res.string.state_retry))
         }
@@ -167,10 +186,10 @@ private fun ReadyPreview(
             LazyColumn(
                 state = scrollState,
                 modifier = Modifier
-                    .widthIn(max = 920.dp) // Constrain preview width
+                    .widthIn(max = PreviewMaxWidth)
                     .fillMaxWidth(),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(PreviewContentPadding),
+                verticalArrangement = Arrangement.spacedBy(PageSpacing),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 itemsIndexed(pages) { index, page ->
@@ -186,7 +205,7 @@ private fun ReadyPreview(
                         LoadMoreButton(
                             currentCount = renderedPages,
                             totalCount = totalPages,
-                            onClick = { onLoadMore(renderedPages + 10) },
+                            onClick = { onLoadMore(renderedPages + PageBatchSize) },
                         )
                     }
                 }
@@ -216,7 +235,7 @@ private fun PdfPageImage(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(0.707f) // A4 aspect ratio
+                        .aspectRatio(A4AspectRatio)
                         .background(Color.White),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -227,7 +246,7 @@ private fun PdfPageImage(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(0.707f)
+                        .aspectRatio(A4AspectRatio)
                         .background(MaterialTheme.colorScheme.errorContainer),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -262,7 +281,7 @@ private fun LoadMoreButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = LoadMoreButtonVerticalPadding)
     ) {
         Text(stringResource(Res.string.cashflow_preview_load_more, currentCount, totalCount))
     }
@@ -274,14 +293,14 @@ private fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(32.dp),
+            .padding(PlaceholderPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = Icons.Default.Description,
             contentDescription = null,
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier.padding(bottom = PlaceholderIconBottomPadding),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
@@ -292,8 +311,8 @@ private fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
         Text(
             text = stringResource(Res.string.cashflow_preview_highlight_hint),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            modifier = Modifier.padding(top = 8.dp)
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = HintTextAlpha),
+            modifier = Modifier.padding(top = HintTopPadding)
         )
     }
 }

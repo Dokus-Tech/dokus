@@ -1,10 +1,5 @@
 package tech.dokus.foundation.backend.lookup
 
-import tech.dokus.domain.enums.Country
-import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.entity.EntityAddress
-import tech.dokus.domain.model.entity.EntityLookup
-import tech.dokus.domain.model.entity.EntityStatus
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -12,6 +7,11 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.Country
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.entity.EntityAddress
+import tech.dokus.domain.model.entity.EntityLookup
+import tech.dokus.domain.model.entity.EntityStatus
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**

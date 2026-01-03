@@ -1,8 +1,5 @@
 package tech.dokus.database.repository.cashflow
 
-import tech.dokus.database.entity.IngestionItemEntity
-import tech.dokus.database.tables.cashflow.DocumentIngestionRunsTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -18,6 +15,9 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.IngestionItemEntity
+import tech.dokus.database.tables.cashflow.DocumentIngestionRunsTable
+import tech.dokus.database.tables.cashflow.DocumentsTable
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
@@ -96,7 +96,7 @@ class DocumentIngestionRunRepository {
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())) and
-                (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             .map { it.toIngestionRunSummary() }
             .singleOrNull()
@@ -113,7 +113,7 @@ class DocumentIngestionRunRepository {
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
-                (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
             .map { it.toIngestionRunSummary() }
@@ -135,8 +135,8 @@ class DocumentIngestionRunRepository {
         val processing = DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             }
             .map { it.toIngestionRunSummary() }
             .firstOrNull()
@@ -147,8 +147,8 @@ class DocumentIngestionRunRepository {
         val finished = DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                (DocumentIngestionRunsTable.status inList listOf(IngestionStatus.Succeeded, IngestionStatus.Failed))
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status inList listOf(IngestionStatus.Succeeded, IngestionStatus.Failed))
             }
             .orderBy(DocumentIngestionRunsTable.finishedAt, SortOrder.DESC_NULLS_LAST)
             .map { it.toIngestionRunSummary() }
@@ -160,8 +160,8 @@ class DocumentIngestionRunRepository {
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
             .map { it.toIngestionRunSummary() }
@@ -177,11 +177,12 @@ class DocumentIngestionRunRepository {
         documentId: DocumentId,
         tenantId: TenantId
     ): IngestionRunSummary? = newSuspendedTransaction {
+        val pendingStatuses = listOf(IngestionStatus.Queued, IngestionStatus.Processing)
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
-                (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (DocumentIngestionRunsTable.status inList listOf(IngestionStatus.Queued, IngestionStatus.Processing))
+                    (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (DocumentIngestionRunsTable.status inList pendingStatuses)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
             .map { it.toIngestionRunSummary() }
@@ -285,7 +286,7 @@ class DocumentIngestionRunRepository {
     ): Int = newSuspendedTransaction {
         DocumentIngestionRunsTable.deleteWhere {
             (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
-            (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }
     }
 
@@ -300,7 +301,7 @@ class DocumentIngestionRunRepository {
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())) and
-                (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             .map { row ->
                 row[DocumentIngestionRunsTable.rawExtractionJson]?.let { jsonStr ->

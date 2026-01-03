@@ -1,14 +1,14 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
-import tech.dokus.features.contacts.usecases.GetContactUseCase
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.contacts.usecases.GetContactUseCase
+import tech.dokus.foundation.platform.Logger
 
 internal typealias DocumentReviewCtx = PipelineContext<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction>
 
@@ -51,42 +51,50 @@ internal class DocumentReviewContainer(
             reduce { intent ->
                 with(reducer) {
                     when (intent) {
-                    // === Data Loading ===
-                    is DocumentReviewIntent.LoadDocument -> handleLoadDocument(intent.documentId)
-                    is DocumentReviewIntent.Refresh -> handleRefresh()
+                        // === Data Loading ===
+                        is DocumentReviewIntent.LoadDocument -> handleLoadDocument(intent.documentId)
+                        is DocumentReviewIntent.Refresh -> handleRefresh()
 
-                    // === Preview ===
-                    is DocumentReviewIntent.LoadPreviewPages -> handleLoadPreviewPages()
-                    is DocumentReviewIntent.LoadMorePages -> handleLoadMorePages(intent.maxPages)
-                    is DocumentReviewIntent.RetryLoadPreview -> handleLoadPreviewPages()
-                    is DocumentReviewIntent.OpenPreviewSheet -> handleOpenPreviewSheet()
-                    is DocumentReviewIntent.ClosePreviewSheet -> handleClosePreviewSheet()
+                        // === Preview ===
+                        is DocumentReviewIntent.LoadPreviewPages -> handleLoadPreviewPages()
+                        is DocumentReviewIntent.LoadMorePages -> handleLoadMorePages(intent.maxPages)
+                        is DocumentReviewIntent.RetryLoadPreview -> handleLoadPreviewPages()
+                        is DocumentReviewIntent.OpenPreviewSheet -> handleOpenPreviewSheet()
+                        is DocumentReviewIntent.ClosePreviewSheet -> handleClosePreviewSheet()
 
-                    // === Field Editing ===
-                    is DocumentReviewIntent.UpdateInvoiceField -> handleUpdateInvoiceField(intent.field, intent.value)
-                    is DocumentReviewIntent.UpdateBillField -> handleUpdateBillField(intent.field, intent.value)
-                    is DocumentReviewIntent.UpdateExpenseField -> handleUpdateExpenseField(intent.field, intent.value)
+                        // === Field Editing ===
+                        is DocumentReviewIntent.UpdateInvoiceField -> handleUpdateInvoiceField(
+                            intent.field,
+                            intent.value
+                        )
+                        is DocumentReviewIntent.UpdateBillField -> handleUpdateBillField(intent.field, intent.value)
+                        is DocumentReviewIntent.UpdateExpenseField -> handleUpdateExpenseField(
+                            intent.field,
+                            intent.value
+                        )
 
-                    // === Contact Selection (with backend persist) ===
-                    is DocumentReviewIntent.SelectContact -> handleSelectContact(intent.contactId)
-                    is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
-                    is DocumentReviewIntent.ClearSelectedContact -> handleClearSelectedContact()
-                    is DocumentReviewIntent.ContactCreated -> handleContactCreated(intent.contactId)
+                        // === Contact Selection (with backend persist) ===
+                        is DocumentReviewIntent.SelectContact -> handleSelectContact(intent.contactId)
+                        is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
+                        is DocumentReviewIntent.ClearSelectedContact -> handleClearSelectedContact()
+                        is DocumentReviewIntent.ContactCreated -> handleContactCreated(intent.contactId)
 
-                    // === Line Items ===
-                    is DocumentReviewIntent.AddLineItem -> handleAddLineItem()
-                    is DocumentReviewIntent.UpdateLineItem -> handleUpdateLineItem(intent.index, intent.item)
-                    is DocumentReviewIntent.RemoveLineItem -> handleRemoveLineItem(intent.index)
+                        // === Line Items ===
+                        is DocumentReviewIntent.AddLineItem -> handleAddLineItem()
+                        is DocumentReviewIntent.UpdateLineItem -> handleUpdateLineItem(intent.index, intent.item)
+                        is DocumentReviewIntent.RemoveLineItem -> handleRemoveLineItem(intent.index)
 
-                    // === Provenance ===
-                    is DocumentReviewIntent.SelectFieldForProvenance -> handleSelectFieldForProvenance(intent.fieldPath)
+                        // === Provenance ===
+                        is DocumentReviewIntent.SelectFieldForProvenance -> handleSelectFieldForProvenance(
+                            intent.fieldPath
+                        )
 
-                    // === Actions ===
-                    is DocumentReviewIntent.SaveDraft -> handleSaveDraft()
-                    is DocumentReviewIntent.DiscardChanges -> handleDiscardChanges()
-                    is DocumentReviewIntent.Confirm -> handleConfirm()
-                    is DocumentReviewIntent.Reject -> handleReject()
-                    is DocumentReviewIntent.OpenChat -> handleOpenChat()
+                        // === Actions ===
+                        is DocumentReviewIntent.SaveDraft -> handleSaveDraft()
+                        is DocumentReviewIntent.DiscardChanges -> handleDiscardChanges()
+                        is DocumentReviewIntent.Confirm -> handleConfirm()
+                        is DocumentReviewIntent.Reject -> handleReject()
+                        is DocumentReviewIntent.OpenChat -> handleOpenChat()
                     }
                 }
             }

@@ -1,5 +1,7 @@
 package tech.dokus.domain.model
 
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
@@ -7,8 +9,6 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
-import kotlinx.datetime.LocalDate
-import kotlinx.serialization.Serializable
 
 // ============================================================================
 // EXTRACTED DATA MODELS
@@ -186,7 +186,7 @@ data class DocumentCorrections(
     val notes: String? = null,
 
     // Invoice-specific
-    val contactId: String? = null,  // UUID string of existing contact (customer)
+    val contactId: String? = null, // UUID string of existing contact (customer)
     val invoiceNumber: String? = null,
     val items: List<ExtractedLineItem>? = null,
 

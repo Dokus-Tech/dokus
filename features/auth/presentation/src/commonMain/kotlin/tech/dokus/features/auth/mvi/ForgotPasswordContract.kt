@@ -1,12 +1,12 @@
 package tech.dokus.features.auth.mvi
 
-import tech.dokus.domain.Email
-import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.domain.Email
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
 
 /**

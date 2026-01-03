@@ -70,8 +70,8 @@ internal class SearchCashflowDocumentsUseCase {
         needle: String
     ): Boolean {
         return invoice.invoiceNumber.value.contains(needle, ignoreCase = true) ||
-                invoice.notes?.contains(needle, ignoreCase = true) == true ||
-                invoice.status.matches(needle)
+            invoice.notes?.contains(needle, ignoreCase = true) == true ||
+            invoice.status.matches(needle)
     }
 
     /**
@@ -90,9 +90,9 @@ internal class SearchCashflowDocumentsUseCase {
         needle: String
     ): Boolean {
         return expense.merchant.contains(needle, ignoreCase = true) ||
-                expense.description?.contains(needle, ignoreCase = true) == true ||
-                expense.category.name.contains(needle, ignoreCase = true) ||
-                expense.notes?.contains(needle, ignoreCase = true) == true
+            expense.description?.contains(needle, ignoreCase = true) == true ||
+            expense.category.name.contains(needle, ignoreCase = true) ||
+            expense.notes?.contains(needle, ignoreCase = true) == true
     }
 
     /**
@@ -111,11 +111,11 @@ internal class SearchCashflowDocumentsUseCase {
         needle: String
     ): Boolean {
         return bill.supplierName.contains(needle, ignoreCase = true) ||
-                bill.invoiceNumber?.contains(needle, ignoreCase = true) == true ||
-                bill.description?.contains(needle, ignoreCase = true) == true ||
-                bill.category.name.contains(needle, ignoreCase = true) ||
-                bill.notes?.contains(needle, ignoreCase = true) == true ||
-                bill.status.name.contains(needle, ignoreCase = true)
+            bill.invoiceNumber?.contains(needle, ignoreCase = true) == true ||
+            bill.description?.contains(needle, ignoreCase = true) == true ||
+            bill.category.name.contains(needle, ignoreCase = true) ||
+            bill.notes?.contains(needle, ignoreCase = true) == true ||
+            bill.status.name.contains(needle, ignoreCase = true)
     }
 
     /**

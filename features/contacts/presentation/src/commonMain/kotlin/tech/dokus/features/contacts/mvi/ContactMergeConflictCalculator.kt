@@ -16,8 +16,8 @@ import tech.dokus.aura.resources.contacts_phone
 import tech.dokus.aura.resources.contacts_postal_code
 import tech.dokus.aura.resources.contacts_tags
 import tech.dokus.aura.resources.contacts_vat_number
-import tech.dokus.features.contacts.presentation.contacts.model.MergeFieldConflict
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.contacts.presentation.contacts.model.MergeFieldConflict
 
 internal object ContactMergeConflictCalculator {
     fun compute(source: ContactDto, target: ContactDto): List<MergeFieldConflict> {

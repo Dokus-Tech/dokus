@@ -1,13 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_confirm
-import tech.dokus.aura.resources.action_reject
-import tech.dokus.aura.resources.action_save
-import tech.dokus.aura.resources.cashflow_chat_with_document
-import tech.dokus.aura.resources.cashflow_document_confirmed
-import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -25,12 +17,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +37,14 @@ import compose.icons.feathericons.Save
 import compose.icons.feathericons.X
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_confirm
+import tech.dokus.aura.resources.action_reject
+import tech.dokus.aura.resources.action_save
+import tech.dokus.aura.resources.cashflow_chat_with_document
+import tech.dokus.aura.resources.cashflow_document_confirmed
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Redesigned approval footer for Document Review screen.

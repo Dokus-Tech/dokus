@@ -15,7 +15,9 @@ external interface Storage {
 /**
  * External console for debugging
  */
-external object console {
+@JsName("console")
+external object Console {
+    @Suppress("UnusedParameter") // External JS declaration - parameter used by JS runtime
     fun log(message: String?)
 }
 

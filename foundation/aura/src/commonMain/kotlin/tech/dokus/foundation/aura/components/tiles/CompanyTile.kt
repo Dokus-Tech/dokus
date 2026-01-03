@@ -1,11 +1,5 @@
 package tech.dokus.foundation.aura.components.tiles
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.workspace_add
-import tech.dokus.foundation.aura.components.AvatarShape
-import tech.dokus.foundation.aura.components.AvatarSize
-import tech.dokus.foundation.aura.components.CompanyAvatarImage
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.workspace_add
+import tech.dokus.foundation.aura.components.AvatarShape
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Small square tile showing a company's avatar (or initial if no avatar) with its name below.

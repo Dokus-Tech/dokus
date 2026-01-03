@@ -1,19 +1,5 @@
 package tech.dokus.database.repository.cashflow
 
-import tech.dokus.database.tables.cashflow.ExpensesTable
-import tech.dokus.domain.Money
-import tech.dokus.domain.Percentage
-import tech.dokus.domain.VatRate
-import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.toDbDecimal
-import tech.dokus.domain.enums.ExpenseCategory
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.ExpenseId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CreateExpenseRequest
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -25,6 +11,20 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.cashflow.ExpensesTable
+import tech.dokus.domain.Money
+import tech.dokus.domain.Percentage
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.toDbDecimal
+import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 
 /**
@@ -41,7 +41,10 @@ class ExpenseRepository {
      * Create a new expense
      * CRITICAL: MUST include tenant_id for multi-tenancy security
      */
-    suspend fun createExpense(tenantId: TenantId, request: CreateExpenseRequest): Result<FinancialDocumentDto.ExpenseDto> = runCatching {
+    suspend fun createExpense(
+        tenantId: TenantId,
+        request: CreateExpenseRequest
+    ): Result<FinancialDocumentDto.ExpenseDto> = runCatching {
         dbQuery {
             val expenseId = ExpensesTable.insertAndGetId {
                 it[ExpensesTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -63,7 +66,7 @@ class ExpenseRepository {
             // Manually fetch and return the created expense
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq expenseId.value) and
-                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 FinancialDocumentDto.ExpenseDto(
                     id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
@@ -99,7 +102,7 @@ class ExpenseRepository {
         dbQuery {
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
-                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
                 FinancialDocumentDto.ExpenseDto(
                     id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
@@ -202,7 +205,7 @@ class ExpenseRepository {
             // Verify expense exists and belongs to tenant
             val exists = ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
-                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
 
             if (!exists) {
@@ -212,7 +215,7 @@ class ExpenseRepository {
             // Update expense
             ExpensesTable.update({
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
-                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[date] = request.date
                 it[merchant] = request.merchant
@@ -232,7 +235,7 @@ class ExpenseRepository {
             // Manually fetch and return the updated expense
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
-                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 FinancialDocumentDto.ExpenseDto(
                     id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
@@ -268,7 +271,7 @@ class ExpenseRepository {
         dbQuery {
             val deletedRows = ExpensesTable.deleteWhere {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
-                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             deletedRows > 0
         }
@@ -285,7 +288,7 @@ class ExpenseRepository {
         dbQuery {
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
-                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
         }
     }
@@ -302,7 +305,7 @@ class ExpenseRepository {
         dbQuery {
             val updatedRows = ExpensesTable.update({
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
-                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[ExpensesTable.documentId] = UUID.fromString(documentId.toString())
             }
@@ -320,7 +323,7 @@ class ExpenseRepository {
     ): FinancialDocumentDto.ExpenseDto? = dbQuery {
         ExpensesTable.selectAll().where {
             (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-            (ExpensesTable.documentId eq UUID.fromString(documentId.toString()))
+                (ExpensesTable.documentId eq UUID.fromString(documentId.toString()))
         }.singleOrNull()?.let { row ->
             FinancialDocumentDto.ExpenseDto(
                 id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),

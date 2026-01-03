@@ -5,8 +5,8 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**

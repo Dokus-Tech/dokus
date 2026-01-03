@@ -1,6 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +20,7 @@ import tech.dokus.aura.resources.invoice_details_title
 import tech.dokus.aura.resources.invoice_notes_optional
 import tech.dokus.aura.resources.invoice_save_as_draft
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding

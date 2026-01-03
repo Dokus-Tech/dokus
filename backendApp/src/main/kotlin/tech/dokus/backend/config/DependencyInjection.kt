@@ -123,11 +123,13 @@ private val httpClientModule = module {
     single {
         HttpClient(CIO) {
             install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    isLenient = true
-                    encodeDefaults = true
-                })
+                json(
+                    Json {
+                        ignoreUnknownKeys = true
+                        isLenient = true
+                        encodeDefaults = true
+                    }
+                )
             }
             install(Logging) {
                 level = LogLevel.INFO

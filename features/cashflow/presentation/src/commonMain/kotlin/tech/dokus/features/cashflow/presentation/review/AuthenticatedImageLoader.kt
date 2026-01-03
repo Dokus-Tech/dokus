@@ -10,6 +10,8 @@ import coil3.network.ktor3.KtorNetworkFetcherFactory
 import io.ktor.client.HttpClient
 import org.koin.compose.koinInject
 
+private const val MemoryCacheSizePercent = 0.25
+
 /**
  * Creates a remembered [ImageLoader] configured for authenticated image requests.
  *
@@ -45,7 +47,7 @@ private fun createAuthenticatedImageLoader(
         }
         .memoryCache {
             MemoryCache.Builder()
-                .maxSizePercent(context, 0.25)
+                .maxSizePercent(context, MemoryCacheSizePercent)
                 .build()
         }
         .build()

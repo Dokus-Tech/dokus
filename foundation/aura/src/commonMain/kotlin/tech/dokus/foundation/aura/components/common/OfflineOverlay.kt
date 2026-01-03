@@ -1,7 +1,5 @@
 package tech.dokus.foundation.aura.components.common
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.state_offline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -17,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.state_offline
 
 /**
  * A reusable overlay component that blurs content when offline and shows an indicator.

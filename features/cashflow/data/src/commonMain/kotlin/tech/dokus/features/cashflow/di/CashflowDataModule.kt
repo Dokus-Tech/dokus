@@ -1,5 +1,9 @@
 package tech.dokus.features.cashflow.di
 
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
+import org.koin.dsl.module
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.features.cashflow.cache.CashflowCacheDatabase
 import tech.dokus.features.cashflow.cache.CashflowDb
 import tech.dokus.features.cashflow.cache.InvoiceLocalDataSource
@@ -8,13 +12,9 @@ import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSourceImpl
 import tech.dokus.features.cashflow.datasource.ChatRemoteDataSource
 import tech.dokus.features.cashflow.datasource.ChatRemoteDataSourceImpl
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SendChatMessageUseCase
 import tech.dokus.features.cashflow.repository.CashflowDataRepository
 import tech.dokus.features.cashflow.repository.ChatRepositoryImpl
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SendChatMessageUseCase
-import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.bind
-import org.koin.dsl.module
-import tech.dokus.domain.config.DynamicDokusEndpointProvider
 
 /**
  * Koin DI module for Cashflow feature network configuration.

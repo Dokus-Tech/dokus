@@ -1,9 +1,9 @@
 package tech.dokus.domain.routes
 
-import tech.dokus.domain.enums.PeppolStatus
-import tech.dokus.domain.enums.PeppolTransmissionDirection
 import io.ktor.resources.*
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 
 /**
  * Type-safe route definitions for Peppol e-invoicing API.

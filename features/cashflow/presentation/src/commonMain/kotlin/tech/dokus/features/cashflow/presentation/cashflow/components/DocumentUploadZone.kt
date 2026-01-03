@@ -1,9 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.upload_drag_hint
-import tech.dokus.aura.resources.upload_drop_files
-import tech.dokus.aura.resources.upload_select_or_drag
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +30,29 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.upload_drag_hint
+import tech.dokus.aura.resources.upload_drop_files
+import tech.dokus.aura.resources.upload_select_or_drag
+
+// UI dimensions
+private val ZoneMinHeight = 160.dp
+private val ZonePadding = 24.dp
+private val ZoneCornerRadius = 12.dp
+private val BorderStrokeWidth = 2.dp
+private val IconContainerSize = 56.dp
+private val IconSize = 28.dp
+private val IconToTextSpacing = 12.dp
+private val TextToHintSpacing = 4.dp
+
+// Border dash pattern
+private const val DashLength = 10f
+private const val DashGap = 10f
+private const val DashPhase = 0f
+
+// Alpha values
+private const val IconBackgroundAlpha = 0.15f
+private const val HintTextAlpha = 0.7f
 
 /**
  * Document upload zone component with dashed border and drag state visual feedback.
@@ -79,7 +98,7 @@ fun DocumentUploadZone(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .requiredHeightIn(min = 160.dp)
+            .requiredHeightIn(min = ZoneMinHeight)
             .clip(MaterialTheme.shapes.medium)
             .fileDropTarget(
                 onDragStateChange = onDragStateChange,
@@ -88,19 +107,19 @@ fun DocumentUploadZone(
             .clickable(enabled = !isUploading, onClick = onClick)
             .drawBehind {
                 val stroke = Stroke(
-                    width = 2.dp.toPx(),
+                    width = BorderStrokeWidth.toPx(),
                     pathEffect = PathEffect.dashPathEffect(
-                        intervals = floatArrayOf(10f, 10f),
-                        phase = 0f
+                        intervals = floatArrayOf(DashLength, DashGap),
+                        phase = DashPhase
                     )
                 )
                 drawRoundRect(
                     color = borderColor,
                     style = stroke,
-                    cornerRadius = CornerRadius(12.dp.toPx())
+                    cornerRadius = CornerRadius(ZoneCornerRadius.toPx())
                 )
             }
-            .padding(24.dp),
+            .padding(ZonePadding),
         contentAlignment = Alignment.Center
     ) {
         if (isUploading) {
@@ -113,9 +132,9 @@ fun DocumentUploadZone(
                 // Icon with background circle (like Pulse)
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(IconContainerSize)
                         .background(
-                            color = borderColor.copy(alpha = 0.15f),
+                            color = borderColor.copy(alpha = IconBackgroundAlpha),
                             shape = MaterialTheme.shapes.medium
                         ),
                     contentAlignment = Alignment.Center
@@ -130,12 +149,12 @@ fun DocumentUploadZone(
                             }
                         },
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
+                        modifier = Modifier.size(IconSize),
                         tint = borderColor
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(IconToTextSpacing))
 
                 Text(
                     text = displayText,
@@ -145,11 +164,11 @@ fun DocumentUploadZone(
                 )
 
                 if (isDragDropSupported && !isDragging) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(TextToHintSpacing))
                     Text(
                         text = stringResource(Res.string.upload_drag_hint),
                         style = MaterialTheme.typography.bodySmall,
-                        color = borderColor.copy(alpha = 0.7f),
+                        color = borderColor.copy(alpha = HintTextAlpha),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -182,24 +201,24 @@ fun DocumentUploadZone(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .requiredHeightIn(min = 160.dp)
+            .requiredHeightIn(min = ZoneMinHeight)
             .clip(MaterialTheme.shapes.medium)
             .clickable(enabled = !isUploading, onClick = onUploadClick)
             .drawBehind {
                 val stroke = Stroke(
-                    width = 2.dp.toPx(),
+                    width = BorderStrokeWidth.toPx(),
                     pathEffect = PathEffect.dashPathEffect(
-                        intervals = floatArrayOf(10f, 10f),
-                        phase = 0f
+                        intervals = floatArrayOf(DashLength, DashGap),
+                        phase = DashPhase
                     )
                 )
                 drawRoundRect(
                     color = borderColor,
                     style = stroke,
-                    cornerRadius = CornerRadius(12.dp.toPx())
+                    cornerRadius = CornerRadius(ZoneCornerRadius.toPx())
                 )
             }
-            .padding(24.dp),
+            .padding(ZonePadding),
         contentAlignment = Alignment.Center
     ) {
         if (isUploading) {
@@ -211,9 +230,9 @@ fun DocumentUploadZone(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(IconContainerSize)
                         .background(
-                            color = borderColor.copy(alpha = 0.15f),
+                            color = borderColor.copy(alpha = IconBackgroundAlpha),
                             shape = MaterialTheme.shapes.medium
                         ),
                     contentAlignment = Alignment.Center
@@ -224,12 +243,12 @@ fun DocumentUploadZone(
                             UploadIcon.Document -> Icons.Outlined.Description
                         },
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
+                        modifier = Modifier.size(IconSize),
                         tint = borderColor
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(IconToTextSpacing))
 
                 Text(
                     text = resolvedTitle,
@@ -239,11 +258,11 @@ fun DocumentUploadZone(
                 )
 
                 if (isDragDropSupported) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(TextToHintSpacing))
                     Text(
                         text = stringResource(Res.string.upload_drag_hint),
                         style = MaterialTheme.typography.bodySmall,
-                        color = borderColor.copy(alpha = 0.7f),
+                        color = borderColor.copy(alpha = HintTextAlpha),
                         textAlign = TextAlign.Center
                     )
                 }

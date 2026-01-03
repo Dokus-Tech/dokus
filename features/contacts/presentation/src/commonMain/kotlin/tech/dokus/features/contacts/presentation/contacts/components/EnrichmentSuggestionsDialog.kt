@@ -38,6 +38,26 @@ import tech.dokus.aura.resources.contacts_enrichment_suggestions
 import tech.dokus.aura.resources.contacts_select_all
 import tech.dokus.features.contacts.mvi.EnrichmentSuggestion
 
+// UI dimension constants
+private val SpacingSmall = 4.dp
+private val SpacingDefault = 8.dp
+private val PaddingHorizontal = 6.dp
+private val PaddingVertical = 2.dp
+private val BadgeCornerRadius = 4.dp
+private val CardCornerRadius = 8.dp
+private val IconSizeSmall = 12.dp
+private val StartPadding = 4.dp
+private val TopBottomPadding = 8.dp
+private val EndPadding = 12.dp
+
+// Alpha constants
+private const val ContainerAlphaDefault = 0.3f
+
+// Confidence thresholds
+private const val HighConfidenceThreshold = 0.8f
+private const val MediumConfidenceThreshold = 0.6f
+private const val PercentageMultiplier = 100
+
 @Composable
 internal fun EnrichmentSuggestionsDialog(
     suggestions: List<EnrichmentSuggestion>,
@@ -65,7 +85,7 @@ internal fun EnrichmentSuggestionsDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(SpacingDefault)
             ) {
                 Text(
                     text = stringResource(Res.string.contacts_enrichment_hint),
@@ -73,7 +93,7 @@ internal fun EnrichmentSuggestionsDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(SpacingDefault))
 
                 suggestions.forEach { suggestion ->
                     val isSelected = suggestion in selectedSuggestions
@@ -92,7 +112,7 @@ internal fun EnrichmentSuggestionsDialog(
                 }
 
                 if (suggestions.size > 1) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(SpacingSmall))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
@@ -164,16 +184,16 @@ private fun EnrichmentSuggestionItem(
 ) {
     Surface(
         color = if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = ContainerAlphaDefault)
         } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = ContainerAlphaDefault)
         },
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(CardCornerRadius)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 4.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+                .padding(start = StartPadding, end = EndPadding, top = TopBottomPadding, bottom = TopBottomPadding),
             verticalAlignment = Alignment.Top
         ) {
             Checkbox(
@@ -183,7 +203,7 @@ private fun EnrichmentSuggestionItem(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(SpacingSmall)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -208,7 +228,7 @@ private fun EnrichmentSuggestionItem(
                 if (suggestion.currentValue != null) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
                     ) {
                         Text(
                             text = stringResource(Res.string.contacts_current),
@@ -231,28 +251,28 @@ private fun EnrichmentSuggestionItem(
 
 @Composable
 private fun ConfidenceBadge(confidence: Float) {
-    val percentage = (confidence * 100).toInt()
+    val percentage = (confidence * PercentageMultiplier).toInt()
     val backgroundColor = when {
-        confidence >= 0.8f -> MaterialTheme.colorScheme.tertiaryContainer
-        confidence >= 0.6f -> MaterialTheme.colorScheme.secondaryContainer
+        confidence >= HighConfidenceThreshold -> MaterialTheme.colorScheme.tertiaryContainer
+        confidence >= MediumConfidenceThreshold -> MaterialTheme.colorScheme.secondaryContainer
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
     val textColor = when {
-        confidence >= 0.8f -> MaterialTheme.colorScheme.onTertiaryContainer
-        confidence >= 0.6f -> MaterialTheme.colorScheme.onSecondaryContainer
+        confidence >= HighConfidenceThreshold -> MaterialTheme.colorScheme.onTertiaryContainer
+        confidence >= MediumConfidenceThreshold -> MaterialTheme.colorScheme.onSecondaryContainer
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Surface(
         color = backgroundColor,
-        shape = RoundedCornerShape(4.dp)
+        shape = RoundedCornerShape(BadgeCornerRadius)
     ) {
         Text(
             text = stringResource(Res.string.common_percent_value, percentage),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Medium,
             color = textColor,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = PaddingHorizontal, vertical = PaddingVertical)
         )
     }
 }
@@ -261,17 +281,17 @@ private fun ConfidenceBadge(confidence: Float) {
 private fun SourceBadge(source: String) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(4.dp)
+        shape = RoundedCornerShape(BadgeCornerRadius)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            modifier = Modifier.padding(horizontal = PaddingHorizontal, vertical = PaddingVertical),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
         ) {
             Icon(
                 imageVector = Icons.Default.AutoAwesome,
                 contentDescription = null,
-                modifier = Modifier.size(12.dp),
+                modifier = Modifier.size(IconSizeSmall),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(

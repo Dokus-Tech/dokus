@@ -5,12 +5,12 @@ import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.home_dashboard
 import tech.dokus.aura.resources.home_settings
 import tech.dokus.aura.resources.user
-import tech.dokus.foundation.aura.model.HomeItem
-import tech.dokus.foundation.aura.model.HomeItemPriority
-import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.ids.UserId
+import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.foundation.aura.model.HomeItemPriority
+import tech.dokus.navigation.destinations.HomeDestination
 
 // Simple mock values for previews
 val mockEmail = Email("john.doe@dokus.be")

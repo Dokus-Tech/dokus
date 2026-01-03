@@ -1,20 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.business_health_actual
-import tech.dokus.aura.resources.business_health_description
-import tech.dokus.aura.resources.business_health_predicted
-import tech.dokus.aura.resources.business_health_title
-import tech.dokus.aura.resources.common_label_value
-import tech.dokus.aura.resources.common_percent_value
-import tech.dokus.aura.resources.health_status_critical
-import tech.dokus.aura.resources.health_status_good
-import tech.dokus.aura.resources.health_status_warning
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.ShimmerCircle
-import tech.dokus.foundation.aura.components.common.ShimmerLine
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +28,57 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.business_health_actual
+import tech.dokus.aura.resources.business_health_description
+import tech.dokus.aura.resources.business_health_predicted
+import tech.dokus.aura.resources.business_health_title
+import tech.dokus.aura.resources.common_label_value
+import tech.dokus.aura.resources.common_percent_value
+import tech.dokus.aura.resources.health_status_critical
+import tech.dokus.aura.resources.health_status_good
+import tech.dokus.aura.resources.health_status_warning
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerCircle
+import tech.dokus.foundation.aura.components.common.ShimmerLine
+
+// Default health data values
+private const val DefaultPredictedPercentage = 90
+private const val DefaultActualPercentage = 86
+
+// Card layout dimensions
+private val CardPadding = 16.dp
+private val TitleDescriptionSpacing = 4.dp
+private val DescriptionChartSpacing = 24.dp
+private val DonutChartSize = 120.dp
+private val LegendItemSpacing = 8.dp
+
+// Skeleton dimensions
+private val SkeletonTitleWidth = 120.dp
+private val SkeletonTitleHeight = 20.dp
+private val SkeletonDescriptionHeight = 12.dp
+private val SkeletonDescriptionSpacing = 4.dp
+private const val SkeletonDescriptionSecondLineFraction = 0.8f
+private val SkeletonLegendFirstWidth = 80.dp
+private val SkeletonLegendSecondWidth = 70.dp
+private val SkeletonLegendHeight = 14.dp
+private val SkeletonIndicatorSize = 12.dp
+
+// Error state dimensions
+private val ErrorSectionSpacing = 16.dp
+
+// Donut chart dimensions
+private val DonutStrokeWidth = 16.dp
+private const val FullCircleAngle = 360f
+private const val StartAngleZero = 0f
+private const val StartAngleFromTop = -90f
+private const val PercentageToAngleMultiplier = 100f
+
+// Legend item dimensions
+private val LegendIndicatorSize = 12.dp
+private val LegendIndicatorBorderWidth = 4.dp
 
 /**
  * Data class representing business health metrics.
@@ -58,8 +94,8 @@ data class BusinessHealthData(
 ) {
     companion object {
         val empty = BusinessHealthData(
-            predictedPercentage = 90,
-            actualPercentage = 86,
+            predictedPercentage = DefaultPredictedPercentage,
+            actualPercentage = DefaultActualPercentage,
             status = HealthStatus.Good
         )
     }
@@ -97,7 +133,7 @@ fun BusinessHealthCard(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(CardPadding)
         ) {
             when (state) {
                 is DokusState.Loading, is DokusState.Idle -> {
@@ -132,7 +168,7 @@ private fun BusinessHealthCardContent(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(TitleDescriptionSpacing))
 
         // Description
         Text(
@@ -141,7 +177,7 @@ private fun BusinessHealthCardContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(DescriptionChartSpacing))
 
         // Chart and legend row
         Row(
@@ -153,12 +189,12 @@ private fun BusinessHealthCardContent(
             DonutChart(
                 actualPercentage = data.actualPercentage,
                 status = data.status,
-                modifier = Modifier.size(120.dp)
+                modifier = Modifier.size(DonutChartSize)
             )
 
             // Legend
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(LegendItemSpacing)
             ) {
                 LegendItem(
                     color = MaterialTheme.colorScheme.primary,
@@ -184,16 +220,19 @@ private fun BusinessHealthCardSkeleton(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         // Title skeleton
-        ShimmerLine(modifier = Modifier.width(120.dp), height = 20.dp)
+        ShimmerLine(modifier = Modifier.width(SkeletonTitleWidth), height = SkeletonTitleHeight)
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LegendItemSpacing))
 
         // Description skeleton (2 lines)
-        ShimmerLine(modifier = Modifier.fillMaxWidth(), height = 12.dp)
-        Spacer(modifier = Modifier.height(4.dp))
-        ShimmerLine(modifier = Modifier.fillMaxWidth(0.8f), height = 12.dp)
+        ShimmerLine(modifier = Modifier.fillMaxWidth(), height = SkeletonDescriptionHeight)
+        Spacer(modifier = Modifier.height(SkeletonDescriptionSpacing))
+        ShimmerLine(
+            modifier = Modifier.fillMaxWidth(SkeletonDescriptionSecondLineFraction),
+            height = SkeletonDescriptionHeight
+        )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(DescriptionChartSpacing))
 
         // Chart and legend row skeleton
         Row(
@@ -202,25 +241,25 @@ private fun BusinessHealthCardSkeleton(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Donut chart skeleton
-            ShimmerCircle(size = 120.dp)
+            ShimmerCircle(size = DonutChartSize)
 
             // Legend skeleton
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(LegendItemSpacing)
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(LegendItemSpacing),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ShimmerCircle(size = 12.dp)
-                    ShimmerLine(modifier = Modifier.width(80.dp), height = 14.dp)
+                    ShimmerCircle(size = SkeletonIndicatorSize)
+                    ShimmerLine(modifier = Modifier.width(SkeletonLegendFirstWidth), height = SkeletonLegendHeight)
                 }
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(LegendItemSpacing),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ShimmerCircle(size = 12.dp)
-                    ShimmerLine(modifier = Modifier.width(70.dp), height = 14.dp)
+                    ShimmerCircle(size = SkeletonIndicatorSize)
+                    ShimmerLine(modifier = Modifier.width(SkeletonLegendSecondWidth), height = SkeletonLegendHeight)
                 }
             }
         }
@@ -243,7 +282,7 @@ private fun BusinessHealthCardError(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(ErrorSectionSpacing))
 
         Box(
             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -284,7 +323,7 @@ private fun DonutChart(
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
-            val strokeWidth = 16.dp.toPx()
+            val strokeWidth = DonutStrokeWidth.toPx()
             val radius = (size.minDimension - strokeWidth) / 2
             val topLeft = Offset(
                 (size.width - radius * 2) / 2,
@@ -295,8 +334,8 @@ private fun DonutChart(
             // Background arc (full circle)
             drawArc(
                 color = backgroundColor,
-                startAngle = 0f,
-                sweepAngle = 360f,
+                startAngle = StartAngleZero,
+                sweepAngle = FullCircleAngle,
                 useCenter = false,
                 topLeft = topLeft,
                 size = arcSize,
@@ -304,10 +343,10 @@ private fun DonutChart(
             )
 
             // Progress arc
-            val sweepAngle = (actualPercentage / 100f) * 360f
+            val sweepAngle = (actualPercentage / PercentageToAngleMultiplier) * FullCircleAngle
             drawArc(
                 color = progressColor,
-                startAngle = -90f, // Start from top
+                startAngle = StartAngleFromTop,
                 sweepAngle = sweepAngle,
                 useCenter = false,
                 topLeft = topLeft,
@@ -348,14 +387,14 @@ private fun LegendItem(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(LegendItemSpacing)
     ) {
         // Color indicator
         Box(
             modifier = Modifier
-                .size(12.dp)
+                .size(LegendIndicatorSize)
                 .clip(CircleShape)
-                .border(4.dp, color, CircleShape)
+                .border(LegendIndicatorBorderWidth, color, CircleShape)
         )
 
         // Label and value

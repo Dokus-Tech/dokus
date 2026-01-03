@@ -1,9 +1,9 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model
 
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.utils.currentTimeMillis
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.utils.currentTimeMillis
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

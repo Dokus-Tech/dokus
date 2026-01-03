@@ -1,14 +1,5 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.auth.DeactivateUserRequest
-import tech.dokus.domain.model.auth.LogoutRequest
-import tech.dokus.domain.model.auth.SelectTenantRequest
-import tech.dokus.domain.model.auth.UpdateProfileRequest
-import tech.dokus.domain.routes.Account
-import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
@@ -19,6 +10,15 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.AuthService
+import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.auth.DeactivateUserRequest
+import tech.dokus.domain.model.auth.LogoutRequest
+import tech.dokus.domain.model.auth.SelectTenantRequest
+import tech.dokus.domain.model.auth.UpdateProfileRequest
+import tech.dokus.domain.routes.Account
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 
 /**
  * Account routes using Ktor Type-Safe Routing for authenticated user operations:

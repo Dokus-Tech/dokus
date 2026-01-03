@@ -1,18 +1,5 @@
 package tech.dokus.database.repository.ai
 
-import tech.dokus.database.tables.ai.ChatMessagesTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ai.ChatCitation
-import tech.dokus.domain.model.ai.ChatMessageDto
-import tech.dokus.domain.model.ai.ChatMessageId
-import tech.dokus.domain.model.ai.ChatScope
-import tech.dokus.domain.model.ai.ChatSessionId
-import tech.dokus.domain.model.ai.ChatSessionSummary
-import tech.dokus.domain.model.ai.MessageRole
-import tech.dokus.domain.repository.ChatRepository
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -26,6 +13,19 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.slf4j.LoggerFactory
+import tech.dokus.database.tables.ai.ChatMessagesTable
+import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatMessageDto
+import tech.dokus.domain.model.ai.ChatMessageId
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
+import tech.dokus.domain.model.ai.ChatSessionSummary
+import tech.dokus.domain.model.ai.MessageRole
+import tech.dokus.domain.repository.ChatRepository
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -108,7 +108,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.id eq msgUuid) and
-                        (ChatMessagesTable.tenantId eq tenantUuid)
+                    (ChatMessagesTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
             ?.toMessageDto()
@@ -128,7 +128,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.sessionId eq sessionUuid)
+                    (ChatMessagesTable.sessionId eq sessionUuid)
             }
 
         val total = baseQuery.count()
@@ -156,7 +156,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.documentId eq documentUuid)
+                    (ChatMessagesTable.documentId eq documentUuid)
             }
 
         val total = baseQuery.count()
@@ -181,7 +181,7 @@ class ChatRepositoryImpl : ChatRepository {
             .select(ChatMessagesTable.sequenceNumber.max())
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.sessionId eq sessionUuid)
+                    (ChatMessagesTable.sessionId eq sessionUuid)
             }
             .singleOrNull()
             ?.get(ChatMessagesTable.sequenceNumber.max())
@@ -263,7 +263,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.sessionId eq sessionUuid)
+                    (ChatMessagesTable.sessionId eq sessionUuid)
             }
             .orderBy(ChatMessagesTable.sequenceNumber to SortOrder.ASC)
             .toList()
@@ -280,7 +280,7 @@ class ChatRepositoryImpl : ChatRepository {
                     .selectAll()
                     .where {
                         (DocumentsTable.id eq docId) and
-                                (DocumentsTable.tenantId eq tenantUuid)
+                            (DocumentsTable.tenantId eq tenantUuid)
                     }
                     .singleOrNull()
                     ?.get(DocumentsTable.filename)
@@ -315,7 +315,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.sessionId eq sessionUuid)
+                    (ChatMessagesTable.sessionId eq sessionUuid)
             }
             .limit(1)
             .count() > 0
@@ -356,7 +356,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.userId eq userUuid)
+                    (ChatMessagesTable.userId eq userUuid)
             }
             .orderBy(ChatMessagesTable.createdAt to SortOrder.DESC)
             .toList()

@@ -85,15 +85,15 @@ data class ExtractedInvoiceData(
 
     // Invoice details
     val invoiceNumber: String? = null,
-    val issueDate: String? = null,       // ISO format YYYY-MM-DD
+    val issueDate: String? = null, // ISO format YYYY-MM-DD
     val dueDate: String? = null,
-    val paymentTerms: String? = null,    // e.g., "Net 30"
+    val paymentTerms: String? = null, // e.g., "Net 30"
 
     // Line items
     val lineItems: List<InvoiceLineItem> = emptyList(),
 
     // Totals
-    val currency: String? = null,        // EUR, USD, etc.
+    val currency: String? = null, // EUR, USD, etc.
     val subtotal: String? = null,
     val vatBreakdown: List<VatBreakdown> = emptyList(),
     val totalVatAmount: String? = null,
@@ -119,7 +119,7 @@ data class InvoiceLineItem(
     val description: String,
     val quantity: Double? = null,
     val unitPrice: String? = null,
-    val vatRate: String? = null,         // e.g., "21%"
+    val vatRate: String? = null, // e.g., "21%"
     val total: String? = null
 )
 
@@ -128,7 +128,7 @@ data class InvoiceLineItem(
  */
 @Serializable
 data class VatBreakdown(
-    val rate: String,                    // e.g., "21%"
+    val rate: String, // e.g., "21%"
     val base: String? = null,
     val amount: String? = null
 )

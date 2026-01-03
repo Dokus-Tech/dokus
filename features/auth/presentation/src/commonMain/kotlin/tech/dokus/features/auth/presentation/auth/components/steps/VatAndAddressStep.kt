@@ -1,26 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components.steps
 
-import tech.dokus.features.auth.presentation.auth.model.AddressFormState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_business_details
-import tech.dokus.aura.resources.auth_business_details_subtitle
-import tech.dokus.aura.resources.contacts_address_line1
-import tech.dokus.aura.resources.contacts_address_line2
-import tech.dokus.aura.resources.contacts_city
-import tech.dokus.aura.resources.contacts_country
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.aura.resources.contacts_postal_code
-import tech.dokus.aura.resources.country_belgium
-import tech.dokus.aura.resources.country_france
-import tech.dokus.aura.resources.country_netherlands
-import tech.dokus.aura.resources.workspace_address
-import tech.dokus.aura.resources.workspace_vat_number
-import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
-import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.domain.enums.Country
-import tech.dokus.domain.ids.VatNumber
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +24,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_business_details
+import tech.dokus.aura.resources.auth_business_details_subtitle
+import tech.dokus.aura.resources.contacts_address_line1
+import tech.dokus.aura.resources.contacts_address_line2
+import tech.dokus.aura.resources.contacts_city
+import tech.dokus.aura.resources.contacts_country
+import tech.dokus.aura.resources.contacts_postal_code
+import tech.dokus.aura.resources.country_belgium
+import tech.dokus.aura.resources.country_france
+import tech.dokus.aura.resources.country_netherlands
+import tech.dokus.aura.resources.workspace_address
+import tech.dokus.aura.resources.workspace_vat_number
+import tech.dokus.domain.enums.Country
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.features.auth.presentation.auth.model.AddressFormState
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
+import tech.dokus.foundation.aura.components.text.SectionTitle
 
 @Composable
 internal fun VatAndAddressStep(

@@ -1,9 +1,5 @@
 package tech.dokus.app
 
-import tech.dokus.foundation.aura.style.ThemeManager
-import tech.dokus.domain.config.DynamicDokusEndpointProvider
-import tech.dokus.domain.config.ServerConfigManager
-import tech.dokus.domain.flags.FeatureFlagService
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -33,13 +29,16 @@ import tech.dokus.app.viewmodel.WorkspaceSettingsAction
 import tech.dokus.app.viewmodel.WorkspaceSettingsContainer
 import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
 import tech.dokus.app.viewmodel.WorkspaceSettingsState
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
+import tech.dokus.domain.config.ServerConfigManager
+import tech.dokus.domain.flags.FeatureFlagService
 import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.aura.style.ThemeManager
 
 internal val diModuleApp = module {
     // Server configuration management (bridges platform settings with domain types)
     singleOf(::ServerConfigManagerImpl) bind ServerConfigManager::class
-
 
     // Dynamic endpoint provider (bridges server config to HTTP clients)
     singleOf(::DynamicDokusEndpointProvider)

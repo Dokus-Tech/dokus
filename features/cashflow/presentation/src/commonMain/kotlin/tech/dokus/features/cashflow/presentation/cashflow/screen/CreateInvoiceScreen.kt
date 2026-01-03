@@ -1,17 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.screen
 
-import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.ContactSelectionPanel
-import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.DesktopInvoiceLayout
-import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.InteractiveInvoiceDocument
-import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.InvoiceSendOptionsPanel
-import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.InvoiceSendOptionsStep
-import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.MobileInvoiceEditLayout
-import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
-import tech.dokus.features.cashflow.mvi.CreateInvoiceState
-import tech.dokus.features.cashflow.mvi.model.DatePickerTarget
-import tech.dokus.features.cashflow.mvi.model.InvoiceCreationStep
-import tech.dokus.foundation.aura.components.PDatePickerDialog
-import tech.dokus.foundation.aura.local.LocalScreenSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -21,6 +9,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.plus
+import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
+import tech.dokus.features.cashflow.mvi.CreateInvoiceState
+import tech.dokus.features.cashflow.mvi.model.DatePickerTarget
+import tech.dokus.features.cashflow.mvi.model.InvoiceCreationStep
+import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.ContactSelectionPanel
+import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.DesktopInvoiceLayout
+import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.InteractiveInvoiceDocument
+import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.InvoiceSendOptionsPanel
+import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.InvoiceSendOptionsStep
+import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.MobileInvoiceEditLayout
+import tech.dokus.foundation.aura.components.PDatePickerDialog
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
  * Screen for creating a new invoice using an interactive WYSIWYG editor.
@@ -60,10 +60,26 @@ internal fun CreateInvoiceScreen(
                             onItemCollapse = { onIntent(CreateInvoiceIntent.CollapseItem) },
                             onAddItem = { onIntent(CreateInvoiceIntent.AddLineItem) },
                             onRemoveItem = { onIntent(CreateInvoiceIntent.RemoveLineItem(it)) },
-                            onUpdateItemDescription = { id, desc -> onIntent(CreateInvoiceIntent.UpdateItemDescription(id, desc)) },
-                            onUpdateItemQuantity = { id, qty -> onIntent(CreateInvoiceIntent.UpdateItemQuantity(id, qty)) },
-                            onUpdateItemUnitPrice = { id, price -> onIntent(CreateInvoiceIntent.UpdateItemUnitPrice(id, price)) },
-                            onUpdateItemVatRate = { id, rate -> onIntent(CreateInvoiceIntent.UpdateItemVatRate(id, rate)) }
+                            onUpdateItemDescription = { id, desc ->
+                                onIntent(
+                                    CreateInvoiceIntent.UpdateItemDescription(id, desc)
+                                )
+                            },
+                            onUpdateItemQuantity = { id, qty ->
+                                onIntent(
+                                    CreateInvoiceIntent.UpdateItemQuantity(id, qty)
+                                )
+                            },
+                            onUpdateItemUnitPrice = { id, price ->
+                                onIntent(
+                                    CreateInvoiceIntent.UpdateItemUnitPrice(id, price)
+                                )
+                            },
+                            onUpdateItemVatRate = { id, rate ->
+                                onIntent(
+                                    CreateInvoiceIntent.UpdateItemVatRate(id, rate)
+                                )
+                            }
                         )
                     },
                     sendOptionsContent = {
@@ -128,10 +144,26 @@ internal fun CreateInvoiceScreen(
                                     onItemCollapse = { onIntent(CreateInvoiceIntent.CollapseItem) },
                                     onAddItem = { onIntent(CreateInvoiceIntent.AddLineItem) },
                                     onRemoveItem = { onIntent(CreateInvoiceIntent.RemoveLineItem(it)) },
-                                    onUpdateItemDescription = { id, desc -> onIntent(CreateInvoiceIntent.UpdateItemDescription(id, desc)) },
-                                    onUpdateItemQuantity = { id, qty -> onIntent(CreateInvoiceIntent.UpdateItemQuantity(id, qty)) },
-                                    onUpdateItemUnitPrice = { id, price -> onIntent(CreateInvoiceIntent.UpdateItemUnitPrice(id, price)) },
-                                    onUpdateItemVatRate = { id, rate -> onIntent(CreateInvoiceIntent.UpdateItemVatRate(id, rate)) }
+                                    onUpdateItemDescription = { id, desc ->
+                                        onIntent(
+                                            CreateInvoiceIntent.UpdateItemDescription(id, desc)
+                                        )
+                                    },
+                                    onUpdateItemQuantity = { id, qty ->
+                                        onIntent(
+                                            CreateInvoiceIntent.UpdateItemQuantity(id, qty)
+                                        )
+                                    },
+                                    onUpdateItemUnitPrice = { id, price ->
+                                        onIntent(
+                                            CreateInvoiceIntent.UpdateItemUnitPrice(id, price)
+                                        )
+                                    },
+                                    onUpdateItemVatRate = { id, rate ->
+                                        onIntent(
+                                            CreateInvoiceIntent.UpdateItemVatRate(id, rate)
+                                        )
+                                    }
                                 )
                             },
                             onNextClick = { onIntent(CreateInvoiceIntent.GoToSendOptions) },

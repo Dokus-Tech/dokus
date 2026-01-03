@@ -1,10 +1,12 @@
-package tech.dokus.features.cashflow.presentation.cashflow.model.usecase
+@file:Suppress("LongParameterList") // Chat API requires multiple optional parameters
 
-import tech.dokus.features.cashflow.repository.ChatRepositoryImpl
+package tech.dokus.features.cashflow.usecase
+
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatResponse
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
+import tech.dokus.features.cashflow.repository.ChatRepositoryImpl
 
 /**
  * Use case for sending chat messages to the document Q&A system.

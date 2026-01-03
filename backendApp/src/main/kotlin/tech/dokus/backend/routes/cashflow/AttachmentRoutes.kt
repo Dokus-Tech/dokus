@@ -1,5 +1,18 @@
 package tech.dokus.backend.routes.cashflow
 
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
+import io.ktor.server.request.receiveMultipart
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.get
+import io.ktor.server.resources.post
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
+import kotlinx.serialization.Serializable
+import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
@@ -17,19 +30,6 @@ import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.PartData
-import io.ktor.http.content.forEachPart
-import io.ktor.server.request.receiveMultipart
-import io.ktor.server.resources.delete
-import io.ktor.server.resources.get
-import io.ktor.server.resources.post
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.RoutingContext
-import kotlinx.serialization.Serializable
-import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
@@ -74,7 +74,9 @@ internal fun Route.attachmentRoutes() {
                 ?: throw DokusException.NotFound("Invoice not found")
 
             // Handle multipart upload
-            val (fileBytes, filename, contentType) = handleMultipartUpload(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)
+            val (fileBytes, filename, contentType) = handleMultipartUpload(
+                DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES
+            )
 
             val validationError = uploadValidator.validate(fileBytes, filename, contentType)
             if (validationError != null) {
@@ -166,7 +168,9 @@ internal fun Route.attachmentRoutes() {
                 ?: throw DokusException.NotFound("Expense not found")
 
             // Handle multipart upload
-            val (fileBytes, filename, contentType) = handleMultipartUpload(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)
+            val (fileBytes, filename, contentType) = handleMultipartUpload(
+                DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES
+            )
 
             val validationError = uploadValidator.validate(fileBytes, filename, contentType)
             if (validationError != null) {

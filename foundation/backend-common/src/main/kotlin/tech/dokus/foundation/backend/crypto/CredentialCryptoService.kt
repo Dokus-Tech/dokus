@@ -46,11 +46,11 @@ class AesGcmCredentialCryptoService(masterSecret: String) : CredentialCryptoServ
     companion object {
         private const val ALGORITHM = "AES/GCM/NoPadding"
         private const val KEY_ALGORITHM = "AES"
-        private const val GCM_IV_LENGTH = 12  // 96 bits recommended for GCM
-        private const val GCM_TAG_LENGTH = 128  // 128-bit authentication tag
+        private const val GCM_IV_LENGTH = 12 // 96 bits recommended for GCM
+        private const val GCM_TAG_LENGTH = 128 // 128-bit authentication tag
         private const val PBKDF2_ITERATIONS = 100_000
-        private const val KEY_LENGTH = 256  // AES-256
-        private val SALT = "dokus-peppol-credential-salt".toByteArray()  // Static salt (secret is unique per deployment)
+        private const val KEY_LENGTH = 256 // AES-256
+        private val SALT = "dokus-peppol-credential-salt".toByteArray() // Static salt (secret is unique per deployment)
     }
 
     init {

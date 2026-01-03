@@ -1,10 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.common_percent_value
-import tech.dokus.aura.resources.invoice_vat_rate
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +18,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.common_percent_value
+import tech.dokus.aura.resources.invoice_vat_rate
+import tech.dokus.foundation.aura.components.DokusCardSurface
+
+// Belgian VAT rates
+private const val VatRateStandard = 21
+private const val VatRateReduced = 12
+private const val VatRateSuperReduced = 6
+private const val VatRateZero = 0
+
+// Layout constants
+private val LabelSpacing = 8.dp
+private val DropdownPadding = 16.dp
 
 /**
  * VAT rate selector dropdown for invoice line items.
@@ -35,7 +44,7 @@ fun InvoiceVatRateSelector(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val rates = listOf(21, 12, 6, 0)
+    val rates = listOf(VatRateStandard, VatRateReduced, VatRateSuperReduced, VatRateZero)
 
     Column(modifier = modifier) {
         Text(
@@ -44,7 +53,7 @@ fun InvoiceVatRateSelector(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LabelSpacing))
 
         Box {
             DokusCardSurface(
@@ -54,7 +63,7 @@ fun InvoiceVatRateSelector(
                 Text(
                     text = stringResource(Res.string.common_percent_value, selectedRatePercent),
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(DropdownPadding)
                 )
             }
 

@@ -1,17 +1,20 @@
 package tech.dokus.features.auth.mvi
 
-import tech.dokus.features.auth.usecases.RegisterAndLoginUseCase
-import tech.dokus.domain.Email
-import tech.dokus.domain.Name
-import tech.dokus.domain.Password
-import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.Password
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.features.auth.usecases.RegisterAndLoginUseCase
+import tech.dokus.foundation.platform.Logger
+
+// Number of characters to show in email preview for logging (privacy)
+private const val EmailPreviewLength = 3
 
 internal typealias RegisterCtx = PipelineContext<RegisterState, RegisterIntent, RegisterAction>
 
@@ -103,10 +106,10 @@ internal class RegisterContainer(
 
     private suspend fun RegisterCtx.handleRegister() {
         // Capture values during state transition
-        var email: Email = Email("")
-        var password: Password = Password("")
-        var firstName: Name = Name("")
-        var lastName: Name = Name("")
+        var email = Email("")
+        var password = Password("")
+        var firstName = Name("")
+        var lastName = Name("")
 
         // Transition to registering state and capture values
         updateState {
@@ -122,7 +125,7 @@ internal class RegisterContainer(
             )
         }
 
-        logger.d { "Registration attempt started for email: ${email.value.take(3)}***" }
+        logger.d { "Registration attempt started for email: ${email.value.take(EmailPreviewLength)}***" }
 
         // Attempt registration
         registerAndLoginUseCase(email, password, firstName, lastName).fold(

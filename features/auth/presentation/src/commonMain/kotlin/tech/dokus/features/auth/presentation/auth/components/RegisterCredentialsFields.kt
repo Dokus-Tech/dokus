@@ -1,14 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_email_label
-import tech.dokus.aura.resources.auth_password_label
-import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
-import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
-import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
-import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +13,15 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_email_label
+import tech.dokus.aura.resources.auth_password_label
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
+import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
+import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
+import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
+import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 
 @Composable
 internal fun RegisterCredentialsFields(
@@ -42,7 +42,7 @@ internal fun RegisterCredentialsFields(
             value = fields.email,
             error = error.takeIf {
                 it is DokusException.Validation.InvalidEmail ||
-                it is DokusException.UserAlreadyExists
+                    it is DokusException.UserAlreadyExists
             },
             keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
             onAction = { focusManager.moveFocus(FocusDirection.Next) },

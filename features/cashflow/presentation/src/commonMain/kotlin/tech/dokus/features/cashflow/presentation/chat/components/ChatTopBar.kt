@@ -1,11 +1,7 @@
 package tech.dokus.features.cashflow.presentation.chat.components
 
-import tech.dokus.features.cashflow.presentation.chat.ChatState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
@@ -25,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextOverflow
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -39,9 +34,10 @@ import tech.dokus.aura.resources.chat_scope_all_documents
 import tech.dokus.aura.resources.chat_scope_single_document
 import tech.dokus.aura.resources.chat_switch_to_all_documents
 import tech.dokus.aura.resources.chat_title_all_documents
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.domain.model.ai.ChatScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,8 +57,9 @@ internal fun ChatTopBar(
                 Column {
                     Text(
                         text = when {
-                            content?.isSingleDocMode == true -> content.documentName
-                                ?: stringResource(Res.string.chat_document_title_fallback)
+                            content?.isSingleDocMode == true ->
+                                content.documentName
+                                    ?: stringResource(Res.string.chat_document_title_fallback)
                             else -> stringResource(Res.string.chat_title_all_documents)
                         },
                         style = MaterialTheme.typography.titleMedium,

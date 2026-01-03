@@ -52,8 +52,8 @@ data class ExtractedReceiptData(
 
     // Transaction details
     val receiptNumber: String? = null,
-    val transactionDate: String? = null,  // ISO format YYYY-MM-DD
-    val transactionTime: String? = null,  // HH:mm format
+    val transactionDate: String? = null, // ISO format YYYY-MM-DD
+    val transactionTime: String? = null, // HH:mm format
 
     // Items (simplified compared to invoices)
     val items: List<ReceiptItem> = emptyList(),
@@ -65,8 +65,8 @@ data class ExtractedReceiptData(
     val totalAmount: String? = null,
 
     // Payment
-    val paymentMethod: String? = null,    // Cash, Card, etc.
-    val cardLastFour: String? = null,     // Last 4 digits if card payment
+    val paymentMethod: String? = null, // Cash, Card, etc.
+    val cardLastFour: String? = null, // Last 4 digits if card payment
 
     // Category suggestion
     val suggestedCategory: String? = null,

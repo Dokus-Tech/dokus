@@ -1,14 +1,5 @@
 package tech.dokus.database.repository.contacts
 
-import tech.dokus.database.tables.contacts.ContactNotesTable
-import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.ContactNoteId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.contact.ContactNoteDto
-import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.backend.database.dbQuery
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -17,6 +8,15 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.contacts.ContactNotesTable
+import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 
 /**
@@ -44,7 +44,7 @@ class ContactNoteRepository {
             // Verify contact exists and belongs to tenant
             val contactExists = ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
 
             if (!contactExists) {
@@ -62,7 +62,7 @@ class ContactNoteRepository {
             // Fetch and return the created note
             ContactNotesTable.selectAll().where {
                 (ContactNotesTable.id eq noteId.value) and
-                (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 mapRowToContactNoteDto(row)
             }
@@ -80,7 +80,7 @@ class ContactNoteRepository {
         dbQuery {
             ContactNotesTable.selectAll().where {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
-                (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
                 mapRowToContactNoteDto(row)
             }
@@ -100,7 +100,7 @@ class ContactNoteRepository {
         dbQuery {
             val query = ContactNotesTable.selectAll().where {
                 (ContactNotesTable.contactId eq UUID.fromString(contactId.toString())) and
-                (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
 
             val total = query.count()
@@ -131,7 +131,7 @@ class ContactNoteRepository {
         dbQuery {
             ContactNotesTable.selectAll().where {
                 (ContactNotesTable.contactId eq UUID.fromString(contactId.toString())) and
-                (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count()
         }
     }
@@ -149,7 +149,7 @@ class ContactNoteRepository {
             // Verify note exists and belongs to tenant
             val exists = ContactNotesTable.selectAll().where {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
-                (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
 
             if (!exists) {
@@ -158,7 +158,7 @@ class ContactNoteRepository {
 
             ContactNotesTable.update({
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
-                (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[ContactNotesTable.content] = content
             }
@@ -166,7 +166,7 @@ class ContactNoteRepository {
             // Fetch and return the updated note
             ContactNotesTable.selectAll().where {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
-                (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 mapRowToContactNoteDto(row)
             }
@@ -184,7 +184,7 @@ class ContactNoteRepository {
         dbQuery {
             val deletedRows = ContactNotesTable.deleteWhere {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
-                (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             deletedRows > 0
         }
@@ -202,7 +202,7 @@ class ContactNoteRepository {
         dbQuery {
             ContactNotesTable.deleteWhere {
                 (ContactNotesTable.contactId eq UUID.fromString(contactId.toString())) and
-                (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
         }
     }

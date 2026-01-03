@@ -1,5 +1,12 @@
 package tech.dokus.features.auth
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.settings_group_account
+import tech.dokus.aura.resources.settings_profile
 import tech.dokus.features.auth.database.AuthDb
 import tech.dokus.features.auth.di.authPresentationModule
 import tech.dokus.features.auth.navigation.AuthNavigationProvider
@@ -11,16 +18,9 @@ import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.SettingsPriority
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.settings_group_account
-import tech.dokus.aura.resources.settings_profile
 import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.AuthDestination
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 object AuthAppModule : AppModule, KoinComponent {
     // Presentation layer

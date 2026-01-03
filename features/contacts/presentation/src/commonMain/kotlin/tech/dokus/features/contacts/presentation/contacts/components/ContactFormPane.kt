@@ -1,14 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
-import tech.dokus.features.contacts.mvi.ContactFormData
-import tech.dokus.features.contacts.mvi.PotentialDuplicate
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_close
-import tech.dokus.aura.resources.contacts_create_contact
-import tech.dokus.aura.resources.contacts_edit_contact
-import tech.dokus.aura.resources.contacts_required_fields_hint
-import tech.dokus.aura.resources.contacts_update_mobile_hint
-import tech.dokus.foundation.aura.components.DokusCardSurface
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -44,7 +35,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.contacts_create_contact
+import tech.dokus.aura.resources.contacts_edit_contact
+import tech.dokus.aura.resources.contacts_required_fields_hint
+import tech.dokus.aura.resources.contacts_update_mobile_hint
 import tech.dokus.domain.enums.ClientType
+import tech.dokus.features.contacts.mvi.ContactFormData
+import tech.dokus.features.contacts.mvi.PotentialDuplicate
+import tech.dokus.foundation.aura.components.DokusCardSurface
+
+// UI dimension constants
+private val FormContentPadding = 16.dp
+private val FormContentSpacing = 16.dp
+private val FormBottomSpacing = 8.dp
+private val HeaderPaddingStart = 16.dp
+private val HeaderPaddingEnd = 8.dp
+private val HeaderPaddingTop = 16.dp
+private val HeaderPaddingBottom = 8.dp
+private val PaneMinWidth = 400.dp
+private val PaneMaxWidth = 600.dp
+private const val AnimationDurationMs = 200
+private const val SlideAnimationDurationMs = 300
+private const val ScrimAlpha = 0.32f
+private const val PaneWidthFraction = 0.4f
 
 /**
  * Side pane for creating or editing a contact on desktop.
@@ -129,13 +144,13 @@ fun ContactFormPane(
         // Backdrop
         AnimatedVisibility(
             visible = isVisible,
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(200))
+            enter = fadeIn(tween(AnimationDurationMs)),
+            exit = fadeOut(tween(AnimationDurationMs))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f))
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = ScrimAlpha))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -149,17 +164,17 @@ fun ContactFormPane(
             visible = isVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeIn(tween(300)),
+                animationSpec = tween(SlideAnimationDurationMs)
+            ) + fadeIn(tween(SlideAnimationDurationMs)),
             exit = slideOutHorizontally(
                 targetOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeOut(tween(300)),
+                animationSpec = tween(SlideAnimationDurationMs)
+            ) + fadeOut(tween(SlideAnimationDurationMs)),
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
             BoxWithConstraints {
                 // Calculate pane width: 40% of screen, between 400dp and 600dp
-                val paneWidth = (maxWidth * 0.4f).coerceIn(400.dp, 600.dp)
+                val paneWidth = (maxWidth * PaneWidthFraction).coerceIn(PaneMinWidth, PaneMaxWidth)
 
                 DokusCardSurface(
                     modifier = Modifier
@@ -193,8 +208,8 @@ fun ContactFormPane(
                             modifier = Modifier
                                 .weight(1f)
                                 .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                                .padding(horizontal = FormContentPadding),
+                            verticalArrangement = Arrangement.spacedBy(FormContentSpacing)
                         ) {
                             // Description
                             Text(
@@ -242,7 +257,7 @@ fun ContactFormPane(
                                 showInitialNote = !isEditMode
                             )
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(FormBottomSpacing))
                         }
 
                         // Action buttons at bottom
@@ -256,7 +271,7 @@ fun ContactFormPane(
                             onDelete = onDelete,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp)
+                                .padding(FormContentPadding)
                         )
                     }
                 }
@@ -277,7 +292,12 @@ private fun ContactFormPaneHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 8.dp),
+            .padding(
+                start = HeaderPaddingStart,
+                end = HeaderPaddingEnd,
+                top = HeaderPaddingTop,
+                bottom = HeaderPaddingBottom
+            ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

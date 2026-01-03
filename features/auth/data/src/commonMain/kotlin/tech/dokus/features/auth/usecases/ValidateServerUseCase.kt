@@ -1,6 +1,10 @@
+@file:Suppress(
+    "MagicNumber", // Port range validation constants
+    "TooGenericExceptionCaught" // Network validation can fail in various ways
+)
+
 package tech.dokus.features.auth.usecases
 
-import tech.dokus.foundation.platform.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
@@ -13,6 +17,7 @@ import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerInfo
 import tech.dokus.domain.config.ServerStatus
 import tech.dokus.domain.config.ServerValidationResult
+import tech.dokus.foundation.platform.Logger
 
 /**
  * Validates that a server is a compatible Dokus instance.
@@ -39,10 +44,12 @@ class ValidateServerUseCase {
         // Create a temporary HTTP client for validation
         val client = HttpClient {
             install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    isLenient = true
-                })
+                json(
+                    Json {
+                        ignoreUnknownKeys = true
+                        isLenient = true
+                    }
+                )
             }
             install(HttpTimeout) {
                 requestTimeoutMillis = 10_000

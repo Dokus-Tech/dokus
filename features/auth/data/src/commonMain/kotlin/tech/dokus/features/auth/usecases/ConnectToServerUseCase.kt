@@ -1,11 +1,11 @@
 package tech.dokus.features.auth.usecases
 
-import tech.dokus.features.auth.storage.TokenStorage
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.domain.config.ServerConnectionException
 import tech.dokus.domain.config.ServerInfo
 import tech.dokus.domain.config.ServerValidationResult
+import tech.dokus.features.auth.storage.TokenStorage
 import tech.dokus.foundation.platform.Logger
 import tech.dokus.foundation.platform.Persistence
 

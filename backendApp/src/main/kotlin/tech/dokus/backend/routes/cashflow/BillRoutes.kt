@@ -1,13 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.BillId
-import tech.dokus.domain.model.CreateBillRequest
-import tech.dokus.domain.model.MarkBillPaidRequest
-import tech.dokus.domain.model.UpdateBillStatusRequest
-import tech.dokus.domain.routes.Bills
-import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -19,6 +11,14 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.cashflow.BillService
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.MarkBillPaidRequest
+import tech.dokus.domain.model.UpdateBillStatusRequest
+import tech.dokus.domain.routes.Bills
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

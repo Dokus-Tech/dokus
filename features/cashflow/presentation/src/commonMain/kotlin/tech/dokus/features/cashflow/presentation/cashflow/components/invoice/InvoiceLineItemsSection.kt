@@ -1,10 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_add_line_item
-import tech.dokus.aura.resources.invoice_line_items
-import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,8 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import tech.dokus.domain.exceptions.DokusException
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_add_line_item
+import tech.dokus.aura.resources.invoice_line_items
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import tech.dokus.foundation.aura.extensions.localized
 
 /**
  * Section containing all invoice line items with add/remove functionality.

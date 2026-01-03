@@ -1,5 +1,15 @@
 package tech.dokus.database.repository.auth
 
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toStdlibInstant
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.mapper.UserMappers.toTenantMembership
 import tech.dokus.database.mapper.UserMappers.toUser
 import tech.dokus.database.mapper.UserMappers.toUserInTenant
@@ -16,16 +26,6 @@ import tech.dokus.domain.model.UserInTenant
 import tech.dokus.foundation.backend.crypto.PasswordCryptoService
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.toStdlibInstant
-import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.insertAndGetId
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
@@ -35,6 +35,7 @@ class UserRepository(
     private val passwordCrypto: PasswordCryptoService
 ) {
     private val logger = loggerFor()
+
     /**
      * Register a new user without associating them with any tenant.
      * The user can later create or join tenants.
@@ -158,8 +159,8 @@ class UserRepository(
                     .selectAll()
                     .where {
                         (TenantMembersTable.tenantId eq javaUuid) and
-                                (UsersTable.isActive eq true) and
-                                (TenantMembersTable.isActive eq true)
+                            (UsersTable.isActive eq true) and
+                            (TenantMembersTable.isActive eq true)
                     }
             } else {
                 UsersTable
@@ -193,7 +194,7 @@ class UserRepository(
             .selectAll()
             .where {
                 (TenantMembersTable.userId eq userId.value.toJavaUuid()) and
-                        (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
+                    (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
             }
             .singleOrNull()
             ?.toTenantMembership()
@@ -220,7 +221,7 @@ class UserRepository(
         dbQuery {
             val updated = TenantMembersTable.update({
                 (TenantMembersTable.userId eq userId.value.toJavaUuid()) and
-                        (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
+                    (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
             }) {
                 it[role] = newRole
             }
@@ -238,7 +239,7 @@ class UserRepository(
     suspend fun removeFromTenant(userId: UserId, tenantId: TenantId) = dbQuery {
         val updated = TenantMembersTable.update({
             (TenantMembersTable.userId eq userId.value.toJavaUuid()) and
-                    (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
+                (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
         }) {
             it[isActive] = false
         }
@@ -366,7 +367,7 @@ class UserRepository(
             .selectAll()
             .where {
                 (UsersTable.emailVerificationToken eq token) and
-                        (UsersTable.emailVerified eq false)
+                    (UsersTable.emailVerified eq false)
             }
             .singleOrNull()
             ?.let { row ->

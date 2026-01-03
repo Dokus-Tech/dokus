@@ -1,6 +1,5 @@
 package tech.dokus.foundation.aura.components.common
 
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +11,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Generic top app bar that accepts two composable slots: one for search content (title area)

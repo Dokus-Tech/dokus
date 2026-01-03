@@ -1,16 +1,5 @@
 package tech.dokus.database.repository.auth
 
-import tech.dokus.database.tables.auth.TenantInvitationsTable
-import tech.dokus.database.tables.auth.UsersTable
-import tech.dokus.domain.Email
-import tech.dokus.domain.enums.InvitationStatus
-import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.ids.InvitationId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.TenantInvitation
-import tech.dokus.foundation.backend.database.dbQuery
-import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -23,6 +12,17 @@ import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.auth.TenantInvitationsTable
+import tech.dokus.database.tables.auth.UsersTable
+import tech.dokus.domain.Email
+import tech.dokus.domain.enums.InvitationStatus
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.SecureRandom
 import java.util.Base64
 import kotlin.uuid.ExperimentalUuidApi
@@ -60,8 +60,8 @@ class InvitationRepository {
             .selectAll()
             .where {
                 (TenantInvitationsTable.tenantId eq tenantId.value.toJavaUuid()) and
-                        (TenantInvitationsTable.email eq email.value) and
-                        (TenantInvitationsTable.status eq InvitationStatus.Pending)
+                    (TenantInvitationsTable.email eq email.value) and
+                    (TenantInvitationsTable.status eq InvitationStatus.Pending)
             }
             .singleOrNull()
 
@@ -98,7 +98,7 @@ class InvitationRepository {
             .selectAll()
             .where {
                 (TenantInvitationsTable.id eq id.value.toJavaUuid()) and
-                        (TenantInvitationsTable.tenantId eq tenantId.value.toJavaUuid())
+                    (TenantInvitationsTable.tenantId eq tenantId.value.toJavaUuid())
             }
             .singleOrNull()
             ?.toTenantInvitation()
@@ -127,7 +127,7 @@ class InvitationRepository {
             .selectAll()
             .where {
                 (TenantInvitationsTable.email eq email.value) and
-                        (TenantInvitationsTable.status eq InvitationStatus.Pending)
+                    (TenantInvitationsTable.status eq InvitationStatus.Pending)
             }
             .singleOrNull()
             ?.toTenantInvitation()
@@ -185,7 +185,7 @@ class InvitationRepository {
     suspend fun cancel(id: InvitationId, tenantId: TenantId): Unit = dbQuery {
         val updated = TenantInvitationsTable.update({
             (TenantInvitationsTable.id eq id.value.toJavaUuid()) and
-                    (TenantInvitationsTable.tenantId eq tenantId.value.toJavaUuid())
+                (TenantInvitationsTable.tenantId eq tenantId.value.toJavaUuid())
         }) {
             it[status] = InvitationStatus.Cancelled
         }
@@ -206,7 +206,7 @@ class InvitationRepository {
 
         val updated = TenantInvitationsTable.update({
             (TenantInvitationsTable.status eq InvitationStatus.Pending) and
-                    (TenantInvitationsTable.expiresAt less now)
+                (TenantInvitationsTable.expiresAt less now)
         }) {
             it[status] = InvitationStatus.Expired
         }

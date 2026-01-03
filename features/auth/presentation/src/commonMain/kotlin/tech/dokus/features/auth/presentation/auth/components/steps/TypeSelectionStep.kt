@@ -1,16 +1,6 @@
 package tech.dokus.features.auth.presentation.auth.components.steps
 
 import androidx.compose.foundation.border
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_workspace_type_company_description
-import tech.dokus.aura.resources.auth_workspace_type_freelancer_description
-import tech.dokus.aura.resources.auth_workspace_type_prompt
-import tech.dokus.aura.resources.auth_workspace_type_unavailable
-import tech.dokus.aura.resources.workspace_type_company
-import tech.dokus.aura.resources.workspace_type_freelancer
-import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.domain.enums.TenantType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -34,7 +24,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_workspace_type_company_description
+import tech.dokus.aura.resources.auth_workspace_type_freelancer_description
+import tech.dokus.aura.resources.auth_workspace_type_prompt
+import tech.dokus.aura.resources.auth_workspace_type_unavailable
+import tech.dokus.aura.resources.workspace_type_company
+import tech.dokus.aura.resources.workspace_type_freelancer
+import tech.dokus.domain.enums.TenantType
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.constrains.Constrains
 
 @Composable
 internal fun TypeSelectionStep(
@@ -129,6 +129,7 @@ internal fun TypeSelectionStep(
     }
 }
 
+@Suppress("UnusedParameter") // Reserved for future use (e.g., analytics)
 @Composable
 private fun TypeCard(
     type: TenantType,

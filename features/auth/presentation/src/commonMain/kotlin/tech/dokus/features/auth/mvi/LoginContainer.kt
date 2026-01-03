@@ -1,9 +1,7 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
+
 package tech.dokus.features.auth.mvi
 
-import tech.dokus.features.auth.usecases.LoginUseCase
-import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -11,6 +9,13 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Email
 import tech.dokus.domain.Password
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.features.auth.usecases.LoginUseCase
+import tech.dokus.foundation.platform.Logger
+
+// Number of characters to show in email preview for logging (privacy)
+private const val EmailPreviewLength = 3
 
 internal typealias LoginCtx = PipelineContext<LoginState, LoginIntent, LoginAction>
 
@@ -79,7 +84,7 @@ internal class LoginContainer(
             )
         }
 
-        logger.d { "Login attempt started for email: ${email.value.take(3)}***" }
+        logger.d { "Login attempt started for email: ${email.value.take(EmailPreviewLength)}***" }
 
         // Attempt login
         loginUseCase(email, password).fold(

@@ -1,19 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review.components
 
-import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.review.ContactSelectionSection
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewFooter
-import tech.dokus.features.cashflow.presentation.review.PdfPreviewBottomSheet
-import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
-import tech.dokus.features.cashflow.presentation.review.PdfPreviewRow
-import tech.dokus.features.cashflow.presentation.review.components.details.AmountsCard
-import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
-import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
-import tech.dokus.features.cashflow.presentation.review.components.forms.UnsavedChangesBar
-import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
-import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -48,7 +34,19 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_counterparty_details_title
 import tech.dokus.aura.resources.cashflow_loading_document
-import tech.dokus.aura.resources.cashflow_unknown_document_type
+import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewFooter
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.PdfPreviewBottomSheet
+import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
+import tech.dokus.features.cashflow.presentation.review.PdfPreviewRow
+import tech.dokus.features.cashflow.presentation.review.components.details.AmountsCard
+import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
+import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
+import tech.dokus.features.cashflow.presentation.review.components.forms.UnsavedChangesBar
+import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
+import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.constrains.Constrains
@@ -260,7 +258,6 @@ private fun ReviewDetailsPane(
         }
     }
 }
-
 
 @Composable
 private fun MobileReviewContent(

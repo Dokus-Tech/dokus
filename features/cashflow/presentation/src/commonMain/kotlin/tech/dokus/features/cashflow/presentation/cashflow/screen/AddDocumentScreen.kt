@@ -1,26 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.screen
 
-import tech.dokus.features.cashflow.presentation.cashflow.components.AppDownloadQrDialog
-import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentUploadList
-import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentUploadZone
-import tech.dokus.features.cashflow.presentation.cashflow.components.UploadIcon
-import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
-import tech.dokus.features.cashflow.mvi.AddDocumentIntent
-import tech.dokus.features.cashflow.mvi.AddDocumentState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_add_document
-import tech.dokus.aura.resources.upload_documents_title
-import tech.dokus.aura.resources.upload_instructions
-import tech.dokus.aura.resources.upload_no_app_hint
-import tech.dokus.aura.resources.upload_select_file
-import tech.dokus.aura.resources.upload_uploads_title
-import tech.dokus.aura.resources.upload_with_camera
-import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.constrains.padding
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.domain.model.DocumentDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +25,34 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_add_document
+import tech.dokus.aura.resources.upload_documents_title
+import tech.dokus.aura.resources.upload_instructions
+import tech.dokus.aura.resources.upload_no_app_hint
+import tech.dokus.aura.resources.upload_select_file
+import tech.dokus.aura.resources.upload_uploads_title
+import tech.dokus.aura.resources.upload_with_camera
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.features.cashflow.mvi.AddDocumentIntent
+import tech.dokus.features.cashflow.mvi.AddDocumentState
+import tech.dokus.features.cashflow.presentation.cashflow.components.AppDownloadQrDialog
+import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentUploadList
+import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentUploadZone
+import tech.dokus.features.cashflow.presentation.cashflow.components.UploadIcon
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
+import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.padding
+import tech.dokus.foundation.aura.local.LocalScreenSize
+
+private val DesktopContentPadding = 32.dp
+private val MobileContentPadding = 16.dp
+private val SectionSpacing = 24.dp
+private val SmallSpacing = 8.dp
+private val MediumSpacing = 12.dp
+private const val DesktopContentWidthFraction = 0.5f
 
 /**
  * Add a document screen for uploading and processing documents/invoices.
@@ -137,7 +144,7 @@ private fun DesktopLayout(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .padding(32.dp)
+                .padding(DesktopContentPadding)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -148,7 +155,7 @@ private fun DesktopLayout(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(SmallSpacing))
 
             Text(
                 text = stringResource(Res.string.upload_instructions),
@@ -156,7 +163,7 @@ private fun DesktopLayout(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(SectionSpacing))
 
             DocumentUploadZone(
                 isDragging = isDragging,
@@ -164,10 +171,10 @@ private fun DesktopLayout(
                 onDragStateChange = { isDragging = it },
                 onFilesDropped = { onIntent(AddDocumentIntent.Upload(it)) },
                 isUploading = isUploading,
-                modifier = Modifier.fillMaxWidth(0.5f)
+                modifier = Modifier.fillMaxWidth(DesktopContentWidthFraction)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MediumSpacing))
 
             TextButton(onClick = onShowQrCode) {
                 Text(
@@ -182,11 +189,11 @@ private fun DesktopLayout(
                 documents = uploadedDocuments,
                 deletionHandles = deletionHandles,
                 uploadManager = uploadManager,
-                modifierText = Modifier.fillMaxWidth(0.5f),
-                modifierList = Modifier.fillMaxWidth(0.5f)
+                modifierText = Modifier.fillMaxWidth(DesktopContentWidthFraction),
+                modifierList = Modifier.fillMaxWidth(DesktopContentWidthFraction)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(SectionSpacing))
         }
     }
 }
@@ -216,9 +223,9 @@ private fun MobileLayout(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .padding(16.dp)
+                .padding(MobileContentPadding)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(MobileContentPadding)
         ) {
             // Camera upload zone
             DocumentUploadZone(
@@ -252,11 +259,10 @@ private fun MobileLayout(
                 modifierList = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(SectionSpacing))
         }
     }
 }
-
 
 @Composable
 private fun Uploads(
@@ -268,7 +274,7 @@ private fun Uploads(
     modifierList: Modifier = Modifier,
 ) {
     if (tasks.isNotEmpty()) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(SectionSpacing))
 
         Text(
             text = stringResource(Res.string.upload_uploads_title),
@@ -277,7 +283,7 @@ private fun Uploads(
             modifier = modifierText
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(SmallSpacing))
 
         DocumentUploadList(
             tasks = tasks,

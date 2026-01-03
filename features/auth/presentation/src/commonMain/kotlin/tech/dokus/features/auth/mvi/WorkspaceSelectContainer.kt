@@ -1,8 +1,5 @@
 package tech.dokus.features.auth.mvi
 
-import tech.dokus.features.auth.datasource.TenantRemoteDataSource
-import tech.dokus.features.auth.usecases.SelectTenantUseCase
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -13,8 +10,12 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.features.auth.datasource.TenantRemoteDataSource
+import tech.dokus.features.auth.usecases.SelectTenantUseCase
+import tech.dokus.foundation.platform.Logger
 
-internal typealias WorkspaceSelectCtx = PipelineContext<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction>
+internal typealias WorkspaceSelectCtx =
+    PipelineContext<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction>
 
 /**
  * Container for Workspace Selection screen using FlowMVI.

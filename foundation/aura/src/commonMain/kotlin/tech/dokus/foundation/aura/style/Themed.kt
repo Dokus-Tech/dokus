@@ -1,7 +1,5 @@
 package tech.dokus.foundation.aura.style
 
-import tech.dokus.foundation.platform.activePlatform
-import tech.dokus.foundation.platform.isWeb
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.LocalRippleConfiguration
@@ -13,6 +11,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.font.FontFamily
 import tech.dokus.foundation.aura.local.LocalThemeManager
+import tech.dokus.foundation.platform.activePlatform
+import tech.dokus.foundation.platform.isWeb
 
 /**
  * Themed wrapper that applies Material3 theme to content.
@@ -54,7 +54,12 @@ fun Themed(
         draggedAlpha = 0.08f,
         hoveredAlpha = 0.06f
     )
-    CompositionLocalProvider(LocalRippleConfiguration provides RippleConfiguration(color = colorScheme.rippleColor, rippleAlpha = calmRippleAlpha)) {
+    CompositionLocalProvider(
+        LocalRippleConfiguration provides RippleConfiguration(
+            color = colorScheme.rippleColor,
+            rippleAlpha = calmRippleAlpha
+        )
+    ) {
         MaterialTheme(colorScheme = colorScheme, typography = typography) {
             content()
         }

@@ -1,6 +1,5 @@
 package tech.dokus.foundation.backend.cache
 
-import tech.dokus.foundation.backend.config.CachingConfig
 import io.lettuce.core.RedisURI
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.async.RedisAsyncCommands
@@ -8,6 +7,7 @@ import io.lettuce.core.support.ConnectionPoolSupport
 import kotlinx.coroutines.future.await
 import org.apache.commons.pool2.impl.GenericObjectPool
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig
+import tech.dokus.foundation.backend.config.CachingConfig
 import java.time.Duration
 import io.lettuce.core.RedisClient as LettuceRedisClient
 

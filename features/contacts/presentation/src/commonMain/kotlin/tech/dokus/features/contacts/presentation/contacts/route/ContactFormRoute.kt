@@ -19,7 +19,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.features.contacts.mvi.ContactFormAction
 import tech.dokus.features.contacts.mvi.ContactFormContainer
-import tech.dokus.features.contacts.mvi.ContactFormIntent
 import tech.dokus.features.contacts.mvi.ContactFormSuccess
 import tech.dokus.features.contacts.presentation.contacts.screen.ContactFormScreen
 import tech.dokus.foundation.app.mvi.container

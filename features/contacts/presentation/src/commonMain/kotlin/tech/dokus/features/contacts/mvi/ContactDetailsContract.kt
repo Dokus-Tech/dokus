@@ -1,16 +1,16 @@
 package tech.dokus.features.contacts.mvi
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
+import pro.respawn.flowmvi.api.MVIAction
+import pro.respawn.flowmvi.api.MVIIntent
+import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
-import pro.respawn.flowmvi.api.MVIAction
-import pro.respawn.flowmvi.api.MVIIntent
-import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.foundation.app.state.DokusState
 
 /**

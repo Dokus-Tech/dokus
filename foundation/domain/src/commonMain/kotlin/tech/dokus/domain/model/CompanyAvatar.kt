@@ -1,8 +1,8 @@
 package tech.dokus.domain.model
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.common.Thumbnail
-import kotlinx.serialization.Serializable
 
 /**
  * Response from avatar upload endpoint.

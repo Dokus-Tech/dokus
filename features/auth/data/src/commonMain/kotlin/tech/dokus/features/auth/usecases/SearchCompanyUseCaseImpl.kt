@@ -1,9 +1,9 @@
 package tech.dokus.features.auth.usecases
 
-import tech.dokus.features.auth.datasource.LookupRemoteDataSource
-import tech.dokus.foundation.platform.Logger
 import tech.dokus.domain.model.entity.EntityLookupResponse
 import tech.dokus.domain.usecases.SearchCompanyUseCase
+import tech.dokus.features.auth.datasource.LookupRemoteDataSource
+import tech.dokus.foundation.platform.Logger
 
 /**
  * Implementation of [SearchCompanyUseCase] that uses CBE API via [LookupRemoteDataSource].

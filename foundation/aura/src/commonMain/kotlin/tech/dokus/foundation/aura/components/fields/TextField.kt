@@ -50,6 +50,7 @@ import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.style.brandGold
 
+@Suppress("LongParameterList") // UI styling function with necessary visual parameters
 private fun Modifier.dokusFocusGlow(
     enabled: Boolean,
     isFocused: Boolean,

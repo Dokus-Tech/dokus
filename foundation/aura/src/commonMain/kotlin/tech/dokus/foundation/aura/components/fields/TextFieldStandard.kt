@@ -1,6 +1,5 @@
 package tech.dokus.foundation.aura.components.fields
 
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -9,11 +8,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import tech.dokus.domain.exceptions.DokusException
 
 object PTextFieldStandardDefaults {
     val icon = null
     val onAction = {}
-    val singleLine = true
+    const val singleLine = true
     val keyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Text,
         capitalization = KeyboardCapitalization.Sentences,

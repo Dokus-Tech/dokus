@@ -1,11 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.screen
 
-import tech.dokus.features.contacts.presentation.contacts.components.create.ConfirmStepContent
-import tech.dokus.features.contacts.presentation.contacts.components.create.LookupStepContent
-import tech.dokus.features.contacts.presentation.contacts.components.create.ManualStepContent
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.navigation.destinations.ContactCreateOrigin
-import tech.dokus.foundation.aura.components.DokusCardSurface
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,6 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import tech.dokus.features.contacts.mvi.CreateContactIntent
 import tech.dokus.features.contacts.mvi.CreateContactState
+import tech.dokus.features.contacts.presentation.contacts.components.create.ConfirmStepContent
+import tech.dokus.features.contacts.presentation.contacts.components.create.LookupStepContent
+import tech.dokus.features.contacts.presentation.contacts.components.create.ManualStepContent
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.navigation.destinations.ContactCreateOrigin
 
 /**
  * Screen for creating a new contact using VAT-first split flow.

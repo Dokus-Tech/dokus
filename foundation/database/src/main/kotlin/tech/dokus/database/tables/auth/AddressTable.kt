@@ -1,11 +1,11 @@
 package tech.dokus.database.tables.auth
 
-import tech.dokus.domain.enums.Country
-import tech.dokus.foundation.backend.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
+import tech.dokus.domain.enums.Country
+import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
  * Address table linked to tenant. Cascade delete ensures addresses

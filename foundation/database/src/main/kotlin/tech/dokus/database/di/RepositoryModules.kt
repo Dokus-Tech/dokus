@@ -1,5 +1,7 @@
 package tech.dokus.database.di
 
+import org.koin.dsl.bind
+import org.koin.dsl.module
 import tech.dokus.database.repository.ai.ChatRepositoryImpl
 import tech.dokus.database.repository.ai.DocumentChunksRepository
 import tech.dokus.database.repository.auth.AddressRepository
@@ -23,8 +25,6 @@ import tech.dokus.database.repository.payment.PaymentRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
-import org.koin.dsl.bind
-import org.koin.dsl.module
 import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository

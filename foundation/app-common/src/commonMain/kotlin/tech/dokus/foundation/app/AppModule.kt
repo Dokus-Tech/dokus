@@ -1,11 +1,11 @@
 package tech.dokus.foundation.app
 
-import tech.dokus.navigation.NavigationProvider
-import tech.dokus.navigation.destinations.NavigationDestination
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
 import org.jetbrains.compose.resources.StringResource
 import org.koin.core.module.Module
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.NavigationDestination
 
 /**
  * Defines a feature module in the Dokus application architecture.
@@ -41,7 +41,6 @@ data class ModuleSettingsSection(
 
 val Collection<AppModule>.navigationProviders: List<NavigationProvider>
     get() = mapNotNull { it.navigationProvider }
-
 
 val Collection<ModuleSettingsGroup>.allDestinations: List<NavigationDestination>
     get() = flatMap { it.sections.map { section -> section.destination } }

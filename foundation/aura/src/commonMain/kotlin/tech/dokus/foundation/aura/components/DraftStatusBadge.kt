@@ -1,11 +1,11 @@
 package tech.dokus.foundation.aura.components
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.foundation.aura.extensions.color
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.extensions.onColor
-import tech.dokus.domain.enums.DraftStatus
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 
 /**
  * A specialized status badge for document draft states.

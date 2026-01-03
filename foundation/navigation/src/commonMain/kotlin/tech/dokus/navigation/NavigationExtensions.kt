@@ -1,6 +1,5 @@
 package tech.dokus.navigation
 
-import tech.dokus.navigation.destinations.NavigationDestination
 import androidx.annotation.MainThread
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -10,6 +9,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavUri
 import androidx.navigation.compose.currentBackStackEntryAsState
+import tech.dokus.navigation.destinations.NavigationDestination
 
 @MainThread
 fun <T : Any> NavController.replace(

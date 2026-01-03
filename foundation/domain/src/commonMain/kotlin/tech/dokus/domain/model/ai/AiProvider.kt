@@ -9,8 +9,11 @@ import tech.dokus.domain.database.DbEnum
  */
 @Serializable
 enum class AiProvider(override val dbValue: String) : DbEnum {
-    @SerialName("ollama") Ollama("ollama"),
-    @SerialName("openai") OpenAi("openai");
+    @SerialName("ollama")
+    Ollama("ollama"),
+
+    @SerialName("openai")
+    OpenAi("openai");
 
     companion object {
         fun fromDbValue(value: String): AiProvider =

@@ -1,7 +1,7 @@
 package tech.dokus.foundation.backend.database
 
-import tech.dokus.domain.database.DbEnum
 import org.jetbrains.exposed.v1.core.Table
+import tech.dokus.domain.database.DbEnum
 
 inline fun <reified T> Table.dbEnumeration(
     name: String

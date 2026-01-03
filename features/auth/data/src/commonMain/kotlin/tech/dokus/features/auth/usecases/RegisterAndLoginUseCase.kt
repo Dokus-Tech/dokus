@@ -1,10 +1,12 @@
+@file:Suppress("ReturnCount") // Multi-step registration flow requires validation returns
+
 package tech.dokus.features.auth.usecases
 
-import tech.dokus.features.auth.repository.AuthRepository
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.Password
 import tech.dokus.domain.model.auth.RegisterRequest
+import tech.dokus.features.auth.repository.AuthRepository
 import tech.dokus.foundation.platform.Logger
 
 /**

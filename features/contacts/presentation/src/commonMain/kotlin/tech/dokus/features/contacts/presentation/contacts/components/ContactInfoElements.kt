@@ -29,6 +29,24 @@ import tech.dokus.aura.resources.contacts_vendor
 import tech.dokus.domain.model.contact.DerivedContactRoles
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 
+// UI dimension constants
+private val InfoRowSpacing = 12.dp
+private val InfoIconSize = 20.dp
+private val SkeletonSpacerHeight = 4.dp
+private val SkeletonTitleHeight = 28.dp
+private val SkeletonIconWidth = 20.dp
+private val SkeletonIconHeight = 20.dp
+private val SkeletonLabelWidth = 60.dp
+private val SkeletonLabelHeight = 12.dp
+private val SkeletonValueWidth = 150.dp
+private val SkeletonValueHeight = 16.dp
+private val BadgeCornerRadius = 4.dp
+private val BadgePaddingHorizontal = 8.dp
+private val BadgePaddingVertical = 4.dp
+private const val SkeletonRepeatCount = 4
+private const val BadgeBackgroundAlpha = 0.1f
+private const val SkeletonTitleWidthFraction = 0.6f
+
 @Composable
 internal fun ContactInfoRow(
     icon: ImageVector,
@@ -38,12 +56,12 @@ internal fun ContactInfoRow(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(InfoRowSpacing)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(InfoIconSize),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Column {
@@ -63,20 +81,20 @@ internal fun ContactInfoRow(
 @Composable
 internal fun ContactInfoSkeleton() {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(InfoRowSpacing)
     ) {
-        ShimmerLine(modifier = Modifier.fillMaxWidth(0.6f), height = 28.dp)
-        Spacer(modifier = Modifier.height(4.dp))
+        ShimmerLine(modifier = Modifier.fillMaxWidth(SkeletonTitleWidthFraction), height = SkeletonTitleHeight)
+        Spacer(modifier = Modifier.height(SkeletonSpacerHeight))
 
-        repeat(4) {
+        repeat(SkeletonRepeatCount) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(InfoRowSpacing)
             ) {
-                ShimmerLine(modifier = Modifier.width(20.dp), height = 20.dp)
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    ShimmerLine(modifier = Modifier.width(60.dp), height = 12.dp)
-                    ShimmerLine(modifier = Modifier.width(150.dp), height = 16.dp)
+                ShimmerLine(modifier = Modifier.width(SkeletonIconWidth), height = SkeletonIconHeight)
+                Column(verticalArrangement = Arrangement.spacedBy(SkeletonSpacerHeight)) {
+                    ShimmerLine(modifier = Modifier.width(SkeletonLabelWidth), height = SkeletonLabelHeight)
+                    ShimmerLine(modifier = Modifier.width(SkeletonValueWidth), height = SkeletonValueHeight)
                 }
             }
         }
@@ -95,15 +113,15 @@ internal fun ContactStatusLabel(
     }
 
     Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(4.dp),
+        color = color.copy(alpha = BadgeBackgroundAlpha),
+        shape = RoundedCornerShape(BadgeCornerRadius),
         modifier = modifier
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
             color = color,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = BadgePaddingHorizontal, vertical = BadgePaddingVertical)
         )
     }
 }
@@ -143,15 +161,15 @@ internal fun ContactInfoRoleBadge(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(4.dp),
+        color = color.copy(alpha = BadgeBackgroundAlpha),
+        shape = RoundedCornerShape(BadgeCornerRadius),
         modifier = modifier
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
             color = color,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = BadgePaddingHorizontal, vertical = BadgePaddingVertical)
         )
     }
 }
@@ -162,15 +180,15 @@ internal fun ContactInfoTagBadge(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(4.dp),
+        color = MaterialTheme.colorScheme.outline.copy(alpha = BadgeBackgroundAlpha),
+        shape = RoundedCornerShape(BadgeCornerRadius),
         modifier = modifier
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = BadgePaddingHorizontal, vertical = BadgePaddingVertical)
         )
     }
 }

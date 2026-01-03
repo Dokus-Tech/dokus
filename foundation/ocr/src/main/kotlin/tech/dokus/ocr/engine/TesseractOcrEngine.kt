@@ -15,10 +15,8 @@ import tech.dokus.ocr.util.TempFileManager
 import tech.dokus.ocr.util.TextNormalizer
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tesseract-based OCR engine using CLI.
@@ -202,8 +200,9 @@ class TesseractOcrEngine : OcrEngine {
 
         return TempFileManager.withTempDir { tempDir ->
             // Calculate conversion timeout: ~30% of base timeout + 2s per estimated page
-            val conversionTimeout = ((input.timeout.inWholeMilliseconds * 0.3).toLong() +
-                (2000L * input.maxPages))
+            val baseTimeoutMs = (input.timeout.inWholeMilliseconds * 0.3).toLong()
+            val perPageTimeoutMs = 2000L * input.maxPages
+            val conversionTimeout = (baseTimeoutMs + perPageTimeoutMs)
                 .coerceIn(5000, 60000)
                 .milliseconds
 
@@ -230,7 +229,9 @@ class TesseractOcrEngine : OcrEngine {
                                 pagesProcessed = 0,
                                 totalPages = null
                             )
-                        } else null
+                        } else {
+                            null
+                        }
                     )
                 }
                 is PdfToImageConverter.ConversionOutcome.Success -> {
@@ -335,7 +336,8 @@ class TesseractOcrEngine : OcrEngine {
             TESSERACT_COMMAND,
             imageFile.absolutePath,
             "stdout", // Output to stdout instead of file
-            "-l", langParam
+            "-l",
+            langParam
         )
 
         return ProcessExecutor.execute(command, timeout)

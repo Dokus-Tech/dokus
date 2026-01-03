@@ -1,6 +1,7 @@
 package tech.dokus.peppol.provider.client
 
 import tech.dokus.domain.enums.PeppolDocumentType.Companion.toApiValue
+import tech.dokus.domain.enums.RecommandDirection
 import tech.dokus.domain.model.RecommandDocumentsResponse
 import tech.dokus.domain.model.RecommandInboxDocument
 import tech.dokus.domain.model.RecommandInvoiceDocument
@@ -8,6 +9,7 @@ import tech.dokus.domain.model.RecommandLineItem
 import tech.dokus.domain.model.RecommandParty
 import tech.dokus.domain.model.RecommandPaymentMeans
 import tech.dokus.domain.model.RecommandReceivedDocument
+import tech.dokus.domain.model.RecommandReceivedLineItem
 import tech.dokus.domain.model.RecommandSendDocumentType
 import tech.dokus.domain.model.RecommandSendRequest
 import tech.dokus.domain.model.RecommandSendResponse
@@ -18,6 +20,7 @@ import tech.dokus.peppol.model.PeppolDocumentSummary
 import tech.dokus.peppol.model.PeppolDocumentType
 import tech.dokus.peppol.model.PeppolError
 import tech.dokus.peppol.model.PeppolInboxItem
+import tech.dokus.peppol.model.PeppolLineItem
 import tech.dokus.peppol.model.PeppolMonetaryTotals
 import tech.dokus.peppol.model.PeppolParty
 import tech.dokus.peppol.model.PeppolReceivedDocument
@@ -27,9 +30,6 @@ import tech.dokus.peppol.model.PeppolSendResponse
 import tech.dokus.peppol.model.PeppolTaxSubtotal
 import tech.dokus.peppol.model.PeppolTaxTotal
 import tech.dokus.peppol.model.PeppolVerifyResponse
-import tech.dokus.domain.enums.RecommandDirection
-import tech.dokus.domain.model.RecommandReceivedLineItem
-import tech.dokus.peppol.model.PeppolLineItem
 
 /**
  * Maps between provider-agnostic Peppol models and Recommand-specific models.
@@ -111,7 +111,9 @@ object RecommandMapper {
             externalDocumentId = response.documentId,
             errorMessage = if (!response.success) {
                 response.errors?.joinToString("; ") { it.message } ?: response.message
-            } else null,
+            } else {
+                null
+            },
             errors = response.errors?.map {
                 PeppolError(
                     code = it.code,

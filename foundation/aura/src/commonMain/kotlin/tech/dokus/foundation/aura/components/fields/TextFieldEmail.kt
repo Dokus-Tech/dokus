@@ -1,7 +1,5 @@
 package tech.dokus.foundation.aura.components.fields
 
-import tech.dokus.domain.Email
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,11 +10,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.AtSign
+import tech.dokus.domain.Email
+import tech.dokus.domain.exceptions.DokusException
 
 object PTextFieldEmailDefaults {
     val icon = FeatherIcons.AtSign
     val onAction = {}
-    val singleLine = true
+    const val singleLine = true
     val keyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Email,
         capitalization = KeyboardCapitalization.None,

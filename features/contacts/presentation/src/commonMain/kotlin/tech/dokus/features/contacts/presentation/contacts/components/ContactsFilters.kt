@@ -1,16 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
-import tech.dokus.features.contacts.mvi.ContactActiveFilter
-import tech.dokus.features.contacts.mvi.ContactRoleFilter
-import tech.dokus.features.contacts.mvi.ContactSortOption
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_filter_role_expand
-import tech.dokus.aura.resources.contacts_filter_role_label
-import tech.dokus.aura.resources.contacts_filter_sort_expand
-import tech.dokus.aura.resources.contacts_filter_sort_label
-import tech.dokus.aura.resources.contacts_filter_status_expand
-import tech.dokus.aura.resources.contacts_filter_status_label
-import tech.dokus.foundation.aura.components.dropdown.PFilterDropdown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +8,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_filter_role_expand
+import tech.dokus.aura.resources.contacts_filter_role_label
+import tech.dokus.aura.resources.contacts_filter_sort_expand
+import tech.dokus.aura.resources.contacts_filter_sort_label
+import tech.dokus.aura.resources.contacts_filter_status_expand
+import tech.dokus.aura.resources.contacts_filter_status_label
+import tech.dokus.features.contacts.mvi.ContactActiveFilter
+import tech.dokus.features.contacts.mvi.ContactRoleFilter
+import tech.dokus.features.contacts.mvi.ContactSortOption
+import tech.dokus.foundation.aura.components.dropdown.PFilterDropdown
 
 /**
  * Filter controls for the Contacts screen (desktop layout).

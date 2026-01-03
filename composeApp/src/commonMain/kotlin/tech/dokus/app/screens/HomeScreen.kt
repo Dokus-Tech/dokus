@@ -68,7 +68,7 @@ internal fun HomeScreen(
     } ?: homeItems.first()
 
     // Subscribe to store (no actions to handle for this navigation shell)
-    val state by container.store.subscribe(DefaultLifecycle) { _ ->
+    container.store.subscribe(DefaultLifecycle) { _ ->
         // No actions to handle
     }
 

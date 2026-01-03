@@ -1,7 +1,7 @@
 package tech.dokus.foundation.backend.cache
 
-import tech.dokus.foundation.backend.config.AppBaseConfig
 import org.koin.dsl.module
+import tech.dokus.foundation.backend.config.AppBaseConfig
 
 fun redisModule(appConfig: AppBaseConfig, redistNamespace: RedisNamespace) = module {
     single<RedisClient> {

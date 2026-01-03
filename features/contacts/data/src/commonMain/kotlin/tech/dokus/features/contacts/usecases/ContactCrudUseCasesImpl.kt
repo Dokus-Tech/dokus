@@ -1,10 +1,10 @@
 package tech.dokus.features.contacts.usecases
 
-import tech.dokus.features.contacts.repository.ContactRemoteDataSource
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
+import tech.dokus.features.contacts.repository.ContactRemoteDataSource
 
 internal class GetContactUseCaseImpl(
     private val remoteDataSource: ContactRemoteDataSource

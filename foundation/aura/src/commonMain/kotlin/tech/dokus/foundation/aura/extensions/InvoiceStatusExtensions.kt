@@ -1,5 +1,9 @@
 package tech.dokus.foundation.aura.extensions
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.invoice_status_cancelled
 import tech.dokus.aura.resources.invoice_status_draft
@@ -9,10 +13,6 @@ import tech.dokus.aura.resources.invoice_status_partial
 import tech.dokus.aura.resources.invoice_status_refunded
 import tech.dokus.aura.resources.invoice_status_sent
 import tech.dokus.aura.resources.invoice_status_viewed
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.enums.InvoiceStatus
 
 /**

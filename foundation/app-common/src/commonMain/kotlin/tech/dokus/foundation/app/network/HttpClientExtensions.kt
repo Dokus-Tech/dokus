@@ -1,15 +1,17 @@
+@file:Suppress(
+    "TooGenericExceptionCaught", // HTTP errors need catch-all handling
+    "ReturnCount", // Multiple early returns for error handling
+    "ThrowsCount" // Multiple throw statements for different error types
+)
+
 package tech.dokus.foundation.app.network
 
-import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.config.DynamicDokusEndpointProvider
-import tech.dokus.domain.exceptions.DokusException
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.call.body
-import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.Sender
-import io.ktor.client.plugins.plugin
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -17,6 +19,7 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.logging.SIMPLE
+import io.ktor.client.plugins.plugin
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.statement.HttpResponse
@@ -27,15 +30,20 @@ import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.AttributeKey
 import kotlinx.serialization.json.Json
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
+import tech.dokus.domain.exceptions.DokusException
 
 fun HttpClientConfig<*>.withJsonContentNegotiation() {
     install(ContentNegotiation) {
-        json(Json {
-            encodeDefaults = true
-            isLenient = true
-            coerceInputValues = true
-            ignoreUnknownKeys = true
-        })
+        json(
+            Json {
+                encodeDefaults = true
+                isLenient = true
+                coerceInputValues = true
+                ignoreUnknownKeys = true
+            }
+        )
     }
 }
 

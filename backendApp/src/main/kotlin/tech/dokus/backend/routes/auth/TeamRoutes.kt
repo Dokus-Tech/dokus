@@ -1,12 +1,5 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.domain.enums.InvitationStatus
-import tech.dokus.domain.ids.InvitationId
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.CreateInvitationRequest
-import tech.dokus.domain.model.TransferOwnershipRequest
-import tech.dokus.domain.model.UpdateMemberRoleRequest
-import tech.dokus.domain.routes.Team
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -17,6 +10,13 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.TeamService
+import tech.dokus.domain.enums.InvitationStatus
+import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.CreateInvitationRequest
+import tech.dokus.domain.model.TransferOwnershipRequest
+import tech.dokus.domain.model.UpdateMemberRoleRequest
+import tech.dokus.domain.routes.Team
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import kotlin.uuid.ExperimentalUuidApi
@@ -38,7 +38,6 @@ internal fun Route.teamRoutes() {
     val teamService by inject<TeamService>()
 
     authenticateJwt {
-
         // ================================================================
         // TEAM MEMBERS
         // ================================================================

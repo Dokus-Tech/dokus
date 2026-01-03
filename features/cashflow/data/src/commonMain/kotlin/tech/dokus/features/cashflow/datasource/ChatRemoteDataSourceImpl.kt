@@ -1,5 +1,12 @@
 package tech.dokus.features.cashflow.datasource
 
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.plugins.resources.get
+import io.ktor.client.plugins.resources.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatHistoryResponse
@@ -10,13 +17,6 @@ import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionListResponse
 import tech.dokus.domain.routes.Chat
 import tech.dokus.domain.routes.Documents
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.resources.get
-import io.ktor.client.plugins.resources.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 
 /**
  * HTTP-based implementation of ChatRemoteDataSource.

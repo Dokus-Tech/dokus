@@ -3,6 +3,11 @@ package tech.dokus.features.cashflow.presentation.cashflow.model
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentDto
 
+private const val PercentageMultiplier = 100
+private const val MinPercentage = 0
+private const val MaxPercentage = 100
+private const val DeleteCountdownSeconds = 5
+
 /**
  * Display state for a document upload item in the UI.
  *
@@ -11,10 +16,10 @@ import tech.dokus.domain.model.DocumentDto
  * state transitions.
  *
  * State transitions:
- * - Pending → Uploading → Uploaded
- * - Uploading → Failed → (retry) → Uploading
- * - Uploaded → Deleting → (timeout) → removed
- * - Deleting → (undo) → Uploaded
+ * - Pending -> Uploading -> Uploaded
+ * - Uploading -> Failed -> (retry) -> Uploading
+ * - Uploaded -> Deleting -> (timeout) -> removed
+ * - Deleting -> (undo) -> Uploaded
  */
 sealed interface DocumentUploadDisplayState {
     /**
@@ -52,7 +57,10 @@ sealed interface DocumentUploadDisplayState {
         val task: DocumentUploadTask,
         val progress: Float
     ) : DocumentUploadDisplayState {
-        val progressPercent: Int get() = (progress * 100).toInt().coerceIn(0, 100)
+        val progressPercent: Int get() = (progress * PercentageMultiplier).toInt().coerceIn(
+            MinPercentage,
+            MaxPercentage
+        )
     }
 
     /**
@@ -89,6 +97,6 @@ sealed interface DocumentUploadDisplayState {
         val progress: Float
     ) : DocumentUploadDisplayState {
         /** Remaining seconds (approximate, based on 5-second total) */
-        val remainingSeconds: Int get() = (progress * 5).toInt()
+        val remainingSeconds: Int get() = (progress * DeleteCountdownSeconds).toInt()
     }
 }

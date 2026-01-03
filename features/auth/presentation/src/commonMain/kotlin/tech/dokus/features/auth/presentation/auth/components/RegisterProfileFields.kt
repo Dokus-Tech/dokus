@@ -1,11 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_first_name_label
-import tech.dokus.aura.resources.auth_last_name_label
-import tech.dokus.foundation.aura.components.fields.PTextFieldName
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +14,12 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_first_name_label
+import tech.dokus.aura.resources.auth_last_name_label
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
+import tech.dokus.foundation.aura.components.fields.PTextFieldName
 
 @Composable
 internal fun RegisterProfileFields(

@@ -1,18 +1,19 @@
 package tech.dokus.foundation.aura.extensions
 
+import androidx.compose.runtime.Composable
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_company_lookup_failed
 import tech.dokus.aura.resources.auth_host_no_spaces
 import tech.dokus.aura.resources.auth_host_required
 import tech.dokus.aura.resources.auth_port_invalid_number
 import tech.dokus.aura.resources.auth_port_out_of_range
 import tech.dokus.aura.resources.auth_port_required
-import tech.dokus.aura.resources.auth_company_lookup_failed
 import tech.dokus.aura.resources.cashflow_confirm_missing_fields
 import tech.dokus.aura.resources.cashflow_contact_bind_failed
 import tech.dokus.aura.resources.cashflow_contact_clear_failed
 import tech.dokus.aura.resources.cashflow_contact_save_failed
 import tech.dokus.aura.resources.cashflow_preview_load_failed
-import tech.dokus.aura.resources.upload_failed_message
 import tech.dokus.aura.resources.chat_error_invalid_document_reference
 import tech.dokus.aura.resources.chat_error_load_conversation
 import tech.dokus.aura.resources.chat_error_no_document_selected
@@ -32,34 +33,20 @@ import tech.dokus.aura.resources.contacts_note_empty_error
 import tech.dokus.aura.resources.contacts_note_update_failed
 import tech.dokus.aura.resources.contacts_peppol_id_required
 import tech.dokus.aura.resources.contacts_peppol_update_failed
-import tech.dokus.aura.resources.profile_save_error
-import tech.dokus.aura.resources.settings_save_failed
-import tech.dokus.aura.resources.team_email_required
-import tech.dokus.aura.resources.team_invite_cancel_failed
-import tech.dokus.aura.resources.team_invite_failed
-import tech.dokus.aura.resources.team_member_removed_failed
-import tech.dokus.aura.resources.team_ownership_transferred_failed
-import tech.dokus.aura.resources.team_role_update_failed
-import tech.dokus.aura.resources.workspace_avatar_delete_failed
-import tech.dokus.aura.resources.workspace_avatar_upload_failed
-import tech.dokus.aura.resources.workspace_create_failed
-import tech.dokus.aura.resources.workspace_select_failed
 import tech.dokus.aura.resources.exception_account_inactive
 import tech.dokus.aura.resources.exception_account_locked
+import tech.dokus.aura.resources.exception_api_key_required
+import tech.dokus.aura.resources.exception_api_secret_required
 import tech.dokus.aura.resources.exception_connection_error
 import tech.dokus.aura.resources.exception_email_already_verified
 import tech.dokus.aura.resources.exception_email_not_verified
 import tech.dokus.aura.resources.exception_email_verification_token_expired
 import tech.dokus.aura.resources.exception_email_verification_token_invalid
+import tech.dokus.aura.resources.exception_invalid_api_credentials
 import tech.dokus.aura.resources.exception_invalid_bic
 import tech.dokus.aura.resources.exception_invalid_city
 import tech.dokus.aura.resources.exception_invalid_country
 import tech.dokus.aura.resources.exception_invalid_credentials
-import tech.dokus.aura.resources.exception_api_key_required
-import tech.dokus.aura.resources.exception_api_secret_required
-import tech.dokus.aura.resources.exception_invalid_api_credentials
-import tech.dokus.aura.resources.exception_missing_vat_number
-import tech.dokus.aura.resources.exception_missing_company_address
 import tech.dokus.aura.resources.exception_invalid_email
 import tech.dokus.aura.resources.exception_invalid_first_name
 import tech.dokus.aura.resources.exception_invalid_iban
@@ -78,8 +65,12 @@ import tech.dokus.aura.resources.exception_invalid_workspace_name
 import tech.dokus.aura.resources.exception_invoice_client_required
 import tech.dokus.aura.resources.exception_invoice_due_date_before_issue
 import tech.dokus.aura.resources.exception_invoice_items_required
+import tech.dokus.aura.resources.exception_missing_company_address
+import tech.dokus.aura.resources.exception_missing_vat_number
 import tech.dokus.aura.resources.exception_not_authenticated
 import tech.dokus.aura.resources.exception_not_authorized
+import tech.dokus.aura.resources.exception_not_found
+import tech.dokus.aura.resources.exception_not_implemented
 import tech.dokus.aura.resources.exception_password_do_not_match
 import tech.dokus.aura.resources.exception_password_reset_token_expired
 import tech.dokus.aura.resources.exception_password_reset_token_invalid
@@ -94,14 +85,23 @@ import tech.dokus.aura.resources.exception_too_many_login_attempts
 import tech.dokus.aura.resources.exception_too_many_sessions
 import tech.dokus.aura.resources.exception_unknown
 import tech.dokus.aura.resources.exception_user_already_exists
+import tech.dokus.aura.resources.exception_user_not_found
 import tech.dokus.aura.resources.exception_validation_error
 import tech.dokus.aura.resources.exception_weak_password
-import tech.dokus.aura.resources.exception_not_found
-import tech.dokus.aura.resources.exception_user_not_found
-import tech.dokus.aura.resources.exception_not_implemented
+import tech.dokus.aura.resources.profile_save_error
+import tech.dokus.aura.resources.settings_save_failed
+import tech.dokus.aura.resources.team_email_required
+import tech.dokus.aura.resources.team_invite_cancel_failed
+import tech.dokus.aura.resources.team_invite_failed
+import tech.dokus.aura.resources.team_member_removed_failed
+import tech.dokus.aura.resources.team_ownership_transferred_failed
+import tech.dokus.aura.resources.team_role_update_failed
+import tech.dokus.aura.resources.upload_failed_message
+import tech.dokus.aura.resources.workspace_avatar_delete_failed
+import tech.dokus.aura.resources.workspace_avatar_upload_failed
+import tech.dokus.aura.resources.workspace_create_failed
+import tech.dokus.aura.resources.workspace_select_failed
 import tech.dokus.domain.exceptions.DokusException
-import androidx.compose.runtime.Composable
-import org.jetbrains.compose.resources.stringResource
 
 /**
  * Extension property to get a localized error message for a DokusException.
@@ -143,7 +143,9 @@ val DokusException.localized: String
         is DokusException.Validation.ContactNameRequired -> stringResource(Res.string.contacts_name_required)
         is DokusException.Validation.CompanyNameRequired -> stringResource(Res.string.contacts_company_name_required)
         is DokusException.Validation.FullNameRequired -> stringResource(Res.string.contacts_full_name_required)
-        is DokusException.Validation.ContactEmailOrPhoneRequired -> stringResource(Res.string.contacts_email_or_phone_required)
+        is DokusException.Validation.ContactEmailOrPhoneRequired -> stringResource(
+            Res.string.contacts_email_or_phone_required
+        )
         is DokusException.Validation.InvalidVatNumber -> stringResource(Res.string.exception_invalid_vat_number)
         is DokusException.Validation.InvalidIban -> stringResource(Res.string.exception_invalid_iban)
         is DokusException.Validation.InvalidBic -> stringResource(Res.string.exception_invalid_bic)
@@ -154,9 +156,13 @@ val DokusException.localized: String
         is DokusException.Validation.InvalidVatRate -> stringResource(Res.string.exception_invalid_vat_rate)
         is DokusException.Validation.InvalidPercentage -> stringResource(Res.string.exception_invalid_percentage)
         is DokusException.Validation.InvalidQuantity -> stringResource(Res.string.exception_invalid_quantity)
-        is DokusException.Validation.InvoiceClientRequired -> stringResource(Res.string.exception_invoice_client_required)
+        is DokusException.Validation.InvoiceClientRequired -> stringResource(
+            Res.string.exception_invoice_client_required
+        )
         is DokusException.Validation.InvoiceItemsRequired -> stringResource(Res.string.exception_invoice_items_required)
-        is DokusException.Validation.InvoiceDueDateBeforeIssue -> stringResource(Res.string.exception_invoice_due_date_before_issue)
+        is DokusException.Validation.InvoiceDueDateBeforeIssue -> stringResource(
+            Res.string.exception_invoice_due_date_before_issue
+        )
         is DokusException.Validation.DocumentMissingFields -> stringResource(Res.string.cashflow_confirm_missing_fields)
         is DokusException.Validation.NoteContentRequired -> stringResource(Res.string.contacts_note_empty_error)
         is DokusException.Validation.InvalidStreetName -> stringResource(Res.string.exception_invalid_street_name)
@@ -165,9 +171,13 @@ val DokusException.localized: String
         is DokusException.Validation.InvalidCountry -> stringResource(Res.string.exception_invalid_country)
         is DokusException.Validation.ApiKeyRequired -> stringResource(Res.string.exception_api_key_required)
         is DokusException.Validation.ApiSecretRequired -> stringResource(Res.string.exception_api_secret_required)
-        is DokusException.Validation.InvalidApiCredentials -> stringResource(Res.string.exception_invalid_api_credentials)
+        is DokusException.Validation.InvalidApiCredentials -> stringResource(
+            Res.string.exception_invalid_api_credentials
+        )
         is DokusException.Validation.MissingVatNumber -> stringResource(Res.string.exception_missing_vat_number)
-        is DokusException.Validation.MissingCompanyAddress -> stringResource(Res.string.exception_missing_company_address)
+        is DokusException.Validation.MissingCompanyAddress -> stringResource(
+            Res.string.exception_missing_company_address
+        )
         is DokusException.Validation -> stringResource(Res.string.exception_validation_error)
         is DokusException.BadRequest -> message
 
@@ -182,8 +192,12 @@ val DokusException.localized: String
         is DokusException.SessionInvalid -> stringResource(Res.string.exception_session_invalid)
         is DokusException.PasswordResetTokenExpired -> stringResource(Res.string.exception_password_reset_token_expired)
         is DokusException.PasswordResetTokenInvalid -> stringResource(Res.string.exception_password_reset_token_invalid)
-        is DokusException.EmailVerificationTokenExpired -> stringResource(Res.string.exception_email_verification_token_expired)
-        is DokusException.EmailVerificationTokenInvalid -> stringResource(Res.string.exception_email_verification_token_invalid)
+        is DokusException.EmailVerificationTokenExpired -> stringResource(
+            Res.string.exception_email_verification_token_expired
+        )
+        is DokusException.EmailVerificationTokenInvalid -> stringResource(
+            Res.string.exception_email_verification_token_invalid
+        )
 
         // 403 Authorization Errors
         is DokusException.NotAuthorized -> stringResource(Res.string.exception_not_authorized)

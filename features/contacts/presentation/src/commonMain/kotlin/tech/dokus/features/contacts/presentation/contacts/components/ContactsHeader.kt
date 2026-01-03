@@ -1,13 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_add_contact
-import tech.dokus.aura.resources.contacts_search_content_description
-import tech.dokus.aura.resources.contacts_search_placeholder
-import tech.dokus.foundation.aura.components.PButton
-import tech.dokus.foundation.aura.components.PButtonVariant
-import tech.dokus.foundation.aura.components.PIconPosition
-import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -28,7 +20,15 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_add_contact
+import tech.dokus.aura.resources.contacts_search_content_description
+import tech.dokus.aura.resources.contacts_search_placeholder
 import tech.dokus.foundation.app.network.rememberIsOnline
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.PIconPosition
+import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 
 /**
  * Search content for the Contacts screen top app bar.

@@ -1,9 +1,9 @@
 package tech.dokus.features.auth.usecases
 
-import tech.dokus.features.auth.repository.AuthRepository
 import tech.dokus.domain.Email
 import tech.dokus.domain.Password
 import tech.dokus.domain.model.auth.LoginRequest
+import tech.dokus.features.auth.repository.AuthRepository
 import tech.dokus.foundation.platform.Logger
 
 /**

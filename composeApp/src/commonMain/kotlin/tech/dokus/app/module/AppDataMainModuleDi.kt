@@ -1,19 +1,19 @@
 package tech.dokus.app.module
 
-import tech.dokus.features.auth.manager.AuthManagerMutable
-import tech.dokus.features.auth.manager.TokenManagerMutable
-import tech.dokus.domain.config.DynamicDokusEndpointProvider
-import tech.dokus.foundation.platform.platformModule
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.dsl.module
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
+import tech.dokus.features.auth.manager.AuthManagerMutable
+import tech.dokus.features.auth.manager.TokenManagerMutable
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.SharedQualifiers
 import tech.dokus.foundation.app.network.ServerConnectionMonitor
 import tech.dokus.foundation.app.network.createDynamicAuthenticatedHttpClient
 import tech.dokus.foundation.app.network.createDynamicBaseHttpClient
+import tech.dokus.foundation.platform.platformModule
 
 internal object AppDataMainModuleDi : AppDataModuleDi {
     override val platform = platformModule

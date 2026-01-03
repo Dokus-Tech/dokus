@@ -1,14 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
-import tech.dokus.features.contacts.mvi.DuplicateReason
-import tech.dokus.features.contacts.mvi.PotentialDuplicate
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_cancel
-import tech.dokus.aura.resources.contacts_continue_anyway
-import tech.dokus.aura.resources.contacts_duplicate_warning
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.aura.resources.contacts_merge
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,8 +23,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.contacts_continue_anyway
+import tech.dokus.aura.resources.contacts_duplicate_warning
+import tech.dokus.aura.resources.contacts_merge
+import tech.dokus.features.contacts.mvi.DuplicateReason
+import tech.dokus.features.contacts.mvi.PotentialDuplicate
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * A warning banner displayed when potential duplicate contacts are detected

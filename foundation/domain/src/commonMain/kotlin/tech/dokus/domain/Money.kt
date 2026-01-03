@@ -1,3 +1,8 @@
+@file:Suppress(
+    "MagicNumber", // Financial constants are self-documenting
+    "ReturnCount" // Parsing functions require multiple early returns for validation
+)
+
 package tech.dokus.domain
 
 import kotlinx.serialization.Serializable
@@ -75,6 +80,7 @@ value class Money(val minor: Long) : Comparable<Money> {
          * - Comma as decimal separator - converted to dot
          * - Optional negative sign
          */
+        @Suppress("CyclomaticComplexMethod") // Currency parsing inherently requires multiple format checks
         fun parse(value: String): Money? {
             val cleaned = value
                 .replace("€", "")
@@ -204,12 +210,13 @@ value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
 
     companion object {
         val ZERO = VatRate(0)
-        val STANDARD_BE = VatRate(2100)  // Belgium standard rate 21%
-        val REDUCED_BE = VatRate(600)    // Belgium reduced rate 6%
+        val STANDARD_BE = VatRate(2100) // Belgium standard rate 21%
+        val REDUCED_BE = VatRate(600) // Belgium reduced rate 6%
 
         /**
          * Parse a display string like "21.00" or "21" into VatRate.
          */
+        @Suppress("CyclomaticComplexMethod") // Parsing requires multiple format checks
         fun parse(value: String): VatRate? {
             val cleaned = value.replace("%", "").replace(",", ".").trim()
             if (cleaned.isEmpty()) return null
@@ -307,12 +314,13 @@ value class Percentage(val basisPoints: Int) : Comparable<Percentage> {
 
     companion object {
         val ZERO = Percentage(0)
-        val FULL = Percentage(10000)  // 100%
-        val HALF = Percentage(5000)   // 50%
+        val FULL = Percentage(10000) // 100%
+        val HALF = Percentage(5000) // 50%
 
         /**
          * Parse a display string like "50.00" or "50" into Percentage.
          */
+        @Suppress("CyclomaticComplexMethod") // Parsing requires multiple format checks
         fun parse(value: String): Percentage? {
             val cleaned = value.replace("%", "").replace(",", ".").trim()
             if (cleaned.isEmpty()) return null

@@ -1,13 +1,10 @@
 package tech.dokus.features.auth.repository
 
-import tech.dokus.features.auth.datasource.AccountRemoteDataSource
-import tech.dokus.features.auth.datasource.IdentityRemoteDataSource
-import tech.dokus.features.auth.datasource.TenantRemoteDataSource
-import tech.dokus.features.auth.manager.AuthManagerMutable
-import tech.dokus.features.auth.manager.TokenManagerMutable
+import kotlinx.coroutines.flow.StateFlow
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.Email
 import tech.dokus.domain.LegalName
+import tech.dokus.domain.Name
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.TenantPlan
 import tech.dokus.domain.enums.TenantType
@@ -25,9 +22,15 @@ import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.ResetPasswordRequest
 import tech.dokus.domain.model.auth.UpdateProfileRequest
-import tech.dokus.domain.Name
+import tech.dokus.features.auth.datasource.AccountRemoteDataSource
+import tech.dokus.features.auth.datasource.IdentityRemoteDataSource
+import tech.dokus.features.auth.datasource.TenantRemoteDataSource
+import tech.dokus.features.auth.manager.AuthManagerMutable
+import tech.dokus.features.auth.manager.TokenManagerMutable
 import tech.dokus.foundation.platform.Logger
-import kotlinx.coroutines.flow.StateFlow
+
+// Number of characters to show in email preview for logging (privacy)
+private const val EmailPreviewLength = 3
 
 /**
  * Repository for authentication operations.
@@ -67,7 +70,7 @@ class AuthRepository(
      * Login with email and password.
      */
     suspend fun login(request: LoginRequest): Result<Unit> {
-        logger.d { "Login attempt for email: ${request.email.value.take(3)}***" }
+        logger.d { "Login attempt for email: ${request.email.value.take(EmailPreviewLength)}***" }
 
         val response = identityDataSource.login(request).getOrElse { error ->
             logger.e(error) { "Login failed" }
@@ -84,7 +87,7 @@ class AuthRepository(
      * Register a new user account.
      */
     suspend fun register(request: RegisterRequest): Result<Unit> {
-        logger.d { "Registration attempt for email: ${request.email.value.take(3)}***" }
+        logger.d { "Registration attempt for email: ${request.email.value.take(EmailPreviewLength)}***" }
 
         val response = identityDataSource.register(request).getOrElse { error ->
             logger.e(error) { "Registration failed" }
@@ -116,6 +119,7 @@ class AuthRepository(
     /**
      * Create a tenant with address and scope tokens to it.
      */
+    @Suppress("LongParameterList") // All tenant creation parameters are required
     suspend fun createTenant(
         type: TenantType,
         legalName: LegalName,
@@ -209,7 +213,7 @@ class AuthRepository(
      * Request password reset email.
      */
     suspend fun requestPasswordReset(email: Email): Result<Unit> {
-        logger.d { "Password reset requested for: ${email.value.take(3)}***" }
+        logger.d { "Password reset requested for: ${email.value.take(EmailPreviewLength)}***" }
         return identityDataSource.requestPasswordReset(email)
             .onFailure { error ->
                 logger.e(error) { "Password reset request failed" }

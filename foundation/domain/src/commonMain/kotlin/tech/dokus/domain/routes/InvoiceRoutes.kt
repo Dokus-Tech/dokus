@@ -1,9 +1,9 @@
 package tech.dokus.domain.routes
 
-import tech.dokus.domain.enums.InvoiceStatus
 import io.ktor.resources.*
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.InvoiceStatus
 
 /**
  * Type-safe route definitions for Invoice API.

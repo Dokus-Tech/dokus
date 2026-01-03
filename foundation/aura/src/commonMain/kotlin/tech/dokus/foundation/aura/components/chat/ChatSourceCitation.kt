@@ -1,16 +1,7 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
+
 package tech.dokus.foundation.aura.components.chat
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.chat_collapse_citation
-import tech.dokus.aura.resources.chat_collapse_sources
-import tech.dokus.aura.resources.chat_document_fallback
-import tech.dokus.aura.resources.chat_expand_citation
-import tech.dokus.aura.resources.chat_expand_sources
-import tech.dokus.aura.resources.chat_page_number
-import tech.dokus.aura.resources.chat_sources_count
-import tech.dokus.aura.resources.chat_view_source_document
-import tech.dokus.aura.resources.common_percent_value
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
@@ -46,6 +37,29 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chat_collapse_citation
+import tech.dokus.aura.resources.chat_collapse_sources
+import tech.dokus.aura.resources.chat_document_fallback
+import tech.dokus.aura.resources.chat_expand_citation
+import tech.dokus.aura.resources.chat_expand_sources
+import tech.dokus.aura.resources.chat_page_number
+import tech.dokus.aura.resources.chat_sources_count
+import tech.dokus.aura.resources.chat_view_source_document
+import tech.dokus.aura.resources.common_percent_value
+import tech.dokus.foundation.aura.constrains.Constrains
+
+// Animation constants
+private const val ExpandedRotation = 180f
+private const val CollapsedRotation = 0f
+
+// Relevance score thresholds
+private const val HighRelevanceThreshold = 0.8f
+private const val MediumRelevanceThreshold = 0.6f
+private const val ScoreToPercentMultiplier = 100
+
+// Divider dimensions
+private val DividerHeight = 1.dp
 
 /**
  * Data class representing a source citation for display.
@@ -70,7 +84,7 @@ data class CitationDisplayData(
  * Default values for ChatSourceCitation components.
  */
 object ChatSourceCitationDefaults {
-    val maxExcerptLines = 4
+    const val maxExcerptLines = 4
     val iconSize = 18.dp
 }
 
@@ -93,7 +107,7 @@ fun ChatSourceCitation(
 ) {
     var isExpanded by remember { mutableStateOf(initiallyExpanded) }
     val rotationAngle by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
+        targetValue = if (isExpanded) ExpandedRotation else CollapsedRotation,
         label = "expand_rotation"
     )
 
@@ -156,8 +170,11 @@ fun ChatSourceCitation(
             Icon(
                 imageVector = Icons.Default.ExpandMore,
                 contentDescription = stringResource(
-                    if (isExpanded) Res.string.chat_collapse_citation
-                    else Res.string.chat_expand_citation
+                    if (isExpanded) {
+                        Res.string.chat_collapse_citation
+                    } else {
+                        Res.string.chat_expand_citation
+                    }
                 ),
                 modifier = Modifier
                     .size(Constrains.IconSize.medium)
@@ -185,7 +202,7 @@ fun ChatSourceCitation(
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.dp)
+                        .height(DividerHeight)
                         .background(MaterialTheme.colorScheme.outlineVariant)
                 )
                 Spacer(modifier = Modifier.height(Constrains.Spacing.small))
@@ -234,15 +251,15 @@ private fun RelevanceScoreBadge(
     score: Float,
     modifier: Modifier = Modifier
 ) {
-    val displayScore = (score * 100).toInt()
+    val displayScore = (score * ScoreToPercentMultiplier).toInt()
     val backgroundColor = when {
-        score >= 0.8f -> MaterialTheme.colorScheme.primaryContainer
-        score >= 0.6f -> MaterialTheme.colorScheme.secondaryContainer
+        score >= HighRelevanceThreshold -> MaterialTheme.colorScheme.primaryContainer
+        score >= MediumRelevanceThreshold -> MaterialTheme.colorScheme.secondaryContainer
         else -> MaterialTheme.colorScheme.surfaceContainerHigh
     }
     val textColor = when {
-        score >= 0.8f -> MaterialTheme.colorScheme.onPrimaryContainer
-        score >= 0.6f -> MaterialTheme.colorScheme.onSecondaryContainer
+        score >= HighRelevanceThreshold -> MaterialTheme.colorScheme.onPrimaryContainer
+        score >= MediumRelevanceThreshold -> MaterialTheme.colorScheme.onSecondaryContainer
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -277,7 +294,7 @@ fun ChatSourceCitationList(
 
     var isExpanded by remember { mutableStateOf(false) }
     val rotationAngle by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
+        targetValue = if (isExpanded) ExpandedRotation else CollapsedRotation,
         label = "list_expand_rotation"
     )
 
@@ -304,8 +321,11 @@ fun ChatSourceCitationList(
             Icon(
                 imageVector = Icons.Default.ExpandMore,
                 contentDescription = stringResource(
-                    if (isExpanded) Res.string.chat_collapse_sources
-                    else Res.string.chat_expand_sources
+                    if (isExpanded) {
+                        Res.string.chat_collapse_sources
+                    } else {
+                        Res.string.chat_expand_sources
+                    }
                 ),
                 modifier = Modifier
                     .size(Constrains.IconSize.medium)
@@ -362,8 +382,11 @@ fun PInlineCitation(
             .clip(MaterialTheme.shapes.extraSmall)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .then(
-                if (onClick != null) Modifier.clickable { onClick() }
-                else Modifier
+                if (onClick != null) {
+                    Modifier.clickable { onClick() }
+                } else {
+                    Modifier
+                }
             )
             .padding(
                 horizontal = Constrains.Spacing.small,

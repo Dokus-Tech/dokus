@@ -1,24 +1,5 @@
 package tech.dokus.features.cashflow.presentation.settings.screen
 
-import tech.dokus.features.cashflow.mvi.PeppolConnectIntent
-import tech.dokus.features.cashflow.mvi.PeppolConnectState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.peppol_connect_title_with_provider
-import tech.dokus.aura.resources.state_connecting
-import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
-import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.local.isLarge
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.PeppolProvider
-import tech.dokus.features.cashflow.presentation.settings.components.CompanyListPane
-import tech.dokus.features.cashflow.presentation.settings.components.CredentialsPane
-import tech.dokus.features.cashflow.presentation.settings.components.ErrorPane
-import tech.dokus.features.cashflow.presentation.settings.components.LoadingPane
-import tech.dokus.features.cashflow.presentation.settings.components.NoCompaniesPane
-import tech.dokus.features.cashflow.presentation.settings.components.RightPane
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,6 +7,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.peppol_connect_title_with_provider
+import tech.dokus.aura.resources.state_connecting
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.PeppolProvider
+import tech.dokus.features.cashflow.mvi.PeppolConnectIntent
+import tech.dokus.features.cashflow.mvi.PeppolConnectState
+import tech.dokus.features.cashflow.presentation.settings.components.CompanyListPane
+import tech.dokus.features.cashflow.presentation.settings.components.CredentialsPane
+import tech.dokus.features.cashflow.presentation.settings.components.ErrorPane
+import tech.dokus.features.cashflow.presentation.settings.components.LoadingPane
+import tech.dokus.features.cashflow.presentation.settings.components.NoCompaniesPane
+import tech.dokus.features.cashflow.presentation.settings.components.RightPane
+import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
 
 /**
  * Peppol provider connection screen using FlowMVI.
@@ -86,7 +86,8 @@ internal fun PeppolConnectScreen(
                         val exception = errorState.exception
                         if (exception is DokusException.Validation.ApiKeyRequired ||
                             exception is DokusException.Validation.ApiSecretRequired ||
-                            exception is DokusException.Validation.InvalidApiCredentials) {
+                            exception is DokusException.Validation.InvalidApiCredentials
+                        ) {
                             CredentialsPane(state, onIntent)
                         } else {
                             ErrorPane(errorState)

@@ -1,6 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,6 +37,7 @@ import tech.dokus.aura.resources.auth_entity_single_confirm
 import tech.dokus.aura.resources.auth_entity_single_prompt
 import tech.dokus.aura.resources.common_vat_value
 import tech.dokus.domain.model.entity.EntityLookup
+import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.DokusGlassSurface

@@ -1,6 +1,5 @@
 package tech.dokus.foundation.aura.local
 
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
@@ -11,6 +10,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
+import tech.dokus.foundation.aura.constrains.Constrains
 
 enum class ScreenSize {
     SMALL,

@@ -1,5 +1,14 @@
 package tech.dokus.features.auth.datasource
 
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.plugins.resources.delete
+import io.ktor.client.plugins.resources.get
+import io.ktor.client.plugins.resources.post
+import io.ktor.client.plugins.resources.put
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import tech.dokus.domain.enums.InvitationStatus
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.InvitationId
@@ -10,15 +19,6 @@ import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.TransferOwnershipRequest
 import tech.dokus.domain.model.UpdateMemberRoleRequest
 import tech.dokus.domain.routes.Team
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.resources.delete
-import io.ktor.client.plugins.resources.get
-import io.ktor.client.plugins.resources.post
-import io.ktor.client.plugins.resources.put
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import kotlin.uuid.ExperimentalUuidApi
 
 /**

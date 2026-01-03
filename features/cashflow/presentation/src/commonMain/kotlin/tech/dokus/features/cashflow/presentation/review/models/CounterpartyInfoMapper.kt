@@ -1,7 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review.models
 
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 
 internal fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyInfo {
     fun clean(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }

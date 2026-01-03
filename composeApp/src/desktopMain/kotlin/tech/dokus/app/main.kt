@@ -38,4 +38,3 @@ private fun ComposeWindow.styleForMacOs() {
     // Optional: keep title empty
     title = ""
 }
-

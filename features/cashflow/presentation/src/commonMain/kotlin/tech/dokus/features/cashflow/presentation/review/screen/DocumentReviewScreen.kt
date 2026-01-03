@@ -1,16 +1,16 @@
 package tech.dokus.features.cashflow.presentation.review.screen
 
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.review.components.ReviewContent
-import tech.dokus.features.cashflow.presentation.review.components.ReviewTopBar
-import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.components.ReviewContent
+import tech.dokus.features.cashflow.presentation.review.components.ReviewTopBar
+import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
 
 @Composable
 internal fun DocumentReviewScreen(

@@ -1,5 +1,6 @@
 package tech.dokus.features.ai.services
 
+import org.slf4j.LoggerFactory
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ChunkRetrievalRequest
@@ -10,7 +11,6 @@ import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.DraftStatusChecker
 import tech.dokus.domain.repository.IngestionStatusChecker
 import tech.dokus.domain.repository.RetrievedChunk
-import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 
 /**
@@ -74,7 +74,6 @@ class RAGService(
         const val DEFAULT_MAX_CONTEXT_TOKENS = 2000
     }
 
-
     /**
      * Result of a RAG retrieval operation.
      */
@@ -127,7 +126,9 @@ class RAGService(
             )
         }
 
-        logger.debug("Query embedding generated: dimensions=${queryEmbedding.dimensions}, model=${queryEmbedding.model}")
+        logger.debug(
+            "Query embedding generated: dimensions=${queryEmbedding.dimensions}, model=${queryEmbedding.model}"
+        )
 
         // Step 2: Perform vector similarity search via repository
         // confirmedOnly=true ensures only chunks from Confirmed documents are returned

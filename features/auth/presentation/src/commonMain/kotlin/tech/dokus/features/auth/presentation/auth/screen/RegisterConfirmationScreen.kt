@@ -1,14 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_continue
-import tech.dokus.aura.resources.auth_register_success_title
-import tech.dokus.aura.resources.registration_success_message
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.text.AppNameText
-import tech.dokus.foundation.aura.components.text.CopyRightText
-import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.local.LocalScreenSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_continue
+import tech.dokus.aura.resources.auth_register_success_title
+import tech.dokus.aura.resources.registration_success_message
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.components.text.CopyRightText
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 @Composable
 fun RegisterConfirmationScreen() {

@@ -1,8 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.foundation.aura.components.common.OfflineOverlay
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,7 +11,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.common.OfflineOverlay
+
+// UI dimensions
+private val SummaryRowHeight = 340.dp
+private val CardSpacing = 24.dp
+private val BusinessHealthMinHeight = 120.dp
+
+// Layout weights
+private const val LeftColumnWeight = 3f
+private const val RightColumnWeight = 2f
 
 /**
  * Summary cards section for the Cashflow screen desktop layout.
@@ -46,15 +55,15 @@ fun CashflowSummarySection(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(340.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp)
+            .height(SummaryRowHeight),
+        horizontalArrangement = Arrangement.spacedBy(CardSpacing)
     ) {
         // Left column: VAT Summary + Business Health stacked vertically
         Column(
             modifier = Modifier
-                .weight(3f)
+                .weight(LeftColumnWeight)
                 .fillMaxHeight(),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(CardSpacing)
         ) {
             // VAT Summary Card at top (requires network connection)
             // When offline with error, show loading skeleton behind overlay instead of error
@@ -74,7 +83,7 @@ fun CashflowSummarySection(
             OfflineOverlay(
                 isOffline = !isOnline,
                 modifier = Modifier
-                    .defaultMinSize(minHeight = 120.dp)
+                    .defaultMinSize(minHeight = BusinessHealthMinHeight)
                     .weight(1f)
             ) {
                 BusinessHealthCard(
@@ -93,7 +102,7 @@ fun CashflowSummarySection(
         OfflineOverlay(
             isOffline = !isOnline,
             modifier = Modifier
-                .weight(2f)
+                .weight(RightColumnWeight)
                 .fillMaxHeight()
         ) {
             PendingDocumentsCard(

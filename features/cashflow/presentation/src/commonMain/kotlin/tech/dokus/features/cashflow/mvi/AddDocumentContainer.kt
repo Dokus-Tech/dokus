@@ -1,18 +1,18 @@
 package tech.dokus.features.cashflow.mvi
 
-import tech.dokus.features.cashflow.presentation.cashflow.components.DroppedFile
-import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
-import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.StateFlow
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.features.cashflow.presentation.cashflow.components.DroppedFile
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
+import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
+import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
+import tech.dokus.foundation.platform.Logger
 
 internal typealias AddDocumentCtx = PipelineContext<AddDocumentState, AddDocumentIntent, AddDocumentAction>
 

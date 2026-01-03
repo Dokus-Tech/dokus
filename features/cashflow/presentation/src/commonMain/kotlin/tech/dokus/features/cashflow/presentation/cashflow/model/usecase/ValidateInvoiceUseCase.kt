@@ -1,7 +1,7 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model.usecase
 
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 
 /**
  * Validation result for invoice form.

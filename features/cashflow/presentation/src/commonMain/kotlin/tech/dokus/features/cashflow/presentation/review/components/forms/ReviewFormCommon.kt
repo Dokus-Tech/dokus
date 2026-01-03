@@ -1,6 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review.components.forms
 
-import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_discard
@@ -22,12 +22,12 @@ import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.state_saving
 import tech.dokus.aura.resources.state_unsaved_changes
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.chips.PChoiceChips
 import tech.dokus.foundation.aura.constrains.Constrains
-import androidx.compose.ui.unit.dp
 
 @Composable
 internal fun UnsavedChangesBar(

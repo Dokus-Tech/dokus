@@ -3,13 +3,13 @@ package tech.dokus.domain.repository
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.DocumentChunkDto
+import tech.dokus.domain.model.DocumentChunkId
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatMessageId
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionSummary
-import tech.dokus.domain.model.DocumentChunkDto
-import tech.dokus.domain.model.DocumentChunkId
 
 // =============================================================================
 // Chunk Repository Interface
@@ -35,6 +35,7 @@ interface ChunkRepository {
      * @param confirmedOnly If true, only search chunks from confirmed documents (default: true for chat)
      * @return ChunkSearchResult containing matched chunks
      */
+    @Suppress("LongParameterList") // Semantic search requires all these filter parameters
     suspend fun searchSimilarChunks(
         tenantId: TenantId,
         queryEmbedding: List<Float>,

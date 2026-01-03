@@ -1,8 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.features.cashflow.presentation.cashflow.components.upload.BlackHoleVortex
-import tech.dokus.features.cashflow.presentation.cashflow.components.upload.GravitationalDocumentsLayer
-import tech.dokus.features.cashflow.presentation.cashflow.components.upload.UploadOverlayHeader
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInQuart
@@ -20,6 +17,19 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import tech.dokus.features.cashflow.presentation.cashflow.components.upload.BlackHoleVortex
+import tech.dokus.features.cashflow.presentation.cashflow.components.upload.GravitationalDocumentsLayer
+import tech.dokus.features.cashflow.presentation.cashflow.components.upload.UploadOverlayHeader
+
+// Animation constants
+private const val GravitationalFallDurationMs = 1400
+private const val PostAbsorptionDelayMs = 400L
+private const val FadeInDurationMs = 500
+private const val FadeOutDurationMs = 400
+
+// UI constants
+private val BackdropBlur = 20.dp
+private const val BackdropAlpha = 0.85f
 
 /**
  * Data class representing a flying document in the upload animation.
@@ -54,20 +64,20 @@ fun SpaceUploadOverlay(
                 doc.progress.animateTo(
                     targetValue = 1f,
                     animationSpec = tween(
-                        durationMillis = 1400,
+                        durationMillis = GravitationalFallDurationMs,
                         easing = EaseInQuart // Accelerating fall into black hole
                     )
                 )
             }
-            delay(400) // Pause after documents absorbed
+            delay(PostAbsorptionDelayMs) // Pause after documents absorbed
             onAnimationComplete()
         }
     }
 
     AnimatedVisibility(
         visible = isVisible,
-        enter = fadeIn(tween(500)),
-        exit = fadeOut(tween(400)),
+        enter = fadeIn(tween(FadeInDurationMs)),
+        exit = fadeOut(tween(FadeOutDurationMs)),
         modifier = modifier
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -75,8 +85,8 @@ fun SpaceUploadOverlay(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .blur(20.dp)
-                    .background(Color.Black.copy(alpha = 0.85f))
+                    .blur(BackdropBlur)
+                    .background(Color.Black.copy(alpha = BackdropAlpha))
             )
 
             // The Black Hole

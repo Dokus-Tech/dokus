@@ -1,6 +1,5 @@
 package tech.dokus.foundation.sstorage
 
-import tech.dokus.domain.model.common.Feature
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
@@ -12,6 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
+import tech.dokus.domain.model.common.Feature
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -29,7 +29,13 @@ internal class AndroidSecureStorage(
     context: Context,
     private val serviceName: String
 ) : SecureStorage() {
-    private val keyAlias: String = serviceName.lowercase().replace(" ", "_")
+
+    companion object {
+        private const val AES_KEY_SIZE = 256
+        private const val GCM_IV_LENGTH = 12
+        private const val GCM_TAG_LENGTH = 128
+    }
+
     private val fileName: String = serviceName.lowercase().replace(" ", "_") + ".datastore"
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -67,13 +73,12 @@ internal class AndroidSecureStorage(
         val existing = ks.getKey(serviceName, null) as? SecretKey
         if (existing != null) return existing
         val keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore")
-        val spec = android.security.keystore.KeyGenParameterSpec.Builder(
-            serviceName,
-            android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or android.security.keystore.KeyProperties.PURPOSE_DECRYPT
-        )
+        val purposes = android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or
+            android.security.keystore.KeyProperties.PURPOSE_DECRYPT
+        val spec = android.security.keystore.KeyGenParameterSpec.Builder(serviceName, purposes)
             .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
-            .setKeySize(256)
+            .setKeySize(AES_KEY_SIZE)
             .setUserAuthenticationRequired(false)
             .build()
         keyGenerator.init(spec)
@@ -90,11 +95,11 @@ internal class AndroidSecureStorage(
     }
 
     private fun decrypt(bytes: ByteArray): ByteArray {
-        require(bytes.size > 12) { "Encrypted payload too short" }
-        val iv = bytes.copyOfRange(0, 12)
-        val cipherText = bytes.copyOfRange(12, bytes.size)
+        require(bytes.size > GCM_IV_LENGTH) { "Encrypted payload too short" }
+        val iv = bytes.copyOfRange(0, GCM_IV_LENGTH)
+        val cipherText = bytes.copyOfRange(GCM_IV_LENGTH, bytes.size)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, iv))
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_LENGTH, iv))
         return cipher.doFinal(cipherText)
     }
     // endregion

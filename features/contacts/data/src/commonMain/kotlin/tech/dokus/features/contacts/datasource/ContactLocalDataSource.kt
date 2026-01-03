@@ -1,9 +1,9 @@
 package tech.dokus.features.contacts.datasource
 
+import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
-import kotlinx.coroutines.flow.Flow
 
 /**
  * Local data source for cached contacts.

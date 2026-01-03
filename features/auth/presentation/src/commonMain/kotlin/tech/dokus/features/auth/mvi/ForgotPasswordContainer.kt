@@ -1,13 +1,18 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
+
 package tech.dokus.features.auth.mvi
 
-import tech.dokus.domain.Email
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.Email
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.foundation.platform.Logger
+
+// Number of characters to show in email preview for logging (privacy)
+private const val EmailPreviewLength = 3
 
 internal typealias ForgotPasswordCtx = PipelineContext<ForgotPasswordState, ForgotPasswordIntent, ForgotPasswordAction>
 
@@ -52,7 +57,7 @@ internal class ForgotPasswordContainer : Container<ForgotPasswordState, ForgotPa
             ForgotPasswordState.Submitting(email = this.email)
         }
 
-        logger.d { "Password reset attempt started for email: ${email.value.take(3)}***" }
+        logger.d { "Password reset attempt started for email: ${email.value.take(EmailPreviewLength)}***" }
 
         // Validate email
         runCatching { email.validOrThrows }.fold(

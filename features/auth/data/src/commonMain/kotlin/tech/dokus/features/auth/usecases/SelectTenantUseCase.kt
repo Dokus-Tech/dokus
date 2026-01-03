@@ -1,7 +1,7 @@
 package tech.dokus.features.auth.usecases
 
-import tech.dokus.features.auth.repository.AuthRepository
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.features.auth.repository.AuthRepository
 import tech.dokus.foundation.platform.Logger
 
 /**

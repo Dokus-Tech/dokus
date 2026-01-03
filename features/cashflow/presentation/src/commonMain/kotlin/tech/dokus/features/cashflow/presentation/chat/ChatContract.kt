@@ -1,5 +1,9 @@
 package tech.dokus.features.cashflow.presentation.chat
 
+import androidx.compose.runtime.Immutable
+import pro.respawn.flowmvi.api.MVIAction
+import pro.respawn.flowmvi.api.MVIIntent
+import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
@@ -10,10 +14,6 @@ import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionSummary
 import tech.dokus.domain.model.ai.MessageRole
-import androidx.compose.runtime.Immutable
-import pro.respawn.flowmvi.api.MVIAction
-import pro.respawn.flowmvi.api.MVIIntent
-import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.foundation.app.state.DokusState
 
 /**

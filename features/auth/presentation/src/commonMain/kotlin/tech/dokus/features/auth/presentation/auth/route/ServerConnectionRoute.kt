@@ -27,7 +27,9 @@ internal fun ServerConnectionRoute(
     container: ServerConnectionContainer = container {
         val initialConfig = if (host != null && port != null) {
             ServerConfig.fromManualEntry(host, port, protocol ?: "http")
-        } else null
+        } else {
+            null
+        }
         parametersOf(ServerConnectionContainer.Companion.Params(initialConfig))
     },
 ) {

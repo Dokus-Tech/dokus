@@ -1,6 +1,7 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
+
 package tech.dokus.foundation.aura.components.common
 
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -23,6 +24,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
+import tech.dokus.foundation.aura.constrains.Constrains
+
+// Shimmer animation constants
+private const val ShimmerDurationMs = 1200
+private const val ShimmerTargetTranslation = 1000f
+private const val ShimmerGradientOffset = 200f
 
 /**
  * Creates an animated shimmer brush effect.
@@ -39,10 +46,10 @@ fun shimmerBrush(
     val transition = rememberInfiniteTransition(label = "shimmer")
     val translateAnimation by transition.animateFloat(
         initialValue = 0f,
-        targetValue = 1000f,
+        targetValue = ShimmerTargetTranslation,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 1200,
+                durationMillis = ShimmerDurationMs,
                 easing = LinearEasing
             ),
             repeatMode = RepeatMode.Restart
@@ -56,7 +63,7 @@ fun shimmerBrush(
             highlightColor,
             baseColor
         ),
-        start = Offset(translateAnimation - 200f, translateAnimation - 200f),
+        start = Offset(translateAnimation - ShimmerGradientOffset, translateAnimation - ShimmerGradientOffset),
         end = Offset(translateAnimation, translateAnimation)
     )
 }

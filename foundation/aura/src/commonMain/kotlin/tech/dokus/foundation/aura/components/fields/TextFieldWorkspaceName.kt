@@ -1,6 +1,5 @@
 package tech.dokus.foundation.aura.components.fields
 
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,11 +10,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Briefcase
+import tech.dokus.domain.exceptions.DokusException
 
 object PTextFieldWorkspaceNameDefaults {
     val icon = FeatherIcons.Briefcase
     val onAction = {}
-    val singleLine = true
+    const val singleLine = true
     val keyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Text,
         capitalization = KeyboardCapitalization.Words,

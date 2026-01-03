@@ -32,7 +32,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,13 +47,8 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
-import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.viewmodel.TeamSettingsAction
-import tech.dokus.app.viewmodel.TeamSettingsContainer
 import tech.dokus.app.viewmodel.TeamSettingsIntent
 import tech.dokus.app.viewmodel.TeamSettingsState
-import tech.dokus.app.viewmodel.TeamSettingsSuccess
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_save
@@ -72,32 +66,25 @@ import tech.dokus.aura.resources.state_sending
 import tech.dokus.aura.resources.team_cancel_invitation
 import tech.dokus.aura.resources.team_change_role
 import tech.dokus.aura.resources.team_expires
-import tech.dokus.aura.resources.team_invite_cancelled
 import tech.dokus.aura.resources.team_invite_email
 import tech.dokus.aura.resources.team_invite_member
 import tech.dokus.aura.resources.team_invite_role
-import tech.dokus.aura.resources.team_invite_success
 import tech.dokus.aura.resources.team_invited_by
 import tech.dokus.aura.resources.team_joined
-import tech.dokus.aura.resources.team_member_removed_success
 import tech.dokus.aura.resources.team_members
 import tech.dokus.aura.resources.team_no_invitations
 import tech.dokus.aura.resources.team_no_members
 import tech.dokus.aura.resources.team_owner_badge
-import tech.dokus.aura.resources.team_ownership_transferred_success
 import tech.dokus.aura.resources.team_pending_invitations
 import tech.dokus.aura.resources.team_remove_confirm
 import tech.dokus.aura.resources.team_remove_member
-import tech.dokus.aura.resources.team_role_update_success
 import tech.dokus.aura.resources.team_send_invitation
 import tech.dokus.aura.resources.team_settings_title
 import tech.dokus.aura.resources.team_transfer_confirm
 import tech.dokus.aura.resources.team_transfer_ownership
 import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
-import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.POutlinedButton
@@ -105,7 +92,6 @@ import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
-import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
@@ -344,6 +330,7 @@ internal fun TeamSettingsContentInternal(
     }
 }
 
+@Suppress("UnusedParameter") // Transfer ownership UI not yet implemented
 @Composable
 private fun TeamMemberItem(
     member: TeamMember,
@@ -386,7 +373,9 @@ private fun TeamMemberItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "${getRoleDisplayName(member.role)} - ${stringResource(Res.string.team_joined)} ${formatDate(member.joinedAt)}",
+                text = "${getRoleDisplayName(
+                    member.role
+                )} - ${stringResource(Res.string.team_joined)} ${formatDate(member.joinedAt)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -424,7 +413,9 @@ private fun InvitationItem(
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "${getRoleDisplayName(invitation.role)} - ${stringResource(Res.string.team_invited_by)} ${invitation.invitedByName}",
+                text = "${getRoleDisplayName(
+                    invitation.role
+                )} - ${stringResource(Res.string.team_invited_by)} ${invitation.invitedByName}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

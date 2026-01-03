@@ -1,13 +1,13 @@
 package tech.dokus.database.tables.ai
 
-import tech.dokus.database.columns.EmbeddingDimensions
-import tech.dokus.database.columns.vector
-import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
+import tech.dokus.database.columns.EmbeddingDimensions
+import tech.dokus.database.columns.vector
+import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.database.tables.cashflow.DocumentsTable
 
 /**
  * Document chunks table - stores chunked document content with vector embeddings for RAG.

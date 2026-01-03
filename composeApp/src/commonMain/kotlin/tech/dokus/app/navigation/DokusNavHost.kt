@@ -1,7 +1,5 @@
 package tech.dokus.app.navigation
 
-import tech.dokus.foundation.platform.activePlatform
-import tech.dokus.foundation.platform.isDesktop
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +25,8 @@ import tech.dokus.domain.model.common.DeepLinks
 import tech.dokus.domain.model.common.KnownDeepLinks
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.platform.activePlatform
+import tech.dokus.foundation.platform.isDesktop
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
 import tech.dokus.navigation.destinations.AuthDestination

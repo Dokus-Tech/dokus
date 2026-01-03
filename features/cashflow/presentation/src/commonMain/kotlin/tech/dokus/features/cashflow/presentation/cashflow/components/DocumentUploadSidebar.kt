@@ -1,16 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
-import tech.dokus.aura.resources.Res
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.aura.resources.action_close
-import tech.dokus.aura.resources.cashflow_add_document
-import tech.dokus.aura.resources.upload_instructions
-import tech.dokus.aura.resources.upload_no_app_hint
-import tech.dokus.aura.resources.upload_uploads_title
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
-import tech.dokus.domain.model.DocumentDto
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -48,6 +37,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.cashflow_add_document
+import tech.dokus.aura.resources.upload_instructions
+import tech.dokus.aura.resources.upload_no_app_hint
+import tech.dokus.aura.resources.upload_uploads_title
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
+import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
+import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
+import tech.dokus.foundation.aura.components.DokusCardSurface
+
+// Animation durations
+private const val FadeDurationMs = 200
+private const val SlideDurationMs = 300
+
+// Sidebar dimensions
+private val SidebarMinWidth = 320.dp
+private val SidebarMaxWidth = 400.dp
+
+// Spacing
+private val ContentPadding = 16.dp
+private val HeaderSpacing = 24.dp
+private val UploadZoneSpacing = 12.dp
+private val InstructionsSpacing = 8.dp
+
+// Scrim opacity
+private const val ScrimAlpha = 0.32f
+
+// Sidebar width ratio
+private const val SidebarWidthDivider = 3
 
 /**
  * Document upload sidebar for desktop.
@@ -87,13 +108,13 @@ fun DocumentUploadSidebar(
         // Backdrop
         AnimatedVisibility(
             visible = isVisible,
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(200))
+            enter = fadeIn(tween(FadeDurationMs)),
+            exit = fadeOut(tween(FadeDurationMs))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f))
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = ScrimAlpha))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -107,16 +128,16 @@ fun DocumentUploadSidebar(
             visible = isVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeIn(tween(300)),
+                animationSpec = tween(SlideDurationMs)
+            ) + fadeIn(tween(SlideDurationMs)),
             exit = slideOutHorizontally(
                 targetOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeOut(tween(300)),
+                animationSpec = tween(SlideDurationMs)
+            ) + fadeOut(tween(SlideDurationMs)),
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
             BoxWithConstraints {
-                val sidebarWidth = (maxWidth / 3).coerceIn(320.dp, 400.dp)
+                val sidebarWidth = (maxWidth / SidebarWidthDivider).coerceIn(SidebarMinWidth, SidebarMaxWidth)
 
                 DokusCardSurface(
                     modifier = Modifier
@@ -135,12 +156,12 @@ fun DocumentUploadSidebar(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp)
+                            .padding(ContentPadding)
                     ) {
                         // Header
                         SidebarHeader(onClose = onDismiss)
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(HeaderSpacing))
 
                         // Upload zone with drag & drop
                         var isDragging by remember { mutableStateOf(false) }
@@ -152,13 +173,11 @@ fun DocumentUploadSidebar(
                             onFilesDropped = { files ->
                                 uploadManager.enqueueFiles(files)
                             },
-                            isUploading = tasks.any {
-                                it.status == tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus.UPLOADING
-                            },
+                            isUploading = tasks.any { it.status == UploadStatus.UPLOADING },
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(UploadZoneSpacing))
 
                         // Instructions
                         Text(
@@ -167,7 +186,7 @@ fun DocumentUploadSidebar(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(InstructionsSpacing))
 
                         // "Don't have the application?" link
                         TextButton(
@@ -181,7 +200,7 @@ fun DocumentUploadSidebar(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(ContentPadding))
 
                         // Upload list section header
                         if (tasks.isNotEmpty()) {
@@ -191,7 +210,7 @@ fun DocumentUploadSidebar(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(InstructionsSpacing))
                         }
 
                         // Scrollable upload list

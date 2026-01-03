@@ -11,6 +11,12 @@ import tech.dokus.domain.ids.PostalCode
  * - Leading zeros are not valid (e.g., 0999 is invalid)
  */
 object ValidatePostalCodeUseCase : Validator<PostalCode> {
+    /** Minimum valid Belgian postal code */
+    private const val MinPostalCode = 1000
+
+    /** Maximum valid Belgian postal code */
+    private const val MaxPostalCode = 9999
+
     override operator fun invoke(value: PostalCode): Boolean {
         if (value.value.isBlank()) return false
 
@@ -21,8 +27,8 @@ object ValidatePostalCodeUseCase : Validator<PostalCode> {
             return false
         }
 
-        // Convert to number and check range 1000-9999
+        // Convert to number and check range
         val numericValue = cleaned.toIntOrNull() ?: return false
-        return numericValue in 1000..9999
+        return numericValue in MinPostalCode..MaxPostalCode
     }
 }

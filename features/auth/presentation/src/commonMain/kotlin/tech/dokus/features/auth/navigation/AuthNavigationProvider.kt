@@ -1,18 +1,18 @@
 package tech.dokus.features.auth.navigation
 
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import tech.dokus.features.auth.presentation.auth.route.ForgotPasswordRoute
 import tech.dokus.features.auth.presentation.auth.route.LoginRoute
 import tech.dokus.features.auth.presentation.auth.route.NewPasswordRoute
 import tech.dokus.features.auth.presentation.auth.route.ProfileSettingsRoute
 import tech.dokus.features.auth.presentation.auth.route.RegisterRoute
-import tech.dokus.features.auth.presentation.auth.route.WorkspaceCreateRoute
 import tech.dokus.features.auth.presentation.auth.route.ServerConnectionRoute
+import tech.dokus.features.auth.presentation.auth.route.WorkspaceCreateRoute
 import tech.dokus.features.auth.presentation.auth.route.WorkspaceSelectRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.AuthDestination
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
 
 internal object AuthNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {

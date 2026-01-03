@@ -1,8 +1,5 @@
 package tech.dokus.database.repository.cashflow
 
-import tech.dokus.database.tables.cashflow.InvoiceNumberSequencesTable
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.coroutines.delay
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -10,6 +7,9 @@ import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.cashflow.InvoiceNumberSequencesTable
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.foundation.backend.database.dbQuery
 import java.sql.SQLException
 import java.util.UUID
 
@@ -69,7 +69,7 @@ class InvoiceNumberRepository {
             val existingRow = InvoiceNumberSequencesTable.selectAll()
                 .where {
                     (InvoiceNumberSequencesTable.tenantId eq tenantUuid) and
-                            (InvoiceNumberSequencesTable.year eq year)
+                        (InvoiceNumberSequencesTable.year eq year)
                 }
                 .forUpdate()
                 .singleOrNull()
@@ -81,7 +81,7 @@ class InvoiceNumberRepository {
 
                 InvoiceNumberSequencesTable.update({
                     (InvoiceNumberSequencesTable.tenantId eq tenantUuid) and
-                            (InvoiceNumberSequencesTable.year eq year)
+                        (InvoiceNumberSequencesTable.year eq year)
                 }) {
                     it[InvoiceNumberSequencesTable.currentNumber] = nextNumber
                     it[updatedAt] = CurrentDateTime
@@ -122,7 +122,7 @@ class InvoiceNumberRepository {
             val row = InvoiceNumberSequencesTable.selectAll()
                 .where {
                     (InvoiceNumberSequencesTable.tenantId eq tenantUuid) and
-                            (InvoiceNumberSequencesTable.year eq year)
+                        (InvoiceNumberSequencesTable.year eq year)
                 }
                 .singleOrNull()
 
@@ -155,7 +155,7 @@ class InvoiceNumberRepository {
             val exists = InvoiceNumberSequencesTable.selectAll()
                 .where {
                     (InvoiceNumberSequencesTable.tenantId eq tenantUuid) and
-                            (InvoiceNumberSequencesTable.year eq year)
+                        (InvoiceNumberSequencesTable.year eq year)
                 }
                 .count() > 0
 

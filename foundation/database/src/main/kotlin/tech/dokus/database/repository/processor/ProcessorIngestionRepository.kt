@@ -1,6 +1,5 @@
 package tech.dokus.database.repository.processor
 
-import tech.dokus.database.entity.IngestionItemEntity
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -13,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.tables.cashflow.DocumentDraftsTable
 import tech.dokus.database.tables.cashflow.DocumentIngestionRunsTable
 import tech.dokus.database.tables.cashflow.DocumentsTable
@@ -59,7 +59,8 @@ class ProcessorIngestionRepository {
             DocumentType.Invoice -> {
                 val inv = data.invoice ?: return DraftStatus.NeedsReview
                 if (inv.totalAmount != null && inv.clientName != null &&
-                    inv.issueDate != null && inv.dueDate != null) {
+                    inv.issueDate != null && inv.dueDate != null
+                ) {
                     DraftStatus.Ready
                 } else {
                     DraftStatus.NeedsReview
@@ -69,7 +70,8 @@ class ProcessorIngestionRepository {
                 val bill = data.bill ?: return DraftStatus.NeedsReview
                 if (bill.amount != null && bill.supplierName != null &&
                     bill.issueDate != null && bill.dueDate != null &&
-                    bill.category != null) {
+                    bill.category != null
+                ) {
                     DraftStatus.Ready
                 } else {
                     DraftStatus.NeedsReview
@@ -78,7 +80,8 @@ class ProcessorIngestionRepository {
             DocumentType.Expense -> {
                 val exp = data.expense ?: return DraftStatus.NeedsReview
                 if (exp.amount != null && exp.merchant != null &&
-                    exp.date != null && exp.category != null) {
+                    exp.date != null && exp.category != null
+                ) {
                     DraftStatus.Ready
                 } else {
                     DraftStatus.NeedsReview
@@ -215,7 +218,7 @@ class ProcessorIngestionRepository {
             val existingDraft = DocumentDraftsTable.selectAll()
                 .where {
                     (DocumentDraftsTable.documentId eq documentUuid) and
-                            (DocumentDraftsTable.tenantId eq tenantUuid)
+                        (DocumentDraftsTable.tenantId eq tenantUuid)
                 }
                 .singleOrNull()
 
@@ -248,7 +251,7 @@ class ProcessorIngestionRepository {
                 // SECURITY: Always filter by tenantId to prevent cross-tenant modification
                 DocumentDraftsTable.update({
                     (DocumentDraftsTable.documentId eq documentUuid) and
-                            (DocumentDraftsTable.tenantId eq tenantUuid)
+                        (DocumentDraftsTable.tenantId eq tenantUuid)
                 }) {
                     it[DocumentDraftsTable.documentType] = documentType
                     it[lastSuccessfulRunId] = runUuid
