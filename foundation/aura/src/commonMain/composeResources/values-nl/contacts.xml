@@ -18,6 +18,8 @@
     <string name="contacts_add_first_hint">Begin met het beheren van je klanten en leveranciers</string>
     <string name="contacts_add_contact">Contact toevoegen</string>
     <string name="contacts_create_contact">Contact aanmaken</string>
+    <string name="contacts_resolve_counterparty">Tegenpartij koppelen</string>
+    <string name="contacts_resolve_counterparty_create">Contact aanmaken vanuit document</string>
     <string name="contacts_edit_contact">Contact bewerken</string>
     <string name="contacts_delete_contact">Contact verwijderen</string>
     <string name="contacts_save_contact">Contact opslaan</string>
@@ -130,6 +132,11 @@
     <string name="contacts_lookup_label">Bedrijfsnaam of BTW-nummer</string>
     <string name="contacts_lookup_hint">Zoek op bedrijfsnaam of BTW-nummer</string>
     <string name="contacts_lookup_query_hint">Probeer een bedrijfsnaam of BTW-nummer in te voeren</string>
+    <string name="contacts_lookup_no_matches">Geen overeenkomsten</string>
+    <string name="contacts_lookup_local_section">In je contacten</string>
+    <string name="contacts_lookup_registry_section">Uit het bedrijfsregister</string>
+    <string name="contacts_lookup_local_empty">Geen lokale contacten gevonden</string>
+    <string name="contacts_lookup_registry_empty">Geen registermatches</string>
     <string name="contacts_lookup_empty">Geen bedrijven gevonden</string>
     <string name="contacts_lookup_no_results">Geen resultaten voor "%1$s"</string>
     <string name="contacts_lookup_search_failed">Bedrijfszoekopdracht mislukt</string>
@@ -138,6 +145,9 @@
     <string name="contacts_add_new_contact">Nieuw contact toevoegen</string>
     <string name="contacts_autocomplete_no_results_for">Geen contacten gevonden voor "%1$s"</string>
     <string name="contacts_searching">Zoeken...</string>
+    <string name="contacts_trust_local">Lokaal</string>
+    <string name="contacts_trust_verified">Geverifieerd</string>
+    <string name="contacts_trust_external">Extern</string>
 
     <!-- Contact Types -->
     <string name="contacts_business">Bedrijf</string>

@@ -56,6 +56,7 @@ import tech.dokus.foundation.aura.extensions.localized
 @Composable
 fun ManualStepContent(
     state: CreateContactState.ManualStep,
+    headerTitle: String,
     onIntent: (CreateContactIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -66,18 +67,11 @@ fun ManualStepContent(
     ) {
         // Header with back button
         ManualHeader(
+            title = headerTitle,
             onBack = { onIntent(CreateContactIntent.BackFromManual) }
         )
 
         Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
-
-        // Step indicator
-        StepIndicator(
-            currentStep = CreateContactStep.Details,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
         // Scrollable content
         Column(
@@ -86,6 +80,12 @@ fun ManualStepContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
         ) {
+            Text(
+                text = stringResource(Res.string.contacts_add_contact_manually),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
             // Type selector
             TypeSelector(
                 selectedType = state.contactType,
@@ -142,6 +142,7 @@ fun ManualStepContent(
 
 @Composable
 private fun ManualHeader(
+    title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -157,7 +158,7 @@ private fun ManualHeader(
             )
         }
         Text(
-            text = stringResource(Res.string.contacts_add_contact_manually),
+            text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )

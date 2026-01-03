@@ -18,6 +18,8 @@
     <string name="contacts_add_first_hint">Начните управлять клиентами и поставщиками</string>
     <string name="contacts_add_contact">Добавить контакт</string>
     <string name="contacts_create_contact">Создать контакт</string>
+    <string name="contacts_resolve_counterparty">Определить контрагента</string>
+    <string name="contacts_resolve_counterparty_create">Создать контакт из документа</string>
     <string name="contacts_edit_contact">Редактировать контакт</string>
     <string name="contacts_delete_contact">Удалить контакт</string>
     <string name="contacts_save_contact">Сохранить контакт</string>
@@ -130,6 +132,11 @@
     <string name="contacts_lookup_label">Название компании или номер НДС</string>
     <string name="contacts_lookup_hint">Поиск по названию компании или номеру НДС</string>
     <string name="contacts_lookup_query_hint">Попробуйте ввести название компании или номер НДС</string>
+    <string name="contacts_lookup_no_matches">Совпадений нет</string>
+    <string name="contacts_lookup_local_section">В ваших контактах</string>
+    <string name="contacts_lookup_registry_section">Из бизнес-реестра</string>
+    <string name="contacts_lookup_local_empty">Локальные контакты не найдены</string>
+    <string name="contacts_lookup_registry_empty">Совпадений в реестре нет</string>
     <string name="contacts_lookup_empty">Компании не найдены</string>
     <string name="contacts_lookup_no_results">Нет результатов для "%1$s"</string>
     <string name="contacts_lookup_search_failed">Поиск компании не удался</string>
@@ -138,6 +145,9 @@
     <string name="contacts_add_new_contact">Добавить новый контакт</string>
     <string name="contacts_autocomplete_no_results_for">Контакты для "%1$s" не найдены</string>
     <string name="contacts_searching">Поиск...</string>
+    <string name="contacts_trust_local">Локальный</string>
+    <string name="contacts_trust_verified">Проверено</string>
+    <string name="contacts_trust_external">Внешний</string>
 
     <!-- Contact Types -->
     <string name="contacts_business">Компания</string>

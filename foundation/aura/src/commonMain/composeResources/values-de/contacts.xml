@@ -18,6 +18,8 @@
     <string name="contacts_add_first_hint">Beginnen Sie mit der Verwaltung Ihrer Kunden und Lieferanten</string>
     <string name="contacts_add_contact">Kontakt hinzufügen</string>
     <string name="contacts_create_contact">Kontakt erstellen</string>
+    <string name="contacts_resolve_counterparty">Gegenpartei zuordnen</string>
+    <string name="contacts_resolve_counterparty_create">Kontakt aus Dokument erstellen</string>
     <string name="contacts_edit_contact">Kontakt bearbeiten</string>
     <string name="contacts_delete_contact">Kontakt löschen</string>
     <string name="contacts_save_contact">Kontakt speichern</string>
@@ -128,6 +130,11 @@
     <string name="contacts_lookup_label">Firmenname oder USt-IdNr.</string>
     <string name="contacts_lookup_hint">Suche nach Firmenname oder USt-IdNr.</string>
     <string name="contacts_lookup_query_hint">Geben Sie einen Firmennamen oder eine USt-IdNr. ein</string>
+    <string name="contacts_lookup_no_matches">Keine Treffer</string>
+    <string name="contacts_lookup_local_section">In Ihren Kontakten</string>
+    <string name="contacts_lookup_registry_section">Aus dem Unternehmensregister</string>
+    <string name="contacts_lookup_local_empty">Keine lokalen Kontakte gefunden</string>
+    <string name="contacts_lookup_registry_empty">Keine Registertreffer</string>
     <string name="contacts_lookup_empty">Keine Unternehmen gefunden</string>
     <string name="contacts_lookup_no_results">Keine Ergebnisse für \"%1$s\"</string>
     <string name="contacts_lookup_search_failed">Firmensuche fehlgeschlagen</string>
@@ -136,6 +143,9 @@
     <string name="contacts_add_new_contact">Neuen Kontakt hinzufügen</string>
     <string name="contacts_autocomplete_no_results_for">Keine Kontakte gefunden für \"%1$s\"</string>
     <string name="contacts_searching">Suche...</string>
+    <string name="contacts_trust_local">Lokal</string>
+    <string name="contacts_trust_verified">Verifiziert</string>
+    <string name="contacts_trust_external">Extern</string>
     <string name="contacts_business">Unternehmen</string>
     <string name="contacts_individual">Privatperson</string>
     <string name="contacts_government">Behörde</string>

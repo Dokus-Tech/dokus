@@ -59,6 +59,7 @@ import tech.dokus.foundation.aura.constrains.Constrains
 @Composable
 fun ConfirmStepContent(
     state: CreateContactState.ConfirmStep,
+    headerTitle: String,
     onIntent: (CreateContactIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -69,18 +70,11 @@ fun ConfirmStepContent(
     ) {
         // Header with back button
         ConfirmHeader(
+            title = headerTitle,
             onBack = { onIntent(CreateContactIntent.BackToLookup) }
         )
 
         Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
-
-        // Step indicator
-        StepIndicator(
-            currentStep = CreateContactStep.Confirm,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
         // Scrollable content
         Column(
@@ -89,6 +83,12 @@ fun ConfirmStepContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
         ) {
+            Text(
+                text = stringResource(Res.string.contacts_confirm_company),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
             // Company info card (read-only)
             CompanyInfoCard(
                 entity = state.selectedEntity,
@@ -148,6 +148,7 @@ fun ConfirmStepContent(
 
 @Composable
 private fun ConfirmHeader(
+    title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -163,7 +164,7 @@ private fun ConfirmHeader(
             )
         }
         Text(
-            text = stringResource(Res.string.contacts_confirm_company),
+            text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )

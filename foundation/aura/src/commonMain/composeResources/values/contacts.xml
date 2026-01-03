@@ -18,6 +18,8 @@
     <string name="contacts_add_first_hint">Start managing your customers and suppliers</string>
     <string name="contacts_add_contact">Add Contact</string>
     <string name="contacts_create_contact">Create Contact</string>
+    <string name="contacts_resolve_counterparty">Resolve counterparty</string>
+    <string name="contacts_resolve_counterparty_create">Create contact from document</string>
     <string name="contacts_edit_contact">Edit Contact</string>
     <string name="contacts_delete_contact">Delete Contact</string>
     <string name="contacts_save_contact">Save Contact</string>
@@ -130,6 +132,11 @@
     <string name="contacts_lookup_label">Company name or VAT number</string>
     <string name="contacts_lookup_hint">Search by company name or VAT number</string>
     <string name="contacts_lookup_query_hint">Try entering a company name or VAT number</string>
+    <string name="contacts_lookup_no_matches">No matches</string>
+    <string name="contacts_lookup_local_section">In your contacts</string>
+    <string name="contacts_lookup_registry_section">From business registry</string>
+    <string name="contacts_lookup_local_empty">No local contacts found</string>
+    <string name="contacts_lookup_registry_empty">No registry matches</string>
     <string name="contacts_lookup_empty">No companies found</string>
     <string name="contacts_lookup_no_results">No results for %1$s</string>
     <string name="contacts_lookup_search_failed">Company lookup failed</string>
@@ -138,6 +145,9 @@
     <string name="contacts_add_new_contact">Add new contact</string>
     <string name="contacts_autocomplete_no_results_for">No contacts found for %1$s</string>
     <string name="contacts_searching">Searching...</string>
+    <string name="contacts_trust_local">Local</string>
+    <string name="contacts_trust_verified">Verified</string>
+    <string name="contacts_trust_external">External</string>
 
     <!-- Contact Types -->
     <string name="contacts_business">Business</string>
