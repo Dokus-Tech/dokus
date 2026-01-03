@@ -24,11 +24,14 @@ import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
@@ -41,6 +44,8 @@ import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Documents
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
@@ -234,35 +239,52 @@ internal fun Route.documentRecordRoutes() {
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
-            // Verify status allows editing
-            if (draft.draftStatus == DraftStatus.Confirmed) {
-                throw DokusException.BadRequest("Cannot edit confirmed draft")
+            val requestData = request.extractedData
+            val hasExtractedData = requestData != null
+            val hasContactUpdate = request.contactId != null || request.counterpartyIntent != null
+
+            if (!hasExtractedData && !hasContactUpdate) {
+                throw DokusException.BadRequest("No draft changes provided")
             }
 
-            // Build tracked corrections
-            val now = kotlinx.datetime.Clock.System.now().toString()
-            val corrections = buildCorrections(draft.extractedData, request.extractedData, now)
+            if (draft.draftStatus == DraftStatus.Rejected) {
+                throw DokusException.BadRequest("Cannot edit rejected draft")
+            }
 
-            // Update draft
-            val newVersion = draftRepository.updateDraft(
-                documentId = documentId,
-                tenantId = tenantId,
-                userId = userId,
-                updatedData = request.extractedData,
-                corrections = corrections
-            ) ?: throw DokusException.InternalError("Failed to update draft")
+            if (hasExtractedData) {
+                val updatedData = requestData ?: throw DokusException.BadRequest("No extracted data provided")
+                // Build tracked corrections
+                val now = kotlinx.datetime.Clock.System.now().toString()
+                val corrections = buildCorrections(draft.extractedData, updatedData, now)
 
-            logger.info("Draft updated: document=$documentId, version=$newVersion")
-
-            call.respond(
-                HttpStatusCode.OK,
-                UpdateDraftResponse(
+                // Update draft (may transition Confirmed -> NeedsReview)
+                val newVersion = draftRepository.updateDraft(
                     documentId = documentId,
-                    draftVersion = newVersion,
-                    extractedData = request.extractedData,
-                    updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+                    tenantId = tenantId,
+                    userId = userId,
+                    updatedData = updatedData,
+                    corrections = corrections
+                ) ?: throw DokusException.InternalError("Failed to update draft")
+
+                logger.info("Draft updated: document=$documentId, version=$newVersion")
+
+                if (hasContactUpdate) {
+                    updateDraftCounterparty(draftRepository, documentId, tenantId, request)
+                }
+
+                call.respond(
+                    HttpStatusCode.OK,
+                    UpdateDraftResponse(
+                        documentId = documentId,
+                        draftVersion = newVersion,
+                        extractedData = updatedData,
+                        updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+                    )
                 )
-            )
+            } else if (hasContactUpdate) {
+                updateDraftCounterparty(draftRepository, documentId, tenantId, request)
+                call.respond(HttpStatusCode.NoContent)
+            }
         }
 
         /**
@@ -350,6 +372,7 @@ internal fun Route.documentRecordRoutes() {
         post<Documents.Id.Confirm> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
+            val userId = dokusPrincipal.userId
 
             val request = call.receive<ConfirmDocumentRequest>()
 
@@ -357,6 +380,10 @@ internal fun Route.documentRecordRoutes() {
 
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
+
+            if (draft.draftStatus == DraftStatus.Rejected) {
+                throw DokusException.BadRequest("Cannot confirm a rejected document")
+            }
 
             // Check if already confirmed (idempotent)
             if (draft.draftStatus == DraftStatus.Confirmed) {
@@ -392,13 +419,39 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Draft is not ready for confirmation: ${draft.draftStatus}")
             }
 
-            val extractedData = request.extractedData ?: draft.extractedData
+            if (draft.counterpartyIntent == CounterpartyIntent.Pending) {
+                throw DokusException.BadRequest("Counterparty is pending creation")
+            }
+
+            val resolvedType = request.documentType
+            if (resolvedType == DocumentType.Unknown) {
+                throw DokusException.BadRequest("Document type must be resolved before confirmation")
+            }
+            if (draft.documentType != null && draft.documentType != resolvedType) {
+                throw DokusException.BadRequest("Document type mismatch with draft")
+            }
+
+            val requestData = request.extractedData
+            if (requestData != null && requestData != draft.extractedData) {
+                val now = Clock.System.now().toString()
+                val corrections = buildCorrections(draft.extractedData, requestData, now)
+                val updatedVersion = draftRepository.updateDraft(
+                    documentId = documentId,
+                    tenantId = tenantId,
+                    userId = userId,
+                    updatedData = requestData,
+                    corrections = corrections
+                ) ?: throw DokusException.InternalError("Failed to persist confirmed data")
+                logger.info("Draft updated before confirmation: document=$documentId, version=$updatedVersion")
+            }
+
+            val extractedData = requestData ?: draft.extractedData
                 ?: throw DokusException.BadRequest("No extracted data available for confirmation")
 
             // Check if entity already exists for this document (idempotent check)
             val existingEntity = findConfirmedEntity(
                 documentId,
-                request.documentType,
+                resolvedType,
                 tenantId,
                 invoiceRepository,
                 billRepository,
@@ -409,16 +462,27 @@ internal fun Route.documentRecordRoutes() {
             }
 
             // Create entity based on type
-            val createdEntity: FinancialDocumentDto = when (request.documentType) {
+            val createdEntity: FinancialDocumentDto = when (resolvedType) {
                 DocumentType.Invoice -> {
                     val invoiceData = extractedData.invoice
                         ?: throw DokusException.BadRequest("No invoice data extracted from document")
 
-                    // For now, require contact ID in a header or query param
-                    // This should come from the request in production
-                    throw DokusException.BadRequest(
-                        "Invoice creation from document requires contact selection. Use /api/v1/invoices instead."
+                    val contactId = draft.linkedContactId
+                        ?: throw DokusException.BadRequest("Invoice requires a linked contact")
+
+                    validateInvoiceData(invoiceData)
+
+                    val items = buildInvoiceItems(invoiceData)
+                    val createRequest = CreateInvoiceRequest(
+                        contactId = contactId,
+                        items = items,
+                        issueDate = invoiceData.issueDate,
+                        dueDate = invoiceData.dueDate,
+                        notes = invoiceData.notes,
+                        documentId = documentId
                     )
+
+                    invoiceRepository.createInvoice(tenantId, createRequest).getOrThrow()
                 }
 
                 DocumentType.Bill -> {
@@ -431,7 +495,7 @@ internal fun Route.documentRecordRoutes() {
                         invoiceNumber = billData.invoiceNumber,
                         issueDate = billData.issueDate
                             ?: throw DokusException.BadRequest("Issue date is required"),
-                        dueDate = billData.dueDate
+                        dueDate = billData.dueDate ?: billData.issueDate
                             ?: throw DokusException.BadRequest("Due date is required"),
                         amount = billData.amount
                             ?: throw DokusException.BadRequest("Amount is required"),
@@ -481,7 +545,7 @@ internal fun Route.documentRecordRoutes() {
             // Update draft status to confirmed
             draftRepository.updateDraftStatus(documentId, tenantId, DraftStatus.Confirmed)
 
-            logger.info("Document confirmed: $documentId -> ${request.documentType}")
+            logger.info("Document confirmed: $documentId -> $resolvedType")
 
             // Return full record
             val document = documentRepository.getById(tenantId, documentId)!!
@@ -496,6 +560,44 @@ internal fun Route.documentRecordRoutes() {
                     draft = updatedDraft.toDto(),
                     latestIngestion = latestIngestion?.toDto(),
                     confirmedEntity = createdEntity
+                )
+            )
+        }
+
+        /**
+         * POST /api/v1/documents/{id}/reject
+         * Reject a document draft with a reason.
+         * IDEMPOTENT: if already rejected, returns existing record.
+         */
+        post<Documents.Id.Reject> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val documentId = DocumentId.parse(route.parent.id)
+            val request = call.receive<RejectDocumentRequest>()
+
+            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+                ?: throw DokusException.NotFound("Draft not found for document")
+
+            if (draft.draftStatus == DraftStatus.Confirmed) {
+                throw DokusException.BadRequest("Cannot reject a confirmed document")
+            }
+
+            if (draft.draftStatus != DraftStatus.Rejected) {
+                draftRepository.rejectDraft(documentId, tenantId, request.reason)
+            }
+
+            val document = documentRepository.getById(tenantId, documentId)
+                ?: throw DokusException.NotFound("Document not found")
+            val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
+            val updatedDraft = draftRepository.getByDocumentId(documentId, tenantId)!!
+            val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
+
+            call.respond(
+                HttpStatusCode.OK,
+                DocumentRecordDto(
+                    document = documentWithUrl,
+                    draft = updatedDraft.toDto(),
+                    latestIngestion = latestIngestion?.toDto(),
+                    confirmedEntity = null
                 )
             )
         }
@@ -518,7 +620,82 @@ private suspend fun addDownloadUrl(
     return document.copy(downloadUrl = downloadUrl)
 }
 
-private suspend fun findConfirmedEntity(
+private fun validateInvoiceData(data: tech.dokus.domain.model.ExtractedInvoiceFields) {
+    if (data.issueDate == null) {
+        throw DokusException.BadRequest("Issue date is required")
+    }
+    val subtotal = data.subtotalAmount
+        ?: throw DokusException.BadRequest("Subtotal is required")
+    val total = data.totalAmount
+    val vat = data.vatAmount
+    if (vat != null && total != null) {
+        val expected = subtotal + vat
+        val diff = kotlin.math.abs(expected.minor - total.minor)
+        if (diff > 1L) {
+            throw DokusException.BadRequest("Amounts are inconsistent")
+        }
+    }
+}
+
+private fun buildInvoiceItems(
+    data: tech.dokus.domain.model.ExtractedInvoiceFields
+): List<tech.dokus.domain.model.InvoiceItemDto> {
+    val items = data.items?.mapIndexedNotNull { index, item ->
+        val quantity = item.quantity ?: 1.0
+        val lineTotal = item.lineTotal ?: item.unitPrice?.let { unit ->
+            Money.fromDouble(unit.toDouble() * quantity)
+        }
+        val vatAmount = item.vatAmount ?: item.vatRate?.let { rate ->
+            lineTotal?.let { rate.applyTo(it) }
+        }
+        val vatRate = item.vatRate ?: if (lineTotal != null && vatAmount != null && lineTotal.minor != 0L) {
+            VatRate.fromMultiplier(vatAmount.toDouble() / lineTotal.toDouble())
+        } else {
+            VatRate.ZERO
+        }
+
+        val finalLineTotal = lineTotal ?: return@mapIndexedNotNull null
+        val finalVatAmount = vatAmount ?: VatRate.ZERO.applyTo(finalLineTotal)
+        val unitPrice = item.unitPrice ?: Money.fromDouble(finalLineTotal.toDouble() / quantity)
+
+        tech.dokus.domain.model.InvoiceItemDto(
+            description = item.description ?: "Line item ${index + 1}",
+            quantity = quantity,
+            unitPrice = unitPrice,
+            vatRate = vatRate,
+            lineTotal = finalLineTotal,
+            vatAmount = finalVatAmount,
+            sortOrder = index
+        )
+    }.orEmpty()
+
+    if (items.isNotEmpty()) {
+        return items
+    }
+
+    val subtotal = data.subtotalAmount
+        ?: throw DokusException.BadRequest("Subtotal is required")
+    val vatAmount = data.vatAmount ?: Money.ZERO
+    val vatRate = if (subtotal.minor != 0L && vatAmount.minor != 0L) {
+        VatRate.fromMultiplier(vatAmount.toDouble() / subtotal.toDouble())
+    } else {
+        VatRate.ZERO
+    }
+
+    return listOf(
+        tech.dokus.domain.model.InvoiceItemDto(
+            description = data.invoiceNumber ?: "Document total",
+            quantity = 1.0,
+            unitPrice = subtotal,
+            vatRate = vatRate,
+            lineTotal = subtotal,
+            vatAmount = vatAmount,
+            sortOrder = 0
+        )
+    )
+}
+
+internal suspend fun findConfirmedEntity(
     documentId: DocumentId,
     documentType: DocumentType?,
     tenantId: tech.dokus.domain.ids.TenantId,
@@ -670,7 +847,7 @@ private fun buildCorrections(
 
 // Extension functions
 
-private fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
+internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     documentId = documentId,
     tenantId = tenantId,
     draftStatus = draftStatus,
@@ -684,12 +861,15 @@ private fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     suggestedContactId = suggestedContactId,
     contactSuggestionConfidence = contactSuggestionConfidence,
     contactSuggestionReason = contactSuggestionReason,
+    linkedContactId = linkedContactId,
+    counterpartyIntent = counterpartyIntent,
+    rejectReason = rejectReason,
     lastSuccessfulRunId = lastSuccessfulRunId,
     createdAt = createdAt,
     updatedAt = updatedAt
 )
 
-private fun IngestionRunSummary.toDto(): DocumentIngestionDto = DocumentIngestionDto(
+internal fun IngestionRunSummary.toDto(): DocumentIngestionDto = DocumentIngestionDto(
     id = id,
     documentId = documentId,
     tenantId = tenantId,
@@ -701,3 +881,21 @@ private fun IngestionRunSummary.toDto(): DocumentIngestionDto = DocumentIngestio
     errorMessage = errorMessage,
     confidence = confidence
 )
+
+private suspend fun updateDraftCounterparty(
+    draftRepository: DocumentDraftRepository,
+    documentId: DocumentId,
+    tenantId: tech.dokus.domain.ids.TenantId,
+    request: UpdateDraftRequest
+) {
+    val contactId = request.contactId?.let { tech.dokus.domain.ids.ContactId.parse(it) }
+    val updated = draftRepository.updateCounterparty(
+        documentId = documentId,
+        tenantId = tenantId,
+        contactId = contactId,
+        intent = request.counterpartyIntent
+    )
+    if (!updated) {
+        throw DokusException.InternalError("Failed to update document counterparty")
+    }
+}

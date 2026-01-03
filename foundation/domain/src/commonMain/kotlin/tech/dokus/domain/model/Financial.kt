@@ -308,7 +308,8 @@ data class CreateInvoiceRequest(
     val items: List<InvoiceItemDto>,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
-    val notes: String? = null
+    val notes: String? = null,
+    val documentId: DocumentId? = null
 )
 
 @Serializable

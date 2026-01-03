@@ -225,6 +225,9 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 suggestedContactId = null,
                 contactSuggestionConfidence = null,
                 contactSuggestionReason = null,
+                linkedContactId = null,
+                counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
+                rejectReason = null,
                 lastSuccessfulRunId = null,
                 createdAt = now,
                 updatedAt = now
@@ -262,6 +265,9 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 suggestedContactId = null,
                 contactSuggestionConfidence = null,
                 contactSuggestionReason = null,
+                linkedContactId = null,
+                counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
+                rejectReason = null,
                 lastSuccessfulRunId = null,
                 createdAt = now,
                 updatedAt = now
@@ -296,6 +302,9 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 suggestedContactId = null,
                 contactSuggestionConfidence = null,
                 contactSuggestionReason = null,
+                linkedContactId = null,
+                counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
+                rejectReason = null,
                 lastSuccessfulRunId = null,
                 createdAt = now,
                 updatedAt = now
@@ -345,6 +354,9 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 suggestedContactId = null,
                 contactSuggestionConfidence = null,
                 contactSuggestionReason = null,
+                linkedContactId = null,
+                counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
+                rejectReason = null,
                 lastSuccessfulRunId = null,
                 createdAt = now,
                 updatedAt = now

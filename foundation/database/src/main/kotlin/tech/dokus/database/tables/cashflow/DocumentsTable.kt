@@ -34,11 +34,16 @@ object DocumentsTable : UUIDTable("documents") {
     // Storage reference (MinIO key)
     val storageKey = varchar("storage_key", 500).index()
 
+    // Content fingerprint for deduplication (SHA-256 hex)
+    val contentHash = varchar("content_hash", 64).nullable()
+
     // Timestamps
     val uploadedAt = datetime("uploaded_at").defaultExpression(CurrentDateTime)
 
     init {
         // Unique constraint: one storage key per tenant
         uniqueIndex(tenantId, storageKey)
+        // Unique constraint for content hash when available
+        uniqueIndex(tenantId, contentHash)
     }
 }

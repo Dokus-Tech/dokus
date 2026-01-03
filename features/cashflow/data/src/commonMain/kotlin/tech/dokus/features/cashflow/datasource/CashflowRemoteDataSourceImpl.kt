@@ -23,6 +23,7 @@ import kotlinx.datetime.LocalDate
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.IngestionStatus
@@ -38,6 +39,7 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.ConfirmDocumentRequest
+import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
@@ -586,14 +588,21 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun updateDocumentDraftContact(
         documentId: DocumentId,
-        contactId: ContactId?
+        contactId: ContactId?,
+        counterpartyIntent: CounterpartyIntent?
     ): Result<Unit> {
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.patch(Documents.Id.Draft(parent = docIdRoute)) {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf("contactId" to contactId?.toString()))
+                setBody(
+                    UpdateDraftRequest(
+                        contactId = contactId?.toString(),
+                        counterpartyIntent = counterpartyIntent
+                    )
+                )
             }
+            Unit
         }
     }
 
@@ -617,6 +626,19 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.post(Documents.Id.Confirm(parent = docIdRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun rejectDocument(
+        documentId: DocumentId,
+        request: RejectDocumentRequest
+    ): Result<DocumentRecordDto> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.post(Documents.Id.Reject(parent = docIdRoute)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()

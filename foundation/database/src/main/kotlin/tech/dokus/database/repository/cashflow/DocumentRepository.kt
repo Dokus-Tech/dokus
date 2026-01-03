@@ -62,7 +62,8 @@ class DocumentRepository {
         filename: String,
         contentType: String,
         sizeBytes: Long,
-        storageKey: String
+        storageKey: String,
+        contentHash: String?
     ): DocumentId = newSuspendedTransaction {
         val id = DocumentId.generate()
         DocumentsTable.insert {
@@ -72,6 +73,7 @@ class DocumentRepository {
             it[DocumentsTable.contentType] = contentType
             it[DocumentsTable.sizeBytes] = sizeBytes
             it[DocumentsTable.storageKey] = storageKey
+            it[DocumentsTable.contentHash] = contentHash
         }
         id
     }
@@ -100,6 +102,21 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.storageKey eq storageKey) and
+                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                }
+                .map { it.toDocumentDto() }
+                .singleOrNull()
+        }
+
+    /**
+     * Get a document by content hash.
+     * CRITICAL: Must filter by tenantId.
+     */
+    suspend fun getByContentHash(tenantId: TenantId, contentHash: String): DocumentDto? =
+        newSuspendedTransaction {
+            DocumentsTable.selectAll()
+                .where {
+                    (DocumentsTable.contentHash eq contentHash) and
                         (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
@@ -329,6 +346,9 @@ class DocumentRepository {
             suggestedContactId = this[DocumentDraftsTable.suggestedContactId]?.let { ContactId(it.toKotlinUuid()) },
             contactSuggestionConfidence = this[DocumentDraftsTable.contactSuggestionConfidence],
             contactSuggestionReason = this[DocumentDraftsTable.contactSuggestionReason],
+            linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it.toKotlinUuid()) },
+            counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
+            rejectReason = this[DocumentDraftsTable.rejectReason],
             lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let {
                 IngestionRunId.parse(
                     it.toString()

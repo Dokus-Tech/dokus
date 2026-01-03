@@ -57,8 +57,11 @@ internal class DocumentReviewLoader(
         val documentType = document.draft?.documentType
 
         val contactSuggestions = buildContactSuggestions(document)
-        val isContactRequired = documentType == DocumentType.Invoice || documentType == DocumentType.Bill
-        val isDocumentConfirmed = document.draft?.draftStatus == DraftStatus.Confirmed
+        val isContactRequired = documentType == DocumentType.Invoice
+        val draftStatus = document.draft?.draftStatus
+        val isDocumentConfirmed = draftStatus == DraftStatus.Confirmed
+        val isDocumentRejected = draftStatus == DraftStatus.Rejected
+        val counterpartyIntent = document.draft?.counterpartyIntent ?: tech.dokus.domain.enums.CounterpartyIntent.None
 
         val (contactSelectionState, selectedContactId, selectedContactSnapshot) =
             buildContactSelectionState(document)
@@ -81,6 +84,8 @@ internal class DocumentReviewLoader(
                 contactSelectionState = contactSelectionState,
                 isContactRequired = isContactRequired,
                 isDocumentConfirmed = isDocumentConfirmed,
+                isDocumentRejected = isDocumentRejected,
+                counterpartyIntent = counterpartyIntent,
             )
         }
 
@@ -95,6 +100,11 @@ internal class DocumentReviewLoader(
         document: DocumentRecordDto
     ): Triple<ContactSelectionState, ContactId?, ContactSnapshot?> {
         val draft = document.draft ?: return Triple(ContactSelectionState.NoContact, null, null)
+        val linkedContactId = draft.linkedContactId
+        if (linkedContactId != null) {
+            return Triple(ContactSelectionState.Selected, linkedContactId, null)
+        }
+
         val suggestedContactId = draft.suggestedContactId ?: return Triple(
             ContactSelectionState.NoContact,
             null,

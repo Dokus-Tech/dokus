@@ -70,7 +70,8 @@ import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.features.contacts.mvi.CreateContactIntent
 import tech.dokus.features.contacts.mvi.CreateContactState
 import tech.dokus.features.contacts.mvi.LookupUiState
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
+import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
@@ -94,7 +95,8 @@ fun LookupStepContent(
     onIntent: (CreateContactIntent) -> Unit,
     initialQuery: String? = null,
     onExistingContactSelected: ((String) -> Unit)? = null,
-    listContacts: ListContactsUseCase = koinInject(),
+    findContactsByName: FindContactsByNameUseCase = koinInject(),
+    findContactsByVat: FindContactsByVatUseCase = koinInject(),
     modifier: Modifier = Modifier,
 ) {
     // Keep query as local state to avoid MVI race conditions
@@ -120,7 +122,13 @@ fun LookupStepContent(
                     onIntent(CreateContactIntent.Search(searchQuery))
                     if (onExistingContactSelected != null) {
                         isExistingLoading = true
-                        listContacts(search = searchQuery, limit = 10)
+                        val normalizedVat = normalizeVatQuery(searchQuery)
+                        val searchResult = if (isVatLike(normalizedVat)) {
+                            findContactsByVat(normalizedVat, limit = 10)
+                        } else {
+                            findContactsByName(searchQuery, limit = 10)
+                        }
+                        searchResult
                             .onSuccess { existingContacts = it }
                             .onFailure { existingContacts = emptyList() }
                         isExistingLoading = false
@@ -260,6 +268,16 @@ fun LookupStepContent(
             )
         }
     }
+}
+
+private fun normalizeVatQuery(value: String): String {
+    return value.trim()
+        .uppercase()
+        .replace(Regex("[^A-Z0-9]"), "")
+}
+
+private fun isVatLike(normalized: String): Boolean {
+    return normalized.length >= MIN_SEARCH_LENGTH && normalized.matches(Regex("^[A-Z]{2}[0-9A-Z]{4,}$"))
 }
 
 @Composable

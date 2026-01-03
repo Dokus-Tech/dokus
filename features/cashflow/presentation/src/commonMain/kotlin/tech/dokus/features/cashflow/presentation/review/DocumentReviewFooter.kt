@@ -43,6 +43,7 @@ import tech.dokus.aura.resources.action_reject
 import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.cashflow_chat_with_document
 import tech.dokus.aura.resources.cashflow_document_confirmed
+import tech.dokus.aura.resources.cashflow_document_rejected
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
 
@@ -61,8 +62,10 @@ import tech.dokus.foundation.aura.constrains.Constrains
  * @param isConfirming Whether confirmation is in progress
  * @param isSaving Whether save is in progress
  * @param isBindingContact Whether contact binding is in progress
+ * @param isRejecting Whether reject is in progress
  * @param hasUnsavedChanges Whether there are unsaved field edits
  * @param isDocumentConfirmed Whether document has been confirmed
+ * @param isDocumentRejected Whether document has been rejected
  * @param confirmBlockedReason Why confirm is blocked (for error display)
  * @param onConfirm Callback for confirm action
  * @param onSaveChanges Callback for save action
@@ -75,8 +78,10 @@ fun DocumentReviewFooter(
     isConfirming: Boolean,
     isSaving: Boolean,
     isBindingContact: Boolean,
+    isRejecting: Boolean,
     hasUnsavedChanges: Boolean,
     isDocumentConfirmed: Boolean,
+    isDocumentRejected: Boolean,
     confirmBlockedReason: StringResource?,
     onConfirm: () -> Unit,
     onSaveChanges: () -> Unit,
@@ -89,9 +94,15 @@ fun DocumentReviewFooter(
         tonalElevation = 2.dp,
         shadowElevation = 4.dp,
     ) {
-        if (isDocumentConfirmed) {
+        if (isDocumentConfirmed || isDocumentRejected) {
             ConfirmedFooter(
                 onOpenChat = onOpenChat,
+                label = if (isDocumentRejected) {
+                    stringResource(Res.string.cashflow_document_rejected)
+                } else {
+                    stringResource(Res.string.cashflow_document_confirmed)
+                },
+                showChat = !isDocumentRejected
             )
         } else {
             PendingFooter(
@@ -99,6 +110,7 @@ fun DocumentReviewFooter(
                 isConfirming = isConfirming,
                 isSaving = isSaving,
                 isBindingContact = isBindingContact,
+                isRejecting = isRejecting,
                 hasUnsavedChanges = hasUnsavedChanges,
                 confirmBlockedReason = confirmBlockedReason,
                 onConfirm = onConfirm,
@@ -115,6 +127,7 @@ private fun PendingFooter(
     isConfirming: Boolean,
     isSaving: Boolean,
     isBindingContact: Boolean,
+    isRejecting: Boolean,
     hasUnsavedChanges: Boolean,
     confirmBlockedReason: StringResource?,
     onConfirm: () -> Unit,
@@ -122,7 +135,7 @@ private fun PendingFooter(
     onReject: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isLoading = isConfirming || isSaving || isBindingContact
+    val isLoading = isConfirming || isSaving || isBindingContact || isRejecting
 
     Column(
         modifier = modifier
@@ -243,6 +256,8 @@ private fun PendingFooter(
 @Composable
 private fun ConfirmedFooter(
     onOpenChat: () -> Unit,
+    label: String,
+    showChat: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -264,7 +279,7 @@ private fun ConfirmedFooter(
             )
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))
             Text(
-                text = stringResource(Res.string.cashflow_document_confirmed),
+                text = label,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.tertiary,
@@ -272,17 +287,19 @@ private fun ConfirmedFooter(
         }
 
         // Chat button
-        Button(
-            onClick = onOpenChat,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            PIcon(
-                icon = FeatherIcons.MessageSquare,
-                description = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
-            Text(stringResource(Res.string.cashflow_chat_with_document))
+        if (showChat) {
+            Button(
+                onClick = onOpenChat,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                PIcon(
+                    icon = FeatherIcons.MessageSquare,
+                    description = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+                Text(stringResource(Res.string.cashflow_chat_with_document))
+            }
         }
     }
 }

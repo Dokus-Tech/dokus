@@ -73,7 +73,8 @@ import tech.dokus.aura.resources.contacts_selected
 import tech.dokus.aura.resources.contacts_supplier
 import tech.dokus.aura.resources.contacts_vendor
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
+import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.platform.Logger
@@ -167,7 +168,8 @@ fun ContactAutocomplete(
     enabled: Boolean = true,
     isError: Boolean = false,
     errorMessage: String? = null,
-    listContacts: ListContactsUseCase = koinInject()
+    findContactsByName: FindContactsByNameUseCase = koinInject(),
+    findContactsByVat: FindContactsByVatUseCase = koinInject()
 ) {
     val scope = rememberCoroutineScope()
     val logger = remember { Logger.withTag("ContactAutocomplete") }
@@ -205,11 +207,14 @@ fun ContactAutocomplete(
                 delay(DebounceDelayMs) // Debounce delay
                 isSearching = true
 
-                listContacts(
-                    search = searchQuery,
-                    isActive = true,
-                    limit = SearchLimit
-                ).fold(
+                val normalizedVat = normalizeVatQuery(searchQuery)
+                val searchResult = if (isVatLike(normalizedVat)) {
+                    findContactsByVat(normalizedVat, limit = SearchLimit)
+                } else {
+                    findContactsByName(searchQuery, limit = SearchLimit)
+                }
+
+                searchResult.fold(
                     onSuccess = { contacts ->
                         searchResults = contacts
                         showDropdown = contacts.isNotEmpty() || searchQuery.isNotEmpty()
@@ -696,7 +701,8 @@ fun ContactAutocompleteSimple(
     enabled: Boolean = true,
     isError: Boolean = false,
     errorMessage: String? = null,
-    listContacts: ListContactsUseCase = koinInject()
+    findContactsByName: FindContactsByNameUseCase = koinInject(),
+    findContactsByVat: FindContactsByVatUseCase = koinInject()
 ) {
     ContactAutocomplete(
         value = value,
@@ -712,6 +718,17 @@ fun ContactAutocompleteSimple(
         enabled = enabled,
         isError = isError,
         errorMessage = errorMessage,
-        listContacts = listContacts
+        findContactsByName = findContactsByName,
+        findContactsByVat = findContactsByVat
     )
+}
+
+private fun normalizeVatQuery(value: String): String {
+    return value.trim()
+        .uppercase()
+        .replace(Regex("[^A-Z0-9]"), "")
+}
+
+private fun isVatLike(normalized: String): Boolean {
+    return normalized.length >= MinSearchLength && normalized.matches(Regex("^[A-Z]{2}[0-9A-Z]{4,}$"))
 }

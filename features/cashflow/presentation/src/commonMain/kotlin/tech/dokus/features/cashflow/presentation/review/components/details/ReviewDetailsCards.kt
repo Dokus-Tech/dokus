@@ -77,7 +77,7 @@ internal fun CounterpartyCard(
     val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(state)
     val hasDraft = listOf(counterparty.name, counterparty.vatNumber, counterparty.address)
         .any { !it.isNullOrBlank() }
-    val actionsEnabled = !state.isBindingContact && !state.isDocumentConfirmed
+    val actionsEnabled = !state.isBindingContact && !state.isDocumentConfirmed && !state.isDocumentRejected
     val hasLinkedContact = state.selectedContactSnapshot != null
     val linkLabel = if (hasLinkedContact) {
         Res.string.action_change
@@ -97,12 +97,16 @@ internal fun CounterpartyCard(
             ?: state.document.latestIngestion?.confidence
         )
         ?.takeIf { it > ConfidenceMinimum }
-    val confidenceLabelRes = confidence?.let {
-        when {
-            it >= ConfidenceHighThreshold -> Res.string.cashflow_confidence_high
-            it >= ConfidenceMediumThreshold -> Res.string.cashflow_confidence_medium
-            else -> Res.string.cashflow_confidence_low
+    val confidenceLabelRes = if (state.showConfidence) {
+        confidence?.let {
+            when {
+                it >= ConfidenceHighThreshold -> Res.string.cashflow_confidence_high
+                it >= ConfidenceMediumThreshold -> Res.string.cashflow_confidence_medium
+                else -> Res.string.cashflow_confidence_low
+            }
         }
+    } else {
+        null
     }
     val confidenceColor = when {
         confidence == null -> MaterialTheme.colorScheme.onSurfaceVariant

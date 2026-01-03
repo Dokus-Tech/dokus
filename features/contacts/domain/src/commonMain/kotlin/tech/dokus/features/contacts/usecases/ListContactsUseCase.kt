@@ -16,6 +16,26 @@ interface ListContactsUseCase {
 }
 
 /**
+ * Use case for finding contacts by name.
+ */
+interface FindContactsByNameUseCase {
+    suspend operator fun invoke(
+        query: String,
+        limit: Int = 50
+    ): Result<List<ContactDto>>
+}
+
+/**
+ * Use case for finding contacts by VAT number.
+ */
+interface FindContactsByVatUseCase {
+    suspend operator fun invoke(
+        vat: String,
+        limit: Int = 50
+    ): Result<List<ContactDto>>
+}
+
+/**
  * Use case for listing customer contacts only.
  */
 interface ListCustomersUseCase {

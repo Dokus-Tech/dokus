@@ -78,6 +78,7 @@ internal class DocumentReviewContainer(
                         is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
                         is DocumentReviewIntent.ClearSelectedContact -> handleClearSelectedContact()
                         is DocumentReviewIntent.ContactCreated -> handleContactCreated(intent.contactId)
+                        is DocumentReviewIntent.SetCounterpartyIntent -> handleSetCounterpartyIntent(intent.intent)
 
                         // === Line Items ===
                         is DocumentReviewIntent.AddLineItem -> handleAddLineItem()
@@ -92,8 +93,10 @@ internal class DocumentReviewContainer(
                         // === Actions ===
                         is DocumentReviewIntent.SaveDraft -> handleSaveDraft()
                         is DocumentReviewIntent.DiscardChanges -> handleDiscardChanges()
+                        is DocumentReviewIntent.ConfirmDiscardChanges -> handleConfirmDiscardChanges()
                         is DocumentReviewIntent.Confirm -> handleConfirm()
                         is DocumentReviewIntent.Reject -> handleReject()
+                        is DocumentReviewIntent.ConfirmReject -> handleConfirmReject(intent.reason)
                         is DocumentReviewIntent.OpenChat -> handleOpenChat()
                     }
                 }

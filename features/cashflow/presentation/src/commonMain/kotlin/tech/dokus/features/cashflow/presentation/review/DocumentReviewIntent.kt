@@ -2,6 +2,8 @@ package tech.dokus.features.cashflow.presentation.review
 
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIIntent
+import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ExtractedLineItem
@@ -35,6 +37,7 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object AcceptSuggestedContact : DocumentReviewIntent
     data object ClearSelectedContact : DocumentReviewIntent
     data class ContactCreated(val contactId: ContactId) : DocumentReviewIntent
+    data class SetCounterpartyIntent(val intent: CounterpartyIntent) : DocumentReviewIntent
 
     data object OpenPreviewSheet : DocumentReviewIntent
     data object ClosePreviewSheet : DocumentReviewIntent
@@ -47,8 +50,10 @@ sealed interface DocumentReviewIntent : MVIIntent {
 
     data object SaveDraft : DocumentReviewIntent
     data object DiscardChanges : DocumentReviewIntent
+    data object ConfirmDiscardChanges : DocumentReviewIntent
     data object Confirm : DocumentReviewIntent
     data object Reject : DocumentReviewIntent
+    data class ConfirmReject(val reason: DocumentRejectReason) : DocumentReviewIntent
     data object OpenChat : DocumentReviewIntent
 }
 

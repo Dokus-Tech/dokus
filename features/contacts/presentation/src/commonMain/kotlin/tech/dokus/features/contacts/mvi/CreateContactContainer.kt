@@ -18,12 +18,12 @@ import tech.dokus.domain.enums.Language
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.features.contacts.usecases.CreateContactUseCase
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
+import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
 import tech.dokus.foundation.platform.Logger
 
 // Duplicate detection constants
@@ -47,7 +47,8 @@ internal typealias CreateContactCtx = PipelineContext<CreateContactState, Create
  */
 internal class CreateContactContainer(
     private val searchCompanyUseCase: SearchCompanyUseCase,
-    private val listContacts: ListContactsUseCase,
+    private val findContactsByName: FindContactsByNameUseCase,
+    private val findContactsByVat: FindContactsByVatUseCase,
     private val createContact: CreateContactUseCase,
 ) : Container<CreateContactState, CreateContactIntent, CreateContactAction> {
 
@@ -116,12 +117,10 @@ internal class CreateContactContainer(
                 updateState { copy(duplicateVat = null) }
             }
 
-            // Use VatNumber for validation and normalization
-            val vatNumber = VatNumber(query)
-
-            if (vatNumber.isValid) {
-                // Valid VAT pattern - check local first, then remote
-                handleVatQuery(vatNumber.normalized)
+            val normalizedVat = normalizeVatQuery(query)
+            if (isVatLike(normalizedVat)) {
+                // VAT-like input - check local first, then remote
+                handleVatQuery(normalizedVat)
             } else {
                 // Name search - execute immediately (debounce already happened in UI)
                 updateState { copy(lookupState = LookupUiState.Loading) }
@@ -210,7 +209,7 @@ internal class CreateContactContainer(
     }
 
     private suspend fun findContactByVat(vatNumber: String): Pair<ContactId, String>? {
-        return listContacts(search = vatNumber, limit = 5).fold(
+        return findContactsByVat(vatNumber, limit = 5).fold(
             onSuccess = { contacts ->
                 contacts.find { it.vatNumber?.value == vatNumber }?.let { it.id to it.name.value }
             },
@@ -273,6 +272,15 @@ internal class CreateContactContainer(
                 return@withState
             }
 
+            val vatNumber = selectedEntity.vatNumber?.value?.let(::normalizeVatQuery)
+            if (!vatNumber.isNullOrBlank()) {
+                val existingContact = findContactByVat(vatNumber)
+                if (existingContact != null) {
+                    action(CreateContactAction.ContactCreated(existingContact.first, existingContact.second))
+                    return@withState
+                }
+            }
+
             updateState { copy(isSubmitting = true) }
 
             val entity = selectedEntity
@@ -280,7 +288,7 @@ internal class CreateContactContainer(
                 name = entity.name,
                 email = billingEmail,
                 phone = phone.takeIf { it.isNotBlank() },
-                vatNumber = entity.vatNumber?.value,
+                vatNumber = vatNumber,
                 businessType = ClientType.Business,
                 addressLine1 = entity.address?.streetLine1,
                 addressLine2 = entity.address?.streetLine2,
@@ -382,6 +390,15 @@ internal class CreateContactContainer(
                 return@withState
             }
 
+            val vatNumber = formData.vatNumber.takeIf { it.isNotBlank() }?.let(::normalizeVatQuery)
+            if (!vatNumber.isNullOrBlank()) {
+                val existingContact = findContactByVat(vatNumber)
+                if (existingContact != null) {
+                    action(CreateContactAction.ContactCreated(existingContact.first, existingContact.second))
+                    return@withState
+                }
+            }
+
             // Check for soft duplicates (name + country)
             val duplicates = findSoftDuplicates(contactType, formData)
             if (duplicates.isNotEmpty() && softDuplicates == null) {
@@ -416,7 +433,7 @@ internal class CreateContactContainer(
                 CreateContactRequest(
                     name = formData.companyName,
                     email = formData.email.takeIf { it.isNotBlank() },
-                    vatNumber = formData.vatNumber.takeIf { it.isNotBlank() },
+                    vatNumber = formData.vatNumber.takeIf { it.isNotBlank() }?.let(::normalizeVatQuery),
                     businessType = ClientType.Business,
                     country = formData.country.dbValue,
                 )
@@ -482,7 +499,7 @@ internal class CreateContactContainer(
         val name = if (type == ClientType.Business) data.companyName else data.fullName
         if (name.length < MinNameLengthForDuplicateCheck) return emptyList()
 
-        return listContacts(search = name, limit = DuplicateSearchLimit).fold(
+        return findContactsByName(name, limit = DuplicateSearchLimit).fold(
             onSuccess = { contacts ->
                 contacts
                     .filter { contact ->
@@ -503,5 +520,15 @@ internal class CreateContactContainer(
             },
             onFailure = { emptyList() }
         )
+    }
+
+    private fun normalizeVatQuery(value: String): String {
+        return value.trim()
+            .uppercase()
+            .replace(Regex("[^A-Z0-9]"), "")
+    }
+
+    private fun isVatLike(normalized: String): Boolean {
+        return normalized.length >= 6 && normalized.matches(Regex("^[A-Z]{2}[0-9A-Z]{4,}$"))
     }
 }
