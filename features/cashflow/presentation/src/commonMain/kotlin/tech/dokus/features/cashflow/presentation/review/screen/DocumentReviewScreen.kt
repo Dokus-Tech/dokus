@@ -19,8 +19,7 @@ internal fun DocumentReviewScreen(
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
     onOpenChat: () -> Unit,
-    onLinkExistingContact: () -> Unit,
-    onCreateNewContact: (CounterpartyInfo) -> Unit,
+    onCorrectContact: (CounterpartyInfo) -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     Scaffold(
@@ -43,8 +42,7 @@ internal fun DocumentReviewScreen(
             isLargeScreen = isLargeScreen,
             contentPadding = contentPadding,
             onIntent = onIntent,
-            onLinkExistingContact = onLinkExistingContact,
-            onCreateNewContact = onCreateNewContact,
+            onCorrectContact = onCorrectContact,
         )
     }
 }

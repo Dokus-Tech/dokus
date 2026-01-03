@@ -57,8 +57,7 @@ internal fun ReviewContent(
     isLargeScreen: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
-    onLinkExistingContact: () -> Unit,
-    onCreateNewContact: (CounterpartyInfo) -> Unit,
+    onCorrectContact: (CounterpartyInfo) -> Unit,
 ) {
     when (state) {
         is DocumentReviewState.Loading -> {
@@ -72,16 +71,14 @@ internal fun ReviewContent(
                     state = state,
                     contentPadding = contentPadding,
                     onIntent = onIntent,
-                    onLinkExistingContact = onLinkExistingContact,
-                    onCreateNewContact = { onCreateNewContact(counterparty) },
+                    onCorrectContact = { onCorrectContact(counterparty) },
                 )
             } else {
                 MobileReviewContent(
                     state = state,
                     contentPadding = contentPadding,
                     onIntent = onIntent,
-                    onLinkExistingContact = onLinkExistingContact,
-                    onCreateNewContact = { onCreateNewContact(counterparty) },
+                    onCorrectContact = { onCorrectContact(counterparty) },
                 )
             }
         }
@@ -141,8 +138,7 @@ private fun DesktopReviewContent(
     state: DocumentReviewState.Content,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
-    onLinkExistingContact: () -> Unit,
-    onCreateNewContact: () -> Unit,
+    onCorrectContact: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -163,8 +159,7 @@ private fun DesktopReviewContent(
         ReviewDetailsPane(
             state = state,
             onIntent = onIntent,
-            onLinkExistingContact = onLinkExistingContact,
-            onCreateNewContact = onCreateNewContact,
+            onCorrectContact = onCorrectContact,
             modifier = Modifier
                 .width(420.dp)
                 .fillMaxHeight()
@@ -195,8 +190,7 @@ private fun DocumentPreviewPane(
 private fun ReviewDetailsPane(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
-    onLinkExistingContact: () -> Unit,
-    onCreateNewContact: () -> Unit,
+    onCorrectContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -223,8 +217,7 @@ private fun ReviewDetailsPane(
                 CounterpartyCard(
                     state = state,
                     onIntent = onIntent,
-                    onLinkExistingContact = onLinkExistingContact,
-                    onCreateNewContact = onCreateNewContact,
+                    onCorrectContact = onCorrectContact,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 InvoiceDetailsCard(
@@ -264,8 +257,7 @@ private fun MobileReviewContent(
     state: DocumentReviewState.Content,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
-    onLinkExistingContact: () -> Unit,
-    onCreateNewContact: () -> Unit,
+    onCorrectContact: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -303,8 +295,7 @@ private fun MobileReviewContent(
             CounterpartyCard(
                 state = state,
                 onIntent = onIntent,
-                onLinkExistingContact = onLinkExistingContact,
-                onCreateNewContact = onCreateNewContact,
+                onCorrectContact = onCorrectContact,
                 modifier = Modifier.fillMaxWidth(),
             )
 
