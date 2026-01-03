@@ -27,20 +27,33 @@ internal fun Route.lookupRoutes() {
          */
         get<Lookup.Company> { route ->
             val (name, number) = route.name to route.number
-
-            val results = when {
-                name.isValid -> cbeApiClient.searchByName(name)
-                number.isValid -> cbeApiClient.searchByVat(number)
-                else -> throw DokusException.BadRequest("Invalid or missing name or number")
-            }.getOrElse {
-                logger.error("CBE API lookup failed for '$name'", it)
-                throw DokusException.InternalError("Company lookup failed. Please try again.")
+            if (!name.isValid && !number.isValid) {
+                logger.error("CBE API lookup failed for '$name', '$number'")
+                throw DokusException.BadRequest("Invalid or missing name or number")
             }
 
+            val nameResults = if (name.isValid) {
+                cbeApiClient.searchByName(name)
+            } else Result.success(emptyList())
+            val numberResults = if (number.isValid) {
+                cbeApiClient.searchByVat(number)
+            } else Result.success(emptyList())
+
+            if (nameResults.isFailure && numberResults.isFailure) {
+                logger.error(
+                    "CBE API lookup failed for '$name', '$number'",
+                    nameResults.exceptionOrNull() ?: numberResults.exceptionOrNull()
+                )
+                throw DokusException.InternalError("CBE API lookup failed")
+            }
+
+            val results = buildList {
+                numberResults.onSuccess { addAll(it) }
+                nameResults.onSuccess { addAll(it) }
+            }
             val response = EntityLookupResponse(
                 results = results,
                 query = "${name}${number}",
-                totalCount = results.size
             )
 
             call.respond<EntityLookupResponse>(HttpStatusCode.OK, response)

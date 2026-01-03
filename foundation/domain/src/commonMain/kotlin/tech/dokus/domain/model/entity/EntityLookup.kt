@@ -1,6 +1,7 @@
 package tech.dokus.domain.model.entity
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
@@ -52,5 +53,7 @@ enum class EntityStatus {
 data class EntityLookupResponse(
     val results: List<EntityLookup>,
     val query: String,
-    val totalCount: Int,
-)
+) {
+    @Transient
+    val totalCount: Int = results.size
+}
