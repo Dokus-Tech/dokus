@@ -11,6 +11,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import tech.dokus.domain.model.ai.AiProvider
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -33,11 +34,6 @@ class EmbeddingService(
     private val config: AIConfig
 ) {
     private val logger = loggerFor()
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
 
     companion object {
         /** Default embedding model for Ollama (768 dimensions) */

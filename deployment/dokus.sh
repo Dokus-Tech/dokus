@@ -70,6 +70,8 @@ DB_NAME="dokus"
 #   - pro:  High performance for Mac/servers (docker-compose.pro.yml)
 #   - lite: Low resource for Raspberry Pi/edge (docker-compose.lite.yml) [default]
 PROFILE_FILE=".dokus-profile"
+DEBUG_MODE_FILE=".dokus-debug"
+DEBUG_MODE=false
 
 # Load saved profile or prompt user to select
 load_profile() {
@@ -167,8 +169,65 @@ get_profile_display() {
     esac
 }
 
+# Load debug mode state
+load_debug_mode() {
+    if [ -f "$DEBUG_MODE_FILE" ]; then
+        DEBUG_MODE=$(cat "$DEBUG_MODE_FILE")
+    else
+        DEBUG_MODE=false
+    fi
+}
+
+# Save debug mode state
+save_debug_mode() {
+    echo "$DEBUG_MODE" > "$DEBUG_MODE_FILE"
+}
+
+# Toggle debug mode - restarts services with/without debug override
+toggle_debug_mode() {
+    if ! check_env; then
+        return 1
+    fi
+
+    if [ "$DEBUG_MODE" = "true" ]; then
+        print_gradient_header "Disabling Debug Mode" "Restarting without JDWP"
+
+        print_status info "Stopping services..."
+        docker compose -f "$COMPOSE_FILE" down
+
+        print_status info "Starting services (normal mode)..."
+        docker compose --compatibility -f "$COMPOSE_FILE" up -d
+
+        DEBUG_MODE=false
+        save_debug_mode
+
+        print_status success "Debug mode disabled"
+    else
+        print_gradient_header "Enabling Debug Mode" "Restarting with JDWP on port 5005"
+
+        print_status info "Stopping services..."
+        docker compose -f "$COMPOSE_FILE" down
+
+        print_status info "Starting services with debug override..."
+        docker compose --compatibility -f "$COMPOSE_FILE" -f docker-compose.debug.yml up -d
+
+        DEBUG_MODE=true
+        save_debug_mode
+
+        print_status success "Debug mode enabled"
+        echo ""
+        print_status info "JVM remote debugging available on port 5005"
+        print_status info "Connect your debugger to: $(get_server_ip):5005"
+    fi
+
+    echo ""
+    print_status info "Waiting for services to stabilize..."
+    sleep 5
+}
+
 # Initialize profile
 load_profile
+load_debug_mode
 
 # Gateway configuration (HTTP for self-hosting)
 GATEWAY_PORT="8000"
@@ -1148,10 +1207,18 @@ show_menu() {
     echo_e "    ${SOFT_CYAN}10${NC}  Check + pull updates (restart)"
     echo ""
 
+    echo_e "  ${SOFT_RED}${BOLD}Developer${NC}"
+    if [ "$DEBUG_MODE" = "true" ]; then
+        echo_e "    ${SOFT_CYAN}11${NC}  Toggle debug mode ${SOFT_GREEN}[ON]${NC} - port 5005"
+    else
+        echo_e "    ${SOFT_CYAN}11${NC}  Toggle debug mode ${SOFT_GRAY}[OFF]${NC}"
+    fi
+    echo ""
+
     echo_e "  ${SOFT_GRAY}0${NC}    Exit"
     echo ""
 
-    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-10]:${NC} "
+    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-11]:${NC} "
     read choice
     echo ""
 
@@ -1166,6 +1233,7 @@ show_menu() {
         8) show_mobile_connection ;;
         9) select_profile ;;
         10) check_docker && update_services ;;
+        11) check_docker && toggle_debug_mode ;;
         0) echo "  ${SOFT_CYAN}👋 Goodbye!${NC}\n" && exit 0 ;;
         *) print_status error "Invalid choice" && sleep 1 && show_menu ;;
     esac
@@ -1248,6 +1316,10 @@ main() {
         connect|qr)
             show_mobile_connection
             ;;
+        debug)
+            check_docker
+            toggle_debug_mode
+            ;;
         profile)
             if [ -n "${args[0]:-}" ]; then
                 # Set profile from CLI
@@ -1295,6 +1367,7 @@ main() {
             echo_e "    db         Access PostgreSQL console"
             echo_e "    connect    Show mobile app connection info"
             echo_e "    profile    Show/set deployment profile"
+            echo_e "    debug      Toggle debug mode (JDWP on port 5005)"
             echo ""
             echo_e "  ${SOFT_ORANGE}Profiles:${NC}"
             echo_e "    cloud      Production HTTPS with Let's Encrypt"

@@ -3,7 +3,6 @@ package tech.dokus.database.repository.ai
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -13,7 +12,6 @@ import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import org.slf4j.LoggerFactory
 import tech.dokus.database.tables.ai.DocumentChunksTable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -24,6 +22,8 @@ import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ChunkSearchResult
 import tech.dokus.domain.repository.ChunkWithEmbedding
 import tech.dokus.domain.repository.RetrievedChunk
+import tech.dokus.domain.utils.json
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.sql.Connection
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
@@ -39,12 +39,7 @@ import kotlin.uuid.ExperimentalUuidApi
 @OptIn(ExperimentalUuidApi::class)
 class DocumentChunksRepository : ChunkRepository {
 
-    private val logger = LoggerFactory.getLogger(DocumentChunksRepository::class.java)
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val logger = loggerFor()
 
     // =========================================================================
     // ChunkRepository Interface Implementation
@@ -204,7 +199,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                    (DocumentChunksTable.documentId eq documentUuid)
+                        (DocumentChunksTable.documentId eq documentUuid)
             }
             .limit(1)
             .singleOrNull()
@@ -225,7 +220,7 @@ class DocumentChunksRepository : ChunkRepository {
 
         val deleted = DocumentChunksTable.deleteWhere {
             (DocumentChunksTable.tenantId eq tenantUuid) and
-                (DocumentChunksTable.documentId eq documentUuid)
+                    (DocumentChunksTable.documentId eq documentUuid)
         }
 
         logger.debug("Deleted $deleted chunks")
@@ -250,7 +245,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                    (DocumentChunksTable.documentId eq documentUuid)
+                        (DocumentChunksTable.documentId eq documentUuid)
             }
             .orderBy(DocumentChunksTable.chunkIndex to SortOrder.ASC)
             .map { it.toChunkDto() }
@@ -270,7 +265,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.id eq chunkUuid) and
-                    (DocumentChunksTable.tenantId eq tenantUuid)
+                        (DocumentChunksTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
             ?.toChunkDto()
@@ -290,7 +285,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                    (DocumentChunksTable.documentId eq documentUuid)
+                        (DocumentChunksTable.documentId eq documentUuid)
             }
             .count()
     }

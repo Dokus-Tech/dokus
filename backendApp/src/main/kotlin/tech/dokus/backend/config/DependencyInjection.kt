@@ -9,7 +9,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -41,6 +40,7 @@ import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.service.AIService
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.EmbeddingService
@@ -123,13 +123,7 @@ private val httpClientModule = module {
     single {
         HttpClient(CIO) {
             install(ContentNegotiation) {
-                json(
-                    Json {
-                        ignoreUnknownKeys = true
-                        isLenient = true
-                        encodeDefaults = true
-                    }
-                )
+                json(json)
             }
             install(Logging) {
                 level = LogLevel.INFO

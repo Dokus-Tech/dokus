@@ -8,12 +8,12 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.Payload
-import kotlinx.serialization.json.Json
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.AuthenticationInfo
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.TenantClaimDto
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
@@ -28,7 +28,6 @@ class JwtValidator(
 ) {
     private val logger = loggerFor()
     private val algorithm = Algorithm.HMAC256(config.secret)
-    private val json = Json { ignoreUnknownKeys = true }
 
     val verifier: JWTVerifier = JWT.require(algorithm)
         .withIssuer(config.issuer)

@@ -3,7 +3,6 @@ package tech.dokus.peppol.service
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.json.Json
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsWithCredentials
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
@@ -26,6 +25,7 @@ import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.mapper.PeppolMapper
 import tech.dokus.peppol.model.PeppolVerifyResponse
@@ -51,10 +51,6 @@ class PeppolService(
     private val validator: PeppolValidator
 ) {
     private val logger = loggerFor()
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
 
     // ========================================================================
     // SETTINGS MANAGEMENT

@@ -5,7 +5,7 @@ import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
-import kotlinx.serialization.json.Json
+import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.models.FieldProvenance
 import tech.dokus.features.ai.models.InvoiceProvenance
@@ -27,10 +27,6 @@ class InvoiceExtractionAgent(
     private val model: LLModel
 ) {
     private val logger = loggerFor()
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
 
     private val systemPrompt = """
         You are an invoice data extraction specialist with forensic attention to detail.

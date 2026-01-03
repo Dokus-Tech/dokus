@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -28,6 +27,7 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.TrackedCorrection
 import tech.dokus.domain.repository.DraftStatusChecker
+import tech.dokus.domain.utils.json
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -65,11 +65,6 @@ data class DraftSummary(
  */
 @OptIn(ExperimentalUuidApi::class)
 class DocumentDraftRepository : DraftStatusChecker {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
 
     /**
      * Create or update a draft from an ingestion run result.

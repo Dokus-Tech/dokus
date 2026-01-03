@@ -2,6 +2,7 @@ package tech.dokus.foundation.backend.cache
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.serializer
+import tech.dokus.domain.utils.json
 import java.time.Duration
 
 /**
@@ -19,11 +20,11 @@ class RedisOperations(@PublishedApi internal val client: RedisClient) {
 
     suspend inline fun <reified T> get(key: String): T? {
         val value = client.get(key) ?: return null
-        return CacheSerializer.json.decodeFromString(serializer<T>(), value)
+        return json.decodeFromString(serializer<T>(), value)
     }
 
     suspend inline fun <reified T> set(key: String, value: T, ttl: Duration? = null) {
-        val serialized = CacheSerializer.json.encodeToString(serializer<T>(), value)
+        val serialized = json.encodeToString(serializer<T>(), value)
         client.set(key, serialized, ttl)
     }
 
@@ -66,7 +67,7 @@ class RedisOperations(@PublishedApi internal val client: RedisClient) {
         if (existing != null) return existing
 
         val value = producer()
-        val serialized = CacheSerializer.json.encodeToString(serializer<T>(), value)
+        val serialized = json.encodeToString(serializer<T>(), value)
         return if (client.setIfAbsent(key, serialized, ttl)) {
             value
         } else {

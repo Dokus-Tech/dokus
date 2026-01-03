@@ -29,8 +29,8 @@ internal fun Route.lookupRoutes() {
             val (name, number) = route.name to route.number
 
             val results = when {
-                name != null && name.isValid -> cbeApiClient.searchByName(name)
-                number != null && number.isValid -> cbeApiClient.searchByVat(number)
+                name.isValid -> cbeApiClient.searchByName(name)
+                number.isValid -> cbeApiClient.searchByVat(number)
                 else -> throw DokusException.BadRequest("Invalid or missing name or number")
             }.getOrElse {
                 logger.error("CBE API lookup failed for '$name'", it)

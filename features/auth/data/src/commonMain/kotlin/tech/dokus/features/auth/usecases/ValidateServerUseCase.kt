@@ -11,11 +11,11 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.Json
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerInfo
 import tech.dokus.domain.config.ServerStatus
 import tech.dokus.domain.config.ServerValidationResult
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.platform.Logger
 
 /** Timeout for the entire HTTP request in milliseconds */
@@ -49,12 +49,7 @@ class ValidateServerUseCase {
         // Create a temporary HTTP client for validation
         val client = HttpClient {
             install(ContentNegotiation) {
-                json(
-                    Json {
-                        ignoreUnknownKeys = true
-                        isLenient = true
-                    }
-                )
+                json(json)
             }
             install(HttpTimeout) {
                 requestTimeoutMillis = RequestTimeoutMs

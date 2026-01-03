@@ -5,7 +5,6 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.resources.Resources
-import org.slf4j.LoggerFactory
 import tech.dokus.backend.config.configureDependencyInjection
 import tech.dokus.backend.plugins.configureBackgroundWorkers
 import tech.dokus.backend.plugins.configureDatabase
@@ -17,8 +16,9 @@ import tech.dokus.foundation.backend.configure.configureJwtAuthentication
 import tech.dokus.foundation.backend.configure.configureMonitoring
 import tech.dokus.foundation.backend.configure.configureSecurity
 import tech.dokus.foundation.backend.configure.configureSerialization
+import tech.dokus.foundation.backend.utils.loggerFor
 
-private val logger = LoggerFactory.getLogger("DokusServer")
+private val logger = loggerFor("DokusServer")
 
 fun main() {
     val appConfig = AppBaseConfig.load()

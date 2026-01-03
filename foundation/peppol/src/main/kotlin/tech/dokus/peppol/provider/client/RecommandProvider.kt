@@ -11,11 +11,11 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.serialization.json.Json
 import tech.dokus.domain.model.RecommandDocumentsResponse
 import tech.dokus.domain.model.RecommandInboxDocument
 import tech.dokus.domain.model.RecommandMarkAsReadRequest
 import tech.dokus.domain.model.RecommandSendResponse
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.model.PeppolDirection
 import tech.dokus.peppol.model.PeppolDocumentList
@@ -48,12 +48,6 @@ class RecommandProvider(
 ) : PeppolProvider {
 
     private val logger = loggerFor()
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        encodeDefaults = true
-        prettyPrint = false
-    }
 
     override val providerId = "recommand"
     override val providerName = "Recommand.eu"

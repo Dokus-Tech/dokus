@@ -8,7 +8,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
@@ -17,6 +16,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ChunkWithEmbedding
+import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.meetsMinimalThreshold
 import tech.dokus.features.ai.models.toDomainType
 import tech.dokus.features.ai.models.toExtractedDocumentData
@@ -66,11 +66,6 @@ class DocumentProcessingWorker(
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var pollingJob: Job? = null
     private val isRunning = AtomicBoolean(false)
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
 
     /**
      * Check if RAG (chunking/embedding) is enabled.

@@ -1,6 +1,5 @@
 package tech.dokus.database.repository.cashflow
 
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -26,6 +25,7 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.utils.json
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -48,11 +48,6 @@ data class DocumentWithDraftAndIngestion(
  */
 @OptIn(ExperimentalUuidApi::class)
 class DocumentRepository {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
 
     /**
      * Create a new document record.

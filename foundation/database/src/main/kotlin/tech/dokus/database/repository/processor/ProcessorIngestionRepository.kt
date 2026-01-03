@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toStdlibInstant
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -21,6 +20,7 @@ import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.utils.json
 import java.util.UUID
 import kotlin.time.ExperimentalTime
 
@@ -37,11 +37,6 @@ import kotlin.time.ExperimentalTime
  * the /reprocess endpoint which creates new runs.
  */
 class ProcessorIngestionRepository {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
 
     // NOTE: meetsMinimalThreshold() was REMOVED from this file.
     // The ONLY threshold check is DocumentAIResult.meetsMinimalThreshold() in the AI module.

@@ -33,10 +33,10 @@ class SearchCompanyUseCaseImpl(
 
         return lookupDataSource.searchCompany(name, number)
             .onSuccess { response ->
-                logger.d { "Found ${response.totalCount} companies for '${name}'" }
+                logger.d { "Found ${response.totalCount} companies for '${name}, ${number}'" }
             }
             .onFailure { error ->
-                logger.e(error) { "Company search failed for '${name}'" }
+                logger.e(error) { "Company search failed for '${name}, ${number}'" }
             }
     }
 }

@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
+import tech.dokus.domain.utils.json
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -58,10 +58,6 @@ internal class JVMSecureStorage(
     private val keyAlias = "dokus_${serviceName}_key"
 
     private val keyStorePassword = deriveKeyStorePassword()
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
 
     private val secretKey: SecretKey = initializeSecretKey()
 
