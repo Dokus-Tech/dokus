@@ -103,9 +103,11 @@ services:
   server-local:
     build:
       context: .
-      dockerfile: backendApp/Dockerfile
+      dockerfile: backendApp/Dockerfile.dev
     image: dokus-server:local
     container_name: dokus-server-local
+    ports:
+      - "5005:5005"   # JVM remote debugging (JDWP)
     environment:
       PORT: 8080
       ENVIRONMENT: local

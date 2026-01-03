@@ -20,5 +20,5 @@ class Lookup {
      */
     @Serializable
     @Resource("company")
-    data class Company(val parent: Lookup = Lookup(), val name: LegalName?, val number: VatNumber?)
+    data class Company(val parent: Lookup = Lookup(), val name: LegalName, val number: VatNumber)
 }

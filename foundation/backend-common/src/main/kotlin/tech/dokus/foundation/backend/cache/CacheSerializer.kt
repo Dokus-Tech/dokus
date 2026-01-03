@@ -1,20 +1,14 @@
 package tech.dokus.foundation.backend.cache
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+import tech.dokus.domain.utils.json
 import java.time.Duration
 
 /**
  * Serialization utilities for Redis cache operations
  */
 object CacheSerializer {
-
-    val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        encodeDefaults = true
-    }
 
     /**
      * Serialize an object to JSON string

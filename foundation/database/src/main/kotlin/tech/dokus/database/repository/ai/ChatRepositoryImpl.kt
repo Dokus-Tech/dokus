@@ -1,7 +1,6 @@
 package tech.dokus.database.repository.ai
 
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -12,7 +11,6 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import org.slf4j.LoggerFactory
 import tech.dokus.database.tables.ai.ChatMessagesTable
 import tech.dokus.database.tables.cashflow.DocumentsTable
 import tech.dokus.domain.ids.DocumentId
@@ -26,6 +24,8 @@ import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionSummary
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.domain.repository.ChatRepository
+import tech.dokus.domain.utils.json
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -41,61 +41,57 @@ import kotlin.uuid.ExperimentalUuidApi
 @OptIn(ExperimentalUuidApi::class)
 class ChatRepositoryImpl : ChatRepository {
 
-    private val logger = LoggerFactory.getLogger(ChatRepositoryImpl::class.java)
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val logger = loggerFor()
 
     // =========================================================================
     // Message Operations
     // =========================================================================
 
-    override suspend fun saveMessage(message: ChatMessageDto): ChatMessageDto = newSuspendedTransaction {
-        val messageId = UUID.fromString(message.id.toString())
-        val tenantUuid = UUID.fromString(message.tenantId.toString())
-        val userUuid = UUID.fromString(message.userId.toString())
-        val sessionUuid = UUID.fromString(message.sessionId.toString())
+    override suspend fun saveMessage(message: ChatMessageDto): ChatMessageDto =
+        newSuspendedTransaction {
+            val messageId = UUID.fromString(message.id.toString())
+            val tenantUuid = UUID.fromString(message.tenantId.toString())
+            val userUuid = UUID.fromString(message.userId.toString())
+            val sessionUuid = UUID.fromString(message.sessionId.toString())
 
-        logger.debug(
-            "Saving chat message: id={}, session={}, role={}, tenant={}",
-            messageId,
-            sessionUuid,
-            message.role,
-            tenantUuid
-        )
+            logger.debug(
+                "Saving chat message: id={}, session={}, role={}, tenant={}",
+                messageId,
+                sessionUuid,
+                message.role,
+                tenantUuid
+            )
 
-        // Serialize citations as JSON array
-        val citationsJson = message.citations?.takeIf { it.isNotEmpty() }?.let { cites ->
-            json.encodeToString(ListSerializer(ChatCitation.serializer()), cites)
-        }
-
-        ChatMessagesTable.insert {
-            it[id] = messageId
-            it[tenantId] = tenantUuid
-            it[userId] = userUuid
-            it[sessionId] = sessionUuid
-            it[role] = message.role.dbValue
-            it[content] = message.content
-            it[scope] = message.scope.dbValue
-            it[documentId] = message.documentId?.let { docId ->
-                UUID.fromString(docId.toString())
+            // Serialize citations as JSON array
+            val citationsJson = message.citations?.takeIf { it.isNotEmpty() }?.let { cites ->
+                json.encodeToString(ListSerializer(ChatCitation.serializer()), cites)
             }
-            it[citations] = citationsJson
-            it[chunksRetrieved] = message.chunksRetrieved
-            it[aiModel] = message.aiModel
-            it[aiProvider] = message.aiProvider
-            it[generationTimeMs] = message.generationTimeMs
-            it[promptTokens] = message.promptTokens
-            it[completionTokens] = message.completionTokens
-            it[sequenceNumber] = message.sequenceNumber
-            it[createdAt] = message.createdAt
-        }
 
-        logger.debug("Successfully saved chat message: {}", messageId)
-        message
-    }
+            ChatMessagesTable.insert {
+                it[id] = messageId
+                it[tenantId] = tenantUuid
+                it[userId] = userUuid
+                it[sessionId] = sessionUuid
+                it[role] = message.role.dbValue
+                it[content] = message.content
+                it[scope] = message.scope.dbValue
+                it[documentId] = message.documentId?.let { docId ->
+                    UUID.fromString(docId.toString())
+                }
+                it[citations] = citationsJson
+                it[chunksRetrieved] = message.chunksRetrieved
+                it[aiModel] = message.aiModel
+                it[aiProvider] = message.aiProvider
+                it[generationTimeMs] = message.generationTimeMs
+                it[promptTokens] = message.promptTokens
+                it[completionTokens] = message.completionTokens
+                it[sequenceNumber] = message.sequenceNumber
+                it[createdAt] = message.createdAt
+            }
+
+            logger.debug("Successfully saved chat message: {}", messageId)
+            message
+        }
 
     override suspend fun getMessageById(
         tenantId: TenantId,
@@ -108,7 +104,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.id eq msgUuid) and
-                    (ChatMessagesTable.tenantId eq tenantUuid)
+                        (ChatMessagesTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
             ?.toMessageDto()
@@ -128,7 +124,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                    (ChatMessagesTable.sessionId eq sessionUuid)
+                        (ChatMessagesTable.sessionId eq sessionUuid)
             }
 
         val total = baseQuery.count()
@@ -156,7 +152,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                    (ChatMessagesTable.documentId eq documentUuid)
+                        (ChatMessagesTable.documentId eq documentUuid)
             }
 
         val total = baseQuery.count()
@@ -181,7 +177,7 @@ class ChatRepositoryImpl : ChatRepository {
             .select(ChatMessagesTable.sequenceNumber.max())
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                    (ChatMessagesTable.sessionId eq sessionUuid)
+                        (ChatMessagesTable.sessionId eq sessionUuid)
             }
             .singleOrNull()
             ?.get(ChatMessagesTable.sequenceNumber.max())
@@ -263,7 +259,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                    (ChatMessagesTable.sessionId eq sessionUuid)
+                        (ChatMessagesTable.sessionId eq sessionUuid)
             }
             .orderBy(ChatMessagesTable.sequenceNumber to SortOrder.ASC)
             .toList()
@@ -280,7 +276,7 @@ class ChatRepositoryImpl : ChatRepository {
                     .selectAll()
                     .where {
                         (DocumentsTable.id eq docId) and
-                            (DocumentsTable.tenantId eq tenantUuid)
+                                (DocumentsTable.tenantId eq tenantUuid)
                     }
                     .singleOrNull()
                     ?.get(DocumentsTable.filename)
@@ -315,7 +311,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                    (ChatMessagesTable.sessionId eq sessionUuid)
+                        (ChatMessagesTable.sessionId eq sessionUuid)
             }
             .limit(1)
             .count() > 0
@@ -356,7 +352,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                    (ChatMessagesTable.userId eq userUuid)
+                        (ChatMessagesTable.userId eq userUuid)
             }
             .orderBy(ChatMessagesTable.createdAt to SortOrder.DESC)
             .toList()

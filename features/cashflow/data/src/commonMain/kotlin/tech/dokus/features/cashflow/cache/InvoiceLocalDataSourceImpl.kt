@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
-import kotlinx.serialization.json.Json
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.FinancialDocumentDto.InvoiceDto
+import tech.dokus.domain.utils.json
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -22,7 +22,6 @@ import kotlin.time.ExperimentalTime
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class, ExperimentalTime::class)
 internal class InvoiceLocalDataSourceImpl(
     private val database: CashflowCacheDatabase,
-    private val json: Json = Json { ignoreUnknownKeys = true }
 ) : InvoiceLocalDataSource {
 
     private val invoiceQueries get() = database.invoiceQueries

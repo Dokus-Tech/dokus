@@ -5,7 +5,7 @@ import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
-import kotlinx.serialization.json.Json
+import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.DocumentClassification
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -19,8 +19,6 @@ class DocumentClassificationAgent(
     private val model: LLModel
 ) {
     private val logger = loggerFor()
-    private val json = Json { ignoreUnknownKeys = true }
-
     private val systemPrompt = """
         You are a document classification specialist.
         Analyze the provided text and determine the document type.

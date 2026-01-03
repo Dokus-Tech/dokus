@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
-import kotlinx.serialization.json.Json
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.utils.json
 import tech.dokus.features.contacts.cache.ContactsCacheDatabase
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -23,7 +23,6 @@ import kotlin.time.ExperimentalTime
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class, ExperimentalTime::class)
 internal class ContactLocalDataSourceImpl(
     private val database: ContactsCacheDatabase,
-    private val json: Json = Json { ignoreUnknownKeys = true }
 ) : ContactLocalDataSource {
 
     private val contactQueries get() = database.contactQueries

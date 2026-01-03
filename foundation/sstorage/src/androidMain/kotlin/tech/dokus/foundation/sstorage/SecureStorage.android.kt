@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.json.Json
 import tech.dokus.domain.model.common.Feature
+import tech.dokus.domain.utils.json
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -38,7 +38,6 @@ internal class AndroidSecureStorage(
 
     private val fileName: String = serviceName.lowercase().replace(" ", "_") + ".datastore"
 
-    private val json = Json { ignoreUnknownKeys = true }
     private val secretKey: SecretKey by lazy { getOrCreateAesKey() }
     private val file: File = File(context.filesDir, fileName)
 
@@ -74,7 +73,7 @@ internal class AndroidSecureStorage(
         if (existing != null) return existing
         val keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore")
         val purposes = android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or
-            android.security.keystore.KeyProperties.PURPOSE_DECRYPT
+                android.security.keystore.KeyProperties.PURPOSE_DECRYPT
         val spec = android.security.keystore.KeyGenParameterSpec.Builder(serviceName, purposes)
             .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)

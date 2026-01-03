@@ -21,7 +21,12 @@ internal class LookupRemoteDataSourceImpl(
         number: VatNumber?
     ): Result<EntityLookupResponse> {
         return runCatching {
-            httpClient.get(Lookup.Company(name = name, number = number)).body()
+            httpClient.get(
+                Lookup.Company(
+                    name = name ?: LegalName.Empty,
+                    number = number ?: VatNumber.Empty,
+                )
+            ).body()
         }
     }
 }

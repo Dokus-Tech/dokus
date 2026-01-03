@@ -29,21 +29,14 @@ import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.AttributeKey
-import kotlinx.serialization.json.Json
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.utils.json
 
 fun HttpClientConfig<*>.withJsonContentNegotiation() {
     install(ContentNegotiation) {
-        json(
-            Json {
-                encodeDefaults = true
-                isLenient = true
-                coerceInputValues = true
-                ignoreUnknownKeys = true
-            }
-        )
+        json(json)
     }
 }
 
@@ -209,7 +202,8 @@ private val DynamicBearerAuthPlugin = createClientPlugin(
     }
 }
 
-private val UnauthorizedRefreshRetryAttemptKey = AttributeKey<Int>("UnauthorizedRefreshRetryAttempt")
+private val UnauthorizedRefreshRetryAttemptKey =
+    AttributeKey<Int>("UnauthorizedRefreshRetryAttempt")
 
 private suspend fun Sender.executeWithUnauthorizedRefreshRetry(
     request: HttpRequestBuilder,
@@ -239,7 +233,8 @@ private suspend fun Sender.executeWithUnauthorizedRefreshRetry(
             attempts += 1
             request.attributes.put(UnauthorizedRefreshRetryAttemptKey, attempts)
 
-            val tokenUsedForFailedRequest = extractBearerToken(request.headers[HttpHeaders.Authorization])
+            val tokenUsedForFailedRequest =
+                extractBearerToken(request.headers[HttpHeaders.Authorization])
             val latestValidToken = tokenManager.getValidAccessToken()
 
             if (latestValidToken.isNullOrBlank()) {

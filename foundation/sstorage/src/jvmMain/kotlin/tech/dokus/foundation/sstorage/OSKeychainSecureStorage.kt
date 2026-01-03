@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
+import tech.dokus.domain.utils.json
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -41,11 +41,6 @@ class OSKeychainSecureStorage(
     } catch (e: Exception) {
         // Keychain not available, fallback to null
         null
-    }
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
     }
 
     private val keychainService = "${KEY_PREFIX}${SEPARATOR}$serviceName"

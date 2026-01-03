@@ -15,7 +15,7 @@ private val logger = LoggerFactory.getLogger("Routing")
  * Configures all routes for the modular monolith server.
  *
  * All route configuration follows a consistent pattern:
- * - Each feature exposes a configure*Routes() Application extension function
+ * - Each feature exposes a configured*Routes() Application extension function
  * - Routes are organized by feature domain
  */
 fun Application.configureRouting(appConfig: AppBaseConfig) {

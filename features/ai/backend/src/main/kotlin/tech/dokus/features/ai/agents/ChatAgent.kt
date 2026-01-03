@@ -6,7 +6,6 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -52,10 +51,6 @@ class ChatAgent(
     private val ragService: RAGService
 ) {
     private val logger = LoggerFactory.getLogger(ChatAgent::class.java)
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
 
     companion object {
         /** Default number of chunks to retrieve for context */

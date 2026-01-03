@@ -131,12 +131,12 @@
     <string name="contacts_lookup_hint">Search by company name or VAT number</string>
     <string name="contacts_lookup_query_hint">Try entering a company name or VAT number</string>
     <string name="contacts_lookup_empty">No companies found</string>
-    <string name="contacts_lookup_no_results">No results for \"%1$s\"</string>
+    <string name="contacts_lookup_no_results">No results for %1$s</string>
     <string name="contacts_lookup_search_failed">Company lookup failed</string>
     <string name="contacts_lookup_location">%1$s, %2$s</string>
     <string name="contacts_confirm_company">Confirm company</string>
     <string name="contacts_add_new_contact">Add new contact</string>
-    <string name="contacts_autocomplete_no_results_for">No contacts found for \"%1$s\"</string>
+    <string name="contacts_autocomplete_no_results_for">No contacts found for %1$s</string>
     <string name="contacts_searching">Searching...</string>
 
     <!-- Contact Types -->
@@ -213,7 +213,7 @@
     <string name="contacts_merge_failed">Failed to merge contacts</string>
     <string name="contacts_merge_from_label">Merge from</string>
     <string name="contacts_merge_search_min_length">Enter at least 2 characters to search</string>
-    <string name="contacts_merge_search_no_results">No contacts found for \"%1$s\"</string>
+    <string name="contacts_merge_search_no_results">No contacts found for %1$s</string>
     <string name="contacts_merge_select_target_prompt">Select a contact to merge into</string>
     <string name="contacts_merge_source_archive">Archive source</string>
     <string name="contacts_merge_target_keep">Keep target</string>
