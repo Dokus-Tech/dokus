@@ -1,39 +1,5 @@
 package tech.dokus.app.screens.settings
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.save_changes
-import ai.dokus.app.resources.generated.workspace_address
-import ai.dokus.app.resources.generated.workspace_banking
-import ai.dokus.app.resources.generated.workspace_bic
-import ai.dokus.app.resources.generated.workspace_company_info
-import ai.dokus.app.resources.generated.workspace_company_name
-import ai.dokus.app.resources.generated.workspace_iban
-import ai.dokus.app.resources.generated.workspace_invoice_include_year
-import ai.dokus.app.resources.generated.workspace_invoice_numbering
-import ai.dokus.app.resources.generated.workspace_invoice_numbering_description
-import ai.dokus.app.resources.generated.workspace_invoice_padding
-import ai.dokus.app.resources.generated.workspace_invoice_prefix
-import ai.dokus.app.resources.generated.workspace_invoice_prefix_description
-import ai.dokus.app.resources.generated.workspace_invoice_preview
-import ai.dokus.app.resources.generated.workspace_invoice_settings
-import ai.dokus.app.resources.generated.workspace_invoice_settings_description
-import ai.dokus.app.resources.generated.workspace_invoice_yearly_reset
-import ai.dokus.app.resources.generated.workspace_legal_name
-import ai.dokus.app.resources.generated.workspace_payment_days_description
-import ai.dokus.app.resources.generated.workspace_payment_terms
-import ai.dokus.app.resources.generated.workspace_payment_terms_description
-import ai.dokus.app.resources.generated.workspace_payment_terms_section
-import ai.dokus.app.resources.generated.workspace_payment_terms_text
-import ai.dokus.app.resources.generated.workspace_settings_title
-import ai.dokus.app.resources.generated.workspace_vat_number
-import ai.dokus.foundation.design.components.AvatarSize
-import ai.dokus.foundation.design.components.CompanyAvatarImage
-import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.components.fields.PTextFieldFree
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import tech.dokus.domain.model.common.Thumbnail
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,14 +18,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -67,104 +30,122 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
-import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.viewmodel.WorkspaceSettingsAction
-import tech.dokus.app.viewmodel.WorkspaceSettingsContainer
 import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
 import tech.dokus.app.viewmodel.WorkspaceSettingsState
-import tech.dokus.foundation.app.mvi.container
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_change
+import tech.dokus.aura.resources.action_remove
+import tech.dokus.aura.resources.action_upload
+import tech.dokus.aura.resources.save_changes
+import tech.dokus.aura.resources.settings_saved_successfully
+import tech.dokus.aura.resources.state_removing
+import tech.dokus.aura.resources.state_retry
+import tech.dokus.aura.resources.state_uploading
+import tech.dokus.aura.resources.workspace_address
+import tech.dokus.aura.resources.workspace_banking
+import tech.dokus.aura.resources.workspace_bic
+import tech.dokus.aura.resources.workspace_company_info
+import tech.dokus.aura.resources.workspace_company_logo
+import tech.dokus.aura.resources.workspace_company_name
+import tech.dokus.aura.resources.workspace_iban
+import tech.dokus.aura.resources.workspace_invoice_include_year
+import tech.dokus.aura.resources.workspace_invoice_numbering
+import tech.dokus.aura.resources.workspace_invoice_numbering_description
+import tech.dokus.aura.resources.workspace_invoice_padding
+import tech.dokus.aura.resources.workspace_invoice_prefix
+import tech.dokus.aura.resources.workspace_invoice_prefix_description
+import tech.dokus.aura.resources.workspace_invoice_preview
+import tech.dokus.aura.resources.workspace_invoice_settings
+import tech.dokus.aura.resources.workspace_invoice_settings_description
+import tech.dokus.aura.resources.workspace_invoice_yearly_reset
+import tech.dokus.aura.resources.workspace_legal_name
+import tech.dokus.aura.resources.workspace_payment_days_description
+import tech.dokus.aura.resources.workspace_payment_terms
+import tech.dokus.aura.resources.workspace_payment_terms_description
+import tech.dokus.aura.resources.workspace_payment_terms_section
+import tech.dokus.aura.resources.workspace_payment_terms_text
+import tech.dokus.aura.resources.workspace_settings_load_failed
+import tech.dokus.aura.resources.workspace_settings_title
+import tech.dokus.aura.resources.workspace_vat_number
+import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.fields.PTextFieldFree
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
+
+// Invoice padding configuration options (number of digits)
+private const val InvoicePaddingMin = 3
+private const val InvoicePaddingDefault = 4
+private const val InvoicePaddingMedium = 5
+private const val InvoicePaddingMax = 6
+private val InvoicePaddingOptions = listOf(
+    InvoicePaddingMin,
+    InvoicePaddingDefault,
+    InvoicePaddingMedium,
+    InvoicePaddingMax
+)
 
 /**
- * Workspace/Company settings screen with top bar using FlowMVI Container pattern.
- * For mobile navigation flow.
+ * Workspace/Company settings screen with top bar.
+ * Pure UI composable that takes state and callbacks.
  */
 @Composable
 internal fun WorkspaceSettingsScreen(
-    container: WorkspaceSettingsContainer = container()
+    state: WorkspaceSettingsState,
+    snackbarHostState: SnackbarHostState,
+    onIntent: (WorkspaceSettingsIntent) -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is WorkspaceSettingsAction.ShowSuccess -> {
-                snackbarHostState.showSnackbar(action.message)
-            }
-
-            is WorkspaceSettingsAction.ShowError -> {
-                snackbarHostState.showSnackbar(action.message)
-            }
-        }
-    }
-
-    // Load settings on first composition
-    LaunchedEffect(Unit) {
-        container.store.intent(WorkspaceSettingsIntent.Load)
-    }
-
+    val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
         topBar = {
-            PTopAppBar(
-                title = stringResource(Res.string.workspace_settings_title)
-            )
+            if (!isLargeScreen) PTopAppBar(Res.string.workspace_settings_title)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        WorkspaceSettingsContentInternal(
+        WorkspaceSettingsContent(
             state = state,
-            onIntent = { container.store.intent(it) },
+            onIntent = onIntent,
             modifier = Modifier.padding(contentPadding)
         )
     }
 }
 
 /**
- * Workspace settings content without scaffold using FlowMVI Container pattern.
- * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
+ * Workspace settings content without scaffold.
+ * Can be embedded in split-pane layout for desktop.
  */
 @Composable
-internal fun WorkspaceSettingsContent(
-    container: WorkspaceSettingsContainer = container(),
+fun WorkspaceSettingsContent(
+    state: WorkspaceSettingsState,
+    onIntent: (WorkspaceSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is WorkspaceSettingsAction.ShowSuccess -> {
-                snackbarHostState.showSnackbar(action.message)
-            }
-
-            is WorkspaceSettingsAction.ShowError -> {
-                snackbarHostState.showSnackbar(action.message)
-            }
-        }
-    }
-
-    // Load settings on first composition
-    LaunchedEffect(Unit) {
-        container.store.intent(WorkspaceSettingsIntent.Load)
-    }
-
     WorkspaceSettingsContentInternal(
         state = state,
-        onIntent = { container.store.intent(it) },
+        onIntent = onIntent,
         modifier = modifier.padding(contentPadding)
     )
 }
 
 @Composable
-private fun WorkspaceSettingsContentInternal(
+internal fun WorkspaceSettingsContentInternal(
     state: WorkspaceSettingsState,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
     modifier: Modifier = Modifier
@@ -195,11 +176,14 @@ private fun WorkspaceSettingsContentInternal(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .withContentPaddingForScrollable(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 // Company Information Section
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                DokusCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    padding = DokusCardPadding.Default,
+                ) {
+                    Column {
                         Text(
                             text = stringResource(Res.string.workspace_company_info),
                             style = MaterialTheme.typography.titleMedium
@@ -260,8 +244,11 @@ private fun WorkspaceSettingsContentInternal(
                 }
 
                 // Banking Details Section
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                DokusCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    padding = DokusCardPadding.Default,
+                ) {
+                    Column {
                         Text(
                             text = stringResource(Res.string.workspace_banking),
                             style = MaterialTheme.typography.titleMedium
@@ -288,8 +275,11 @@ private fun WorkspaceSettingsContentInternal(
                 }
 
                 // Invoice Settings Section
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                DokusCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    padding = DokusCardPadding.Default,
+                ) {
+                    Column {
                         Text(
                             text = stringResource(Res.string.workspace_invoice_settings),
                             style = MaterialTheme.typography.titleMedium
@@ -417,7 +407,7 @@ private fun WorkspaceSettingsContentInternal(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            listOf(3, 4, 5, 6).forEach { padding ->
+                            InvoicePaddingOptions.forEach { padding ->
                                 TextButton(
                                     onClick = {
                                         onIntent(
@@ -429,10 +419,11 @@ private fun WorkspaceSettingsContentInternal(
                                 ) {
                                     Text(
                                         text = padding.toString(),
-                                        color = if (formState.invoicePadding == padding)
+                                        color = if (formState.invoicePadding == padding) {
                                             MaterialTheme.colorScheme.primary
-                                        else
+                                        } else {
                                             MaterialTheme.colorScheme.onSurfaceVariant
+                                        }
                                     )
                                 }
                             }
@@ -441,11 +432,9 @@ private fun WorkspaceSettingsContentInternal(
                         Spacer(Modifier.height(8.dp))
 
                         // Preview in highlighted card
-                        Card(
+                        DokusCardSurface(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
+                            variant = DokusCardVariant.Soft,
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
@@ -526,13 +515,13 @@ private fun WorkspaceSettingsContentInternal(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Failed to load workspace settings",
+                        text = stringResource(Res.string.workspace_settings_load_failed),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(Modifier.height(16.dp))
                     PPrimaryButton(
-                        text = "Retry",
+                        text = stringResource(Res.string.state_retry),
                         onClick = { onIntent(WorkspaceSettingsIntent.Load) }
                     )
                 }
@@ -569,7 +558,7 @@ private fun CompanyAvatarSection(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Company Logo",
+                text = stringResource(Res.string.workspace_company_logo),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -579,7 +568,7 @@ private fun CompanyAvatarSection(
             // Avatar action buttons
             val isActionInProgress =
                 avatarState is WorkspaceSettingsState.Content.AvatarState.Uploading ||
-                        avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
+                    avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(
                     onClick = { avatarPicker.launch() },
@@ -591,7 +580,13 @@ private fun CompanyAvatarSection(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(if (currentAvatar != null) "Change" else "Upload")
+                    Text(
+                        if (currentAvatar != null) {
+                            stringResource(Res.string.action_change)
+                        } else {
+                            stringResource(Res.string.action_upload)
+                        }
+                    )
                 }
 
                 if (currentAvatar != null) {
@@ -605,7 +600,7 @@ private fun CompanyAvatarSection(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text("Remove")
+                        Text(stringResource(Res.string.action_remove))
                     }
                 }
             }
@@ -640,7 +635,7 @@ private fun AvatarStateIndicator(
                     strokeWidth = 2.dp
                 )
                 Text(
-                    text = "Uploading...",
+                    text = stringResource(Res.string.state_uploading),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -657,7 +652,7 @@ private fun AvatarStateIndicator(
                     strokeWidth = 2.dp
                 )
                 Text(
-                    text = "Removing...",
+                    text = stringResource(Res.string.state_removing),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -666,7 +661,7 @@ private fun AvatarStateIndicator(
 
         is WorkspaceSettingsState.Content.AvatarState.Error -> {
             Text(
-                text = avatarState.message,
+                text = avatarState.error.localized,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )
@@ -694,7 +689,7 @@ private fun SaveStateFeedback(
     when (saveState) {
         is WorkspaceSettingsState.Content.SaveState.Success -> {
             Text(
-                text = "Settings saved successfully",
+                text = stringResource(Res.string.settings_saved_successfully),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = modifier
             )
@@ -702,7 +697,7 @@ private fun SaveStateFeedback(
 
         is WorkspaceSettingsState.Content.SaveState.Error -> {
             Text(
-                text = saveState.message,
+                text = saveState.error.localized,
                 color = MaterialTheme.colorScheme.error,
                 modifier = modifier
             )

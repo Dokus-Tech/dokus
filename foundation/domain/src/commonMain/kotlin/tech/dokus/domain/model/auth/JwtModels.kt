@@ -1,11 +1,11 @@
 package tech.dokus.domain.model.auth
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import kotlinx.serialization.Serializable
 
 @Serializable
 data class JwtClaims(

@@ -1,0 +1,81 @@
+<resources>
+    <!-- Login Screen -->
+    <string name="auth_login_subtitle">Log in op uw account</string>
+    <string name="auth_email_label">E-mail</string>
+    <string name="auth_password_label">Wachtwoord</string>
+    <string name="auth_forgot_password">Wachtwoord vergeten?</string>
+    <string name="auth_sign_in_button">Inloggen</string>
+    <string name="auth_no_account_prefix">Nog geen account? </string>
+    <string name="auth_sign_up_link">Registreren</string>
+
+    <!-- Register Screen -->
+    <string name="auth_register_title">Account aanmaken</string>
+    <string name="auth_first_name_label">Voornaam</string>
+    <string name="auth_last_name_label">Achternaam</string>
+    <string name="auth_register_button">Registreren</string>
+    <string name="auth_has_account_prefix">Al een account? </string>
+    <string name="auth_login_link">Inloggen</string>
+
+    <!-- Register Steps -->
+    <string name="auth_register_profile_title">Je profiel</string>
+    <string name="auth_register_credentials_title">Inloggegevens</string>
+    <string name="auth_register_success_title">Registratie voltooid</string>
+
+    <!-- Workspace Wizard -->
+    <string name="auth_step_of">Stap %1$d van %2$d</string>
+    <string name="auth_workspace_type_prompt">Kies je werkruimte-type</string>
+    <string name="auth_workspace_type_company_description">Voor geregistreerde bedrijven</string>
+    <string name="auth_workspace_type_freelancer_description">Voor individuele freelancers</string>
+    <string name="auth_workspace_type_unavailable">Freelancer-werkruimte bestaat al</string>
+    <string name="auth_your_name">Je naam</string>
+    <string name="auth_company_name_prompt">Bedrijfsnaam</string>
+    <string name="auth_company_name_subtitle">We zoeken je bedrijfsgegevens op</string>
+    <string name="auth_company_name_label">Bedrijfsnaam</string>
+    <string name="auth_company_name_searching">Zoeken...</string>
+    <string name="auth_company_lookup_failed">Bedrijfszoekopdracht mislukt</string>
+    <string name="auth_business_details">Bedrijfsgegevens</string>
+    <string name="auth_business_details_subtitle">Voeg btw- en adresgegevens toe</string>
+
+    <!-- Entity Confirmation -->
+    <string name="auth_entity_single_prompt">Is dit je bedrijf?</string>
+    <string name="auth_entity_single_confirm">Dit bedrijf gebruiken</string>
+    <string name="auth_entity_manual_entry">Handmatig invoeren</string>
+    <string name="auth_entity_multiple_title">Selecteer je bedrijf</string>
+    <string name="auth_entity_multiple_subtitle">We hebben meerdere overeenkomsten gevonden. Kies er één of voer handmatig in.</string>
+
+    <!-- Server Connection -->
+    <string name="auth_server_connection">Serververbinding</string>
+    <string name="auth_server_label">Server</string>
+    <string name="auth_dokus_cloud">Dokus Cloud</string>
+    <string name="auth_server_url">Server-URL</string>
+    <string name="auth_server_version">Versie</string>
+    <string name="auth_change_server">Server wijzigen</string>
+    <string name="auth_reset_cloud">Terugzetten naar cloud</string>
+    <string name="auth_protocol_http">HTTP</string>
+    <string name="auth_protocol_https">HTTPS</string>
+    <string name="auth_protocol_selector">Protocolselector</string>
+    <string name="auth_server_found">Server gevonden</string>
+    <string name="auth_server_name_label">Servernaam</string>
+    <string name="auth_server_features_label">Functies</string>
+    <string name="auth_server_connecting_will">Verbinden zal:</string>
+    <string name="auth_server_logout_warning">Je wordt afgemeld van de huidige server.</string>
+    <string name="auth_server_reset_warning">Lokale gegevens worden gewist.</string>
+    <string name="auth_server_reauth_warning">Je moet opnieuw inloggen.</string>
+    <string name="auth_server_details_title">Serverdetails</string>
+    <string name="auth_protocol_label">Protocol</string>
+    <string name="auth_host_label">Host</string>
+    <string name="auth_port_label">Poort</string>
+    <string name="auth_validating">Valideren...</string>
+    <string name="auth_connecting">Verbinden...</string>
+    <string name="auth_validate_connection">Verbinding valideren</string>
+    <string name="auth_checking_server">Server controleren...</string>
+    <string name="auth_use_cloud">Dokus Cloud gebruiken</string>
+    <string name="auth_currently_connected_to">Momenteel verbonden met</string>
+    <string name="auth_need_help">Hulp nodig?</string>
+    <string name="auth_help_description">Voer je servergegevens in of schakel naar cloud.</string>
+    <string name="auth_host_required">Host is verplicht</string>
+    <string name="auth_host_no_spaces">Host mag geen spaties bevatten</string>
+    <string name="auth_port_required">Poort is verplicht</string>
+    <string name="auth_port_invalid_number">Poort moet een getal zijn</string>
+    <string name="auth_port_out_of_range">Poort moet tussen 1 en 65535 liggen</string>
+</resources>

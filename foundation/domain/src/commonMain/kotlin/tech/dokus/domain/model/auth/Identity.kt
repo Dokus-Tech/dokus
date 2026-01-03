@@ -1,12 +1,12 @@
 package tech.dokus.domain.model.auth
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.Password
 import tech.dokus.domain.current
 import tech.dokus.domain.ids.TenantId
-import kotlinx.serialization.Serializable
 
 @Serializable
 data class LoginRequest(

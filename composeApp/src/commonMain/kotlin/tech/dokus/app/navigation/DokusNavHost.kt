@@ -1,19 +1,7 @@
 package tech.dokus.app.navigation
 
-import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.design.local.isLarge
-import tech.dokus.domain.asbtractions.AuthManager
-import tech.dokus.domain.model.auth.AuthEvent
-import tech.dokus.domain.model.common.DeepLinks
-import tech.dokus.domain.model.common.KnownDeepLinks
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.animation.TransitionsProvider
-import ai.dokus.foundation.navigation.destinations.AuthDestination
-import ai.dokus.foundation.navigation.destinations.CoreDestination
-import ai.dokus.foundation.navigation.destinations.NavigationDestination
-import ai.dokus.foundation.navigation.navigateTo
-import ai.dokus.foundation.navigation.replace
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.referentialEqualityPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavUri
@@ -30,6 +19,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import tech.dokus.domain.asbtractions.AuthManager
+import tech.dokus.domain.model.auth.AuthEvent
+import tech.dokus.domain.model.common.DeepLinks
+import tech.dokus.domain.model.common.KnownDeepLinks
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.platform.activePlatform
+import tech.dokus.foundation.platform.isDesktop
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.animation.TransitionsProvider
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.CoreDestination
+import tech.dokus.navigation.destinations.NavigationDestination
+import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.replace
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -108,7 +112,15 @@ fun DokusNavHost(
         exitTransition = { with(transitionsProvider) { exitTransition } },
         popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
         popExitTransition = { with(transitionsProvider) { popExitTransition } },
-        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.background)
+            .then(
+                if (activePlatform.isDesktop) {
+                    Modifier.padding(top = 12.dp)
+                } else {
+                    Modifier
+                }
+            ),
     ) {
         navigationProvider.forEach { provider ->
             with(provider) {

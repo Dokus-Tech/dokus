@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 enum class FilePickerType {
     /** Image files only (png, jpg, jpeg, gif, webp, bmp) */
     Image,
+
     /** Document files (pdf, doc, docx, xls, xlsx, csv, txt, images) */
     Document
 }

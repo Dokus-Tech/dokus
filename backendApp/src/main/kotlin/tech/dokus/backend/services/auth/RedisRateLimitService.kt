@@ -1,9 +1,9 @@
 package tech.dokus.backend.services.auth
 
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.foundation.ktor.cache.RedisClient
-import tech.dokus.foundation.ktor.database.now
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.cache.RedisClient
+import tech.dokus.foundation.backend.database.now
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.time.Duration
 import kotlin.time.Duration.Companion.minutes
 

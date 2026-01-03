@@ -1,6 +1,6 @@
 package tech.dokus.backend.services.auth
 
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * No-op email service for development and testing.

@@ -76,6 +76,9 @@ Currently working towards the December 2025 MVP release with PEPPOL invoicing su
 - Multi-tenant architecture for secure data isolation
 - Comprehensive security with encryption and audit logging
 
+### 🔧 Improvements
+- Refine Document Review layout with read-only counterparty/details cards and desktop top-bar actions
+
 ## [0.1.0] - December 2025 (Planned)
 
 The first public release focused on Belgium's January 2026 PEPPOL mandate.

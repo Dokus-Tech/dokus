@@ -1,17 +1,5 @@
 package tech.dokus.backend.routes.auth
 
-import ai.dokus.foundation.database.repository.auth.AddressRepository
-import ai.dokus.foundation.database.repository.auth.TenantRepository
-import ai.dokus.foundation.database.repository.auth.UserRepository
-import ai.dokus.foundation.database.services.InvoiceNumberGenerator
-import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CreateTenantRequest
-import tech.dokus.domain.model.InvoiceNumberPreviewResponse
-import tech.dokus.domain.model.TenantSettings
-import tech.dokus.domain.model.UpsertTenantAddressRequest
-import tech.dokus.domain.routes.Tenants
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
@@ -20,10 +8,22 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.AvatarStorageService
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.database.repository.auth.AddressRepository
+import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.services.InvoiceNumberGenerator
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CreateTenantRequest
+import tech.dokus.domain.model.InvoiceNumberPreviewResponse
+import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.routes.Tenants
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.storage.AvatarStorageService
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -61,7 +61,9 @@ internal fun Route.tenantRoutes() {
                         val storageKey = tenantRepository.getAvatarStorageKey(tenant.id)
                         if (storageKey != null) {
                             avatarStorageService.getAvatarUrls(storageKey)
-                        } else null
+                        } else {
+                            null
+                        }
                     } catch (e: Exception) {
                         logger.warn("Failed to get avatar for tenant ${tenant.id}", e)
                         null
@@ -198,7 +200,9 @@ internal fun Route.tenantRoutes() {
                 val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
                 if (storageKey != null) {
                     avatarStorageService.getAvatarUrls(storageKey)
-                } else null
+                } else {
+                    null
+                }
             } catch (e: Exception) {
                 logger.warn("Failed to get avatar for tenant $tenantId", e)
                 null

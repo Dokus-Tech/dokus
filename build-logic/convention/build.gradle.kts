@@ -2,7 +2,7 @@ plugins {
     `kotlin-dsl`
 }
 
-group = "ai.dokus.buildlogic"
+group = "tech.dokus.buildlogic"
 
 dependencies {
     implementation(libs.kotlin.gradlePlugin)
@@ -13,7 +13,7 @@ gradlePlugin {
     plugins {
         register("versioning") {
             id = "dokus.versioning"
-            implementationClass = "ai.dokus.convention.VersioningPlugin"
+            implementationClass = "tech.dokus.convention.VersioningPlugin"
         }
     }
 }

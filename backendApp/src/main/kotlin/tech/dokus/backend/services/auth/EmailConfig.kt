@@ -1,7 +1,7 @@
 package tech.dokus.backend.services.auth
 
-import tech.dokus.foundation.ktor.config.AppBaseConfig
 import com.typesafe.config.Config
+import tech.dokus.foundation.backend.config.AppBaseConfig
 
 /**
  * Configuration for email service.
@@ -53,10 +53,16 @@ data class EmailConfig(
                     password = smtpConfig.getString("password"),
                     enableTls = smtpConfig.getBoolean("enableTls"),
                     enableAuth = smtpConfig.getBoolean("enableAuth"),
-                    connectionTimeout = if (smtpConfig.hasPath("connectionTimeout"))
-                        smtpConfig.getLong("connectionTimeout") else 10000L,
-                    timeout = if (smtpConfig.hasPath("timeout"))
-                        smtpConfig.getLong("timeout") else 10000L
+                    connectionTimeout = if (smtpConfig.hasPath("connectionTimeout")) {
+                        smtpConfig.getLong("connectionTimeout")
+                    } else {
+                        10000L
+                    },
+                    timeout = if (smtpConfig.hasPath("timeout")) {
+                        smtpConfig.getLong("timeout")
+                    } else {
+                        10000L
+                    }
                 ),
                 from = EmailAddress(
                     email = fromConfig.getString("email"),
@@ -68,7 +74,9 @@ data class EmailConfig(
                         email = replyToConfig.getString("email"),
                         name = replyToConfig.getString("name")
                     )
-                } else null,
+                } else {
+                    null
+                },
                 templates = EmailTemplateConfig(
                     baseUrl = templatesConfig.getString("baseUrl"),
                     supportEmail = templatesConfig.getString("supportEmail")

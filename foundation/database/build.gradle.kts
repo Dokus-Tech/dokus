@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
-group = "ai.dokus.foundation.database"
+group = "tech.dokus.database"
 version = "1.0.0"
 
 kotlin {
@@ -15,7 +15,7 @@ kotlin {
 dependencies {
     // Foundation modules
     implementation(projects.foundation.domain)
-    implementation(projects.foundation.ktorCommon)
+    implementation(projects.foundation.backendCommon)
 
     // DI - Koin (with BOM for version management)
     api(platform(libs.koin.bom))

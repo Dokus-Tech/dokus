@@ -1,10 +1,11 @@
+@file:Suppress("TooGenericExceptionCaught") // File dialog errors
+
 package tech.dokus.foundation.app.picker
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import java.awt.FileDialog
 import java.awt.Frame
-import java.io.File
 import java.io.FilenameFilter
 import java.nio.file.Files
 import javax.swing.SwingUtilities

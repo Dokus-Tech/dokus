@@ -23,7 +23,7 @@ enum class DocumentState {
     PROCESSING,
 
     /**
-     * Document has indexed chunks and is ready for chat.
+     * Document has indexed chunks, is confirmed, and is ready for chat.
      * RAG retrieval will work normally.
      */
     READY,
@@ -33,7 +33,14 @@ enum class DocumentState {
      * No chunks available for RAG retrieval.
      * Chat is not available.
      */
-    NOT_INDEXED
+    NOT_INDEXED,
+
+    /**
+     * Document has not been confirmed by the user.
+     * Chat is only allowed for Confirmed documents.
+     * User should confirm the document first.
+     */
+    NOT_CONFIRMED
 }
 
 // =============================================================================
@@ -118,9 +125,10 @@ data class ChatResponse(
      * Document state for single-document chat.
      *
      * Indicates whether the document is ready for chat:
-     * - READY: Chunks indexed, RAG works normally
+     * - READY: Chunks indexed and confirmed, RAG works normally
      * - PROCESSING: Still being processed, chat not available
      * - NOT_INDEXED: No chunks, chat not available
+     * - NOT_CONFIRMED: Document not confirmed by user, chat not allowed
      *
      * Null for cross-document chat (ALL_DOCS scope).
      */

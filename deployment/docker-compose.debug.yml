@@ -1,0 +1,9 @@
+# Debug override for Dokus deployment
+# Use with: docker compose -f docker-compose.{profile}.yml -f docker-compose.debug.yml up -d
+# Switches to dev image with JVM remote debugging (JDWP) enabled on port 5005
+
+services:
+  dokus-server:
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-server:dev
+    ports:
+      - "5005:5005"   # JVM remote debugging (JDWP)

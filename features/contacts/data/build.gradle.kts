@@ -68,7 +68,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.contacts.data"
+    namespace = "tech.dokus.features.contacts.data"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -82,7 +82,7 @@ android {
 sqldelight {
     databases {
         create("ContactsCacheDatabase") {
-            packageName.set("ai.dokus.app.contacts.cache")
+            packageName.set("tech.dokus.features.contacts.cache")
             generateAsync.set(true)
         }
     }

@@ -1,19 +1,20 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.app.auth.datasource.TeamRemoteDataSource
-import tech.dokus.domain.Email
-import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.ids.InvitationId
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.CreateInvitationRequest
-import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.Email
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.CreateInvitationRequest
+import tech.dokus.features.auth.datasource.TeamRemoteDataSource
+import tech.dokus.foundation.platform.Logger
 
 internal typealias TeamSettingsCtx = PipelineContext<TeamSettingsState, TeamSettingsIntent, TeamSettingsAction>
 
@@ -139,19 +140,21 @@ internal class TeamSettingsContainer(
         withState<TeamSettingsState.Content, _> {
             // Validate email
             if (inviteEmail.isBlank()) {
+                val exception = DokusException.Validation.EmailRequired
                 updateState {
-                    copy(actionState = TeamSettingsState.Content.ActionState.Error("Email is required"))
+                    copy(actionState = TeamSettingsState.Content.ActionState.Error(exception))
                 }
-                action(TeamSettingsAction.ShowError("Email is required"))
+                action(TeamSettingsAction.ShowError(exception))
                 return@withState
             }
 
             // Basic email validation
             if (!inviteEmail.contains("@") || !inviteEmail.contains(".")) {
+                val exception = DokusException.Validation.InvalidEmail
                 updateState {
-                    copy(actionState = TeamSettingsState.Content.ActionState.Error("Please enter a valid email address"))
+                    copy(actionState = TeamSettingsState.Content.ActionState.Error(exception))
                 }
-                action(TeamSettingsAction.ShowError("Please enter a valid email address"))
+                action(TeamSettingsAction.ShowError(exception))
                 return@withState
             }
 
@@ -173,10 +176,10 @@ internal class TeamSettingsContainer(
                         copy(
                             inviteEmail = "",
                             inviteRole = UserRole.Editor,
-                            actionState = TeamSettingsState.Content.ActionState.Success("Invitation sent successfully")
+                            actionState = TeamSettingsState.Content.ActionState.Success(TeamSettingsSuccess.InviteSent)
                         )
                     }
-                    action(TeamSettingsAction.ShowSuccess("Invitation sent successfully"))
+                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.InviteSent))
                     action(TeamSettingsAction.DismissInviteDialog)
 
                     // Refresh invitations
@@ -184,11 +187,16 @@ internal class TeamSettingsContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to send invitation" }
-                    val message = error.message ?: "Failed to send invitation"
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.TeamInviteFailed
+                    } else {
+                        exception
                     }
-                    action(TeamSettingsAction.ShowError(message))
+                    updateState {
+                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
+                    }
+                    action(TeamSettingsAction.ShowError(displayException))
                 }
             )
         }
@@ -203,20 +211,29 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Invitation cancelled: $invitationId" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success("Invitation cancelled"))
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(
+                                TeamSettingsSuccess.InviteCancelled
+                            )
+                        )
                     }
-                    action(TeamSettingsAction.ShowSuccess("Invitation cancelled"))
+                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.InviteCancelled))
 
                     // Refresh invitations
                     refreshInvitations()
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to cancel invitation" }
-                    val message = error.message ?: "Failed to cancel invitation"
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.TeamInviteCancelFailed
+                    } else {
+                        exception
                     }
-                    action(TeamSettingsAction.ShowError(message))
+                    updateState {
+                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
+                    }
+                    action(TeamSettingsAction.ShowError(displayException))
                 }
             )
         }
@@ -231,20 +248,27 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Role updated for $userId to $newRole" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success("Role updated successfully"))
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(TeamSettingsSuccess.RoleUpdated)
+                        )
                     }
-                    action(TeamSettingsAction.ShowSuccess("Role updated successfully"))
+                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.RoleUpdated))
 
                     // Refresh members
                     refreshMembers()
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to update role" }
-                    val message = error.message ?: "Failed to update role"
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.TeamRoleUpdateFailed
+                    } else {
+                        exception
                     }
-                    action(TeamSettingsAction.ShowError(message))
+                    updateState {
+                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
+                    }
+                    action(TeamSettingsAction.ShowError(displayException))
                 }
             )
         }
@@ -259,20 +283,29 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Member removed: $userId" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success("Member removed successfully"))
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(
+                                TeamSettingsSuccess.MemberRemoved
+                            )
+                        )
                     }
-                    action(TeamSettingsAction.ShowSuccess("Member removed successfully"))
+                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.MemberRemoved))
 
                     // Refresh members
                     refreshMembers()
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to remove member" }
-                    val message = error.message ?: "Failed to remove member"
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.TeamMemberRemoveFailed
+                    } else {
+                        exception
                     }
-                    action(TeamSettingsAction.ShowError(message))
+                    updateState {
+                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
+                    }
+                    action(TeamSettingsAction.ShowError(displayException))
                 }
             )
         }
@@ -287,20 +320,29 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Ownership transferred to $newOwnerId" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success("Ownership transferred successfully"))
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(
+                                TeamSettingsSuccess.OwnershipTransferred
+                            )
+                        )
                     }
-                    action(TeamSettingsAction.ShowSuccess("Ownership transferred successfully"))
+                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.OwnershipTransferred))
 
                     // Refresh members
                     refreshMembers()
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to transfer ownership" }
-                    val message = error.message ?: "Failed to transfer ownership"
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.TeamOwnershipTransferFailed
+                    } else {
+                        exception
                     }
-                    action(TeamSettingsAction.ShowError(message))
+                    updateState {
+                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
+                    }
+                    action(TeamSettingsAction.ShowError(displayException))
                 }
             )
         }

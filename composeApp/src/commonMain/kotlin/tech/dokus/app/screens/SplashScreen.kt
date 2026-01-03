@@ -1,16 +1,5 @@
 package tech.dokus.app.screens
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.bootstrap_state_app_version_check
-import ai.dokus.app.resources.generated.bootstrap_state_authenticating
-import ai.dokus.app.resources.generated.bootstrap_state_checking_account_status
-import ai.dokus.app.resources.generated.bootstrap_state_initializing
-import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
-import ai.dokus.foundation.design.components.background.SpotlightEffect
-import ai.dokus.foundation.navigation.destinations.AuthDestination
-import ai.dokus.foundation.navigation.destinations.CoreDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.replace
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -46,10 +35,24 @@ import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.viewmodel.BootstrapAction
 import tech.dokus.app.viewmodel.BootstrapContainer
 import tech.dokus.app.viewmodel.BootstrapIntent
-import tech.dokus.app.viewmodel.BootstrapState
 import tech.dokus.app.viewmodel.BootstrapStep
 import tech.dokus.app.viewmodel.BootstrapStepType
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.app_name
+import tech.dokus.aura.resources.bootstrap_state_app_version_check
+import tech.dokus.aura.resources.bootstrap_state_authenticating
+import tech.dokus.aura.resources.bootstrap_state_checking_account_status
+import tech.dokus.aura.resources.bootstrap_state_initializing
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
+import tech.dokus.foundation.aura.components.background.SpotlightEffect
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.CoreDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.replace
+
+private const val GoldAccentHex = 0xFFD4AF37
+private val GoldAccent = Color(GoldAccentHex)
 
 private val BootstrapStepType.localized: String
     @Composable get() = when (this) {
@@ -73,7 +76,9 @@ internal fun SplashScreen(
         when (action) {
             BootstrapAction.NavigateToLogin -> navController.replace(AuthDestination.Login)
             BootstrapAction.NavigateToUpdate -> navController.replace(CoreDestination.UpdateRequired)
-            BootstrapAction.NavigateToAccountConfirmation -> navController.replace(AuthDestination.PendingConfirmAccount)
+            BootstrapAction.NavigateToAccountConfirmation -> navController.replace(
+                AuthDestination.PendingConfirmAccount
+            )
             BootstrapAction.NavigateToTenantSelection -> navController.replace(AuthDestination.WorkspaceSelect)
             BootstrapAction.NavigateToMain -> navController.replace(CoreDestination.Home)
         }
@@ -101,11 +106,11 @@ internal fun SplashScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "D[#]kus",
+                    text = stringResource(Res.string.app_name),
                     color = MaterialTheme.colorScheme.primaryContainer,
                     style = TextStyle(
                         fontSize = 64.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         letterSpacing = 16.sp
                     )
                 )
@@ -168,7 +173,7 @@ private fun BootstrapStateItem(
                 // Outer glow
                 Canvas(modifier = Modifier.size(24.dp)) {
                     drawCircle(
-                        color = Color(0xFFD4AF37).copy(alpha = if (isCurrentStep) glowAlpha * 0.4f else 0.2f),
+                        color = GoldAccent.copy(alpha = if (isCurrentStep) glowAlpha * 0.4f else 0.2f),
                         radius = if (isCurrentStep) 12.dp.toPx() else 8.dp.toPx()
                     )
                 }
@@ -176,7 +181,7 @@ private fun BootstrapStateItem(
                 // Inner dot
                 Canvas(modifier = Modifier.size(12.dp)) {
                     drawCircle(
-                        color = Color(0xFFD4AF37).copy(alpha = if (isCurrentStep) 1f else 0.6f),
+                        color = GoldAccent.copy(alpha = if (isCurrentStep) 1f else 0.6f),
                         radius = 6.dp.toPx()
                     )
                 }
@@ -195,7 +200,7 @@ private fun BootstrapStateItem(
         Text(
             text = step.type.localized,
             color = when {
-                isCurrentStep -> Color(0xFFD4AF37).copy(alpha = glowAlpha)
+                isCurrentStep -> GoldAccent.copy(alpha = glowAlpha)
                 isActive -> Color.White.copy(alpha = 0.7f)
                 else -> Color.White.copy(alpha = 0.3f)
             },

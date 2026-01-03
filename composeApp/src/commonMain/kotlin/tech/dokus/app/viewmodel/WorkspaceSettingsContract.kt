@@ -1,14 +1,14 @@
 package tech.dokus.app.viewmodel
 
+import androidx.compose.runtime.Immutable
+import pro.respawn.flowmvi.api.MVIAction
+import pro.respawn.flowmvi.api.MVIIntent
+import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.common.Thumbnail
-import androidx.compose.runtime.Immutable
-import pro.respawn.flowmvi.api.MVIAction
-import pro.respawn.flowmvi.api.MVIIntent
-import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -88,7 +88,7 @@ sealed interface WorkspaceSettingsState : MVIState, DokusState<Nothing> {
             data object Idle : SaveState
             data object Saving : SaveState
             data object Success : SaveState
-            data class Error(val message: String) : SaveState
+            data class Error(val error: DokusException) : SaveState
         }
 
         /**
@@ -100,7 +100,7 @@ sealed interface WorkspaceSettingsState : MVIState, DokusState<Nothing> {
             data class Uploading(val progress: Float) : AvatarState
             data object Deleting : AvatarState
             data object Success : AvatarState
-            data class Error(val message: String) : AvatarState
+            data class Error(val error: DokusException) : AvatarState
         }
     }
 
@@ -190,8 +190,12 @@ sealed interface WorkspaceSettingsIntent : MVIIntent {
 sealed interface WorkspaceSettingsAction : MVIAction {
 
     /** Show a success message */
-    data class ShowSuccess(val message: String) : WorkspaceSettingsAction
+    data class ShowSuccess(val success: WorkspaceSettingsSuccess) : WorkspaceSettingsAction
 
     /** Show an error message */
-    data class ShowError(val message: String) : WorkspaceSettingsAction
+    data class ShowError(val error: DokusException) : WorkspaceSettingsAction
+}
+
+enum class WorkspaceSettingsSuccess {
+    SettingsSaved,
 }

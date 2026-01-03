@@ -1,0 +1,151 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ArgumentListWrapping:AIConfig.kt$AIConfig.ModelConfig.Companion$("chat")</ID>
+    <ID>ArgumentListWrapping:AIConfig.kt$AIConfig.ModelConfig.Companion$("document-extraction")</ID>
+    <ID>ArgumentListWrapping:AppBaseConfig.kt$AppBaseConfig.Companion$("storage")</ID>
+    <ID>ArgumentListWrapping:AppBaseConfig.kt$AppBaseConfig.Companion$(config.getConfig("storage"))</ID>
+    <ID>ArgumentListWrapping:DocumentStorageService.kt$DocumentStorageService$("Uploading document: tenant=$tenantId, prefix=$prefix, filename=$sanitizedFilename, size=${data.size}")</ID>
+    <ID>ArgumentListWrapping:HealthRoutes.kt$( HttpStatusCode.OK, HealthStatus( status = ServerStatus.UP, checks = mapOf( "service" to HealthCheck(ServerStatus.UP, "Service is running") ) ) )</ID>
+    <ID>ArgumentListWrapping:HealthRoutes.kt$( statusCode, HealthStatus( status = overallStatus, checks = checks ) )</ID>
+    <ID>FinalNewline:AuthConfig.kt$tech.dokus.foundation.backend.config.AuthConfig.kt</ID>
+    <ID>FinalNewline:CacheKeyBuilder.kt$tech.dokus.foundation.backend.cache.CacheKeyBuilder.kt</ID>
+    <ID>FinalNewline:CacheSerializer.kt$tech.dokus.foundation.backend.cache.CacheSerializer.kt</ID>
+    <ID>FinalNewline:CachingConfig.kt$tech.dokus.foundation.backend.config.CachingConfig.kt</ID>
+    <ID>FinalNewline:DatabaseConfig.kt$tech.dokus.foundation.backend.config.DatabaseConfig.kt</ID>
+    <ID>FinalNewline:FlywayConfig.kt$tech.dokus.foundation.backend.config.FlywayConfig.kt</ID>
+    <ID>FinalNewline:HealthRoutes.kt$tech.dokus.foundation.backend.routes.HealthRoutes.kt</ID>
+    <ID>FinalNewline:JwtAuthentication.kt$tech.dokus.foundation.backend.configure.JwtAuthentication.kt</ID>
+    <ID>FinalNewline:JwtConfig.kt$tech.dokus.foundation.backend.config.JwtConfig.kt</ID>
+    <ID>FinalNewline:KtorConfig.kt$tech.dokus.foundation.backend.config.KtorConfig.kt</ID>
+    <ID>FinalNewline:LoggingConfig.kt$tech.dokus.foundation.backend.config.LoggingConfig.kt</ID>
+    <ID>FinalNewline:MetricsConfig.kt$tech.dokus.foundation.backend.config.MetricsConfig.kt</ID>
+    <ID>FinalNewline:Monitoring.kt$tech.dokus.foundation.backend.configure.Monitoring.kt</ID>
+    <ID>FinalNewline:PasswordCryptoService.kt$tech.dokus.foundation.backend.crypto.PasswordCryptoService.kt</ID>
+    <ID>FinalNewline:PasswordCryptoService4j.kt$tech.dokus.foundation.backend.crypto.PasswordCryptoService4j.kt</ID>
+    <ID>FinalNewline:RateLimitPlugin.kt$tech.dokus.foundation.backend.middleware.RateLimitPlugin.kt</ID>
+    <ID>FinalNewline:RedisClient.kt$tech.dokus.foundation.backend.cache.RedisClient.kt</ID>
+    <ID>FinalNewline:RedisClientFactory.kt$tech.dokus.foundation.backend.cache.RedisClientFactory.kt</ID>
+    <ID>FinalNewline:RedisClientImpl.kt$tech.dokus.foundation.backend.cache.RedisClientImpl.kt</ID>
+    <ID>FinalNewline:RedisDelegate.kt$tech.dokus.foundation.backend.cache.RedisDelegate.kt</ID>
+    <ID>FinalNewline:RedisDsl.kt$tech.dokus.foundation.backend.cache.RedisDsl.kt</ID>
+    <ID>FinalNewline:RedisExtensions.kt$tech.dokus.foundation.backend.cache.RedisExtensions.kt</ID>
+    <ID>FinalNewline:RedisModule.kt$tech.dokus.foundation.backend.cache.RedisModule.kt</ID>
+    <ID>FinalNewline:RedisNamespace.kt$tech.dokus.foundation.backend.cache.RedisNamespace.kt</ID>
+    <ID>FinalNewline:Security.kt$tech.dokus.foundation.backend.configure.Security.kt</ID>
+    <ID>FinalNewline:SecurityConfig.kt$tech.dokus.foundation.backend.config.SecurityConfig.kt</ID>
+    <ID>FinalNewline:Serialization.kt$tech.dokus.foundation.backend.configure.Serialization.kt</ID>
+    <ID>ForbiddenComment:RateLimitPlugin.kt$// TODO: Implement rate limiting logic using Redis or in-memory store</ID>
+    <ID>ForbiddenComment:Security.kt$// TODO: Body size limit - 1MB max</ID>
+    <ID>ImportOrdering:AIConfig.kt$import tech.dokus.domain.model.ai.AiProvider import com.typesafe.config.Config</ID>
+    <ID>ImportOrdering:AvatarStorageService.kt$import tech.dokus.domain.ids.TenantId import tech.dokus.domain.model.common.Thumbnail import com.sksamuel.scrimage.ImmutableImage import com.sksamuel.scrimage.webp.WebpWriter import kotlinx.coroutines.Dispatchers import kotlinx.coroutines.withContext import tech.dokus.foundation.backend.utils.loggerFor import java.util.UUID import kotlin.time.Duration import kotlin.time.Duration.Companion.hours</ID>
+    <ID>ImportOrdering:CbeApiClient.kt$import tech.dokus.domain.enums.Country import tech.dokus.domain.ids.VatNumber import tech.dokus.domain.model.entity.EntityAddress import tech.dokus.domain.model.entity.EntityLookup import tech.dokus.domain.model.entity.EntityStatus import io.ktor.client.HttpClient import io.ktor.client.call.body import io.ktor.client.request.get import io.ktor.client.request.header import io.ktor.client.request.parameter import kotlinx.serialization.SerialName import kotlinx.serialization.Serializable import tech.dokus.foundation.backend.utils.loggerFor</ID>
+    <ID>ImportOrdering:DbEnum.kt$import tech.dokus.domain.database.DbEnum import org.jetbrains.exposed.v1.core.Table</ID>
+    <ID>ImportOrdering:DokusPrincipal.kt$import tech.dokus.domain.exceptions.DokusException import tech.dokus.domain.ids.TenantId import tech.dokus.domain.ids.UserId import tech.dokus.domain.model.auth.AuthenticationInfo import io.ktor.server.auth.Principal</ID>
+    <ID>ImportOrdering:ErrorHandling.kt$import tech.dokus.domain.exceptions.DokusException import tech.dokus.foundation.backend.utils.loggerFor import io.ktor.http.HttpHeaders import io.ktor.http.HttpStatusCode import io.ktor.server.application.Application import io.ktor.server.application.install import io.ktor.server.plugins.statuspages.StatusPages import io.ktor.server.response.respond import java.net.ConnectException import java.net.SocketTimeoutException</ID>
+    <ID>ImportOrdering:JwtAuthentication.kt$import tech.dokus.domain.exceptions.DokusException import tech.dokus.domain.model.auth.JwtClaims import tech.dokus.foundation.backend.security.AuthMethod import tech.dokus.foundation.backend.security.DokusPrincipal import tech.dokus.foundation.backend.security.JwtValidator import tech.dokus.foundation.backend.security.TokenBlacklistService import tech.dokus.foundation.backend.utils.loggerFor import io.ktor.http.HttpStatusCode import io.ktor.server.application.Application import io.ktor.server.application.install import io.ktor.server.auth.Authentication import io.ktor.server.auth.jwt.jwt import io.ktor.server.response.respond import org.koin.ktor.ext.inject</ID>
+    <ID>ImportOrdering:JwtGenerator.kt$import tech.dokus.domain.ids.UserId import tech.dokus.domain.model.auth.JwtClaims import tech.dokus.domain.model.auth.LoginResponse import tech.dokus.domain.model.auth.TenantScope import tech.dokus.foundation.backend.config.JwtConfig import tech.dokus.foundation.backend.database.now import com.auth0.jwt.JWT import com.auth0.jwt.algorithms.Algorithm import java.time.Instant import java.util.* import kotlin.time.Duration.Companion.days import kotlin.time.Duration.Companion.seconds import kotlin.uuid.ExperimentalUuidApi import kotlin.uuid.Uuid</ID>
+    <ID>ImportOrdering:JwtValidator.kt$import tech.dokus.domain.ids.TenantId import tech.dokus.domain.ids.UserId import tech.dokus.domain.model.auth.AuthenticationInfo import tech.dokus.domain.model.auth.JwtClaims import tech.dokus.domain.model.auth.TenantClaimDto import tech.dokus.foundation.backend.config.JwtConfig import tech.dokus.foundation.backend.utils.loggerFor import com.auth0.jwt.JWT import com.auth0.jwt.JWTVerifier import com.auth0.jwt.algorithms.Algorithm import com.auth0.jwt.exceptions.JWTVerificationException import com.auth0.jwt.interfaces.DecodedJWT import com.auth0.jwt.interfaces.Payload import kotlinx.serialization.json.Json import kotlin.uuid.ExperimentalUuidApi import kotlin.uuid.Uuid</ID>
+    <ID>ImportOrdering:MinioStorage.kt$import tech.dokus.foundation.backend.config.MinioConfig import tech.dokus.foundation.backend.utils.loggerFor import io.minio.BucketExistsArgs import io.minio.GetObjectArgs import io.minio.GetPresignedObjectUrlArgs import io.minio.MakeBucketArgs import io.minio.MinioClient import io.minio.PutObjectArgs import io.minio.RemoveObjectArgs import io.minio.StatObjectArgs import io.minio.http.Method import kotlinx.coroutines.Dispatchers import kotlinx.coroutines.withContext import java.io.ByteArrayInputStream import kotlin.time.Duration import kotlin.time.DurationUnit</ID>
+    <ID>ImportOrdering:RedisClientImpl.kt$import tech.dokus.foundation.backend.config.CachingConfig import io.lettuce.core.RedisURI import io.lettuce.core.api.StatefulRedisConnection import io.lettuce.core.api.async.RedisAsyncCommands import io.lettuce.core.support.ConnectionPoolSupport import kotlinx.coroutines.future.await import org.apache.commons.pool2.impl.GenericObjectPool import org.apache.commons.pool2.impl.GenericObjectPoolConfig import java.time.Duration import io.lettuce.core.RedisClient as LettuceRedisClient</ID>
+    <ID>ImportOrdering:RedisModule.kt$import tech.dokus.foundation.backend.config.AppBaseConfig import org.koin.dsl.module</ID>
+    <ID>ImportOrdering:Security.kt$import tech.dokus.foundation.backend.config.SecurityConfig import io.ktor.http.HttpHeaders import io.ktor.http.HttpMethod import io.ktor.server.application.Application import io.ktor.server.application.install import io.ktor.server.plugins.callid.CallId import io.ktor.server.plugins.cors.routing.CORS import io.ktor.server.plugins.defaultheaders.DefaultHeaders import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders import io.ktor.server.plugins.forwardedheaders.XForwardedHeaders import io.ktor.server.plugins.hsts.HSTS import io.ktor.server.plugins.requestvalidation.RequestValidation import kotlin.time.Duration.Companion.days</ID>
+    <ID>LongMethod:HealthRoutes.kt$fun Routing.healthRoutes()</ID>
+    <ID>MagicNumber:CacheKeyBuilder.kt$CacheKeyBuilder$36</ID>
+    <ID>MagicNumber:CredentialCryptoService.kt$AesGcmCredentialCryptoService$32</ID>
+    <ID>MagicNumber:DatabaseFactory.kt$DatabaseFactory$1000</ID>
+    <ID>MagicNumber:DocumentStorageService.kt$DocumentStorageService$255</ID>
+    <ID>MagicNumber:DocumentUploadValidator.kt$DocumentUploadValidator$1024.0</ID>
+    <ID>MagicNumber:HealthRoutes.kt$10</ID>
+    <ID>MagicNumber:HealthRoutes.kt$100</ID>
+    <ID>MagicNumber:HealthRoutes.kt$1000</ID>
+    <ID>MagicNumber:HealthRoutes.kt$1024</ID>
+    <ID>MagicNumber:HealthRoutes.kt$90</ID>
+    <ID>MagicNumber:PasswordCryptoService4j.kt$PasswordCryptoService4j$32</ID>
+    <ID>MagicNumber:RedisClientImpl.kt$RedisClientImpl$30</ID>
+    <ID>MagicNumber:RedisDsl.kt$CacheBuilder$5</ID>
+    <ID>MagicNumber:RedisDsl.kt$RedisOperations$30</ID>
+    <ID>MagicNumber:RedisDsl.kt$SessionBuilder$8</ID>
+    <ID>MagicNumber:RedisExtensions.kt$30</ID>
+    <ID>MagicNumber:RedisExtensions.kt$5</ID>
+    <ID>MagicNumber:RedisExtensions.kt$8</ID>
+    <ID>MagicNumber:Security.kt$1000</ID>
+    <ID>MagicNumber:Security.kt$3600</ID>
+    <ID>MagicNumber:Security.kt$9999</ID>
+    <ID>MatchingDeclarationName:Authentication.kt$AuthMethod</ID>
+    <ID>MaxLineLength:AIConfig.kt$AIConfig.ModelConfig.Companion$chat = if (config.hasPath("chat")) config.getString("chat") else config.getString("document-extraction")</ID>
+    <ID>MaxLineLength:AppBaseConfig.kt$AppBaseConfig.Companion$storage = if (config.hasPath("storage")) StorageConfig.fromConfig(config.getConfig("storage")) else StorageConfig.empty()</ID>
+    <ID>MaxLineLength:CredentialCryptoService.kt$AesGcmCredentialCryptoService.Companion$private val SALT = "dokus-peppol-credential-salt".toByteArray() // Static salt (secret is unique per deployment)</ID>
+    <ID>MaxLineLength:DocumentStorageService.kt$DocumentStorageService$logger.info("Uploading document: tenant=$tenantId, prefix=$prefix, filename=$sanitizedFilename, size=${data.size}")</ID>
+    <ID>MaximumLineLength:AIConfig.kt$AIConfig.ModelConfig.Companion$ </ID>
+    <ID>MaximumLineLength:AppBaseConfig.kt$AppBaseConfig.Companion$ </ID>
+    <ID>MaximumLineLength:CredentialCryptoService.kt$AesGcmCredentialCryptoService.Companion$ </ID>
+    <ID>MaximumLineLength:DocumentStorageService.kt$DocumentStorageService$ </ID>
+    <ID>MultiLineIfElse:StorageConfig.kt$StorageConfig.Companion$null</ID>
+    <ID>NewLineAtEndOfFile:AuthConfig.kt$tech.dokus.foundation.backend.config.AuthConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:CacheKeyBuilder.kt$tech.dokus.foundation.backend.cache.CacheKeyBuilder.kt</ID>
+    <ID>NewLineAtEndOfFile:CacheSerializer.kt$tech.dokus.foundation.backend.cache.CacheSerializer.kt</ID>
+    <ID>NewLineAtEndOfFile:CachingConfig.kt$tech.dokus.foundation.backend.config.CachingConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:DatabaseConfig.kt$tech.dokus.foundation.backend.config.DatabaseConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:FlywayConfig.kt$tech.dokus.foundation.backend.config.FlywayConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:HealthRoutes.kt$tech.dokus.foundation.backend.routes.HealthRoutes.kt</ID>
+    <ID>NewLineAtEndOfFile:JwtAuthentication.kt$tech.dokus.foundation.backend.configure.JwtAuthentication.kt</ID>
+    <ID>NewLineAtEndOfFile:JwtConfig.kt$tech.dokus.foundation.backend.config.JwtConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:KtorConfig.kt$tech.dokus.foundation.backend.config.KtorConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:LoggingConfig.kt$tech.dokus.foundation.backend.config.LoggingConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:MetricsConfig.kt$tech.dokus.foundation.backend.config.MetricsConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:Monitoring.kt$tech.dokus.foundation.backend.configure.Monitoring.kt</ID>
+    <ID>NewLineAtEndOfFile:PasswordCryptoService.kt$tech.dokus.foundation.backend.crypto.PasswordCryptoService.kt</ID>
+    <ID>NewLineAtEndOfFile:PasswordCryptoService4j.kt$tech.dokus.foundation.backend.crypto.PasswordCryptoService4j.kt</ID>
+    <ID>NewLineAtEndOfFile:RateLimitPlugin.kt$tech.dokus.foundation.backend.middleware.RateLimitPlugin.kt</ID>
+    <ID>NewLineAtEndOfFile:RedisClient.kt$tech.dokus.foundation.backend.cache.RedisClient.kt</ID>
+    <ID>NewLineAtEndOfFile:RedisClientFactory.kt$tech.dokus.foundation.backend.cache.RedisClientFactory.kt</ID>
+    <ID>NewLineAtEndOfFile:RedisClientImpl.kt$tech.dokus.foundation.backend.cache.RedisClientImpl.kt</ID>
+    <ID>NewLineAtEndOfFile:RedisDelegate.kt$tech.dokus.foundation.backend.cache.RedisDelegate.kt</ID>
+    <ID>NewLineAtEndOfFile:RedisDsl.kt$tech.dokus.foundation.backend.cache.RedisDsl.kt</ID>
+    <ID>NewLineAtEndOfFile:RedisExtensions.kt$tech.dokus.foundation.backend.cache.RedisExtensions.kt</ID>
+    <ID>NewLineAtEndOfFile:RedisModule.kt$tech.dokus.foundation.backend.cache.RedisModule.kt</ID>
+    <ID>NewLineAtEndOfFile:RedisNamespace.kt$tech.dokus.foundation.backend.cache.RedisNamespace.kt</ID>
+    <ID>NewLineAtEndOfFile:Security.kt$tech.dokus.foundation.backend.configure.Security.kt</ID>
+    <ID>NewLineAtEndOfFile:SecurityConfig.kt$tech.dokus.foundation.backend.config.SecurityConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:Serialization.kt$tech.dokus.foundation.backend.configure.Serialization.kt</ID>
+    <ID>NoConsecutiveBlankLines:AppBaseConfig.kt$ </ID>
+    <ID>NoConsecutiveBlankLines:DocumentUploadValidator.kt$ </ID>
+    <ID>NoMultipleSpaces:CredentialCryptoService.kt$AesGcmCredentialCryptoService.Companion$ </ID>
+    <ID>ReturnCount:DocumentUploadValidator.kt$DocumentUploadValidator$fun validate( fileContent: ByteArray, filename: String, mimeType: String, ): String?</ID>
+    <ID>ReturnCount:JwtValidator.kt$JwtValidator$private fun extractAuthInfoInternal(payload: Payload): AuthenticationInfo?</ID>
+    <ID>ReturnCount:RequestUtils.kt$fun ApplicationCall.extractClientIpAddress(): String</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:AIConfig.kt$ModelPurpose.CATEGORIZATION$/** Transaction/expense categorization */</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:AIConfig.kt$ModelPurpose.CHAT$/** RAG-powered chat/Q&amp;A with documents */</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:AIConfig.kt$ModelPurpose.DOCUMENT_EXTRACTION$/** Structured data extraction from documents */</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:AIConfig.kt$ModelPurpose.EMBEDDING$/** Text embedding generation for vector search */</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:AIConfig.kt$ModelPurpose.SUGGESTIONS$/** Smart suggestions and recommendations */</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:MinioStorage.kt$MinioStorage.Companion$/** * Create a MinioStorage instance from configuration. * * @param config MinIO configuration with endpoint and credentials * @param publicUrl Optional public URL for presigned URLs (e.g., http://192.168.0.44:8000/storage). * When provided, a separate signing client is created configured with this endpoint, * ensuring presigned URLs are signed for the public host (not the internal Docker host). */</ID>
+    <ID>SpreadOperator:CacheKeyBuilder.kt$CacheKeyBuilder$(*segments.toTypedArray())</ID>
+    <ID>SpreadOperator:DatabaseFactory.kt$DatabaseFactory$(*flywayConfig.locations.toTypedArray())</ID>
+    <ID>SpreadOperator:DatabaseFactory.kt$DatabaseFactory$(*flywayConfig.schemas.toTypedArray())</ID>
+    <ID>SpreadOperator:RedisClientImpl.kt$RedisClientImpl$(*buildKeys(*keys))</ID>
+    <ID>SpreadOperator:RedisClientImpl.kt$RedisClientImpl$(*fullKeys)</ID>
+    <ID>SpreadOperator:RedisClientImpl.kt$RedisClientImpl$(*keys.toTypedArray())</ID>
+    <ID>SpreadOperator:RedisDsl.kt$CacheBuilder$(*(prefixSegments + segments).toTypedArray())</ID>
+    <ID>SpreadOperator:TokenBlacklistService.kt$RedisTokenBlacklistService$(*keysToDelete)</ID>
+    <ID>SwallowedException:RedisExtensions.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AvatarStorageService.kt$AvatarStorageService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:JwtValidator.kt$JwtValidator$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MinioStorage.kt$MinioStorage$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MinioStorage.kt$MinioStorage.Companion$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RedisExtensions.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TokenBlacklistService.kt$RedisTokenBlacklistService$e: Exception</ID>
+    <ID>TooManyFunctions:CacheKeyBuilder.kt$CacheKeyBuilder</ID>
+    <ID>TooManyFunctions:RedisClient.kt$RedisClient</ID>
+    <ID>TooManyFunctions:RedisClientImpl.kt$RedisClientImpl : RedisClient</ID>
+    <ID>TooManyFunctions:RedisDsl.kt$RedisOperations</ID>
+    <ID>TooManyFunctions:RedisExtensions.kt$tech.dokus.foundation.backend.cache.RedisExtensions.kt</ID>
+    <ID>UseCheckOrError:AppBaseConfig.kt$AppBaseConfig.Companion$throw IllegalStateException( "AI configuration is required. Add 'ai { ... }' section to application.conf" )</ID>
+    <ID>UseCheckOrError:RedisDsl.kt$RedisOperations$throw IllegalStateException("Could not acquire lock for $resource")</ID>
+    <ID>Wrapping:HealthRoutes.kt$( HttpStatusCode.OK, HealthStatus( status = ServerStatus.UP, checks = mapOf( "service" to HealthCheck(ServerStatus.UP, "Service is running") ) ) )</ID>
+    <ID>Wrapping:HealthRoutes.kt$( statusCode, HealthStatus( status = overallStatus, checks = checks ) )</ID>
+    <ID>Wrapping:Serialization.kt$(</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,8 +1,8 @@
 package tech.dokus.foundation.app
 
-import ai.dokus.foundation.design.model.HomeItem
-import ai.dokus.foundation.navigation.NavigationProvider
 import org.koin.core.module.Module
+import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.navigation.NavigationProvider
 
 interface AppPresentationModule {
     /** Primary navigation graph for the feature (main content area) */

@@ -1,8 +1,8 @@
 package tech.dokus.domain.model.auth
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.current
-import kotlinx.serialization.Serializable
 
 @Serializable
 data class QrLoginInitRequest(

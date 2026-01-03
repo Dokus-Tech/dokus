@@ -1,18 +1,18 @@
 package tech.dokus.app.navigation
 
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
 import tech.dokus.app.screens.EmptyScreen
 import tech.dokus.app.screens.HomeScreen
 import tech.dokus.app.screens.SplashScreen
 import tech.dokus.app.screens.UnderDevelopmentScreen
-import tech.dokus.app.screens.settings.AppearanceSettingsScreen
-import tech.dokus.app.screens.settings.TeamSettingsScreen
-import tech.dokus.app.screens.settings.WorkspaceSettingsScreen
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.AppDestination
-import ai.dokus.foundation.navigation.destinations.CoreDestination
-import ai.dokus.foundation.navigation.destinations.SettingsDestination
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.composable
+import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
+import tech.dokus.app.screens.settings.route.TeamSettingsRoute
+import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.AppDestination
+import tech.dokus.navigation.destinations.CoreDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 
 internal object AppNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {
@@ -28,15 +28,14 @@ internal object AppNavigationProvider : NavigationProvider {
         composable<AppDestination.Empty> {
             EmptyScreen()
         }
-        // Settings screens
         composable<SettingsDestination.WorkspaceSettings> {
-            WorkspaceSettingsScreen()
+            WorkspaceSettingsRoute()
         }
         composable<SettingsDestination.TeamSettings> {
-            TeamSettingsScreen()
+            TeamSettingsRoute()
         }
         composable<SettingsDestination.AppearanceSettings> {
-            AppearanceSettingsScreen()
+            AppearanceSettingsRoute()
         }
     }
 }

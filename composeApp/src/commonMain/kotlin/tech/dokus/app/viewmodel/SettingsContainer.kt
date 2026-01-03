@@ -1,13 +1,14 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import tech.dokus.domain.exceptions.asDokusException
-import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
+import tech.dokus.foundation.platform.Logger
 
 internal typealias SettingsCtx = PipelineContext<SettingsState, SettingsIntent, SettingsAction>
 
@@ -43,7 +44,16 @@ internal class SettingsContainer(
         getCurrentTenantUseCase().fold(
             onSuccess = { tenant ->
                 logger.i { "Current tenant loaded: ${tenant?.displayName?.value}" }
-                updateState { SettingsState.Content(tenant = tenant) }
+                if (tenant != null) {
+                    updateState { SettingsState.Content(data = tenant) }
+                    return@fold
+                }
+                updateState {
+                    SettingsState.Error(
+                        exception = DokusException.NotFound(),
+                        retryHandler = { intent(SettingsIntent.Load) }
+                    )
+                }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load current tenant" }

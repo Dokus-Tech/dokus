@@ -4,7 +4,7 @@ plugins {
     `java-library`
 }
 
-group = "ai.dokus.ai"
+group = "tech.dokus.features.ai"
 version = "1.0.0"
 
 kotlin {
@@ -20,7 +20,7 @@ dependencies {
 
     // Foundation dependencies
     implementation(projects.foundation.domain)
-    implementation(projects.foundation.ktorCommon)
+    implementation(projects.foundation.backendCommon)
 
     // Ktor HTTP Client (for Ollama/OpenAI embeddings API)
     implementation(libs.ktor.client.core)

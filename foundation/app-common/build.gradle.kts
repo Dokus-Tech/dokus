@@ -51,7 +51,7 @@ kotlin {
             api(projects.foundation.platform)
             api(projects.foundation.domain)
             api(projects.foundation.navigation)
-            api(projects.foundation.designSystem)
+            api(projects.foundation.aura)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

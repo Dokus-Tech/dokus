@@ -1,0 +1,132 @@
+<resources>
+    <!-- Common Actions -->
+    <string name="action_back">Atrás</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_save_changes">Guardar cambios</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_confirm">Confirmar</string>
+    <string name="action_continue">Continuar</string>
+    <string name="action_approve">Aprobar</string>
+    <string name="action_reject">Rechazar</string>
+    <string name="action_search">Buscar</string>
+    <string name="action_or">o</string>
+    <string name="action_next">Siguiente</string>
+    <string name="action_change">Cambiar</string>
+    <string name="action_close">Cerrar</string>
+    <string name="action_upload">Subir</string>
+    <string name="action_remove">Eliminar</string>
+    <string name="action_view">Ver</string>
+    <string name="action_done">Listo</string>
+    <string name="action_connect">Conectar</string>
+    <string name="action_clear">Borrar</string>
+    <string name="action_clear_field">Borrar %1$s</string>
+    <string name="action_expand_options">Expandir opciones</string>
+    <string name="action_expand">Expandir</string>
+    <string name="action_collapse">Contraer</string>
+    <string name="action_select">Seleccionar</string>
+    <string name="action_select_date">Seleccionar fecha</string>
+    <string name="action_discard">Descartar</string>
+    <string name="action_fit">Ajustar</string>
+    <string name="action_zoom_in">Acercar</string>
+    <string name="action_zoom_out">Alejar</string>
+
+    <!-- Common States -->
+    <string name="state_loading">Cargando...</string>
+    <string name="state_error">Se produjo un error</string>
+    <string name="state_empty">No hay datos disponibles</string>
+    <string name="state_retry">Reintentar</string>
+    <string name="state_connecting">Conectando...</string>
+    <string name="state_saving">Guardando...</string>
+    <string name="state_confirming">Confirmando...</string>
+    <string name="state_unsaved_changes">Tiene cambios sin guardar</string>
+    <string name="state_offline">Sin conexión</string>
+    <string name="state_creating">Creando...</string>
+    <string name="state_uploading">Subiendo...</string>
+    <string name="state_sending">Enviando...</string>
+    <string name="state_removing">Eliminando...</string>
+
+    <!-- Common Values -->
+    <string name="common_unknown">Desconocido</string>
+    <string name="common_empty_value">-</string>
+    <string name="common_label_value">%1$s: %2$s</string>
+    <string name="common_numbered_step">%1$d. %2$s</string>
+    <string name="common_currency">Moneda</string>
+    <string name="common_bank_account">Cuenta bancaria</string>
+    <string name="common_notes">Notas</string>
+    <string name="common_date">Fecha</string>
+    <string name="common_vat_value">IVA: %1$s</string>
+    <string name="common_percent_value">%1$s %%</string>
+    <string name="common_file_size_bytes">%1$d B</string>
+    <string name="common_file_size_kb">%1$.1f KB</string>
+    <string name="common_file_size_mb">%1$.1f MB</string>
+    <string name="common_country_value">País: %1$s</string>
+    <string name="common_action_irreversible">Esta acción es irreversible</string>
+    <string name="search_placeholder">Buscar...</string>
+    <string name="field_required">%1$s *</string>
+    <string name="field_optional">%1$s (opcional)</string>
+
+    <!-- Connection -->
+    <string name="connection_server_unreachable">Servidor inaccesible</string>
+    <string name="connection_connected">Conectado</string>
+
+    <!-- Dates -->
+    <string name="date_format_long">%2$d de %1$s de %3$d</string>
+    <string name="date_format_short">%2$d %1$s %3$d</string>
+    <string name="date_month_long_january">enero</string>
+    <string name="date_month_long_february">febrero</string>
+    <string name="date_month_long_march">marzo</string>
+    <string name="date_month_long_april">abril</string>
+    <string name="date_month_long_may">mayo</string>
+    <string name="date_month_long_june">junio</string>
+    <string name="date_month_long_july">julio</string>
+    <string name="date_month_long_august">agosto</string>
+    <string name="date_month_long_september">septiembre</string>
+    <string name="date_month_long_october">octubre</string>
+    <string name="date_month_long_november">noviembre</string>
+    <string name="date_month_long_december">diciembre</string>
+    <string name="date_month_short_jan">ene</string>
+    <string name="date_month_short_feb">feb</string>
+    <string name="date_month_short_mar">mar</string>
+    <string name="date_month_short_apr">abr</string>
+    <string name="date_month_short_may">may</string>
+    <string name="date_month_short_jun">jun</string>
+    <string name="date_month_short_jul">jul</string>
+    <string name="date_month_short_aug">ago</string>
+    <string name="date_month_short_sep">sep</string>
+    <string name="date_month_short_oct">oct</string>
+    <string name="date_month_short_nov">nov</string>
+    <string name="date_month_short_dec">dic</string>
+
+    <!-- Countries -->
+    <string name="country_belgium">Bélgica</string>
+    <string name="country_france">Francia</string>
+    <string name="country_netherlands">Países Bajos</string>
+
+    <!-- Under Development -->
+    <string name="under_development_title">Construyendo algo confiable</string>
+    <string name="under_development_subtitle">Esta función está siendo desarrollada cuidadosamente.\nCreada para satisfacer tus necesidades.</string>
+
+    <!-- Registration Success -->
+    <string name="registration_success_message">Te has registrado correctamente y ahora puedes continuar explorando todas las emocionantes funciones que tenemos para ofrecer.</string>
+
+    <!-- Server Connection -->
+    <string name="connect_to_server">Conectar al servidor</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Recortar imagen</string>
+    <string name="image_cropper_apply">Aplicar</string>
+    <string name="image_cropper_hint">Pellizca para zoom, arrastra para mover</string>
+    <string name="image_cropper_content_description">Imagen para recortar</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Avatar de la empresa</string>
+
+    <!-- Legacy aliases for backward compatibility -->
+    <string name="back">Atrás</string>
+    <string name="approve">Aprobar</string>
+    <string name="reject">Rechazar</string>
+    <string name="save_changes">Guardar cambios</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete">Eliminar</string>
+</resources>

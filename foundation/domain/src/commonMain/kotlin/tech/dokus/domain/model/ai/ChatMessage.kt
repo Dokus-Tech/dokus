@@ -56,13 +56,16 @@ value class ChatSessionId(val value: Uuid) {
 @Serializable
 enum class MessageRole(override val dbValue: String) : DbEnum {
     /** User-submitted question */
-    @SerialName("USER") User("USER"),
+    @SerialName("USER")
+    User("USER"),
 
     /** AI-generated response */
-    @SerialName("ASSISTANT") Assistant("ASSISTANT"),
+    @SerialName("ASSISTANT")
+    Assistant("ASSISTANT"),
 
     /** System message (for context injection) */
-    @SerialName("SYSTEM") System("SYSTEM");
+    @SerialName("SYSTEM")
+    System("SYSTEM");
 
     companion object {
         fun fromDbValue(value: String): MessageRole =
@@ -77,10 +80,12 @@ enum class MessageRole(override val dbValue: String) : DbEnum {
 @Serializable
 enum class ChatScope(override val dbValue: String) : DbEnum {
     /** Questions about a specific document */
-    @SerialName("SINGLE_DOC") SingleDoc("SINGLE_DOC"),
+    @SerialName("SINGLE_DOC")
+    SingleDoc("SINGLE_DOC"),
 
     /** Cross-document queries on confirmed documents */
-    @SerialName("ALL_DOCS") AllDocs("ALL_DOCS");
+    @SerialName("ALL_DOCS")
+    AllDocs("ALL_DOCS");
 
     companion object {
         fun fromDbValue(value: String): ChatScope =

@@ -38,12 +38,13 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.features.cashflow.data)
             implementation(projects.features.auth.data)
+            implementation(projects.features.contacts.domain)
             implementation(projects.features.contacts.presentation)
             implementation(projects.foundation.domain)
 
             implementation(projects.foundation.navigation)
             implementation(projects.foundation.appCommon)
-            implementation(projects.foundation.designSystem)
+            implementation(projects.foundation.aura)
 
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.bundles.koin.compose)
@@ -64,7 +65,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.cashflow"
+    namespace = "tech.dokus.features.cashflow"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

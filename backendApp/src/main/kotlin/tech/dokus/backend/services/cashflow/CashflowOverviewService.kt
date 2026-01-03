@@ -1,8 +1,14 @@
 package tech.dokus.backend.services.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.BillRepository
-import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
-import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.todayIn
+import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.ExpenseRepository
+import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.InvoiceStatus
@@ -11,14 +17,7 @@ import tech.dokus.domain.model.CashInSummary
 import tech.dokus.domain.model.CashOutSummary
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPeriod
-import tech.dokus.foundation.ktor.utils.loggerFor
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DatePeriod
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.todayIn
-import java.math.BigDecimal
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Service for cashflow overview calculations.
@@ -52,7 +51,9 @@ class CashflowOverviewService(
         val effectiveFromDate = fromDate ?: today.minus(DatePeriod(days = today.dayOfMonth - 1))
         val effectiveToDate = toDate ?: today
 
-        logger.info("Calculating cashflow overview for tenant: $tenantId (from=$effectiveFromDate, to=$effectiveToDate)")
+        logger.info(
+            "Calculating cashflow overview for tenant: $tenantId (from=$effectiveFromDate, to=$effectiveToDate)"
+        )
 
         // Fetch invoices for period
         val invoicesResult = invoiceRepository.listInvoices(

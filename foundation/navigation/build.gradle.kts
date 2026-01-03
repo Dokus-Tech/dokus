@@ -62,7 +62,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.navigation"
+    namespace = "tech.dokus.navigation"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

@@ -1,11 +1,11 @@
 package tech.dokus.domain.ids
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.Validatable
 import tech.dokus.domain.ValueClass
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.validators.ValidateBicUseCase
 import tech.dokus.domain.validators.ValidateIbanUseCase
-import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

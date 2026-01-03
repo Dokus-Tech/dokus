@@ -1,5 +1,8 @@
 package tech.dokus.domain.model
 
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.PaymentMeansCode
 import tech.dokus.domain.enums.PeppolCurrency
@@ -15,9 +18,6 @@ import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
-import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 // ============================================================================
 // PEPPOL PROVIDERS
@@ -101,14 +101,19 @@ data class PeppolConnectRequest(
 enum class PeppolConnectStatus {
     /** Settings saved and tenant is connected to a Recommand company. */
     Connected,
+
     /** Multiple Recommand companies match the tenant VAT; user must select one. */
     MultipleMatches,
+
     /** No matching company found; user can confirm to create one. */
     NoCompanyFound,
+
     /** No VAT configured for tenant. */
     MissingVatNumber,
+
     /** Tenant address is missing or cannot be used to create a Recommand company. */
     MissingCompanyAddress,
+
     /** Recommand rejected the provided credentials. */
     InvalidCredentials,
 }
@@ -189,11 +194,20 @@ data class RecommandSendRequest(
  */
 @Serializable
 enum class RecommandSendDocumentType {
-    @SerialName("invoice") Invoice,
-    @SerialName("creditNote") CreditNote,
-    @SerialName("selfBillingInvoice") SelfBillingInvoice,
-    @SerialName("selfBillingCreditNote") SelfBillingCreditNote,
-    @SerialName("xml") Xml
+    @SerialName("invoice")
+    Invoice,
+
+    @SerialName("creditNote")
+    CreditNote,
+
+    @SerialName("selfBillingInvoice")
+    SelfBillingInvoice,
+
+    @SerialName("selfBillingCreditNote")
+    SelfBillingCreditNote,
+
+    @SerialName("xml")
+    Xml
 }
 
 /**
@@ -285,9 +299,9 @@ data class RecommandValidationError(
 data class RecommandInboxDocument(
     val id: String,
     val documentType: String,
-    val sender: String,  // Peppol ID
-    val receiver: String,  // Peppol ID
-    val receivedAt: String,  // ISO timestamp
+    val sender: String, // Peppol ID
+    val receiver: String, // Peppol ID
+    val receivedAt: String, // ISO timestamp
     val isRead: Boolean,
     val document: RecommandReceivedDocument? = null
 )
@@ -385,9 +399,9 @@ data class RecommandDocumentSummary(
     @SerialName("documentType")
     val documentType: PeppolDocumentType,
     val direction: RecommandDirection,
-    val counterparty: String,  // Peppol ID
+    val counterparty: String, // Peppol ID
     val status: RecommandDocumentStatus,
-    val createdAt: String,  // ISO timestamp
+    val createdAt: String, // ISO timestamp
     val invoiceNumber: String? = null,
     val totalAmount: Double? = null,
     val currency: PeppolCurrency? = null

@@ -1,16 +1,16 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.database.repository.cashflow.CashflowRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.routes.Cashflow
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 
 /**
  * Cashflow Document Routes using Ktor Type-Safe Routing
@@ -42,7 +42,10 @@ internal fun Route.cashflowDocumentRoutes() {
                 offset = route.offset
             )
                 .onSuccess {
-                    logger.info("Fetched ${it.items.size} cashflow documents (offset=${route.offset}, limit=${route.limit}, total=${it.total})")
+                    logger.info(
+                        "Fetched ${it.items.size} cashflow documents " +
+                            "(offset=${route.offset}, limit=${route.limit}, total=${it.total})"
+                    )
                 }
                 .onFailure {
                     logger.error("Failed to fetch cashflow documents for tenant=$tenantId", it)

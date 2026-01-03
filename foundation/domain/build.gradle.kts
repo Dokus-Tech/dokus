@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.buildKonfig)
     id("dokus.versioning")
 }
-val appVersion: ai.dokus.convention.AppVersionExtension by project.extensions
+val appVersion: tech.dokus.convention.AppVersionExtension by project.extensions
 
 kotlin {
     jvmToolchain(17)

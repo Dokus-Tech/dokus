@@ -9,10 +9,10 @@ Complete implementation of all backend services using KotlinX RPC pattern establ
 **Location:** `foundation/apispec/src/commonMain/kotlin/ai/dokus/foundation/apispec/ClientApi.kt`
 
 ```kotlin
-package ai.dokus.foundation.apispec
+package tech.dokus.foundation.apispec
 
-import ai.dokus.foundation.domain.*
-import ai.dokus.foundation.domain.model.*
+import tech.dokus.foundation.domain.*
+import tech.dokus.foundation.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.rpc.RemoteService
 import kotlinx.rpc.annotations.Rpc
@@ -48,12 +48,12 @@ interface ClientApi : RemoteService {
 **Location:** `features/clients/backend/src/main/kotlin/ai/dokus/clients/backend/services/ClientApiImpl.kt`
 
 ```kotlin
-package ai.dokus.clients.backend.services
+package tech.dokus.clients.backend.services
 
-import ai.dokus.foundation.apispec.ClientApi
-import ai.dokus.foundation.database.repositories.ClientRepository
-import ai.dokus.foundation.domain.*
-import ai.dokus.foundation.domain.model.*
+import tech.dokus.foundation.apispec.ClientApi
+import tech.dokus.foundation.database.repositories.ClientRepository
+import tech.dokus.foundation.domain.*
+import tech.dokus.foundation.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.rpc.RpcServiceContext
@@ -261,11 +261,11 @@ interface PaymentApi : RemoteService {
 **Location:** `features/peppol/backend/src/main/kotlin/ai/dokus/peppol/backend/`
 
 ```kotlin
-package ai.dokus.peppol.backend.services
+package tech.dokus.peppol.backend.services
 
-import ai.dokus.foundation.domain.model.Invoice
-import ai.dokus.peppol.backend.converters.UblConverter
-import ai.dokus.peppol.backend.validators.SchematronValidator
+import tech.dokus.foundation.domain.model.Invoice
+import tech.dokus.peppol.backend.converters.UblConverter
+import tech.dokus.peppol.backend.validators.SchematronValidator
 
 class PeppolService(
     private val accessPointClient: AccessPointClient,
@@ -321,11 +321,11 @@ class PeppolService(
 **Location:** `features/*/backend/src/main/kotlin/ai/dokus/*/backend/Application.kt`
 
 ```kotlin
-package ai.dokus.[feature].backend
+package tech.dokus.[feature].backend
 
-import ai.dokus.foundation.database.DatabaseFactory
-import ai.dokus.foundation.ktor.*
-import ai.dokus.[feature].backend.services.*
+import tech.dokus.foundation.database.DatabaseFactory
+import tech.dokus.foundation.ktor.*
+import tech.dokus.[feature].backend.services.*
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import kotlinx.rpc.krpc.ktor.server.*

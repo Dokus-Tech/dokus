@@ -10,9 +10,12 @@ import tech.dokus.domain.ids.InvoiceNumber
  * - Maximum 50 characters
  */
 object ValidateInvoiceNumberUseCase : Validator<InvoiceNumber> {
+    /** Maximum allowed length for invoice numbers */
+    private const val MaxLength = 50
+
     override operator fun invoke(value: InvoiceNumber): Boolean {
         if (value.value.isBlank()) return false
-        if (value.value.length > 50) return false
+        if (value.value.length > MaxLength) return false
         return true
     }
 }

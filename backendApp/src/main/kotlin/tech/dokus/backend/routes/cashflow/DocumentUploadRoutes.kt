@@ -1,17 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.DocumentIngestionRunRepository
-import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
-import ai.dokus.foundation.database.repository.cashflow.IngestionRunSummary
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentIngestionDto
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.routes.Documents
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.DocumentUploadValidator
-import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.request.*
@@ -20,6 +8,22 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.ExpenseRepository
+import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.routes.Documents
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.storage.DocumentUploadValidator
+import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
+import java.security.MessageDigest
 
 /** Allowed prefixes for document storage */
 private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses", "receipts")
@@ -39,6 +43,10 @@ internal fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentRepository by inject<DocumentRepository>()
     val ingestionRepository by inject<DocumentIngestionRunRepository>()
+    val draftRepository by inject<DocumentDraftRepository>()
+    val invoiceRepository by inject<InvoiceRepository>()
+    val billRepository by inject<BillRepository>()
+    val expenseRepository by inject<ExpenseRepository>()
     val uploadValidator by inject<DocumentUploadValidator>()
     val logger = LoggerFactory.getLogger("DocumentUploadRoutes")
 
@@ -105,6 +113,44 @@ internal fun Route.documentUploadRoutes() {
                 throw DokusException.Validation.Generic(validationError)
             }
 
+            val contentHash = sha256Hex(fileBytes!!)
+            val existingDocument = documentRepository.getByContentHash(tenantId, contentHash)
+            if (existingDocument != null) {
+                logger.info("Duplicate document detected, reusing existing record: ${existingDocument.id}")
+                val downloadUrl = try {
+                    minioStorage.getDownloadUrl(existingDocument.storageKey)
+                } catch (e: Exception) {
+                    logger.warn("Failed to get download URL for ${existingDocument.storageKey}: ${e.message}")
+                    null
+                }
+
+                val draft = draftRepository.getByDocumentId(existingDocument.id, tenantId)
+                val latestIngestion = ingestionRepository.getLatestForDocument(existingDocument.id, tenantId)
+                val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
+                    findConfirmedEntity(
+                        existingDocument.id,
+                        draft.documentType,
+                        tenantId,
+                        invoiceRepository,
+                        billRepository,
+                        expenseRepository
+                    )
+                } else {
+                    null
+                }
+
+                call.respond(
+                    HttpStatusCode.OK,
+                    DocumentRecordDto(
+                        document = existingDocument.copy(downloadUrl = downloadUrl),
+                        draft = draft?.toDto(),
+                        latestIngestion = latestIngestion?.toDto(),
+                        confirmedEntity = confirmedEntity
+                    )
+                )
+                return@post
+            }
+
             // Upload to MinIO
             logger.info("Uploading to MinIO: tenant=$tenantId, prefix=$prefix")
 
@@ -122,7 +168,8 @@ internal fun Route.documentUploadRoutes() {
                 filename = result.filename,
                 contentType = result.contentType,
                 sizeBytes = result.sizeBytes,
-                storageKey = result.key
+                storageKey = result.key,
+                contentHash = contentHash
             )
 
             logger.info("Document created: id=$documentId, key=${result.key}, size=${result.sizeBytes}")
@@ -148,7 +195,7 @@ internal fun Route.documentUploadRoutes() {
                 HttpStatusCode.Created,
                 DocumentRecordDto(
                     document = document.copy(downloadUrl = result.url),
-                    draft = null,  // No draft until extraction completes
+                    draft = null, // No draft until extraction completes
                     latestIngestion = ingestionRun.toDto(),
                     confirmedEntity = null
                 )
@@ -160,18 +207,7 @@ internal fun Route.documentUploadRoutes() {
     }
 }
 
-/**
- * Convert IngestionRunSummary to DTO for API response.
- */
-private fun IngestionRunSummary.toDto(): DocumentIngestionDto = DocumentIngestionDto(
-    id = id,
-    documentId = documentId,
-    tenantId = tenantId,
-    status = status,
-    provider = provider,
-    queuedAt = queuedAt,
-    startedAt = startedAt,
-    finishedAt = finishedAt,
-    errorMessage = errorMessage,
-    confidence = confidence
-)
+private fun sha256Hex(data: ByteArray): String {
+    val digest = MessageDigest.getInstance("SHA-256").digest(data)
+    return digest.joinToString("") { byte -> "%02x".format(byte) }
+}

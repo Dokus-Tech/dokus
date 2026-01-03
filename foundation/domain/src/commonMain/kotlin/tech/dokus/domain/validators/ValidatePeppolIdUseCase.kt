@@ -1,3 +1,5 @@
+@file:Suppress("ReturnCount") // Validation requires multiple early returns
+
 package tech.dokus.domain.validators
 
 import tech.dokus.domain.ids.PeppolId

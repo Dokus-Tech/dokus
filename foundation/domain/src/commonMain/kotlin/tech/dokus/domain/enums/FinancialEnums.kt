@@ -327,10 +327,10 @@ enum class PeppolStatus(override val dbValue: String) : DbEnum {
 @Serializable
 enum class PeppolTransmissionDirection(override val dbValue: String) : DbEnum {
     @SerialName("OUTBOUND")
-    Outbound("OUTBOUND"),  // Sending invoices to customers
+    Outbound("OUTBOUND"), // Sending invoices to customers
 
     @SerialName("INBOUND")
-    Inbound("INBOUND")     // Receiving bills from suppliers
+    Inbound("INBOUND") // Receiving bills from suppliers
 }
 
 @Serializable
@@ -348,7 +348,7 @@ enum class PeppolDocumentType(override val dbValue: String) : DbEnum {
     SelfBillingCreditNote("SELF_BILLING_CREDIT_NOTE"),
 
     @SerialName("XML")
-    Xml("XML");  // Raw UBL XML
+    Xml("XML"); // Raw UBL XML
 
     companion object {
         /** Map from Recommand API values to enum */
@@ -375,31 +375,31 @@ enum class PeppolDocumentType(override val dbValue: String) : DbEnum {
 @Serializable
 enum class PeppolVatCategory(override val dbValue: String) : DbEnum {
     @SerialName("S")
-    Standard("S"),           // Standard VAT rate
+    Standard("S"), // Standard VAT rate
 
     @SerialName("Z")
-    ZeroRated("Z"),          // Zero rated
+    ZeroRated("Z"), // Zero rated
 
     @SerialName("E")
-    Exempt("E"),             // VAT exempt
+    Exempt("E"), // VAT exempt
 
     @SerialName("AE")
-    ReverseCharge("AE"),     // Reverse charge (EU cross-border)
+    ReverseCharge("AE"), // Reverse charge (EU cross-border)
 
     @SerialName("K")
-    IntraCommSupply("K"),    // Intra-community supply
+    IntraCommSupply("K"), // Intra-community supply
 
     @SerialName("G")
-    ExportOutsideEu("G"),    // Export outside EU
+    ExportOutsideEu("G"), // Export outside EU
 
     @SerialName("O")
-    NotSubject("O"),         // Not subject to VAT
+    NotSubject("O"), // Not subject to VAT
 
     @SerialName("L")
-    CanaryIslands("L"),      // Canary Islands
+    CanaryIslands("L"), // Canary Islands
 
     @SerialName("M")
-    Ceuta("M"),              // Ceuta and Melilla
+    Ceuta("M"), // Ceuta and Melilla
 
     @SerialName("B")
     ServiceOutsideScope("B"); // Services outside scope of VAT

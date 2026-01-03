@@ -1,6 +1,8 @@
 package tech.dokus.domain.model.entity
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
 
@@ -13,9 +15,9 @@ data class EntityLookup(
     /** CBE enterprise number (e.g., "0123.456.789") */
     val enterpriseNumber: String,
     /** Formatted VAT number (e.g., "BE0123456789") */
-    val vatNumber: VatNumber?,
+    val vatNumber: VatNumber,
     /** Official company legal name */
-    val name: String,
+    val name: LegalName,
     /** Registered business address */
     val address: EntityAddress?,
     /** Company status */
@@ -51,5 +53,7 @@ enum class EntityStatus {
 data class EntityLookupResponse(
     val results: List<EntityLookup>,
     val query: String,
-    val totalCount: Int,
-)
+) {
+    @Transient
+    val totalCount: Int = results.size
+}

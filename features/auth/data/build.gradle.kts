@@ -84,7 +84,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.auth.data"
+    namespace = "tech.dokus.features.auth.data"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -98,7 +98,7 @@ android {
 sqldelight {
     databases {
         create("AuthDatabase") {
-            packageName.set("ai.dokus.app.auth.database")
+            packageName.set("tech.dokus.features.auth.database")
             generateAsync.set(true)
         }
     }

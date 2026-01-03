@@ -1,19 +1,6 @@
 package tech.dokus.app.screens
 
-import ai.dokus.app.auth.screen.ProfileSettingsScreen
-import ai.dokus.app.cashflow.screens.settings.PeppolSettingsScreen
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.settings_current_workspace
-import ai.dokus.app.resources.generated.settings_select_workspace
-import ai.dokus.foundation.design.components.ListSettingsItem
-import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.navigation.destinations.AuthDestination
-import ai.dokus.foundation.navigation.destinations.SettingsDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,8 +22,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,18 +43,40 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.screens.settings.AppearanceSettingsContent
-import tech.dokus.app.screens.settings.TeamSettingsContent
-import tech.dokus.app.screens.settings.WorkspaceSettingsContent
+import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
+import tech.dokus.app.screens.settings.route.TeamSettingsRoute
+import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
 import tech.dokus.app.settingsGroupsCombined
 import tech.dokus.app.viewmodel.SettingsAction
 import tech.dokus.app.viewmodel.SettingsContainer
 import tech.dokus.app.viewmodel.SettingsIntent
 import tech.dokus.app.viewmodel.SettingsState
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.settings_current_workspace
+import tech.dokus.aura.resources.settings_select_hint
+import tech.dokus.aura.resources.settings_select_prompt
+import tech.dokus.aura.resources.settings_select_workspace
+import tech.dokus.aura.resources.settings_unknown_section
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.auth.presentation.auth.route.ProfileSettingsRoute
+import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.ListSettingsItem
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.SettingsDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 
 /**
  * Settings screen using FlowMVI Container pattern.
@@ -78,14 +88,26 @@ internal fun SettingsScreen(
 ) {
     val screenSize = LocalScreenSize.current
     val navController = LocalNavController.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             SettingsAction.NavigateToWorkspaceSelect -> {
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
             }
+
             is SettingsAction.ShowError -> {
-                // TODO: Show snackbar
+                pendingError = action.error
             }
         }
     }
@@ -97,10 +119,15 @@ internal fun SettingsScreen(
 
     if (screenSize.isLarge) {
         // Desktop: Split-pane layout
-        SettingsSplitPaneLayout(state = state)
+        SettingsSplitPaneLayout(
+            state = state,
+            snackbarHostState = snackbarHostState
+        )
     } else {
         // Mobile: Traditional navigation layout
-        SettingsMobileLayout(state = state)
+        SettingsMobileLayout(
+            state = state,
+        )
     }
 }
 
@@ -109,7 +136,8 @@ internal fun SettingsScreen(
  */
 @Composable
 private fun SettingsSplitPaneLayout(
-    state: SettingsState
+    state: SettingsState,
+    snackbarHostState: SnackbarHostState
 ) {
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
@@ -124,36 +152,47 @@ private fun SettingsSplitPaneLayout(
         mutableStateOf(allSections.firstOrNull())
     }
 
-    Surface {
-        Row(Modifier.fillMaxSize()) {
-            // Left Navigation Panel - matches HomeScreen's RailNavigationLayout pattern
-            Surface(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(280.dp),
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-            ) {
-                SettingsNavigationPanel(
-                    state = state,
-                    settingsGroups = settingsGroups,
-                    selectedSection = selectedSection,
-                    onSectionSelected = { selectedSection = it }
-                )
-            }
-
-            // Right Content Panel (fills remaining space)
-            Box(
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { contentPadding ->
+        Surface {
+            Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start = 8.dp),
-                contentAlignment = Alignment.TopStart
+                    .padding(contentPadding)
             ) {
-                selectedSection?.let { section ->
-                    SettingsContentPane(section = section)
-                } ?: run {
-                    // Empty state when no section selected
-                    SettingsEmptyState()
+                // Left Navigation Panel - matches HomeScreen's RailNavigationLayout pattern
+                Surface(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(280.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
+                ) {
+                    SettingsNavigationPanel(
+                        state = state,
+                        settingsGroups = settingsGroups,
+                        selectedSection = selectedSection,
+                        onSectionSelected = { selectedSection = it }
+                    )
+                }
+
+                // Right Content Panel (fills remaining space)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 8.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    selectedSection?.let { section ->
+                        SettingsContentPane(section = section)
+                    } ?: run {
+                        // Empty state when no section selected
+                        SettingsEmptyState()
+                    }
                 }
             }
         }
@@ -165,15 +204,15 @@ private fun SettingsSplitPaneLayout(
  */
 @Composable
 private fun SettingsMobileLayout(
-    state: SettingsState
+    state: SettingsState,
 ) {
     val navController = LocalNavController.current
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
 
     // Extract tenant from state
-    val currentTenant = (state as? SettingsState.Content)?.tenant
-    val isLoading = state is SettingsState.Loading
+    val currentTenant = if (state.isSuccess()) state.data else null
+    val isLoading = state.isLoading()
 
     Scaffold { contentPadding ->
         Column(
@@ -199,7 +238,6 @@ private fun SettingsMobileLayout(
                 SettingsGroupCard(
                     title = groupTitle,
                     sections = groups.flatMap { group -> group.sections },
-                    selectedSection = null, // No selection state on mobile
                     onSectionClick = { section ->
                         navController.navigateTo(section.destination)
                     }
@@ -223,8 +261,8 @@ private fun SettingsNavigationPanel(
     val navController = LocalNavController.current
 
     // Extract tenant from state
-    val currentTenant = (state as? SettingsState.Content)?.tenant
-    val isLoading = state is SettingsState.Loading
+    val currentTenant = if (state.isSuccess()) state.data else null
+    val isLoading = state.isLoading()
 
     Column(
         modifier = Modifier
@@ -311,21 +349,25 @@ private fun SettingsContentPane(
             when (section.destination) {
                 is AuthDestination.ProfileSettings -> {
                     // Use the full screen as embedded content for now
-                    ProfileSettingsScreen()
+                    ProfileSettingsRoute()
                 }
+
                 is SettingsDestination.WorkspaceSettings -> {
-                    WorkspaceSettingsContent()
+                    WorkspaceSettingsRoute()
                 }
+
                 is SettingsDestination.TeamSettings -> {
-                    TeamSettingsContent()
+                    TeamSettingsRoute()
                 }
+
                 is SettingsDestination.AppearanceSettings -> {
-                    AppearanceSettingsContent()
+                    AppearanceSettingsRoute()
                 }
+
                 is SettingsDestination.PeppolSettings -> {
-                    // Use the full screen as embedded content for now
-                    PeppolSettingsScreen()
+                    PeppolSettingsRoute()
                 }
+
                 else -> {
                     // Fallback for unknown destinations
                     Box(
@@ -333,7 +375,7 @@ private fun SettingsContentPane(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Settings content for ${section.destination::class.simpleName}",
+                            text = stringResource(Res.string.settings_unknown_section),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -366,12 +408,12 @@ private fun SettingsEmptyState() {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
             Text(
-                text = "Select a setting to configure",
+                text = stringResource(Res.string.settings_select_prompt),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Choose from the options on the left",
+                text = stringResource(Res.string.settings_select_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -385,14 +427,13 @@ private fun WorkspacePickerCard(
     isLoading: Boolean,
     onClick: () -> Unit
 ) {
-    OutlinedCard(
-        modifier = Modifier.fillMaxWidth()
+    DokusCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        padding = DokusCardPadding.Default,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onClick() }
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -409,7 +450,8 @@ private fun WorkspacePickerCard(
                     )
                 } else {
                     Text(
-                        text = workspaceName ?: stringResource(Res.string.settings_select_workspace),
+                        text = workspaceName
+                            ?: stringResource(Res.string.settings_select_workspace),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -428,10 +470,9 @@ private fun WorkspacePickerCard(
 private fun SettingsGroupCard(
     title: StringResource,
     sections: List<ModuleSettingsSection>,
-    selectedSection: ModuleSettingsSection?,
     onSectionClick: (ModuleSettingsSection) -> Unit
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
         Column {
             Text(
                 text = stringResource(title),
@@ -446,7 +487,6 @@ private fun SettingsGroupCard(
                 ListSettingsItem(
                     text = stringResource(section.title),
                     icon = section.icon,
-                    isSelected = selectedSection == section,
                     onClick = { onSectionClick(section) }
                 )
             }

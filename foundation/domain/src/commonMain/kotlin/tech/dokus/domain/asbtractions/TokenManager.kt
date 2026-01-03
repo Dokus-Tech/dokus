@@ -1,7 +1,7 @@
 package tech.dokus.domain.asbtractions
 
-import tech.dokus.domain.model.auth.JwtClaims
 import kotlinx.coroutines.flow.StateFlow
+import tech.dokus.domain.model.auth.JwtClaims
 
 interface TokenManager {
     val isAuthenticated: StateFlow<Boolean>

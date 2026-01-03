@@ -1,0 +1,145 @@
+<resources>
+    <!-- Settings Groups -->
+    <string name="settings_group_account">Account</string>
+    <string name="settings_group_workspace">Workspace</string>
+    <string name="settings_group_app">App</string>
+
+    <!-- Settings Sections -->
+    <string name="settings_profile">Profile</string>
+    <string name="settings_workspace_details">Company Details</string>
+    <string name="settings_team">Team Members</string>
+    <string name="settings_peppol">Peppol E-Invoicing</string>
+    <string name="settings_appearance">Appearance</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_select_prompt">Select a setting to configure</string>
+    <string name="settings_select_hint">Choose from the options on the left</string>
+    <string name="settings_saved_successfully">Settings saved successfully</string>
+    <string name="settings_save_failed">Failed to save settings</string>
+    <string name="settings_unknown_section">Unknown settings section</string>
+
+    <!-- Workspace Picker -->
+    <string name="settings_current_workspace">Current Workspace</string>
+    <string name="settings_switch_workspace">Switch Workspace</string>
+    <string name="settings_select_workspace">Select Workspace</string>
+
+    <!-- Profile Settings -->
+    <string name="profile_settings_title">Profile</string>
+    <string name="profile_personal_info">Personal Information</string>
+    <string name="profile_first_name">First Name</string>
+    <string name="profile_last_name">Last Name</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_change_password">Change Password</string>
+    <string name="profile_current_password">Current Password</string>
+    <string name="profile_new_password">New Password</string>
+    <string name="profile_confirm_password">Confirm Password</string>
+    <string name="profile_danger_zone">Danger Zone</string>
+    <string name="profile_deactivate_account">Deactivate Account</string>
+    <string name="profile_deactivate_warning">Deactivating your account will remove access to all workspaces.</string>
+    <string name="profile_password_changed">Password changed successfully</string>
+    <string name="profile_logout">Log Out</string>
+    <string name="profile_logout_description">Sign out from this device</string>
+    <string name="profile_logging_out">Logging out...</string>
+    <string name="profile_edit">Edit</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_cancel">Cancel</string>
+    <string name="profile_save_success">Profile updated successfully</string>
+    <string name="profile_save_error">Failed to update profile</string>
+    <string name="profile_load_failed">Failed to load profile</string>
+    <string name="profile_reset_to_cloud_failed">Failed to reset to cloud</string>
+
+    <!-- Workspace Settings -->
+    <string name="workspace_settings_title">Company Details</string>
+    <string name="workspace_company_info">Company Information</string>
+    <string name="workspace_company_name">Company Name</string>
+    <string name="workspace_legal_name">Legal Name</string>
+    <string name="workspace_vat_number">VAT Number</string>
+    <string name="workspace_banking">Banking Details</string>
+    <string name="workspace_iban">IBAN</string>
+    <string name="workspace_bic">BIC</string>
+    <string name="workspace_address">Address</string>
+    <string name="workspace_invoice_settings">Invoice Settings</string>
+    <string name="workspace_invoice_prefix">Invoice Prefix</string>
+    <string name="workspace_payment_terms">Default Payment Terms (days)</string>
+    <string name="workspace_create_title">Create your workspace</string>
+    <string name="workspace_create_button">Create workspace</string>
+    <string name="workspace_display_name">Display name</string>
+    <string name="workspace_select_title">Select your workspace</string>
+    <string name="workspace_add">Add workspace</string>
+    <string name="workspace_type_company">Company</string>
+    <string name="workspace_type_freelancer">Freelancer</string>
+    <string name="workspace_create_failed">Failed to create workspace</string>
+    <string name="workspace_select_failed">Failed to select workspace</string>
+    <string name="workspace_settings_load_failed">Failed to load workspace settings</string>
+    <string name="workspace_company_logo">Company logo</string>
+    <string name="workspace_avatar_upload_failed">Failed to upload company logo</string>
+    <string name="workspace_avatar_delete_failed">Failed to delete company logo</string>
+
+    <!-- Invoice Settings Descriptions -->
+    <string name="workspace_invoice_settings_description">Configure how your invoices are numbered and formatted</string>
+    <string name="workspace_invoice_prefix_description">Appears at the start of invoice numbers (e.g., INV-2025-001)</string>
+    <string name="workspace_payment_days_description">Default number of days until payment is due</string>
+
+    <!-- Invoice Numbering Section -->
+    <string name="workspace_invoice_numbering">Invoice Numbering</string>
+    <string name="workspace_invoice_numbering_description">Control the automatic numbering format</string>
+    <string name="workspace_invoice_include_year">Include year in number</string>
+    <string name="workspace_invoice_yearly_reset">Reset numbering each year</string>
+    <string name="workspace_invoice_padding">Number padding (digits)</string>
+    <string name="workspace_invoice_preview">Preview</string>
+
+    <!-- Payment Terms Section -->
+    <string name="workspace_payment_terms_section">Payment Terms</string>
+    <string name="workspace_payment_terms_text">Legal Payment Terms</string>
+    <string name="workspace_payment_terms_description">Optional legal terms printed on invoices (late payment fees, collection costs, etc.)</string>
+    <string name="workspace_payment_terms_placeholder">e.g., In the event of non-payment, an interest rate of 8% per year will be charged...</string>
+
+    <!-- Peppol Settings -->
+    <string name="peppol_settings_title">Peppol E-Invoicing</string>
+    <string name="peppol_connection_status">Connection Status</string>
+    <string name="peppol_connected">Connected</string>
+    <string name="peppol_not_configured">Not Configured</string>
+    <string name="peppol_credentials">Credentials</string>
+    <string name="peppol_company_id">Company ID</string>
+    <string name="peppol_participant_id">Peppol Participant ID</string>
+    <string name="peppol_api_key">API Key</string>
+    <string name="peppol_api_secret">API Secret</string>
+    <string name="peppol_configuration">Configuration</string>
+    <string name="peppol_enabled">Enable Peppol</string>
+    <string name="peppol_test_mode">Test Mode</string>
+    <string name="peppol_test_connection">Test Connection</string>
+    <string name="peppol_delete_settings">Delete Peppol Settings</string>
+    <string name="peppol_key_placeholder">Leave blank to keep existing key</string>
+    <string name="peppol_secret_placeholder">Leave blank to keep existing secret</string>
+    <string name="peppol_testing_connection">Testing connection...</string>
+    <string name="peppol_connection_successful">Connection successful!</string>
+    <string name="peppol_delete_warning">Deleting Peppol settings will disable e-invoicing capabilities.</string>
+    <string name="peppol_delete_success">Peppol settings deleted</string>
+    <string name="peppol_connect_title">Connect Peppol Provider</string>
+    <string name="peppol_connect_title_with_provider">Connect %1$s</string>
+    <string name="peppol_select_provider_hint">Select a provider to continue</string>
+    <string name="peppol_provider_recommand_description">Recommended for fast onboarding</string>
+    <string name="peppol_more_providers_coming">More providers coming soon</string>
+    <string name="peppol_connected_to">Connected to %1$s</string>
+    <string name="peppol_get_credentials_title">Get your API credentials</string>
+    <string name="peppol_instruction_visit_site">Visit the provider website</string>
+    <string name="peppol_instruction_create_account">Create an account</string>
+    <string name="peppol_instruction_navigate_api">Navigate to API credentials</string>
+    <string name="peppol_instruction_generate_keys">Generate API keys</string>
+    <string name="peppol_instruction_copy_credentials">Copy the credentials below</string>
+    <string name="peppol_open_provider">Open provider website</string>
+    <string name="peppol_select_company_title">Select a company</string>
+    <string name="peppol_multiple_companies_hint">Multiple companies found, choose one to continue</string>
+    <string name="peppol_enterprise_value">Enterprise</string>
+    <string name="peppol_no_companies_title">No companies found</string>
+    <string name="peppol_no_companies_hint">Create a company on the provider platform to continue</string>
+    <string name="peppol_create_company_on_provider">Create company on provider</string>
+
+    <!-- Appearance Settings -->
+    <string name="appearance_settings_title">Appearance</string>
+    <string name="appearance_theme">Theme</string>
+    <string name="appearance_theme_light">Light</string>
+    <string name="appearance_theme_dark">Dark</string>
+    <string name="appearance_theme_system">System</string>
+    <string name="appearance_language">Language</string>
+</resources>

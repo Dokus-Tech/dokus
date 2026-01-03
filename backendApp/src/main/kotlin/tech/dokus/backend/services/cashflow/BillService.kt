@@ -1,7 +1,8 @@
 package tech.dokus.backend.services.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.BillRepository
-import ai.dokus.foundation.database.repository.cashflow.BillStatistics
+import kotlinx.datetime.LocalDate
+import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.BillStatistics
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.BillStatus
@@ -12,9 +13,8 @@ import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.ktor.utils.loggerFor
-import ai.dokus.peppol.model.PeppolReceivedDocument
-import kotlinx.datetime.LocalDate
+import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.peppol.model.PeppolReceivedDocument
 
 /**
  * Service for bill business operations.
@@ -249,35 +249,35 @@ class BillService(
         val lowerName = supplierName.lowercase()
         return when {
             lowerName.contains("telecom") || lowerName.contains("mobile") ||
-                    lowerName.contains("proximus") || lowerName.contains("orange") ||
-                    lowerName.contains("telenet") -> ExpenseCategory.Telecommunications
+                lowerName.contains("proximus") || lowerName.contains("orange") ||
+                lowerName.contains("telenet") -> ExpenseCategory.Telecommunications
 
             lowerName.contains("electric") || lowerName.contains("gas") ||
-                    lowerName.contains("water") || lowerName.contains("engie") ||
-                    lowerName.contains("luminus") -> ExpenseCategory.Utilities
+                lowerName.contains("water") || lowerName.contains("engie") ||
+                lowerName.contains("luminus") -> ExpenseCategory.Utilities
 
             lowerName.contains("software") || lowerName.contains("cloud") ||
-                    lowerName.contains("microsoft") || lowerName.contains("google") ||
-                    lowerName.contains("aws") || lowerName.contains("adobe") -> ExpenseCategory.Software
+                lowerName.contains("microsoft") || lowerName.contains("google") ||
+                lowerName.contains("aws") || lowerName.contains("adobe") -> ExpenseCategory.Software
 
             lowerName.contains("insurance") || lowerName.contains("axa") ||
-                    lowerName.contains("ethias") -> ExpenseCategory.Insurance
+                lowerName.contains("ethias") -> ExpenseCategory.Insurance
 
             lowerName.contains("office") || lowerName.contains("staples") ||
-                    lowerName.contains("bol.com") -> ExpenseCategory.OfficeSupplies
+                lowerName.contains("bol.com") -> ExpenseCategory.OfficeSupplies
 
             lowerName.contains("accountant") || lowerName.contains("lawyer") ||
-                    lowerName.contains("consultant") || lowerName.contains("fiduciary") -> ExpenseCategory.ProfessionalServices
+                lowerName.contains("consultant") || lowerName.contains("fiduciary") -> ExpenseCategory.ProfessionalServices
 
             lowerName.contains("rent") || lowerName.contains("lease") ||
-                    lowerName.contains("immobili") -> ExpenseCategory.Rent
+                lowerName.contains("immobili") -> ExpenseCategory.Rent
 
             lowerName.contains("fuel") || lowerName.contains("garage") ||
-                    lowerName.contains("toyota") || lowerName.contains("volkswagen") -> ExpenseCategory.Vehicle
+                lowerName.contains("toyota") || lowerName.contains("volkswagen") -> ExpenseCategory.Vehicle
 
             lowerName.contains("hotel") || lowerName.contains("airline") ||
-                    lowerName.contains("train") || lowerName.contains("sncb") ||
-                    lowerName.contains("nmbs") -> ExpenseCategory.Travel
+                lowerName.contains("train") || lowerName.contains("sncb") ||
+                lowerName.contains("nmbs") -> ExpenseCategory.Travel
 
             else -> ExpenseCategory.Other
         }

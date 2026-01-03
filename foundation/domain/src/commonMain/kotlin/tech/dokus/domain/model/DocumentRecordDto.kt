@@ -1,5 +1,9 @@
 package tech.dokus.domain.model
 
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
@@ -8,8 +12,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.Serializable
 
 /**
  * Document ingestion run DTO - represents a single AI extraction attempt.
@@ -48,6 +50,9 @@ data class DocumentDraftDto(
     val suggestedContactId: ContactId?,
     val contactSuggestionConfidence: Float?,
     val contactSuggestionReason: String?,
+    val linkedContactId: ContactId?,
+    val counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
+    val rejectReason: DocumentRejectReason? = null,
     val lastSuccessfulRunId: IngestionRunId?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
@@ -105,7 +110,9 @@ data class ReprocessResponse(
  */
 @Serializable
 data class UpdateDraftRequest(
-    val extractedData: ExtractedDocumentData,
+    val extractedData: ExtractedDocumentData? = null,
+    val contactId: String? = null,
+    val counterpartyIntent: CounterpartyIntent? = null,
     val changeDescription: String? = null
 )
 
@@ -127,6 +134,14 @@ data class UpdateDraftResponse(
 data class ConfirmDocumentRequest(
     val documentType: DocumentType,
     val extractedData: ExtractedDocumentData? = null // Optional overrides
+)
+
+/**
+ * Request to reject a document draft with a reason.
+ */
+@Serializable
+data class RejectDocumentRequest(
+    val reason: DocumentRejectReason
 )
 
 /**

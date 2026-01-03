@@ -53,7 +53,7 @@
         <appender-ref ref="ASYNC_FILE" />
     </logger>
 
-    <logger name="ai.dokus" level="${LOG_LEVEL}" additivity="false">
+    <logger name="tech.dokus" level="${LOG_LEVEL}" additivity="false">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="ASYNC_FILE" />
         <appender-ref ref="ERROR_FILE" />

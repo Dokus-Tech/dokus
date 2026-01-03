@@ -1,0 +1,338 @@
+<resources>
+    <!-- Cashflow Screen -->
+    <string name="cashflow_title">Kasstroom</string>
+    <string name="cashflow_card_title">Kasstroom</string>
+    <string name="cashflow_add_document">Nieuw document toevoegen</string>
+    <string name="cashflow_no_documents">Nog geen financiële documenten</string>
+    <string name="cashflow_search">Zoeken</string>
+    <string name="cashflow_search_placeholder">Zoeken...</string>
+
+    <!-- Document Types -->
+    <string name="document_type_invoice">Factuur</string>
+    <string name="document_type_expense">Uitgave</string>
+    <string name="document_type_bill">Inkoopfactuur</string>
+    <string name="document_type_document">Document</string>
+    <string name="document_type_unknown">Onbekend</string>
+
+    <!-- Pending Documents -->
+    <string name="pending_documents_title">Kasstroom</string>
+    <string name="pending_documents_empty">Geen openstaande documenten</string>
+    <string name="pending_documents_need_confirmation">Bevestiging nodig</string>
+    <string name="pending_documents_previous">Vorige</string>
+    <string name="pending_documents_next">Volgende</string>
+
+    <!-- Document Table -->
+    <string name="document_table_invoice">Factuur</string>
+    <string name="document_table_contact">Contact</string>
+    <string name="document_table_amount">Bedrag</string>
+    <string name="document_table_date">Datum</string>
+    <string name="document_table_more_options">Meer opties</string>
+    <string name="document_table_view_details">Details bekijken</string>
+
+    <!-- Invoice Details Form -->
+    <string name="invoice_details">Details</string>
+    <string name="invoice_name">Factuurnaam</string>
+    <string name="invoice_total_amount">Totaalbedrag</string>
+    <string name="invoice_vat">BTW</string>
+    <string name="invoice_category">Categorie</string>
+    <string name="invoice_issue_date">Uitgiftedatum</string>
+    <string name="invoice_due_date">Vervaldatum</string>
+    <string name="invoice_due_prefix">Vervalt:</string>
+    <string name="invoice_client">Klant</string>
+    <string name="invoice_recurrent_expense">Terugkerende uitgave</string>
+    <string name="invoice_items">Items</string>
+    <string name="invoice_no_items">Geen items toegevoegd</string>
+
+    <!-- Cash Flow Direction -->
+    <string name="cashflow_direction">Kasstroom</string>
+    <string name="cashflow_cash_in">Inkomend</string>
+    <string name="cashflow_cash_out">Uitgaand</string>
+
+    <!-- Yes/No -->
+    <string name="answer_yes">Ja</string>
+    <string name="answer_no">Nee</string>
+
+    <!-- Business Health Card -->
+    <string name="business_health_title">Bedrijfsgezondheid</string>
+    <string name="business_health_predicted">Voorspeld</string>
+    <string name="business_health_actual">Werkelijk</string>
+
+    <!-- VAT Summary Card -->
+    <string name="vat_summary_title">BTW</string>
+    <string name="vat_net_amount">Nettobedrag</string>
+    <string name="vat_predicted_net_amount">Voorspeld nettobedrag</string>
+
+    <!-- Document Upload -->
+    <string name="upload_documents_title">Documenten uploaden</string>
+    <string name="upload_add_document">Document toevoegen</string>
+    <string name="upload_drag_hint">of sleep bestanden hierheen</string>
+    <string name="upload_instructions">Om een afbeelding te importeren of een document te scannen voor uw factuur, zorg ervoor dat het bestand duidelijk is en in een compatibel formaat.</string>
+    <string name="upload_no_app_hint">Heeft u de applicatie niet? Klik hier</string>
+    <string name="upload_uploads_title">Uploads</string>
+    <string name="upload_no_documents">Geen documenten worden geüpload</string>
+    <string name="upload_release_to_upload">Loslaten om te uploaden</string>
+    <string name="upload_documents_absorbed">Documenten worden geabsorbeerd</string>
+
+    <!-- Upload Item Actions -->
+    <string name="upload_action_cancel">Annuleren</string>
+    <string name="upload_action_retry">Opnieuw proberen</string>
+    <string name="upload_action_remove">Verwijderen</string>
+    <string name="upload_action_delete">Verwijderen</string>
+    <string name="upload_action_undo">Verwijderen ongedaan maken</string>
+    <string name="upload_action_close">Sluiten</string>
+    <string name="upload_status_failed">Mislukt</string>
+    <string name="upload_status_uploaded">Geüpload</string>
+
+    <!-- App Download Dialog -->
+    <string name="app_download_title">Download de Dokus App</string>
+    <string name="app_download_description">Scan deze QR-code met uw telefoon om de Dokus mobiele app te downloaden.</string>
+    <string name="app_download_platforms">Beschikbaar op iOS en Android</string>
+    <string name="app_download_qr_code">QR-code</string>
+
+    <!-- Sort Dropdown -->
+    <string name="sort_expand">Sorteeropties uitvouwen</string>
+
+    <!-- Invoice Creation - General -->
+    <string name="invoice_title">Factuur</string>
+    <string name="invoice_preview">Voorbeeld</string>
+
+    <!-- Invoice Status -->
+    <string name="invoice_status_draft">Concept</string>
+    <string name="invoice_status_sent">Verzonden</string>
+    <string name="invoice_status_viewed">Bekeken</string>
+    <string name="invoice_status_partial">Gedeeltelijk</string>
+    <string name="invoice_status_paid">Betaald</string>
+    <string name="invoice_status_overdue">Achterstallig</string>
+    <string name="invoice_status_cancelled">Geannuleerd</string>
+    <string name="invoice_status_refunded">Terugbetaald</string>
+
+    <!-- Invoice Creation - Sections -->
+    <string name="invoice_bill_to">Factureren aan</string>
+    <string name="invoice_description">Omschrijving</string>
+    <string name="invoice_qty">Aant</string>
+    <string name="invoice_price">Prijs</string>
+    <string name="invoice_amount">Bedrag</string>
+    <string name="invoice_total">Totaal</string>
+    <string name="invoice_subtotal">Subtotaal</string>
+
+    <!-- Invoice Creation - Actions & UI -->
+    <string name="invoice_select_client">Selecteer klant</string>
+    <string name="invoice_click_to_select_client">Klik om een klant te selecteren</string>
+    <string name="invoice_click_to_change">Klik om te wijzigen</string>
+    <string name="invoice_line_items">Factuurregels</string>
+    <string name="invoice_add_line_item">Regel toevoegen</string>
+    <string name="invoice_item_number">Artikel %1$d</string>
+    <string name="invoice_line_total">Regeltotaal: %1$s</string>
+    <string name="invoice_vat_rate">BTW-tarief</string>
+    <string name="invoice_remove">Verwijderen</string>
+    <string name="invoice_save_as_draft">Opslaan als concept</string>
+    <string name="invoice_vat_with_rate">BTW (%1$d%%): %2$s</string>
+
+    <!-- Invoice Creation - Send Options -->
+    <string name="invoice_send_options">Verzendopties</string>
+    <string name="invoice_choose_delivery_method">Kies verzendmethode</string>
+    <string name="invoice_send_coming_soon_message">Verzendfuncties komen binnenkort. Sla nu uw factuur op als concept.</string>
+    <string name="invoice_summary">Factuursamenvatting</string>
+    <string name="invoice_line_items_count">%1$d regel(s)</string>
+    <string name="invoice_coming_soon">Binnenkort beschikbaar</string>
+    <string name="invoice_not_selected">Niet geselecteerd</string>
+    <string name="invoice_not_set">Niet ingesteld</string>
+
+    <!-- Delivery Methods -->
+    <string name="delivery_export_pdf">Exporteren als PDF</string>
+    <string name="delivery_send_peppol">Verzenden via Peppol</string>
+    <string name="delivery_send_email">Verzenden per e-mail</string>
+    <string name="delivery_pdf_description">Factuur downloaden als PDF</string>
+    <string name="delivery_peppol_description">E-factuur rechtstreeks naar klant sturen</string>
+    <string name="delivery_peppol_warning">Klant heeft geen Peppol ID geconfigureerd</string>
+    <string name="delivery_email_description">PDF-factuur per e-mail verzenden</string>
+
+    <!-- Peppol Warnings -->
+    <string name="peppol_id_missing">Peppol ID ontbreekt</string>
+    <string name="peppol_belgian_client_warning">Deze Belgische klant heeft een Peppol ID nodig voor e-facturatie (verplicht vanaf 2026)</string>
+    <string name="peppol_belgian_client_warning_short">Belgische klant zonder Peppol ID - e-facturatie verplicht vanaf 2026</string>
+
+    <!-- Errors -->
+    <string name="error_failed_to_load_clients">Kon klanten niet laden</string>
+
+    <!-- Draft Status -->
+    <string name="draft_status_needs_input">Invoer nodig</string>
+    <string name="draft_status_needs_review">Beoordeling nodig</string>
+    <string name="draft_status_ready">Klaar</string>
+    <string name="draft_status_confirmed">Bevestigd</string>
+    <string name="draft_status_rejected">Afgewezen</string>
+
+    <!-- Cashflow Actions -->
+    <string name="cashflow_upload_document">Document uploaden</string>
+    <string name="cashflow_create_invoice">Factuur maken</string>
+    <string name="cashflow_sort_label">Sorteren</string>
+    <string name="cashflow_sort_default">Standaard</string>
+    <string name="cashflow_sort_date_newest">Nieuwste eerst</string>
+    <string name="cashflow_sort_date_oldest">Oudste eerst</string>
+    <string name="cashflow_sort_amount_highest">Bedrag (hoog naar laag)</string>
+    <string name="cashflow_sort_amount_lowest">Bedrag (laag naar hoog)</string>
+    <string name="cashflow_sort_type">Type</string>
+    <string name="cashflow_document_number_expense">Uitgave %1$s</string>
+    <string name="cashflow_document_number_bill">Factuur %1$s</string>
+    <string name="cashflow_amount_with_currency">%1$s %2$s</string>
+    <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
+
+    <!-- Document Review -->
+    <string name="cashflow_document_review_title">Documentcontrole</string>
+    <string name="cashflow_chat_with_document">Chat met document</string>
+    <string name="cashflow_confidence_badge">AI: %1$d%%</string>
+    <string name="cashflow_counterparty_details_title">Counterparty &amp; Details</string>
+    <string name="cashflow_counterparty_ai_extracted">Counterparty (AI extracted)</string>
+    <string name="cashflow_action_link_contact">Link existing contact</string>
+    <string name="cashflow_action_save_new_contact">Save as new contact</string>
+    <string name="cashflow_action_ignore_for_now">Ignore for now</string>
+    <string name="cashflow_confidence_label">AI</string>
+    <string name="cashflow_confidence_high">High</string>
+    <string name="cashflow_confidence_medium">Medium</string>
+    <string name="cashflow_confidence_low">Low</string>
+    <string name="cashflow_loading_document">Document laden...</string>
+    <string name="cashflow_unknown_document_type">Onbekend documenttype</string>
+    <string name="cashflow_document_rejected">Document afgewezen</string>
+    <string name="cashflow_client_information">Klantinformatie</string>
+    <string name="cashflow_client_name">Klantnaam</string>
+    <string name="cashflow_invoice_details_section">Factuurdetails</string>
+    <string name="cashflow_section_amounts">Bedragen</string>
+    <string name="cashflow_section_additional_information">Aanvullende informatie</string>
+    <string name="cashflow_invoice_number">Factuurnummer</string>
+    <string name="cashflow_vat_amount">Btw-bedrag</string>
+    <string name="cashflow_bill_details_section">Factuurdetails</string>
+    <string name="cashflow_supplier_information">Leveranciersinformatie</string>
+    <string name="cashflow_supplier_name">Leveranciersnaam</string>
+    <string name="cashflow_merchant_information">Handelaarsinformatie</string>
+    <string name="cashflow_merchant">Handelaar</string>
+    <string name="cashflow_expense_details_section">Uitgavedetails</string>
+    <string name="cashflow_receipt_number">Bonnummer</string>
+    <string name="cashflow_payment_method">Betaalmethode</string>
+    <string name="cashflow_tax_deductibility">Fiscale aftrekbaarheid</string>
+    <string name="cashflow_reject_title">Document afwijzen</string>
+    <string name="cashflow_reject_prompt">Waarom wijs je dit document af?</string>
+    <string name="cashflow_reject_reason_not_my_business">Niet mijn bedrijf</string>
+    <string name="cashflow_reject_reason_duplicate">Duplicaat</string>
+    <string name="cashflow_reject_reason_spam">Spam</string>
+    <string name="cashflow_reject_reason_test">Test</string>
+    <string name="cashflow_reject_reason_other">Overig</string>
+    <string name="cashflow_discard_changes_title">Wijzigingen negeren?</string>
+    <string name="cashflow_discard_changes_message">Je bewerkingen gaan verloren.</string>
+    <string name="draft_status_unconfirmed">Onbevestigd</string>
+    <string name="cashflow_is_deductible">Aftrekbaar</string>
+    <string name="cashflow_deductible_percentage">Aftrekbaar percentage</string>
+    <string name="cashflow_select_category">Categorie selecteren</string>
+    <string name="cashflow_select_payment_method">Betaalmethode selecteren</string>
+    <string name="cashflow_suggested_contacts">Voorgestelde contacten:</string>
+
+    <!-- Contact Selection -->
+    <string name="cashflow_client_label">Klant</string>
+    <string name="cashflow_supplier_label">Leverancier</string>
+    <string name="cashflow_contact_label">Contact</string>
+    <string name="cashflow_saving_contact">Contact opslaan...</string>
+    <string name="cashflow_no_contact_selected">Geen contact geselecteerd</string>
+    <string name="cashflow_select_contact">Contact selecteren</string>
+    <string name="cashflow_suggested_contact">Voorgesteld contact</string>
+    <string name="cashflow_use_this_contact">Dit contact gebruiken</string>
+    <string name="cashflow_choose_different">Andere kiezen</string>
+    <string name="cashflow_contact_selected">Contact geselecteerd</string>
+    <string name="cashflow_bound_to">Gekoppeld aan %1$s</string>
+    <string name="cashflow_ai_suggested">AI-voorgesteld</string>
+
+    <!-- Document Review Messages -->
+    <string name="cashflow_contact_clear_failed">Contact verwijderen mislukt</string>
+    <string name="cashflow_contact_save_failed">Contact opslaan mislukt</string>
+    <string name="cashflow_contact_bind_failed">Contact koppelen mislukt</string>
+    <string name="cashflow_preview_load_failed">Documentvoorvertoning laden mislukt</string>
+    <string name="cashflow_draft_saved">Concept opgeslagen</string>
+    <string name="cashflow_confirm_missing_fields">Verplichte velden ontbreken</string>
+    <string name="cashflow_confirm_select_contact">Selecteer een contact om door te gaan</string>
+    <string name="cashflow_document_confirmed">Document bevestigd</string>
+
+    <!-- Preview -->
+    <string name="cashflow_document_preview_title">Documentvoorvertoning</string>
+    <string name="cashflow_preview_page_label">Pagina %1$d</string>
+    <string name="cashflow_preview_page_failed">Pagina %1$d mislukt</string>
+    <string name="cashflow_preview_load_more">Meer laden (toon %1$d van %2$d)</string>
+    <string name="cashflow_preview_highlight_hint">De voorvertoning markeert relevante secties wanneer je een veld selecteert</string>
+    <string name="cashflow_no_preview">Geen voorvertoning</string>
+    <string name="cashflow_page_single">%1$d pagina</string>
+    <string name="cashflow_page_plural">%1$d pagina's</string>
+
+    <!-- Invoice Creation (Additional) -->
+    <string name="invoice_click_to_set">Klik om in te stellen</string>
+    <string name="invoice_back_to_edit">Terug naar bewerken</string>
+    <string name="invoice_details_title">Factuurdetails</string>
+    <string name="invoice_notes_optional">Notities (optioneel)</string>
+    <string name="invoice_add_description_hint">Beschrijving toevoegen</string>
+    <string name="invoice_price_with_currency">Prijs (%1$s)</string>
+    <string name="invoice_number_preview">Factuur #%1$s</string>
+    <string name="invoice_edit_hint_desktop">Klik op een veld om te bewerken</string>
+    <string name="invoice_edit_hint_mobile">Tik op een veld om te bewerken</string>
+    <string name="invoice_contact_search_placeholder">Contacten zoeken...</string>
+    <string name="invoice_contact_search_label">Contacten zoeken</string>
+    <string name="invoice_contact_search_help">Zoek een klant op naam, e-mail of btw-nummer</string>
+    <string name="invoice_selected_contact">Geselecteerd contact</string>
+    <string name="invoice_search_clients">Klanten zoeken</string>
+    <string name="invoice_no_clients_found">Geen klanten gevonden</string>
+    <string name="invoice_no_clients_match">Geen klanten komen overeen met je zoekopdracht</string>
+    <string name="cashflow_invoice_create_success">Factuur succesvol aangemaakt</string>
+    <string name="cashflow_invoice_create_failed">Factuur maken mislukt</string>
+    <string name="invoice_validation_client_required">Selecteer een klant</string>
+    <string name="invoice_validation_items_required">Voeg ten minste één geldige regel toe</string>
+    <string name="invoice_validation_due_date_before_issue">De vervaldatum mag niet vóór de uitgiftedatum liggen</string>
+
+    <!-- Upload -->
+    <string name="upload_select_or_drag">Selecteer bestanden of sleep ze hierheen</string>
+    <string name="upload_drop_files">Laat bestanden los om te uploaden</string>
+    <string name="upload_with_camera">Uploaden met camera</string>
+    <string name="upload_select_file">Selecteer een bestand</string>
+    <string name="upload_status_deleting">Verwijderen...</string>
+    <string name="upload_status_waiting">Wachten...</string>
+    <string name="upload_failed_message">Uploaden mislukt</string>
+
+    <!-- Bill Status -->
+    <string name="bill_status_draft">Concept</string>
+    <string name="bill_status_pending">In behandeling</string>
+    <string name="bill_status_scheduled">Gepland</string>
+    <string name="bill_status_paid">Betaald</string>
+    <string name="bill_status_overdue">Achterstallig</string>
+    <string name="bill_status_cancelled">Geannuleerd</string>
+
+    <!-- Business Health -->
+    <string name="business_health_description">Prestatieprognose op basis van recente activiteit</string>
+    <string name="health_status_good">Goed</string>
+    <string name="health_status_warning">Waarschuwing</string>
+    <string name="health_status_critical">Kritiek</string>
+
+    <!-- VAT Summary -->
+    <string name="vat_quarter_sublabel">Kwartaal %1$d</string>
+
+    <!-- Currency -->
+    <string name="currency_symbol_eur">€</string>
+
+    <!-- Expense Categories -->
+    <string name="expense_category_office_supplies">Kantoorbenodigdheden</string>
+    <string name="expense_category_travel">Reizen</string>
+    <string name="expense_category_meals">Maaltijden</string>
+    <string name="expense_category_software">Software</string>
+    <string name="expense_category_hardware">Hardware</string>
+    <string name="expense_category_utilities">Nutsvoorzieningen</string>
+    <string name="expense_category_rent">Huur</string>
+    <string name="expense_category_insurance">Verzekering</string>
+    <string name="expense_category_marketing">Marketing</string>
+    <string name="expense_category_professional_services">Professionele diensten</string>
+    <string name="expense_category_telecommunications">Telecommunicatie</string>
+    <string name="expense_category_vehicle">Voertuig</string>
+    <string name="expense_category_other">Overig</string>
+
+    <!-- Payment Methods -->
+    <string name="payment_method_bank_transfer">Bankoverschrijving</string>
+    <string name="payment_method_credit_card">Creditcard</string>
+    <string name="payment_method_debit_card">Debetkaart</string>
+    <string name="payment_method_paypal">PayPal</string>
+    <string name="payment_method_stripe">Stripe</string>
+    <string name="payment_method_cash">Contant</string>
+    <string name="payment_method_check">Cheque</string>
+    <string name="payment_method_other">Overig</string>
+</resources>

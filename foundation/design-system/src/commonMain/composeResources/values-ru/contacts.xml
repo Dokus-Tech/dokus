@@ -1,8 +1,0 @@
-<resources>
-    <!-- Contacts Screen -->
-    <string name="contacts_title">Контакты</string>
-    <string name="contacts_empty">Нет контактов</string>
-    <string name="contacts_empty_description">Добавьте первый контакт, чтобы начать</string>
-    <string name="contacts_add">Добавить контакт</string>
-    <string name="contacts_search">Поиск контактов...</string>
-</resources>
