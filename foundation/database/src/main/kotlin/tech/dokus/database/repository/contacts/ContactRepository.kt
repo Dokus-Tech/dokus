@@ -426,14 +426,14 @@ class ContactRepository {
         vatNumber: String
     ): Result<ContactDto?> = runCatching {
         dbQuery {
-            val normalized = vatNumber.uppercase().replace(" ", "").replace(".", "")
+            val normalized = VatNumber.normalize(vatNumber)
             // Search for both normalized and original format
             ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (ContactsTable.isActive eq true)
             }.filter { row ->
                 // Case-insensitive comparison on the result
-                val storedVat = row[ContactsTable.vatNumber]?.uppercase()?.replace(" ", "")?.replace(".", "")
+                val storedVat = row[ContactsTable.vatNumber]?.let { VatNumber.normalize(it) }
                 storedVat == normalized
             }.firstOrNull()?.let { row ->
                 mapRowToContactDto(row)

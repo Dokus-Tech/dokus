@@ -40,10 +40,26 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
     override fun toString(): String = value
 
     val normalized: String
-        get() = value
-            .replace(".", "")
-            .replace(" ", "")
-            .uppercase()
+        get() = normalize(value)
+
+    val countryCode: String?
+        get() = normalized.takeIf { it.length >= 2 && it.substring(0, 2).all { ch -> ch.isLetter() } }
+            ?.substring(0, 2)
+
+    val companyNumber: String
+        get() = normalized.let { normalizedValue ->
+            val code = countryCode
+            if (code == null || normalizedValue.length <= 2) normalizedValue else normalizedValue.substring(2)
+        }
+
+    val formatted: String
+        get() = format(includeCountry = true)
+
+    val formattedCompanyNumber: String
+        get() = format(includeCountry = false)
+
+    val isBelgian: Boolean
+        get() = countryCode == "BE"
 
     override val isValid: Boolean
         get() = ValidateVatNumberUseCase(this)
@@ -53,6 +69,36 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
 
     companion object {
         val Empty = VatNumber("")
+
+        fun normalize(raw: String): String = raw
+            .trim()
+            .uppercase()
+            .replace(Regex("[^A-Z0-9]"), "")
+
+        fun fromCountryAndCompanyNumber(countryCode: String, companyNumber: String): VatNumber {
+            val normalizedCountry = countryCode.trim().uppercase()
+            val normalizedCompany = normalize(companyNumber)
+            return VatNumber("$normalizedCountry$normalizedCompany")
+        }
+    }
+
+    private fun format(includeCountry: Boolean): String {
+        val country = countryCode
+        val formattedCompany = when (country) {
+            "BE" -> formatBelgianCompanyNumber(companyNumber)
+            else -> companyNumber
+        }
+        return if (includeCountry && country != null) {
+            "$country$formattedCompany"
+        } else {
+            formattedCompany
+        }
+    }
+
+    private fun formatBelgianCompanyNumber(number: String): String {
+        val digits = number.filter { it.isDigit() }
+        if (digits.length != 10) return number
+        return "${digits.substring(0, 4)}.${digits.substring(4, 7)}.${digits.substring(7, 10)}"
     }
 }
 

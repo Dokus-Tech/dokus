@@ -519,12 +519,21 @@ private fun buildUnifiedItems(
     queryVat: VatNumber?,
     query: String
 ): List<UnifiedLookupItem> {
-    val normalizedQueryVat = queryVat?.value?.let(::normalizeVatValue)
+    val normalizedQueryVat = queryVat?.normalized
+    val queryCompanyNumber = queryVat?.companyNumber
+    val queryCountryCode = queryVat?.countryCode
     val queryText = if (queryVat == null) query.trim().ifBlank { null } else null
     val externalResults = (lookupState as? LookupUiState.Success)?.results.orEmpty()
     val localItems = existingContacts.mapIndexed { index, contact ->
-        val contactVat = contact.vatNumber?.value?.let(::normalizeVatValue)
-        val hasVatExactMatch = normalizedQueryVat != null && contactVat == normalizedQueryVat
+        val contactVat = contact.vatNumber
+        val contactNormalized = contactVat?.normalized
+        val contactCompanyNumber = contactVat?.companyNumber
+        val contactCountryCode = contactVat?.countryCode
+        val hasVatExactMatch = normalizedQueryVat != null && (
+            contactNormalized == normalizedQueryVat ||
+                (queryCompanyNumber == contactCompanyNumber &&
+                    (queryCountryCode == null || contactCountryCode == null || queryCountryCode == contactCountryCode))
+            )
         val nameScore = nameScore(queryText, contact.name.value)
         UnifiedLookupItem.Local(
             key = "local-${contact.id}",
@@ -541,8 +550,15 @@ private fun buildUnifiedItems(
         )
     }
     val externalItems = externalResults.mapIndexed { index, entity ->
-        val entityVat = entity.vatNumber.value.let(::normalizeVatValue)
-        val hasVatExactMatch = normalizedQueryVat != null && entityVat == normalizedQueryVat
+        val entityVat = entity.vatNumber
+        val entityNormalized = entityVat.normalized
+        val entityCompanyNumber = entityVat.companyNumber
+        val entityCountryCode = entityVat.countryCode
+        val hasVatExactMatch = normalizedQueryVat != null && (
+            entityNormalized == normalizedQueryVat ||
+                (queryCompanyNumber == entityCompanyNumber &&
+                    (queryCountryCode == null || entityCountryCode == null || queryCountryCode == entityCountryCode))
+            )
         val isVerified = hasVatExactMatch
         val nameScore = nameScore(queryText, entity.name.value)
         val secondary = buildList {
@@ -584,8 +600,4 @@ private fun nameScore(query: String?, name: String): Int {
         normalizedName.contains(normalizedQuery) -> 1
         else -> 0
     }
-}
-
-private fun normalizeVatValue(value: String): String {
-    return value.trim().uppercase().replace(Regex("[^A-Z0-9]"), "")
 }
