@@ -17,7 +17,9 @@ data class StorageConfig(
         fun fromConfig(config: Config): StorageConfig = StorageConfig(
             publicUrl = if (config.hasPath("publicUrl")) {
                 config.getString("publicUrl").takeIf { it.isNotBlank() }
-            } else null
+            } else {
+                null
+            }
         )
 
         fun empty(): StorageConfig = StorageConfig(publicUrl = null)

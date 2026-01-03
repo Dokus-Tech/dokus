@@ -1,9 +1,9 @@
 package tech.dokus.database.repository.cashflow
 
+import kotlinx.datetime.LocalDate
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginatedResponse
-import kotlinx.datetime.LocalDate
 
 class CashflowRepository(
     private val invoiceRepository: InvoiceRepository,

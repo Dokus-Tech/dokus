@@ -1,13 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.database.repository.cashflow.BillRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
-import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
-import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DraftSummary
-import tech.dokus.database.repository.cashflow.ExpenseRepository
-import tech.dokus.database.repository.cashflow.IngestionRunSummary
-import tech.dokus.database.repository.cashflow.InvoiceRepository
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -21,6 +13,14 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.repository.cashflow.ExpenseRepository
+import tech.dokus.database.repository.cashflow.IngestionRunSummary
+import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
@@ -105,7 +105,9 @@ internal fun Route.documentRecordRoutes() {
                         billRepository,
                         expenseRepository
                     )
-                } else null
+                } else {
+                    null
+                }
 
                 DocumentRecordDto(
                     document = documentWithUrl,
@@ -151,7 +153,9 @@ internal fun Route.documentRecordRoutes() {
                     billRepository,
                     expenseRepository
                 )
-            } else null
+            } else {
+                null
+            }
 
             call.respond(
                 HttpStatusCode.OK,
@@ -290,9 +294,11 @@ internal fun Route.documentRecordRoutes() {
                 ReprocessRequest()
             }
 
-            logger.info("Reprocessing document: $documentId, force=${request.force}, " +
-                "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}, timeout=${request.timeoutSeconds}s], " +
-                "tenant=$tenantId")
+            logger.info(
+                "Reprocessing document: $documentId, force=${request.force}, " +
+                    "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}, " +
+                    "timeout=${request.timeoutSeconds}s], tenant=$tenantId"
+            )
 
             // Check document exists
             if (!documentRepository.exists(tenantId, documentId)) {
@@ -387,7 +393,7 @@ internal fun Route.documentRecordRoutes() {
             }
 
             val extractedData = request.extractedData ?: draft.extractedData
-            ?: throw DokusException.BadRequest("No extracted data available for confirmation")
+                ?: throw DokusException.BadRequest("No extracted data available for confirmation")
 
             // Check if entity already exists for this document (idempotent check)
             val existingEntity = findConfirmedEntity(
@@ -410,7 +416,9 @@ internal fun Route.documentRecordRoutes() {
 
                     // For now, require contact ID in a header or query param
                     // This should come from the request in production
-                    throw DokusException.BadRequest("Invoice creation from document requires contact selection. Use /api/v1/invoices instead.")
+                    throw DokusException.BadRequest(
+                        "Invoice creation from document requires contact selection. Use /api/v1/invoices instead."
+                    )
                 }
 
                 DocumentType.Bill -> {
@@ -552,90 +560,108 @@ private fun buildCorrections(
     // Invoice fields
     oldData?.invoice?.let { old ->
         newData.invoice?.let { new ->
-            if (old.clientName != new.clientName) corrections.add(
-                TrackedCorrection(
-                    "invoice.clientName",
-                    old.clientName,
-                    new.clientName,
-                    now
+            if (old.clientName != new.clientName) {
+                corrections.add(
+                    TrackedCorrection(
+                        "invoice.clientName",
+                        old.clientName,
+                        new.clientName,
+                        now
+                    )
                 )
-            )
-            if (old.invoiceNumber != new.invoiceNumber) corrections.add(
-                TrackedCorrection(
-                    "invoice.invoiceNumber",
-                    old.invoiceNumber,
-                    new.invoiceNumber,
-                    now
+            }
+            if (old.invoiceNumber != new.invoiceNumber) {
+                corrections.add(
+                    TrackedCorrection(
+                        "invoice.invoiceNumber",
+                        old.invoiceNumber,
+                        new.invoiceNumber,
+                        now
+                    )
                 )
-            )
-            if (old.totalAmount != new.totalAmount) corrections.add(
-                TrackedCorrection(
-                    "invoice.totalAmount",
-                    old.totalAmount?.toString(),
-                    new.totalAmount?.toString(),
-                    now
+            }
+            if (old.totalAmount != new.totalAmount) {
+                corrections.add(
+                    TrackedCorrection(
+                        "invoice.totalAmount",
+                        old.totalAmount?.toString(),
+                        new.totalAmount?.toString(),
+                        now
+                    )
                 )
-            )
+            }
         }
     }
 
     // Bill fields
     oldData?.bill?.let { old ->
         newData.bill?.let { new ->
-            if (old.supplierName != new.supplierName) corrections.add(
-                TrackedCorrection(
-                    "bill.supplierName",
-                    old.supplierName,
-                    new.supplierName,
-                    now
+            if (old.supplierName != new.supplierName) {
+                corrections.add(
+                    TrackedCorrection(
+                        "bill.supplierName",
+                        old.supplierName,
+                        new.supplierName,
+                        now
+                    )
                 )
-            )
-            if (old.invoiceNumber != new.invoiceNumber) corrections.add(
-                TrackedCorrection(
-                    "bill.invoiceNumber",
-                    old.invoiceNumber,
-                    new.invoiceNumber,
-                    now
+            }
+            if (old.invoiceNumber != new.invoiceNumber) {
+                corrections.add(
+                    TrackedCorrection(
+                        "bill.invoiceNumber",
+                        old.invoiceNumber,
+                        new.invoiceNumber,
+                        now
+                    )
                 )
-            )
-            if (old.amount != new.amount) corrections.add(
-                TrackedCorrection(
-                    "bill.amount",
-                    old.amount?.toString(),
-                    new.amount?.toString(),
-                    now
+            }
+            if (old.amount != new.amount) {
+                corrections.add(
+                    TrackedCorrection(
+                        "bill.amount",
+                        old.amount?.toString(),
+                        new.amount?.toString(),
+                        now
+                    )
                 )
-            )
+            }
         }
     }
 
     // Expense fields
     oldData?.expense?.let { old ->
         newData.expense?.let { new ->
-            if (old.merchant != new.merchant) corrections.add(
-                TrackedCorrection(
-                    "expense.merchant",
-                    old.merchant,
-                    new.merchant,
-                    now
+            if (old.merchant != new.merchant) {
+                corrections.add(
+                    TrackedCorrection(
+                        "expense.merchant",
+                        old.merchant,
+                        new.merchant,
+                        now
+                    )
                 )
-            )
-            if (old.amount != new.amount) corrections.add(
-                TrackedCorrection(
-                    "expense.amount",
-                    old.amount?.toString(),
-                    new.amount?.toString(),
-                    now
+            }
+            if (old.amount != new.amount) {
+                corrections.add(
+                    TrackedCorrection(
+                        "expense.amount",
+                        old.amount?.toString(),
+                        new.amount?.toString(),
+                        now
+                    )
                 )
-            )
-            if (old.category != new.category) corrections.add(
-                TrackedCorrection(
-                    "expense.category",
-                    old.category?.name,
-                    new.category?.name,
-                    now
+            }
+            if (old.category != new.category) {
+                corrections.add(
+                    TrackedCorrection(
+                        "expense.category",
+                        old.category?.name,
+                        new.category?.name,
+                        now
+                    )
                 )
-            )
+            }
         }
     }
 

@@ -1,31 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components.create
 
-import tech.dokus.features.contacts.mvi.CreateContactIntent
-import tech.dokus.features.contacts.mvi.CreateContactState
-import tech.dokus.features.contacts.mvi.ManualContactFormData
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_back
-import tech.dokus.aura.resources.contacts_add_contact_manually
-import tech.dokus.aura.resources.contacts_business
-import tech.dokus.aura.resources.contacts_company_name
-import tech.dokus.aura.resources.contacts_create_contact
-import tech.dokus.aura.resources.contacts_creating
-import tech.dokus.aura.resources.contacts_email
-import tech.dokus.aura.resources.contacts_full_name
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.aura.resources.contacts_phone
-import tech.dokus.aura.resources.contacts_vat_number
-import tech.dokus.aura.resources.country_belgium
-import tech.dokus.aura.resources.country_france
-import tech.dokus.aura.resources.country_netherlands
-import tech.dokus.aura.resources.field_optional
-import tech.dokus.aura.resources.field_required
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
-import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
-import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,11 +20,35 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_back
+import tech.dokus.aura.resources.contacts_add_contact_manually
+import tech.dokus.aura.resources.contacts_company_name
+import tech.dokus.aura.resources.contacts_create_contact
+import tech.dokus.aura.resources.contacts_creating
+import tech.dokus.aura.resources.contacts_email
+import tech.dokus.aura.resources.contacts_full_name
+import tech.dokus.aura.resources.contacts_phone
+import tech.dokus.aura.resources.contacts_vat_number
+import tech.dokus.aura.resources.country_belgium
+import tech.dokus.aura.resources.country_france
+import tech.dokus.aura.resources.country_netherlands
+import tech.dokus.aura.resources.field_optional
+import tech.dokus.aura.resources.field_required
 import tech.dokus.domain.Email
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.enums.Country
-import org.jetbrains.compose.resources.stringResource
+import tech.dokus.features.contacts.mvi.CreateContactIntent
+import tech.dokus.features.contacts.mvi.CreateContactState
+import tech.dokus.features.contacts.mvi.ManualContactFormData
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
+import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.extensions.localized
 
 /**
  * Manual step content - add contact without VAT lookup.
@@ -115,17 +113,17 @@ fun ManualStepContent(
             }
         }
 
-    // Primary action button
-    PPrimaryButton(
-        text = if (state.isSubmitting) {
-            stringResource(Res.string.contacts_creating)
-        } else {
-            stringResource(Res.string.contacts_create_contact)
-        },
-        enabled = !state.isSubmitting && isFormValid(state.contactType, state.formData),
-        isLoading = state.isSubmitting,
-        onClick = { onIntent(CreateContactIntent.CreateManualContact) },
-        modifier = Modifier
+        // Primary action button
+        PPrimaryButton(
+            text = if (state.isSubmitting) {
+                stringResource(Res.string.contacts_creating)
+            } else {
+                stringResource(Res.string.contacts_create_contact)
+            },
+            enabled = !state.isSubmitting && isFormValid(state.contactType, state.formData),
+            isLoading = state.isSubmitting,
+            onClick = { onIntent(CreateContactIntent.CreateManualContact) },
+            modifier = Modifier
                 .fillMaxWidth()
                 .height(Constrains.Height.button)
         )

@@ -49,8 +49,10 @@ sealed class OcrResult {
 enum class TimeoutStage {
     /** pdftoppm timed out during PDF to image conversion */
     PDF_CONVERSION,
+
     /** tesseract timed out while processing a specific page */
     OCR_PAGE,
+
     /** tesseract timed out while processing a single image input */
     OCR_IMAGE
 }

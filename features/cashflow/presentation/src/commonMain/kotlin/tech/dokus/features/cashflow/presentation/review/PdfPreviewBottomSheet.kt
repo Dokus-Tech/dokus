@@ -1,10 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_close
-import tech.dokus.aura.resources.cashflow_document_preview_title
-import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +24,16 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.cashflow_document_preview_title
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
+
+// UI dimensions
+private const val SheetHeightFraction = 0.9f
+private val CloseButtonBalanceWidth = 48.dp
+private val CloseIconSize = 24.dp
 
 /**
  * Full-screen bottom sheet for PDF preview on mobile.
@@ -69,7 +74,7 @@ fun PdfPreviewBottomSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.9f), // 90% of screen height
+                    .fillMaxHeight(SheetHeightFraction),
             ) {
                 // Header with close button
                 SheetHeader(onClose = onDismiss)
@@ -102,7 +107,7 @@ private fun SheetHeader(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Spacer(modifier = Modifier.width(48.dp)) // Balance for close button
+        Spacer(modifier = Modifier.width(CloseButtonBalanceWidth))
 
         Text(
             text = stringResource(Res.string.cashflow_document_preview_title),
@@ -116,7 +121,7 @@ private fun SheetHeader(
             PIcon(
                 icon = FeatherIcons.X,
                 description = stringResource(Res.string.action_close),
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(CloseIconSize),
             )
         }
     }

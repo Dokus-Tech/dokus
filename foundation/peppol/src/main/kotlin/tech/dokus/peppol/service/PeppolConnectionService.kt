@@ -76,7 +76,7 @@ class PeppolConnectionService(
             }
         }
 
-        val peppolId = "0208:${vatNormalized}"
+        val peppolId = "0208:$vatNormalized"
 
         val savedSettings = settingsRepository.saveSettings(
             tenantId = tenant.id,

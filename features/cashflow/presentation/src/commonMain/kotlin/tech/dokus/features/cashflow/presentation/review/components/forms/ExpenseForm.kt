@@ -1,7 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review.components.forms
 
-import tech.dokus.features.cashflow.presentation.review.EditableExpenseFields
-import tech.dokus.features.cashflow.presentation.review.ExpenseField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +34,8 @@ import tech.dokus.aura.resources.invoice_description
 import tech.dokus.aura.resources.invoice_vat_rate
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.features.cashflow.presentation.review.EditableExpenseFields
+import tech.dokus.features.cashflow.presentation.review.ExpenseField
 import tech.dokus.foundation.aura.components.fields.PDateField
 import tech.dokus.foundation.aura.components.fields.PDropdownField
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard

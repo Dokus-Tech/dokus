@@ -1,8 +1,10 @@
+@file:Suppress(
+    "TooManyFunctions", // Container handles contact creation workflow
+    "MagicNumber" // Timeout constants
+)
+
 package tech.dokus.features.contacts.mvi
 
-import tech.dokus.features.contacts.usecases.CreateContactUseCase
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.api.Container
@@ -21,6 +23,9 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.usecases.SearchCompanyUseCase
+import tech.dokus.features.contacts.usecases.CreateContactUseCase
+import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.foundation.platform.Logger
 
 internal typealias CreateContactCtx = PipelineContext<CreateContactState, CreateContactIntent, CreateContactAction>
 
@@ -479,7 +484,7 @@ internal class CreateContactContainer(
                 contacts
                     .filter { contact ->
                         contact.name.value.equals(name, ignoreCase = true) &&
-                                (type != ClientType.Business || contact.country == data.country.dbValue)
+                            (type != ClientType.Business || contact.country == data.country.dbValue)
                     }
                     .map { contact ->
                         SoftDuplicateUi(
@@ -496,5 +501,4 @@ internal class CreateContactContainer(
             onFailure = { emptyList() }
         )
     }
-
 }

@@ -1,14 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_client
-import tech.dokus.aura.resources.invoice_select_client
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.contact.ContactDto
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_client
+import tech.dokus.aura.resources.invoice_select_client
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.extensions.localized
 
 /**
  * Client selector dropdown for invoice creation.

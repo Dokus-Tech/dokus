@@ -1,9 +1,9 @@
 package tech.dokus.foundation.aura.local
 
-import tech.dokus.foundation.aura.style.ThemeManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import tech.dokus.foundation.aura.style.ThemeManager
 
 /**
  * CompositionLocal providing access to [ThemeManager].

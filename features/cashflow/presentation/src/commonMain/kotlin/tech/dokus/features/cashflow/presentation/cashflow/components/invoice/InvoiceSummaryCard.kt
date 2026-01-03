@@ -1,26 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
-import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_amount_with_currency
-import tech.dokus.aura.resources.common_empty_value
-import tech.dokus.aura.resources.currency_symbol_eur
-import tech.dokus.aura.resources.invoice_amount
-import tech.dokus.aura.resources.invoice_bill_to
-import tech.dokus.aura.resources.invoice_description
-import tech.dokus.aura.resources.invoice_due_date
-import tech.dokus.aura.resources.invoice_issue_date
-import tech.dokus.aura.resources.invoice_no_items
-import tech.dokus.aura.resources.invoice_price
-import tech.dokus.aura.resources.invoice_qty
-import tech.dokus.aura.resources.invoice_select_client
-import tech.dokus.aura.resources.invoice_subtotal
-import tech.dokus.aura.resources.invoice_total
-import tech.dokus.aura.resources.invoice_vat
-import tech.dokus.foundation.aura.components.PDashedDivider
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,7 +20,56 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+// Card spacing
+private val CardOuterPadding = 8.dp
+private val CardContentPadding = 16.dp
+private val ContentSpacing = 16.dp
+private val SectionSpacing = 4.dp
+private val DateColumnSpacing = 24.dp
+private val TotalsSpacing = 8.dp
+private val DividerMargin = 4.dp
+private val TotalRowPadding = 12.dp
+
+// Typography
+private val LabelLetterSpacing = 1.sp
+
+// Layout weights
+private const val DescriptionWeight = 2f
+private const val QtyWeight = 0.5f
+private const val PriceWeight = 1f
+private const val AmountWeight = 1f
+
+// Total row styling
+private const val PrimaryContainerAlpha = 0.5f
+private const val MaxDescriptionLines = 2
+
+// Money formatting
+private const val CentsMultiplier = 100
+private const val RoundingOffset = 0.5
+private const val DecimalPadLength = 2
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_amount_with_currency
+import tech.dokus.aura.resources.common_empty_value
+import tech.dokus.aura.resources.currency_symbol_eur
+import tech.dokus.aura.resources.invoice_amount
+import tech.dokus.aura.resources.invoice_bill_to
+import tech.dokus.aura.resources.invoice_description
+import tech.dokus.aura.resources.invoice_due_date
+import tech.dokus.aura.resources.invoice_issue_date
+import tech.dokus.aura.resources.invoice_no_items
+import tech.dokus.aura.resources.invoice_price
+import tech.dokus.aura.resources.invoice_qty
+import tech.dokus.aura.resources.invoice_select_client
+import tech.dokus.aura.resources.invoice_subtotal
+import tech.dokus.aura.resources.invoice_total
+import tech.dokus.aura.resources.invoice_vat
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
+import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.PDashedDivider
 
 /**
  * Displays an invoice preview that looks like a real paper invoice.
@@ -53,7 +81,7 @@ fun InvoiceSummaryCard(
     modifier: Modifier = Modifier
 ) {
     DokusCardSurface(
-        modifier = modifier.fillMaxWidth().padding(8.dp),
+        modifier = modifier.fillMaxWidth().padding(CardOuterPadding),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -65,22 +93,24 @@ fun InvoiceSummaryCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(CardContentPadding),
+                verticalArrangement = Arrangement.spacedBy(ContentSpacing)
             ) {
                 // Client section
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(SectionSpacing)
                 ) {
                     Text(
                         text = stringResource(Res.string.invoice_bill_to).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
-                        letterSpacing = 1.sp
+                        letterSpacing = LabelLetterSpacing
                     )
+                    val clientName = formState.selectedClient?.name?.value
+                        ?: stringResource(Res.string.invoice_select_client)
                     Text(
-                        text = formState.selectedClient?.name?.value ?: stringResource(Res.string.invoice_select_client),
+                        text = clientName,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = if (formState.selectedClient != null) {
@@ -94,11 +124,11 @@ fun InvoiceSummaryCard(
                 // Dates section
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DateColumnSpacing)
                 ) {
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(SectionSpacing)
                     ) {
                         Text(
                             text = stringResource(Res.string.invoice_issue_date).uppercase(),
@@ -116,14 +146,14 @@ fun InvoiceSummaryCard(
                     }
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(SectionSpacing)
                     ) {
                         Text(
                             text = stringResource(Res.string.invoice_due_date).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium,
-                            letterSpacing = 1.sp
+                            letterSpacing = LabelLetterSpacing
                         )
                         Text(
                             text = formState.dueDate?.toString()
@@ -147,35 +177,35 @@ fun InvoiceSummaryCard(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
-                        letterSpacing = 1.sp,
-                        modifier = Modifier.weight(2f)
+                        letterSpacing = LabelLetterSpacing,
+                        modifier = Modifier.weight(DescriptionWeight)
                     )
                     Text(
                         text = stringResource(Res.string.invoice_qty).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
-                        letterSpacing = 1.sp,
+                        letterSpacing = LabelLetterSpacing,
                         textAlign = TextAlign.End,
-                        modifier = Modifier.weight(0.5f)
+                        modifier = Modifier.weight(QtyWeight)
                     )
                     Text(
                         text = stringResource(Res.string.invoice_price).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
-                        letterSpacing = 1.sp,
+                        letterSpacing = LabelLetterSpacing,
                         textAlign = TextAlign.End,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(PriceWeight)
                     )
                     Text(
                         text = stringResource(Res.string.invoice_amount).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
-                        letterSpacing = 1.sp,
+                        letterSpacing = LabelLetterSpacing,
                         textAlign = TextAlign.End,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(AmountWeight)
                     )
                 }
 
@@ -186,7 +216,7 @@ fun InvoiceSummaryCard(
                         text = stringResource(Res.string.invoice_no_items),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier.padding(vertical = TotalsSpacing)
                     )
                 } else {
                     validItems.forEach { item ->
@@ -199,7 +229,7 @@ fun InvoiceSummaryCard(
 
                 // Totals section
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(TotalsSpacing)
                 ) {
                     InvoiceTotalRow(
                         label = stringResource(Res.string.invoice_subtotal),
@@ -210,20 +240,20 @@ fun InvoiceSummaryCard(
                         value = formState.vatAmount
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(DividerMargin))
 
                     // Dashed divider effect
                     PDashedDivider()
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(DividerMargin))
 
                     // Total amount - highlighted
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(MaterialTheme.shapes.small)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
-                            .padding(horizontal = 12.dp, vertical = 12.dp),
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = PrimaryContainerAlpha))
+                            .padding(horizontal = TotalRowPadding, vertical = TotalRowPadding),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -232,7 +262,7 @@ fun InvoiceSummaryCard(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
-                            letterSpacing = 1.sp
+                            letterSpacing = LabelLetterSpacing
                         )
                         Text(
                             text = formState.total,
@@ -255,7 +285,7 @@ private fun InvoiceLineItemRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = SectionSpacing),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -263,16 +293,16 @@ private fun InvoiceLineItemRow(
             text = item.description.ifBlank { stringResource(Res.string.common_empty_value) },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
+            maxLines = MaxDescriptionLines,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(2f)
+            modifier = Modifier.weight(DescriptionWeight)
         )
         Text(
             text = item.quantity.toString(),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.End,
-            modifier = Modifier.weight(0.5f)
+            modifier = Modifier.weight(QtyWeight)
         )
         Text(
             text = if (item.unitPriceDouble > 0) {
@@ -287,7 +317,7 @@ private fun InvoiceLineItemRow(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.End,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(PriceWeight)
         )
         Text(
             text = if (item.lineTotalDouble > 0) {
@@ -303,7 +333,7 @@ private fun InvoiceLineItemRow(
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.End,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(AmountWeight)
         )
     }
 }
@@ -312,8 +342,8 @@ private fun InvoiceLineItemRow(
  * Format a double to 2 decimal places.
  */
 private fun formatDecimal(value: Double): String {
-    val rounded = kotlin.math.round(value * 100) / 100
+    val rounded = kotlin.math.round(value * CentsMultiplier) / CentsMultiplier
     val intPart = rounded.toLong()
-    val decPart = ((kotlin.math.abs(rounded - intPart) * 100) + 0.5).toInt()
-    return "$intPart.${decPart.toString().padStart(2, '0')}"
+    val decPart = ((kotlin.math.abs(rounded - intPart) * CentsMultiplier) + RoundingOffset).toInt()
+    return "$intPart.${decPart.toString().padStart(DecimalPadLength, '0')}"
 }

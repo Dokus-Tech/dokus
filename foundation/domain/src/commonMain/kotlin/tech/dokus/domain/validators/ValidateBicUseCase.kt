@@ -16,13 +16,19 @@ import tech.dokus.domain.ids.Bic
  * - GEBABEBB036 (11 characters)
  */
 object ValidateBicUseCase : Validator<Bic> {
+    /** BIC length without branch code */
+    private const val BicLengthShort = 8
+
+    /** BIC length with branch code */
+    private const val BicLengthFull = 11
+
     override operator fun invoke(value: Bic): Boolean {
         if (value.value.isBlank()) return false
 
         val cleaned = value.value.replace(" ", "").uppercase()
 
         // Must be exactly 8 or 11 characters
-        if (cleaned.length != 8 && cleaned.length != 11) {
+        if (cleaned.length != BicLengthShort && cleaned.length != BicLengthFull) {
             return false
         }
 

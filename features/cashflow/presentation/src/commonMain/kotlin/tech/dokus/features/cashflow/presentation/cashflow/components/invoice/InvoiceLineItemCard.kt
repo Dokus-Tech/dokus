@@ -1,17 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_description
-import tech.dokus.aura.resources.invoice_item_number
-import tech.dokus.aura.resources.invoice_line_total
-import tech.dokus.aura.resources.invoice_price
-import tech.dokus.aura.resources.invoice_qty
-import tech.dokus.aura.resources.invoice_remove
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +17,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_description
+import tech.dokus.aura.resources.invoice_item_number
+import tech.dokus.aura.resources.invoice_line_total
+import tech.dokus.aura.resources.invoice_price
+import tech.dokus.aura.resources.invoice_qty
+import tech.dokus.aura.resources.invoice_remove
+import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 
 /**
  * Card displaying a single invoice line item with editable fields.

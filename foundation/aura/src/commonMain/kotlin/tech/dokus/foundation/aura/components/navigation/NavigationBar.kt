@@ -1,22 +1,5 @@
 package tech.dokus.foundation.aura.components.navigation
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow
-import tech.dokus.aura.resources.cashflow_title
-import tech.dokus.aura.resources.chart_bar_trend_up
-import tech.dokus.aura.resources.contacts_title
-import tech.dokus.aura.resources.home_dashboard
-import tech.dokus.aura.resources.nav_banking
-import tech.dokus.aura.resources.nav_items
-import tech.dokus.aura.resources.nav_profile
-import tech.dokus.aura.resources.nav_simulations
-import tech.dokus.aura.resources.plus
-import tech.dokus.aura.resources.simulations
-import tech.dokus.aura.resources.tasks_2
-import tech.dokus.aura.resources.user
-import tech.dokus.aura.resources.users
-import tech.dokus.aura.resources.wallet_2
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,7 +20,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow
+import tech.dokus.aura.resources.cashflow_title
+import tech.dokus.aura.resources.chart_bar_trend_up
+import tech.dokus.aura.resources.contacts_title
+import tech.dokus.aura.resources.home_dashboard
+import tech.dokus.aura.resources.nav_banking
+import tech.dokus.aura.resources.nav_items
+import tech.dokus.aura.resources.nav_profile
+import tech.dokus.aura.resources.nav_simulations
+import tech.dokus.aura.resources.plus
+import tech.dokus.aura.resources.simulations
+import tech.dokus.aura.resources.tasks_2
+import tech.dokus.aura.resources.user
+import tech.dokus.aura.resources.users
+import tech.dokus.aura.resources.wallet_2
+import tech.dokus.foundation.aura.constrains.Constrains
 
 sealed interface TabNavItem {
     @get:Composable

@@ -1,6 +1,7 @@
+@file:Suppress("UnusedParameter") // Reserved parameters for future features
+
 package tech.dokus.features.cashflow.repository
 
-import tech.dokus.features.cashflow.datasource.ChatRemoteDataSource
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatHistoryResponse
@@ -9,6 +10,7 @@ import tech.dokus.domain.model.ai.ChatResponse
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionListResponse
+import tech.dokus.features.cashflow.datasource.ChatRemoteDataSource
 import tech.dokus.foundation.platform.Logger
 
 /**

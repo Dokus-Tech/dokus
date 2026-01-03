@@ -1,12 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_bill_to
-import tech.dokus.aura.resources.invoice_click_to_change
-import tech.dokus.aura.resources.invoice_click_to_select_client
-import tech.dokus.aura.resources.peppol_belgian_client_warning_short
-import tech.dokus.aura.resources.peppol_id_missing
-import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -34,6 +27,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_bill_to
+import tech.dokus.aura.resources.invoice_click_to_change
+import tech.dokus.aura.resources.invoice_click_to_select_client
+import tech.dokus.aura.resources.peppol_belgian_client_warning_short
+import tech.dokus.aura.resources.peppol_id_missing
+import tech.dokus.domain.model.contact.ContactDto
 
 /**
  * Clickable client section in the invoice document.

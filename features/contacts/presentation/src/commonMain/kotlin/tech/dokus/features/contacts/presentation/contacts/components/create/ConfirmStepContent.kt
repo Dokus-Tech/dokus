@@ -1,29 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components.create
 
-import tech.dokus.features.contacts.mvi.CreateContactIntent
-import tech.dokus.features.contacts.mvi.CreateContactState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_back
-import tech.dokus.aura.resources.common_country_value
-import tech.dokus.aura.resources.common_vat_value
-import tech.dokus.aura.resources.contacts_billing_email
-import tech.dokus.aura.resources.contacts_confirm_company
-import tech.dokus.aura.resources.contacts_contact_details
-import tech.dokus.aura.resources.contacts_create_contact
-import tech.dokus.aura.resources.contacts_creating
-import tech.dokus.aura.resources.contacts_hide_address
-import tech.dokus.aura.resources.contacts_phone
-import tech.dokus.aura.resources.contacts_show_address
-import tech.dokus.aura.resources.country_belgium
-import tech.dokus.aura.resources.country_france
-import tech.dokus.aura.resources.country_netherlands
-import tech.dokus.aura.resources.field_optional
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
-import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,11 +23,35 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import tech.dokus.domain.Email
-import tech.dokus.domain.enums.Country
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_back
+import tech.dokus.aura.resources.common_country_value
+import tech.dokus.aura.resources.common_vat_value
+import tech.dokus.aura.resources.contacts_billing_email
+import tech.dokus.aura.resources.contacts_confirm_company
+import tech.dokus.aura.resources.contacts_contact_details
+import tech.dokus.aura.resources.contacts_create_contact
+import tech.dokus.aura.resources.contacts_creating
+import tech.dokus.aura.resources.contacts_hide_address
+import tech.dokus.aura.resources.contacts_phone
+import tech.dokus.aura.resources.contacts_show_address
+import tech.dokus.aura.resources.country_belgium
+import tech.dokus.aura.resources.country_france
+import tech.dokus.aura.resources.country_netherlands
+import tech.dokus.aura.resources.field_optional
+import tech.dokus.domain.Email
 import tech.dokus.domain.PhoneNumber
+import tech.dokus.domain.enums.Country
 import tech.dokus.domain.model.entity.EntityLookup
+import tech.dokus.features.contacts.mvi.CreateContactIntent
+import tech.dokus.features.contacts.mvi.CreateContactState
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
+import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Confirm step content - review company data and add billing email.

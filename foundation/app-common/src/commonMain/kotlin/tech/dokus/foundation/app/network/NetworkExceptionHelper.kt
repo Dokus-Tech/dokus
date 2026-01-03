@@ -22,6 +22,7 @@ expect fun isNetworkException(throwable: Throwable): Boolean
  * Common network-related exception message patterns.
  * Used as a fallback when platform-specific detection fails.
  */
+@Suppress("CyclomaticComplexMethod") // Many message patterns to check by design
 internal fun hasNetworkExceptionMessage(throwable: Throwable): Boolean {
     val message = throwable.message?.lowercase() ?: return false
     return message.contains("connection refused") ||

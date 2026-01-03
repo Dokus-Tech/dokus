@@ -224,18 +224,27 @@ private fun SettingsContent(
                     Icon(
                         imageVector = if (isConnected) Icons.Default.Check else Icons.Default.Close,
                         contentDescription = null,
-                        tint = if (isConnected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.error,
+                        tint = if (isConnected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
                         text = stringResource(
-                            if (isConnected) Res.string.peppol_connected
-                            else Res.string.peppol_not_configured
+                            if (isConnected) {
+                                Res.string.peppol_connected
+                            } else {
+                                Res.string.peppol_not_configured
+                            }
                         ),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (isConnected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.error
+                        color = if (isConnected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        }
                     )
                 }
 

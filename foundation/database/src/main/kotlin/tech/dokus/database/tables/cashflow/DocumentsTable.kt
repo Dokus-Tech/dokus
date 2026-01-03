@@ -1,10 +1,10 @@
 package tech.dokus.database.tables.cashflow
 
-import tech.dokus.database.tables.auth.TenantTable
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
+import tech.dokus.database.tables.auth.TenantTable
 
 /**
  * Documents table - stores metadata for files uploaded to object storage (MinIO).

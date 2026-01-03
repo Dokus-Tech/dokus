@@ -1,9 +1,9 @@
 package tech.dokus.foundation.aura.model
 
-import tech.dokus.navigation.destinations.HomeDestination
 import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
+import tech.dokus.navigation.destinations.HomeDestination
 
 @Immutable
 data class HomeItem(

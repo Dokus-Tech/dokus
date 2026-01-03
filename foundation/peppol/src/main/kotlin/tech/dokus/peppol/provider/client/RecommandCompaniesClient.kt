@@ -1,6 +1,5 @@
 package tech.dokus.peppol.provider.client
 
-import tech.dokus.peppol.config.PeppolModuleConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.basicAuth
@@ -13,6 +12,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
+import tech.dokus.peppol.config.PeppolModuleConfig
 
 class RecommandCompaniesClient(
     private val httpClient: HttpClient,

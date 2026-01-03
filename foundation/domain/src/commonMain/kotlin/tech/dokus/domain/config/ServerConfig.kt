@@ -1,3 +1,8 @@
+@file:Suppress(
+    "MagicNumber", // Port ranges and network constants are self-documenting
+    "ReturnCount" // URL parsing requires multiple early returns for validation
+)
+
 package tech.dokus.domain.config
 
 import kotlinx.serialization.Serializable
@@ -63,6 +68,7 @@ data class ServerConfig(
          * @param url The deep link URL to parse
          * @return ServerConfig if valid, null if invalid or missing required parameters
          */
+        @Suppress("TooGenericExceptionCaught", "SwallowedException") // URL parsing can throw various exceptions
         fun fromDeepLink(url: String): ServerConfig? {
             return try {
                 // Parse query parameters

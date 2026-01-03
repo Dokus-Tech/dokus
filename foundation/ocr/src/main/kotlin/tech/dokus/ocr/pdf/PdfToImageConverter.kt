@@ -59,7 +59,6 @@ internal class PdfToImageConverter {
         dpi: Int,
         timeout: Duration
     ): ConversionOutcome {
-
         val outputPrefix = outputDir.resolve("page").toString()
 
         // pdftoppm -png -r <dpi> -f 1 -l <maxPages> input.pdf outputPrefix
@@ -69,8 +68,8 @@ internal class PdfToImageConverter {
             PDFTOPPM_COMMAND,
             "-$OUTPUT_FORMAT",
             "-r", dpi.toString(),
-            "-f", "1",                  // Start from first page (explicit)
-            "-l", maxPages.toString(),  // Stop at maxPages (hard limit)
+            "-f", "1", // Start from first page (explicit)
+            "-l", maxPages.toString(), // Stop at maxPages (hard limit)
             pdfPath.toAbsolutePath().toString(),
             outputPrefix
         )

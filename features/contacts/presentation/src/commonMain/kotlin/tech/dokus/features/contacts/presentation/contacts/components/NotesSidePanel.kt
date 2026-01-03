@@ -1,25 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_cancel
-import tech.dokus.aura.resources.action_close
-import tech.dokus.aura.resources.action_delete
-import tech.dokus.aura.resources.action_save
-import tech.dokus.aura.resources.contacts_add_first_note_hint
-import tech.dokus.aura.resources.contacts_add_note
-import tech.dokus.aura.resources.contacts_delete_note
-import tech.dokus.aura.resources.contacts_delete_note_confirm
-import tech.dokus.aura.resources.contacts_delete_note_warning
-import tech.dokus.aura.resources.contacts_deleting
-import tech.dokus.aura.resources.contacts_edit_note
-import tech.dokus.aura.resources.contacts_load_notes_failed
-import tech.dokus.aura.resources.contacts_no_notes
-import tech.dokus.aura.resources.contacts_note_by
-import tech.dokus.aura.resources.contacts_note_content
-import tech.dokus.aura.resources.contacts_notes
-import tech.dokus.aura.resources.contacts_saving
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.fields.PTextFieldFree
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -46,11 +26,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -71,10 +51,61 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.action_delete
+import tech.dokus.aura.resources.action_save
+import tech.dokus.aura.resources.contacts_add_first_note_hint
+import tech.dokus.aura.resources.contacts_add_note
+import tech.dokus.aura.resources.contacts_delete_note
+import tech.dokus.aura.resources.contacts_delete_note_confirm
+import tech.dokus.aura.resources.contacts_delete_note_warning
+import tech.dokus.aura.resources.contacts_deleting
+import tech.dokus.aura.resources.contacts_edit_note
+import tech.dokus.aura.resources.contacts_load_notes_failed
+import tech.dokus.aura.resources.contacts_no_notes
+import tech.dokus.aura.resources.contacts_note_by
+import tech.dokus.aura.resources.contacts_note_content
+import tech.dokus.aura.resources.contacts_notes
+import tech.dokus.aura.resources.contacts_saving
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.fields.PTextFieldFree
+
+// Animation timing constants
+private const val FadeAnimationDurationMs = 200
+private const val SlideAnimationDurationMs = 300
+
+// UI dimension constants
+private val SidebarMinWidth = 320.dp
+private val SidebarMaxWidth = 400.dp
+private val ContentPadding = 16.dp
+private val SpacingSmall = 8.dp
+private val SpacingMedium = 12.dp
+private val SpacingDefault = 16.dp
+private val IconSizeSmall = 16.dp
+private val IconSizeMedium = 18.dp
+private val IconSizeLarge = 48.dp
+private val CardCornerRadius = 8.dp
+private val ProgressIndicatorSize = 16.dp
+private val ProgressStrokeWidth = 2.dp
+private val ButtonSpacing = 4.dp
+private val NoteItemPadding = 12.dp
+
+// Alpha constants
+private const val ScrimAlpha = 0.32f
+private const val DividerAlpha = 0.5f
+private const val ContainerAlphaSelected = 0.3f
+private const val ContainerAlphaDefault = 0.5f
+private const val IconAlphaDisabled = 0.5f
+private const val TextAlphaSecondary = 0.7f
+
+// Content preview constants
+private const val NotePreviewMaxLength = 100
+private const val SidebarWidthFraction = 3
 
 /**
  * Side panel for managing contact notes on desktop.
@@ -122,13 +153,13 @@ fun NotesSidePanel(
         // Backdrop
         AnimatedVisibility(
             visible = isVisible,
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(200))
+            enter = fadeIn(tween(FadeAnimationDurationMs)),
+            exit = fadeOut(tween(FadeAnimationDurationMs))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f))
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = ScrimAlpha))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -142,16 +173,16 @@ fun NotesSidePanel(
             visible = isVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeIn(tween(300)),
+                animationSpec = tween(SlideAnimationDurationMs)
+            ) + fadeIn(tween(SlideAnimationDurationMs)),
             exit = slideOutHorizontally(
                 targetOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeOut(tween(300)),
+                animationSpec = tween(SlideAnimationDurationMs)
+            ) + fadeOut(tween(SlideAnimationDurationMs)),
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
             BoxWithConstraints {
-                val sidebarWidth = (maxWidth / 3).coerceIn(320.dp, 400.dp)
+                val sidebarWidth = (maxWidth / SidebarWidthFraction).coerceIn(SidebarMinWidth, SidebarMaxWidth)
 
                 DokusCardSurface(
                     modifier = Modifier
@@ -170,7 +201,7 @@ fun NotesSidePanel(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp)
+                            .padding(ContentPadding)
                     ) {
                         // Header
                         NotesSidePanelHeader(
@@ -181,7 +212,7 @@ fun NotesSidePanel(
                             }
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(SpacingDefault))
 
                         // Add/Edit Note Form
                         if (showAddNoteForm || editingNote != null) {
@@ -208,13 +239,13 @@ fun NotesSidePanel(
                                 }
                             )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(SpacingDefault))
 
                             HorizontalDivider(
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = DividerAlpha)
                             )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(SpacingDefault))
                         }
 
                         // Notes list
@@ -239,7 +270,7 @@ fun NotesSidePanel(
                                 ) {
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        verticalArrangement = Arrangement.spacedBy(SpacingSmall)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Warning,
@@ -267,13 +298,15 @@ fun NotesSidePanel(
                                     ) {
                                         Column(
                                             horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            verticalArrangement = Arrangement.spacedBy(SpacingSmall)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.AutoMirrored.Filled.Note,
                                                 contentDescription = null,
-                                                modifier = Modifier.size(48.dp),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                                modifier = Modifier.size(IconSizeLarge),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                    alpha = IconAlphaDisabled
+                                                )
                                             )
                                             Text(
                                                 text = stringResource(Res.string.contacts_no_notes),
@@ -283,7 +316,9 @@ fun NotesSidePanel(
                                             Text(
                                                 text = stringResource(Res.string.contacts_add_first_note_hint),
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                    alpha = TextAlphaSecondary
+                                                )
                                             )
                                         }
                                     }
@@ -292,7 +327,7 @@ fun NotesSidePanel(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        verticalArrangement = Arrangement.spacedBy(SpacingSmall)
                                     ) {
                                         items(
                                             items = notes,
@@ -362,7 +397,7 @@ private fun NotesSidePanelHeader(
         )
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(ButtonSpacing)
         ) {
             IconButton(onClick = onAddClick) {
                 Icon(
@@ -395,7 +430,7 @@ private fun NoteForm(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(SpacingMedium)
     ) {
         Text(
             text = title,
@@ -419,11 +454,11 @@ private fun NoteForm(
             if (isSaving) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
+                        modifier = Modifier.size(ProgressIndicatorSize),
+                        strokeWidth = ProgressStrokeWidth
                     )
                     Text(
                         text = stringResource(Res.string.contacts_saving),
@@ -439,7 +474,7 @@ private fun NoteForm(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(SpacingSmall))
 
                 Button(
                     onClick = onSave,
@@ -463,14 +498,14 @@ private fun NoteListItem(
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = if (isEditing) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = ContainerAlphaSelected)
         } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = ContainerAlphaDefault)
         },
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(CardCornerRadius)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(NoteItemPadding)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -480,12 +515,12 @@ private fun NoteListItem(
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Note,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(IconSizeSmall),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
@@ -494,15 +529,15 @@ private fun NoteListItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         note.authorName?.let { author ->
-                        Text(
-                            text = stringResource(Res.string.contacts_note_by, author),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                            Text(
+                                text = stringResource(Res.string.contacts_note_by, author),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(SpacingSmall))
 
                     Text(
                         text = note.content,
@@ -515,7 +550,7 @@ private fun NoteListItem(
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = stringResource(Res.string.contacts_edit_note),
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(IconSizeMedium),
                             tint = if (isEditing) {
                                 MaterialTheme.colorScheme.primary
                             } else {
@@ -527,7 +562,7 @@ private fun NoteListItem(
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = stringResource(Res.string.contacts_delete_note),
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(IconSizeMedium),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -566,19 +601,21 @@ private fun DeleteNoteConfirmationDialog(
                     text = stringResource(Res.string.contacts_delete_note_confirm),
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(SpacingSmall))
                 Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(8.dp)
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = ContainerAlphaDefault),
+                    shape = RoundedCornerShape(CardCornerRadius)
                 ) {
+                    val previewText = note.content.take(NotePreviewMaxLength) +
+                        if (note.content.length > NotePreviewMaxLength) "..." else ""
                     Text(
-                        text = note.content.take(100) + if (note.content.length > 100) "..." else "",
+                        text = previewText,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(12.dp)
+                        modifier = Modifier.padding(NoteItemPadding)
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(SpacingSmall))
                 Text(
                     text = stringResource(Res.string.contacts_delete_note_warning),
                     style = MaterialTheme.typography.bodySmall,
@@ -590,11 +627,11 @@ private fun DeleteNoteConfirmationDialog(
             if (isDeleting) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
+                        modifier = Modifier.size(ProgressIndicatorSize),
+                        strokeWidth = ProgressStrokeWidth
                     )
                     Text(
                         text = stringResource(Res.string.contacts_deleting),

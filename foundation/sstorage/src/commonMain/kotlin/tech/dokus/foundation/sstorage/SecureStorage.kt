@@ -1,8 +1,8 @@
 package tech.dokus.foundation.sstorage
 
-import tech.dokus.domain.model.common.Feature
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import tech.dokus.domain.model.common.Feature
 
 /**
  * SecureStorage interface providing encrypted key-value storage with Flow support

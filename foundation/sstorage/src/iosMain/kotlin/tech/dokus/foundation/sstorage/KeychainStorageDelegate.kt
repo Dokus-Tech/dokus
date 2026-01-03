@@ -1,16 +1,54 @@
 package tech.dokus.foundation.sstorage
 
-import kotlinx.cinterop.*
-import platform.CoreFoundation.*
-import platform.Foundation.*
-import platform.Security.*
+import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArrayOf
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import platform.CoreFoundation.CFBridgingRelease
+import platform.CoreFoundation.CFBridgingRetain
+import platform.CoreFoundation.CFDictionaryAddValue
+import platform.CoreFoundation.CFDictionaryCreateMutable
+import platform.CoreFoundation.CFRelease
+import platform.CoreFoundation.CFStringCreateWithCString
+import platform.CoreFoundation.CFStringRef
+import platform.CoreFoundation.CFTypeRefVar
+import platform.CoreFoundation.kCFBooleanTrue
+import platform.CoreFoundation.kCFStringEncodingUTF8
+import platform.Foundation.NSArray
+import platform.Foundation.NSData
+import platform.Foundation.NSDictionary
+import platform.Foundation.NSString
+import platform.Foundation.NSUTF8StringEncoding
+import platform.Foundation.create
+import platform.Foundation.objectAtIndex
+import platform.Foundation.objectForKey
+import platform.Security.SecItemAdd
+import platform.Security.SecItemCopyMatching
+import platform.Security.SecItemDelete
+import platform.Security.SecItemUpdate
+import platform.Security.errSecItemNotFound
+import platform.Security.errSecSuccess
+import platform.Security.kSecAttrAccessible
+import platform.Security.kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+import platform.Security.kSecAttrAccount
+import platform.Security.kSecAttrService
+import platform.Security.kSecClass
+import platform.Security.kSecClassGenericPassword
+import platform.Security.kSecMatchLimit
+import platform.Security.kSecMatchLimitAll
+import platform.Security.kSecMatchLimitOne
+import platform.Security.kSecReturnAttributes
+import platform.Security.kSecReturnData
+import platform.Security.kSecValueData
 
 /**
  * Keychain-based storage delegate using iOS Keychain Services.
  * Provides hardware-backed secure storage on iOS devices.
  */
 internal class KeychainStorageDelegate(private val serviceName: String) : IOSStorageDelegate {
-    
+
     @OptIn(ExperimentalForeignApi::class)
     override fun store(key: String, value: String): Boolean {
         val data = value.encodeToByteArray().toNSData()
@@ -33,15 +71,15 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
             CFDictionaryAddValue(query, kSecAttrAccessible, kSecAttrAccessibleWhenUnlockedThisDeviceOnly)
             status = SecItemAdd(query, null)
         }
-        
+
         val success = status == errSecSuccess
-        
+
         // Clean up CF strings
         CFRelease(serviceString)
         CFRelease(keyString)
         CFRelease(query)
         CFRelease(attributes)
-        
+
         return success
     }
 
@@ -50,7 +88,7 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
         val serviceString = serviceName.toCFString()
         val keyString = key.toCFString()
         val query = CFDictionaryCreateMutable(null, 0, null, null)!!
-        
+
         CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword)
         CFDictionaryAddValue(query, kSecAttrService, serviceString)
         CFDictionaryAddValue(query, kSecAttrAccount, keyString)
@@ -68,15 +106,19 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
                     nsData?.let { data ->
                         NSString.create(data, NSUTF8StringEncoding)?.toString()
                     }
-                } else null
-            } else null
+                } else {
+                    null
+                }
+            } else {
+                null
+            }
         }
-        
+
         // Clean up
         CFRelease(serviceString)
         CFRelease(keyString)
         CFRelease(query)
-        
+
         return result
     }
 
@@ -85,18 +127,18 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
         val serviceString = serviceName.toCFString()
         val keyString = key.toCFString()
         val query = CFDictionaryCreateMutable(null, 0, null, null)!!
-        
+
         CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword)
         CFDictionaryAddValue(query, kSecAttrService, serviceString)
         CFDictionaryAddValue(query, kSecAttrAccount, keyString)
 
         val status = SecItemDelete(query)
-        
+
         // Clean up
         CFRelease(serviceString)
         CFRelease(keyString)
         CFRelease(query)
-        
+
         return status == errSecSuccess
     }
 
@@ -104,16 +146,16 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
     override fun clear(): Boolean {
         val serviceString = serviceName.toCFString()
         val query = CFDictionaryCreateMutable(null, 0, null, null)!!
-        
+
         CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword)
         CFDictionaryAddValue(query, kSecAttrService, serviceString)
 
         val status = SecItemDelete(query)
-        
+
         // Clean up
         CFRelease(serviceString)
         CFRelease(query)
-        
+
         return status == errSecSuccess
     }
 
@@ -125,7 +167,7 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
     override fun getAllKeys(): Set<String> {
         val serviceString = serviceName.toCFString()
         val query = CFDictionaryCreateMutable(null, 0, null, null)!!
-        
+
         CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword)
         CFDictionaryAddValue(query, kSecAttrService, serviceString)
         CFDictionaryAddValue(query, kSecReturnAttributes, kCFBooleanTrue)
@@ -134,7 +176,7 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
         val keys = memScoped {
             val result = alloc<CFTypeRefVar>()
             val status = SecItemCopyMatching(query, result.ptr)
-            
+
             if (status == errSecSuccess && result.value != null) {
                 val array = (CFBridgingRelease(result.value) as? NSArray)
                 array?.let { items ->
@@ -147,11 +189,11 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
                 emptySet()
             }
         }
-        
+
         // Clean up
         CFRelease(serviceString)
         CFRelease(query)
-        
+
         return keys
     }
 }

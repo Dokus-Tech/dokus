@@ -1,17 +1,5 @@
 package tech.dokus.foundation.aura.components.common
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.exception_connection_error
-import tech.dokus.aura.resources.state_error
-import tech.dokus.aura.resources.state_retry
-import tech.dokus.foundation.aura.components.POutlinedButton
-import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -32,6 +20,18 @@ import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.exception_connection_error
+import tech.dokus.aura.resources.state_error
+import tech.dokus.aura.resources.state_retry
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 fun DokusErrorText(

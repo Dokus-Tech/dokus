@@ -13,6 +13,23 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.interVariable
 import tech.dokus.aura.resources.switzerVariable
 
+// Line height multipliers for typography tuning
+private const val LINE_HEIGHT_DISPLAY = 1.15f
+private const val LINE_HEIGHT_TITLE = 1.2f
+private const val LINE_HEIGHT_BODY = 1.35f
+
+// Font sizes in sp
+private const val FONT_SIZE_DISPLAY_LARGE = 48
+private const val FONT_SIZE_HEADLINE_LARGE = 32
+private const val FONT_SIZE_HEADLINE_MEDIUM = 24
+private const val FONT_SIZE_TITLE_LARGE = 20
+private const val FONT_SIZE_TITLE_MEDIUM = 16
+private const val FONT_SIZE_BODY_LARGE = 16
+private const val FONT_SIZE_BODY_MEDIUM = 14
+private const val FONT_SIZE_LABEL_LARGE = 14
+private const val FONT_SIZE_LABEL_MEDIUM = 12
+private const val FONT_SIZE_LABEL_SMALL = 11
+
 @Composable
 fun Typography.withFontFamily(fontFamily: FontFamily): Typography {
     return copy(
@@ -43,7 +60,7 @@ fun Typography.withFontFamilyForDisplay(fontFamily: FontFamily): Typography {
         headlineMedium = headlineMedium.copy(fontFamily = fontFamily),
         headlineSmall = headlineSmall.copy(fontFamily = fontFamily),
         // Optional: titleLarge only if you want brand in top bars
-         titleLarge = titleLarge.copy(fontFamily = fontFamily),
+        titleLarge = titleLarge.copy(fontFamily = fontFamily),
     )
 }
 
@@ -55,81 +72,81 @@ fun Typography.tuned(): Typography = copy(
     // Display stays slightly tighter for large hero text.
 
     // Display (rare in product UI)
-    displayLarge = displayLarge.withLineHeightMultiplier(1.15f),
-    displayMedium = displayMedium.withLineHeightMultiplier(1.15f),
-    displaySmall = displaySmall.withLineHeightMultiplier(1.2f),
+    displayLarge = displayLarge.withLineHeightMultiplier(LINE_HEIGHT_DISPLAY),
+    displayMedium = displayMedium.withLineHeightMultiplier(LINE_HEIGHT_DISPLAY),
+    displaySmall = displaySmall.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
 
     // Headlines (screen titles, empty states)
-    headlineLarge = headlineLarge.withLineHeightMultiplier(1.2f),
-    headlineMedium = headlineMedium.withLineHeightMultiplier(1.2f),
-    headlineSmall = headlineSmall.withLineHeightMultiplier(1.2f),
+    headlineLarge = headlineLarge.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
+    headlineMedium = headlineMedium.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
+    headlineSmall = headlineSmall.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
 
     // Titles (cards, dialogs, sections)
-    titleLarge = titleLarge.withLineHeightMultiplier(1.2f),
-    titleMedium = titleMedium.withLineHeightMultiplier(1.2f),
-    titleSmall = titleSmall.withLineHeightMultiplier(1.2f),
+    titleLarge = titleLarge.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
+    titleMedium = titleMedium.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
+    titleSmall = titleSmall.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
 
     // Body (lists, forms, paragraphs)
-    bodyLarge = bodyLarge.withLineHeightMultiplier(1.35f),
-    bodyMedium = bodyMedium.withLineHeightMultiplier(1.35f),
-    bodySmall = bodySmall.withLineHeightMultiplier(1.35f),
+    bodyLarge = bodyLarge.withLineHeightMultiplier(LINE_HEIGHT_BODY),
+    bodyMedium = bodyMedium.withLineHeightMultiplier(LINE_HEIGHT_BODY),
+    bodySmall = bodySmall.withLineHeightMultiplier(LINE_HEIGHT_BODY),
 
     // Labels (buttons, chips, input labels)
-    labelLarge = labelLarge.withLineHeightMultiplier(1.2f),
-    labelMedium = labelMedium.withLineHeightMultiplier(1.2f),
-    labelSmall = labelSmall.withLineHeightMultiplier(1.2f),
+    labelLarge = labelLarge.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
+    labelMedium = labelMedium.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
+    labelSmall = labelSmall.withLineHeightMultiplier(LINE_HEIGHT_TITLE),
 )
 
 fun createDokusTypography(fontFamily: FontFamily): Typography {
     val displayLarge = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 48.sp
+        fontSize = FONT_SIZE_DISPLAY_LARGE.sp
     )
     val headlineLarge = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 32.sp
+        fontSize = FONT_SIZE_HEADLINE_LARGE.sp
     )
     val headlineMedium = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp
+        fontSize = FONT_SIZE_HEADLINE_MEDIUM.sp
     )
     val titleLarge = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 20.sp
+        fontSize = FONT_SIZE_TITLE_LARGE.sp
     )
     val titleMedium = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 16.sp
+        fontSize = FONT_SIZE_TITLE_MEDIUM.sp
     )
     val bodyLarge = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp
+        fontSize = FONT_SIZE_BODY_LARGE.sp
     )
     val bodyMedium = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp
+        fontSize = FONT_SIZE_BODY_MEDIUM.sp
     )
     val labelLarge = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 14.sp
+        fontSize = FONT_SIZE_LABEL_LARGE.sp
     )
     val labelMedium = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 12.sp
+        fontSize = FONT_SIZE_LABEL_MEDIUM.sp
     )
     val labelSmall = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp
+        fontSize = FONT_SIZE_LABEL_SMALL.sp
     )
 
     return Typography(

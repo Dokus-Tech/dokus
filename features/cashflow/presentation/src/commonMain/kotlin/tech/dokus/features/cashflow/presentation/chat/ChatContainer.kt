@@ -1,18 +1,11 @@
+@file:Suppress(
+    "TooManyFunctions", // Container handles chat workflow
+    "TooGenericExceptionCaught", // Network errors need catch-all
+    "MagicNumber" // Delay/retry constants
+)
+
 package tech.dokus.features.cashflow.presentation.chat
 
-import tech.dokus.features.cashflow.repository.ChatRepositoryImpl
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SendChatMessageUseCase
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ai.ChatConfiguration
-import tech.dokus.domain.model.ai.ChatMessageDto
-import tech.dokus.domain.model.ai.ChatMessageId
-import tech.dokus.domain.model.ai.ChatResponse
-import tech.dokus.domain.model.ai.ChatScope
-import tech.dokus.domain.model.ai.ChatSessionId
-import tech.dokus.domain.model.ai.MessageRole
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -25,6 +18,19 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.ai.ChatConfiguration
+import tech.dokus.domain.model.ai.ChatMessageDto
+import tech.dokus.domain.model.ai.ChatMessageId
+import tech.dokus.domain.model.ai.ChatResponse
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
+import tech.dokus.domain.model.ai.MessageRole
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SendChatMessageUseCase
+import tech.dokus.features.cashflow.repository.ChatRepositoryImpl
+import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 

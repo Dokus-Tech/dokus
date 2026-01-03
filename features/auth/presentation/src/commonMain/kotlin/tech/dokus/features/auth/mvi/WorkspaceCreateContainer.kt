@@ -1,11 +1,7 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
+
 package tech.dokus.features.auth.mvi
 
-import tech.dokus.features.auth.presentation.auth.model.AddressFormState
-import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
-import tech.dokus.features.auth.presentation.auth.model.LookupState
-import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
-import tech.dokus.features.auth.repository.AuthRepository
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -24,8 +20,17 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.usecases.SearchCompanyUseCase
+import tech.dokus.features.auth.presentation.auth.model.AddressFormState
+import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
+import tech.dokus.features.auth.presentation.auth.model.LookupState
+import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
+import tech.dokus.features.auth.repository.AuthRepository
+import tech.dokus.foundation.platform.Logger
 
-internal typealias WorkspaceCreateCtx = PipelineContext<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction>
+private const val MinCompanyNameLength = 3
+
+internal typealias WorkspaceCreateCtx =
+    PipelineContext<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction>
 
 /**
  * Container for Workspace Creation wizard using FlowMVI.
@@ -135,7 +140,7 @@ internal class WorkspaceCreateContainer(
     private suspend fun WorkspaceCreateCtx.handleLookupCompany() {
         withState<WorkspaceCreateState.Wizard, _> {
             val name = companyName.trim()
-            if (name.length < 3) return@withState
+            if (name.length < MinCompanyNameLength) return@withState
 
             val currentState = this
 

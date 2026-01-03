@@ -32,7 +32,11 @@ data class AppBaseConfig(
                 security = SecurityConfig.fromConfig(config.getConfig("security")),
                 caching = CachingConfig.fromConfig(config.getConfig("caching")),
                 serverInfo = ServerInfoConfig.fromConfig(config.getConfig("server")),
-                storage = if (config.hasPath("storage")) StorageConfig.fromConfig(config.getConfig("storage")) else StorageConfig.empty(),
+                storage = if (config.hasPath("storage")) {
+                    StorageConfig.fromConfig(config.getConfig("storage"))
+                } else {
+                    StorageConfig.empty()
+                },
                 ai = if (config.hasPath("ai")) {
                     AIConfig.fromConfig(config.getConfig("ai"))
                 } else {
@@ -52,4 +56,3 @@ data class AppBaseConfig(
         }
     }
 }
-

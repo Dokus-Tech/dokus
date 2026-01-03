@@ -1,16 +1,12 @@
+@file:Suppress(
+    "TooManyFunctions", // Container handles contact details workflow
+    "MagicNumber", // Timeout constants
+    "TooGenericExceptionCaught", // Network errors need catch-all
+    "LongParameterList" // DI requires many use cases
+)
+
 package tech.dokus.features.contacts.mvi
 
-import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
-import tech.dokus.features.contacts.usecases.CacheContactsUseCase
-import tech.dokus.features.contacts.usecases.CreateContactNoteUseCase
-import tech.dokus.features.contacts.usecases.DeleteContactNoteUseCase
-import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
-import tech.dokus.features.contacts.usecases.GetContactActivityUseCase
-import tech.dokus.features.contacts.usecases.GetContactUseCase
-import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
-import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
-import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCase
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.async
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
@@ -26,7 +22,18 @@ import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
+import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
+import tech.dokus.features.contacts.usecases.CacheContactsUseCase
+import tech.dokus.features.contacts.usecases.CreateContactNoteUseCase
+import tech.dokus.features.contacts.usecases.DeleteContactNoteUseCase
+import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
+import tech.dokus.features.contacts.usecases.GetContactActivityUseCase
+import tech.dokus.features.contacts.usecases.GetContactUseCase
+import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
+import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
+import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCase
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.platform.Logger
 
 internal typealias ContactDetailsCtx = PipelineContext<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction>
 
@@ -105,7 +112,9 @@ internal class ContactDetailsContainer(
                     // Enrichment
                     is ContactDetailsIntent.ShowEnrichmentPanel -> handleShowEnrichmentPanel()
                     is ContactDetailsIntent.HideEnrichmentPanel -> handleHideEnrichmentPanel()
-                    is ContactDetailsIntent.ApplyEnrichmentSuggestions -> handleApplyEnrichmentSuggestions(intent.suggestions)
+                    is ContactDetailsIntent.ApplyEnrichmentSuggestions -> handleApplyEnrichmentSuggestions(
+                        intent.suggestions
+                    )
                 }
             }
         }
@@ -699,5 +708,4 @@ internal class ContactDetailsContainer(
             )
         }
     }
-
 }

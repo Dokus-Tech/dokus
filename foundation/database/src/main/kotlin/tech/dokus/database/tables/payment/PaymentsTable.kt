@@ -1,14 +1,14 @@
 package tech.dokus.database.tables.payment
 
-import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.database.tables.cashflow.InvoicesTable
-import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.foundation.backend.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
+import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.database.tables.cashflow.InvoicesTable
+import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
  * Payment transactions against invoices
@@ -29,7 +29,7 @@ object PaymentsTable : UUIDTable("payments") {
 
     val paymentMethod = dbEnumeration<PaymentMethod>("payment_method")
 
-    val transactionId = varchar("transaction_id", 255).nullable()  // External ID
+    val transactionId = varchar("transaction_id", 255).nullable() // External ID
     val notes = text("notes").nullable()
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 

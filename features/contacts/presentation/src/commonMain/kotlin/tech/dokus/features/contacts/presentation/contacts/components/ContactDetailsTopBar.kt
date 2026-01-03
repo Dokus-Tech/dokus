@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MergeType
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.automirrored.filled.MergeType
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -30,9 +30,9 @@ import tech.dokus.aura.resources.contacts_contact_details
 import tech.dokus.aura.resources.contacts_edit_contact
 import tech.dokus.aura.resources.contacts_enrichment_available
 import tech.dokus.aura.resources.contacts_merge
-import tech.dokus.foundation.aura.components.common.ShimmerLine
-import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.common.ShimmerLine
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

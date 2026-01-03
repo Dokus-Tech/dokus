@@ -1,10 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_fit
-import tech.dokus.aura.resources.action_zoom_in
-import tech.dokus.aura.resources.action_zoom_out
-import tech.dokus.aura.resources.common_percent_value
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -23,6 +18,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_fit
+import tech.dokus.aura.resources.action_zoom_in
+import tech.dokus.aura.resources.action_zoom_out
+import tech.dokus.aura.resources.common_percent_value
+
+// Layout dimensions
+private val ControlsCornerRadius = 8.dp
+private val ControlsPadding = 4.dp
+private val ControlsSpacing = 4.dp
+private val PercentLabelHorizontalPadding = 4.dp
+
+// Zoom constants
+private const val ZoomStep = 0.25f
+private const val ZoomMin = 0.5f
+private const val ZoomMax = 3f
+private const val ZoomDefault = 1f
+private const val SurfaceBackgroundAlpha = 0.9f
+private const val PercentMultiplier = 100
 
 /**
  * Zoom control component for PDF preview.
@@ -46,15 +60,15 @@ fun ZoomControls(
     Row(
         modifier = modifier
             .background(
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                shape = RoundedCornerShape(8.dp)
+                color = MaterialTheme.colorScheme.surface.copy(alpha = SurfaceBackgroundAlpha),
+                shape = RoundedCornerShape(ControlsCornerRadius)
             )
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(ControlsPadding),
+        horizontalArrangement = Arrangement.spacedBy(ControlsSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
-            onClick = { onZoomChange((zoomLevel - 0.25f).coerceAtLeast(0.5f)) }
+            onClick = { onZoomChange((zoomLevel - ZoomStep).coerceAtLeast(ZoomMin)) }
         ) {
             Icon(
                 imageVector = Icons.Default.ZoomOut,
@@ -63,13 +77,13 @@ fun ZoomControls(
         }
 
         Text(
-            text = stringResource(Res.string.common_percent_value, (zoomLevel * 100).toInt()),
+            text = stringResource(Res.string.common_percent_value, (zoomLevel * PercentMultiplier).toInt()),
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(horizontal = 4.dp)
+            modifier = Modifier.padding(horizontal = PercentLabelHorizontalPadding)
         )
 
         IconButton(
-            onClick = { onZoomChange((zoomLevel + 0.25f).coerceAtMost(3f)) }
+            onClick = { onZoomChange((zoomLevel + ZoomStep).coerceAtMost(ZoomMax)) }
         ) {
             Icon(
                 imageVector = Icons.Default.ZoomIn,
@@ -78,7 +92,7 @@ fun ZoomControls(
         }
 
         TextButton(
-            onClick = { onZoomChange(1f) }
+            onClick = { onZoomChange(ZoomDefault) }
         ) {
             Text(stringResource(Res.string.action_fit))
         }

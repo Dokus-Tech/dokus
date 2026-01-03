@@ -1,18 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components.create
 
-import tech.dokus.features.contacts.mvi.SoftDuplicateReason
-import tech.dokus.features.contacts.mvi.SoftDuplicateUi
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_view
-import tech.dokus.aura.resources.contacts_cancel
-import tech.dokus.aura.resources.contacts_continue_anyway
-import tech.dokus.aura.resources.contacts_duplicate_list_hint
-import tech.dokus.aura.resources.contacts_duplicate_match_name
-import tech.dokus.aura.resources.contacts_duplicate_match_name_country
-import tech.dokus.aura.resources.contacts_duplicate_warning
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.constrains.Constrains
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,8 +17,20 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import tech.dokus.domain.ids.ContactId
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_view
+import tech.dokus.aura.resources.contacts_cancel
+import tech.dokus.aura.resources.contacts_continue_anyway
+import tech.dokus.aura.resources.contacts_duplicate_list_hint
+import tech.dokus.aura.resources.contacts_duplicate_match_name
+import tech.dokus.aura.resources.contacts_duplicate_match_name_country
+import tech.dokus.aura.resources.contacts_duplicate_warning
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.features.contacts.mvi.SoftDuplicateReason
+import tech.dokus.features.contacts.mvi.SoftDuplicateUi
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Dialog shown when soft duplicates are found during manual contact creation.

@@ -41,6 +41,7 @@ class Documents {
      */
     @Serializable
     @Resource("")
+    @Suppress("LongParameterList") // Query parameters for document filtering
     class Paginated(
         val parent: Documents = Documents(),
         val draftStatus: DraftStatus? = null,

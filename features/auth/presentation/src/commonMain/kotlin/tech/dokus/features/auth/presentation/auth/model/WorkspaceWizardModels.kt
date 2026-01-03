@@ -1,11 +1,15 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
+
 package tech.dokus.features.auth.presentation.auth.model
 
+import androidx.compose.runtime.Stable
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
-import androidx.compose.runtime.Stable
+
+private const val MinCompanyNameLength = 3
 
 /**
  * Steps in the workspace creation wizard.
@@ -13,8 +17,10 @@ import androidx.compose.runtime.Stable
 enum class WorkspaceWizardStep {
     /** Step 1: Select workspace type (Freelancer or Company) */
     TypeSelection,
+
     /** Step 2: Enter company name (Companies only, Freelancers skip) */
     CompanyName,
+
     /** Step 3: Enter VAT number and address (All types) */
     VatAndAddress;
 
@@ -61,8 +67,10 @@ sealed class LookupState {
 sealed class EntityConfirmationState {
     /** Dialog is hidden */
     data object Hidden : EntityConfirmationState()
+
     /** Single result found - show confirmation */
     data class SingleResult(val entity: EntityLookup) : EntityConfirmationState()
+
     /** Multiple results found - show selection list */
     data class MultipleResults(val entities: List<EntityLookup>) : EntityConfirmationState()
 }
@@ -85,7 +93,7 @@ data class WorkspaceWizardState(
     val canProceed: Boolean
         get() = when (step) {
             WorkspaceWizardStep.TypeSelection -> true // Type is always selected
-            WorkspaceWizardStep.CompanyName -> companyName.length >= 3
+            WorkspaceWizardStep.CompanyName -> companyName.length >= MinCompanyNameLength
             WorkspaceWizardStep.VatAndAddress -> vatNumber.isValid && address.isValid
         }
 

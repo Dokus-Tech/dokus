@@ -1,10 +1,10 @@
 package tech.dokus.features.contacts.navigation
 
-import tech.dokus.navigation.NavigationProvider
-import tech.dokus.navigation.destinations.HomeDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import tech.dokus.features.contacts.presentation.contacts.route.ContactsRoute
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.HomeDestination
 
 /**
  * Navigation provider for the Contacts feature.

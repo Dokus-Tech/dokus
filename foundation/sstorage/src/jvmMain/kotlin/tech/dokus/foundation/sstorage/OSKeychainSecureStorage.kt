@@ -1,3 +1,8 @@
+@file:Suppress(
+    "TooGenericExceptionCaught", // Keychain operations can fail in many ways - graceful fallback
+    "SwallowedException" // Intentionally swallowed for fallback behavior
+)
+
 package tech.dokus.foundation.sstorage
 
 import com.github.javakeyring.Keyring
@@ -43,7 +48,7 @@ class OSKeychainSecureStorage(
         encodeDefaults = true
     }
 
-    private val keychainService = "${KEY_PREFIX}${SEPARATOR}${serviceName}"
+    private val keychainService = "${KEY_PREFIX}${SEPARATOR}$serviceName"
     private val keychainAccount = DEFAULT_ACCOUNT
 
     // In-memory cache for better performance
@@ -120,27 +125,32 @@ class OSKeychainSecureStorage(
             keyring?.getPassword(service, keychainAccount)
         } catch (e: PasswordAccessException) {
             // Try to reconstruct from chunks
-            var index = 0
-            val chunks = mutableListOf<String>()
+            val chunks = collectChunks(service)
+            chunks.takeIf { it.isNotEmpty() }?.joinToString("")
+        }
+    }
 
-            while (true) {
-                val chunkService = "${service}${SEPARATOR}chunk${index}"
-                try {
-                    keyring?.getPassword(chunkService, keychainAccount)?.let {
-                        chunks.add(it)
-                        index++
-                    } ?: break
-                } catch (e: PasswordAccessException) {
-                    break
-                }
-            }
+    /**
+     * Collects all chunks for a given service key
+     */
+    private fun collectChunks(service: String): List<String> {
+        val chunks = mutableListOf<String>()
+        var index = 0
+        var hasMoreChunks = true
 
-            if (chunks.isNotEmpty()) {
-                chunks.joinToString("")
-            } else {
-                null
+        while (hasMoreChunks) {
+            val chunkService = "${service}${SEPARATOR}chunk$index"
+            hasMoreChunks = try {
+                keyring?.getPassword(chunkService, keychainAccount)?.also {
+                    chunks.add(it)
+                    index++
+                } != null
+            } catch (e: PasswordAccessException) {
+                false
             }
         }
+
+        return chunks
     }
 
     /**
@@ -159,7 +169,7 @@ class OSKeychainSecureStorage(
         } else {
             // Store as chunks
             chunks.forEachIndexed { index, chunk ->
-                val chunkService = "${service}${SEPARATOR}chunk${index}"
+                val chunkService = "${service}${SEPARATOR}chunk$index"
                 keyring?.setPassword(chunkService, keychainAccount, chunk)
             }
 
@@ -177,16 +187,18 @@ class OSKeychainSecureStorage(
      */
     private fun cleanupChunks(service: String) {
         var index = 0
-        while (true) {
-            val chunkService = "${service}${SEPARATOR}chunk${index}"
-            try {
+        var hasMoreChunks = true
+
+        while (hasMoreChunks) {
+            val chunkService = "${service}${SEPARATOR}chunk$index"
+            hasMoreChunks = try {
                 keyring?.deletePassword(chunkService, keychainAccount)
                 index++
+                true
             } catch (e: PasswordAccessException) {
-                // No more chunks
-                break
+                false
             } catch (e: Exception) {
-                break
+                false
             }
         }
     }

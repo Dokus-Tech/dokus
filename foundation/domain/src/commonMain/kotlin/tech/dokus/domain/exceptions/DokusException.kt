@@ -564,7 +564,8 @@ sealed class DokusException(
     @Serializable
     @SerialName("DokusException.TooManySessions")
     data class TooManySessions(
-        override val message: String? = "Maximum number of concurrent sessions reached. Please log out from another device.",
+        override val message: String? =
+            "Maximum number of concurrent sessions reached. Please log out from another device.",
         val maxSessions: Int = 5,
     ) : DokusException(
         httpStatusCode = HTTP_STATUS,

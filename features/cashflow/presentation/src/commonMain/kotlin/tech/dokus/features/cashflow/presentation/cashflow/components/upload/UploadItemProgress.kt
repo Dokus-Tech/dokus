@@ -1,7 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.upload
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.common_percent_value
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.common_percent_value
 
 /**
  * Upload progress indicator showing a linear progress bar with percentage text.

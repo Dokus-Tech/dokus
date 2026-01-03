@@ -1,7 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
-import tech.dokus.features.auth.mvi.LoginIntent
-import tech.dokus.features.auth.mvi.LoginState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +41,8 @@ import tech.dokus.aura.resources.auth_sign_in_button
 import tech.dokus.aura.resources.auth_sign_up_link
 import tech.dokus.aura.resources.connect_to_server
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.auth.mvi.LoginIntent
+import tech.dokus.features.auth.mvi.LoginState
 import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton

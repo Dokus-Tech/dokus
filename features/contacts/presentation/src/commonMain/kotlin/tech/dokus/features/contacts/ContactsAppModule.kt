@@ -1,27 +1,24 @@
 package tech.dokus.features.contacts
 
-import tech.dokus.features.contacts.contactsDataModule
-import tech.dokus.features.contacts.contactsDomainModule
-import tech.dokus.features.contacts.contactsNetworkModule
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_title
+import tech.dokus.aura.resources.users
 import tech.dokus.features.contacts.datasource.ContactsDb
 import tech.dokus.features.contacts.di.contactsPresentationModule
 import tech.dokus.features.contacts.navigation.ContactsHomeNavigationProvider
 import tech.dokus.features.contacts.navigation.ContactsNavigationProvider
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_title
-import tech.dokus.aura.resources.users
-import tech.dokus.foundation.aura.model.HomeItem
-import tech.dokus.foundation.aura.model.HomeItemPriority
-import tech.dokus.navigation.NavigationProvider
-import tech.dokus.navigation.destinations.HomeDestination
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.AppPresentationModuleDi
 import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleSettingsGroup
+import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.foundation.aura.model.HomeItemPriority
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.HomeDestination
 
 /**
  * Contacts module registration for dependency injection.

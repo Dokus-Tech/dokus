@@ -1,7 +1,5 @@
 package tech.dokus.foundation.aura.constrains
 
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.local.isLarge
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -13,6 +11,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
 
 object Constrains {
     val largeScreenWidth = 980.dp
@@ -25,8 +25,8 @@ object Constrains {
      * Used to determine screen size categories.
      */
     object Breakpoint {
-        const val SMALL = 600   // Mobile breakpoint
-        const val LARGE = 1200  // Desktop breakpoint
+        const val SMALL = 600 // Mobile breakpoint
+        const val LARGE = 1200 // Desktop breakpoint
     }
 
     /**
@@ -34,13 +34,13 @@ object Constrains {
      * Based on 4dp baseline rhythm for consistent visual harmony.
      */
     object Spacing {
-        val xxSmall = 2.dp   // Minimal spacing
-        val xSmall = 4.dp    // Very tight spacing
-        val small = 8.dp     // Tight spacing
-        val medium = 12.dp   // Default spacing
-        val large = 16.dp    // Comfortable spacing
-        val xLarge = 24.dp   // Generous spacing
-        val xxLarge = 32.dp  // Section spacing
+        val xxSmall = 2.dp // Minimal spacing
+        val xSmall = 4.dp // Very tight spacing
+        val small = 8.dp // Tight spacing
+        val medium = 12.dp // Default spacing
+        val large = 16.dp // Comfortable spacing
+        val xLarge = 24.dp // Generous spacing
+        val xxLarge = 32.dp // Section spacing
         val xxxLarge = 48.dp // Major section spacing
     }
 
@@ -56,13 +56,16 @@ object Constrains {
     @Deprecated("Use MaterialTheme.shapes instead for consistent Material Design 3 theming")
     object CornerRadius {
         @Deprecated("Use MaterialTheme.shapes.extraSmall", ReplaceWith("MaterialTheme.shapes.extraSmall"))
-        val small = 4.dp     // Subtle rounding
+        val small = 4.dp // Subtle rounding
+
         @Deprecated("Use MaterialTheme.shapes.small", ReplaceWith("MaterialTheme.shapes.small"))
-        val medium = 8.dp    // Default rounding
+        val medium = 8.dp // Default rounding
+
         @Deprecated("Use MaterialTheme.shapes.medium", ReplaceWith("MaterialTheme.shapes.medium"))
-        val large = 12.dp    // Prominent rounding
+        val large = 12.dp // Prominent rounding
+
         @Deprecated("Use MaterialTheme.shapes.large", ReplaceWith("MaterialTheme.shapes.large"))
-        val xLarge = 16.dp   // Strong rounding
+        val xLarge = 16.dp // Strong rounding
     }
 
     /**
@@ -70,13 +73,13 @@ object Constrains {
      * Based on Material Design 3 icon sizing guidelines.
      */
     object IconSize {
-        val xSmall = 16.dp   // Inline icons
-        val small = 18.dp    // List item icons
+        val xSmall = 16.dp // Inline icons
+        val small = 18.dp // List item icons
         val smallMedium = 20.dp // Between small and medium
-        val medium = 24.dp   // Standard icons
-        val large = 32.dp    // Prominent icons
-        val xLarge = 48.dp   // Featured icons
-        val xxLarge = 64.dp  // Hero icons
+        val medium = 24.dp // Standard icons
+        val large = 32.dp // Prominent icons
+        val xLarge = 48.dp // Featured icons
+        val xxLarge = 64.dp // Hero icons
         val buttonLoading = 20.dp // Loading indicator inside buttons
     }
 
@@ -85,10 +88,10 @@ object Constrains {
      * Ensures consistent vertical sizing across interactive elements.
      */
     object Height {
-        val button = 42.dp        // Standard button height
-        val input = 56.dp         // Input field height
+        val button = 42.dp // Standard button height
+        val input = 56.dp // Input field height
         val navigationBar = 60.dp // Bottom navigation bar height
-        val shimmerLine = 14.dp   // Default shimmer text line height
+        val shimmerLine = 14.dp // Default shimmer text line height
     }
 
     /**
@@ -96,10 +99,10 @@ object Constrains {
      * Based on Material Design 3 elevation scale.
      */
     object Elevation {
-        val none = 0.dp      // Flat, no elevation
-        val low = 4.dp       // Subtle lift
-        val medium = 8.dp    // Moderate elevation
-        val high = 16.dp     // Prominent elevation
+        val none = 0.dp // Flat, no elevation
+        val low = 4.dp // Subtle lift
+        val medium = 8.dp // Moderate elevation
+        val high = 16.dp // Prominent elevation
     }
 
     /**
@@ -107,11 +110,11 @@ object Constrains {
      * Matches the AvatarSize enum values in CompanyAvatarImage.kt.
      */
     object AvatarSize {
-        val extraSmall = 24.dp  // Compact avatars (lists, inline)
-        val small = 32.dp       // Small avatars
-        val medium = 64.dp      // Standard avatars
-        val tile = 72.dp        // Tile avatars (company tiles)
-        val large = 128.dp      // Profile avatars
+        val extraSmall = 24.dp // Compact avatars (lists, inline)
+        val small = 32.dp // Small avatars
+        val medium = 64.dp // Standard avatars
+        val tile = 72.dp // Tile avatars (company tiles)
+        val large = 128.dp // Profile avatars
         val extraLarge = 256.dp // Featured avatars
     }
 
@@ -120,7 +123,7 @@ object Constrains {
      * For lines, borders, and divider components.
      */
     object Stroke {
-        val thin = 1.dp      // Standard divider/border thickness
+        val thin = 1.dp // Standard divider/border thickness
         val dashWidth = 6.dp // Dashed divider dash width
         val cropGuide = 3.dp // Crop overlay guide stroke width
     }
@@ -130,8 +133,8 @@ object Constrains {
      * Used for modal dialogs and overlays.
      */
     object DialogSize {
-        val maxWidth = 400.dp      // Maximum width for standard dialogs
-        val cropAreaMax = 320.dp   // Maximum size for image crop areas
+        val maxWidth = 400.dp // Maximum width for standard dialogs
+        val cropAreaMax = 320.dp // Maximum size for image crop areas
     }
 
     /**
@@ -139,7 +142,7 @@ object Constrains {
      * Used for image cropper corner guides.
      */
     object CropGuide {
-        val cornerLength = 40.dp   // Length of corner guide lines
+        val cornerLength = 40.dp // Length of corner guide lines
     }
 
     /**
@@ -147,7 +150,7 @@ object Constrains {
      * Used for NavigationBar and NavigationRail components.
      */
     object Navigation {
-        val fabSize = 46.dp        // FAB button size in nav bar
+        val fabSize = 46.dp // FAB button size in nav bar
         val indicatorWidth = 24.dp // Selected item indicator width
         val indicatorHeight = 2.dp // Selected item indicator height
     }
@@ -157,8 +160,8 @@ object Constrains {
      * Used for compact search fields in top bars.
      */
     object SearchField {
-        val minWidth = 200.dp  // Minimum width for search field
-        val maxWidth = 360.dp  // Maximum width for search field
+        val minWidth = 200.dp // Minimum width for search field
+        val maxWidth = 360.dp // Maximum width for search field
     }
 }
 
@@ -174,7 +177,11 @@ fun Modifier.withVerticalPadding(): Modifier = then(Modifier.padding(vertical = 
 @Composable
 fun Modifier.withContentPaddingForScrollable(): Modifier {
     if (LocalScreenSize.isLarge) {
-        return then(Modifier.padding(top = Constrains.Spacing.large).then(Modifier.padding(horizontal = Constrains.Spacing.xxLarge)))
+        return then(
+            Modifier.padding(
+                top = Constrains.Spacing.large
+            ).then(Modifier.padding(horizontal = Constrains.Spacing.xxLarge))
+        )
     }
     return then(Modifier.padding(horizontal = Constrains.Spacing.large))
 }

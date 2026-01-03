@@ -7,4 +7,4 @@ package tech.dokus.features.auth.usecases
  * If we find a user, we return them right away and sync from the server in the
  * background to get any updates. Only hits the network if there's no local user.
  */
-class CheckAccountUseCase()
+class CheckAccountUseCase

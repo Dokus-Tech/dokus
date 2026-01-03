@@ -1,6 +1,5 @@
 package tech.dokus.foundation.aura.components.chat
 
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Represents the role of a message sender in a chat conversation.

@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.datasource
 
+import io.ktor.client.HttpClient
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatHistoryResponse
@@ -8,7 +9,6 @@ import tech.dokus.domain.model.ai.ChatResponse
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionListResponse
-import io.ktor.client.HttpClient
 
 /**
  * Remote data source for chat operations.

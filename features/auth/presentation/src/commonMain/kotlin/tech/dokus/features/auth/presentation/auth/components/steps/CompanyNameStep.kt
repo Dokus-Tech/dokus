@@ -1,14 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components.steps
 
-import tech.dokus.features.auth.presentation.auth.model.LookupState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_company_name_label
-import tech.dokus.aura.resources.auth_company_name_prompt
-import tech.dokus.aura.resources.auth_company_name_searching
-import tech.dokus.aura.resources.auth_company_name_subtitle
-import tech.dokus.foundation.aura.components.fields.PTextFieldWorkspaceName
-import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +15,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_company_name_label
+import tech.dokus.aura.resources.auth_company_name_prompt
+import tech.dokus.aura.resources.auth_company_name_searching
+import tech.dokus.aura.resources.auth_company_name_subtitle
+import tech.dokus.features.auth.presentation.auth.model.LookupState
+import tech.dokus.foundation.aura.components.fields.PTextFieldWorkspaceName
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.extensions.localized
 
 @Composable
 internal fun CompanyNameStep(

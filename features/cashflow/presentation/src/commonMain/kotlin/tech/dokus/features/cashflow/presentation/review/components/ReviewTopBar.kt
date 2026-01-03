@@ -1,11 +1,11 @@
 package tech.dokus.features.cashflow.presentation.review.components
 
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,8 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -32,11 +30,22 @@ import tech.dokus.aura.resources.cashflow_chat_with_document
 import tech.dokus.aura.resources.cashflow_confidence_badge
 import tech.dokus.aura.resources.cashflow_document_review_title
 import tech.dokus.aura.resources.state_confirming
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.aura.components.DraftStatusBadge
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constrains
+
+// Confidence thresholds
+private const val ConfidenceHighThreshold = 80
+private const val ConfidenceMediumThreshold = 50
+
+// Badge dimensions
+private val BadgeCornerRadius = 4.dp
+private val BadgeHorizontalPadding = 6.dp
+private val BadgeVerticalPadding = 2.dp
+private const val BadgeBackgroundAlpha = 0.1f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,16 +137,16 @@ internal fun ReviewTopBar(
 @Composable
 private fun ConfidenceBadge(percent: Int) {
     val color = when {
-        percent >= 80 -> MaterialTheme.colorScheme.tertiary
-        percent >= 50 -> MaterialTheme.colorScheme.secondary
+        percent >= ConfidenceHighThreshold -> MaterialTheme.colorScheme.tertiary
+        percent >= ConfidenceMediumThreshold -> MaterialTheme.colorScheme.secondary
         else -> MaterialTheme.colorScheme.error
     }
 
     androidx.compose.foundation.layout.Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(color.copy(alpha = 0.1f))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .clip(RoundedCornerShape(BadgeCornerRadius))
+            .background(color.copy(alpha = BadgeBackgroundAlpha))
+            .padding(horizontal = BadgeHorizontalPadding, vertical = BadgeVerticalPadding)
     ) {
         Text(
             text = stringResource(Res.string.cashflow_confidence_badge, percent),

@@ -1,7 +1,5 @@
 package tech.dokus.features.cashflow.presentation.chat.components
 
-import tech.dokus.features.cashflow.presentation.chat.ChatIntent
-import tech.dokus.features.cashflow.presentation.chat.ChatState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import tech.dokus.features.cashflow.presentation.chat.ChatIntent
+import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.foundation.aura.constrains.Constrains
 
 @Composable

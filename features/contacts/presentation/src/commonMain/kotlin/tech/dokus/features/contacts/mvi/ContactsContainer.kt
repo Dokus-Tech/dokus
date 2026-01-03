@@ -1,17 +1,12 @@
+@file:Suppress(
+    "TooManyFunctions", // Container handles contacts list workflow
+    "MagicNumber", // Timeout/delay constants
+    "TooGenericExceptionCaught", // Network errors need catch-all
+    "DestructuringDeclarationWithTooManyEntries" // Contact model has many fields
+)
+
 package tech.dokus.features.contacts.mvi
 
-import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
-import tech.dokus.features.contacts.usecases.CacheContactsUseCase
-import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
-import tech.dokus.features.contacts.usecases.ListCustomersUseCase
-import tech.dokus.features.contacts.usecases.ListVendorsUseCase
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.api.Container
@@ -20,6 +15,18 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
+import tech.dokus.features.contacts.usecases.CacheContactsUseCase
+import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
+import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.features.contacts.usecases.ListCustomersUseCase
+import tech.dokus.features.contacts.usecases.ListVendorsUseCase
+import tech.dokus.foundation.platform.Logger
 
 internal typealias ContactsCtx = PipelineContext<ContactsState, ContactsIntent, ContactsAction>
 

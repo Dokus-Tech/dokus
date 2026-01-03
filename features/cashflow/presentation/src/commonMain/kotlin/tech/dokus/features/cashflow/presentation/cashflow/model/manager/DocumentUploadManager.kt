@@ -1,12 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model.manager
 
-import tech.dokus.features.cashflow.presentation.cashflow.components.DroppedFile
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
-import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +15,14 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.utils.currentTimeMillis
+import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.presentation.cashflow.components.DroppedFile
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
+import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
+import tech.dokus.foundation.platform.Logger
 import kotlin.time.Duration.Companion.seconds
 
 /**

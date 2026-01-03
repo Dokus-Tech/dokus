@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // Color hex codes (0xFF...) are standard notation, not magic numbers
+
 package tech.dokus.foundation.aura.style
 
 import androidx.compose.material3.ColorScheme
@@ -113,7 +115,8 @@ fun createColorScheme(useDarkTheme: Boolean): ColorScheme = if (useDarkTheme) {
 val ColorScheme.rippleColor: Color get() = onSurface
 
 // Helper for surface decisions that depend on theme brightness.
-val ColorScheme.isDark: Boolean get() = background.luminance() < 0.5f
+private const val DARK_LUMINANCE_THRESHOLD = 0.5f
+val ColorScheme.isDark: Boolean get() = background.luminance() < DARK_LUMINANCE_THRESHOLD
 
 // Brand accent access (use intentionally; do not map to primary)
 @Suppress("UnusedReceiverParameter")

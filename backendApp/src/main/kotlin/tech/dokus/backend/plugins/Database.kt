@@ -1,10 +1,10 @@
 package tech.dokus.backend.plugins
 
-import tech.dokus.foundation.backend.database.DatabaseFactory
-import tech.dokus.foundation.backend.utils.loggerFor
 import io.ktor.server.application.Application
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.inject
+import tech.dokus.foundation.backend.database.DatabaseFactory
+import tech.dokus.foundation.backend.utils.loggerFor
 
 private val logger = loggerFor("Database")
 

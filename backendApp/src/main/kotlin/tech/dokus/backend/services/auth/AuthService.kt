@@ -2,6 +2,7 @@
 
 package tech.dokus.backend.services.auth
 
+import com.auth0.jwt.JWT
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.enums.Permission
@@ -24,7 +25,6 @@ import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.security.JwtGenerator
 import tech.dokus.foundation.backend.security.TokenBlacklistService
 import tech.dokus.foundation.backend.utils.loggerFor
-import com.auth0.jwt.JWT
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -86,7 +86,10 @@ class AuthService(
         // Enforce concurrent session limit by revoking oldest session if needed
         val activeSessions = refreshTokenRepository.countActiveForUser(userId)
         if (activeSessions >= maxConcurrentSessions) {
-            logger.info("User ${userId.value} at session limit ($activeSessions/$maxConcurrentSessions), revoking oldest session")
+            logger.info(
+                "User ${userId.value} at session limit " +
+                    "($activeSessions/$maxConcurrentSessions), revoking oldest session"
+            )
             refreshTokenRepository.revokeOldestForUser(userId).onFailure { error ->
                 logger.warn("Failed to revoke oldest session for user: ${userId.value}", error)
             }
@@ -473,18 +476,28 @@ class AuthService(
         UserRole.Owner -> Permission.entries.toSet()
         UserRole.Admin -> Permission.entries.toSet() - setOf(Permission.UsersManage)
         UserRole.Accountant -> setOf(
-            Permission.InvoicesRead, Permission.InvoicesCreate, Permission.InvoicesEdit,
-            Permission.InvoicesSend, Permission.ClientsRead, Permission.ClientsManage,
-            Permission.ReportsView, Permission.ExportsCreate
+            Permission.InvoicesRead,
+            Permission.InvoicesCreate,
+            Permission.InvoicesEdit,
+            Permission.InvoicesSend,
+            Permission.ClientsRead,
+            Permission.ClientsManage,
+            Permission.ReportsView,
+            Permission.ExportsCreate
         )
 
         UserRole.Editor -> setOf(
-            Permission.InvoicesRead, Permission.InvoicesCreate, Permission.InvoicesEdit,
-            Permission.ClientsRead, Permission.ReportsView
+            Permission.InvoicesRead,
+            Permission.InvoicesCreate,
+            Permission.InvoicesEdit,
+            Permission.ClientsRead,
+            Permission.ReportsView
         )
 
         UserRole.Viewer -> setOf(
-            Permission.InvoicesRead, Permission.ClientsRead, Permission.ReportsView
+            Permission.InvoicesRead,
+            Permission.ClientsRead,
+            Permission.ReportsView
         )
     }
 }

@@ -1,35 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_amount_with_currency
-import tech.dokus.aura.resources.cashflow_document_number_bill
-import tech.dokus.aura.resources.cashflow_document_number_expense
-import tech.dokus.aura.resources.common_unknown
-import tech.dokus.aura.resources.date_format_long
-import tech.dokus.aura.resources.date_month_long_april
-import tech.dokus.aura.resources.date_month_long_august
-import tech.dokus.aura.resources.date_month_long_december
-import tech.dokus.aura.resources.date_month_long_february
-import tech.dokus.aura.resources.date_month_long_january
-import tech.dokus.aura.resources.date_month_long_july
-import tech.dokus.aura.resources.date_month_long_june
-import tech.dokus.aura.resources.date_month_long_march
-import tech.dokus.aura.resources.date_month_long_may
-import tech.dokus.aura.resources.date_month_long_november
-import tech.dokus.aura.resources.date_month_long_october
-import tech.dokus.aura.resources.date_month_long_september
-import tech.dokus.aura.resources.document_table_amount
-import tech.dokus.aura.resources.document_table_contact
-import tech.dokus.aura.resources.document_table_date
-import tech.dokus.aura.resources.document_table_invoice
-import tech.dokus.aura.resources.document_table_more_options
-import tech.dokus.aura.resources.document_table_view_details
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.CashflowType
-import tech.dokus.foundation.aura.components.CashflowTypeBadge
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -60,6 +30,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_amount_with_currency
+import tech.dokus.aura.resources.cashflow_document_number_bill
+import tech.dokus.aura.resources.cashflow_document_number_expense
+import tech.dokus.aura.resources.common_unknown
+import tech.dokus.aura.resources.date_format_long
+import tech.dokus.aura.resources.date_month_long_april
+import tech.dokus.aura.resources.date_month_long_august
+import tech.dokus.aura.resources.date_month_long_december
+import tech.dokus.aura.resources.date_month_long_february
+import tech.dokus.aura.resources.date_month_long_january
+import tech.dokus.aura.resources.date_month_long_july
+import tech.dokus.aura.resources.date_month_long_june
+import tech.dokus.aura.resources.date_month_long_march
+import tech.dokus.aura.resources.date_month_long_may
+import tech.dokus.aura.resources.date_month_long_november
+import tech.dokus.aura.resources.date_month_long_october
+import tech.dokus.aura.resources.date_month_long_september
+import tech.dokus.aura.resources.document_table_amount
+import tech.dokus.aura.resources.document_table_contact
+import tech.dokus.aura.resources.document_table_date
+import tech.dokus.aura.resources.document_table_invoice
+import tech.dokus.aura.resources.document_table_more_options
+import tech.dokus.aura.resources.document_table_view_details
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.foundation.aura.components.CashflowType
+import tech.dokus.foundation.aura.components.CashflowTypeBadge
+import tech.dokus.foundation.aura.components.DokusCardSurface
 
 /**
  * Data class representing a financial document table row.
@@ -339,9 +339,9 @@ private fun FinancialDocumentTableRow(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                text = row.contactName.ifBlank {
-                    stringResource(Res.string.common_unknown)
-                },
+                    text = row.contactName.ifBlank {
+                        stringResource(Res.string.common_unknown)
+                    },
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium
                     ),

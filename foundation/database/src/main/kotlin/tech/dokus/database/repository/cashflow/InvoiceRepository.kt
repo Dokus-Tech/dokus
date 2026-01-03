@@ -1,26 +1,7 @@
 package tech.dokus.database.repository.cashflow
 
-import tech.dokus.database.services.InvoiceNumberGenerator
-import tech.dokus.database.tables.cashflow.InvoiceItemsTable
-import tech.dokus.database.tables.cashflow.InvoicesTable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
-import tech.dokus.domain.Money
-import tech.dokus.domain.VatRate
-import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.toDbDecimal
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.InvoiceNumber
-import tech.dokus.domain.ids.PeppolId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.InvoiceItemDto
-import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
@@ -38,6 +19,25 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.services.InvoiceNumberGenerator
+import tech.dokus.database.tables.cashflow.InvoiceItemsTable
+import tech.dokus.database.tables.cashflow.InvoicesTable
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.InvoiceNumber
+import tech.dokus.domain.ids.PeppolId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.toDbDecimal
+import tech.dokus.foundation.backend.database.dbQuery
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -105,7 +105,7 @@ class InvoiceRepository(
             // Manually fetch and return the complete invoice
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq invoiceId.value) and
-                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single()
 
             val items = InvoiceItemsTable.selectAll().where {
@@ -166,7 +166,7 @@ class InvoiceRepository(
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull() ?: return@dbQuery null
 
             // Fetch invoice items
@@ -305,11 +305,13 @@ class InvoiceRepository(
 
                 InvoicesTable.selectAll().where {
                     (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                            (InvoicesTable.dueDate less today) and
-                            (InvoicesTable.status inList listOf(
+                        (InvoicesTable.dueDate less today) and
+                        (
+                            InvoicesTable.status inList listOf(
                                 InvoiceStatus.Sent,
                                 InvoiceStatus.Draft
-                            ))
+                            )
+                            )
                 }.orderBy(InvoicesTable.dueDate)
                     .map { row ->
                         FinancialDocumentDto.InvoiceDto(
@@ -355,7 +357,7 @@ class InvoiceRepository(
         dbQuery {
             val updatedRows = InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[InvoicesTable.status] = status
             }
@@ -376,7 +378,7 @@ class InvoiceRepository(
             // Verify invoice exists and belongs to tenant
             val exists = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
 
             if (!exists) {
@@ -386,7 +388,7 @@ class InvoiceRepository(
             // Update invoice
             InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[contactId] = UUID.fromString(request.contactId.toString())
                 it[subtotalAmount] =
@@ -423,7 +425,7 @@ class InvoiceRepository(
             // Manually fetch and return the updated invoice
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single()
 
             val items = InvoiceItemsTable.selectAll().where {
@@ -493,7 +495,7 @@ class InvoiceRepository(
             // Delete invoice
             val deletedRows = InvoicesTable.deleteWhere {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
 
             deletedRows > 0
@@ -511,7 +513,7 @@ class InvoiceRepository(
         dbQuery {
             InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
         }
     }
@@ -528,7 +530,7 @@ class InvoiceRepository(
         dbQuery {
             val updatedRows = InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[InvoicesTable.documentId] = UUID.fromString(documentId.toString())
             }
@@ -546,7 +548,7 @@ class InvoiceRepository(
     ): FinancialDocumentDto.InvoiceDto? = dbQuery {
         InvoicesTable.selectAll().where {
             (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-            (InvoicesTable.documentId eq UUID.fromString(documentId.toString()))
+                (InvoicesTable.documentId eq UUID.fromString(documentId.toString()))
         }.singleOrNull()?.let { row ->
             // Fetch invoice items
             val invoiceId = InvoiceId.parse(row[InvoicesTable.id].value.toString())

@@ -1,17 +1,17 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
-import tech.dokus.features.auth.presentation.auth.model.RegisterPage
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_continue
-import tech.dokus.aura.resources.auth_register_title
-import tech.dokus.foundation.aura.components.PPrimaryButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_continue
+import tech.dokus.aura.resources.auth_register_title
+import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
+import tech.dokus.features.auth.presentation.auth.model.RegisterPage
+import tech.dokus.foundation.aura.components.PPrimaryButton
 
 @Composable
 internal fun RegisterActionButton(

@@ -1,10 +1,5 @@
 package tech.dokus.features.contacts.datasource
 
-import tech.dokus.features.contacts.cache.ContactsCacheDatabase
-
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.contact.ContactDto
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +9,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.json.Json
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.contacts.cache.ContactsCacheDatabase
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 

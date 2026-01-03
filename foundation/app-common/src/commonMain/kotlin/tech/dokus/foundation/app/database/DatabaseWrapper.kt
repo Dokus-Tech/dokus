@@ -1,11 +1,13 @@
+@file:Suppress("TooGenericExceptionCaught") // Database errors need catch-all handling
+
 package tech.dokus.foundation.app.database
 
-import tech.dokus.domain.model.common.Feature
 import app.cash.sqldelight.db.QueryResult
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.db.SqlSchema
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import tech.dokus.domain.model.common.Feature
 
 /**
  * Interface for database wrappers that handles thread-safe initialization.
@@ -60,7 +62,10 @@ fun <T> DatabaseWrapper(
                 isInitialized = true
             } catch (e: Exception) {
                 // Schema mismatch or corruption - delete and retry
-                println("Database initialization failed for ${feature.frontendDbName}, dropping and recreating: ${e.message}")
+                println(
+                    "Database initialization failed for ${feature.frontendDbName}, " +
+                        "dropping and recreating: ${e.message}"
+                )
 
                 try {
                     feature.deleteSqlDatabase()

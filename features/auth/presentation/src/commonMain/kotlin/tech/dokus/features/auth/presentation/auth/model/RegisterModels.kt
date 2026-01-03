@@ -1,13 +1,13 @@
 package tech.dokus.features.auth.presentation.auth.model
 
-import tech.dokus.foundation.app.extensions.rememberIsValid
-import tech.dokus.domain.Email
-import tech.dokus.domain.Name
-import tech.dokus.domain.Password
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.Password
+import tech.dokus.foundation.app.extensions.rememberIsValid
 
 /**
  * Holds form field values for the user registration flow.

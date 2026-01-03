@@ -1,7 +1,5 @@
 package tech.dokus.features.auth.mvi
 
-import tech.dokus.features.auth.usecases.ConnectToServerUseCase
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -11,8 +9,11 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.features.auth.usecases.ConnectToServerUseCase
+import tech.dokus.foundation.platform.Logger
 
-internal typealias ServerConnectionCtx = PipelineContext<ServerConnectionState, ServerConnectionIntent, ServerConnectionAction>
+internal typealias ServerConnectionCtx =
+    PipelineContext<ServerConnectionState, ServerConnectionIntent, ServerConnectionAction>
 
 /**
  * Container for Server Connection screen using FlowMVI.
@@ -26,6 +27,10 @@ internal class ServerConnectionContainer(
 ) : Container<ServerConnectionState, ServerConnectionIntent, ServerConnectionAction> {
 
     companion object {
+        private const val DefaultPort = 8000
+        private const val MinPort = 1
+        private const val MaxPort = 65535
+
         data class Params(
             val initialConfig: ServerConfig?
         )
@@ -38,7 +43,7 @@ internal class ServerConnectionContainer(
             ServerConnectionState.Input(
                 protocol = initialConfig?.protocol ?: "http",
                 host = initialConfig?.host ?: "",
-                port = (initialConfig?.port ?: 8000).toString()
+                port = (initialConfig?.port ?: DefaultPort).toString()
             )
         ) {
             reduce { intent ->
@@ -257,7 +262,7 @@ internal class ServerConnectionContainer(
         return when {
             port.isBlank() -> DokusException.Validation.ServerPortRequired
             portNum == null -> DokusException.Validation.ServerPortInvalidNumber
-            portNum !in 1..65535 -> DokusException.Validation.ServerPortOutOfRange
+            portNum !in MinPort..MaxPort -> DokusException.Validation.ServerPortOutOfRange
             else -> null
         }
     }

@@ -1,5 +1,6 @@
 package tech.dokus.database
 
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import tech.dokus.database.tables.ai.ChatMessagesTable
 import tech.dokus.database.tables.ai.DocumentChunksTable
 import tech.dokus.database.tables.auth.AddressTable
@@ -24,7 +25,6 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
 import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
-import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -35,6 +35,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
  */
 object DokusSchema {
     private val logger = loggerFor()
+
     /**
      * Creates all tables (idempotently) in a deterministic order.
      */

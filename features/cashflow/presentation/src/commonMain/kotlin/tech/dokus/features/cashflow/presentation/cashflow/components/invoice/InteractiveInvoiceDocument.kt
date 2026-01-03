@@ -1,8 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
-import tech.dokus.foundation.aura.components.DokusCardSurface
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -15,9 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-// A4 aspect ratio: 210mm × 297mm = 1:√2 ≈ 0.707
-private const val A4_ASPECT_RATIO = 0.707f
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
+import tech.dokus.foundation.aura.components.DokusCardSurface
 
 // A4-like proportions with slightly wider width for better readability
 private val MAX_PAPER_WIDTH = 680.dp
@@ -51,8 +48,6 @@ fun InteractiveInvoiceDocument(
     ) {
         // Calculate paper width - use available width but cap at A4 max
         val paperWidth = minOf(maxWidth, MAX_PAPER_WIDTH)
-        // Calculate minimum height based on A4 ratio (content can exceed this)
-        val minPaperHeight = paperWidth / A4_ASPECT_RATIO
 
         DokusCardSurface(
             modifier = Modifier

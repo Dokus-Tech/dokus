@@ -1,9 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components.create
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_step_confirm
-import tech.dokus.aura.resources.contacts_step_details
-import tech.dokus.aura.resources.contacts_step_search
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_step_confirm
+import tech.dokus.aura.resources.contacts_step_details
+import tech.dokus.aura.resources.contacts_step_search
 
 /**
  * Step in the create contact flow.

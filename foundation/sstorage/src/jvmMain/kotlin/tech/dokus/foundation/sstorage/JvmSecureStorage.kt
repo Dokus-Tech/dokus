@@ -1,3 +1,9 @@
+@file:Suppress(
+    "TooGenericExceptionCaught", // Security code must catch all exceptions for graceful fallback
+    "SwallowedException", // Intentionally swallowed - fallback behavior is same regardless of exception
+    "TooManyFunctions" // Comprehensive storage impl with crypto, platform detection, and file management
+)
+
 package tech.dokus.foundation.sstorage
 
 import androidx.datastore.core.DataStore
@@ -42,6 +48,7 @@ internal class JVMSecureStorage(
         private const val GCM_IV_LENGTH = 12
         private const val CIPHER_ALGORITHM = "AES/GCM/NoPadding"
         private const val KEY_ALGORITHM = "AES"
+        private const val HASH_PREFIX_BYTES = 8
     }
 
     private val osType = detectOS()
@@ -121,7 +128,7 @@ internal class JVMSecureStorage(
     private fun hashServiceName(): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val hash = digest.digest("$serviceName-dokus".toByteArray())
-        return hash.take(8).joinToString("") { "%02x".format(it) }
+        return hash.take(HASH_PREFIX_BYTES).joinToString("") { "%02x".format(it) }
     }
 
     /**
@@ -238,7 +245,9 @@ internal class JVMSecureStorage(
                 val dbusIdFile = File("/var/lib/dbus/machine-id")
                 if (dbusIdFile.exists()) {
                     dbusIdFile.readText().trim()
-                } else null
+                } else {
+                    null
+                }
             }
         } catch (e: Exception) {
             null
@@ -307,42 +316,38 @@ internal class JVMSecureStorage(
      * Applies platform-specific file permissions for security
      */
     private fun secureFiles() {
-        listOf(storageDir, dataFile, keyStoreFile).forEach { file ->
-            if (file.exists()) {
-                when (osType) {
-                    OSType.LINUX, OSType.MACOS -> {
-                        try {
-                            val permissions = if (file.isDirectory) {
-                                PosixFilePermissions.fromString("rwx------")
-                            } else {
-                                PosixFilePermissions.fromString("rw-------")
-                            }
-                            Files.setPosixFilePermissions(file.toPath(), permissions)
-                        } catch (e: Exception) {
-                            // TODO: Logging
-                            // Fallback to basic Java file permissions
-                            applyBasicPermissions(file)
-                        }
-                    }
+        listOf(storageDir, dataFile, keyStoreFile)
+            .filter { it.exists() }
+            .forEach { secureFile(it) }
+    }
 
-                    OSType.WINDOWS -> {
-                        // Windows file permissions via Java API
-                        applyBasicPermissions(file)
+    private fun secureFile(file: File) {
+        when (osType) {
+            OSType.LINUX, OSType.MACOS -> applyPosixPermissions(file)
+            OSType.WINDOWS -> applyWindowsPermissions(file)
+            OSType.UNKNOWN -> applyBasicPermissions(file)
+        }
+    }
 
-                        // Try to set Windows-specific attributes
-                        try {
-                            Files.setAttribute(file.toPath(), "dos:hidden", true)
-                        } catch (e: Exception) {
-                            // TODO: Logging
-                            // Ignore if not supported
-                        }
-                    }
-
-                    OSType.UNKNOWN -> {
-                        applyBasicPermissions(file)
-                    }
-                }
+    private fun applyPosixPermissions(file: File) {
+        try {
+            val permissions = if (file.isDirectory) {
+                PosixFilePermissions.fromString("rwx------")
+            } else {
+                PosixFilePermissions.fromString("rw-------")
             }
+            Files.setPosixFilePermissions(file.toPath(), permissions)
+        } catch (e: Exception) {
+            applyBasicPermissions(file)
+        }
+    }
+
+    private fun applyWindowsPermissions(file: File) {
+        applyBasicPermissions(file)
+        try {
+            Files.setAttribute(file.toPath(), "dos:hidden", true)
+        } catch (e: Exception) {
+            // Ignore if not supported
         }
     }
 

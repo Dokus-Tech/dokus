@@ -1,24 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_clear
-import tech.dokus.aura.resources.action_search
-import tech.dokus.aura.resources.common_vat_value
-import tech.dokus.aura.resources.contacts_add_new_contact
-import tech.dokus.aura.resources.contacts_autocomplete_no_results
-import tech.dokus.aura.resources.contacts_autocomplete_no_results_for
-import tech.dokus.aura.resources.contacts_contact_label
-import tech.dokus.aura.resources.contacts_customer
-import tech.dokus.aura.resources.contacts_search_placeholder
-import tech.dokus.aura.resources.contacts_searching
-import tech.dokus.aura.resources.contacts_selected
-import tech.dokus.aura.resources.contacts_supplier
-import tech.dokus.aura.resources.contacts_vendor
-import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.foundation.platform.Logger
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -77,6 +58,54 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_clear
+import tech.dokus.aura.resources.action_search
+import tech.dokus.aura.resources.common_vat_value
+import tech.dokus.aura.resources.contacts_add_new_contact
+import tech.dokus.aura.resources.contacts_autocomplete_no_results
+import tech.dokus.aura.resources.contacts_autocomplete_no_results_for
+import tech.dokus.aura.resources.contacts_contact_label
+import tech.dokus.aura.resources.contacts_customer
+import tech.dokus.aura.resources.contacts_search_placeholder
+import tech.dokus.aura.resources.contacts_searching
+import tech.dokus.aura.resources.contacts_selected
+import tech.dokus.aura.resources.contacts_supplier
+import tech.dokus.aura.resources.contacts_vendor
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.platform.Logger
+
+// UI dimension constants
+private val DropdownTopPadding = 4.dp
+private val DropdownElevation = 8.dp
+private val DropdownCornerRadius = 8.dp
+private val DropdownTonalElevation = 3.dp
+private val DropdownMaxHeight = 300.dp
+private val DropdownResultsMaxHeight = 240.dp
+private val DropdownItemPadding = 12.dp
+private val DropdownContentPadding = 16.dp
+private val LoadingIndicatorSize = 20.dp
+private val LoadingIndicatorStrokeWidth = 2.dp
+private val ContentSpacing = 8.dp
+private val BadgeCornerRadius = 4.dp
+private val BadgePaddingHorizontal = 6.dp
+private val BadgePaddingVertical = 2.dp
+private val SelectedBadgeCornerRadius = 4.dp
+private val AddIconSize = 20.dp
+private val ClearButtonSize = 24.dp
+private val ClearIconSize = 16.dp
+private val RoleBadgeSpacing = 4.dp
+private val RoleBadgeTopSpacing = 4.dp
+private const val MinSearchLength = 2
+private const val DebounceDelayMs = 300L
+private const val SearchLimit = 10
+private const val DisabledAlpha = 0.6f
+private const val DividerAlpha = 0.5f
+private const val BadgeBackgroundAlpha = 0.1f
+private val FontSizeDefault = 16.sp
 
 // ============================================================================
 // DATA CLASSES
@@ -171,15 +200,15 @@ fun ContactAutocomplete(
             return@LaunchedEffect
         }
 
-        if (searchQuery.length >= 2) {
+        if (searchQuery.length >= MinSearchLength) {
             searchJob = scope.launch {
-                delay(300) // Debounce delay
+                delay(DebounceDelayMs) // Debounce delay
                 isSearching = true
 
                 listContacts(
                     search = searchQuery,
                     isActive = true,
-                    limit = 10
+                    limit = SearchLimit
                 ).fold(
                     onSuccess = { contacts ->
                         searchResults = contacts
@@ -233,7 +262,7 @@ fun ContactAutocomplete(
                 },
                 onFocusChanged = { focused ->
                     hasFocus = focused
-                    if (focused && searchQuery.length >= 2 && selectedContact == null) {
+                    if (focused && searchQuery.length >= MinSearchLength && selectedContact == null) {
                         showDropdown = true
                     }
                 },
@@ -317,11 +346,11 @@ private fun ContactAutocompleteField(
         else -> MaterialTheme.colorScheme.outline
     }
     val textStyle = LocalTextStyle.current.copy(
-        fontSize = 16.sp,
+        fontSize = FontSizeDefault,
         color = if (enabled) {
             MaterialTheme.colorScheme.onSurface
         } else {
-            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            MaterialTheme.colorScheme.onSurface.copy(alpha = DisabledAlpha)
         }
     )
 
@@ -372,13 +401,13 @@ private fun ContactAutocompleteField(
         if (selectedContact != null) {
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
-                shape = RoundedCornerShape(4.dp)
+                shape = RoundedCornerShape(SelectedBadgeCornerRadius)
             ) {
                 Text(
                     text = stringResource(Res.string.contacts_selected),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    modifier = Modifier.padding(horizontal = BadgePaddingHorizontal, vertical = BadgePaddingVertical)
                 )
             }
         }
@@ -386,12 +415,12 @@ private fun ContactAutocompleteField(
         if (value.isNotEmpty()) {
             IconButton(
                 onClick = onClear,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(ClearButtonSize)
             ) {
                 Icon(
                     imageVector = Icons.Default.Clear,
                     contentDescription = stringResource(Res.string.action_clear),
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(ClearIconSize),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -417,16 +446,16 @@ private fun ContactAutocompleteDropdown(
 ) {
     Surface(
         modifier = modifier
-            .padding(top = 4.dp)
-            .shadow(elevation = 8.dp, shape = RoundedCornerShape(8.dp)),
-        shape = RoundedCornerShape(8.dp),
+            .padding(top = DropdownTopPadding)
+            .shadow(elevation = DropdownElevation, shape = RoundedCornerShape(DropdownCornerRadius)),
+        shape = RoundedCornerShape(DropdownCornerRadius),
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp
+        tonalElevation = DropdownTonalElevation
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 300.dp)
+                .heightIn(max = DropdownMaxHeight)
         ) {
             when {
                 isSearching -> {
@@ -434,15 +463,15 @@ private fun ContactAutocompleteDropdown(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(DropdownContentPadding),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
+                            modifier = Modifier.size(LoadingIndicatorSize),
+                            strokeWidth = LoadingIndicatorStrokeWidth
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(ContentSpacing))
                         Text(
                             text = stringResource(Res.string.contacts_searching),
                             style = MaterialTheme.typography.bodySmall,
@@ -451,12 +480,12 @@ private fun ContactAutocompleteDropdown(
                     }
                 }
 
-                searchResults.isEmpty() && searchQuery.length >= 2 -> {
+                searchResults.isEmpty() && searchQuery.length >= MinSearchLength -> {
                     // No results state
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(DropdownContentPadding),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -475,7 +504,7 @@ private fun ContactAutocompleteDropdown(
                 else -> {
                     // Results list
                     LazyColumn(
-                        modifier = Modifier.heightIn(max = 240.dp)
+                        modifier = Modifier.heightIn(max = DropdownResultsMaxHeight)
                     ) {
                         items(searchResults) { contact ->
                             ContactAutocompleteItem(
@@ -489,7 +518,7 @@ private fun ContactAutocompleteDropdown(
 
             // Add new contact option
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = DividerAlpha)
             )
 
             Surface(
@@ -501,16 +530,16 @@ private fun ContactAutocompleteDropdown(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
+                        .padding(DropdownItemPadding),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(AddIconSize),
                         tint = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(ContentSpacing))
                     Text(
                         text = stringResource(Res.string.contacts_add_new_contact),
                         style = MaterialTheme.typography.bodyMedium,
@@ -547,7 +576,7 @@ private fun ContactAutocompleteItem(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(DropdownItemPadding)
         ) {
             // Name
             Text(
@@ -584,10 +613,10 @@ private fun ContactAutocompleteItem(
             // Role badges
             contact.derivedRoles?.let { roles ->
                 if (roles.isCustomer || roles.isSupplier || roles.isVendor) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(RoleBadgeTopSpacing))
                     FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(RoleBadgeSpacing),
+                        verticalArrangement = Arrangement.spacedBy(RoleBadgeSpacing)
                     ) {
                         if (roles.isCustomer) {
                             AutocompleteRoleBadge(
@@ -624,15 +653,15 @@ private fun AutocompleteRoleBadge(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(4.dp),
+        color = color.copy(alpha = BadgeBackgroundAlpha),
+        shape = RoundedCornerShape(BadgeCornerRadius),
         modifier = modifier
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
             color = color,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = BadgePaddingHorizontal, vertical = BadgePaddingVertical)
         )
     }
 }

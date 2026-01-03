@@ -72,7 +72,6 @@ internal fun Route.chatRoutes() {
     val chatAgent = ChatAgent(executor, model, ragService)
 
     authenticateJwt {
-
         // =========================================================================
         // Cross-Document Chat
         // =========================================================================
@@ -481,7 +480,7 @@ private suspend fun processChat(
 
     logger.info(
         "Chat completed: session=$sessionId, chunks=${chatResult.chunksRetrieved}, " +
-                "citations=${citations?.size ?: 0}, time=${generationTimeMs}ms"
+            "citations=${citations?.size ?: 0}, time=${generationTimeMs}ms"
     )
 
     // Build response metadata

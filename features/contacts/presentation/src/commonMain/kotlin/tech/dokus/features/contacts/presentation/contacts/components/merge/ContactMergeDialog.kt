@@ -2,9 +2,6 @@ package tech.dokus.features.contacts.presentation.contacts.components.merge
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MergeType
@@ -31,9 +28,9 @@ import tech.dokus.aura.resources.contacts_merge_dialog_title
 import tech.dokus.aura.resources.contacts_merge_select_target
 import tech.dokus.aura.resources.contacts_merge_success
 import tech.dokus.aura.resources.contacts_merging
-import tech.dokus.features.contacts.presentation.contacts.model.MergeDialogStep
 import tech.dokus.features.contacts.mvi.ContactMergeIntent
 import tech.dokus.features.contacts.mvi.ContactMergeState
+import tech.dokus.features.contacts.presentation.contacts.model.MergeDialogStep
 
 @Composable
 internal fun ContactMergeDialog(

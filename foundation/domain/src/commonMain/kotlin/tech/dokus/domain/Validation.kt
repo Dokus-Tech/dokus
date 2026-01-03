@@ -1,7 +1,7 @@
 package tech.dokus.domain
 
-import tech.dokus.domain.exceptions.DokusException
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.validators.ValidateCityUseCase
 import tech.dokus.domain.validators.ValidateEmailUseCase
 import tech.dokus.domain.validators.ValidateLegalNameUseCase
@@ -9,6 +9,8 @@ import tech.dokus.domain.validators.ValidateNameUseCase
 import tech.dokus.domain.validators.ValidatePasswordUseCase
 import tech.dokus.domain.validators.ValidatePhoneNumberUseCase
 import kotlin.jvm.JvmInline
+
+private const val DISPLAY_NAME_MAX_LENGTH = 255
 
 interface ValueClass<T> {
     val value: T
@@ -84,7 +86,7 @@ value class DisplayName(override val value: String) : ValueClass<String>, Valida
     val initialOrEmpty: String
         get() = value.firstOrNull()?.toString() ?: ""
 
-    override val isValid get() = value.isNotBlank() && value.length <= 255
+    override val isValid get() = value.isNotBlank() && value.length <= DISPLAY_NAME_MAX_LENGTH
 
     override val validOrThrows: DisplayName
         get() = if (isValid) this else throw DokusException.Validation.InvalidDisplayName

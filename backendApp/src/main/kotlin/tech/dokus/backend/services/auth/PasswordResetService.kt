@@ -2,6 +2,9 @@
 
 package tech.dokus.backend.services.auth
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -10,9 +13,6 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.security.TokenBlacklistService
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.security.SecureRandom
 import java.util.Base64
 import kotlin.time.Duration.Companion.hours

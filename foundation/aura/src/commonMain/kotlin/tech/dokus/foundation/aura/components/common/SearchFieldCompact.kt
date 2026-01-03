@@ -1,10 +1,5 @@
 package tech.dokus.foundation.aura.components.common
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_clear_field
-import tech.dokus.aura.resources.action_search
-import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +29,11 @@ import androidx.compose.ui.unit.sp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_clear_field
+import tech.dokus.aura.resources.action_search
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Compact search field for top bars; independent of PTextField.

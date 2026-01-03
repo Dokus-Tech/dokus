@@ -1,8 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
-import tech.dokus.features.contacts.usecases.GetContactUseCase
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
@@ -10,6 +7,9 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.contacts.usecases.GetContactUseCase
+import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewLoader(
     private val dataSource: CashflowRemoteDataSource,

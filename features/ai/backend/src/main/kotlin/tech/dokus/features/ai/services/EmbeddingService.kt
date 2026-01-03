@@ -1,8 +1,5 @@
 package tech.dokus.features.ai.services
 
-import tech.dokus.domain.model.ai.AiProvider
-import tech.dokus.foundation.backend.config.AIConfig
-import tech.dokus.foundation.backend.utils.loggerFor
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -13,6 +10,9 @@ import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import tech.dokus.domain.model.ai.AiProvider
+import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Service for generating text embeddings using AI providers.
@@ -267,7 +267,9 @@ class EmbeddingService(
                 )
             }
 
-            logger.debug("OpenAI embeddings generated: count=${results.size}, dimensions=${results.firstOrNull()?.dimensions}")
+            logger.debug(
+                "OpenAI embeddings generated: count=${results.size}, dimensions=${results.firstOrNull()?.dimensions}"
+            )
 
             return results
         } catch (e: EmbeddingException) {

@@ -1,5 +1,13 @@
 package tech.dokus.app.module
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Palette
+import tech.dokus.app.diModuleApp
+import tech.dokus.app.diModuleUseCases
+import tech.dokus.app.navigation.AppNavigationProvider
+import tech.dokus.app.navigation.HomeNavigationProvider
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.home_dashboard
@@ -10,18 +18,6 @@ import tech.dokus.aura.resources.settings_group_workspace
 import tech.dokus.aura.resources.settings_team
 import tech.dokus.aura.resources.settings_workspace_details
 import tech.dokus.aura.resources.user
-import tech.dokus.foundation.aura.model.HomeItem
-import tech.dokus.foundation.aura.model.HomeItemPriority
-import tech.dokus.navigation.destinations.HomeDestination
-import tech.dokus.navigation.destinations.SettingsDestination
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Palette
-import tech.dokus.app.diModuleApp
-import tech.dokus.app.diModuleUseCases
-import tech.dokus.app.navigation.AppNavigationProvider
-import tech.dokus.app.navigation.HomeNavigationProvider
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
 import tech.dokus.foundation.app.AppModule
@@ -30,6 +26,10 @@ import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.SettingsPriority
+import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.foundation.aura.model.HomeItemPriority
+import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 
 internal object AppMainModule : AppModule {
     // Presentation layer

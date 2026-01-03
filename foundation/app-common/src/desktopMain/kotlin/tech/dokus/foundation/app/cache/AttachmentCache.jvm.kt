@@ -1,3 +1,5 @@
+@file:Suppress("TooGenericExceptionCaught", "SwallowedException") // File operations fail gracefully
+
 package tech.dokus.foundation.app.cache
 
 import java.io.File

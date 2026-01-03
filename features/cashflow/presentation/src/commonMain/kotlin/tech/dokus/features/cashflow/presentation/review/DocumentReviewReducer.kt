@@ -1,12 +1,14 @@
+@file:Suppress("TooManyFunctions") // Reducer handles document review state transitions
+
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
-import tech.dokus.features.contacts.usecases.GetContactUseCase
-import tech.dokus.foundation.platform.Logger
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedLineItem
+import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.contacts.usecases.GetContactUseCase
+import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewReducer(
     private val dataSource: CashflowRemoteDataSource,

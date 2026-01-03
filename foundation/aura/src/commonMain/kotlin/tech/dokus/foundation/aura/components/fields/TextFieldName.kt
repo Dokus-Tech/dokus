@@ -1,7 +1,5 @@
 package tech.dokus.foundation.aura.components.fields
 
-import tech.dokus.domain.Name
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,11 +12,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.intl.Locale
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.User
+import tech.dokus.domain.Name
+import tech.dokus.domain.exceptions.DokusException
 
 object PTextFieldNameDefaults {
     val icon = FeatherIcons.User
     val onAction = {}
-    val singleLine = true
+    const val singleLine = true
     val keyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Text,
         capitalization = KeyboardCapitalization.Words,

@@ -1,17 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_change_server
-import tech.dokus.aura.resources.auth_dokus_cloud
-import tech.dokus.aura.resources.auth_reset_cloud
-import tech.dokus.aura.resources.auth_server_connection
-import tech.dokus.aura.resources.auth_server_label
-import tech.dokus.aura.resources.auth_server_url
-import tech.dokus.aura.resources.auth_server_version
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.components.POutlinedButton
-import tech.dokus.domain.config.ServerConfig
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +22,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_change_server
+import tech.dokus.aura.resources.auth_dokus_cloud
+import tech.dokus.aura.resources.auth_reset_cloud
+import tech.dokus.aura.resources.auth_server_connection
+import tech.dokus.aura.resources.auth_server_label
+import tech.dokus.aura.resources.auth_server_url
+import tech.dokus.aura.resources.auth_server_version
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.POutlinedButton
 
 /**
  * Settings section showing the current server connection.

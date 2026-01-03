@@ -1,3 +1,8 @@
+@file:Suppress(
+    "MagicNumber", // IBAN format validation constants
+    "ReturnCount" // Validation requires multiple early returns
+)
+
 package tech.dokus.domain.validators
 
 import tech.dokus.domain.ids.Iban
@@ -39,6 +44,7 @@ object ValidateIbanUseCase : Validator<Iban> {
         return validateIbanCheckDigits(cleaned)
     }
 
+    @Suppress("TooGenericExceptionCaught", "SwallowedException") // IBAN validation can fail in various ways
     private fun validateIbanCheckDigits(iban: String): Boolean {
         return try {
             // Move first 4 chars to end

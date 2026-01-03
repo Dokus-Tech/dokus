@@ -1,7 +1,5 @@
 package tech.dokus.foundation.aura.components.dropdown
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_expand_options
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -28,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_expand_options
 
 /**
  * Default values for [PFilterDropdown] component.

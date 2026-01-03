@@ -1,18 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_amount_compact_thousands
-import tech.dokus.aura.resources.cashflow_amount_with_currency
-import tech.dokus.aura.resources.currency_symbol_eur
-import tech.dokus.aura.resources.vat_net_amount
-import tech.dokus.aura.resources.vat_predicted_net_amount
-import tech.dokus.aura.resources.vat_quarter_sublabel
-import tech.dokus.aura.resources.vat_summary_title
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.ShimmerLine
-import tech.dokus.domain.Money
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +17,36 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_amount_compact_thousands
+import tech.dokus.aura.resources.cashflow_amount_with_currency
+import tech.dokus.aura.resources.currency_symbol_eur
+import tech.dokus.aura.resources.vat_net_amount
+import tech.dokus.aura.resources.vat_predicted_net_amount
+import tech.dokus.aura.resources.vat_quarter_sublabel
+import tech.dokus.aura.resources.vat_summary_title
+import tech.dokus.domain.Money
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerLine
+
+// Layout constants
+private val CardPadding = 16.dp
+private val ColumnSpacing = 24.dp
+private val SkeletonVerticalSpacing = 4.dp
+
+// Skeleton dimensions
+private val VatSkeletonLabelWidth = 140.dp
+private val VatSkeletonAmountWidth = 60.dp
+private val NetSkeletonLabelWidth = 70.dp
+private val NetSkeletonAmountWidth = 50.dp
+private val PredictedSkeletonLabelWidth = 120.dp
+private val SkeletonLabelHeight = 12.dp
+private val SkeletonAmountHeight = 16.dp
+
+// Amount formatting threshold
+private const val ThousandsThreshold = 1000
 
 /**
  * A card component displaying VAT summary information with three columns:
@@ -51,7 +68,7 @@ fun VatSummaryCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(CardPadding)
         ) {
             when (state) {
                 is DokusState.Loading, is DokusState.Idle -> {
@@ -80,7 +97,7 @@ private fun VatSummaryCardContent(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(ColumnSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // VAT column
@@ -113,31 +130,31 @@ private fun VatSummaryCardSkeleton(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(ColumnSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // VAT column skeleton
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(SkeletonVerticalSpacing)
         ) {
-            ShimmerLine(modifier = Modifier.width(140.dp), height = 12.dp)
-            ShimmerLine(modifier = Modifier.width(60.dp), height = 16.dp)
+            ShimmerLine(modifier = Modifier.width(VatSkeletonLabelWidth), height = SkeletonLabelHeight)
+            ShimmerLine(modifier = Modifier.width(VatSkeletonAmountWidth), height = SkeletonAmountHeight)
         }
 
         // Net amount column skeleton
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(SkeletonVerticalSpacing)
         ) {
-            ShimmerLine(modifier = Modifier.width(70.dp), height = 12.dp)
-            ShimmerLine(modifier = Modifier.width(50.dp), height = 16.dp)
+            ShimmerLine(modifier = Modifier.width(NetSkeletonLabelWidth), height = SkeletonLabelHeight)
+            ShimmerLine(modifier = Modifier.width(NetSkeletonAmountWidth), height = SkeletonAmountHeight)
         }
 
         // Predicted Net amount column skeleton
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(SkeletonVerticalSpacing)
         ) {
-            ShimmerLine(modifier = Modifier.width(120.dp), height = 12.dp)
-            ShimmerLine(modifier = Modifier.width(50.dp), height = 16.dp)
+            ShimmerLine(modifier = Modifier.width(PredictedSkeletonLabelWidth), height = SkeletonLabelHeight)
+            ShimmerLine(modifier = Modifier.width(NetSkeletonAmountWidth), height = SkeletonAmountHeight)
         }
     }
 }
@@ -246,8 +263,8 @@ private fun formatAmount(amount: Money): String {
             currencySymbol,
             "000"
         )
-        value >= 1000 -> {
-            val thousands = (value / 1000).toInt()
+        value >= ThousandsThreshold -> {
+            val thousands = (value / ThousandsThreshold).toInt()
             stringResource(Res.string.cashflow_amount_compact_thousands, currencySymbol, thousands)
         }
         value == 0.0 -> stringResource(

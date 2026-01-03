@@ -1,5 +1,13 @@
 package tech.dokus.backend.routes.cashflow
 
+import io.ktor.http.*
+import io.ktor.http.content.*
+import io.ktor.server.request.*
+import io.ktor.server.resources.post
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.IngestionRunSummary
@@ -11,14 +19,6 @@ import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
-import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.server.request.*
-import io.ktor.server.resources.post
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
 
 /** Allowed prefixes for document storage */
 private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses", "receipts")
@@ -147,7 +147,7 @@ internal fun Route.documentUploadRoutes() {
                 HttpStatusCode.Created,
                 DocumentRecordDto(
                     document = document.copy(downloadUrl = result.url),
-                    draft = null,  // No draft until extraction completes
+                    draft = null, // No draft until extraction completes
                     latestIngestion = ingestionRun.toDto(),
                     confirmedEntity = null
                 )

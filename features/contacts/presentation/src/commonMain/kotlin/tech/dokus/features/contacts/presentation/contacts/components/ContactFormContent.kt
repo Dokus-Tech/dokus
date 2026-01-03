@@ -1,26 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
-import tech.dokus.features.contacts.mvi.ContactFormData
-import tech.dokus.features.contacts.mvi.PotentialDuplicate
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_cancel
-import tech.dokus.aura.resources.contacts_create_contact
-import tech.dokus.aura.resources.contacts_delete
-import tech.dokus.aura.resources.contacts_delete_contact
-import tech.dokus.aura.resources.contacts_deleting
-import tech.dokus.aura.resources.contacts_edit_contact
-import tech.dokus.aura.resources.contacts_fill_details_hint
-import tech.dokus.aura.resources.contacts_required_fields_hint
-import tech.dokus.aura.resources.contacts_save
-import tech.dokus.aura.resources.contacts_save_contact
-import tech.dokus.aura.resources.contacts_saving
-import tech.dokus.aura.resources.contacts_update_hint
-import tech.dokus.aura.resources.contacts_update_mobile_hint
-import tech.dokus.foundation.aura.components.PButton
-import tech.dokus.foundation.aura.components.PButtonVariant
-import tech.dokus.foundation.aura.components.POutlinedButton
-import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.domain.enums.ClientType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,6 +17,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_cancel
+import tech.dokus.aura.resources.contacts_create_contact
+import tech.dokus.aura.resources.contacts_delete
+import tech.dokus.aura.resources.contacts_delete_contact
+import tech.dokus.aura.resources.contacts_deleting
+import tech.dokus.aura.resources.contacts_edit_contact
+import tech.dokus.aura.resources.contacts_fill_details_hint
+import tech.dokus.aura.resources.contacts_required_fields_hint
+import tech.dokus.aura.resources.contacts_save
+import tech.dokus.aura.resources.contacts_save_contact
+import tech.dokus.aura.resources.contacts_saving
+import tech.dokus.aura.resources.contacts_update_hint
+import tech.dokus.aura.resources.contacts_update_mobile_hint
+import tech.dokus.domain.enums.ClientType
+import tech.dokus.features.contacts.mvi.ContactFormData
+import tech.dokus.features.contacts.mvi.PotentialDuplicate
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.text.SectionTitle
 
 // ============================================================================
 // CONTACT FORM CONTENT

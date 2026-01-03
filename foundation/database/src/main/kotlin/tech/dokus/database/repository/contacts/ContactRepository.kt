@@ -1,3 +1,5 @@
+@file:Suppress("UseRequire") // Custom exception messaging
+
 package tech.dokus.database.repository.contacts
 
 import tech.dokus.database.tables.cashflow.BillsTable
@@ -85,7 +87,7 @@ class ContactRepository {
             // Fetch and return the created contact
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq contactId.value) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 mapRowToContactDto(row)
             }
@@ -103,7 +105,7 @@ class ContactRepository {
         dbQuery {
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
                 mapRowToContactDto(row)
             }
@@ -138,8 +140,8 @@ class ContactRepository {
             if (!searchQuery.isNullOrBlank()) {
                 query = query.andWhere {
                     (ContactsTable.name like "%$searchQuery%") or
-                    (ContactsTable.email like "%$searchQuery%") or
-                    (ContactsTable.vatNumber like "%$searchQuery%")
+                        (ContactsTable.email like "%$searchQuery%") or
+                        (ContactsTable.vatNumber like "%$searchQuery%")
                 }
             }
 
@@ -206,7 +208,7 @@ class ContactRepository {
             // Verify contact exists and belongs to tenant
             val exists = ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
 
             if (!exists) {
@@ -216,7 +218,7 @@ class ContactRepository {
             // Update contact (only non-null fields)
             ContactsTable.update({
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 request.name?.let { value -> it[name] = value }
                 request.email?.let { value -> it[email] = value }
@@ -242,7 +244,7 @@ class ContactRepository {
             // Fetch and return the updated contact
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 mapRowToContactDto(row)
             }
@@ -263,7 +265,7 @@ class ContactRepository {
             // Verify contact exists and belongs to tenant
             val exists = ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
 
             if (!exists) {
@@ -272,7 +274,7 @@ class ContactRepository {
 
             ContactsTable.update({
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[ContactsTable.peppolId] = peppolId
                 it[ContactsTable.peppolEnabled] = peppolEnabled
@@ -281,7 +283,7 @@ class ContactRepository {
             // Fetch and return the updated contact
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 mapRowToContactDto(row)
             }
@@ -299,7 +301,7 @@ class ContactRepository {
         dbQuery {
             val deletedRows = ContactsTable.deleteWhere {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             deletedRows > 0
         }
@@ -316,7 +318,7 @@ class ContactRepository {
         dbQuery {
             val updatedRows = ContactsTable.update({
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[isActive] = false
             }
@@ -335,7 +337,7 @@ class ContactRepository {
         dbQuery {
             val updatedRows = ContactsTable.update({
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[isActive] = true
             }
@@ -354,7 +356,7 @@ class ContactRepository {
         dbQuery {
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
         }
     }
@@ -400,8 +402,8 @@ class ContactRepository {
         dbQuery {
             ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ContactsTable.peppolEnabled eq true) and
-                (ContactsTable.peppolId.isNotNull())
+                    (ContactsTable.peppolEnabled eq true) and
+                    (ContactsTable.peppolId.isNotNull())
             }.orderBy(ContactsTable.name to SortOrder.ASC)
                 .map { row -> mapRowToContactDto(row) }
         }
@@ -424,7 +426,7 @@ class ContactRepository {
             // Search for both normalized and original format
             ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ContactsTable.isActive eq true)
+                    (ContactsTable.isActive eq true)
             }.filter { row ->
                 // Case-insensitive comparison on the result
                 val storedVat = row[ContactsTable.vatNumber]?.uppercase()?.replace(" ", "")?.replace(".", "")
@@ -446,8 +448,8 @@ class ContactRepository {
         dbQuery {
             ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ContactsTable.peppolId eq peppolId) and
-                (ContactsTable.isActive eq true)
+                    (ContactsTable.peppolId eq peppolId) and
+                    (ContactsTable.isActive eq true)
             }.singleOrNull()?.let { row ->
                 mapRowToContactDto(row)
             }
@@ -465,8 +467,8 @@ class ContactRepository {
         dbQuery {
             ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ContactsTable.companyNumber eq companyNumber) and
-                (ContactsTable.isActive eq true)
+                    (ContactsTable.companyNumber eq companyNumber) and
+                    (ContactsTable.isActive eq true)
             }.singleOrNull()?.let { row ->
                 mapRowToContactDto(row)
             }
@@ -487,8 +489,8 @@ class ContactRepository {
             val searchTerm = "%${name.lowercase()}%"
             var query = ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ContactsTable.name like searchTerm) and
-                (ContactsTable.isActive eq true)
+                    (ContactsTable.name like searchTerm) and
+                    (ContactsTable.isActive eq true)
             }
 
             if (country != null) {
@@ -516,7 +518,7 @@ class ContactRepository {
             // Check if system contact already exists
             val existing = ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ContactsTable.isSystemContact eq true)
+                    (ContactsTable.isSystemContact eq true)
             }.singleOrNull()
 
             if (existing != null) {
@@ -658,7 +660,9 @@ class ContactRepository {
             val sourceVat = sourceContact[ContactsTable.vatNumber]
             val targetVat = targetContact[ContactsTable.vatNumber]
             if (!sourceVat.isNullOrBlank() && !targetVat.isNullOrBlank() && sourceVat != targetVat) {
-                throw IllegalArgumentException("Cannot merge contacts with different VAT numbers: $sourceVat vs $targetVat")
+                throw IllegalArgumentException(
+                    "Cannot merge contacts with different VAT numbers: $sourceVat vs $targetVat"
+                )
             }
 
             // 3. Check if source is a system contact
@@ -700,7 +704,9 @@ class ContactRepository {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             val mergeNote = buildString {
                 appendLine("[SYSTEM] Contact merged from \"$sourceName\" (ID: $sourceContactId)")
-                appendLine("- Reassigned: $invoicesReassigned invoices, $billsReassigned bills, $expensesReassigned expenses")
+                appendLine(
+                    "- Reassigned: $invoicesReassigned invoices, $billsReassigned bills, $expensesReassigned expenses"
+                )
                 appendLine("- Notes moved: $notesReassigned")
                 appendLine("- Merged by: $mergedByEmail at $now")
                 appendLine("- Source contact archived")

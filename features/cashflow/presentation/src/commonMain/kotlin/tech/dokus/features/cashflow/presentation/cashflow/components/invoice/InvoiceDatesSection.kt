@@ -1,24 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.common_unknown
-import tech.dokus.aura.resources.date_format_short
-import tech.dokus.aura.resources.date_month_short_apr
-import tech.dokus.aura.resources.date_month_short_aug
-import tech.dokus.aura.resources.date_month_short_dec
-import tech.dokus.aura.resources.date_month_short_feb
-import tech.dokus.aura.resources.date_month_short_jan
-import tech.dokus.aura.resources.date_month_short_jul
-import tech.dokus.aura.resources.date_month_short_jun
-import tech.dokus.aura.resources.date_month_short_mar
-import tech.dokus.aura.resources.date_month_short_may
-import tech.dokus.aura.resources.date_month_short_nov
-import tech.dokus.aura.resources.date_month_short_oct
-import tech.dokus.aura.resources.date_month_short_sep
-import tech.dokus.aura.resources.invoice_click_to_change
-import tech.dokus.aura.resources.invoice_click_to_set
-import tech.dokus.aura.resources.invoice_due_date
-import tech.dokus.aura.resources.invoice_issue_date
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -42,6 +23,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.common_unknown
+import tech.dokus.aura.resources.date_format_short
+import tech.dokus.aura.resources.date_month_short_apr
+import tech.dokus.aura.resources.date_month_short_aug
+import tech.dokus.aura.resources.date_month_short_dec
+import tech.dokus.aura.resources.date_month_short_feb
+import tech.dokus.aura.resources.date_month_short_jan
+import tech.dokus.aura.resources.date_month_short_jul
+import tech.dokus.aura.resources.date_month_short_jun
+import tech.dokus.aura.resources.date_month_short_mar
+import tech.dokus.aura.resources.date_month_short_may
+import tech.dokus.aura.resources.date_month_short_nov
+import tech.dokus.aura.resources.date_month_short_oct
+import tech.dokus.aura.resources.date_month_short_sep
+import tech.dokus.aura.resources.invoice_click_to_change
+import tech.dokus.aura.resources.invoice_click_to_set
+import tech.dokus.aura.resources.invoice_due_date
+import tech.dokus.aura.resources.invoice_issue_date
 
 /**
  * Dates section in the invoice document.

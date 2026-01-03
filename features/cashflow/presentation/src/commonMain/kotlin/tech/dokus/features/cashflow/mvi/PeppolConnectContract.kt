@@ -1,13 +1,13 @@
 package tech.dokus.features.cashflow.mvi
 
-import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.PeppolProvider
-import tech.dokus.domain.model.RecommandCompanySummary
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.PeppolProvider
+import tech.dokus.domain.model.RecommandCompanySummary
 import tech.dokus.foundation.app.state.DokusState
 
 /**

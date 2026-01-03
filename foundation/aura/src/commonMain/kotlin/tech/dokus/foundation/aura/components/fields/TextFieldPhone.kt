@@ -1,7 +1,5 @@
 package tech.dokus.foundation.aura.components.fields
 
-import tech.dokus.domain.PhoneNumber
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,11 +9,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Phone
+import tech.dokus.domain.PhoneNumber
+import tech.dokus.domain.exceptions.DokusException
 
 object PTextFieldPhoneDefaults {
     val icon = FeatherIcons.Phone
     val onAction = {}
-    val singleLine = true
+    const val singleLine = true
     val keyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Phone,
         imeAction = ImeAction.Done

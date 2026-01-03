@@ -1,7 +1,7 @@
 package tech.dokus.foundation.backend.config
 
-import tech.dokus.domain.model.ai.AiProvider
 import com.typesafe.config.Config
+import tech.dokus.domain.model.ai.AiProvider
 
 /**
  * Configuration for the AI service.
@@ -64,7 +64,11 @@ data class AIConfig(
                 documentExtraction = config.getString("document-extraction"),
                 categorization = config.getString("categorization"),
                 suggestions = config.getString("suggestions"),
-                chat = if (config.hasPath("chat")) config.getString("chat") else config.getString("document-extraction"),
+                chat = if (config.hasPath("chat")) {
+                    config.getString("chat")
+                } else {
+                    config.getString("document-extraction")
+                },
                 embedding = if (config.hasPath("embedding")) config.getString("embedding") else "nomic-embed-text"
             )
         }
@@ -110,14 +114,19 @@ data class AIConfig(
 enum class ModelPurpose {
     /** Document type classification (invoice, receipt, etc.) */
     CLASSIFICATION,
+
     /** Structured data extraction from documents */
     DOCUMENT_EXTRACTION,
+
     /** Transaction/expense categorization */
     CATEGORIZATION,
+
     /** Smart suggestions and recommendations */
     SUGGESTIONS,
+
     /** RAG-powered chat/Q&A with documents */
     CHAT,
+
     /** Text embedding generation for vector search */
     EMBEDDING
 }

@@ -1,11 +1,11 @@
 package tech.dokus.foundation.backend.storage
 
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.common.Thumbnail
 import com.sksamuel.scrimage.ImmutableImage
 import com.sksamuel.scrimage.webp.WebpWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 import kotlin.time.Duration

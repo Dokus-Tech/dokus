@@ -1,12 +1,7 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
+
 package tech.dokus.foundation.aura.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_cancel
-import tech.dokus.aura.resources.image_cropper_apply
-import tech.dokus.aura.resources.image_cropper_content_description
-import tech.dokus.aura.resources.image_cropper_hint
-import tech.dokus.aura.resources.image_cropper_title
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -56,6 +51,24 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.image_cropper_apply
+import tech.dokus.aura.resources.image_cropper_content_description
+import tech.dokus.aura.resources.image_cropper_hint
+import tech.dokus.aura.resources.image_cropper_title
+import tech.dokus.foundation.aura.constrains.Constrains
+
+// Zoom constraints
+private const val MinZoom = 0.5f
+private const val MaxZoom = 4f
+
+// Crop overlay
+private const val CropOverlayAlpha = 0.5f
+
+// Dialog layout
+private const val DialogWidthFraction = 0.9f
+private const val SquareAspectRatio = 1f
 
 /**
  * A dialog for cropping images to a square aspect ratio.
@@ -87,7 +100,7 @@ fun ImageCropperDialog(
         Surface(
             modifier = Modifier
                 .widthIn(max = Constrains.DialogSize.maxWidth)
-                .fillMaxWidth(0.9f)
+                .fillMaxWidth(DialogWidthFraction)
                 .padding(Constrains.Spacing.large),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surface,
@@ -121,16 +134,19 @@ fun ImageCropperDialog(
                 // Image crop area
                 Box(
                     modifier = Modifier
-                        .sizeIn(maxWidth = Constrains.DialogSize.cropAreaMax, maxHeight = Constrains.DialogSize.cropAreaMax)
+                        .sizeIn(
+                            maxWidth = Constrains.DialogSize.cropAreaMax,
+                            maxHeight = Constrains.DialogSize.cropAreaMax
+                        )
                         .fillMaxWidth()
-                        .aspectRatio(1f)
+                        .aspectRatio(SquareAspectRatio)
                         .clip(MaterialTheme.shapes.small)
                         .background(Color.Black)
                         .onSizeChanged { containerSize = it }
                         .clipToBounds()
                         .pointerInput(Unit) {
                             detectTransformGestures { _, pan, zoom, _ ->
-                                scale = (scale * zoom).coerceIn(0.5f, 4f)
+                                scale = (scale * zoom).coerceIn(MinZoom, MaxZoom)
 
                                 val maxOffset = containerSize.width * (scale - 1) / 2
                                 offsetX = (offsetX + pan.x).coerceIn(-maxOffset, maxOffset)
@@ -156,7 +172,7 @@ fun ImageCropperDialog(
 
                     // Square crop overlay
                     Canvas(modifier = Modifier.fillMaxSize()) {
-                        val overlayColor = Color.Black.copy(alpha = 0.5f)
+                        val overlayColor = Color.Black.copy(alpha = CropOverlayAlpha)
 
                         // Draw semi-transparent overlay around crop area
                         // The visible area in center is the crop region
@@ -211,6 +227,7 @@ fun ImageCropperDialog(
 /**
  * Draw a semi-transparent overlay with a clear square in the center.
  */
+@Suppress("UnusedParameter") // Reserved for future overlay customization
 private fun DrawScope.drawCropOverlay(overlayColor: Color) {
     // For a simple implementation, we just draw corner guides
     val strokeWidth = Constrains.Stroke.cropGuide.toPx()

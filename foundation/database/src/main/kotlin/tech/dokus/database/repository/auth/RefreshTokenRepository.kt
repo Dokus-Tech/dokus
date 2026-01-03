@@ -2,12 +2,6 @@
 
 package tech.dokus.database.repository.auth
 
-import tech.dokus.database.tables.auth.RefreshTokensTable
-import tech.dokus.database.utils.toKotlinxInstant
-import tech.dokus.domain.ids.UserId
-import tech.dokus.foundation.backend.database.dbQuery
-import tech.dokus.foundation.backend.database.now
-import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -21,6 +15,12 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.auth.RefreshTokensTable
+import tech.dokus.database.utils.toKotlinxInstant
+import tech.dokus.domain.ids.UserId
+import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.database.now
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.MessageDigest
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -220,7 +220,7 @@ class RefreshTokenRepository {
             val updated = RefreshTokensTable.update(
                 {
                     (RefreshTokensTable.userId eq userUuid) and
-                            (RefreshTokensTable.isRevoked eq false)
+                        (RefreshTokensTable.isRevoked eq false)
                 }
             ) {
                 it[RefreshTokensTable.isRevoked] = true
@@ -272,8 +272,8 @@ class RefreshTokenRepository {
                 .selectAll()
                 .where {
                     (RefreshTokensTable.userId eq userUuid) and
-                            (RefreshTokensTable.isRevoked eq false) and
-                            (RefreshTokensTable.expiresAt greater now)
+                        (RefreshTokensTable.isRevoked eq false) and
+                        (RefreshTokensTable.expiresAt greater now)
                 }
                 .count()
                 .toInt()
@@ -302,8 +302,8 @@ class RefreshTokenRepository {
                 .selectAll()
                 .where {
                     (RefreshTokensTable.userId eq userUuid) and
-                            (RefreshTokensTable.isRevoked eq false) and
-                            (RefreshTokensTable.expiresAt greater now)
+                        (RefreshTokensTable.isRevoked eq false) and
+                        (RefreshTokensTable.expiresAt greater now)
                 }
                 .orderBy(RefreshTokensTable.createdAt, SortOrder.ASC)
                 .limit(1)
@@ -340,8 +340,8 @@ class RefreshTokenRepository {
                 .selectAll()
                 .where {
                     (RefreshTokensTable.userId eq userUuid) and
-                            (RefreshTokensTable.isRevoked eq false) and
-                            (RefreshTokensTable.expiresAt greater now)
+                        (RefreshTokensTable.isRevoked eq false) and
+                        (RefreshTokensTable.expiresAt greater now)
                 }
                 .orderBy(RefreshTokensTable.createdAt, SortOrder.DESC)
                 .map { row ->

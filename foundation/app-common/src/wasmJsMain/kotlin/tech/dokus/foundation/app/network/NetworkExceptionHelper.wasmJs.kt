@@ -1,3 +1,9 @@
+@file:Suppress(
+    "CyclomaticComplexMethod",
+    "ComplexCondition",
+    "ReturnCount"
+) // Network error detection requires many checks
+
 package tech.dokus.foundation.app.network
 
 /**

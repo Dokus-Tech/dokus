@@ -1,3 +1,5 @@
+@file:Suppress("UnusedParameter") // Reserved parameters for future features
+
 package tech.dokus.features.cashflow.presentation.chat.components
 
 import androidx.compose.foundation.layout.Arrangement
@@ -9,9 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.foundation.aura.components.chat.ChatMessageBubble
@@ -19,7 +21,6 @@ import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.ChatSourceCitationList
 import tech.dokus.foundation.aura.components.chat.CitationDisplayData
 import tech.dokus.foundation.aura.constrains.Constrains
-import kotlinx.datetime.LocalDateTime
 
 @Composable
 internal fun MessagesList(

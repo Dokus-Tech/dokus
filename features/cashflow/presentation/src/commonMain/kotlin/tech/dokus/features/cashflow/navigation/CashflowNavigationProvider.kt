@@ -1,19 +1,19 @@
 package tech.dokus.features.cashflow.navigation
 
-import tech.dokus.features.cashflow.presentation.chat.route.ChatRoute
-import tech.dokus.features.cashflow.presentation.review.route.DocumentReviewRoute
-import tech.dokus.features.cashflow.presentation.cashflow.route.AddDocumentRoute
-import tech.dokus.features.cashflow.presentation.cashflow.route.CreateInvoiceRoute
-import tech.dokus.features.cashflow.presentation.settings.route.PeppolConnectRoute
-import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.PeppolProvider
-import tech.dokus.navigation.NavigationProvider
-import tech.dokus.navigation.destinations.CashFlowDestination
-import tech.dokus.navigation.destinations.SettingsDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.PeppolProvider
+import tech.dokus.features.cashflow.presentation.cashflow.route.AddDocumentRoute
+import tech.dokus.features.cashflow.presentation.cashflow.route.CreateInvoiceRoute
+import tech.dokus.features.cashflow.presentation.chat.route.ChatRoute
+import tech.dokus.features.cashflow.presentation.review.route.DocumentReviewRoute
+import tech.dokus.features.cashflow.presentation.settings.route.PeppolConnectRoute
+import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.CashFlowDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 
 internal object CashflowNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {

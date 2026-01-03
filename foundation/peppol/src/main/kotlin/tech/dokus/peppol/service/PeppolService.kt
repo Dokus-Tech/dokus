@@ -1,5 +1,9 @@
 package tech.dokus.peppol.service
 
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.Json
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsWithCredentials
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
@@ -10,7 +14,6 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolInboxPollResponse
@@ -22,6 +25,7 @@ import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.mapper.PeppolMapper
 import tech.dokus.peppol.model.PeppolVerifyResponse
@@ -29,10 +33,6 @@ import tech.dokus.peppol.provider.PeppolProvider
 import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandCredentials
 import tech.dokus.peppol.validator.PeppolValidator
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.json.Json
 
 /**
  * Provider-agnostic Peppol service.
@@ -51,7 +51,10 @@ class PeppolService(
     private val validator: PeppolValidator
 ) {
     private val logger = loggerFor()
-    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
 
     // ========================================================================
     // SETTINGS MANAGEMENT
@@ -178,7 +181,12 @@ class PeppolService(
 
             // Validate
             val validationResult = validator.validateForSending(
-                invoice, contact, tenant, companyAddress, tenantSettings, peppolSettings
+                invoice,
+                contact,
+                tenant,
+                companyAddress,
+                tenantSettings,
+                peppolSettings
             )
 
             if (!validationResult.isValid) {
@@ -311,7 +319,7 @@ class PeppolService(
 
                     // Mark as read in provider
                     provider.markAsRead(inboxItem.id)
-                        .getOrNull()  // Ignore errors on marking as read
+                        .getOrNull() // Ignore errors on marking as read
 
                     processedDocuments.add(
                         ProcessedPeppolDocument(
@@ -325,7 +333,6 @@ class PeppolService(
                     )
 
                     logger.info("Processed incoming Peppol document ${inboxItem.id} -> Bill ${bill.id}")
-
                 } catch (e: Exception) {
                     logger.error("Failed to process incoming document ${inboxItem.id}", e)
                     // Continue processing other documents

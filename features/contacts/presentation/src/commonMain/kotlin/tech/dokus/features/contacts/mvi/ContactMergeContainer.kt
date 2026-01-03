@@ -1,8 +1,5 @@
 package tech.dokus.features.contacts.mvi
 
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
-import tech.dokus.features.contacts.usecases.MergeContactsUseCase
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -13,12 +10,19 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.features.contacts.presentation.contacts.model.MergeDialogStep
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactMergeResult
+import tech.dokus.features.contacts.presentation.contacts.model.MergeDialogStep
+import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.features.contacts.usecases.MergeContactsUseCase
+import tech.dokus.foundation.platform.Logger
+
+// Search debounce configuration
+private const val SearchDebounceMs = 300L
+private const val MinSearchLength = 2
+private const val SearchResultLimit = 20
 
 internal typealias ContactMergeCtx = PipelineContext<ContactMergeState, ContactMergeIntent, ContactMergeAction>
 
@@ -77,7 +81,9 @@ internal class ContactMergeContainer(
             sourceContact = sourceContact,
             sourceActivity = sourceActivity,
             targetContact = preselectedTarget,
-            conflicts = preselectedTarget?.let { ContactMergeConflictCalculator.compute(sourceContact, it) } ?: emptyList(),
+            conflicts = preselectedTarget
+                ?.let { ContactMergeConflictCalculator.compute(sourceContact, it) }
+                ?: emptyList(),
             searchQuery = "",
             searchResults = emptyList(),
             isSearching = false,
@@ -92,18 +98,18 @@ internal class ContactMergeContainer(
         updateState { copy(searchQuery = query, mergeError = null) }
         searchJob?.cancel()
 
-        if (query.length < 2) {
+        if (query.length < MinSearchLength) {
             updateState { copy(searchResults = emptyList(), isSearching = false) }
             return
         }
 
         searchJob = launch {
-            delay(300)
+            delay(SearchDebounceMs)
             updateState { copy(isSearching = true) }
             listContacts(
                 search = query,
                 isActive = true,
-                limit = 20
+                limit = SearchResultLimit
             ).fold(
                 onSuccess = { contacts ->
                     val filtered = contacts.filter { it.id != sourceContact.id }

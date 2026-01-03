@@ -1,11 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_close
-import tech.dokus.aura.resources.app_download_description
-import tech.dokus.aura.resources.app_download_platforms
-import tech.dokus.aura.resources.app_download_qr_code
-import tech.dokus.aura.resources.app_download_title
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.app_download_description
+import tech.dokus.aura.resources.app_download_platforms
+import tech.dokus.aura.resources.app_download_qr_code
+import tech.dokus.aura.resources.app_download_title
 
 /**
  * Dialog showing a QR code for downloading the mobile application.

@@ -1,9 +1,9 @@
 package tech.dokus.features.cashflow.cache
 
+import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.FinancialDocumentDto.InvoiceDto
-import kotlinx.coroutines.flow.Flow
 
 /**
  * Local data source for cached invoices.

@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // Decimal places are inherent to the domain (2 for currency, 4 for basis points)
+
 package tech.dokus.domain
 
 import java.math.BigDecimal

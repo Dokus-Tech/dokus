@@ -1,16 +1,16 @@
 package tech.dokus.backend.routes.auth
 
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.resources.get
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import org.koin.ktor.ext.inject
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.entity.EntityLookupResponse
 import tech.dokus.domain.routes.Lookup
 import tech.dokus.foundation.backend.lookup.CbeApiClient
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.utils.loggerFor
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.resources.get
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import org.koin.ktor.ext.inject
 
 /**
  * Lookup routes for external data searches (CBE company lookup, etc.)

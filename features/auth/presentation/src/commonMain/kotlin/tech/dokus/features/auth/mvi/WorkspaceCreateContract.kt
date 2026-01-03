@@ -1,19 +1,23 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
+
 package tech.dokus.features.auth.mvi
 
-import tech.dokus.features.auth.presentation.auth.model.AddressFormState
-import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
-import tech.dokus.features.auth.presentation.auth.model.LookupState
-import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
+import androidx.compose.runtime.Immutable
+import pro.respawn.flowmvi.api.MVIAction
+import pro.respawn.flowmvi.api.MVIIntent
+import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
-import androidx.compose.runtime.Immutable
-import pro.respawn.flowmvi.api.MVIAction
-import pro.respawn.flowmvi.api.MVIIntent
-import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.features.auth.presentation.auth.model.AddressFormState
+import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
+import tech.dokus.features.auth.presentation.auth.model.LookupState
+import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.app.state.DokusState
+
+private const val MinCompanyNameLength = 3
 
 /**
  * Contract for Workspace Creation wizard screen.
@@ -60,7 +64,7 @@ sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
         val canProceed: Boolean
             get() = when (step) {
                 WorkspaceWizardStep.TypeSelection -> true
-                WorkspaceWizardStep.CompanyName -> companyName.length >= 3
+                WorkspaceWizardStep.CompanyName -> companyName.length >= MinCompanyNameLength
                 WorkspaceWizardStep.VatAndAddress -> vatNumber.isValid && address.isValid
             }
 

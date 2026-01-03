@@ -1,8 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.upload
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.upload_documents_absorbed
-import tech.dokus.aura.resources.upload_release_to_upload
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -22,6 +19,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.upload_documents_absorbed
+import tech.dokus.aura.resources.upload_release_to_upload
+
+// Animation constants
+private const val PulseAnimationDurationMs = 1200
+private const val AlphaInitial = 0.6f
+private const val AlphaTarget = 1f
+private const val SubtitleAlphaMultiplier = 0.7f
+
+// UI dimensions
+private val HeaderTopSpacing = 180.dp
+private val TitleSubtitleSpacing = 8.dp
+
+// Colors
+private const val HighlightColorValue = 0xFFFFAA00
 
 /**
  * Header prompt shown when dragging files over the upload overlay.
@@ -39,10 +52,10 @@ fun UploadOverlayHeader(
     val infiniteTransition = rememberInfiniteTransition(label = "promptPulse")
 
     val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 1f,
+        initialValue = AlphaInitial,
+        targetValue = AlphaTarget,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = PulseAnimationDurationMs, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "textPulse"
@@ -52,21 +65,21 @@ fun UploadOverlayHeader(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(180.dp))
+        Spacer(modifier = Modifier.height(HeaderTopSpacing))
 
         Text(
             text = stringResource(Res.string.upload_release_to_upload),
             style = MaterialTheme.typography.headlineMedium,
-            color = Color(0xFFFFAA00).copy(alpha = alpha),
+            color = Color(HighlightColorValue).copy(alpha = alpha),
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(TitleSubtitleSpacing))
 
         Text(
             text = stringResource(Res.string.upload_documents_absorbed),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = alpha * 0.7f),
+            color = Color.White.copy(alpha = alpha * SubtitleAlphaMultiplier),
             textAlign = TextAlign.Center
         )
     }

@@ -1,25 +1,7 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for UI constants (Kotlin convention)
+
 package tech.dokus.features.auth.presentation.auth.screen
 
-import tech.dokus.features.auth.presentation.auth.components.EntityConfirmationDialog
-import tech.dokus.features.auth.presentation.auth.components.steps.CompanyNameStep
-import tech.dokus.features.auth.presentation.auth.components.steps.TypeSelectionStep
-import tech.dokus.features.auth.presentation.auth.components.steps.VatAndAddressStep
-import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
-import tech.dokus.features.auth.mvi.WorkspaceCreateIntent
-import tech.dokus.features.auth.mvi.WorkspaceCreateState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_continue
-import tech.dokus.aura.resources.auth_step_of
-import tech.dokus.aura.resources.state_creating
-import tech.dokus.aura.resources.workspace_create_button
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
-import tech.dokus.foundation.aura.components.background.WarpJumpEffect
-import tech.dokus.foundation.aura.components.text.AppNameText
-import tech.dokus.foundation.aura.components.text.CopyRightText
-import tech.dokus.foundation.aura.constrains.limitWidth
-import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
-import tech.dokus.foundation.aura.constrains.withVerticalPadding
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -53,8 +35,34 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_continue
+import tech.dokus.aura.resources.auth_step_of
+import tech.dokus.aura.resources.state_creating
+import tech.dokus.aura.resources.workspace_create_button
+import tech.dokus.features.auth.mvi.WorkspaceCreateIntent
+import tech.dokus.features.auth.mvi.WorkspaceCreateState
+import tech.dokus.features.auth.presentation.auth.components.EntityConfirmationDialog
+import tech.dokus.features.auth.presentation.auth.components.steps.CompanyNameStep
+import tech.dokus.features.auth.presentation.auth.components.steps.TypeSelectionStep
+import tech.dokus.features.auth.presentation.auth.components.steps.VatAndAddressStep
+import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
+import tech.dokus.foundation.aura.components.background.WarpJumpEffect
+import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.components.text.CopyRightText
+import tech.dokus.foundation.aura.constrains.limitWidth
+import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
+import tech.dokus.foundation.aura.constrains.withVerticalPadding
 
-private val stepContentMinHeight = 320.dp
+private const val BackgroundFadeOutDurationMs = 800
+private const val ContentFadeOutDurationMs = 600
+private const val NavigationDelayMs = 100L
+
+private val StepContentMinHeight = 320.dp
+private val ContentHorizontalPadding = 16.dp
+private val SpacerHeight = 24.dp
 
 @Composable
 internal fun WorkspaceCreateScreen(
@@ -78,7 +86,7 @@ internal fun WorkspaceCreateScreen(
 
     LaunchedEffect(shouldNavigate) {
         if (shouldNavigate) {
-            delay(100)
+            delay(NavigationDelayMs)
             onWarpComplete()
         }
     }
@@ -101,7 +109,7 @@ internal fun WorkspaceCreateScreen(
             AnimatedVisibility(
                 visible = contentVisible,
                 enter = fadeIn(),
-                exit = fadeOut(animationSpec = tween(800))
+                exit = fadeOut(animationSpec = tween(BackgroundFadeOutDurationMs))
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     EnhancedFloatingBubbles()
@@ -112,7 +120,7 @@ internal fun WorkspaceCreateScreen(
             AnimatedVisibility(
                 visible = contentVisible,
                 enter = fadeIn(),
-                exit = fadeOut(animationSpec = tween(600))
+                exit = fadeOut(animationSpec = tween(ContentFadeOutDurationMs))
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     if (wizardState != null) {
@@ -179,7 +187,7 @@ private fun WorkspaceCreateContent(
         modifier = modifier
             .withVerticalPadding()
             .limitWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = ContentHorizontalPadding)
             .fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
@@ -201,12 +209,12 @@ private fun WorkspaceCreateContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(SpacerHeight))
 
             // Step content with pager
             Box(
                 modifier = Modifier
-                    .heightIn(min = stepContentMinHeight)
+                    .heightIn(min = StepContentMinHeight)
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
@@ -262,7 +270,7 @@ private fun WorkspaceCreateContent(
 
             // Navigation buttons (not needed for TypeSelection step)
             if (wizardState.step != WorkspaceWizardStep.TypeSelection) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(SpacerHeight))
 
                 PPrimaryButton(
                     text = when (wizardState.step) {

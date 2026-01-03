@@ -1,12 +1,14 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model.usecase
 
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
+
+private const val VAT_RATE_MULTIPLIER = 100
 
 /**
  * Use case for submitting an invoice to the backend.
@@ -46,7 +48,7 @@ class SubmitInvoiceUseCase(
                         description = item.description,
                         quantity = item.quantity,
                         unitPrice = Money.fromDouble(item.unitPriceDouble),
-                        vatRate = VatRate(item.vatRatePercent * 100),
+                        vatRate = VatRate(item.vatRatePercent * VAT_RATE_MULTIPLIER),
                         lineTotal = Money.fromDouble(item.lineTotalDouble),
                         vatAmount = Money.fromDouble(item.vatAmountDouble),
                         sortOrder = index

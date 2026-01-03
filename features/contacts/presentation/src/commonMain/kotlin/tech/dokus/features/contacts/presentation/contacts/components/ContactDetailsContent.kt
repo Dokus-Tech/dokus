@@ -14,12 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.OfflineOverlay
-import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.OfflineOverlay
 
 @Composable
 internal fun ContactDetailsContent(

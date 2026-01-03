@@ -1,23 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
-import tech.dokus.features.auth.presentation.auth.components.RegisterActionButton
-import tech.dokus.features.auth.presentation.auth.components.RegisterCredentialsFields
-import tech.dokus.features.auth.presentation.auth.components.RegisterProfileFields
-import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
-import tech.dokus.features.auth.presentation.auth.model.RegisterPage
-import tech.dokus.features.auth.mvi.RegisterIntent
-import tech.dokus.features.auth.mvi.RegisterState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_has_account_prefix
-import tech.dokus.aura.resources.auth_login_link
-import tech.dokus.aura.resources.auth_register_credentials_title
-import tech.dokus.aura.resources.auth_register_profile_title
-import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
-import tech.dokus.foundation.aura.components.background.SpotlightEffect
-import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
-import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
-import tech.dokus.foundation.aura.constrains.withContentPadding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -47,7 +29,25 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_has_account_prefix
+import tech.dokus.aura.resources.auth_login_link
+import tech.dokus.aura.resources.auth_register_credentials_title
+import tech.dokus.aura.resources.auth_register_profile_title
+import tech.dokus.features.auth.mvi.RegisterIntent
+import tech.dokus.features.auth.mvi.RegisterState
+import tech.dokus.features.auth.presentation.auth.components.RegisterActionButton
+import tech.dokus.features.auth.presentation.auth.components.RegisterCredentialsFields
+import tech.dokus.features.auth.presentation.auth.components.RegisterProfileFields
+import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
+import tech.dokus.features.auth.presentation.auth.model.RegisterPage
 import tech.dokus.foundation.app.state.exceptionIfError
+import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
+import tech.dokus.foundation.aura.components.background.SpotlightEffect
+import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
+import tech.dokus.foundation.aura.constrains.withContentPadding
 
 private val fieldsContentMinHeight = 280.dp
 

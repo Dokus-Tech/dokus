@@ -1,9 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +15,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.foundation.app.state.DokusState
+
+// Desktop layout constants
+private val DesktopContentPadding = 24.dp
+private val DesktopItemSpacing = 24.dp
+
+// Mobile layout constants
+private val MobileContentPadding = 16.dp
+private val MobileItemSpacing = 16.dp
+
+// Infinite scroll trigger threshold
+private const val InfiniteScrollThreshold = 5
 
 /**
  * Desktop cashflow content with Figma-matching layout.
@@ -68,9 +79,9 @@ fun DesktopCashflowContent(
         }
             .distinctUntilChanged()
             .filter { (last, total) ->
-                (last + 1) > (total - 5) &&
-                        paginationState.hasMorePages &&
-                        !paginationState.isLoadingMore
+                (last + 1) > (total - InfiniteScrollThreshold) &&
+                    paginationState.hasMorePages &&
+                    !paginationState.isLoadingMore
             }
             .collect { onLoadMore() }
     }
@@ -79,8 +90,8 @@ fun DesktopCashflowContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding),
-        contentPadding = PaddingValues(24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        contentPadding = PaddingValues(DesktopContentPadding),
+        verticalArrangement = Arrangement.spacedBy(DesktopItemSpacing),
         state = listState
     ) {
         // Top row: Summary cards (each handles its own loading state)
@@ -114,7 +125,7 @@ fun DesktopCashflowContent(
 
         // Bottom padding
         item {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(DesktopContentPadding))
         }
     }
 }
@@ -153,9 +164,9 @@ fun MobileCashflowContent(
         }
             .distinctUntilChanged()
             .filter { (last, total) ->
-                (last + 1) > (total - 5) &&
-                        paginationState.hasMorePages &&
-                        !paginationState.isLoadingMore
+                (last + 1) > (total - InfiniteScrollThreshold) &&
+                    paginationState.hasMorePages &&
+                    !paginationState.isLoadingMore
             }
             .collect { onLoadMore() }
     }
@@ -164,8 +175,8 @@ fun MobileCashflowContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(MobileContentPadding),
+        verticalArrangement = Arrangement.spacedBy(MobileItemSpacing),
         state = listState
     ) {
         // Sort/filter controls (mobile layout)
@@ -186,7 +197,7 @@ fun MobileCashflowContent(
 
         // Bottom padding
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MobileContentPadding))
         }
     }
 }

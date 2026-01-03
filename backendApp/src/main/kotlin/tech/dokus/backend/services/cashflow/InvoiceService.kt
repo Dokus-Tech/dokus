@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.cashflow
 
+import kotlinx.datetime.LocalDate
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.InvoiceId
@@ -8,7 +9,6 @@ import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlinx.datetime.LocalDate
 
 /**
  * Service for invoice business operations.

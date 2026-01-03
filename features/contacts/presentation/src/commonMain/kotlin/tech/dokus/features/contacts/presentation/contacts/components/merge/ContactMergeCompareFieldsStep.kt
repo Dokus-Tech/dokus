@@ -34,8 +34,8 @@ import tech.dokus.aura.resources.contacts_merge_resolve_conflict_plural
 import tech.dokus.aura.resources.contacts_merge_resolve_conflict_single
 import tech.dokus.aura.resources.contacts_merge_source_archive
 import tech.dokus.aura.resources.contacts_merge_target_keep
-import tech.dokus.features.contacts.presentation.contacts.model.MergeFieldConflict
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.contacts.presentation.contacts.model.MergeFieldConflict
 
 @Composable
 internal fun ContactMergeCompareFieldsStep(

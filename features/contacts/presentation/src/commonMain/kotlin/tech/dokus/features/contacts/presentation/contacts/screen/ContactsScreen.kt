@@ -1,17 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.screen
 
-import tech.dokus.features.contacts.presentation.contacts.components.ContactsFilters
-import tech.dokus.features.contacts.presentation.contacts.components.ContactsFiltersMobile
-import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderActions
-import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderSearch
-import tech.dokus.features.contacts.presentation.contacts.components.ContactsList
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_select_contact
-import tech.dokus.aura.resources.contacts_select_contact_hint
-import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.local.isLarge
-import tech.dokus.features.contacts.presentation.contacts.route.ContactDetailsRoute
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,23 +23,50 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_select_contact
+import tech.dokus.aura.resources.contacts_select_contact_hint
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.mvi.ContactActiveFilter
 import tech.dokus.features.contacts.mvi.ContactRoleFilter
 import tech.dokus.features.contacts.mvi.ContactSortOption
 import tech.dokus.features.contacts.mvi.ContactsIntent
 import tech.dokus.features.contacts.mvi.ContactsState
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.contacts.presentation.contacts.components.ContactsFilters
+import tech.dokus.features.contacts.presentation.contacts.components.ContactsFiltersMobile
+import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderActions
+import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderSearch
+import tech.dokus.features.contacts.presentation.contacts.components.ContactsList
+import tech.dokus.features.contacts.presentation.contacts.route.ContactDetailsRoute
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
+
+// UI dimension constants
+private val ContentPaddingHorizontal = 16.dp
+private val SpacingSmall = 8.dp
+private val SpacingMedium = 12.dp
+private val SpacingDefault = 16.dp
+private val IconSize = 48.dp
+private val DividerWidth = 1.dp
+private val BottomPadding = 16.dp
+
+// Layout weight constants
+private const val MasterPanelWeight = 0.4f
+private const val DetailPanelWeight = 0.6f
+private const val IconAlphaDisabled = 0.5f
+private const val TextAlphaSecondary = 0.7f
 
 /**
  * The main contacts screen showing a list of contacts with master-detail layout.
@@ -214,12 +229,12 @@ private fun DesktopContactsContent(
         // Left panel: Contacts list with filters (40%)
         Column(
             modifier = Modifier
-                .weight(0.4f)
+                .weight(MasterPanelWeight)
                 .fillMaxHeight()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = ContentPaddingHorizontal)
         ) {
             // Filter controls
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(SpacingDefault))
             ContactsFilters(
                 selectedSortOption = sortOption,
                 selectedRoleFilter = roleFilter,
@@ -228,7 +243,7 @@ private fun DesktopContactsContent(
                 onRoleFilterSelected = onRoleFilterSelected,
                 onActiveFilterSelected = onActiveFilterSelected
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(SpacingMedium))
 
             // Contacts list
             ContactsList(
@@ -236,7 +251,7 @@ private fun DesktopContactsContent(
                 onContactClick = onContactClick,
                 onLoadMore = onLoadMore,
                 onAddContactClick = onAddContactClick,
-                contentPadding = PaddingValues(bottom = 16.dp),
+                contentPadding = PaddingValues(bottom = BottomPadding),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -245,7 +260,7 @@ private fun DesktopContactsContent(
         HorizontalDivider(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(1.dp),
+                .width(DividerWidth),
             color = MaterialTheme.colorScheme.outlineVariant
         )
 
@@ -253,7 +268,7 @@ private fun DesktopContactsContent(
         // Create contact is now handled via CreateContactScreen navigation
         Box(
             modifier = Modifier
-                .weight(0.6f)
+                .weight(DetailPanelWeight)
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surfaceContainerLowest)
         ) {
@@ -292,10 +307,10 @@ private fun MobileContactsContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = ContentPaddingHorizontal)
     ) {
         // Filter controls
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(SpacingDefault))
         ContactsFiltersMobile(
             selectedSortOption = sortOption,
             selectedRoleFilter = roleFilter,
@@ -304,7 +319,7 @@ private fun MobileContactsContent(
             onRoleFilterSelected = onRoleFilterSelected,
             onActiveFilterSelected = onActiveFilterSelected
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(SpacingMedium))
 
         // Contacts list
         ContactsList(
@@ -312,7 +327,7 @@ private fun MobileContactsContent(
             onContactClick = onContactClick,
             onLoadMore = onLoadMore,
             onAddContactClick = onAddContactClick,
-            contentPadding = PaddingValues(bottom = 16.dp),
+            contentPadding = PaddingValues(bottom = BottomPadding),
             modifier = Modifier.weight(1f)
         )
     }
@@ -337,21 +352,21 @@ private fun NoContactSelectedPlaceholder(
                 imageVector = Icons.Default.Person,
                 contentDescription = null,
                 modifier = Modifier
-                    .height(48.dp)
-                    .width(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    .height(IconSize)
+                    .width(IconSize),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = IconAlphaDisabled)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(SpacingDefault))
             Text(
                 text = stringResource(Res.string.contacts_select_contact),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(SpacingSmall))
             Text(
                 text = stringResource(Res.string.contacts_select_contact_hint),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = TextAlphaSecondary)
             )
         }
     }

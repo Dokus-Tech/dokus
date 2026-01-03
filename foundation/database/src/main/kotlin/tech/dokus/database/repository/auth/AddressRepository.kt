@@ -2,6 +2,12 @@
 
 package tech.dokus.database.repository.auth
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.mapper.TenantMappers.toAddress
 import tech.dokus.database.tables.auth.AddressTable
 import tech.dokus.domain.ids.TenantId
@@ -9,12 +15,6 @@ import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.database.now
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 
@@ -71,4 +71,3 @@ class AddressRepository {
             .toAddress()
     }
 }
-

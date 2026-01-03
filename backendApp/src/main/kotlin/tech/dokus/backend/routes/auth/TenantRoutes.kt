@@ -1,5 +1,13 @@
 package tech.dokus.backend.routes.auth
 
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.resources.get
+import io.ktor.server.resources.post
+import io.ktor.server.resources.put
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import org.koin.ktor.ext.inject
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -12,14 +20,6 @@ import tech.dokus.domain.model.InvoiceNumberPreviewResponse
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.routes.Tenants
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
-import io.ktor.server.resources.get
-import io.ktor.server.resources.post
-import io.ktor.server.resources.put
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import org.koin.ktor.ext.inject
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.AvatarStorageService
@@ -61,7 +61,9 @@ internal fun Route.tenantRoutes() {
                         val storageKey = tenantRepository.getAvatarStorageKey(tenant.id)
                         if (storageKey != null) {
                             avatarStorageService.getAvatarUrls(storageKey)
-                        } else null
+                        } else {
+                            null
+                        }
                     } catch (e: Exception) {
                         logger.warn("Failed to get avatar for tenant ${tenant.id}", e)
                         null
@@ -198,7 +200,9 @@ internal fun Route.tenantRoutes() {
                 val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
                 if (storageKey != null) {
                     avatarStorageService.getAvatarUrls(storageKey)
-                } else null
+                } else {
+                    null
+                }
             } catch (e: Exception) {
                 logger.warn("Failed to get avatar for tenant $tenantId", e)
                 null

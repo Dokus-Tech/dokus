@@ -1,5 +1,8 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
+import androidx.compose.runtime.Composable
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.invoice_status_cancelled
 import tech.dokus.aura.resources.invoice_status_draft
@@ -11,9 +14,6 @@ import tech.dokus.aura.resources.invoice_status_sent
 import tech.dokus.aura.resources.invoice_status_viewed
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
-import androidx.compose.runtime.Composable
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
 
 /**
  * Extension functions for working with FinancialDocumentDto types in the cashflow presentation layer.
@@ -29,7 +29,8 @@ import org.jetbrains.compose.resources.stringResource
 fun List<FinancialDocumentDto>.needingConfirmation(): List<FinancialDocumentDto> {
     return this.filter { doc ->
         when (doc) {
-            is FinancialDocumentDto.InvoiceDto -> doc.status == InvoiceStatus.Sent || doc.status == InvoiceStatus.Overdue
+            is FinancialDocumentDto.InvoiceDto ->
+                doc.status == InvoiceStatus.Sent || doc.status == InvoiceStatus.Overdue
             is FinancialDocumentDto.ExpenseDto -> false // Expenses don't have a confirmation workflow by default
             is FinancialDocumentDto.BillDto -> false // Bills don't have a confirmation workflow by default
         }

@@ -1,7 +1,7 @@
 package tech.dokus.domain.model
 
-import tech.dokus.domain.enums.Country
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.Country
 
 @Serializable
 data class UpsertTenantAddressRequest(
@@ -11,4 +11,3 @@ data class UpsertTenantAddressRequest(
     val postalCode: String,
     val country: Country = Country.Belgium,
 )
-

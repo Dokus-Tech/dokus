@@ -52,14 +52,37 @@ import tech.dokus.aura.resources.invoice_edit_hint_mobile
 import tech.dokus.aura.resources.invoice_number_preview
 import tech.dokus.aura.resources.invoice_select_client
 import tech.dokus.aura.resources.invoice_selected_contact
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.presentation.contacts.components.ContactAutoFillData
 import tech.dokus.features.contacts.presentation.contacts.components.ContactAutocomplete
-import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constrains
+
+// Desktop layout constants
+private val DesktopHorizontalPadding = 32.dp
+private val DesktopColumnSpacing = 24.dp
+private val DesktopSectionSpacing = 16.dp
+private val DesktopTopSpacing = 8.dp
+private val DesktopSendOptionsMinWidth = 320.dp
+private const val DesktopMainColumnWeight = 1.6f
+
+// Mobile layout constants
+private val MobileHorizontalPadding = 16.dp
+private val MobileSectionSpacing = 16.dp
+private val MobileTopSpacing = 8.dp
+private val MobileBottomSpacing = 16.dp
+
+// Contact selection panel constants
+private const val PanelFadeDurationMs = 200
+private const val PanelSlideDurationMs = 300
+private const val ScrimAlpha = 0.32f
+private const val SidebarWidthFraction = 3
+private val SidebarMinWidth = 320.dp
+private val SidebarMaxWidth = 400.dp
+private val SelectedContactSpacing = 8.dp
 
 @Composable
 fun DesktopInvoiceLayout(
@@ -73,16 +96,16 @@ fun DesktopInvoiceLayout(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .padding(horizontal = 32.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = DesktopHorizontalPadding),
+        horizontalArrangement = Arrangement.spacedBy(DesktopColumnSpacing)
     ) {
         Column(
             modifier = Modifier
-                .weight(1.6f)
+                .weight(DesktopMainColumnWeight)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(DesktopSectionSpacing)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(DesktopTopSpacing))
             SectionTitle(
                 text = stringResource(Res.string.cashflow_create_invoice),
                 onBackPress = onBackPress
@@ -105,12 +128,12 @@ fun DesktopInvoiceLayout(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .widthIn(min = 320.dp)
+                .widthIn(min = DesktopSendOptionsMinWidth)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(DesktopTopSpacing))
             sendOptionsContent()
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(DesktopTopSpacing))
         }
     }
 }
@@ -132,11 +155,11 @@ fun MobileInvoiceEditLayout(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = MobileHorizontalPadding)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(MobileSectionSpacing)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(MobileTopSpacing))
             SectionTitle(
                 text = stringResource(Res.string.cashflow_create_invoice),
                 onBackPress = onBackPress
@@ -154,13 +177,13 @@ fun MobileInvoiceEditLayout(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             invoiceContent()
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MobileBottomSpacing))
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(MobileHorizontalPadding),
             horizontalArrangement = Arrangement.End
         ) {
             PButton(
@@ -187,13 +210,13 @@ fun ContactSelectionPanel(
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = isVisible,
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(200))
+            enter = fadeIn(tween(PanelFadeDurationMs)),
+            exit = fadeOut(tween(PanelFadeDurationMs))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f))
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = ScrimAlpha))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -206,16 +229,16 @@ fun ContactSelectionPanel(
             visible = isVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeIn(tween(300)),
+                animationSpec = tween(PanelSlideDurationMs)
+            ) + fadeIn(tween(PanelSlideDurationMs)),
             exit = slideOutHorizontally(
                 targetOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeOut(tween(300)),
+                animationSpec = tween(PanelSlideDurationMs)
+            ) + fadeOut(tween(PanelSlideDurationMs)),
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
             BoxWithConstraints {
-                val sidebarWidth = (maxWidth / 3).coerceIn(320.dp, 400.dp)
+                val sidebarWidth = (maxWidth / SidebarWidthFraction).coerceIn(SidebarMinWidth, SidebarMaxWidth)
 
                 DokusCardSurface(
                     modifier = Modifier
@@ -286,7 +309,7 @@ fun ContactSelectionPanel(
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(SelectedContactSpacing))
                             Text(
                                 text = selectedContact.name.value,
                                 style = MaterialTheme.typography.bodyMedium,

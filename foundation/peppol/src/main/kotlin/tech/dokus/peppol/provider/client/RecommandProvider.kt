@@ -247,7 +247,8 @@ class RecommandProvider(
             parameter("page", page)
             direction?.let {
                 parameter(
-                    "direction", when (it) {
+                    "direction",
+                    when (it) {
                         PeppolDirection.INBOUND -> "incoming"
                         PeppolDirection.OUTBOUND -> "outgoing"
                     }

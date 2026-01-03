@@ -27,5 +27,5 @@ sealed class ExtractedDocumentData {
 
     @Serializable
     @SerialName("Bill")
-    data class Bill(val data: ExtractedInvoiceData) : ExtractedDocumentData()  // Bills use invoice structure
+    data class Bill(val data: ExtractedInvoiceData) : ExtractedDocumentData() // Bills use invoice structure
 }

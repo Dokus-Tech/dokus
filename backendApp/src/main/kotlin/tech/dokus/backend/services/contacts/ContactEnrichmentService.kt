@@ -121,7 +121,7 @@ class ContactEnrichmentService(
 
         logger.info(
             "Enriching contact $contactId with fields: ${toEnrich.map { it.first }}. " +
-                    "Source document: $sourceDocumentId"
+                "Source document: $sourceDocumentId"
         )
 
         val updatedContact = contactRepository.updateContact(contactId, tenantId, updateRequest)

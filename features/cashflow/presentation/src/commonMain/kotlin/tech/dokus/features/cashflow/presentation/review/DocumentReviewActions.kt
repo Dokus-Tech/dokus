@@ -1,9 +1,9 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewActions(
     private val logger: Logger,
@@ -14,7 +14,6 @@ internal class DocumentReviewActions(
 
             logger.d { "Saving draft for document: $documentId" }
             updateState { copy(isSaving = true) }
-
 
             launch {
                 logger.i { "Draft save requested (API method needed): $documentId" }
@@ -52,7 +51,6 @@ internal class DocumentReviewActions(
 
             logger.d { "Confirming document: $documentId" }
             updateState { copy(isConfirming = true) }
-
 
             launch {
                 logger.i { "Confirmation requested (API method needed): $documentId" }

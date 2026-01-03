@@ -1,36 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
-import tech.dokus.features.auth.presentation.auth.components.ProtocolSelector
-import tech.dokus.features.auth.presentation.auth.components.ServerConfirmationDialog
-import tech.dokus.features.auth.mvi.ServerConnectionIntent
-import tech.dokus.features.auth.mvi.ServerConnectionState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_checking_server
-import tech.dokus.aura.resources.auth_connecting
-import tech.dokus.aura.resources.auth_currently_connected_to
-import tech.dokus.aura.resources.auth_help_description
-import tech.dokus.aura.resources.auth_host_label
-import tech.dokus.aura.resources.auth_need_help
-import tech.dokus.aura.resources.auth_port_label
-import tech.dokus.aura.resources.auth_protocol_label
-import tech.dokus.aura.resources.auth_server_details_title
-import tech.dokus.aura.resources.auth_use_cloud
-import tech.dokus.aura.resources.auth_validate_connection
-import tech.dokus.aura.resources.auth_validating
-import tech.dokus.aura.resources.connect_to_server
-import tech.dokus.foundation.aura.components.PBackButton
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.components.DokusGlassSurface
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
-import tech.dokus.foundation.aura.constrains.withContentPadding
-import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.config.ServerConfig
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,6 +35,37 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_checking_server
+import tech.dokus.aura.resources.auth_connecting
+import tech.dokus.aura.resources.auth_currently_connected_to
+import tech.dokus.aura.resources.auth_help_description
+import tech.dokus.aura.resources.auth_host_label
+import tech.dokus.aura.resources.auth_need_help
+import tech.dokus.aura.resources.auth_port_label
+import tech.dokus.aura.resources.auth_protocol_label
+import tech.dokus.aura.resources.auth_server_details_title
+import tech.dokus.aura.resources.auth_use_cloud
+import tech.dokus.aura.resources.auth_validate_connection
+import tech.dokus.aura.resources.auth_validating
+import tech.dokus.aura.resources.connect_to_server
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.features.auth.mvi.ServerConnectionIntent
+import tech.dokus.features.auth.mvi.ServerConnectionState
+import tech.dokus.features.auth.presentation.auth.components.ProtocolSelector
+import tech.dokus.features.auth.presentation.auth.components.ServerConfirmationDialog
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.DokusGlassSurface
+import tech.dokus.foundation.aura.components.PBackButton
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
+import tech.dokus.foundation.aura.constrains.withContentPadding
 
 /**
  * Screen for connecting to a self-hosted Dokus server.
@@ -221,7 +221,7 @@ private fun ServerConnectionContent(
                             else -> stringResource(Res.string.auth_validate_connection)
                         },
                         enabled = state !is ServerConnectionState.Validating &&
-                                state !is ServerConnectionState.Connecting,
+                            state !is ServerConnectionState.Connecting,
                         onClick = { onIntent(ServerConnectionIntent.ValidateClicked) },
                         modifier = Modifier.fillMaxWidth()
                     )

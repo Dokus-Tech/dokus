@@ -1,5 +1,42 @@
 package tech.dokus.app.screens.settings
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
+import tech.dokus.app.viewmodel.WorkspaceSettingsState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_change
 import tech.dokus.aura.resources.action_remove
@@ -35,6 +72,9 @@ import tech.dokus.aura.resources.workspace_payment_terms_text
 import tech.dokus.aura.resources.workspace_settings_load_failed
 import tech.dokus.aura.resources.workspace_settings_title
 import tech.dokus.aura.resources.workspace_vat_number
+import tech.dokus.domain.model.common.Thumbnail
+import tech.dokus.foundation.app.picker.FilePickerLauncher
+import tech.dokus.foundation.app.picker.rememberImagePicker
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.DokusCard
@@ -44,61 +84,13 @@ import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldFree
-import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
-import tech.dokus.domain.model.common.Thumbnail
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.stringResource
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
-import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.viewmodel.WorkspaceSettingsAction
-import tech.dokus.app.viewmodel.WorkspaceSettingsContainer
-import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
-import tech.dokus.app.viewmodel.WorkspaceSettingsState
-import tech.dokus.app.viewmodel.WorkspaceSettingsSuccess
-import tech.dokus.foundation.app.mvi.container
-import tech.dokus.foundation.app.picker.FilePickerLauncher
-import tech.dokus.foundation.app.picker.rememberImagePicker
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.domain.exceptions.DokusException
+
+@Suppress("MagicNumber") // Invoice padding configuration options
+private val INVOICE_PADDING_OPTIONS = listOf(3, 4, 5, 6)
 
 /**
  * Workspace/Company settings screen with top bar.
@@ -406,7 +398,7 @@ internal fun WorkspaceSettingsContentInternal(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            listOf(3, 4, 5, 6).forEach { padding ->
+                            INVOICE_PADDING_OPTIONS.forEach { padding ->
                                 TextButton(
                                     onClick = {
                                         onIntent(
@@ -418,10 +410,11 @@ internal fun WorkspaceSettingsContentInternal(
                                 ) {
                                     Text(
                                         text = padding.toString(),
-                                        color = if (formState.invoicePadding == padding)
+                                        color = if (formState.invoicePadding == padding) {
                                             MaterialTheme.colorScheme.primary
-                                        else
+                                        } else {
                                             MaterialTheme.colorScheme.onSurfaceVariant
+                                        }
                                     )
                                 }
                             }
@@ -566,7 +559,7 @@ private fun CompanyAvatarSection(
             // Avatar action buttons
             val isActionInProgress =
                 avatarState is WorkspaceSettingsState.Content.AvatarState.Uploading ||
-                        avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
+                    avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(
                     onClick = { avatarPicker.launch() },

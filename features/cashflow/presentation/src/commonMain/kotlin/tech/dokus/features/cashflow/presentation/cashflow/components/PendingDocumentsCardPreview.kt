@@ -1,23 +1,7 @@
+@file:Suppress("LongMethod") // Mock data and long setup functions
+
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentDraftDto
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.ExtractedBillFields
-import tech.dokus.domain.model.ExtractedDocumentData
-import tech.dokus.domain.model.ExtractedExpenseFields
-import tech.dokus.domain.model.ExtractedInvoiceFields
-import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -26,6 +10,51 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.ExtractedBillFields
+import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.ExtractedExpenseFields
+import tech.dokus.domain.model.ExtractedInvoiceFields
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+
+// Preview layout constants
+private val PreviewPadding = 24.dp
+
+// Pagination constants
+private const val PreviewPageSize = 4
+private const val PreviewFirstPage = 0
+private const val PreviewSecondPage = 1
+
+// Preview mock data date constants
+private const val PreviewYear = 2024
+private const val PreviewMonth = 5
+private const val PreviewDay = 25
+private const val PreviewHour = 10
+private const val PreviewMinute = 30
+private const val PreviewSecond = 0
+private const val PreviewNanosecond = 0
+
+// Preview mock data file size constants (in bytes)
+private const val InvoiceSizeBytes = 125000L
+private const val BillSizeBytes = 98000L
+private const val ExpenseSizeBytes = 45000L
+private const val ScanSizeBytes = 200000L
+private const val ClientInvoiceSizeBytes = 150000L
+
+// Draft version constant
+private const val InitialDraftVersion = 1
 
 /**
  * Preview for PendingDocumentsCard component with documents.
@@ -40,8 +69,8 @@ fun PendingDocumentsCardPreview(
             state = DokusState.success(
                 PaginationState(
                     data = getSamplePendingDocuments(),
-                    currentPage = 0,
-                    pageSize = 4,
+                    currentPage = PreviewFirstPage,
+                    pageSize = PreviewPageSize,
                     hasMorePages = true
                 )
             ),
@@ -49,7 +78,7 @@ fun PendingDocumentsCardPreview(
             onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(PreviewPadding)
         )
     }
 }
@@ -69,7 +98,7 @@ fun PendingDocumentsCardLoadingPreview(
             onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(PreviewPadding)
         )
     }
 }
@@ -87,8 +116,8 @@ fun PendingDocumentsCardEmptyPreview(
             state = DokusState.success(
                 PaginationState(
                     data = emptyList(),
-                    currentPage = 0,
-                    pageSize = 4,
+                    currentPage = PreviewFirstPage,
+                    pageSize = PreviewPageSize,
                     hasMorePages = false
                 )
             ),
@@ -96,7 +125,7 @@ fun PendingDocumentsCardEmptyPreview(
             onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(PreviewPadding)
         )
     }
 }
@@ -119,7 +148,7 @@ fun PendingDocumentsCardErrorPreview(
             onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(PreviewPadding)
         )
     }
 }
@@ -136,9 +165,9 @@ fun PendingDocumentsCardWithMoreItemsPreview(
         PendingDocumentsCard(
             state = DokusState.success(
                 PaginationState(
-                    data = getSamplePendingDocuments().take(4),
-                    currentPage = 1,
-                    pageSize = 4,
+                    data = getSamplePendingDocuments().take(PreviewPageSize),
+                    currentPage = PreviewSecondPage,
+                    pageSize = PreviewPageSize,
                     hasMorePages = true
                 )
             ),
@@ -146,7 +175,7 @@ fun PendingDocumentsCardWithMoreItemsPreview(
             onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(PreviewPadding)
         )
     }
 }
@@ -157,7 +186,15 @@ fun PendingDocumentsCardWithMoreItemsPreview(
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
     // Use static date for preview stability
-    val now = LocalDateTime(2024, 5, 25, 10, 30, 0, 0)
+    val now = LocalDateTime(
+        PreviewYear,
+        PreviewMonth,
+        PreviewDay,
+        PreviewHour,
+        PreviewMinute,
+        PreviewSecond,
+        PreviewNanosecond
+    )
     val tenantId = TenantId.generate()
 
     return listOf(
@@ -168,7 +205,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 tenantId = tenantId,
                 filename = "invoice-2024-001.pdf",
                 contentType = "application/pdf",
-                sizeBytes = 125000,
+                sizeBytes = InvoiceSizeBytes,
                 storageKey = "documents/invoice-2024-001.pdf",
                 uploadedAt = now
             ),
@@ -182,7 +219,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 ),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
-                draftVersion = 1,
+                draftVersion = InitialDraftVersion,
                 draftEditedAt = null,
                 draftEditedBy = null,
                 suggestedContactId = null,
@@ -202,7 +239,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 tenantId = tenantId,
                 filename = "supplier-bill.pdf",
                 contentType = "application/pdf",
-                sizeBytes = 98000,
+                sizeBytes = BillSizeBytes,
                 storageKey = "documents/supplier-bill.pdf",
                 uploadedAt = now
             ),
@@ -219,7 +256,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 ),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
-                draftVersion = 1,
+                draftVersion = InitialDraftVersion,
                 draftEditedAt = null,
                 draftEditedBy = null,
                 suggestedContactId = null,
@@ -239,7 +276,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 tenantId = tenantId,
                 filename = "receipt-lunch-meeting.jpg",
                 contentType = "image/jpeg",
-                sizeBytes = 45000,
+                sizeBytes = ExpenseSizeBytes,
                 storageKey = "documents/receipt-lunch-meeting.jpg",
                 uploadedAt = now
             ),
@@ -253,7 +290,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 ),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
-                draftVersion = 1,
+                draftVersion = InitialDraftVersion,
                 draftEditedAt = null,
                 draftEditedBy = null,
                 suggestedContactId = null,
@@ -273,7 +310,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 tenantId = tenantId,
                 filename = "scan-20240525.pdf",
                 contentType = "application/pdf",
-                sizeBytes = 200000,
+                sizeBytes = ScanSizeBytes,
                 storageKey = "documents/scan-20240525.pdf",
                 uploadedAt = now
             ),
@@ -288,7 +325,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 tenantId = tenantId,
                 filename = "invoice-client-abc.pdf",
                 contentType = "application/pdf",
-                sizeBytes = 150000,
+                sizeBytes = ClientInvoiceSizeBytes,
                 storageKey = "documents/invoice-client-abc.pdf",
                 uploadedAt = now
             ),
@@ -302,7 +339,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 ),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
-                draftVersion = 1,
+                draftVersion = InitialDraftVersion,
                 draftEditedAt = null,
                 draftEditedBy = null,
                 suggestedContactId = null,

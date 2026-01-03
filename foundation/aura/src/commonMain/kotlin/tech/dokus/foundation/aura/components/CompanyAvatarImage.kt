@@ -1,8 +1,7 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for constants (Kotlin convention)
+
 package tech.dokus.foundation.aura.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.company_avatar_content_description
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -20,8 +19,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
-import kotlin.math.abs
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.company_avatar_content_description
+import tech.dokus.foundation.aura.constrains.Constrains
+import kotlin.math.abs
+
+// Avatar font sizes for fallback display
+private val FontSizeExtraSmall = 10.sp
+private val FontSizeSmall = 14.sp
+private val FontSizeMedium = 24.sp
+private val FontSizeLarge = 48.sp
+private val FontSizeExtraLarge = 96.sp
+
+// Avatar color generation constants
+private const val HueModulus = 360
+private const val AvatarColorSaturation = 0.5f
+private const val AvatarColorLightness = 0.7f
 
 /**
  * Size variants for company avatars.
@@ -141,11 +155,11 @@ private fun AvatarFallback(
     val textColor = MaterialTheme.colorScheme.primary
 
     val fontSize = when (size) {
-        AvatarSize.ExtraSmall -> 10.sp
-        AvatarSize.Small -> 14.sp
-        AvatarSize.Medium -> 24.sp
-        AvatarSize.Large -> 48.sp
-        AvatarSize.ExtraLarge -> 96.sp
+        AvatarSize.ExtraSmall -> FontSizeExtraSmall
+        AvatarSize.Small -> FontSizeSmall
+        AvatarSize.Medium -> FontSizeMedium
+        AvatarSize.Large -> FontSizeLarge
+        AvatarSize.ExtraLarge -> FontSizeExtraLarge
     }
 
     Box(
@@ -170,6 +184,6 @@ private fun AvatarFallback(
  */
 @Composable
 fun rememberAvatarColor(seed: String): Color {
-    val hue = (abs(seed.hashCode()) % 360).toFloat()
-    return Color.hsl(hue, 0.5f, 0.7f)
+    val hue = (abs(seed.hashCode()) % HueModulus).toFloat()
+    return Color.hsl(hue, AvatarColorSaturation, AvatarColorLightness)
 }

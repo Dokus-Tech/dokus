@@ -1,23 +1,28 @@
 package tech.dokus.app.viewmodel
 
-import tech.dokus.features.auth.datasource.TenantRemoteDataSource
-import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
-import tech.dokus.domain.ids.Bic
-import tech.dokus.domain.ids.Iban
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.model.TenantSettings
-import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.Bic
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
+import tech.dokus.features.auth.datasource.TenantRemoteDataSource
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
+import tech.dokus.foundation.platform.Logger
 
-internal typealias WorkspaceSettingsCtx = PipelineContext<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction>
+internal typealias WorkspaceSettingsCtx =
+    PipelineContext<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction>
+
+private const val MAX_PAYMENT_TERMS_DAYS = 365
+private const val MIN_INVOICE_PADDING = 1
+private const val MAX_INVOICE_PADDING = 8
 
 /**
  * Container for Workspace Settings screen using FlowMVI.
@@ -45,7 +50,9 @@ internal class WorkspaceSettingsContainer(
                     is WorkspaceSettingsIntent.UpdateBic -> handleUpdateBic(intent.value)
                     is WorkspaceSettingsIntent.UpdateAddress -> handleUpdateAddress(intent.value)
                     is WorkspaceSettingsIntent.UpdateInvoicePrefix -> handleUpdateInvoicePrefix(intent.value)
-                    is WorkspaceSettingsIntent.UpdateDefaultPaymentTerms -> handleUpdateDefaultPaymentTerms(intent.value)
+                    is WorkspaceSettingsIntent.UpdateDefaultPaymentTerms -> handleUpdateDefaultPaymentTerms(
+                        intent.value
+                    )
                     is WorkspaceSettingsIntent.UpdateInvoiceYearlyReset -> handleUpdateInvoiceYearlyReset(intent.value)
                     is WorkspaceSettingsIntent.UpdateInvoicePadding -> handleUpdateInvoicePadding(intent.value)
                     is WorkspaceSettingsIntent.UpdateInvoiceIncludeYear -> handleUpdateInvoiceIncludeYear(intent.value)
@@ -158,7 +165,7 @@ internal class WorkspaceSettingsContainer(
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateDefaultPaymentTerms(value: String) {
         val terms = value.toIntOrNull() ?: return
-        if (terms in 0..365) {
+        if (terms in 0..MAX_PAYMENT_TERMS_DAYS) {
             withState<WorkspaceSettingsState.Content, _> {
                 updateState { copy(form = form.copy(defaultPaymentTerms = terms)) }
             }
@@ -173,7 +180,11 @@ internal class WorkspaceSettingsContainer(
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateInvoicePadding(value: Int) {
         withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(invoicePadding = value.coerceIn(1, 8))) }
+            updateState {
+                copy(
+                    form = form.copy(invoicePadding = value.coerceIn(MIN_INVOICE_PADDING, MAX_INVOICE_PADDING))
+                )
+            }
         }
     }
 

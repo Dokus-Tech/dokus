@@ -1,14 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_sort_amount_highest
-import tech.dokus.aura.resources.cashflow_sort_amount_lowest
-import tech.dokus.aura.resources.cashflow_sort_date_newest
-import tech.dokus.aura.resources.cashflow_sort_date_oldest
-import tech.dokus.aura.resources.cashflow_sort_default
-import tech.dokus.aura.resources.cashflow_sort_label
-import tech.dokus.aura.resources.cashflow_sort_type
-import tech.dokus.aura.resources.sort_expand
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -35,6 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_sort_amount_highest
+import tech.dokus.aura.resources.cashflow_sort_amount_lowest
+import tech.dokus.aura.resources.cashflow_sort_date_newest
+import tech.dokus.aura.resources.cashflow_sort_date_oldest
+import tech.dokus.aura.resources.cashflow_sort_default
+import tech.dokus.aura.resources.cashflow_sort_label
+import tech.dokus.aura.resources.cashflow_sort_type
+import tech.dokus.aura.resources.sort_expand
 
 /**
  * Sort options for financial documents.

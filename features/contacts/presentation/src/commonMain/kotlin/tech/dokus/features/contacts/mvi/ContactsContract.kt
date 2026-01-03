@@ -1,5 +1,10 @@
 package tech.dokus.features.contacts.mvi
 
+import androidx.compose.runtime.Immutable
+import org.jetbrains.compose.resources.StringResource
+import pro.respawn.flowmvi.api.MVIAction
+import pro.respawn.flowmvi.api.MVIIntent
+import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_active
 import tech.dokus.aura.resources.contacts_filter_all
@@ -12,18 +17,13 @@ import tech.dokus.aura.resources.contacts_sort_created_oldest
 import tech.dokus.aura.resources.contacts_sort_default
 import tech.dokus.aura.resources.contacts_sort_name_asc
 import tech.dokus.aura.resources.contacts_sort_name_desc
-import tech.dokus.foundation.aura.components.dropdown.FilterOption
-import androidx.compose.runtime.Immutable
-import org.jetbrains.compose.resources.StringResource
-import pro.respawn.flowmvi.api.MVIAction
-import pro.respawn.flowmvi.api.MVIIntent
-import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.dropdown.FilterOption
 
 /**
  * Contract for the Contacts screen.

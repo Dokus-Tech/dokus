@@ -1,12 +1,12 @@
 package tech.dokus.database.services
 
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
 import tech.dokus.database.tables.auth.TenantSettingsTable
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -65,9 +65,11 @@ class InvoiceNumberGenerator(
         return runCatching {
             // Step 1: Fetch tenant's invoice configuration
             val config = getInvoiceConfig(tenantId).getOrThrow()
-            logger.debug("Loaded tenant config: tenant_id=$tenantId, prefix=${config.prefix}, " +
+            logger.debug(
+                "Loaded tenant config: tenant_id=$tenantId, prefix=${config.prefix}, " +
                     "yearly_reset=${config.yearlyReset}, padding=${config.padding}, " +
-                    "include_year=${config.includeYear}, timezone=${config.timezone}")
+                    "include_year=${config.includeYear}, timezone=${config.timezone}"
+            )
 
             // Step 2: Calculate current year in tenant's timezone
             val year = getCurrentYear(config.timezone)
@@ -79,8 +81,10 @@ class InvoiceNumberGenerator(
 
             // Step 4: Get and increment the sequence number atomically
             val sequenceNumber = invoiceNumberRepository.getAndIncrementSequence(tenantId, sequenceYear).getOrThrow()
-            logger.debug("Sequence incremented: tenant_id=$tenantId, sequence_year=$sequenceYear, " +
-                    "sequence_number=$sequenceNumber")
+            logger.debug(
+                "Sequence incremented: tenant_id=$tenantId, sequence_year=$sequenceYear, " +
+                    "sequence_number=$sequenceNumber"
+            )
 
             // Step 5: Format the invoice number
             val invoiceNumber = formatInvoiceNumber(
@@ -94,9 +98,11 @@ class InvoiceNumberGenerator(
             // Structured audit log for invoice number generation
             // Contains all fields required for Belgian tax compliance audit trail:
             // timestamp (handled by logging framework), tenant_id, generated_number, sequence_number, year
-            logger.info("Invoice number generated: tenant_id=$tenantId, generated_number=$invoiceNumber, " +
+            logger.info(
+                "Invoice number generated: tenant_id=$tenantId, generated_number=$invoiceNumber, " +
                     "sequence_number=$sequenceNumber, year=$year, prefix=${config.prefix}, " +
-                    "yearly_reset=${config.yearlyReset}")
+                    "yearly_reset=${config.yearlyReset}"
+            )
 
             invoiceNumber
         }.onFailure { error ->
@@ -132,8 +138,10 @@ class InvoiceNumberGenerator(
                 includeYear = config.includeYear
             )
 
-            logger.debug("Invoice number preview: tenant_id=$tenantId, preview_number=$previewNumber, " +
-                    "next_sequence=$nextSequence, year=$year")
+            logger.debug(
+                "Invoice number preview: tenant_id=$tenantId, preview_number=$previewNumber, " +
+                    "next_sequence=$nextSequence, year=$year"
+            )
 
             previewNumber
         }.onFailure { error ->

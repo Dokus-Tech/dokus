@@ -1,12 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model.state
 
-import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadDisplayState
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
-import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.DocumentDto
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
@@ -19,6 +12,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadDisplayState
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
+import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
+import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import kotlin.time.Duration.Companion.milliseconds
 
 /**

@@ -45,6 +45,29 @@ import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.extensions.localizedUppercase
 
+// UI dimensions
+private val CardPadding = 16.dp
+private val DividerSpacing = 12.dp
+private val DividerHeight = 1.dp
+private val ItemVerticalPadding = 8.dp
+private val ItemCornerRadius = 8.dp
+private val ItemSpacing = 16.dp
+private val ShimmerNameWidth = 180.dp
+private val ShimmerNameHeight = 16.dp
+private val ShimmerBadgeWidth = 100.dp
+private val ShimmerBadgeHeight = 22.dp
+private val BadgeCornerRadius = 16.dp
+private val BadgeHorizontalPadding = 12.dp
+private val BadgeVerticalPadding = 4.dp
+private val LoadingIndicatorSize = 24.dp
+private val LoadingIndicatorStrokeWidth = 2.dp
+
+// Pagination constants
+private const val SkeletonRowCount = 4
+private const val LastDividerIndex = 3
+private const val LoadMoreThreshold = 2
+private const val DocumentIdPreviewLength = 8
+
 /**
  * A card component displaying pending documents that need confirmation.
  *
@@ -67,7 +90,7 @@ fun PendingDocumentsCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(CardPadding)
         ) {
             // Title
             Text(
@@ -76,7 +99,7 @@ fun PendingDocumentsCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(CardPadding))
 
             when (state) {
                 is DokusState.Loading, is DokusState.Idle -> {
@@ -125,18 +148,18 @@ private fun PendingDocumentsLoadingContent(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        // Show 4 skeleton rows
-        repeat(4) { index ->
+        // Show skeleton rows
+        repeat(SkeletonRowCount) { index ->
             PendingDocumentItemSkeleton()
-            if (index < 3) {
-                Spacer(modifier = Modifier.height(12.dp))
+            if (index < LastDividerIndex) {
+                Spacer(modifier = Modifier.height(DividerSpacing))
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.dp)
+                        .height(DividerHeight)
                         .background(MaterialTheme.colorScheme.outlineVariant)
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(DividerSpacing))
             }
         }
     }
@@ -152,24 +175,24 @@ private fun PendingDocumentItemSkeleton(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = ItemVerticalPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Document name skeleton
         ShimmerLine(
-            modifier = Modifier.width(180.dp),
-            height = 16.dp
+            modifier = Modifier.width(ShimmerNameWidth),
+            height = ShimmerNameHeight
         )
 
-        Spacer(Modifier.width(16.dp))
+        Spacer(Modifier.width(ItemSpacing))
 
         // Badge skeleton
         ShimmerBox(
             modifier = Modifier
-                .width(100.dp)
-                .height(22.dp),
-            shape = RoundedCornerShape(16.dp)
+                .width(ShimmerBadgeWidth)
+                .height(ShimmerBadgeHeight),
+            shape = RoundedCornerShape(BadgeCornerRadius)
         )
     }
 }
@@ -236,8 +259,8 @@ private fun PendingDocumentsLazyList(
         }
             .distinctUntilChanged()
             .filter { (lastVisible, total) ->
-                // Load more when within 2 items of the end
-                lastVisible >= total - 2 && hasMorePages && !isLoadingMore
+                // Load more when within threshold items of the end
+                lastVisible >= total - LoadMoreThreshold && hasMorePages && !isLoadingMore
             }
             .collect { onLoadMore() }
     }
@@ -258,14 +281,14 @@ private fun PendingDocumentsLazyList(
 
             // Add divider between items (not after the last item unless loading more)
             if (index < documents.size - 1 || isLoadingMore) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(DividerSpacing))
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.dp)
+                        .height(DividerHeight)
                         .background(MaterialTheme.colorScheme.outlineVariant)
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(DividerSpacing))
             }
         }
 
@@ -275,12 +298,12 @@ private fun PendingDocumentsLazyList(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = ItemVerticalPadding),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
+                        modifier = Modifier.size(LoadingIndicatorSize),
+                        strokeWidth = LoadingIndicatorStrokeWidth
                     )
                 }
             }
@@ -302,9 +325,9 @@ private fun PendingDocumentItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(ItemCornerRadius))
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = ItemVerticalPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -318,7 +341,7 @@ private fun PendingDocumentItem(
             modifier = Modifier.weight(1f)
         )
 
-        Spacer(Modifier.width(16.dp))
+        Spacer(Modifier.width(ItemSpacing))
 
         // "Need confirmation" badge
         NeedConfirmationBadge()
@@ -339,9 +362,9 @@ private fun NeedConfirmationBadge(
         modifier = modifier
             .background(
                 color = MaterialTheme.colorScheme.errorContainer,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(BadgeCornerRadius)
             )
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = BadgeHorizontalPadding, vertical = BadgeVerticalPadding)
     )
 }
 
@@ -374,7 +397,7 @@ private fun getDocumentDisplayName(record: DocumentRecordDto): String {
 
             else -> {
                 // Fallback to document ID if no filename
-                "$typePrefix ${record.document.id.toString().take(8).uppercase()}"
+                "$typePrefix ${record.document.id.toString().take(DocumentIdPreviewLength).uppercase()}"
             }
         }
     }

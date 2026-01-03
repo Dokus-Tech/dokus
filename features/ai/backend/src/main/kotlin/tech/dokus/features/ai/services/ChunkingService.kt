@@ -1,10 +1,10 @@
 package tech.dokus.features.ai.services
 
+import org.slf4j.LoggerFactory
 import tech.dokus.domain.model.ChunkMetadata
 import tech.dokus.domain.model.ChunkProvenance
 import tech.dokus.domain.model.ChunkingConfig
 import tech.dokus.domain.model.TextOffsets
-import org.slf4j.LoggerFactory
 
 /**
  * Service responsible for chunking document text into segments suitable for RAG.
@@ -46,6 +46,7 @@ class ChunkingService {
     enum class ChunkingStrategy {
         /** Respects sentence and paragraph boundaries */
         SEMANTIC,
+
         /** Fixed-size chunks with overlap */
         FIXED
     }
@@ -132,20 +133,24 @@ class ChunkingService {
                 val trimmed = paragraph.trim()
                 if (trimmed.isNotEmpty()) {
                     val startOffset = normalizedText.indexOf(trimmed, currentOffset)
-                    segments.add(TextSegment(
-                        text = trimmed,
-                        startOffset = startOffset,
-                        endOffset = startOffset + trimmed.length
-                    ))
+                    segments.add(
+                        TextSegment(
+                            text = trimmed,
+                            startOffset = startOffset,
+                            endOffset = startOffset + trimmed.length
+                        )
+                    )
                     currentOffset = startOffset + trimmed.length
                 }
             }
         } else {
-            segments.add(TextSegment(
-                text = normalizedText,
-                startOffset = 0,
-                endOffset = normalizedText.length
-            ))
+            segments.add(
+                TextSegment(
+                    text = normalizedText,
+                    startOffset = 0,
+                    endOffset = normalizedText.length
+                )
+            )
         }
 
         // Step 2: Split long paragraphs on sentence boundaries
@@ -246,19 +251,21 @@ class ChunkingService {
 
             // Skip if chunk is too small (except for the last chunk)
             if (chunkText.length >= config.minChunkSize || startOffset + config.targetChunkSize >= normalizedText.length) {
-                chunks.add(Chunk(
-                    content = chunkText,
-                    index = chunkIndex,
-                    provenance = ChunkProvenance(
-                        offsets = TextOffsets(
-                            start = startOffset,
-                            end = endOffset
+                chunks.add(
+                    Chunk(
+                        content = chunkText,
+                        index = chunkIndex,
+                        provenance = ChunkProvenance(
+                            offsets = TextOffsets(
+                                start = startOffset,
+                                end = endOffset
+                            ),
+                            pageNumber = null
                         ),
-                        pageNumber = null
-                    ),
-                    metadata = detectChunkMetadata(chunkText),
-                    estimatedTokens = chunkText.length / 4
-                ))
+                        metadata = detectChunkMetadata(chunkText),
+                        estimatedTokens = chunkText.length / 4
+                    )
+                )
                 chunkIndex++
             }
 
@@ -317,11 +324,13 @@ class ChunkingService {
                 val relativeStart = segment.text.indexOf(trimmed, currentOffset - segment.startOffset)
                 val absoluteStart = segment.startOffset + maxOf(0, relativeStart)
 
-                result.add(TextSegment(
-                    text = trimmed,
-                    startOffset = absoluteStart,
-                    endOffset = absoluteStart + trimmed.length
-                ))
+                result.add(
+                    TextSegment(
+                        text = trimmed,
+                        startOffset = absoluteStart,
+                        endOffset = absoluteStart + trimmed.length
+                    )
+                )
                 currentOffset = absoluteStart + trimmed.length
             }
         }
@@ -353,11 +362,13 @@ class ChunkingService {
             } else {
                 // Save current chunk and start new one
                 if (currentText.isNotEmpty()) {
-                    result.add(TextSegment(
-                        text = currentText.toString(),
-                        startOffset = currentStart,
-                        endOffset = currentEnd
-                    ))
+                    result.add(
+                        TextSegment(
+                            text = currentText.toString(),
+                            startOffset = currentStart,
+                            endOffset = currentEnd
+                        )
+                    )
                 }
                 currentText = StringBuilder(segment.text)
                 currentStart = segment.startOffset
@@ -367,11 +378,13 @@ class ChunkingService {
 
         // Add the last chunk
         if (currentText.isNotEmpty()) {
-            result.add(TextSegment(
-                text = currentText.toString(),
-                startOffset = currentStart,
-                endOffset = currentEnd
-            ))
+            result.add(
+                TextSegment(
+                    text = currentText.toString(),
+                    startOffset = currentStart,
+                    endOffset = currentEnd
+                )
+            )
         }
 
         return result
@@ -396,11 +409,13 @@ class ChunkingService {
                 }
             }
 
-            result.add(TextSegment(
-                text = text.substring(startIndex, endIndex).trim(),
-                startOffset = segment.startOffset + startIndex,
-                endOffset = segment.startOffset + endIndex
-            ))
+            result.add(
+                TextSegment(
+                    text = text.substring(startIndex, endIndex).trim(),
+                    startOffset = segment.startOffset + startIndex,
+                    endOffset = segment.startOffset + endIndex
+                )
+            )
 
             startIndex = endIndex
             // Skip whitespace at start of next chunk

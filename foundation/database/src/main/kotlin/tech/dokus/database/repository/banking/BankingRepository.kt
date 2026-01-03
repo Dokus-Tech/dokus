@@ -1,21 +1,5 @@
 package tech.dokus.database.repository.banking
 
-import tech.dokus.database.tables.banking.BankConnectionsTable
-import tech.dokus.database.tables.banking.BankTransactionsTable
-import tech.dokus.domain.Money
-import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.toDbDecimal
-import tech.dokus.domain.enums.BankAccountType
-import tech.dokus.domain.enums.BankProvider
-import tech.dokus.domain.enums.Currency
-import tech.dokus.domain.ids.BankConnectionId
-import tech.dokus.domain.ids.BankTransactionId
-import tech.dokus.domain.ids.ExpenseId
-import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BankConnectionDto
-import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -28,6 +12,22 @@ import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.banking.BankConnectionsTable
+import tech.dokus.database.tables.banking.BankTransactionsTable
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.BankAccountType
+import tech.dokus.domain.enums.BankProvider
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.ids.BankConnectionId
+import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.BankConnectionDto
+import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.toDbDecimal
+import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -91,7 +91,7 @@ class BankingRepository {
         dbQuery {
             BankConnectionsTable.selectAll().where {
                 (BankConnectionsTable.id eq UUID.fromString(connectionId.toString())) and
-                (BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.toBankConnectionDto()
         }
     }
@@ -127,7 +127,7 @@ class BankingRepository {
         dbQuery {
             BankConnectionsTable.update({
                 (BankConnectionsTable.id eq UUID.fromString(connectionId.toString())) and
-                (BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[lastSyncedAt] = syncedAt
                 it[updatedAt] = syncedAt
@@ -145,7 +145,7 @@ class BankingRepository {
         dbQuery {
             BankConnectionsTable.update({
                 (BankConnectionsTable.id eq UUID.fromString(connectionId.toString())) and
-                (BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[isActive] = false
             } > 0
@@ -200,7 +200,7 @@ class BankingRepository {
         dbQuery {
             BankTransactionsTable.selectAll().where {
                 (BankTransactionsTable.id eq UUID.fromString(transactionId.toString())) and
-                (BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.toBankTransactionDto()
         }
     }
@@ -256,7 +256,7 @@ class BankingRepository {
         dbQuery {
             BankTransactionsTable.update({
                 (BankTransactionsTable.id eq UUID.fromString(transactionId.toString())) and
-                (BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[BankTransactionsTable.expenseId] = UUID.fromString(expenseId.toString())
                 it[isReconciled] = true
@@ -275,7 +275,7 @@ class BankingRepository {
         dbQuery {
             BankTransactionsTable.update({
                 (BankTransactionsTable.id eq UUID.fromString(transactionId.toString())) and
-                (BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[BankTransactionsTable.invoiceId] = UUID.fromString(invoiceId.toString())
                 it[isReconciled] = true

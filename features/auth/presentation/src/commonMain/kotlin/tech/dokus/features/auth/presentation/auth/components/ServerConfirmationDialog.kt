@@ -1,21 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_cancel
-import tech.dokus.aura.resources.action_connect
-import tech.dokus.aura.resources.auth_server_connecting_will
-import tech.dokus.aura.resources.auth_server_features_label
-import tech.dokus.aura.resources.auth_server_found
-import tech.dokus.aura.resources.auth_server_logout_warning
-import tech.dokus.aura.resources.auth_server_name_label
-import tech.dokus.aura.resources.auth_server_reauth_warning
-import tech.dokus.aura.resources.auth_server_reset_warning
-import tech.dokus.aura.resources.auth_server_url
-import tech.dokus.aura.resources.auth_server_version
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.domain.config.ServerConfig
-import tech.dokus.domain.config.ServerInfo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +24,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.action_connect
+import tech.dokus.aura.resources.auth_server_connecting_will
+import tech.dokus.aura.resources.auth_server_features_label
+import tech.dokus.aura.resources.auth_server_found
+import tech.dokus.aura.resources.auth_server_logout_warning
+import tech.dokus.aura.resources.auth_server_name_label
+import tech.dokus.aura.resources.auth_server_reauth_warning
+import tech.dokus.aura.resources.auth_server_reset_warning
+import tech.dokus.aura.resources.auth_server_url
+import tech.dokus.aura.resources.auth_server_version
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.config.ServerInfo
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 
 /**
  * Confirmation dialog shown after server validation.

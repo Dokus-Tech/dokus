@@ -1,13 +1,11 @@
+@file:Suppress(
+    "TooManyFunctions", // Container handles form validation
+    "MagicNumber", // Timeout constants
+    "CyclomaticComplexMethod" // Duplicate checking has many field checks
+)
+
 package tech.dokus.features.contacts.mvi
 
-import tech.dokus.domain.enums.ClientType
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.CreateContactRequest
-import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -17,11 +15,19 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.features.contacts.usecases.CreateContactUseCase
 import tech.dokus.features.contacts.usecases.DeleteContactUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactUseCase
+import tech.dokus.foundation.platform.Logger
 
 internal typealias ContactFormCtx = PipelineContext<ContactFormState, ContactFormIntent, ContactFormAction>
 

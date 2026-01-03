@@ -1,5 +1,6 @@
 package tech.dokus.features.auth.di
 
+import org.koin.dsl.module
 import tech.dokus.features.auth.AuthInitializer
 import tech.dokus.features.auth.mvi.ForgotPasswordAction
 import tech.dokus.features.auth.mvi.ForgotPasswordContainer
@@ -33,7 +34,6 @@ import tech.dokus.features.auth.mvi.WorkspaceSelectAction
 import tech.dokus.features.auth.mvi.WorkspaceSelectContainer
 import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
 import tech.dokus.features.auth.mvi.WorkspaceSelectState
-import org.koin.dsl.module
 import tech.dokus.foundation.app.mvi.container
 
 val authPresentationModule = module {
@@ -61,7 +61,8 @@ val authPresentationModule = module {
     container<ProfileSettingsContainer, ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
         ProfileSettingsContainer(authRepository = get())
     }
-    container<ServerConnectionContainer, ServerConnectionState, ServerConnectionIntent, ServerConnectionAction> { (params: ServerConnectionContainer.Companion.Params) ->
+    container<ServerConnectionContainer, ServerConnectionState, ServerConnectionIntent, ServerConnectionAction> {
+            (params: ServerConnectionContainer.Companion.Params) ->
         ServerConnectionContainer(initialConfig = params.initialConfig, connectToServerUseCase = get())
     }
 }

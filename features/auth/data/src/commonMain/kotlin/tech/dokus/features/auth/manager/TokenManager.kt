@@ -1,17 +1,19 @@
+@file:Suppress("TooGenericExceptionCaught") // Token parsing can fail in various ways
+
 package tech.dokus.features.auth.manager
 
-import tech.dokus.features.auth.storage.TokenStorage
-import tech.dokus.features.auth.utils.JwtDecoder
-import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.auth.JwtClaims
-import tech.dokus.domain.model.auth.LoginResponse
-import tech.dokus.domain.model.auth.TokenStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.auth.JwtClaims
+import tech.dokus.domain.model.auth.LoginResponse
+import tech.dokus.domain.model.auth.TokenStatus
+import tech.dokus.features.auth.storage.TokenStorage
+import tech.dokus.features.auth.utils.JwtDecoder
 import tech.dokus.foundation.app.network.isNetworkException
 
 interface TokenManagerMutable : TokenManager {

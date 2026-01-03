@@ -1,7 +1,5 @@
 package tech.dokus.foundation.aura.components.fields
 
-import tech.dokus.domain.Password
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -13,11 +11,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Key
+import tech.dokus.domain.Password
+import tech.dokus.domain.exceptions.DokusException
 
 object PTextFieldPasswordDefaults {
     val icon = FeatherIcons.Key
     val onAction = {}
-    val singleLine = true
+    const val singleLine = true
     val keyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Password,
         capitalization = KeyboardCapitalization.None,

@@ -12,6 +12,15 @@ import tech.dokus.domain.ids.VatNumber
  * For other countries, performs basic format validation.
  */
 object ValidateVatNumberUseCase : Validator<VatNumber> {
+    /** Modulo divisor for Belgian VAT check digit algorithm */
+    private const val Mod97Divisor = 97
+
+    /** Start index of check digits in Belgian VAT number */
+    private const val CheckDigitsStart = 8
+
+    /** Country code prefix length */
+    private const val CountryCodeLength = 2
+
     override operator fun invoke(value: VatNumber): Boolean {
         if (value.value.isBlank()) return false
 
@@ -32,10 +41,10 @@ object ValidateVatNumberUseCase : Validator<VatNumber> {
         }
 
         // Validate check digits using modulo-97 algorithm
-        val digits = cleaned.substring(2)
-        val baseNumber = digits.substring(0, 8).toIntOrNull() ?: return false
-        val checkDigits = digits.substring(8).toIntOrNull() ?: return false
-        val expectedCheckDigits = 97 - (baseNumber % 97)
+        val digits = cleaned.substring(CountryCodeLength)
+        val baseNumber = digits.substring(0, CheckDigitsStart).toIntOrNull() ?: return false
+        val checkDigits = digits.substring(CheckDigitsStart).toIntOrNull() ?: return false
+        val expectedCheckDigits = Mod97Divisor - (baseNumber % Mod97Divisor)
 
         return checkDigits == expectedCheckDigits
     }

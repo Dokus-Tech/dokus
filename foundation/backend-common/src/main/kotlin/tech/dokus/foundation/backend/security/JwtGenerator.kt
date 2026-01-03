@@ -2,14 +2,14 @@
 
 package tech.dokus.foundation.backend.security
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.TenantScope
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.database.now
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import java.time.Instant
 import java.util.*
 import kotlin.time.Duration.Companion.days

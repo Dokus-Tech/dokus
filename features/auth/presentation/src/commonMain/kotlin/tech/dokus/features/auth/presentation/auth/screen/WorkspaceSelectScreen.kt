@@ -1,14 +1,7 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for UI constants (Kotlin convention)
+
 package tech.dokus.features.auth.presentation.auth.screen
 
-import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
-import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
-import tech.dokus.features.auth.mvi.WorkspaceSelectState
-import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
-import tech.dokus.foundation.aura.components.background.WarpJumpEffect
-import tech.dokus.foundation.aura.components.text.AppNameText
-import tech.dokus.foundation.aura.components.text.CopyRightText
-import tech.dokus.foundation.aura.constrains.limitWidth
-import tech.dokus.foundation.aura.constrains.withVerticalPadding
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -33,6 +26,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalLayoutDirection
 import kotlinx.coroutines.delay
+import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
+import tech.dokus.features.auth.mvi.WorkspaceSelectState
+import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
+import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
+import tech.dokus.foundation.aura.components.background.WarpJumpEffect
+import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.components.text.CopyRightText
+import tech.dokus.foundation.aura.constrains.limitWidth
+import tech.dokus.foundation.aura.constrains.withVerticalPadding
+
+private const val BackgroundFadeOutDurationMs = 800
+private const val ContentFadeOutDurationMs = 600
+private const val NavigationDelayMs = 100L
 
 @Composable
 internal fun WorkspaceSelectScreen(
@@ -57,7 +63,7 @@ internal fun WorkspaceSelectScreen(
 
     LaunchedEffect(shouldNavigate) {
         if (shouldNavigate) {
-            delay(100)
+            delay(NavigationDelayMs)
             onWarpComplete()
         }
     }
@@ -77,7 +83,7 @@ internal fun WorkspaceSelectScreen(
             AnimatedVisibility(
                 visible = contentVisible,
                 enter = fadeIn(),
-                exit = fadeOut(animationSpec = tween(800))
+                exit = fadeOut(animationSpec = tween(BackgroundFadeOutDurationMs))
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     EnhancedFloatingBubbles()
@@ -88,7 +94,7 @@ internal fun WorkspaceSelectScreen(
             AnimatedVisibility(
                 visible = contentVisible,
                 enter = fadeIn(),
-                exit = fadeOut(animationSpec = tween(600))
+                exit = fadeOut(animationSpec = tween(ContentFadeOutDurationMs))
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     WorkspaceSelectContent(

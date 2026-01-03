@@ -1,9 +1,9 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model.usecase
 
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import kotlinx.datetime.LocalDate
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginatedResponse
-import kotlinx.datetime.LocalDate
+import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 
 /**
  * Loads cashflow documents from the remote data source with pagination support.

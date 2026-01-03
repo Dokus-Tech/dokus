@@ -1,11 +1,5 @@
 package tech.dokus.features.cashflow.presentation.chat.screen
 
-import tech.dokus.features.cashflow.presentation.chat.ChatIntent
-import tech.dokus.features.cashflow.presentation.chat.ChatState
-import tech.dokus.features.cashflow.presentation.chat.components.ChatContent
-import tech.dokus.features.cashflow.presentation.chat.components.ChatTopBar
-import tech.dokus.features.cashflow.presentation.chat.components.ErrorContent
-import tech.dokus.features.cashflow.presentation.chat.components.LoadingContent
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -13,6 +7,12 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import tech.dokus.features.cashflow.presentation.chat.ChatIntent
+import tech.dokus.features.cashflow.presentation.chat.ChatState
+import tech.dokus.features.cashflow.presentation.chat.components.ChatContent
+import tech.dokus.features.cashflow.presentation.chat.components.ChatTopBar
+import tech.dokus.features.cashflow.presentation.chat.components.ErrorContent
+import tech.dokus.features.cashflow.presentation.chat.components.LoadingContent
 
 @Composable
 internal fun ChatScreen(

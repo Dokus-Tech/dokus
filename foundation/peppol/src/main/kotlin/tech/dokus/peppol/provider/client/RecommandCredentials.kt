@@ -1,7 +1,7 @@
 package tech.dokus.peppol.provider.client
 
-import tech.dokus.peppol.provider.PeppolCredentials
 import kotlinx.serialization.Serializable
+import tech.dokus.peppol.provider.PeppolCredentials
 
 /**
  * Recommand.eu specific credentials.

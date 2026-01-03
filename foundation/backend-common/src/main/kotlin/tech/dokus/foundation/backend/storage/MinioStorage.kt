@@ -1,7 +1,5 @@
 package tech.dokus.foundation.backend.storage
 
-import tech.dokus.foundation.backend.config.MinioConfig
-import tech.dokus.foundation.backend.utils.loggerFor
 import io.minio.BucketExistsArgs
 import io.minio.GetObjectArgs
 import io.minio.GetPresignedObjectUrlArgs
@@ -13,6 +11,8 @@ import io.minio.StatObjectArgs
 import io.minio.http.Method
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import tech.dokus.foundation.backend.config.MinioConfig
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.ByteArrayInputStream
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -157,6 +157,7 @@ class MinioStorage(
 
     companion object {
         private val logger = loggerFor<MinioStorage>()
+
         /**
          * Create a MinioStorage instance from configuration.
          *

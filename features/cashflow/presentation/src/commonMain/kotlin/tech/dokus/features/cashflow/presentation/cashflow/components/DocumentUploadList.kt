@@ -1,11 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
-import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.upload_no_documents
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
-import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
-import tech.dokus.domain.model.DocumentDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.upload_no_documents
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
+import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
+import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 
 /**
  * A list of document upload items.

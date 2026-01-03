@@ -1,16 +1,5 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_subtotal
-import tech.dokus.aura.resources.invoice_title
-import tech.dokus.aura.resources.invoice_total
-import tech.dokus.aura.resources.invoice_vat
-import tech.dokus.foundation.aura.components.PDashedDivider
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +21,17 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_subtotal
+import tech.dokus.aura.resources.invoice_title
+import tech.dokus.aura.resources.invoice_total
+import tech.dokus.aura.resources.invoice_vat
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.foundation.aura.components.PDashedDivider
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Invoice header with INVOICE title and status badge.

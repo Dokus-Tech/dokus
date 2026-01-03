@@ -1,13 +1,13 @@
 package tech.dokus.database.tables.contacts
 
-import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
-import tech.dokus.domain.enums.ClientType
-import tech.dokus.foundation.backend.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
+import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.domain.enums.ClientType
+import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
  * Contacts table - stores all contacts (customers AND vendors) for a tenant.

@@ -1,20 +1,5 @@
 package tech.dokus.database.repository.cashflow
 
-import tech.dokus.database.tables.cashflow.BillsTable
-import tech.dokus.domain.Money
-import tech.dokus.domain.VatRate
-import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.toDbDecimal
-import tech.dokus.domain.enums.BillStatus
-import tech.dokus.domain.enums.ExpenseCategory
-import tech.dokus.domain.ids.BillId
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CreateBillRequest
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.MarkBillPaidRequest
-import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -22,6 +7,21 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.*
+import tech.dokus.database.tables.cashflow.BillsTable
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.MarkBillPaidRequest
+import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.toDbDecimal
+import tech.dokus.foundation.backend.database.dbQuery
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -64,7 +64,7 @@ class BillRepository {
             // Fetch and return the created bill
             BillsTable.selectAll().where {
                 (BillsTable.id eq billId.value) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 FinancialDocumentDto.BillDto(
                     id = BillId.parse(row[BillsTable.id].value.toString()),
@@ -105,7 +105,7 @@ class BillRepository {
         dbQuery {
             BillsTable.selectAll().where {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
                 FinancialDocumentDto.BillDto(
                     id = BillId.parse(row[BillsTable.id].value.toString()),
@@ -193,7 +193,7 @@ class BillRepository {
                         paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                         paymentMethod = row[BillsTable.paymentMethod],
                         paymentReference = row[BillsTable.paymentReference],
-                            notes = row[BillsTable.notes],
+                        notes = row[BillsTable.notes],
                         createdAt = row[BillsTable.createdAt],
                         updatedAt = row[BillsTable.updatedAt]
                     )
@@ -219,8 +219,8 @@ class BillRepository {
 
             BillsTable.selectAll().where {
                 (BillsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (BillsTable.dueDate less today) and
-                (BillsTable.status inList listOf(BillStatus.Pending, BillStatus.Draft))
+                    (BillsTable.dueDate less today) and
+                    (BillsTable.status inList listOf(BillStatus.Pending, BillStatus.Draft))
             }.orderBy(BillsTable.dueDate to SortOrder.ASC)
                 .map { row ->
                     FinancialDocumentDto.BillDto(
@@ -243,7 +243,7 @@ class BillRepository {
                         paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                         paymentMethod = row[BillsTable.paymentMethod],
                         paymentReference = row[BillsTable.paymentReference],
-                            notes = row[BillsTable.notes],
+                        notes = row[BillsTable.notes],
                         createdAt = row[BillsTable.createdAt],
                         updatedAt = row[BillsTable.updatedAt]
                     )
@@ -263,7 +263,7 @@ class BillRepository {
         dbQuery {
             val updatedRows = BillsTable.update({
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[BillsTable.status] = status
             }
@@ -284,7 +284,7 @@ class BillRepository {
             // Verify bill exists and belongs to tenant
             val exists = BillsTable.selectAll().where {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
 
             if (!exists) {
@@ -294,7 +294,7 @@ class BillRepository {
             // Update bill
             BillsTable.update({
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[supplierName] = request.supplierName
                 it[supplierVatNumber] = request.supplierVatNumber
@@ -313,7 +313,7 @@ class BillRepository {
             // Fetch and return the updated bill
             BillsTable.selectAll().where {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 FinancialDocumentDto.BillDto(
                     id = BillId.parse(row[BillsTable.id].value.toString()),
@@ -356,7 +356,7 @@ class BillRepository {
             // Verify bill exists and belongs to tenant
             val exists = BillsTable.selectAll().where {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
 
             if (!exists) {
@@ -366,7 +366,7 @@ class BillRepository {
             // Update bill payment details
             BillsTable.update({
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[status] = BillStatus.Paid
                 it[paidAt] = request.paidAt.toDateTime()
@@ -378,7 +378,7 @@ class BillRepository {
             // Fetch and return the updated bill
             BillsTable.selectAll().where {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 FinancialDocumentDto.BillDto(
                     id = BillId.parse(row[BillsTable.id].value.toString()),
@@ -419,7 +419,7 @@ class BillRepository {
         dbQuery {
             val deletedRows = BillsTable.deleteWhere {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             deletedRows > 0
         }
@@ -436,7 +436,7 @@ class BillRepository {
         dbQuery {
             BillsTable.selectAll().where {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
-                (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
         }
     }
@@ -451,7 +451,7 @@ class BillRepository {
     ): FinancialDocumentDto.BillDto? = dbQuery {
         BillsTable.selectAll().where {
             (BillsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-            (BillsTable.documentId eq UUID.fromString(documentId.toString()))
+                (BillsTable.documentId eq UUID.fromString(documentId.toString()))
         }.singleOrNull()?.let { row ->
             FinancialDocumentDto.BillDto(
                 id = BillId.parse(row[BillsTable.id].value.toString()),
@@ -492,14 +492,16 @@ class BillRepository {
         dbQuery {
             val bills = BillsTable.selectAll().where {
                 (BillsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (BillsTable.issueDate greaterEq fromDate) and
-                (BillsTable.issueDate lessEq toDate)
+                    (BillsTable.issueDate greaterEq fromDate) and
+                    (BillsTable.issueDate lessEq toDate)
             }.toList()
 
             val total = bills.sumOf { BigDecimal(it[BillsTable.amount].toString()) }
             val paid = bills.filter { it[BillsTable.status] == BillStatus.Paid }
                 .sumOf { BigDecimal(it[BillsTable.paidAmount]?.toString() ?: it[BillsTable.amount].toString()) }
-            val pending = bills.filter { it[BillsTable.status] in listOf(BillStatus.Pending, BillStatus.Draft, BillStatus.Scheduled) }
+            val pending = bills.filter {
+                it[BillsTable.status] in listOf(BillStatus.Pending, BillStatus.Draft, BillStatus.Scheduled)
+            }
                 .sumOf { BigDecimal(it[BillsTable.amount].toString()) }
 
             BillStatistics(

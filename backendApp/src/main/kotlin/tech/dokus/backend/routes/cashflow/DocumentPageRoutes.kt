@@ -1,6 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
@@ -10,6 +9,7 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.pdf.PdfPreviewService
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.routes.Documents

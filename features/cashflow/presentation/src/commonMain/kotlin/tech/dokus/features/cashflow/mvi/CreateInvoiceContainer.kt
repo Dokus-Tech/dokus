@@ -1,16 +1,11 @@
+@file:Suppress(
+    "TooManyFunctions", // Container handles invoice creation workflow
+    "MagicNumber", // VAT and date calculation constants
+    "MaxLineLength" // Complex function signatures
+)
+
 package tech.dokus.features.cashflow.mvi
 
-import tech.dokus.features.auth.datasource.TenantRemoteDataSource
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SubmitInvoiceUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
-import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
-import tech.dokus.features.cashflow.mvi.model.DatePickerTarget
-import tech.dokus.features.cashflow.mvi.model.InvoiceCreationStep
-import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.foundation.platform.Logger
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -22,6 +17,17 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.auth.datasource.TenantRemoteDataSource
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
+import tech.dokus.features.cashflow.mvi.model.DatePickerTarget
+import tech.dokus.features.cashflow.mvi.model.InvoiceCreationStep
+import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SubmitInvoiceUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
+import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -75,10 +81,22 @@ internal class CreateInvoiceContainer(
                     is CreateInvoiceIntent.ToggleItemExpanded -> handleToggleItemExpanded(intent.itemId)
                     is CreateInvoiceIntent.AddLineItem -> handleAddLineItem()
                     is CreateInvoiceIntent.RemoveLineItem -> handleRemoveLineItem(intent.itemId)
-                    is CreateInvoiceIntent.UpdateItemDescription -> handleUpdateItemDescription(intent.itemId, intent.description)
-                    is CreateInvoiceIntent.UpdateItemQuantity -> handleUpdateItemQuantity(intent.itemId, intent.quantity)
-                    is CreateInvoiceIntent.UpdateItemUnitPrice -> handleUpdateItemUnitPrice(intent.itemId, intent.unitPrice)
-                    is CreateInvoiceIntent.UpdateItemVatRate -> handleUpdateItemVatRate(intent.itemId, intent.vatRatePercent)
+                    is CreateInvoiceIntent.UpdateItemDescription -> handleUpdateItemDescription(
+                        intent.itemId,
+                        intent.description
+                    )
+                    is CreateInvoiceIntent.UpdateItemQuantity -> handleUpdateItemQuantity(
+                        intent.itemId,
+                        intent.quantity
+                    )
+                    is CreateInvoiceIntent.UpdateItemUnitPrice -> handleUpdateItemUnitPrice(
+                        intent.itemId,
+                        intent.unitPrice
+                    )
+                    is CreateInvoiceIntent.UpdateItemVatRate -> handleUpdateItemVatRate(
+                        intent.itemId,
+                        intent.vatRatePercent
+                    )
 
                     // Notes
                     is CreateInvoiceIntent.UpdateNotes -> handleUpdateNotes(intent.notes)

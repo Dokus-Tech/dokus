@@ -1,11 +1,11 @@
 package tech.dokus.features.contacts.repository
 
-import tech.dokus.features.contacts.datasource.ContactLocalDataSource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import tech.dokus.features.contacts.datasource.ContactLocalDataSource
 import tech.dokus.foundation.app.state.CacheState
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

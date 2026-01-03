@@ -1,9 +1,11 @@
+@file:Suppress("TooGenericExceptionCaught") // JS interop can throw dynamic exceptions
+
 package tech.dokus.foundation.sstorage
 
-import tech.dokus.domain.model.common.Feature
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import tech.dokus.domain.model.common.Feature
 
 /**
  * WASM/JS implementation of SecureStorage using localStorage.
@@ -20,6 +22,13 @@ internal class WasmSecureStorage(
 
     private val storagePrefix = serviceName.replace(".", "_")
 
+    companion object {
+        private const val ROT13_SHIFT = 13
+        private const val ALPHABET_SIZE = 26
+        private const val DIGIT_SHIFT = 5
+        private const val DIGIT_COUNT = 10
+    }
+
     // Flow state holder for reactive updates
     private val stringFlows = mutableMapOf<String, MutableStateFlow<String?>>()
 
@@ -32,11 +41,11 @@ internal class WasmSecureStorage(
             when {
                 char.isLetter() -> {
                     val base = if (char.isLowerCase()) 'a' else 'A'
-                    ((char - base + 13) % 26 + base.code).toChar()
+                    ((char - base + ROT13_SHIFT) % ALPHABET_SIZE + base.code).toChar()
                 }
 
                 char.isDigit() -> {
-                    ((char - '0' + 5) % 10 + '0'.code).toChar()
+                    ((char - '0' + DIGIT_SHIFT) % DIGIT_COUNT + '0'.code).toChar()
                 }
 
                 else -> char
@@ -52,11 +61,11 @@ internal class WasmSecureStorage(
             when {
                 char.isLetter() -> {
                     val base = if (char.isLowerCase()) 'a' else 'A'
-                    ((char - base - 13 + 26) % 26 + base.code).toChar()
+                    ((char - base - ROT13_SHIFT + ALPHABET_SIZE) % ALPHABET_SIZE + base.code).toChar()
                 }
 
                 char.isDigit() -> {
-                    ((char - '0' - 5 + 10) % 10 + '0'.code).toChar()
+                    ((char - '0' - DIGIT_SHIFT + DIGIT_COUNT) % DIGIT_COUNT + '0'.code).toChar()
                 }
 
                 else -> char
@@ -73,7 +82,7 @@ internal class WasmSecureStorage(
         try {
             operation()
         } catch (e: Exception) {
-            console.log("Storage operation failed: ${e.message}")
+            Console.log("Storage operation failed: ${e.message}")
         }
     }
 
@@ -84,7 +93,7 @@ internal class WasmSecureStorage(
         return try {
             operation()
         } catch (e: Exception) {
-            console.log("Storage retrieval failed: ${e.message}")
+            Console.log("Storage retrieval failed: ${e.message}")
             null
         }
     }
@@ -135,14 +144,14 @@ internal class WasmSecureStorage(
                     }
                 }
             } catch (e: Exception) {
-                console.log("Error scanning localStorage keys: ${e.message}")
+                Console.log("Error scanning localStorage keys: ${e.message}")
             }
 
             keysToRemove.forEach { key ->
                 try {
                     localStorage.removeItem(key)
                 } catch (e: Exception) {
-                    console.log("Error removing key $key: ${e.message}")
+                    Console.log("Error removing key $key: ${e.message}")
                 }
             }
 
@@ -169,7 +178,7 @@ internal class WasmSecureStorage(
                     }
                 }
             } catch (e: Exception) {
-                console.log("Error getting all keys: ${e.message}")
+                Console.log("Error getting all keys: ${e.message}")
             }
 
             keys

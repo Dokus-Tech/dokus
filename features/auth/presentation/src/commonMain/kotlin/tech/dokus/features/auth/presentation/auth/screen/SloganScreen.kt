@@ -1,14 +1,7 @@
+@file:Suppress("TopLevelPropertyNaming") // Using PascalCase for animation/UI constants (Kotlin convention)
+
 package tech.dokus.features.auth.presentation.auth.screen
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.app_slogan
-import tech.dokus.aura.resources.brand_motto
-import tech.dokus.aura.resources.copyright
-import tech.dokus.aura.resources.slogan_line_2
-import tech.dokus.aura.resources.slogan_line_3
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -38,67 +31,98 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.app_slogan
+import tech.dokus.aura.resources.brand_motto
+import tech.dokus.aura.resources.copyright
+import tech.dokus.aura.resources.slogan_line_2
+import tech.dokus.aura.resources.slogan_line_3
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+
+// Animation timing constants
+private const val InitialOffsetY = 30f
+private const val InitialDelayMs = 500L
+private const val StaggerDelayMs = 400L
+private const val CreditsDelayMs = 700L
+private const val SloganFadeDurationMs = 600
+private const val CreditsFadeDurationMs = 1000
+
+// Text style constants
+private val HeadlineLetterSpacing = 1.sp
+private val SubtitleLetterSpacing = 0.5.sp
+private const val SubtitleTextAlpha = 0.85f
+private const val MottoTextAlpha = 0.6f
+private const val CopyrightTextAlpha = 0.4f
+
+// Layout constants
+private val SloganSpacing = 24.dp
+private val SloganHorizontalPadding = 40.dp
+private val SloganInternalSpacing = 8.dp
+private val CreditsContainerPadding = 32.dp
+private val CreditsSpacing = 4.dp
 
 @Composable
 internal fun SloganScreen() {
     // Animation states for text elements
     val sloganLine1Alpha = remember { Animatable(0f) }
-    val sloganLine1OffsetY = remember { Animatable(30f) }
+    val sloganLine1OffsetY = remember { Animatable(InitialOffsetY) }
     val sloganLine2Alpha = remember { Animatable(0f) }
-    val sloganLine2OffsetY = remember { Animatable(30f) }
+    val sloganLine2OffsetY = remember { Animatable(InitialOffsetY) }
     val sloganLine3Alpha = remember { Animatable(0f) }
-    val sloganLine3OffsetY = remember { Animatable(30f) }
+    val sloganLine3OffsetY = remember { Animatable(InitialOffsetY) }
     val creditsAlpha = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
         // Stage 1: Slogan lines (0.5-2.5s)
-        delay(500)
+        delay(InitialDelayMs)
         launch {
             sloganLine1Alpha.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(600, easing = FastOutSlowInEasing)
+                animationSpec = tween(SloganFadeDurationMs, easing = FastOutSlowInEasing)
             )
         }
         launch {
             sloganLine1OffsetY.animateTo(
                 targetValue = 0f,
-                animationSpec = tween(600, easing = FastOutSlowInEasing)
+                animationSpec = tween(SloganFadeDurationMs, easing = FastOutSlowInEasing)
             )
         }
 
-        delay(400)
+        delay(StaggerDelayMs)
         launch {
             sloganLine2Alpha.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(600, easing = FastOutSlowInEasing)
+                animationSpec = tween(SloganFadeDurationMs, easing = FastOutSlowInEasing)
             )
         }
         launch {
             sloganLine2OffsetY.animateTo(
                 targetValue = 0f,
-                animationSpec = tween(600, easing = FastOutSlowInEasing)
+                animationSpec = tween(SloganFadeDurationMs, easing = FastOutSlowInEasing)
             )
         }
 
-        delay(400)
+        delay(StaggerDelayMs)
         launch {
             sloganLine3Alpha.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(600, easing = FastOutSlowInEasing)
+                animationSpec = tween(SloganFadeDurationMs, easing = FastOutSlowInEasing)
             )
         }
         launch {
             sloganLine3OffsetY.animateTo(
                 targetValue = 0f,
-                animationSpec = tween(600, easing = FastOutSlowInEasing)
+                animationSpec = tween(SloganFadeDurationMs, easing = FastOutSlowInEasing)
             )
         }
 
         // Stage 2: Credits (2.7s)
-        delay(700)
+        delay(CreditsDelayMs)
         creditsAlpha.animateTo(
             targetValue = 1f,
-            animationSpec = tween(1000, easing = LinearEasing)
+            animationSpec = tween(CreditsFadeDurationMs, easing = LinearEasing)
         )
     }
 
@@ -114,14 +138,14 @@ internal fun SloganScreen() {
             // Marketing slogans with staggered entrance
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp),
-                modifier = Modifier.padding(horizontal = 40.dp)
+                verticalArrangement = Arrangement.spacedBy(SloganSpacing),
+                modifier = Modifier.padding(horizontal = SloganHorizontalPadding)
             ) {
                 Text(
                     text = stringResource(Res.string.app_slogan),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Medium,
-                        letterSpacing = 1.sp
+                        letterSpacing = HeadlineLetterSpacing
                     ),
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center,
@@ -130,15 +154,15 @@ internal fun SloganScreen() {
                         .offset(y = sloganLine1OffsetY.value.dp)
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(SloganInternalSpacing))
 
                 Text(
                     text = stringResource(Res.string.slogan_line_2),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Normal,
-                        letterSpacing = 0.5.sp
+                        letterSpacing = SubtitleLetterSpacing
                     ),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = SubtitleTextAlpha),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .alpha(sloganLine2Alpha.value)
@@ -149,9 +173,9 @@ internal fun SloganScreen() {
                     text = stringResource(Res.string.slogan_line_3),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Normal,
-                        letterSpacing = 0.5.sp
+                        letterSpacing = SubtitleLetterSpacing
                     ),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = SubtitleTextAlpha),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .alpha(sloganLine3Alpha.value)
@@ -164,26 +188,26 @@ internal fun SloganScreen() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(CreditsContainerPadding),
             contentAlignment = Alignment.BottomCenter
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(CreditsSpacing),
                 modifier = Modifier.alpha(creditsAlpha.value)
             ) {
                 Text(
                     text = stringResource(Res.string.brand_motto),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium,
-                        letterSpacing = 1.sp
+                        letterSpacing = HeadlineLetterSpacing
                     ),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = MottoTextAlpha)
                 )
                 Text(
                     text = stringResource(Res.string.copyright),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = CopyrightTextAlpha)
                 )
             }
         }

@@ -1,12 +1,12 @@
 package tech.dokus.features.contacts.mvi
 
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.features.contacts.presentation.contacts.model.MergeDialogStep
-import tech.dokus.features.contacts.presentation.contacts.model.MergeFieldConflict
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactMergeResult
+import tech.dokus.features.contacts.presentation.contacts.model.MergeDialogStep
+import tech.dokus.features.contacts.presentation.contacts.model.MergeFieldConflict
 
 internal data class ContactMergeState(
     val step: MergeDialogStep,

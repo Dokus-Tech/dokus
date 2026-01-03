@@ -1,5 +1,7 @@
 package tech.dokus.features.contacts
 
+import io.ktor.client.HttpClient
+import org.koin.dsl.module
 import tech.dokus.features.contacts.datasource.ContactLocalDataSource
 import tech.dokus.features.contacts.datasource.ContactLocalDataSourceImpl
 import tech.dokus.features.contacts.datasource.ContactsDb
@@ -38,8 +40,6 @@ import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCaseImpl
 import tech.dokus.features.contacts.usecases.UpdateContactUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactUseCaseImpl
-import io.ktor.client.HttpClient
-import org.koin.dsl.module
 
 val contactsNetworkModule = module {
     single<ContactRemoteDataSource> {

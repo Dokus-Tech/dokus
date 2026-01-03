@@ -1,5 +1,10 @@
 package tech.dokus.database.tables.cashflow
 
+import org.jetbrains.exposed.v1.core.ReferenceOption
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.datetime.CurrentDateTime
+import org.jetbrains.exposed.v1.datetime.date
+import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.enums.BillStatus
@@ -7,11 +12,6 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.foundation.backend.database.dbEnumeration
-import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
-import org.jetbrains.exposed.v1.datetime.CurrentDateTime
-import org.jetbrains.exposed.v1.datetime.date
-import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
  * Bills table - stores incoming supplier invoices (Cash-Out).

@@ -1,10 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components.create
 
-import tech.dokus.features.contacts.mvi.DuplicateVatUi
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_view
-import tech.dokus.aura.resources.contacts_duplicate_exists
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_view
+import tech.dokus.aura.resources.contacts_duplicate_exists
+import tech.dokus.features.contacts.mvi.DuplicateVatUi
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Banner shown when a contact with the same VAT number already exists.

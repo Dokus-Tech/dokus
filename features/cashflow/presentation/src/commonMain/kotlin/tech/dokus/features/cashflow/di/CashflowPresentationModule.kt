@@ -1,22 +1,6 @@
 package tech.dokus.features.cashflow.di
 
-import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
-import tech.dokus.features.cashflow.presentation.chat.ChatAction
-import tech.dokus.features.cashflow.presentation.chat.ChatContainer
-import tech.dokus.features.cashflow.presentation.chat.ChatIntent
-import tech.dokus.features.cashflow.presentation.chat.ChatState
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.FilterDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadBusinessHealthUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadCashflowDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadVatSummaryUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SearchCashflowDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SubmitInvoiceUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.WatchPendingDocumentsUseCase
+import org.koin.dsl.module
 import tech.dokus.features.cashflow.mvi.AddDocumentAction
 import tech.dokus.features.cashflow.mvi.AddDocumentContainer
 import tech.dokus.features.cashflow.mvi.AddDocumentIntent
@@ -41,7 +25,23 @@ import tech.dokus.features.cashflow.mvi.PeppolSettingsAction
 import tech.dokus.features.cashflow.mvi.PeppolSettingsContainer
 import tech.dokus.features.cashflow.mvi.PeppolSettingsIntent
 import tech.dokus.features.cashflow.mvi.PeppolSettingsState
-import org.koin.dsl.module
+import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.FilterDocumentsUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadBusinessHealthUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadCashflowDocumentsUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadVatSummaryUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SearchCashflowDocumentsUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SubmitInvoiceUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.WatchPendingDocumentsUseCase
+import tech.dokus.features.cashflow.presentation.chat.ChatAction
+import tech.dokus.features.cashflow.presentation.chat.ChatContainer
+import tech.dokus.features.cashflow.presentation.chat.ChatIntent
+import tech.dokus.features.cashflow.presentation.chat.ChatState
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.app.mvi.container
 
 val cashflowViewModelModule = module {
@@ -66,7 +66,8 @@ val cashflowViewModelModule = module {
     container<PeppolSendContainer, PeppolSendState, PeppolSendIntent, PeppolSendAction> {
         PeppolSendContainer(dataSource = get())
     }
-    container<PeppolConnectContainer, PeppolConnectState, PeppolConnectIntent, PeppolConnectAction> { (params: PeppolConnectContainer.Companion.Params) ->
+    container<PeppolConnectContainer, PeppolConnectState, PeppolConnectIntent, PeppolConnectAction> {
+            (params: PeppolConnectContainer.Companion.Params) ->
         PeppolConnectContainer(provider = params.provider, dataSource = get())
     }
     container<CashflowContainer, CashflowState, CashflowIntent, CashflowAction> {

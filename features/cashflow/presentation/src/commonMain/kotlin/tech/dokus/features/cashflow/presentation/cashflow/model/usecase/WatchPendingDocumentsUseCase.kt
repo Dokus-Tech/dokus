@@ -1,15 +1,17 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model.usecase
 
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.domain.enums.DraftStatus
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.DocumentRecordDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.foundation.app.state.DokusState
+
+private const val DEFAULT_DOCUMENT_LIMIT = 100
 
 /**
  * Use case for watching pending documents with automatic refresh capability.
@@ -33,7 +35,7 @@ class WatchPendingDocumentsUseCase(
      * @return Flow of [DokusState] containing pending documents
      */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    operator fun invoke(limit: Int = 100): Flow<DokusState<List<DocumentRecordDto>>> {
+    operator fun invoke(limit: Int = DEFAULT_DOCUMENT_LIMIT): Flow<DokusState<List<DocumentRecordDto>>> {
         require(limit > 0) { "Limit must be positive" }
 
         return refreshTrigger
@@ -44,7 +46,7 @@ class WatchPendingDocumentsUseCase(
                     dataSource.listDocuments(
                         draftStatus = DraftStatus.NeedsReview,
                         page = 0,
-                        limit = limit.coerceAtMost(100)
+                        limit = limit.coerceAtMost(DEFAULT_DOCUMENT_LIMIT)
                     ).fold(
                         onSuccess = { response ->
                             emit(DokusState.success(response.items))

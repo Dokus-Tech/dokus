@@ -37,7 +37,9 @@ class DocumentStorageService(
         val sanitizedFilename = sanitizeFilename(filename)
         val key = generateStorageKey(tenantId, prefix, sanitizedFilename)
 
-        logger.info("Uploading document: tenant=$tenantId, prefix=$prefix, filename=$sanitizedFilename, size=${data.size}")
+        logger.info(
+            "Uploading document: tenant=$tenantId, prefix=$prefix, filename=$sanitizedFilename, size=${data.size}"
+        )
 
         storage.put(key, data, contentType)
 

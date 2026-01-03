@@ -1,5 +1,16 @@
+@file:Suppress(
+    "MagicNumber", // JWT structure constants
+    "ReturnCount", // JWT decoding requires multiple validation returns
+    "TooGenericExceptionCaught" // JWT parsing can fail in various ways
+)
+
 package tech.dokus.features.auth.utils
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.longOrNull
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.UserRole
@@ -8,11 +19,6 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.TenantScope
 import tech.dokus.domain.model.auth.TokenStatus
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.longOrNull
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.Clock

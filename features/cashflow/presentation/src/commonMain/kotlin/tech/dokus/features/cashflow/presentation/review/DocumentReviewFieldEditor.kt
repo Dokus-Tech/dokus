@@ -1,3 +1,5 @@
+@file:Suppress("CyclomaticComplexMethod") // Field mapping requires exhaustive when branches
+
 package tech.dokus.features.cashflow.presentation.review
 
 import kotlinx.datetime.LocalDate
@@ -83,7 +85,9 @@ internal class DocumentReviewFieldEditor {
                 ExpenseField.CATEGORY -> currentExpense.copy(category = value as? ExpenseCategory)
                 ExpenseField.DESCRIPTION -> currentExpense.copy(description = value as? String ?: "")
                 ExpenseField.IS_DEDUCTIBLE -> currentExpense.copy(isDeductible = value as? Boolean ?: true)
-                ExpenseField.DEDUCTIBLE_PERCENTAGE -> currentExpense.copy(deductiblePercentage = value as? String ?: "100")
+                ExpenseField.DEDUCTIBLE_PERCENTAGE -> currentExpense.copy(
+                    deductiblePercentage = value as? String ?: "100"
+                )
                 ExpenseField.PAYMENT_METHOD -> currentExpense.copy(paymentMethod = value as? PaymentMethod)
                 ExpenseField.NOTES -> currentExpense.copy(notes = value as? String ?: "")
                 ExpenseField.RECEIPT_NUMBER -> currentExpense.copy(receiptNumber = value as? String ?: "")

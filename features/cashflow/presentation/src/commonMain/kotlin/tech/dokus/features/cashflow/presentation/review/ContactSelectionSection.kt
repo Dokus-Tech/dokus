@@ -1,28 +1,7 @@
+@file:Suppress("UnusedParameter") // reserved params
+
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_change
-import tech.dokus.aura.resources.cashflow_ai_suggested
-import tech.dokus.aura.resources.cashflow_bound_to
-import tech.dokus.aura.resources.cashflow_choose_different
-import tech.dokus.aura.resources.cashflow_client_label
-import tech.dokus.aura.resources.cashflow_contact_label
-import tech.dokus.aura.resources.cashflow_contact_selected
-import tech.dokus.aura.resources.cashflow_no_contact_selected
-import tech.dokus.aura.resources.cashflow_saving_contact
-import tech.dokus.aura.resources.cashflow_select_contact
-import tech.dokus.aura.resources.cashflow_suggested_contact
-import tech.dokus.aura.resources.cashflow_supplier_label
-import tech.dokus.aura.resources.cashflow_use_this_contact
-import tech.dokus.aura.resources.common_percent_value
-import tech.dokus.aura.resources.common_unknown
-import tech.dokus.aura.resources.common_vat_value
-import tech.dokus.aura.resources.contacts_create_contact
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -60,8 +39,53 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Link
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_change
+import tech.dokus.aura.resources.cashflow_ai_suggested
+import tech.dokus.aura.resources.cashflow_bound_to
+import tech.dokus.aura.resources.cashflow_choose_different
+import tech.dokus.aura.resources.cashflow_client_label
+import tech.dokus.aura.resources.cashflow_contact_label
+import tech.dokus.aura.resources.cashflow_contact_selected
+import tech.dokus.aura.resources.cashflow_no_contact_selected
+import tech.dokus.aura.resources.cashflow_saving_contact
+import tech.dokus.aura.resources.cashflow_select_contact
+import tech.dokus.aura.resources.cashflow_suggested_contact
+import tech.dokus.aura.resources.cashflow_supplier_label
+import tech.dokus.aura.resources.cashflow_use_this_contact
+import tech.dokus.aura.resources.common_percent_value
+import tech.dokus.aura.resources.common_unknown
+import tech.dokus.aura.resources.common_vat_value
+import tech.dokus.aura.resources.contacts_create_contact
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.extensions.localized
+
+// UI dimension constants
+private val ErrorSurfaceCornerRadius = 8.dp
+private val ProgressIndicatorSize = 20.dp
+private val ProgressIndicatorStrokeWidth = 2.dp
+private val PersonIconSize = 32.dp
+private val ButtonIconSize = 18.dp
+private val ReasonTextTopPadding = 2.dp
+private val BadgeCornerRadius = 4.dp
+private val BadgeHorizontalPadding = 6.dp
+private val BadgeVerticalPadding = 2.dp
+private val EditIconSize = 16.dp
+private val SpacerWidth = 4.dp
+private val LinkIconSize = 20.dp
+
+// Confidence and alpha constants
+private const val IconAlpha = 0.6f
+private const val ReasonTextAlpha = 0.8f
+private const val PercentageMultiplier = 100
+private const val HighConfidenceThreshold = 0.9f
+private const val MediumConfidenceThreshold = 0.7f
+private const val SurfaceColorAlpha = 0.15f
 
 /**
  * Contact selection section for the Document Review screen.
@@ -121,7 +145,7 @@ fun ContactSelectionSection(
         if (validationError != null) {
             Surface(
                 color = MaterialTheme.colorScheme.errorContainer,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(ErrorSurfaceCornerRadius),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = Constrains.Spacing.small),
@@ -199,8 +223,8 @@ private fun LoadingState(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                strokeWidth = 2.dp,
+                modifier = Modifier.size(ProgressIndicatorSize),
+                strokeWidth = ProgressIndicatorStrokeWidth,
             )
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))
             Text(
@@ -232,8 +256,8 @@ private fun NoContactState(
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.size(PersonIconSize),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = IconAlpha),
             )
             Spacer(modifier = Modifier.height(Constrains.Spacing.small))
             Text(
@@ -254,7 +278,7 @@ private fun NoContactState(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(ButtonIconSize),
                     )
                     Spacer(modifier = Modifier.width(Constrains.Spacing.xSmall))
                     Text(stringResource(Res.string.cashflow_select_contact))
@@ -267,7 +291,7 @@ private fun NoContactState(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(ButtonIconSize),
                     )
                     Spacer(modifier = Modifier.width(Constrains.Spacing.xSmall))
                     Text(stringResource(Res.string.contacts_create_contact))
@@ -339,8 +363,8 @@ private fun SuggestedContactCard(
                 Text(
                     text = reasonText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(top = 2.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = ReasonTextAlpha),
+                    modifier = Modifier.padding(top = ReasonTextTopPadding),
                 )
             }
 
@@ -358,7 +382,7 @@ private fun SuggestedContactCard(
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(ButtonIconSize),
                     )
                     Spacer(modifier = Modifier.width(Constrains.Spacing.xSmall))
                     Text(stringResource(Res.string.cashflow_use_this_contact))
@@ -380,16 +404,16 @@ private fun ConfidenceBadge(
     confidence: Float,
     modifier: Modifier = Modifier,
 ) {
-    val percentage = (confidence * 100).toInt()
+    val percentage = (confidence * PercentageMultiplier).toInt()
     val color = when {
-        confidence >= 0.9f -> MaterialTheme.colorScheme.tertiary
-        confidence >= 0.7f -> MaterialTheme.colorScheme.primary
+        confidence >= HighConfidenceThreshold -> MaterialTheme.colorScheme.tertiary
+        confidence >= MediumConfidenceThreshold -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.secondary
     }
 
     Surface(
-        color = color.copy(alpha = 0.15f),
-        shape = RoundedCornerShape(4.dp),
+        color = color.copy(alpha = SurfaceColorAlpha),
+        shape = RoundedCornerShape(BadgeCornerRadius),
         modifier = modifier,
     ) {
         Text(
@@ -397,7 +421,7 @@ private fun ConfidenceBadge(
             style = MaterialTheme.typography.labelSmall,
             color = color,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            modifier = Modifier.padding(horizontal = BadgeHorizontalPadding, vertical = BadgeVerticalPadding),
         )
     }
 }
@@ -456,9 +480,9 @@ private fun SelectedContactCard(
                 PIcon(
                     icon = FeatherIcons.Edit2,
                     description = stringResource(Res.string.action_change),
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(EditIconSize),
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(SpacerWidth))
                 Text(stringResource(Res.string.action_change))
             }
         }
@@ -484,7 +508,7 @@ private fun BoundContactCard(
             Icon(
                 imageVector = FeatherIcons.Link,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(LinkIconSize),
                 tint = MaterialTheme.colorScheme.tertiary,
             )
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))

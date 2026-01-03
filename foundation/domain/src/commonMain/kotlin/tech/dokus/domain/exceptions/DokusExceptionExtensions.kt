@@ -15,14 +15,23 @@ val Throwable?.asDokusException: DokusException
             else -> {
                 if (message == null) return DokusException.Unknown(this)
 
-                if (message.contains("failed to connect to")) DokusException.ConnectionError(message)
-                else if (message.contains("connection refused")) DokusException.ConnectionError(message)
-                else if (message.contains("connection reset")) DokusException.ConnectionError(message)
-                else if (message.contains("could not connect to the server")) DokusException.ConnectionError(message)
-                else if (message.contains("websocket connection")) DokusException.ConnectionError(message)
-                else if (message.contains("network is unreachable")) DokusException.ConnectionError(message)
-                else if (message.contains("io.ktor.serialization.jsonconvertexception")) DokusException.InternalError("Serialization error")
-                else DokusException.Unknown(this)
+                if (message.contains("failed to connect to")) {
+                    DokusException.ConnectionError(message)
+                } else if (message.contains("connection refused")) {
+                    DokusException.ConnectionError(message)
+                } else if (message.contains("connection reset")) {
+                    DokusException.ConnectionError(message)
+                } else if (message.contains("could not connect to the server")) {
+                    DokusException.ConnectionError(message)
+                } else if (message.contains("websocket connection")) {
+                    DokusException.ConnectionError(message)
+                } else if (message.contains("network is unreachable")) {
+                    DokusException.ConnectionError(message)
+                } else if (message.contains("io.ktor.serialization.jsonconvertexception")) {
+                    DokusException.InternalError("Serialization error")
+                } else {
+                    DokusException.Unknown(this)
+                }
             }
         }
     }

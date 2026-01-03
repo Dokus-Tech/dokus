@@ -1,9 +1,9 @@
 package tech.dokus.foundation.sstorage
 
-import tech.dokus.domain.model.common.Feature
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import tech.dokus.domain.model.common.Feature
 
 /**
  * iOS implementation of SecureStorage using the iOS Keychain Services.
@@ -64,7 +64,6 @@ internal class IOSSecureStorage(
     private fun updateStringFlow(key: String, value: String?) {
         stringFlows[key]?.value = value
     }
-
 }
 
 /**

@@ -1,15 +1,5 @@
 package tech.dokus.features.auth.datasource
 
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.AvatarUploadResponse
-import tech.dokus.domain.model.CreateTenantRequest
-import tech.dokus.domain.model.InvoiceNumberPreviewResponse
-import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.model.TenantSettings
-import tech.dokus.domain.model.UpsertTenantAddressRequest
-import tech.dokus.domain.model.common.Thumbnail
-import tech.dokus.domain.routes.Tenants
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
@@ -26,6 +16,16 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.AvatarUploadResponse
+import tech.dokus.domain.model.CreateTenantRequest
+import tech.dokus.domain.model.InvoiceNumberPreviewResponse
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.common.Thumbnail
+import tech.dokus.domain.routes.Tenants
 import kotlin.uuid.ExperimentalUuidApi
 
 /**

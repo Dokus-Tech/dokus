@@ -2,19 +2,6 @@
 
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_close
-import tech.dokus.aura.resources.contacts_selected
-import tech.dokus.aura.resources.error_failed_to_load_clients
-import tech.dokus.aura.resources.invoice_no_clients_found
-import tech.dokus.aura.resources.invoice_no_clients_match
-import tech.dokus.aura.resources.invoice_search_clients
-import tech.dokus.aura.resources.invoice_select_client
-import tech.dokus.aura.resources.peppol_id_missing
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -61,6 +48,36 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.contacts_selected
+import tech.dokus.aura.resources.error_failed_to_load_clients
+import tech.dokus.aura.resources.invoice_no_clients_found
+import tech.dokus.aura.resources.invoice_no_clients_match
+import tech.dokus.aura.resources.invoice_search_clients
+import tech.dokus.aura.resources.invoice_select_client
+import tech.dokus.aura.resources.peppol_id_missing
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+
+private const val AnimationDurationMs = 200
+private const val SlideAnimationDurationMs = 300
+private const val ScrimAlpha = 0.32f
+private const val SelectedAlpha = 0.5f
+private const val SidebarWidthDivisor = 3
+private val SidebarMinWidth = 320.dp
+private val SidebarMaxWidth = 400.dp
+private val ContentPadding = 16.dp
+private val ItemSpacing = 4.dp
+private val ErrorIconSpacing = 8.dp
+private val ListItemPadding = 12.dp
+private val ListItemSpacing = 12.dp
+private val ClientIconSize = 24.dp
+private val PeppolWarningIconSize = 14.dp
+private val SelectedIndicatorSize = 20.dp
+private val ClientNameSpacing = 8.dp
 
 /**
  * Side panel for selecting a client in the invoice creation flow.
@@ -81,13 +98,13 @@ fun InvoiceClientSidePanel(
         // Backdrop
         AnimatedVisibility(
             visible = isVisible,
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(200))
+            enter = fadeIn(tween(AnimationDurationMs)),
+            exit = fadeOut(tween(AnimationDurationMs))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f))
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = ScrimAlpha))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -101,16 +118,16 @@ fun InvoiceClientSidePanel(
             visible = isVisible,
             enter = slideInHorizontally(
                 initialOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeIn(tween(300)),
+                animationSpec = tween(SlideAnimationDurationMs)
+            ) + fadeIn(tween(SlideAnimationDurationMs)),
             exit = slideOutHorizontally(
                 targetOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeOut(tween(300)),
+                animationSpec = tween(SlideAnimationDurationMs)
+            ) + fadeOut(tween(SlideAnimationDurationMs)),
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
             BoxWithConstraints {
-                val sidebarWidth = (maxWidth / 3).coerceIn(320.dp, 400.dp)
+                val sidebarWidth = (maxWidth / SidebarWidthDivisor).coerceIn(SidebarMinWidth, SidebarMaxWidth)
 
                 DokusCardSurface(
                     modifier = Modifier
@@ -129,12 +146,12 @@ fun InvoiceClientSidePanel(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp)
+                            .padding(ContentPadding)
                     ) {
                         // Header
                         ClientSidePanelHeader(onClose = onDismiss)
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(ContentPadding))
 
                         // Search field
                         PTextFieldStandard(
@@ -144,7 +161,7 @@ fun InvoiceClientSidePanel(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(ContentPadding))
 
                         // Client list
                         when (clientsState) {
@@ -168,7 +185,7 @@ fun InvoiceClientSidePanel(
                                 ) {
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        verticalArrangement = Arrangement.spacedBy(ErrorIconSpacing)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Warning,
@@ -186,9 +203,12 @@ fun InvoiceClientSidePanel(
 
                             is DokusState.Success -> {
                                 val filteredClients = clientsState.data.filter { client ->
-                                    if (searchQuery.isBlank()) true
-                                    else client.name.value.contains(searchQuery, ignoreCase = true) ||
+                                    if (searchQuery.isBlank()) {
+                                        true
+                                    } else {
+                                        client.name.value.contains(searchQuery, ignoreCase = true) ||
                                             client.email?.value?.contains(searchQuery, ignoreCase = true) == true
+                                    }
                                 }
 
                                 if (filteredClients.isEmpty()) {
@@ -213,7 +233,7 @@ fun InvoiceClientSidePanel(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        verticalArrangement = Arrangement.spacedBy(ItemSpacing)
                                     ) {
                                         items(
                                             items = filteredClients,
@@ -288,7 +308,7 @@ private fun ClientListItem(
     val isHovered by interactionSource.collectIsHoveredAsState()
 
     val isBelgian = client.country?.equals("BE", ignoreCase = true) == true ||
-            client.country?.equals("Belgium", ignoreCase = true) == true
+        client.country?.equals("Belgium", ignoreCase = true) == true
     val hasPeppolId = client.peppolId != null
     val showPeppolWarning = isBelgian && !hasPeppolId
 
@@ -298,8 +318,8 @@ private fun ClientListItem(
             .clip(MaterialTheme.shapes.small)
             .background(
                 when {
-                    isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                    isHovered -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = SelectedAlpha)
+                    isHovered -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = SelectedAlpha)
                     else -> MaterialTheme.colorScheme.surface
                 }
             )
@@ -309,8 +329,8 @@ private fun ClientListItem(
                 onClick = onClick
             )
             .pointerHoverIcon(PointerIcon.Hand)
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(ListItemPadding),
+        horizontalArrangement = Arrangement.spacedBy(ListItemSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Client icon
@@ -322,13 +342,13 @@ private fun ClientListItem(
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(ClientIconSize)
         )
 
         // Client info
         Column(modifier = Modifier.weight(1f)) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(ClientNameSpacing),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -343,7 +363,7 @@ private fun ClientListItem(
                         imageVector = Icons.Default.Warning,
                         contentDescription = stringResource(Res.string.peppol_id_missing),
                         tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(PeppolWarningIconSize)
                     )
                 }
             }
@@ -371,7 +391,7 @@ private fun ClientListItem(
                 imageVector = Icons.Default.Check,
                 contentDescription = stringResource(Res.string.contacts_selected),
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(SelectedIndicatorSize)
             )
         }
     }

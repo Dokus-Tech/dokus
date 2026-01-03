@@ -1,9 +1,5 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.AvatarUploadResponse
-import tech.dokus.domain.routes.Tenants
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -15,6 +11,10 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.AvatarUploadResponse
+import tech.dokus.domain.routes.Tenants
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.AvatarStorageService

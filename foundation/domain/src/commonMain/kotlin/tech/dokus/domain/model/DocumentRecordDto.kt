@@ -1,5 +1,7 @@
 package tech.dokus.domain.model
 
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
@@ -8,8 +10,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.Serializable
 
 /**
  * Document ingestion run DTO - represents a single AI extraction attempt.

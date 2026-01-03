@@ -1,6 +1,5 @@
 package tech.dokus.foundation.aura.components
 
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * A settings list item with icon, text, and optional selection state.

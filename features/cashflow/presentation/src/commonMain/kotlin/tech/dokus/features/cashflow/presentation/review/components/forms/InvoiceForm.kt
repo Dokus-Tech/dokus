@@ -1,8 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review.components.forms
 
-import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
-import tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields
-import tech.dokus.features.cashflow.presentation.review.InvoiceField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +27,9 @@ import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total_amount
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
+import tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields
+import tech.dokus.features.cashflow.presentation.review.InvoiceField
 import tech.dokus.foundation.aura.components.fields.PDateField
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains

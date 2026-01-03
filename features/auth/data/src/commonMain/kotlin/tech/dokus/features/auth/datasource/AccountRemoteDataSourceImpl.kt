@@ -1,10 +1,5 @@
 package tech.dokus.features.auth.datasource
 
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.auth.DeactivateUserRequest
-import tech.dokus.domain.model.auth.LoginResponse
-import tech.dokus.domain.model.auth.LogoutRequest
-import tech.dokus.domain.model.auth.UpdateProfileRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.resources.get
@@ -14,7 +9,12 @@ import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.DeactivateUserRequest
+import tech.dokus.domain.model.auth.LoginResponse
+import tech.dokus.domain.model.auth.LogoutRequest
+import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.routes.Account
 
 /**
