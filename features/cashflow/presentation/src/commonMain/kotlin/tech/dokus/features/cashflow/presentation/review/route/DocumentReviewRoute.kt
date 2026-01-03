@@ -137,14 +137,7 @@ internal fun DocumentReviewRoute(
         onIntent = { container.store.intent(it) },
         onBackClick = { navController.popBackStack() },
         onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
-        onLinkExistingContact = {
-            navController.navigateTo(
-                ContactsDestination.CreateContact(
-                    origin = ContactCreateOrigin.DocumentReview.name
-                )
-            )
-        },
-        onCreateNewContact = { counterparty ->
+        onCorrectContact = { counterparty ->
             container.store.intent(
                 DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending)
             )

@@ -183,9 +183,8 @@
     <string name="cashflow_confidence_badge">AI: %1$d%%</string>
     <string name="cashflow_counterparty_details_title">Counterparty &amp; Details</string>
     <string name="cashflow_counterparty_ai_extracted">Counterparty (AI extracted)</string>
-    <string name="cashflow_action_link_contact">Link existing contact</string>
-    <string name="cashflow_action_save_new_contact">Save as new contact</string>
-    <string name="cashflow_action_ignore_for_now">Ignore for now</string>
+    <string name="cashflow_action_correct_contact">Correct contact</string>
+    <string name="cashflow_action_ignore">Ignore</string>
     <string name="cashflow_confidence_label">AI</string>
     <string name="cashflow_confidence_high">High</string>
     <string name="cashflow_confidence_medium">Medium</string>

@@ -14,9 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_change
-import tech.dokus.aura.resources.cashflow_action_ignore_for_now
-import tech.dokus.aura.resources.cashflow_action_link_contact
-import tech.dokus.aura.resources.cashflow_action_save_new_contact
+import tech.dokus.aura.resources.cashflow_action_correct_contact
+import tech.dokus.aura.resources.cashflow_action_ignore
 import tech.dokus.aura.resources.cashflow_bill_details_section
 import tech.dokus.aura.resources.cashflow_bound_to
 import tech.dokus.aura.resources.cashflow_client_name
@@ -70,8 +69,7 @@ private const val ConfidenceBadgeBackgroundAlpha = 0.15f
 internal fun CounterpartyCard(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
-    onLinkExistingContact: () -> Unit,
-    onCreateNewContact: () -> Unit,
+    onCorrectContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(state)
@@ -79,10 +77,10 @@ internal fun CounterpartyCard(
         .any { !it.isNullOrBlank() }
     val actionsEnabled = !state.isBindingContact && !state.isDocumentConfirmed && !state.isDocumentRejected
     val hasLinkedContact = state.selectedContactSnapshot != null
-    val linkLabel = if (hasLinkedContact) {
+    val correctContactLabel = if (hasLinkedContact) {
         Res.string.action_change
     } else {
-        Res.string.cashflow_action_link_contact
+        Res.string.cashflow_action_correct_contact
     }
 
     val nameLabel = when (state.editableData.documentType) {
@@ -188,28 +186,18 @@ internal fun CounterpartyCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
             ) {
-                POutlinedButton(
-                    text = stringResource(linkLabel),
-                    modifier = Modifier.weight(1f),
-                    enabled = actionsEnabled,
-                    onClick = onLinkExistingContact,
-                )
                 PPrimaryButton(
-                    text = stringResource(Res.string.cashflow_action_save_new_contact),
+                    text = stringResource(correctContactLabel),
                     modifier = Modifier.weight(1f),
                     enabled = actionsEnabled,
-                    onClick = onCreateNewContact,
+                    onClick = onCorrectContact,
                 )
-            }
-
-            androidx.compose.material3.TextButton(
-                onClick = {
-                    onIntent(DocumentReviewIntent.ClearSelectedContact)
-                },
-                enabled = actionsEnabled,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            ) {
-                Text(stringResource(Res.string.cashflow_action_ignore_for_now))
+                POutlinedButton(
+                    text = stringResource(Res.string.cashflow_action_ignore),
+                    modifier = Modifier.weight(1f),
+                    enabled = actionsEnabled,
+                    onClick = { onIntent(DocumentReviewIntent.ClearSelectedContact) },
+                )
             }
         }
     }
