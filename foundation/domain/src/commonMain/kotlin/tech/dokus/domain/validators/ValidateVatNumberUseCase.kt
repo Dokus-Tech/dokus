@@ -50,7 +50,7 @@ object ValidateVatNumberUseCase : Validator<VatNumber> {
     }
 
     private fun validateGenericVat(cleaned: String): Boolean {
-        // Generic validation: 2 letter country code followed by alphanumeric
+        // Generic validation: 2-letter country code followed by alphanumeric
         return cleaned.matches(Regex("^[A-Z]{2}[A-Z0-9]+$"))
     }
 }

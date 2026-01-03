@@ -7,8 +7,10 @@ import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
+import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.fromDbDecimal
 // ContactType removed - roles are now derived from cashflow items
@@ -64,17 +66,17 @@ class ContactRepository {
         dbQuery {
             val contactId = ContactsTable.insertAndGetId {
                 it[ContactsTable.tenantId] = UUID.fromString(tenantId.toString())
-                it[name] = request.name
-                it[email] = request.email
-                it[phone] = request.phone
-                it[vatNumber] = request.vatNumber
+                it[name] = request.name.value
+                it[email] = request.email?.value
+                it[phone] = request.phone?.value
+                it[vatNumber] = request.vatNumber?.value
                 // contactType removed - roles are derived from cashflow items
                 it[businessType] = request.businessType
-                it[addressLine1] = request.addressLine1
-                it[addressLine2] = request.addressLine2
-                it[city] = request.city
-                it[postalCode] = request.postalCode
-                it[country] = request.country
+                it[addressLine1] = request.address?.streetLine1
+                it[addressLine2] = request.address?.streetLine2
+                it[city] = request.address?.city?.value
+                it[postalCode] = request.address?.postalCode
+                it[country] = request.address?.country
                 it[contactPerson] = request.contactPerson
                 it[companyNumber] = request.companyNumber
                 it[defaultPaymentTerms] = request.defaultPaymentTerms
@@ -220,17 +222,19 @@ class ContactRepository {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
-                request.name?.let { value -> it[name] = value }
-                request.email?.let { value -> it[email] = value }
-                request.phone?.let { value -> it[phone] = value }
-                request.vatNumber?.let { value -> it[vatNumber] = value }
+                request.name?.let { value -> it[name] = value.value }
+                request.email?.let { value -> it[email] = value.value }
+                request.phone?.let { value -> it[phone] = value.value }
+                request.vatNumber?.let { value -> it[vatNumber] = value.value }
                 // contactType removed - roles are derived from cashflow items
                 request.businessType?.let { value -> it[businessType] = value }
-                request.addressLine1?.let { value -> it[addressLine1] = value }
-                request.addressLine2?.let { value -> it[addressLine2] = value }
-                request.city?.let { value -> it[city] = value }
-                request.postalCode?.let { value -> it[postalCode] = value }
-                request.country?.let { value -> it[country] = value }
+                request.address?.let { addr ->
+                    it[addressLine1] = addr.streetLine1
+                    it[addressLine2] = addr.streetLine2
+                    it[city] = addr.city.value
+                    it[postalCode] = addr.postalCode
+                    it[country] = addr.country
+                }
                 request.contactPerson?.let { value -> it[contactPerson] = value }
                 request.companyNumber?.let { value -> it[companyNumber] = value }
                 request.defaultPaymentTerms?.let { value -> it[defaultPaymentTerms] = value }
@@ -757,11 +761,11 @@ class ContactRepository {
             businessType = row[ContactsTable.businessType],
             addressLine1 = row[ContactsTable.addressLine1],
             addressLine2 = row[ContactsTable.addressLine2],
-            city = row[ContactsTable.city],
+            city = row[ContactsTable.city]?.let { City(it) },
             postalCode = row[ContactsTable.postalCode],
             country = row[ContactsTable.country],
             contactPerson = row[ContactsTable.contactPerson],
-            phone = row[ContactsTable.phone],
+            phone = row[ContactsTable.phone]?.let { PhoneNumber(it) },
             companyNumber = row[ContactsTable.companyNumber],
             defaultPaymentTerms = row[ContactsTable.defaultPaymentTerms],
             defaultVatRate = row[ContactsTable.defaultVatRate]?.let { VatRate.fromDbDecimal(it) },

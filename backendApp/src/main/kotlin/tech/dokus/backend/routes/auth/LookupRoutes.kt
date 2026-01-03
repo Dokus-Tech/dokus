@@ -26,24 +26,24 @@ internal fun Route.lookupRoutes() {
          * Search for companies by name in CBE (Crossroads Bank for Enterprises).
          */
         get<Lookup.Company> { route ->
-            val name = route.name.trim()
+            val (name, number) = route.name to route.number
 
-            if (name.length < 3) {
-                throw DokusException.BadRequest("Company name must be at least 3 characters")
-            }
-
-            val results = cbeApiClient.searchByName(name).getOrElse { e ->
-                logger.error("CBE API lookup failed for '$name'", e)
+            val results = when {
+                name != null && name.isValid -> cbeApiClient.searchByName(name)
+                number != null && number.isValid -> cbeApiClient.searchByVat(number)
+                else -> throw DokusException.BadRequest("Invalid or missing name or number")
+            }.getOrElse {
+                logger.error("CBE API lookup failed for '$name'", it)
                 throw DokusException.InternalError("Company lookup failed. Please try again.")
             }
 
             val response = EntityLookupResponse(
                 results = results,
-                query = name,
+                query = "${name}${number}",
                 totalCount = results.size
             )
 
-            call.respond(HttpStatusCode.OK, response)
+            call.respond<EntityLookupResponse>(HttpStatusCode.OK, response)
         }
     }
 }

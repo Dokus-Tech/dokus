@@ -110,9 +110,9 @@ fun ConfirmStepContent(
                     Res.string.field_optional,
                     stringResource(Res.string.contacts_billing_email)
                 ),
-                value = Email(state.billingEmail),
+                value = state.billingEmail,
                 error = state.emailError,
-                onValueChange = { onIntent(CreateContactIntent.BillingEmailChanged(it.value)) },
+                onValueChange = { onIntent(CreateContactIntent.BillingEmailChanged(it)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -121,8 +121,8 @@ fun ConfirmStepContent(
                     Res.string.field_optional,
                     stringResource(Res.string.contacts_phone)
                 ),
-                value = PhoneNumber(state.phone),
-                onValueChange = { onIntent(CreateContactIntent.PhoneChanged(it.value)) },
+                value = state.phone,
+                onValueChange = { onIntent(CreateContactIntent.PhoneChanged(it)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -186,7 +186,7 @@ private fun CompanyInfoCard(
         ) {
             // Company name
             Text(
-                text = entity.name,
+                text = entity.name.value,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )

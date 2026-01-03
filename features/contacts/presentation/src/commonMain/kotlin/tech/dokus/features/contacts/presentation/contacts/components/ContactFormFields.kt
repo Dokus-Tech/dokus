@@ -107,7 +107,7 @@ internal fun ContactFormFields(
             // Name (Required)
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.contacts_name),
-                value = formData.name,
+                value = formData.name.value,
                 onValueChange = onNameChange,
                 error = formData.errors["name"],
                 modifier = Modifier.fillMaxWidth()
@@ -118,7 +118,7 @@ internal fun ContactFormFields(
             // Email
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.contacts_email),
-                value = formData.email,
+                value = formData.email.value,
                 onValueChange = onEmailChange,
                 error = formData.errors["email"],
                 keyboardOptions = KeyboardOptions(
@@ -134,7 +134,7 @@ internal fun ContactFormFields(
             // Phone
             PTextFieldPhone(
                 fieldName = stringResource(Res.string.contacts_phone),
-                value = PhoneNumber(formData.phone),
+                value = formData.phone,
                 onValueChange = { onPhoneChange(it.value) },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -163,7 +163,7 @@ internal fun ContactFormFields(
             // VAT Number
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.contacts_vat_number),
-                value = formData.vatNumber,
+                value = formData.vatNumber.value,
                 onValueChange = onVatNumberChange,
                 error = formData.errors["vatNumber"],
                 keyboardOptions = KeyboardOptions(
@@ -224,7 +224,7 @@ internal fun ContactFormFields(
 
                 PTextFieldStandard(
                     fieldName = stringResource(Res.string.contacts_city),
-                    value = formData.city,
+                    value = formData.city.value,
                     onValueChange = onCityChange,
                     modifier = Modifier.weight(2f)
                 )

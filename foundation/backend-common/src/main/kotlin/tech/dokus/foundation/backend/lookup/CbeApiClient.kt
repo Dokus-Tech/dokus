@@ -7,6 +7,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityAddress
@@ -32,11 +33,11 @@ class CbeApiClient(
      * @param name Company name to search for (min 3 characters)
      * @return List of matching entities
      */
-    suspend fun searchByName(name: String): Result<List<EntityLookup>> = runCatching {
+    suspend fun searchByName(name: LegalName): Result<List<EntityLookup>> = runCatching {
         logger.debug("Searching CBE for company: $name")
 
         val response = httpClient.get("$baseUrl/v1/company/search") {
-            parameter("name", name)
+            parameter("name", name.value)
             header("Authorization", "Bearer $apiSecret")
         }
 
@@ -46,6 +47,26 @@ class CbeApiClient(
         cbeResponse.data.map { it.toEntityLookup() }
     }.onFailure { e ->
         logger.error("CBE API search failed for '$name'", e)
+    }
+
+    /**
+     * Search for companies by name.
+     * @param number Company VAT number to search for (min 3 characters)
+     * @return List of matching entities
+     */
+    suspend fun searchByVat(number: VatNumber): Result<List<EntityLookup>> = runCatching {
+        logger.debug("Searching CBE for company: $number")
+
+        val response = httpClient.get("$baseUrl/v1/company/search/${number}") {
+            header("Authorization", "Bearer $apiSecret")
+        }
+
+        val cbeResponse = response.body<CbeSearchResponse>()
+        logger.debug("CBE returned ${cbeResponse.data.size} results for '$number'")
+
+        cbeResponse.data.map { it.toEntityLookup() }
+    }.onFailure { e ->
+        logger.error("CBE API search failed for '$number'", e)
     }
 }
 
@@ -105,7 +126,7 @@ private fun CbeCompany.toEntityLookup(): EntityLookup {
     return EntityLookup(
         enterpriseNumber = cbeNumberFormatted ?: cbeNumber,
         vatNumber = vatNumber,
-        name = companyName,
+        name = LegalName(companyName),
         address = address?.toEntityAddress(),
         status = when (status?.lowercase()) {
             "active" -> EntityStatus.Active

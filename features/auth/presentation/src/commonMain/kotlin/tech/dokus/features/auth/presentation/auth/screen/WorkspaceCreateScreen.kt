@@ -40,6 +40,7 @@ import tech.dokus.aura.resources.action_continue
 import tech.dokus.aura.resources.auth_step_of
 import tech.dokus.aura.resources.state_creating
 import tech.dokus.aura.resources.workspace_create_button
+import tech.dokus.domain.LegalName
 import tech.dokus.features.auth.mvi.WorkspaceCreateIntent
 import tech.dokus.features.auth.mvi.WorkspaceCreateState
 import tech.dokus.features.auth.presentation.auth.components.EntityConfirmationDialog
@@ -240,10 +241,10 @@ private fun WorkspaceCreateContent(
 
                         WorkspaceWizardStep.CompanyName -> {
                             CompanyNameStep(
-                                companyName = wizardState.companyName,
+                                companyName = wizardState.companyName.value,
                                 lookupState = wizardState.lookupState,
                                 onCompanyNameChanged = { name ->
-                                    onIntent(WorkspaceCreateIntent.UpdateCompanyName(name))
+                                    onIntent(WorkspaceCreateIntent.UpdateCompanyName(LegalName(name)))
                                 },
                                 onBackPress = { onIntent(WorkspaceCreateIntent.BackClicked) },
                                 modifier = Modifier.fillMaxWidth()

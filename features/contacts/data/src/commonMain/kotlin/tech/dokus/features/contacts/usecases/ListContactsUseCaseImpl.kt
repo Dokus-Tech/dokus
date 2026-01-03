@@ -1,5 +1,6 @@
 package tech.dokus.features.contacts.usecases
 
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.repository.ContactRemoteDataSource
 
@@ -74,25 +75,18 @@ internal class FindContactsByVatUseCaseImpl(
     private val remoteDataSource: ContactRemoteDataSource
 ) : FindContactsByVatUseCase {
     override suspend fun invoke(
-        vat: String,
+        vat: VatNumber,
         limit: Int
     ): Result<List<ContactDto>> {
-        val normalizedVat = normalizeVat(vat)
+        val normalizedVat = vat.normalized
         return remoteDataSource.listContacts(
             search = normalizedVat,
             limit = limit,
             offset = 0
         ).map { contacts ->
             contacts.filter { contact ->
-                val existingVat = contact.vatNumber?.value?.let { normalizeVat(it) }
-                existingVat == normalizedVat
+                contact.vatNumber?.normalized == normalizedVat
             }
         }
     }
-}
-
-private fun normalizeVat(value: String): String {
-    return value.trim()
-        .uppercase()
-        .replace(Regex("[^A-Z0-9]"), "")
 }

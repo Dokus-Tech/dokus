@@ -1,5 +1,6 @@
 package tech.dokus.features.contacts.usecases
 
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
 
 /**
@@ -30,7 +31,7 @@ interface FindContactsByNameUseCase {
  */
 interface FindContactsByVatUseCase {
     suspend operator fun invoke(
-        vat: String,
+        vat: VatNumber,
         limit: Int = 50
     ): Result<List<ContactDto>>
 }

@@ -9,9 +9,14 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_duplicate_match_email
 import tech.dokus.aura.resources.contacts_duplicate_match_name_country
 import tech.dokus.aura.resources.contacts_duplicate_match_vat
+import tech.dokus.domain.City
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
@@ -45,20 +50,20 @@ import tech.dokus.foundation.app.state.DokusState
 @Immutable
 data class ContactFormData(
     // Basic info
-    val name: String = "",
-    val email: String = "",
-    val phone: String = "",
+    val name: Name = Name.Empty,
+    val email: Email = Email.Empty,
+    val phone: PhoneNumber = PhoneNumber.Empty,
     val contactPerson: String = "",
 
     // Business info
-    val vatNumber: String = "",
+    val vatNumber: VatNumber = VatNumber.Empty,
     val companyNumber: String = "",
     val businessType: ClientType = ClientType.Business,
 
     // Address
     val addressLine1: String = "",
     val addressLine2: String = "",
-    val city: String = "",
+    val city: City = City(""),
     val postalCode: String = "",
     val country: String = "",
 
@@ -84,13 +89,19 @@ data class ContactFormData(
      * Check if the form has the minimum required data.
      */
     val isValid: Boolean
-        get() = name.isNotBlank() && errors.isEmpty()
+        get() = name.value.isNotBlank() && errors.isEmpty()
 
     /**
      * Check if email format is valid (if provided).
      */
     val isEmailValid: Boolean
-        get() = email.isBlank() || email.contains("@")
+        get() = email.value.isBlank() || email.isValid
+
+    /**
+     * Check if VAT number format is valid (if provided).
+     */
+    val isVatValid: Boolean
+        get() = vatNumber.value.isBlank() || vatNumber.isValid
 
     /**
      * Check if Peppol ID format is valid (if provided).
@@ -175,17 +186,17 @@ sealed interface ContactFormState : MVIState, DokusState<Nothing> {
          */
         val hasChanges: Boolean
             get() = originalContact?.let { original ->
-                formData.name != original.name.value ||
-                    formData.email != (original.email?.value ?: "") ||
-                    formData.phone != (original.phone ?: "") ||
-                    formData.vatNumber != (original.vatNumber?.value ?: "") ||
+                formData.name != original.name ||
+                    formData.email != (original.email ?: Email.Empty) ||
+                    formData.phone != (original.phone ?: PhoneNumber.Empty) ||
+                    formData.vatNumber != (original.vatNumber ?: VatNumber.Empty) ||
                     formData.businessType != original.businessType ||
                     formData.addressLine1 != (original.addressLine1 ?: "") ||
-                    formData.city != (original.city ?: "") ||
+                    formData.city != (original.city ?: City("")) ||
                     formData.country != (original.country ?: "") ||
                     formData.peppolId != (original.peppolId ?: "") ||
                     formData.peppolEnabled != original.peppolEnabled
-            } ?: formData.name.isNotBlank()
+            } ?: formData.name.value.isNotBlank()
     }
 
     /**

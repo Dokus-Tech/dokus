@@ -71,7 +71,7 @@ class PeppolMapper {
             name = contact.name.value,
             vatNumber = contact.vatNumber?.value,
             streetName = contact.addressLine1,
-            cityName = contact.city,
+            cityName = contact.city?.value,
             postalZone = contact.postalCode,
             countryCode = contact.country,
             contactEmail = contact.email?.value,

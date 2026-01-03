@@ -178,10 +178,10 @@ private fun CreateContactContent(
         if (manualPrefillApplied) return@LaunchedEffect
         val manualState = state as? CreateContactState.ManualStep ?: return@LaunchedEffect
 
-        if (!prefillCompanyName.isNullOrBlank() && manualState.formData.companyName.isBlank()) {
+        if (!prefillCompanyName.isNullOrBlank() && manualState.formData.companyName.value.isBlank()) {
             onIntent(CreateContactIntent.ManualFieldChanged("companyName", prefillCompanyName))
         }
-        if (!prefillVat.isNullOrBlank() && manualState.formData.vatNumber.isBlank()) {
+        if (!prefillVat.isNullOrBlank() && manualState.formData.vatNumber.value.isBlank()) {
             onIntent(CreateContactIntent.ManualFieldChanged("vatNumber", prefillVat))
         }
         manualPrefillApplied = true

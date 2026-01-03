@@ -50,6 +50,10 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
 
     override val validOrThrows: VatNumber
         get() = if (isValid) this else throw DokusException.Validation.InvalidVatNumber
+
+    companion object {
+        val Empty = VatNumber("")
+    }
 }
 
 @OptIn(ExperimentalUuidApi::class)

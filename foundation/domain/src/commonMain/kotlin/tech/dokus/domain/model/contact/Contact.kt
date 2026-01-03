@@ -3,8 +3,10 @@ package tech.dokus.domain.model.contact
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
+import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.ids.ContactId
@@ -28,11 +30,11 @@ data class ContactDto(
     val businessType: ClientType = ClientType.Business,
     val addressLine1: String? = null,
     val addressLine2: String? = null,
-    val city: String? = null,
+    val city: City? = null,
     val postalCode: String? = null,
     val country: String? = null,
     val contactPerson: String? = null,
-    val phone: String? = null,
+    val phone: PhoneNumber? = null,
     val companyNumber: String? = null,
     val defaultPaymentTerms: Int = 30,
     val defaultVatRate: VatRate? = null,
@@ -79,20 +81,29 @@ data class ContactNoteDto(
 // ============================================================================
 
 /**
+ * Address input for contact create/update requests.
+ * Encapsulates all address-related fields.
+ */
+@Serializable
+data class ContactAddress(
+    val streetLine1: String,
+    val streetLine2: String? = null,
+    val city: City,
+    val postalCode: String,
+    val country: String
+)
+
+/**
  * Request DTO for creating a contact.
  */
 @Serializable
 data class CreateContactRequest(
-    val name: String,
-    val email: String? = null,
-    val phone: String? = null,
-    val vatNumber: String? = null,
+    val name: Name,
+    val email: Email? = null,
+    val phone: PhoneNumber? = null,
+    val vatNumber: VatNumber? = null,
     val businessType: ClientType = ClientType.Business,
-    val addressLine1: String? = null,
-    val addressLine2: String? = null,
-    val city: String? = null,
-    val postalCode: String? = null,
-    val country: String? = null,
+    val address: ContactAddress? = null,
     val contactPerson: String? = null,
     val companyNumber: String? = null,
     val defaultPaymentTerms: Int = 30,
@@ -109,16 +120,12 @@ data class CreateContactRequest(
  */
 @Serializable
 data class UpdateContactRequest(
-    val name: String? = null,
-    val email: String? = null,
-    val phone: String? = null,
-    val vatNumber: String? = null,
+    val name: Name? = null,
+    val email: Email? = null,
+    val phone: PhoneNumber? = null,
+    val vatNumber: VatNumber? = null,
     val businessType: ClientType? = null,
-    val addressLine1: String? = null,
-    val addressLine2: String? = null,
-    val city: String? = null,
-    val postalCode: String? = null,
-    val country: String? = null,
+    val address: ContactAddress? = null,
     val contactPerson: String? = null,
     val companyNumber: String? = null,
     val defaultPaymentTerms: Int? = null,

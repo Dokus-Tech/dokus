@@ -65,6 +65,7 @@ import tech.dokus.aura.resources.state_retry
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.features.contacts.mvi.CreateContactIntent
@@ -122,9 +123,9 @@ fun LookupStepContent(
                     onIntent(CreateContactIntent.Search(searchQuery))
                     if (onExistingContactSelected != null) {
                         isExistingLoading = true
-                        val normalizedVat = normalizeVatQuery(searchQuery)
-                        val searchResult = if (isVatLike(normalizedVat)) {
-                            findContactsByVat(normalizedVat, limit = 10)
+                        val vatNumber = VatNumber(searchQuery)
+                        val searchResult = if (vatNumber.isValid) {
+                            findContactsByVat(vatNumber, limit = 10)
                         } else {
                             findContactsByName(searchQuery, limit = 10)
                         }
@@ -268,16 +269,6 @@ fun LookupStepContent(
             )
         }
     }
-}
-
-private fun normalizeVatQuery(value: String): String {
-    return value.trim()
-        .uppercase()
-        .replace(Regex("[^A-Z0-9]"), "")
-}
-
-private fun isVatLike(normalized: String): Boolean {
-    return normalized.length >= MIN_SEARCH_LENGTH && normalized.matches(Regex("^[A-Z]{2}[0-9A-Z]{4,}$"))
 }
 
 @Composable
@@ -471,7 +462,7 @@ private fun LookupResultCard(
             modifier = Modifier.padding(Constrains.Spacing.medium)
         ) {
             Text(
-                text = entity.name,
+                text = entity.name.value,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )

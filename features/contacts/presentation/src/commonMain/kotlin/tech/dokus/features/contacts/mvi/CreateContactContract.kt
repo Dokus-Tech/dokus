@@ -5,11 +5,16 @@ import androidx.compose.runtime.Stable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.domain.Email
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.Name
+import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
 
 /**
@@ -38,7 +43,7 @@ import tech.dokus.domain.model.entity.EntityLookup
 data class DuplicateVatUi(
     val contactId: ContactId,
     val displayName: String,
-    val vatNumber: String,
+    val vatNumber: VatNumber,
 )
 
 /**
@@ -59,24 +64,24 @@ sealed interface LookupUiState {
 @Immutable
 data class ManualContactFormData(
     // Business fields
-    val companyName: String = "",
+    val companyName: LegalName = LegalName.Empty,
     val country: Country = Country.Belgium,
-    val vatNumber: String = "",
-    val email: String = "",
+    val vatNumber: VatNumber = VatNumber.Empty,
+    val email: Email = Email.Empty,
     // Individual fields
-    val fullName: String = "",
-    val personEmail: String = "",
-    val personPhone: String = "",
+    val fullName: Name = Name.Empty,
+    val personEmail: Email = Email.Empty,
+    val personPhone: PhoneNumber = PhoneNumber.Empty,
     // Validation errors
     val errors: Map<String, DokusException> = emptyMap(),
 ) {
     val isBusinessValid: Boolean
-        get() = companyName.isNotBlank() && errors.isEmpty()
+        get() = companyName.isValid && errors.isEmpty()
 
     val isIndividualValid: Boolean
-        get() = fullName.isNotBlank() &&
-            (personEmail.isNotBlank() || personPhone.isNotBlank()) &&
-            errors.isEmpty()
+        get() = fullName.isValid &&
+                (personEmail.isValid || personPhone.isValid) &&
+                errors.isEmpty()
 }
 
 /**
@@ -122,8 +127,8 @@ sealed interface CreateContactState : MVIState {
      */
     data class ConfirmStep(
         val selectedEntity: EntityLookup,
-        val billingEmail: String = "",
-        val phone: String = "",
+        val billingEmail: Email = Email.Empty,
+        val phone: PhoneNumber = PhoneNumber.Empty,
         val language: Language? = null,
         val showAddressDetails: Boolean = false,
         val isSubmitting: Boolean = false,
@@ -172,10 +177,10 @@ sealed interface CreateContactIntent : MVIIntent {
     // === Confirm Step ===
 
     /** User updated billing email */
-    data class BillingEmailChanged(val email: String) : CreateContactIntent
+    data class BillingEmailChanged(val email: Email) : CreateContactIntent
 
     /** User updated phone */
-    data class PhoneChanged(val phone: String) : CreateContactIntent
+    data class PhoneChanged(val phone: PhoneNumber) : CreateContactIntent
 
     /** User selected a language */
     data class LanguageChanged(val language: Language?) : CreateContactIntent
@@ -239,7 +244,10 @@ sealed interface CreateContactAction : MVIAction {
     data class NavigateToContact(val contactId: ContactId) : CreateContactAction
 
     /** Contact was created successfully - return to caller with result */
-    data class ContactCreated(val contactId: ContactId, val displayName: String) : CreateContactAction
+    data class ContactCreated(
+        val contactId: ContactId,
+        val displayName: String
+    ) : CreateContactAction
 
     /** Show error message */
     data class ShowError(val error: DokusException) : CreateContactAction

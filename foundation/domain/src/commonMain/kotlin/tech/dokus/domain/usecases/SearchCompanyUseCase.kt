@@ -1,5 +1,7 @@
 package tech.dokus.domain.usecases
 
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookupResponse
 
 /**
@@ -14,8 +16,8 @@ interface SearchCompanyUseCase {
     /**
      * Search for companies matching the given query.
      *
-     * @param query Company name or VAT number (minimum 3 characters for name search)
+     * @param this@invoke Company name or VAT number (minimum 3 characters for name search)
      * @return List of matching companies wrapped in Result
      */
-    suspend operator fun invoke(query: String): Result<EntityLookupResponse>
+    suspend operator fun invoke(name: LegalName?, number: VatNumber?): Result<EntityLookupResponse>
 }
