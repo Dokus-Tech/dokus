@@ -95,9 +95,14 @@ internal class DocumentReviewContainer(
                         is DocumentReviewIntent.DiscardChanges -> handleDiscardChanges()
                         is DocumentReviewIntent.ConfirmDiscardChanges -> handleConfirmDiscardChanges()
                         is DocumentReviewIntent.Confirm -> handleConfirm()
-                        is DocumentReviewIntent.Reject -> handleReject()
-                        is DocumentReviewIntent.ConfirmReject -> handleConfirmReject(intent.reason)
                         is DocumentReviewIntent.OpenChat -> handleOpenChat()
+
+                        // === Reject Dialog ===
+                        is DocumentReviewIntent.ShowRejectDialog -> handleShowRejectDialog()
+                        is DocumentReviewIntent.DismissRejectDialog -> handleDismissRejectDialog()
+                        is DocumentReviewIntent.SelectRejectReason -> handleSelectRejectReason(intent.reason)
+                        is DocumentReviewIntent.UpdateRejectNote -> handleUpdateRejectNote(intent.note)
+                        is DocumentReviewIntent.ConfirmReject -> handleConfirmReject()
                     }
                 }
             }

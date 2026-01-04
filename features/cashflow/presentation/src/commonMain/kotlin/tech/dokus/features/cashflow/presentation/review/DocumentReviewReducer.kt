@@ -90,11 +90,21 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleConfirm() =
         with(actions) { handleConfirm() }
 
-    suspend fun DocumentReviewCtx.handleReject() =
-        with(actions) { handleReject() }
+    // Reject dialog handlers
+    suspend fun DocumentReviewCtx.handleShowRejectDialog() =
+        with(actions) { handleShowRejectDialog() }
 
-    suspend fun DocumentReviewCtx.handleConfirmReject(reason: tech.dokus.domain.enums.DocumentRejectReason) =
-        with(actions) { handleConfirmReject(reason) }
+    suspend fun DocumentReviewCtx.handleDismissRejectDialog() =
+        with(actions) { handleDismissRejectDialog() }
+
+    suspend fun DocumentReviewCtx.handleSelectRejectReason(reason: tech.dokus.domain.enums.DocumentRejectReason) =
+        with(actions) { handleSelectRejectReason(reason) }
+
+    suspend fun DocumentReviewCtx.handleUpdateRejectNote(note: String) =
+        with(actions) { handleUpdateRejectNote(note) }
+
+    suspend fun DocumentReviewCtx.handleConfirmReject() =
+        with(actions) { handleConfirmReject() }
 
     suspend fun DocumentReviewCtx.handleOpenChat() =
         with(actions) { handleOpenChat() }

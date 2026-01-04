@@ -324,7 +324,7 @@ private fun MobileReviewContent(
                 confirmBlockedReason = state.confirmBlockedReason,
                 onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
                 onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
-                onReject = { onIntent(DocumentReviewIntent.Reject) },
+                onReject = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
                 onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
             )
     }

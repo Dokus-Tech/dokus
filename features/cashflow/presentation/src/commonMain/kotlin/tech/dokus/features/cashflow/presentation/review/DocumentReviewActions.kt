@@ -143,15 +143,59 @@ internal class DocumentReviewActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleReject() {
+    // === Reject Dialog Handlers ===
+
+    suspend fun DocumentReviewCtx.handleShowRejectDialog() {
         withState<DocumentReviewState.Content, _> {
-            action(DocumentReviewAction.ShowRejectConfirmation)
+            updateState { copy(rejectDialogState = RejectDialogState()) }
         }
     }
 
-    suspend fun DocumentReviewCtx.handleConfirmReject(reason: DocumentRejectReason) {
+    suspend fun DocumentReviewCtx.handleDismissRejectDialog() {
         withState<DocumentReviewState.Content, _> {
-            updateState { copy(isRejecting = true) }
+            updateState { copy(rejectDialogState = null) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleSelectRejectReason(reason: DocumentRejectReason) {
+        withState<DocumentReviewState.Content, _> {
+            rejectDialogState?.let { dialogState ->
+                updateState {
+                    copy(
+                        rejectDialogState = dialogState.copy(
+                            selectedReason = reason,
+                            // Clear note if not "Other" reason
+                            otherNote = if (reason == DocumentRejectReason.Other) dialogState.otherNote else ""
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleUpdateRejectNote(note: String) {
+        withState<DocumentReviewState.Content, _> {
+            rejectDialogState?.let { dialogState ->
+                updateState {
+                    copy(rejectDialogState = dialogState.copy(otherNote = note))
+                }
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleConfirmReject() {
+        withState<DocumentReviewState.Content, _> {
+            val dialogState = rejectDialogState ?: return@withState
+            val reason = dialogState.selectedReason
+
+            // Set loading state in dialog
+            updateState {
+                copy(
+                    isRejecting = true,
+                    rejectDialogState = dialogState.copy(isConfirming = true)
+                )
+            }
+
             launch {
                 dataSource.rejectDocument(documentId, RejectDocumentRequest(reason))
                     .fold(
@@ -163,7 +207,8 @@ internal class DocumentReviewActions(
                                         document = record,
                                         isRejecting = false,
                                         isDocumentRejected = draft?.draftStatus == DraftStatus.Rejected,
-                                        isDocumentConfirmed = draft?.draftStatus == DraftStatus.Confirmed
+                                        isDocumentConfirmed = draft?.draftStatus == DraftStatus.Confirmed,
+                                        rejectDialogState = null // Close dialog on success
                                     )
                                 }
                             }
@@ -172,7 +217,12 @@ internal class DocumentReviewActions(
                         onFailure = { error ->
                             logger.e(error) { "Failed to reject document: $documentId" }
                             withState<DocumentReviewState.Content, _> {
-                                updateState { copy(isRejecting = false) }
+                                updateState {
+                                    copy(
+                                        isRejecting = false,
+                                        rejectDialogState = rejectDialogState?.copy(isConfirming = false)
+                                    )
+                                }
                             }
                             action(DocumentReviewAction.ShowError(error.asDokusException))
                         }

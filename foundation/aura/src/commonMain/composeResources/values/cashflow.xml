@@ -215,6 +215,9 @@
     <string name="cashflow_reject_reason_spam">Spam</string>
     <string name="cashflow_reject_reason_test">Test</string>
     <string name="cashflow_reject_reason_other">Other</string>
+    <string name="cashflow_action_reject_document">Reject Document</string>
+    <string name="cashflow_action_keep_reviewing">Keep Reviewing</string>
+    <string name="cashflow_reject_note_optional">Additional notes (optional)</string>
     <string name="cashflow_discard_changes_title">Discard changes?</string>
     <string name="cashflow_discard_changes_message">Your edits will be lost.</string>
     <string name="draft_status_unconfirmed">Unconfirmed</string>
