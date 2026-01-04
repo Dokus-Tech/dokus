@@ -7,12 +7,12 @@ import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
-import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
-import tech.dokus.domain.utils.json
+import tech.dokus.domain.utils.parseSafe
 import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.DocumentClassification
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
+import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
@@ -106,32 +106,10 @@ class DocumentClassificationAgent(
     }
 
     private fun parseClassificationResponse(response: String): DocumentClassification {
-        return try {
-            // Extract JSON from response (may be wrapped in markdown code blocks)
-            val jsonString = extractJson(response)
-            json.decodeFromString<DocumentClassification>(jsonString)
-        } catch (e: Exception) {
-            logger.warn("Failed to parse classification response: $response", e)
+        return parseSafe<DocumentClassification>(normalizeJson(response)).getOrElse {
+            logger.warn("Failed to parse classification response: $response", it)
             // Fallback: try to extract document type from text
             fallbackParse(response)
-        }
-    }
-
-    private fun extractJson(response: String): String {
-        // Remove markdown code blocks if present
-        val cleaned = response
-            .replace("```json", "")
-            .replace("```", "")
-            .trim()
-
-        // Find JSON object in the response
-        val startIndex = cleaned.indexOf('{')
-        val endIndex = cleaned.lastIndexOf('}')
-
-        return if (startIndex >= 0 && endIndex > startIndex) {
-            cleaned.substring(startIndex, endIndex + 1)
-        } else {
-            cleaned
         }
     }
 

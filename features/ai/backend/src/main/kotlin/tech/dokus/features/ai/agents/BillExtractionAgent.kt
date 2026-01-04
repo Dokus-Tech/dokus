@@ -7,11 +7,11 @@ import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
-import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
-import tech.dokus.domain.utils.json
+import tech.dokus.domain.utils.parseSafe
 import tech.dokus.features.ai.models.ExtractedBillData
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
+import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
@@ -136,28 +136,9 @@ class BillExtractionAgent(
     }
 
     private fun parseExtractionResponse(response: String): ExtractedBillData {
-        return try {
-            val jsonString = extractJson(response)
-            json.decodeFromString<ExtractedBillData>(jsonString)
-        } catch (e: Exception) {
-            logger.warn("Failed to parse extraction response: ${response.take(500)}", e)
+        return parseSafe<ExtractedBillData>(normalizeJson(response)).getOrElse {
+            logger.warn("Failed to parse extraction response: ${response.take(500)}", it)
             ExtractedBillData(confidence = 0.0)
-        }
-    }
-
-    private fun extractJson(response: String): String {
-        val cleaned = response
-            .replace("```json", "")
-            .replace("```", "")
-            .trim()
-
-        val startIndex = cleaned.indexOf('{')
-        val endIndex = cleaned.lastIndexOf('}')
-
-        return if (startIndex >= 0 && endIndex > startIndex) {
-            cleaned.substring(startIndex, endIndex + 1)
-        } else {
-            cleaned
         }
     }
 }
