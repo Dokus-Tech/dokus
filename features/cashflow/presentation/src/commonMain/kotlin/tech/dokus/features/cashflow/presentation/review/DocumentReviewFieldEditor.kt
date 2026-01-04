@@ -4,6 +4,7 @@ package tech.dokus.features.cashflow.presentation.review
 
 import kotlinx.datetime.LocalDate
 import pro.respawn.flowmvi.dsl.withState
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
 
@@ -97,6 +98,47 @@ internal class DocumentReviewFieldEditor {
                 copy(
                     editableData = editableData.copy(expense = updatedExpense),
                     hasUnsavedChanges = true
+                )
+            }
+        }
+    }
+
+    /**
+     * Handle manual document type selection.
+     * This is used when the AI fails to classify the document or the type is Unknown.
+     * Initializes empty fields for the selected type.
+     */
+    suspend fun DocumentReviewCtx.handleSelectDocumentType(type: DocumentType) {
+        withState<DocumentReviewState.Content, _> {
+            // Don't allow selecting Unknown type manually
+            if (type == DocumentType.Unknown) return@withState
+
+            val newEditableData = when (type) {
+                DocumentType.Invoice -> EditableExtractedData(
+                    documentType = type,
+                    invoice = EditableInvoiceFields(),
+                    bill = null,
+                    expense = null,
+                )
+                DocumentType.Bill -> EditableExtractedData(
+                    documentType = type,
+                    invoice = null,
+                    bill = EditableBillFields(),
+                    expense = null,
+                )
+                DocumentType.Expense -> EditableExtractedData(
+                    documentType = type,
+                    invoice = null,
+                    bill = null,
+                    expense = EditableExpenseFields(),
+                )
+                DocumentType.Unknown -> return@withState
+            }
+
+            updateState {
+                copy(
+                    editableData = newEditableData,
+                    hasUnsavedChanges = true,
                 )
             }
         }

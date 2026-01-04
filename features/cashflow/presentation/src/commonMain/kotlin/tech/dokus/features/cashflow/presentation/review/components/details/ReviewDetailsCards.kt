@@ -32,7 +32,11 @@ import tech.dokus.aura.resources.cashflow_merchant
 import tech.dokus.aura.resources.cashflow_receipt_number
 import tech.dokus.aura.resources.cashflow_supplier_name
 import tech.dokus.aura.resources.cashflow_processing_identifying_type
+import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_unknown_document_type
+import tech.dokus.aura.resources.document_type_bill
+import tech.dokus.aura.resources.document_type_expense
+import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_vat_number
@@ -301,19 +305,41 @@ internal fun InvoiceDetailsCard(
                     )
                 }
                 else -> {
-                    // Show neutral placeholder during processing, error text only when truly unknown
-                    val (textRes, textColor) = if (state.isProcessing) {
-                        Res.string.cashflow_processing_identifying_type to
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                    if (state.isProcessing) {
+                        // Show neutral placeholder during processing
+                        Text(
+                            text = stringResource(Res.string.cashflow_processing_identifying_type),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     } else {
-                        Res.string.cashflow_unknown_document_type to
-                            MaterialTheme.colorScheme.error
+                        // Show document type selector when AI failed or type is unknown
+                        Text(
+                            text = stringResource(Res.string.cashflow_select_document_type),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                        ) {
+                            POutlinedButton(
+                                text = stringResource(Res.string.document_type_invoice),
+                                modifier = Modifier.weight(1f),
+                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Invoice)) },
+                            )
+                            POutlinedButton(
+                                text = stringResource(Res.string.document_type_bill),
+                                modifier = Modifier.weight(1f),
+                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Bill)) },
+                            )
+                            POutlinedButton(
+                                text = stringResource(Res.string.document_type_expense),
+                                modifier = Modifier.weight(1f),
+                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Expense)) },
+                            )
+                        }
                     }
-                    Text(
-                        text = stringResource(textRes),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = textColor,
-                    )
                 }
             }
         }

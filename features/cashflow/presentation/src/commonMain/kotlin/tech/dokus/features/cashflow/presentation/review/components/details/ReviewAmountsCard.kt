@@ -13,7 +13,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_section_amounts
 import tech.dokus.aura.resources.cashflow_processing_calculating_totals
-import tech.dokus.aura.resources.cashflow_unknown_document_type
+import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total_amount
@@ -114,18 +114,17 @@ internal fun AmountsCard(
                     )
                 }
                 else -> {
-                    // Show neutral placeholder during processing, error text only when truly unknown
-                    val (textRes, textColor) = if (state.isProcessing) {
-                        Res.string.cashflow_processing_calculating_totals to
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        Res.string.cashflow_unknown_document_type to
-                            MaterialTheme.colorScheme.error
-                    }
+                    // Show neutral placeholder during processing, hint when type not selected
                     Text(
-                        text = stringResource(textRes),
+                        text = stringResource(
+                            if (state.isProcessing) {
+                                Res.string.cashflow_processing_calculating_totals
+                            } else {
+                                Res.string.cashflow_select_document_type
+                            }
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = textColor,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
