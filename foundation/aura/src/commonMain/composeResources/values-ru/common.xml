@@ -1,0 +1,131 @@
+<resources>
+    <!-- Common Actions -->
+    <string name="action_back">Назад</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_save_changes">Сохранить изменения</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_confirm">Подтвердить</string>
+    <string name="action_continue">Продолжить</string>
+    <string name="action_approve">Одобрить</string>
+    <string name="action_reject">Отклонить</string>
+    <string name="action_search">Поиск</string>
+    <string name="action_or">или</string>
+    <string name="action_next">Далее</string>
+    <string name="action_change">Изменить</string>
+    <string name="action_close">Закрыть</string>
+    <string name="action_upload">Загрузить</string>
+    <string name="action_remove">Удалить</string>
+    <string name="action_view">Просмотреть</string>
+    <string name="action_done">Готово</string>
+    <string name="action_connect">Подключить</string>
+    <string name="action_clear">Очистить</string>
+    <string name="action_clear_field">Очистить %1$s</string>
+    <string name="action_expand_options">Показать параметры</string>
+    <string name="action_expand">Развернуть</string>
+    <string name="action_collapse">Свернуть</string>
+    <string name="action_select">Выбрать</string>
+    <string name="action_select_date">Выбрать дату</string>
+    <string name="action_discard">Отменить</string>
+    <string name="action_fit">Подогнать</string>
+    <string name="action_zoom_in">Приблизить</string>
+    <string name="action_zoom_out">Отдалить</string>
+
+    <!-- Common States -->
+    <string name="state_loading">Загрузка...</string>
+    <string name="state_error">Произошла ошибка</string>
+    <string name="state_empty">Нет данных</string>
+    <string name="state_retry">Повторить</string>
+    <string name="state_connecting">Подключение...</string>
+    <string name="state_saving">Сохранение...</string>
+    <string name="state_confirming">Подтверждение...</string>
+    <string name="state_unsaved_changes">У вас есть несохранённые изменения</string>
+    <string name="state_offline">Офлайн</string>
+    <string name="state_creating">Создание...</string>
+    <string name="state_uploading">Загрузка...</string>
+    <string name="state_sending">Отправка...</string>
+    <string name="state_removing">Удаление...</string>
+
+    <!-- Common Values -->
+    <string name="common_unknown">Неизвестно</string>
+    <string name="common_empty_value">-</string>
+    <string name="common_label_value">%1$s: %2$s</string>
+    <string name="common_numbered_step">%1$d. %2$s</string>
+    <string name="common_currency">Валюта</string>
+    <string name="common_bank_account">Банковский счёт</string>
+    <string name="common_notes">Заметки</string>
+    <string name="common_date">Дата</string>
+    <string name="common_vat_value">НДС: %1$s</string>
+    <string name="common_percent_value">%1$s %%</string>
+    <string name="common_file_size_bytes">%1$d Б</string>
+    <string name="common_file_size_kb">%1$.1f КБ</string>
+    <string name="common_file_size_mb">%1$.1f МБ</string>
+    <string name="common_country_value">Страна: %1$s</string>
+    <string name="common_action_irreversible">Это действие необратимо</string>
+    <string name="search_placeholder">Поиск...</string>
+    <string name="field_required">%1$s *</string>
+    <string name="field_optional">%1$s (необязательно)</string>
+
+    <!-- Connection -->
+    <string name="connection_server_unreachable">Сервер недоступен</string>
+    <string name="connection_connected">Подключено</string>
+
+    <!-- Dates -->
+    <string name="date_format_long">%2$d %1$s %3$d</string>
+    <string name="date_format_short">%2$d %1$s %3$d</string>
+    <string name="date_month_long_january">января</string>
+    <string name="date_month_long_february">февраля</string>
+    <string name="date_month_long_march">марта</string>
+    <string name="date_month_long_april">апреля</string>
+    <string name="date_month_long_may">мая</string>
+    <string name="date_month_long_june">июня</string>
+    <string name="date_month_long_july">июля</string>
+    <string name="date_month_long_august">августа</string>
+    <string name="date_month_long_september">сентября</string>
+    <string name="date_month_long_october">октября</string>
+    <string name="date_month_long_november">ноября</string>
+    <string name="date_month_long_december">декабря</string>
+    <string name="date_month_short_jan">янв.</string>
+    <string name="date_month_short_feb">февр.</string>
+    <string name="date_month_short_mar">мар.</string>
+    <string name="date_month_short_apr">апр.</string>
+    <string name="date_month_short_may">май</string>
+    <string name="date_month_short_jun">июн.</string>
+    <string name="date_month_short_jul">июл.</string>
+    <string name="date_month_short_aug">авг.</string>
+    <string name="date_month_short_sep">сент.</string>
+    <string name="date_month_short_oct">окт.</string>
+    <string name="date_month_short_nov">нояб.</string>
+    <string name="date_month_short_dec">дек.</string>
+
+    <!-- Countries -->
+    <string name="country_belgium">Бельгия</string>
+    <string name="country_france">Франция</string>
+    <string name="country_netherlands">Нидерланды</string>
+
+    <!-- Under Development -->
+    <string name="under_development_title">Создаём что-то надёжное</string>
+    <string name="under_development_subtitle">Эта функция разрабатывается.\nСоздано для ваших потребностей.</string>
+
+    <!-- Registration Success -->
+    <string name="registration_success_message">Вы успешно зарегистрировались и теперь можете изучить все интересные функции, которые мы предлагаем.</string>
+
+    <!-- Server Connection -->
+    <string name="connect_to_server">Подключиться к серверу</string>
+    <!-- Legacy aliases for backward compatibility -->
+    <string name="back">Назад</string>
+    <string name="approve">Одобрить</string>
+    <string name="reject">Отклонить</string>
+    <string name="save_changes">Сохранить изменения</string>
+    <string name="cancel">Отмена</string>
+    <string name="delete">Удалить</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Обрезать изображение</string>
+    <string name="image_cropper_apply">Применить</string>
+    <string name="image_cropper_hint">Сожмите для масштабирования, перетащите для перемещения</string>
+    <string name="image_cropper_content_description">Изображение для обрезки</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Аватар компании</string>
+</resources>

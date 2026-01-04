@@ -1,43 +1,5 @@
 package tech.dokus.app.screens.settings
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.cancel
-import ai.dokus.app.resources.generated.role_accountant
-import ai.dokus.app.resources.generated.role_accountant_desc
-import ai.dokus.app.resources.generated.role_admin
-import ai.dokus.app.resources.generated.role_admin_desc
-import ai.dokus.app.resources.generated.role_editor
-import ai.dokus.app.resources.generated.role_editor_desc
-import ai.dokus.app.resources.generated.role_owner
-import ai.dokus.app.resources.generated.role_viewer
-import ai.dokus.app.resources.generated.role_viewer_desc
-import ai.dokus.app.resources.generated.team_cancel_invitation
-import ai.dokus.app.resources.generated.team_change_role
-import ai.dokus.app.resources.generated.team_expires
-import ai.dokus.app.resources.generated.team_invite_email
-import ai.dokus.app.resources.generated.team_invite_member
-import ai.dokus.app.resources.generated.team_invite_role
-import ai.dokus.app.resources.generated.team_invited_by
-import ai.dokus.app.resources.generated.team_joined
-import ai.dokus.app.resources.generated.team_members
-import ai.dokus.app.resources.generated.team_no_invitations
-import ai.dokus.app.resources.generated.team_no_members
-import ai.dokus.app.resources.generated.team_owner_badge
-import ai.dokus.app.resources.generated.team_pending_invitations
-import ai.dokus.app.resources.generated.team_remove_confirm
-import ai.dokus.app.resources.generated.team_remove_member
-import ai.dokus.app.resources.generated.team_send_invitation
-import ai.dokus.app.resources.generated.team_settings_title
-import ai.dokus.app.resources.generated.team_transfer_confirm
-import ai.dokus.app.resources.generated.team_transfer_ownership
-import ai.dokus.foundation.design.components.POutlinedButton
-import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,141 +12,135 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
-import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.viewmodel.TeamSettingsAction
-import tech.dokus.app.viewmodel.TeamSettingsContainer
 import tech.dokus.app.viewmodel.TeamSettingsIntent
 import tech.dokus.app.viewmodel.TeamSettingsState
-import tech.dokus.foundation.app.mvi.container
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_confirm
+import tech.dokus.aura.resources.action_save
+import tech.dokus.aura.resources.cancel
+import tech.dokus.aura.resources.role_accountant
+import tech.dokus.aura.resources.role_admin
+import tech.dokus.aura.resources.role_editor
+import tech.dokus.aura.resources.role_owner
+import tech.dokus.aura.resources.role_viewer
+import tech.dokus.aura.resources.state_sending
+import tech.dokus.aura.resources.team_cancel_invitation
+import tech.dokus.aura.resources.team_change_role
+import tech.dokus.aura.resources.team_expires
+import tech.dokus.aura.resources.team_invite_email
+import tech.dokus.aura.resources.team_invite_member
+import tech.dokus.aura.resources.team_invite_role
+import tech.dokus.aura.resources.team_invited_by
+import tech.dokus.aura.resources.team_joined
+import tech.dokus.aura.resources.team_members
+import tech.dokus.aura.resources.team_no_invitations
+import tech.dokus.aura.resources.team_no_members
+import tech.dokus.aura.resources.team_owner_badge
+import tech.dokus.aura.resources.team_pending_invitations
+import tech.dokus.aura.resources.team_remove_confirm
+import tech.dokus.aura.resources.team_remove_member
+import tech.dokus.aura.resources.team_send_invitation
+import tech.dokus.aura.resources.team_settings_title
+import tech.dokus.aura.resources.team_transfer_confirm
+import tech.dokus.aura.resources.team_transfer_ownership
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.model.TeamMember
+import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
- * Team settings screen with top bar using FlowMVI Container pattern.
- * For mobile navigation flow.
+ * Team settings screen with top bar.
+ * Pure UI composable that takes state and callbacks.
  */
 @Composable
 internal fun TeamSettingsScreen(
-    container: TeamSettingsContainer = container()
+    state: TeamSettingsState,
+    snackbarHostState: SnackbarHostState,
+    showInviteDialog: Boolean,
+    onShowInviteDialog: (Boolean) -> Unit,
+    onIntent: (TeamSettingsIntent) -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    var showInviteDialog by remember { mutableStateOf(false) }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is TeamSettingsAction.ShowSuccess -> {
-                snackbarHostState.showSnackbar(action.message)
-            }
-            is TeamSettingsAction.ShowError -> {
-                snackbarHostState.showSnackbar(action.message)
-            }
-            TeamSettingsAction.DismissInviteDialog -> {
-                showInviteDialog = false
-            }
-        }
-    }
-
-    // Load data on first composition
-    LaunchedEffect(Unit) {
-        container.store.intent(TeamSettingsIntent.Load)
-    }
-
+    val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
         topBar = {
-            PTopAppBar(
-                title = stringResource(Res.string.team_settings_title)
-            )
+            if (!isLargeScreen) PTopAppBar(Res.string.team_settings_title)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        TeamSettingsContentInternal(
+        TeamSettingsContent(
             state = state,
             showInviteDialog = showInviteDialog,
-            onShowInviteDialog = { showInviteDialog = it },
-            onIntent = { container.store.intent(it) },
+            onShowInviteDialog = onShowInviteDialog,
+            onIntent = onIntent,
             modifier = Modifier.padding(contentPadding)
         )
     }
 }
 
 /**
- * Team settings content without scaffold using FlowMVI Container pattern.
- * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
+ * Team settings content without scaffold.
+ * Can be embedded in split-pane layout for desktop.
  */
 @Composable
-internal fun TeamSettingsContent(
-    container: TeamSettingsContainer = container(),
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+fun TeamSettingsContent(
+    state: TeamSettingsState,
+    showInviteDialog: Boolean,
+    onShowInviteDialog: (Boolean) -> Unit,
+    onIntent: (TeamSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    var showInviteDialog by remember { mutableStateOf(false) }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is TeamSettingsAction.ShowSuccess -> {
-                snackbarHostState.showSnackbar(action.message)
-            }
-            is TeamSettingsAction.ShowError -> {
-                snackbarHostState.showSnackbar(action.message)
-            }
-            TeamSettingsAction.DismissInviteDialog -> {
-                showInviteDialog = false
-            }
-        }
-    }
-
-    // Load data on first composition
-    LaunchedEffect(Unit) {
-        container.store.intent(TeamSettingsIntent.Load)
-    }
-
     TeamSettingsContentInternal(
         state = state,
         showInviteDialog = showInviteDialog,
-        onShowInviteDialog = { showInviteDialog = it },
-        onIntent = { container.store.intent(it) },
+        onShowInviteDialog = onShowInviteDialog,
+        onIntent = onIntent,
         modifier = modifier.padding(contentPadding)
     )
 }
 
 @Composable
-private fun TeamSettingsContentInternal(
+internal fun TeamSettingsContentInternal(
     state: TeamSettingsState,
     showInviteDialog: Boolean,
     onShowInviteDialog: (Boolean) -> Unit,
@@ -211,7 +167,7 @@ private fun TeamSettingsContentInternal(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .withContentPaddingForScrollable(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Invite Member Button
         PPrimaryButton(
@@ -221,8 +177,11 @@ private fun TeamSettingsContentInternal(
         )
 
         // Team Members Section
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        DokusCard(
+            modifier = Modifier.fillMaxWidth(),
+            padding = DokusCardPadding.Default,
+        ) {
+            Column {
                 Text(
                     text = stringResource(Res.string.team_members),
                     style = MaterialTheme.typography.titleMedium
@@ -264,8 +223,11 @@ private fun TeamSettingsContentInternal(
         }
 
         // Pending Invitations Section
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        DokusCard(
+            modifier = Modifier.fillMaxWidth(),
+            padding = DokusCardPadding.Default,
+        ) {
+            Column {
                 Text(
                     text = stringResource(Res.string.team_pending_invitations),
                     style = MaterialTheme.typography.titleMedium
@@ -362,6 +324,7 @@ private fun TeamSettingsContentInternal(
     }
 }
 
+@Suppress("UnusedParameter") // Transfer ownership UI not yet implemented
 @Composable
 private fun TeamMemberItem(
     member: TeamMember,
@@ -404,7 +367,9 @@ private fun TeamMemberItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "${getRoleDisplayName(member.role)} - ${stringResource(Res.string.team_joined)} ${formatDate(member.joinedAt)}",
+                text = "${getRoleDisplayName(
+                    member.role
+                )} - ${stringResource(Res.string.team_joined)} ${formatDate(member.joinedAt)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -442,7 +407,9 @@ private fun InvitationItem(
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "${getRoleDisplayName(invitation.role)} - ${stringResource(Res.string.team_invited_by)} ${invitation.invitedByName}",
+                text = "${getRoleDisplayName(
+                    invitation.role
+                )} - ${stringResource(Res.string.team_invited_by)} ${invitation.invitedByName}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -470,11 +437,13 @@ private fun InviteDialog(
     onDismiss: () -> Unit,
     onInvite: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.team_invite_member)) },
-        text = {
-            Column {
+    DokusDialog(
+        onDismissRequest = { if (!isInviting) onDismiss() },
+        title = stringResource(Res.string.team_invite_member),
+        content = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 PTextFieldStandard(
                     fieldName = stringResource(Res.string.team_invite_email),
                     value = email,
@@ -482,33 +451,37 @@ private fun InviteDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(Modifier.height(16.dp))
-
                 Text(
                     text = stringResource(Res.string.team_invite_role),
                     style = MaterialTheme.typography.labelMedium
                 )
 
-                Spacer(Modifier.height(8.dp))
-
-                RoleSelector(
-                    selectedRole = role,
-                    onRoleSelected = onRoleChange
+                DokusSelectableRowGroup(
+                    items = UserRole.assignable,
+                    selectedItem = role,
+                    onItemSelected = onRoleChange,
+                    itemText = { getRoleDisplayName(it) },
+                    enabled = !isInviting,
                 )
             }
         },
-        confirmButton = {
-            PPrimaryButton(
-                text = if (isInviting) "Sending..." else stringResource(Res.string.team_send_invitation),
-                enabled = !isInviting && email.isNotBlank(),
-                onClick = onInvite
-            )
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = if (isInviting) {
+                stringResource(Res.string.state_sending)
+            } else {
+                stringResource(Res.string.team_send_invitation)
+            },
+            onClick = onInvite,
+            isLoading = isInviting,
+            enabled = !isInviting && email.isNotBlank()
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.cancel),
+            onClick = onDismiss,
+            enabled = !isInviting
+        ),
+        dismissOnBackPress = !isInviting,
+        dismissOnClickOutside = !isInviting
     )
 }
 
@@ -520,67 +493,27 @@ private fun ChangeRoleDialog(
 ) {
     var selectedRole by remember { mutableStateOf(currentRole) }
 
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.team_change_role)) },
-        text = {
-            RoleSelector(
-                selectedRole = selectedRole,
-                onRoleSelected = { selectedRole = it }
+        title = stringResource(Res.string.team_change_role),
+        content = {
+            DokusSelectableRowGroup(
+                items = UserRole.assignable,
+                selectedItem = selectedRole,
+                onItemSelected = { selectedRole = it },
+                itemText = { getRoleDisplayName(it) },
             )
         },
-        confirmButton = {
-            PPrimaryButton(
-                text = "Save",
-                enabled = selectedRole != currentRole,
-                onClick = { onRoleSelected(selectedRole) }
-            )
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_save),
+            onClick = { onRoleSelected(selectedRole) },
+            enabled = selectedRole != currentRole
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.cancel),
+            onClick = onDismiss
+        )
     )
-}
-
-@Composable
-private fun RoleSelector(
-    selectedRole: UserRole,
-    onRoleSelected: (UserRole) -> Unit
-) {
-    Column(modifier = Modifier.selectableGroup()) {
-        UserRole.assignable.forEach { role ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .selectable(
-                        selected = role == selectedRole,
-                        onClick = { onRoleSelected(role) },
-                        role = Role.RadioButton
-                    )
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = role == selectedRole,
-                    onClick = null
-                )
-                Spacer(Modifier.width(8.dp))
-                Column {
-                    Text(
-                        text = getRoleDisplayName(role),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = getRoleDescription(role),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -590,21 +523,25 @@ private fun ConfirmationDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(message) },
-        confirmButton = {
-            PPrimaryButton(
-                text = "Confirm",
-                onClick = onConfirm
+        title = title,
+        content = {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_confirm),
+            onClick = onConfirm,
+            isDestructive = true
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.cancel),
+            onClick = onDismiss
+        )
     )
 }
 
@@ -619,23 +556,12 @@ private fun getRoleDisplayName(role: UserRole): String {
     }
 }
 
-@Composable
-private fun getRoleDescription(role: UserRole): String {
-    return when (role) {
-        UserRole.Owner -> ""
-        UserRole.Admin -> stringResource(Res.string.role_admin_desc)
-        UserRole.Accountant -> stringResource(Res.string.role_accountant_desc)
-        UserRole.Editor -> stringResource(Res.string.role_editor_desc)
-        UserRole.Viewer -> stringResource(Res.string.role_viewer_desc)
-    }
-}
-
 private fun formatDate(dateTime: LocalDateTime): String {
     return try {
         val format = LocalDateTime.Format {
             monthName(MonthNames.ENGLISH_ABBREVIATED)
             char(' ')
-            dayOfMonth()
+            day(padding = Padding.ZERO)
             chars(", ")
             year()
         }

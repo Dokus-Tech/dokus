@@ -1,11 +1,5 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.domain.Email
-import tech.dokus.domain.model.auth.LoginRequest
-import tech.dokus.domain.model.auth.RefreshTokenRequest
-import tech.dokus.domain.model.auth.RegisterRequest
-import tech.dokus.domain.model.auth.ResetPasswordRequest
-import tech.dokus.domain.routes.Identity
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.patch
@@ -14,6 +8,12 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.AuthService
+import tech.dokus.domain.Email
+import tech.dokus.domain.model.auth.LoginRequest
+import tech.dokus.domain.model.auth.RefreshTokenRequest
+import tech.dokus.domain.model.auth.RegisterRequest
+import tech.dokus.domain.model.auth.ResetPasswordRequest
+import tech.dokus.domain.routes.Identity
 
 /**
  * Identity routes using Ktor Type-Safe Routing for unauthenticated operations:

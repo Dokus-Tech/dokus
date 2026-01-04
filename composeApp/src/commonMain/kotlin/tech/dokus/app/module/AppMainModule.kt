@@ -1,19 +1,5 @@
 package tech.dokus.app.module
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.chart_bar_trend_up
-import ai.dokus.app.resources.generated.home_dashboard
-import ai.dokus.app.resources.generated.home_settings
-import ai.dokus.app.resources.generated.settings_appearance
-import ai.dokus.app.resources.generated.settings_group_app
-import ai.dokus.app.resources.generated.settings_group_workspace
-import ai.dokus.app.resources.generated.settings_team
-import ai.dokus.app.resources.generated.settings_workspace_details
-import ai.dokus.app.resources.generated.user
-import ai.dokus.foundation.design.model.HomeItem
-import ai.dokus.foundation.design.model.HomeItemPriority
-import ai.dokus.foundation.navigation.destinations.HomeDestination
-import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Group
@@ -22,6 +8,16 @@ import tech.dokus.app.diModuleApp
 import tech.dokus.app.diModuleUseCases
 import tech.dokus.app.navigation.AppNavigationProvider
 import tech.dokus.app.navigation.HomeNavigationProvider
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chart_bar_trend_up
+import tech.dokus.aura.resources.home_dashboard
+import tech.dokus.aura.resources.home_settings
+import tech.dokus.aura.resources.settings_appearance
+import tech.dokus.aura.resources.settings_group_app
+import tech.dokus.aura.resources.settings_group_workspace
+import tech.dokus.aura.resources.settings_team
+import tech.dokus.aura.resources.settings_workspace_details
+import tech.dokus.aura.resources.user
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
 import tech.dokus.foundation.app.AppModule
@@ -30,6 +26,10 @@ import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.SettingsPriority
+import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.foundation.aura.model.HomeItemPriority
+import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 
 internal object AppMainModule : AppModule {
     // Presentation layer

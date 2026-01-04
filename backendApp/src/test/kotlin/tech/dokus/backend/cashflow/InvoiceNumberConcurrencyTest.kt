@@ -1,10 +1,10 @@
 package tech.dokus.backend.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.InvoiceNumberRepository
-import ai.dokus.foundation.database.services.InvoiceNumberGenerator
-import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
-import ai.dokus.foundation.database.tables.auth.TenantTable
-import ai.dokus.foundation.database.tables.cashflow.InvoiceNumberSequencesTable
+import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
+import tech.dokus.database.services.InvoiceNumberGenerator
+import tech.dokus.database.tables.auth.TenantSettingsTable
+import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.database.tables.cashflow.InvoiceNumberSequencesTable
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.TenantPlan
 import tech.dokus.domain.enums.TenantStatus

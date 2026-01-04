@@ -1,10 +1,10 @@
 package tech.dokus.backend.services.contacts
 
-import ai.dokus.foundation.database.repository.contacts.ContactRepository
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactMatchReason
 import tech.dokus.domain.model.contact.ContactSuggestion
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Service for matching extracted counterparty data to existing contacts.

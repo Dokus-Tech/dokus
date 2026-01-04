@@ -1,16 +1,5 @@
 package tech.dokus.app.screens
 
-import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.components.navigation.DokusNavigationBar
-import ai.dokus.foundation.design.components.navigation.DokusNavigationRail
-import ai.dokus.foundation.design.components.text.AppNameText
-import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.design.local.isLarge
-import ai.dokus.foundation.design.model.HomeItem
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.animation.TransitionsProvider
-import ai.dokus.foundation.navigation.navigateTo
-import ai.dokus.foundation.navigation.rememberSelectedDestination
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -45,6 +34,17 @@ import tech.dokus.app.viewmodel.HomeIntent
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
+import tech.dokus.foundation.aura.components.navigation.DokusNavigationRail
+import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.animation.TransitionsProvider
+import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.rememberSelectedDestination
 
 /**
  * Home screen using FlowMVI Container pattern.
@@ -68,7 +68,7 @@ internal fun HomeScreen(
     } ?: homeItems.first()
 
     // Subscribe to store (no actions to handle for this navigation shell)
-    val state by container.store.subscribe(DefaultLifecycle) { _ ->
+    container.store.subscribe(DefaultLifecycle) { _ ->
         // No actions to handle
     }
 
@@ -122,7 +122,7 @@ private fun HomeNavHost(
         exitTransition = { with(transitionsProvider) { exitTransition } },
         popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
         popExitTransition = { with(transitionsProvider) { popExitTransition } },
-        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
     ) {
         homeNavProviders.forEach { navProvider ->
             with(navProvider) {
@@ -139,20 +139,29 @@ private fun RailNavigationLayout(
     onSelectedItemChange: (HomeItem) -> Unit,
     content: @Composable () -> Unit
 ) {
-    Row(Modifier.fillMaxSize()) {
+    // Detached, calm desktop shell (Revolut structure × Perplexity calm)
+    Row(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
+    ) {
+        // Detached glass rail panel
         Surface(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(240.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            shape = MaterialTheme.shapes.large,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)),
+            tonalElevation = 0.dp,
+            shadowElevation = 2.dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(16.dp)
             ) {
-                AppNameText(modifier = Modifier.padding(bottom = 32.dp))
+                AppNameText(modifier = Modifier.padding(bottom = 24.dp))
 
                 DokusNavigationRail(
                     selectedItem = selectedItem,
@@ -163,13 +172,23 @@ private fun RailNavigationLayout(
             }
         }
 
-        Box(
-            Modifier
+        // Main content area — detached glass container (clips app bars to rounded corners)
+        Surface(
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 8.dp),
-            contentAlignment = Alignment.Center
+                .padding(start = 16.dp),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+            shape = MaterialTheme.shapes.large,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)),
+            tonalElevation = 0.dp,
+            shadowElevation = 1.dp,
         ) {
-            content()
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopStart
+            ) {
+                content()
+            }
         }
     }
 }
@@ -193,18 +212,30 @@ private fun BottomNavigationLayout(
             }
         },
         bottomBar = {
-            DokusNavigationBar(
-                navItems = navItems,
-                selectedItem = selectedItem,
-                onSelectedItemChange = onSelectedItemChange,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Calm, “Dokus” bottom shell: no tinted slab; keep accent only for the selected item.
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+                tonalElevation = 0.dp,
+                shadowElevation = 0.dp,
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
+                )
+            ) {
+                DokusNavigationBar(
+                    navItems = navItems,
+                    selectedItem = selectedItem,
+                    onSelectedItemChange = onSelectedItemChange,
+                    modifier = Modifier
+                        .padding(top = 1.dp)
+                        .fillMaxWidth()
+                )
+            }
         }
     ) { innerPadding ->
         Box(
-            Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             content()

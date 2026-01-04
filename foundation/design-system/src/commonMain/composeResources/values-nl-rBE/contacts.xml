@@ -1,8 +1,0 @@
-<resources>
-    <!-- Contacts Screen -->
-    <string name="contacts_title">Contacten</string>
-    <string name="contacts_empty">Nog geen contacten</string>
-    <string name="contacts_empty_description">Voeg je eerste contact toe om te beginnen</string>
-    <string name="contacts_add">Contact toevoegen</string>
-    <string name="contacts_search">Contacten zoeken...</string>
-</resources>

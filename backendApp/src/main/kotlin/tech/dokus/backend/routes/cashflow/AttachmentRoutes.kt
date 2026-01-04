@@ -1,22 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
-import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
-import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
-import tech.dokus.domain.enums.EntityType
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.AttachmentId
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.ExpenseId
-import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.model.AttachmentDto
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.routes.Attachments
-import tech.dokus.domain.routes.Expenses
-import tech.dokus.domain.routes.Invoices
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.DocumentUploadValidator
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -30,9 +13,27 @@ import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.database.repository.cashflow.DocumentCreatePayload
+import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.ExpenseRepository
+import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.domain.enums.EntityType
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.AttachmentId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.model.AttachmentDto
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.routes.Attachments
+import tech.dokus.domain.routes.Expenses
+import tech.dokus.domain.routes.Invoices
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.storage.DocumentUploadValidator
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
  * Attachment API Routes using Ktor Type-Safe Routing
@@ -74,7 +75,9 @@ internal fun Route.attachmentRoutes() {
                 ?: throw DokusException.NotFound("Invoice not found")
 
             // Handle multipart upload
-            val (fileBytes, filename, contentType) = handleMultipartUpload(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)
+            val (fileBytes, filename, contentType) = handleMultipartUpload(
+                DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES
+            )
 
             val validationError = uploadValidator.validate(fileBytes, filename, contentType)
             if (validationError != null) {
@@ -97,10 +100,13 @@ internal fun Route.attachmentRoutes() {
 
             val documentId = documentRepository.create(
                 tenantId = tenantId,
-                filename = uploadResult.filename,
-                contentType = uploadResult.contentType,
-                sizeBytes = uploadResult.sizeBytes,
-                storageKey = uploadResult.key
+                payload = DocumentCreatePayload(
+                    filename = uploadResult.filename,
+                    contentType = uploadResult.contentType,
+                    sizeBytes = uploadResult.sizeBytes,
+                    storageKey = uploadResult.key,
+                    contentHash = null
+                )
             )
 
             // Link document to invoice by updating invoice's documentId
@@ -166,7 +172,9 @@ internal fun Route.attachmentRoutes() {
                 ?: throw DokusException.NotFound("Expense not found")
 
             // Handle multipart upload
-            val (fileBytes, filename, contentType) = handleMultipartUpload(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)
+            val (fileBytes, filename, contentType) = handleMultipartUpload(
+                DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES
+            )
 
             val validationError = uploadValidator.validate(fileBytes, filename, contentType)
             if (validationError != null) {
@@ -189,10 +197,13 @@ internal fun Route.attachmentRoutes() {
 
             val documentId = documentRepository.create(
                 tenantId = tenantId,
-                filename = uploadResult.filename,
-                contentType = uploadResult.contentType,
-                sizeBytes = uploadResult.sizeBytes,
-                storageKey = uploadResult.key
+                payload = DocumentCreatePayload(
+                    filename = uploadResult.filename,
+                    contentType = uploadResult.contentType,
+                    sizeBytes = uploadResult.sizeBytes,
+                    storageKey = uploadResult.key,
+                    contentHash = null
+                )
             )
 
             // Link document to expense by updating expense's documentId

@@ -1,0 +1,81 @@
+<resources>
+    <!-- Login Screen -->
+    <string name="auth_login_subtitle">Sign in to your account</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_sign_in_button">Sign In</string>
+    <string name="auth_no_account_prefix">Don't have an account? </string>
+    <string name="auth_sign_up_link">Sign up</string>
+
+    <!-- Register Screen -->
+    <string name="auth_register_title">Create Account</string>
+    <string name="auth_first_name_label">First Name</string>
+    <string name="auth_last_name_label">Last Name</string>
+    <string name="auth_register_button">Register</string>
+    <string name="auth_has_account_prefix">Already have an account? </string>
+    <string name="auth_login_link">Login</string>
+
+    <!-- Register Steps -->
+    <string name="auth_register_profile_title">Your profile</string>
+    <string name="auth_register_credentials_title">Credentials</string>
+    <string name="auth_register_success_title">Registration complete</string>
+
+    <!-- Workspace Wizard -->
+    <string name="auth_step_of">Step %1$d of %2$d</string>
+    <string name="auth_workspace_type_prompt">Choose your workspace type</string>
+    <string name="auth_workspace_type_company_description">For registered companies</string>
+    <string name="auth_workspace_type_freelancer_description">For individual freelancers</string>
+    <string name="auth_workspace_type_unavailable">Freelancer workspace already exists</string>
+    <string name="auth_your_name">Your name</string>
+    <string name="auth_company_name_prompt">Company name</string>
+    <string name="auth_company_name_subtitle">We will look up your company details</string>
+    <string name="auth_company_name_label">Company name</string>
+    <string name="auth_company_name_searching">Searching...</string>
+    <string name="auth_company_lookup_failed">Company lookup failed</string>
+    <string name="auth_business_details">Business details</string>
+    <string name="auth_business_details_subtitle">Add VAT and address information</string>
+
+    <!-- Entity Confirmation -->
+    <string name="auth_entity_single_prompt">Is this your company?</string>
+    <string name="auth_entity_single_confirm">Use this company</string>
+    <string name="auth_entity_manual_entry">Enter manually</string>
+    <string name="auth_entity_multiple_title">Select your company</string>
+    <string name="auth_entity_multiple_subtitle">We found multiple matches. Choose one or enter manually.</string>
+
+    <!-- Server Connection -->
+    <string name="auth_server_connection">Server Connection</string>
+    <string name="auth_server_label">Server</string>
+    <string name="auth_dokus_cloud">Dokus Cloud</string>
+    <string name="auth_server_url">Server URL</string>
+    <string name="auth_server_version">Version</string>
+    <string name="auth_change_server">Change Server</string>
+    <string name="auth_reset_cloud">Reset to Cloud</string>
+    <string name="auth_protocol_http">HTTP</string>
+    <string name="auth_protocol_https">HTTPS</string>
+    <string name="auth_protocol_selector">Protocol selector</string>
+    <string name="auth_server_found">Server found</string>
+    <string name="auth_server_name_label">Server name</string>
+    <string name="auth_server_features_label">Features</string>
+    <string name="auth_server_connecting_will">Connecting will:</string>
+    <string name="auth_server_logout_warning">You will be logged out of the current server.</string>
+    <string name="auth_server_reset_warning">Local data will be cleared.</string>
+    <string name="auth_server_reauth_warning">You will need to sign in again.</string>
+    <string name="auth_server_details_title">Server details</string>
+    <string name="auth_protocol_label">Protocol</string>
+    <string name="auth_host_label">Host</string>
+    <string name="auth_port_label">Port</string>
+    <string name="auth_validating">Validating...</string>
+    <string name="auth_connecting">Connecting...</string>
+    <string name="auth_validate_connection">Validate connection</string>
+    <string name="auth_checking_server">Checking server...</string>
+    <string name="auth_use_cloud">Use Dokus Cloud</string>
+    <string name="auth_currently_connected_to">Currently connected to</string>
+    <string name="auth_need_help">Need help?</string>
+    <string name="auth_help_description">Enter your server details or switch to cloud.</string>
+    <string name="auth_host_required">Host is required</string>
+    <string name="auth_host_no_spaces">Host cannot contain spaces</string>
+    <string name="auth_port_required">Port is required</string>
+    <string name="auth_port_invalid_number">Port must be a number</string>
+    <string name="auth_port_out_of_range">Port must be between 1 and 65535</string>
+</resources>

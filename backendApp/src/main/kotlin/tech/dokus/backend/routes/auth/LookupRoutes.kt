@@ -1,16 +1,16 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.entity.EntityLookupResponse
-import tech.dokus.domain.routes.Lookup
-import tech.dokus.foundation.ktor.lookup.CbeApiClient
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.entity.EntityLookupResponse
+import tech.dokus.domain.routes.Lookup
+import tech.dokus.foundation.backend.lookup.CbeApiClient
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Lookup routes for external data searches (CBE company lookup, etc.)
@@ -26,24 +26,41 @@ internal fun Route.lookupRoutes() {
          * Search for companies by name in CBE (Crossroads Bank for Enterprises).
          */
         get<Lookup.Company> { route ->
-            val name = route.name.trim()
-
-            if (name.length < 3) {
-                throw DokusException.BadRequest("Company name must be at least 3 characters")
+            val (name, number) = route.name to route.number
+            if (!name.isValid && !number.isValid) {
+                logger.error("CBE API lookup failed for '$name', '$number'")
+                throw DokusException.BadRequest("Invalid or missing name or number")
             }
 
-            val results = cbeApiClient.searchByName(name).getOrElse { e ->
-                logger.error("CBE API lookup failed for '$name'", e)
-                throw DokusException.InternalError("Company lookup failed. Please try again.")
+            val nameResults = if (name.isValid) {
+                cbeApiClient.searchByName(name)
+            } else {
+                Result.success(emptyList())
+            }
+            val numberResults = if (number.isValid) {
+                cbeApiClient.searchByVat(number)
+            } else {
+                Result.failure(DokusException.Validation.InvalidVatNumber)
             }
 
+            if (nameResults.isFailure && numberResults.isFailure) {
+                logger.error(
+                    "CBE API lookup failed for '$name', '$number'",
+                    nameResults.exceptionOrNull() ?: numberResults.exceptionOrNull()
+                )
+                throw DokusException.InternalError("CBE API lookup failed")
+            }
+
+            val results = buildList {
+                numberResults.onSuccess { add(it) }
+                nameResults.onSuccess { addAll(it) }
+            }
             val response = EntityLookupResponse(
                 results = results,
-                query = name,
-                totalCount = results.size
+                query = "${name}$number",
             )
 
-            call.respond(HttpStatusCode.OK, response)
+            call.respond<EntityLookupResponse>(HttpStatusCode.OK, response)
         }
     }
 }

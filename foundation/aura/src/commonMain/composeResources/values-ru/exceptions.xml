@@ -1,0 +1,75 @@
+<resources>
+    <!-- 400 Validation Errors -->
+    <string name="exception_validation_error">Ошибка валидации</string>
+    <string name="exception_invalid_email">Неверный адрес электронной почты</string>
+    <string name="exception_weak_password">Пароль не соответствует требованиям безопасности</string>
+    <string name="exception_password_do_not_match">Пароли не совпадают</string>
+    <string name="exception_invalid_first_name">Неверное имя</string>
+    <string name="exception_invalid_last_name">Неверная фамилия</string>
+    <string name="exception_invalid_tax_number">Неверный налоговый номер</string>
+    <string name="exception_invalid_workspace_name">Неверное название рабочего пространства</string>
+    <string name="exception_invalid_vat_number">Неверный номер НДС</string>
+    <string name="exception_invalid_iban">Неверный IBAN</string>
+    <string name="exception_invalid_bic">Неверный BIC/SWIFT код</string>
+    <string name="exception_invalid_peppol_id">Неверный Peppol ID</string>
+    <string name="exception_invalid_invoice_number">Неверный номер счёта</string>
+    <string name="exception_invalid_money">Неверная денежная сумма</string>
+    <string name="exception_invalid_vat_rate">Неверная ставка НДС</string>
+    <string name="exception_invalid_percentage">Неверное процентное значение</string>
+    <string name="exception_invalid_quantity">Неверное количество</string>
+    <string name="exception_invoice_client_required">Выберите клиента</string>
+    <string name="exception_invoice_items_required">Добавьте хотя бы одну корректную позицию</string>
+    <string name="exception_invoice_due_date_before_issue">Срок оплаты не может быть раньше даты выставления</string>
+    <string name="exception_invalid_street_name">Неверное название улицы</string>
+    <string name="exception_invalid_city">Неверный город</string>
+    <string name="exception_invalid_postal_code">Неверный почтовый индекс</string>
+    <string name="exception_invalid_country">Неверная страна</string>
+    <string name="exception_api_key_required">Требуется API-ключ</string>
+    <string name="exception_api_secret_required">Требуется секрет API</string>
+    <string name="exception_invalid_api_credentials">Недействительные учётные данные API. Проверьте свой API-ключ и секрет.</string>
+    <string name="exception_missing_vat_number">Сначала настройте номер НДС вашей компании в настройках рабочего пространства</string>
+    <string name="exception_missing_company_address">Сначала настройте адрес вашей компании в настройках рабочего пространства</string>
+
+    <!-- 401 Authentication Errors -->
+    <string name="exception_not_authenticated">Пожалуйста, войдите, чтобы продолжить</string>
+    <string name="exception_invalid_credentials">Неверный адрес электронной почты или пароль</string>
+    <string name="exception_token_expired">Токен аутентификации истёк</string>
+    <string name="exception_token_invalid">Недействительный токен аутентификации</string>
+    <string name="exception_refresh_token_expired">Токен обновления истёк. Пожалуйста, войдите снова.</string>
+    <string name="exception_refresh_token_revoked">Токен обновления был отозван. Пожалуйста, войдите снова.</string>
+    <string name="exception_session_expired">Ваша сессия истекла. Пожалуйста, войдите снова.</string>
+    <string name="exception_session_invalid">Недействительная сессия. Пожалуйста, войдите снова.</string>
+    <string name="exception_password_reset_token_expired">Токен сброса пароля истёк. Пожалуйста, запросите новый.</string>
+    <string name="exception_password_reset_token_invalid">Недействительный токен сброса пароля. Пожалуйста, запросите новый.</string>
+    <string name="exception_email_verification_token_expired">Токен подтверждения email истёк. Пожалуйста, запросите новый.</string>
+    <string name="exception_email_verification_token_invalid">Недействительный токен подтверждения email. Пожалуйста, запросите новый.</string>
+
+    <!-- 403 Authorization Errors -->
+    <string name="exception_not_authorized">У вас нет разрешения на доступ к этому ресурсу</string>
+    <string name="exception_account_inactive">Ваш аккаунт неактивен. Пожалуйста, свяжитесь с поддержкой.</string>
+    <string name="exception_account_locked">Ваш аккаунт заблокирован. Пожалуйста, свяжитесь с поддержкой для разблокировки.</string>
+    <string name="exception_email_not_verified">Пожалуйста, подтвердите свой адрес электронной почты, чтобы продолжить</string>
+    <string name="exception_email_already_verified">Адрес электронной почты уже подтверждён</string>
+    <string name="exception_too_many_sessions">Достигнуто максимальное количество одновременных сессий. Пожалуйста, выйдите с другого устройства.</string>
+
+    <!-- 404 Не найдено -->
+    <string name="exception_not_found">Запрошенный ресурс не найден</string>
+    <string name="exception_user_not_found">Пользователь не найден</string>
+
+    <!-- 409 Conflict Errors -->
+    <string name="exception_user_already_exists">Пользователь с таким email уже существует</string>
+
+    <!-- 429 Rate Limiting Errors -->
+    <string name="exception_too_many_login_attempts">Слишком много попыток входа. Пожалуйста, попробуйте позже.</string>
+
+    <!-- 500 Server Errors -->
+    <string name="exception_internal_error">Произошла внутренняя ошибка. Пожалуйста, попробуйте позже.</string>
+    <string name="exception_tenant_creation_failed">Не удалось создать рабочее пространство. Пожалуйста, попробуйте снова.</string>
+    <string name="exception_unknown">Произошла неизвестная ошибка</string>
+
+    <!-- 501 Не реализовано -->
+    <string name="exception_not_implemented">Эта функция ещё не реализована</string>
+
+    <!-- 503 Service Unavailable -->
+    <string name="exception_connection_error">Ошибка соединения. Пожалуйста, попробуйте позже.</string>
+</resources>

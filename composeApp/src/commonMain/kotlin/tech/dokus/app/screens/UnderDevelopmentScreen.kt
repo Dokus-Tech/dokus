@@ -1,5 +1,5 @@
 package tech.dokus.app.screens
-import ai.dokus.foundation.design.constrains.withContentPadding
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -32,13 +32,51 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.under_development_subtitle
-import ai.dokus.app.resources.generated.under_development_title
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.under_development_subtitle
+import tech.dokus.aura.resources.under_development_title
+import tech.dokus.foundation.aura.constrains.withContentPadding
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+
+// Animation durations in milliseconds
+private const val ANIM_DURATION_PRIMARY = 3000
+private const val ANIM_DURATION_SECONDARY = 2500
+private const val ANIM_DURATION_TERTIARY = 2800
+private const val ANIM_DURATION_PARTICLE = 4000
+private const val ANIM_DURATION_FADE = 1000
+private const val ANIM_DELAY_SHORT = 300
+private const val ANIM_DELAY_MEDIUM = 600
+
+// Canvas drawing constants
+private const val GRID_SPACING = 30f
+private const val GRID_ALPHA = 0.2f
+private const val PARTICLE_COUNT = 12
+private const val PARTICLE_RADIUS = 3f
+private const val PARTICLE_ORBIT_RADIUS = 100f
+private const val PARTICLE_ALPHA_BASE = 0.4f
+private const val PARTICLE_ALPHA_RANGE = 0.4f
+private const val HEX_RADIUS = 80f
+private const val HEX_SIDES = 6
+private const val STROKE_WIDTH_THICK = 3f
+private const val STROKE_WIDTH_MEDIUM = 2.5f
+private const val STROKE_WIDTH_THIN = 2f
+private const val STROKE_WIDTH_LINE = 1f
+private const val TRIANGLE_RADIUS = 50f
+private const val TRIANGLE_SIDES = 3
+private const val TRIANGLE_ALPHA = 0.6f
+private const val SQUARE_SIZE = 140f
+private const val SQUARE_ALPHA = 0.3f
+private const val CENTER_DOT_RADIUS = 8f
+private const val LINE_LENGTH = 60f
+private const val LINE_GRADIENT_ALPHA = 0.8f
+private const val FULL_ROTATION_DEGREES = 360f
+private const val TWO_PI_MULTIPLIER = 2
+private const val CANVAS_SIZE_DP = 280
+private const val SPACER_LARGE_DP = 48
+private const val SPACER_MEDIUM_DP = 16
 
 @Composable
 internal fun UnderDevelopmentScreen() {
@@ -57,7 +95,7 @@ internal fun UnderDevelopmentScreen() {
         progress1.animateTo(
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(3000, easing = FastOutSlowInEasing),
+                animation = tween(ANIM_DURATION_PRIMARY, easing = FastOutSlowInEasing),
                 repeatMode = RepeatMode.Reverse
             )
         )
@@ -67,7 +105,11 @@ internal fun UnderDevelopmentScreen() {
         progress2.animateTo(
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(2500, delayMillis = 300, easing = FastOutSlowInEasing),
+                animation = tween(
+                    ANIM_DURATION_SECONDARY,
+                    delayMillis = ANIM_DELAY_SHORT,
+                    easing = FastOutSlowInEasing
+                ),
                 repeatMode = RepeatMode.Reverse
             )
         )
@@ -77,7 +119,11 @@ internal fun UnderDevelopmentScreen() {
         progress3.animateTo(
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(2800, delayMillis = 600, easing = FastOutSlowInEasing),
+                animation = tween(
+                    ANIM_DURATION_TERTIARY,
+                    delayMillis = ANIM_DELAY_MEDIUM,
+                    easing = FastOutSlowInEasing
+                ),
                 repeatMode = RepeatMode.Reverse
             )
         )
@@ -87,7 +133,7 @@ internal fun UnderDevelopmentScreen() {
         particleProgress.animateTo(
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(4000, easing = LinearEasing),
+                animation = tween(ANIM_DURATION_PARTICLE, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart
             )
         )
@@ -96,14 +142,14 @@ internal fun UnderDevelopmentScreen() {
     LaunchedEffect(Unit) {
         titleAlpha.animateTo(
             targetValue = 1f,
-            animationSpec = tween(1000, delayMillis = 300, easing = FastOutSlowInEasing)
+            animationSpec = tween(ANIM_DURATION_FADE, delayMillis = ANIM_DELAY_SHORT, easing = FastOutSlowInEasing)
         )
     }
 
     LaunchedEffect(Unit) {
         subtitleAlpha.animateTo(
             targetValue = 1f,
-            animationSpec = tween(1000, delayMillis = 600, easing = FastOutSlowInEasing)
+            animationSpec = tween(ANIM_DURATION_FADE, delayMillis = ANIM_DELAY_MEDIUM, easing = FastOutSlowInEasing)
         )
     }
 
@@ -120,7 +166,7 @@ internal fun UnderDevelopmentScreen() {
         ) {
             // Custom Canvas Animation
             Canvas(
-                modifier = Modifier.size(280.dp)
+                modifier = Modifier.size(CANVAS_SIZE_DP.dp)
             ) {
                 val canvasWidth = size.width
                 val canvasHeight = size.height
@@ -128,63 +174,61 @@ internal fun UnderDevelopmentScreen() {
                 val centerY = canvasHeight / 2
 
                 // Background grid pattern (subtle)
-                val gridSpacing = 30f
-                for (i in 0..canvasWidth.toInt() step gridSpacing.toInt()) {
+                for (i in 0..canvasWidth.toInt() step GRID_SPACING.toInt()) {
                     drawLine(
-                        color = surfaceVariant.copy(alpha = 0.2f),
+                        color = surfaceVariant.copy(alpha = GRID_ALPHA),
                         start = Offset(i.toFloat(), 0f),
                         end = Offset(i.toFloat(), canvasHeight),
-                        strokeWidth = 1f
+                        strokeWidth = STROKE_WIDTH_LINE
                     )
                 }
-                for (i in 0..canvasHeight.toInt() step gridSpacing.toInt()) {
+                for (i in 0..canvasHeight.toInt() step GRID_SPACING.toInt()) {
                     drawLine(
-                        color = surfaceVariant.copy(alpha = 0.2f),
+                        color = surfaceVariant.copy(alpha = GRID_ALPHA),
                         start = Offset(0f, i.toFloat()),
                         end = Offset(canvasWidth, i.toFloat()),
-                        strokeWidth = 1f
+                        strokeWidth = STROKE_WIDTH_LINE
                     )
                 }
 
                 // Animated particles orbiting
-                val particleCount = 12
-                val orbitRadius = 100f
-                for (i in 0 until particleCount) {
-                    val angle = (2 * PI * i / particleCount) + (particleProgress.value * 2 * PI)
-                    val x = centerX + (orbitRadius * cos(angle)).toFloat()
-                    val y = centerY + (orbitRadius * sin(angle)).toFloat()
-                    val particleAlpha =
-                        0.4f + (sin(angle + particleProgress.value * 2 * PI) * 0.4f).toFloat()
+                for (i in 0 until PARTICLE_COUNT) {
+                    val baseAngle = TWO_PI_MULTIPLIER * PI * i / PARTICLE_COUNT
+                    val animOffset = particleProgress.value * TWO_PI_MULTIPLIER * PI
+                    val angle = baseAngle + animOffset
+                    val x = centerX + (PARTICLE_ORBIT_RADIUS * cos(angle)).toFloat()
+                    val y = centerY + (PARTICLE_ORBIT_RADIUS * sin(angle)).toFloat()
+                    val particleAlpha = PARTICLE_ALPHA_BASE +
+                        (sin(angle + animOffset) * PARTICLE_ALPHA_RANGE).toFloat()
 
                     drawCircle(
                         color = primaryColor.copy(alpha = particleAlpha),
-                        radius = 3f,
+                        radius = PARTICLE_RADIUS,
                         center = Offset(x, y)
                     )
                 }
 
                 // Central hexagon outline (animated)
-                val hexRadius = 80f
                 val hexPath = Path().apply {
-                    for (i in 0..6) {
-                        val angle = (PI / 3 * i) - PI / 2
-                        val x = centerX + (hexRadius * cos(angle) * progress1.value).toFloat()
-                        val y = centerY + (hexRadius * sin(angle) * progress1.value).toFloat()
+                    for (i in 0..HEX_SIDES) {
+                        val angle = (PI / TRIANGLE_SIDES * i) - PI / 2
+                        val x = centerX + (HEX_RADIUS * cos(angle) * progress1.value).toFloat()
+                        val y = centerY + (HEX_RADIUS * sin(angle) * progress1.value).toFloat()
                         if (i == 0) moveTo(x, y) else lineTo(x, y)
                     }
                 }
                 drawPath(
                     path = hexPath,
                     color = primaryColor,
-                    style = Stroke(width = 3f, cap = StrokeCap.Round)
+                    style = Stroke(width = STROKE_WIDTH_THICK, cap = StrokeCap.Round)
                 )
 
                 // Inner triangle (rotating)
-                rotate(degrees = particleProgress.value * 360f, pivot = Offset(centerX, centerY)) {
-                    val triangleRadius = 50f * progress2.value
+                rotate(degrees = particleProgress.value * FULL_ROTATION_DEGREES, pivot = Offset(centerX, centerY)) {
+                    val triangleRadius = TRIANGLE_RADIUS * progress2.value
                     val trianglePath = Path().apply {
-                        for (i in 0..3) {
-                            val angle = (2 * PI / 3 * i) - PI / 2
+                        for (i in 0..TRIANGLE_SIDES) {
+                            val angle = (TWO_PI_MULTIPLIER * PI / TRIANGLE_SIDES * i) - PI / 2
                             val x = centerX + (triangleRadius * cos(angle)).toFloat()
                             val y = centerY + (triangleRadius * sin(angle)).toFloat()
                             if (i == 0) moveTo(x, y) else lineTo(x, y)
@@ -192,24 +236,24 @@ internal fun UnderDevelopmentScreen() {
                     }
                     drawPath(
                         path = trianglePath,
-                        color = primaryColor.copy(alpha = 0.6f),
-                        style = Stroke(width = 2.5f, cap = StrokeCap.Round)
+                        color = primaryColor.copy(alpha = TRIANGLE_ALPHA),
+                        style = Stroke(width = STROKE_WIDTH_MEDIUM, cap = StrokeCap.Round)
                     )
                 }
 
                 // Outer square (pulsing)
-                val squareSize = 140f * progress3.value
+                val squareSize = SQUARE_SIZE * progress3.value
                 drawRect(
-                    color = primaryColor.copy(alpha = 0.3f),
+                    color = primaryColor.copy(alpha = SQUARE_ALPHA),
                     topLeft = Offset(centerX - squareSize / 2, centerY - squareSize / 2),
                     size = Size(squareSize, squareSize),
-                    style = Stroke(width = 2f, cap = StrokeCap.Round)
+                    style = Stroke(width = STROKE_WIDTH_THIN, cap = StrokeCap.Round)
                 )
 
                 // Central dot
                 drawCircle(
                     color = primaryColor,
-                    radius = 8f,
+                    radius = CENTER_DOT_RADIUS,
                     center = Offset(centerX, centerY)
                 )
 
@@ -219,14 +263,14 @@ internal fun UnderDevelopmentScreen() {
                     brush = Brush.linearGradient(
                         colors = listOf(
                             primaryColor.copy(alpha = 0f),
-                            primaryColor.copy(alpha = 0.8f)
+                            primaryColor.copy(alpha = LINE_GRADIENT_ALPHA)
                         ),
                         start = Offset(centerX, centerY),
-                        end = Offset(centerX + 60f * lineProgress, centerY)
+                        end = Offset(centerX + LINE_LENGTH * lineProgress, centerY)
                     ),
                     start = Offset(centerX, centerY),
-                    end = Offset(centerX + 60f * lineProgress, centerY),
-                    strokeWidth = 2f,
+                    end = Offset(centerX + LINE_LENGTH * lineProgress, centerY),
+                    strokeWidth = STROKE_WIDTH_THIN,
                     cap = StrokeCap.Round
                 )
 
@@ -234,31 +278,31 @@ internal fun UnderDevelopmentScreen() {
                     brush = Brush.linearGradient(
                         colors = listOf(
                             primaryColor.copy(alpha = 0f),
-                            primaryColor.copy(alpha = 0.8f)
+                            primaryColor.copy(alpha = LINE_GRADIENT_ALPHA)
                         ),
                         start = Offset(centerX, centerY),
-                        end = Offset(centerX - 60f * lineProgress, centerY)
+                        end = Offset(centerX - LINE_LENGTH * lineProgress, centerY)
                     ),
                     start = Offset(centerX, centerY),
-                    end = Offset(centerX - 60f * lineProgress, centerY),
-                    strokeWidth = 2f,
+                    end = Offset(centerX - LINE_LENGTH * lineProgress, centerY),
+                    strokeWidth = STROKE_WIDTH_THIN,
                     cap = StrokeCap.Round
                 )
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(SPACER_LARGE_DP.dp))
 
             // Title
             Text(
                 text = stringResource(Res.string.under_development_title),
                 style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.alpha(titleAlpha.value)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(SPACER_MEDIUM_DP.dp))
 
             // Subtitle
             Text(

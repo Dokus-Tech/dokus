@@ -1,15 +1,5 @@
 package tech.dokus.app.screens
 
-import ai.dokus.app.cashflow.components.PendingDocumentsCard
-import ai.dokus.foundation.design.components.AvatarShape
-import ai.dokus.foundation.design.components.AvatarSize
-import ai.dokus.foundation.design.components.CompanyAvatarImage
-import ai.dokus.foundation.design.components.common.PSearchFieldCompact
-import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
-import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.navigation.destinations.AuthDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -36,6 +26,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,14 +41,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
+import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.viewmodel.DashboardAction
 import tech.dokus.app.viewmodel.DashboardContainer
 import tech.dokus.app.viewmodel.DashboardIntent
 import tech.dokus.app.viewmodel.DashboardState
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_search
+import tech.dokus.aura.resources.search_placeholder
+import tech.dokus.aura.resources.settings_select_workspace
+import tech.dokus.aura.resources.settings_switch_workspace
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.cashflow.presentation.cashflow.components.PendingDocumentsCard
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.AvatarShape
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
+import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 
 /**
  * Dashboard screen using FlowMVI Container pattern.
@@ -67,10 +77,21 @@ internal fun DashboardScreen(
     container: DashboardContainer = container()
 ) {
     val navController = LocalNavController.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     val isLargeScreen = LocalScreenSize.current.isLarge
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
     val searchExpanded = isLargeScreen || isSearchExpanded
+
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
@@ -81,7 +102,7 @@ internal fun DashboardScreen(
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
             }
             is DashboardAction.ShowError -> {
-                // TODO: Show snackbar or error state
+                pendingError = action.error
             }
         }
     }
@@ -116,7 +137,7 @@ internal fun DashboardScreen(
                             ) {
                                 Icon(
                                     imageVector = FeatherIcons.Search,
-                                    contentDescription = "Search"
+                                    contentDescription = stringResource(Res.string.action_search)
                                 )
                             }
                         }
@@ -129,7 +150,7 @@ internal fun DashboardScreen(
                             PSearchFieldCompact(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
-                                placeholder = "Search...",
+                                placeholder = stringResource(Res.string.search_placeholder),
                                 modifier = if (isLargeScreen) Modifier else Modifier.fillMaxWidth()
                             )
                         }
@@ -152,19 +173,21 @@ internal fun DashboardScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = currentTenant?.displayName?.value ?: "Select Workspace",
+                            text = currentTenant?.displayName?.value
+                                ?: stringResource(Res.string.settings_select_workspace),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(Modifier.width(8.dp))
                         Icon(
                             imageVector = Icons.Default.SwitchAccount,
-                            contentDescription = "Switch workspace",
+                            contentDescription = stringResource(Res.string.settings_switch_workspace),
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
         // Mobile dashboard content
         if (!isLargeScreen) {

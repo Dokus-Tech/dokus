@@ -1,10 +1,10 @@
 package tech.dokus.foundation.app.network
 
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Monitors connection to the Dokus server based on actual API request results.

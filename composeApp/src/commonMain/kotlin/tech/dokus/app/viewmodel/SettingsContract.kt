@@ -1,12 +1,12 @@
 package tech.dokus.app.viewmodel
 
-import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.Tenant
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -27,21 +27,21 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface SettingsState : MVIState, DokusState<Tenant?> {
+sealed interface SettingsState : MVIState, DokusState<Tenant> {
 
     /**
      * Loading state - fetching current tenant.
      */
-    data object Loading : SettingsState
+    data object Loading : SettingsState, DokusState.Loading<Tenant>
 
     /**
      * Content state - tenant loaded and ready for display.
      *
-     * @property tenant The current tenant/workspace
+     * @property data The current tenant/workspace
      */
     data class Content(
-        val tenant: Tenant?,
-    ) : SettingsState
+        override val data: Tenant,
+    ) : SettingsState, DokusState.Success<Tenant>
 
     /**
      * Error state - failed to load tenant.
@@ -52,7 +52,7 @@ sealed interface SettingsState : MVIState, DokusState<Tenant?> {
     data class Error(
         override val exception: DokusException,
         override val retryHandler: RetryHandler,
-    ) : SettingsState, DokusState.Error<Tenant?>
+    ) : SettingsState, DokusState.Error<Tenant>
 }
 
 // ============================================================================
@@ -80,5 +80,5 @@ sealed interface SettingsAction : MVIAction {
     data object NavigateToWorkspaceSelect : SettingsAction
 
     /** Show error message */
-    data class ShowError(val message: String) : SettingsAction
+    data class ShowError(val error: DokusException) : SettingsAction
 }

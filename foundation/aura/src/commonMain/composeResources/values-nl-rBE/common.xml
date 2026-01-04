@@ -1,0 +1,131 @@
+<resources>
+    <!-- Common Actions -->
+    <string name="action_back">Terug</string>
+    <string name="action_save">Opslaan</string>
+    <string name="action_save_changes">Wijzigingen opslaan</string>
+    <string name="action_cancel">Annuleren</string>
+    <string name="action_delete">Verwijderen</string>
+    <string name="action_confirm">Bevestigen</string>
+    <string name="action_continue">Doorgaan</string>
+    <string name="action_approve">Goedkeuren</string>
+    <string name="action_reject">Afwijzen</string>
+    <string name="action_search">Zoeken</string>
+    <string name="action_or">of</string>
+    <string name="action_next">Volgende</string>
+    <string name="action_change">Wijzigen</string>
+    <string name="action_close">Sluiten</string>
+    <string name="action_upload">Uploaden</string>
+    <string name="action_remove">Verwijderen</string>
+    <string name="action_view">Bekijken</string>
+    <string name="action_done">Klaar</string>
+    <string name="action_connect">Verbinden</string>
+    <string name="action_clear">Wissen</string>
+    <string name="action_clear_field">%1$s wissen</string>
+    <string name="action_expand_options">Opties uitklappen</string>
+    <string name="action_expand">Uitklappen</string>
+    <string name="action_collapse">Inklappen</string>
+    <string name="action_select">Selecteren</string>
+    <string name="action_select_date">Datum selecteren</string>
+    <string name="action_discard">Verwerpen</string>
+    <string name="action_fit">Passend</string>
+    <string name="action_zoom_in">Inzoomen</string>
+    <string name="action_zoom_out">Uitzoomen</string>
+
+    <!-- Common States -->
+    <string name="state_loading">Laden...</string>
+    <string name="state_error">Er is een fout opgetreden</string>
+    <string name="state_empty">Geen gegevens beschikbaar</string>
+    <string name="state_retry">Opnieuw proberen</string>
+    <string name="state_connecting">Verbinden...</string>
+    <string name="state_saving">Opslaan...</string>
+    <string name="state_confirming">Bevestigen...</string>
+    <string name="state_unsaved_changes">Je hebt niet-opgeslagen wijzigingen</string>
+    <string name="state_offline">Offline</string>
+    <string name="state_creating">Aanmaken...</string>
+    <string name="state_uploading">Uploaden...</string>
+    <string name="state_sending">Verzenden...</string>
+    <string name="state_removing">Verwijderen...</string>
+
+    <!-- Common Values -->
+    <string name="common_unknown">Onbekend</string>
+    <string name="common_empty_value">-</string>
+    <string name="common_label_value">%1$s: %2$s</string>
+    <string name="common_numbered_step">%1$d. %2$s</string>
+    <string name="common_currency">Valuta</string>
+    <string name="common_bank_account">Bankrekening</string>
+    <string name="common_notes">Notities</string>
+    <string name="common_date">Datum</string>
+    <string name="common_vat_value">BTW: %1$s</string>
+    <string name="common_percent_value">%1$s%%</string>
+    <string name="common_file_size_bytes">%1$d B</string>
+    <string name="common_file_size_kb">%1$.1f KB</string>
+    <string name="common_file_size_mb">%1$.1f MB</string>
+    <string name="common_country_value">Land: %1$s</string>
+    <string name="common_action_irreversible">Deze actie is onomkeerbaar</string>
+    <string name="search_placeholder">Zoeken...</string>
+    <string name="field_required">%1$s *</string>
+    <string name="field_optional">%1$s (optioneel)</string>
+
+    <!-- Connection -->
+    <string name="connection_server_unreachable">Server niet bereikbaar</string>
+    <string name="connection_connected">Verbonden</string>
+
+    <!-- Dates -->
+    <string name="date_format_long">%2$d %1$s %3$d</string>
+    <string name="date_format_short">%2$d %1$s %3$d</string>
+    <string name="date_month_long_january">januari</string>
+    <string name="date_month_long_february">februari</string>
+    <string name="date_month_long_march">maart</string>
+    <string name="date_month_long_april">april</string>
+    <string name="date_month_long_may">mei</string>
+    <string name="date_month_long_june">juni</string>
+    <string name="date_month_long_july">juli</string>
+    <string name="date_month_long_august">augustus</string>
+    <string name="date_month_long_september">september</string>
+    <string name="date_month_long_october">oktober</string>
+    <string name="date_month_long_november">november</string>
+    <string name="date_month_long_december">december</string>
+    <string name="date_month_short_jan">jan</string>
+    <string name="date_month_short_feb">feb</string>
+    <string name="date_month_short_mar">mrt</string>
+    <string name="date_month_short_apr">apr</string>
+    <string name="date_month_short_may">mei</string>
+    <string name="date_month_short_jun">jun</string>
+    <string name="date_month_short_jul">jul</string>
+    <string name="date_month_short_aug">aug</string>
+    <string name="date_month_short_sep">sep</string>
+    <string name="date_month_short_oct">okt</string>
+    <string name="date_month_short_nov">nov</string>
+    <string name="date_month_short_dec">dec</string>
+
+    <!-- Countries -->
+    <string name="country_belgium">België</string>
+    <string name="country_france">Frankrijk</string>
+    <string name="country_netherlands">Nederland</string>
+
+    <!-- Under Development -->
+    <string name="under_development_title">Iets betrouwbaars bouwen</string>
+    <string name="under_development_subtitle">Deze functie wordt zorgvuldig ontwikkeld.\nGemaakt om aan uw behoeften te voldoen.</string>
+
+    <!-- Registration Success -->
+    <string name="registration_success_message">U bent succesvol geregistreerd en kunt nu alle spannende functies verkennen die we te bieden hebben.</string>
+
+    <!-- Server Connection -->
+    <string name="connect_to_server">Verbinden met server</string>
+    <!-- Legacy aliases for backward compatibility -->
+    <string name="back">Terug</string>
+    <string name="approve">Goedkeuren</string>
+    <string name="reject">Afwijzen</string>
+    <string name="save_changes">Wijzigingen opslaan</string>
+    <string name="cancel">Annuleren</string>
+    <string name="delete">Verwijderen</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Afbeelding bijsnijden</string>
+    <string name="image_cropper_apply">Toepassen</string>
+    <string name="image_cropper_hint">Knijp om te zoomen, sleep om te verschuiven</string>
+    <string name="image_cropper_content_description">Afbeelding om bij te snijden</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Bedrijfsavatar</string>
+</resources>

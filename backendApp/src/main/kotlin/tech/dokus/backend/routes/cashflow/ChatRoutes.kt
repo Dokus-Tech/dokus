@@ -1,15 +1,18 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.ai.agents.ChatAgent
-import ai.dokus.ai.agents.ConversationMessage
-import ai.dokus.ai.config.AIProviderFactory
-import tech.dokus.foundation.ktor.config.AIConfig
-import tech.dokus.foundation.ktor.config.ModelPurpose
-import ai.dokus.ai.services.EmbeddingService
-import ai.dokus.ai.services.RAGService
-import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
-import tech.dokus.domain.repository.ChatRepository
-import tech.dokus.domain.repository.ChunkRepository
+import io.ktor.client.HttpClient
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -26,21 +29,19 @@ import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionListResponse
 import tech.dokus.domain.model.ai.MessageRole
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import io.ktor.client.HttpClient
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
-import ai.dokus.ai.agents.MessageRole as AgentMessageRole
+import tech.dokus.domain.repository.ChatRepository
+import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.features.ai.agents.ChatAgent
+import tech.dokus.features.ai.agents.ConversationMessage
+import tech.dokus.features.ai.config.AIModels
+import tech.dokus.features.ai.config.AIProviderFactory
+import tech.dokus.features.ai.services.EmbeddingService
+import tech.dokus.features.ai.services.RAGService
+import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.ModelPurpose
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.features.ai.agents.MessageRole as AgentMessageRole
 
 /**
  * Chat routes for RAG-powered document Q&A.
@@ -72,7 +73,6 @@ internal fun Route.chatRoutes() {
     val chatAgent = ChatAgent(executor, model, ragService)
 
     authenticateJwt {
-
         // =========================================================================
         // Cross-Document Chat
         // =========================================================================
@@ -312,13 +312,14 @@ internal fun Route.chatRoutes() {
          * Response: ChatConfiguration
          */
         get("/api/v1/chat/config") {
+            val chatModelName = AIModels.chatModel(aiConfig.mode).id
             val configuration = ChatConfiguration(
                 maxMessageLength = 4000,
                 maxChunksPerQuery = 10,
                 defaultChunksPerQuery = 5,
                 streamingEnabled = false,
-                availableModels = listOf(aiConfig.models.chat),
-                defaultModel = aiConfig.models.chat,
+                availableModels = listOf(chatModelName),
+                defaultModel = chatModelName,
                 crossDocumentChatEnabled = true,
                 minDocumentsForCrossDocChat = 1
             )
@@ -469,8 +470,8 @@ private suspend fun processChat(
         documentId = documentId,
         citations = citations,
         chunksRetrieved = chatResult.chunksRetrieved,
-        aiModel = aiConfig.models.chat,
-        aiProvider = aiConfig.defaultProvider.name.lowercase(),
+        aiModel = AIModels.chatModel(aiConfig.mode).id,
+        aiProvider = "ollama",
         generationTimeMs = generationTimeMs,
         promptTokens = null, // TODO: Track from LLM response
         completionTokens = null,
@@ -481,7 +482,7 @@ private suspend fun processChat(
 
     logger.info(
         "Chat completed: session=$sessionId, chunks=${chatResult.chunksRetrieved}, " +
-                "citations=${citations?.size ?: 0}, time=${generationTimeMs}ms"
+            "citations=${citations?.size ?: 0}, time=${generationTimeMs}ms"
     )
 
     // Build response metadata
@@ -490,8 +491,8 @@ private suspend fun processChat(
         chunksUsed = chatResult.citations.size,
         contextTokens = null,
         generationTimeMs = generationTimeMs,
-        model = aiConfig.models.chat,
-        provider = aiConfig.defaultProvider.name.lowercase(),
+        model = AIModels.chatModel(aiConfig.mode).id,
+        provider = "ollama",
         promptTokens = null,
         completionTokens = null,
         totalTokens = null

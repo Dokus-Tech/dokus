@@ -1,14 +1,14 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.app.auth.AuthInitializer
-import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.config.ServerConfigManager
-import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.config.ServerConfigManager
+import tech.dokus.features.auth.AuthInitializer
+import tech.dokus.foundation.platform.Logger
 
 internal typealias BootstrapCtx = PipelineContext<BootstrapState, BootstrapIntent, BootstrapAction>
 
@@ -41,6 +41,7 @@ internal class BootstrapContainer(
             }
         }
 
+    @Suppress("ReturnCount") // Multiple early returns for different bootstrap outcomes
     private suspend fun BootstrapCtx.handleLoad() {
         logger.d { "Starting bootstrap process" }
 
@@ -99,20 +100,11 @@ internal class BootstrapContainer(
         }
     }
 
-    private fun needsUpdate(): Boolean {
-        // TODO: Implement update check
-        return false
-    }
+    @Suppress("FunctionOnlyReturningConstant") // TODO: Implement update check
+    private fun needsUpdate(): Boolean = false
 
-    private fun needsAccountConfirmation(): Boolean {
-        // TODO: Implement account status check
-        // Check if user is active - fetches from network and updates local database
-        // val user = userRepository.fetchCurrentUser().getOrElse {
-        //     return false // TODO: Handle cases when there is no internet
-        // }
-        // return user.status == UserStatus.PENDING_VERIFICATION
-        return false
-    }
+    @Suppress("FunctionOnlyReturningConstant") // TODO: Implement account status check
+    private fun needsAccountConfirmation(): Boolean = false
 
     private suspend fun needsTenantSelection(): Boolean {
         val claims = tokenManager.getCurrentClaims()

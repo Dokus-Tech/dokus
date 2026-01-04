@@ -1,7 +1,7 @@
 package tech.dokus.foundation.app.state
 
-import tech.dokus.domain.asbtractions.RetryHandler
 import kotlinx.coroutines.flow.MutableStateFlow
+import tech.dokus.domain.asbtractions.RetryHandler
 
 suspend fun <T> MutableStateFlow<DokusState<T>>.emitIdle() {
     emit(DokusState.idle<T>())

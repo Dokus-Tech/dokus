@@ -1,9 +1,11 @@
+@file:Suppress("ReturnCount") // Deep link parsing requires multiple early returns for validation
+
 package tech.dokus.domain.model.common
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.common.DeepLink.Companion.APP_SCHEME
 import tech.dokus.domain.model.common.DeepLink.Companion.HTTPS_SCHEME
-import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 
 /**
@@ -46,7 +48,7 @@ value class DeepLink(val value: String) {
 
 enum class KnownDeepLinks(val path: DeepLink, val pattern: DeepLink) {
     QrDecision(DeepLink("auth/qr/decision"), DeepLink("auth/qr/decision?s={sessionId}&t={token}")),
-    ServerConnect(DeepLink("connect"), DeepLink("connect?host={host}&port={port}&protocol={protocol}"));
+    ServerConnect(DeepLink("connect"), DeepLink("connect?host={host}&port={port}&protocol={protocol}"))
 }
 
 object DeepLinks {

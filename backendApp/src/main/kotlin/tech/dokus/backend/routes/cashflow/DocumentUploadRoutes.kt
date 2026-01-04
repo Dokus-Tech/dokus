@@ -1,25 +1,33 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.DocumentIngestionRunRepository
-import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
-import ai.dokus.foundation.database.repository.cashflow.IngestionRunSummary
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentIngestionDto
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.routes.Documents
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.DocumentUploadValidator
-import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 import io.ktor.http.*
 import io.ktor.http.content.*
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.*
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.DocumentCreatePayload
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.ExpenseRepository
+import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.routes.Documents
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.storage.DocumentUploadValidator
+import java.security.MessageDigest
+import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /** Allowed prefixes for document storage */
 private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses", "receipts")
@@ -39,8 +47,22 @@ internal fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentRepository by inject<DocumentRepository>()
     val ingestionRepository by inject<DocumentIngestionRunRepository>()
+    val draftRepository by inject<DocumentDraftRepository>()
+    val invoiceRepository by inject<InvoiceRepository>()
+    val billRepository by inject<BillRepository>()
+    val expenseRepository by inject<ExpenseRepository>()
     val uploadValidator by inject<DocumentUploadValidator>()
     val logger = LoggerFactory.getLogger("DocumentUploadRoutes")
+    val context = DocumentUploadContext(
+        minioStorage = minioStorage,
+        documentRepository = documentRepository,
+        ingestionRepository = ingestionRepository,
+        draftRepository = draftRepository,
+        invoiceRepository = invoiceRepository,
+        billRepository = billRepository,
+        expenseRepository = expenseRepository,
+        logger = logger
+    )
 
     authenticateJwt {
         /**
@@ -58,101 +80,29 @@ internal fun Route.documentUploadRoutes() {
 
             logger.info("Document upload request from tenant: $tenantId")
 
-            // Handle multipart upload
-            val multipart = call.receiveMultipart()
-            var fileBytes: ByteArray? = null
-            var filename: String? = null
-            var contentType: String? = null
-            var prefix = "documents" // default prefix
+            val payload = call.readUploadPayload()
+            validateUploadPayload(payload, uploadValidator, logger)
 
-            multipart.forEachPart { part ->
-                when (part) {
-                    is PartData.FileItem -> {
-                        filename = part.originalFileName ?: "unknown"
-                        contentType = part.contentType?.toString() ?: "application/octet-stream"
-
-                        // Read file content
-                        fileBytes = part.readBytesWithLimit(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)
-                    }
-                    is PartData.FormItem -> {
-                        if (part.name == "prefix") {
-                            val requestedPrefix = part.value.ifBlank { "documents" }
-                            // Validate prefix to prevent path traversal
-                            if (requestedPrefix !in ALLOWED_PREFIXES) {
-                                throw DokusException.BadRequest(
-                                    "Invalid prefix. Allowed values: ${ALLOWED_PREFIXES.joinToString()}"
-                                )
-                            }
-                            prefix = requestedPrefix
-                        }
-                    }
-                    else -> { /* Ignore */ }
-                }
-                part.dispose()
-            }
-
-            if (fileBytes == null || filename == null) {
-                throw DokusException.BadRequest("No file provided in request")
-            }
-
-            val validationError = uploadValidator.validate(
-                fileContent = fileBytes!!,
-                filename = filename!!,
-                mimeType = contentType!!,
-            )
-            if (validationError != null) {
-                logger.warn("File validation failed: $validationError")
-                throw DokusException.Validation.Generic(validationError)
-            }
-
-            // Upload to MinIO
-            logger.info("Uploading to MinIO: tenant=$tenantId, prefix=$prefix")
-
-            val result = minioStorage.uploadDocument(
-                tenantId = tenantId,
-                prefix = prefix,
-                filename = filename!!,
-                data = fileBytes!!,
-                contentType = contentType!!
-            )
-
-            // Create document record in database
-            val documentId = documentRepository.create(
-                tenantId = tenantId,
-                filename = result.filename,
-                contentType = result.contentType,
-                sizeBytes = result.sizeBytes,
-                storageKey = result.key
-            )
-
-            logger.info("Document created: id=$documentId, key=${result.key}, size=${result.sizeBytes}")
-
-            // Create ingestion run for AI extraction
-            val runId = ingestionRepository.createRun(
-                documentId = documentId,
-                tenantId = tenantId
-            )
-
-            logger.info("Ingestion run created: id=$runId, documentId=$documentId")
-
-            // Fetch the created document to return full DTO
-            val document = documentRepository.getById(tenantId, documentId)
-                ?: throw DokusException.InternalError("Failed to retrieve created document")
-
-            // Fetch the ingestion run to return full DTO
-            val ingestionRun = ingestionRepository.getById(runId, tenantId)
-                ?: throw DokusException.InternalError("Failed to retrieve created ingestion run")
-
-            // Return DocumentRecordDto with draft=null (no draft yet - document is queued)
-            call.respond(
-                HttpStatusCode.Created,
-                DocumentRecordDto(
-                    document = document.copy(downloadUrl = result.url),
-                    draft = null,  // No draft until extraction completes
-                    latestIngestion = ingestionRun.toDto(),
-                    confirmedEntity = null
+            val contentHash = sha256Hex(payload.fileBytes)
+            val existingDocument = documentRepository.getByContentHash(tenantId, contentHash)
+            if (existingDocument != null) {
+                logger.info("Duplicate document detected, reusing existing record: ${existingDocument.id}")
+                val record = buildExistingDocumentRecord(
+                    tenantId = tenantId,
+                    existingDocument = existingDocument,
+                    context = context
                 )
+                call.respond(HttpStatusCode.OK, record)
+                return@post
+            }
+
+            val record = createNewDocumentRecord(
+                tenantId = tenantId,
+                payload = payload,
+                contentHash = contentHash,
+                context = context
             )
+            call.respond(HttpStatusCode.Created, record)
         }
 
         // NOTE: GET /api/v1/documents/{id} and DELETE /api/v1/documents/{id}
@@ -160,18 +110,169 @@ internal fun Route.documentUploadRoutes() {
     }
 }
 
-/**
- * Convert IngestionRunSummary to DTO for API response.
- */
-private fun IngestionRunSummary.toDto(): DocumentIngestionDto = DocumentIngestionDto(
-    id = id,
-    documentId = documentId,
-    tenantId = tenantId,
-    status = status,
-    provider = provider,
-    queuedAt = queuedAt,
-    startedAt = startedAt,
-    finishedAt = finishedAt,
-    errorMessage = errorMessage,
-    confidence = confidence
+private data class UploadPayload(
+    val fileBytes: ByteArray,
+    val filename: String,
+    val contentType: String,
+    val prefix: String
 )
+
+private data class DocumentUploadContext(
+    val minioStorage: MinioDocumentStorageService,
+    val documentRepository: DocumentRepository,
+    val ingestionRepository: DocumentIngestionRunRepository,
+    val draftRepository: DocumentDraftRepository,
+    val invoiceRepository: InvoiceRepository,
+    val billRepository: BillRepository,
+    val expenseRepository: ExpenseRepository,
+    val logger: Logger
+)
+
+private suspend fun ApplicationCall.readUploadPayload(): UploadPayload {
+    val multipart = receiveMultipart()
+    var fileBytes: ByteArray? = null
+    var filename: String? = null
+    var contentType: String? = null
+    var prefix = "documents"
+
+    multipart.forEachPart { part ->
+        when (part) {
+            is PartData.FileItem -> {
+                filename = part.originalFileName ?: "unknown"
+                contentType = part.contentType?.toString() ?: "application/octet-stream"
+                fileBytes = part.readBytesWithLimit(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)
+            }
+            is PartData.FormItem -> {
+                if (part.name == "prefix") {
+                    val requestedPrefix = part.value.ifBlank { "documents" }
+                    if (requestedPrefix !in ALLOWED_PREFIXES) {
+                        throw DokusException.BadRequest(
+                            "Invalid prefix. Allowed values: ${ALLOWED_PREFIXES.joinToString()}"
+                        )
+                    }
+                    prefix = requestedPrefix
+                }
+            }
+            else -> { /* Ignore */ }
+        }
+        part.dispose()
+    }
+
+    if (fileBytes == null || filename == null) {
+        throw DokusException.BadRequest("No file provided in request")
+    }
+
+    return UploadPayload(
+        fileBytes = fileBytes!!,
+        filename = filename!!,
+        contentType = contentType ?: "application/octet-stream",
+        prefix = prefix
+    )
+}
+
+private fun validateUploadPayload(
+    payload: UploadPayload,
+    uploadValidator: DocumentUploadValidator,
+    logger: Logger
+) {
+    val validationError = uploadValidator.validate(
+        fileContent = payload.fileBytes,
+        filename = payload.filename,
+        mimeType = payload.contentType,
+    )
+    if (validationError != null) {
+        logger.warn("File validation failed: $validationError")
+        throw DokusException.Validation.Generic(validationError)
+    }
+}
+
+private suspend fun buildExistingDocumentRecord(
+    tenantId: TenantId,
+    existingDocument: DocumentDto,
+    context: DocumentUploadContext
+): DocumentRecordDto {
+    val downloadUrl = runCatching {
+        context.minioStorage.getDownloadUrl(existingDocument.storageKey)
+    }.onFailure { error ->
+        context.logger.warn(
+            "Failed to get download URL for ${existingDocument.storageKey}: ${error.message}"
+        )
+    }.getOrNull()
+
+    val draft = context.draftRepository.getByDocumentId(existingDocument.id, tenantId)
+    val latestIngestion = context.ingestionRepository.getLatestForDocument(existingDocument.id, tenantId)
+    val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
+        findConfirmedEntity(
+            existingDocument.id,
+            draft.documentType,
+            tenantId,
+            context.invoiceRepository,
+            context.billRepository,
+            context.expenseRepository
+        )
+    } else {
+        null
+    }
+
+    return DocumentRecordDto(
+        document = existingDocument.copy(downloadUrl = downloadUrl),
+        draft = draft?.toDto(),
+        latestIngestion = latestIngestion?.toDto(),
+        confirmedEntity = confirmedEntity
+    )
+}
+
+private suspend fun createNewDocumentRecord(
+    tenantId: TenantId,
+    payload: UploadPayload,
+    contentHash: String,
+    context: DocumentUploadContext
+): DocumentRecordDto {
+    context.logger.info("Uploading to MinIO: tenant=$tenantId, prefix=${payload.prefix}")
+
+    val result = context.minioStorage.uploadDocument(
+        tenantId = tenantId,
+        prefix = payload.prefix,
+        filename = payload.filename,
+        data = payload.fileBytes,
+        contentType = payload.contentType
+    )
+
+    val documentId = context.documentRepository.create(
+        tenantId = tenantId,
+        payload = DocumentCreatePayload(
+            filename = result.filename,
+            contentType = result.contentType,
+            sizeBytes = result.sizeBytes,
+            storageKey = result.key,
+            contentHash = contentHash
+        )
+    )
+
+    context.logger.info("Document created: id=$documentId, key=${result.key}, size=${result.sizeBytes}")
+
+    val runId = context.ingestionRepository.createRun(
+        documentId = documentId,
+        tenantId = tenantId
+    )
+
+    context.logger.info("Ingestion run created: id=$runId, documentId=$documentId")
+
+    val document = context.documentRepository.getById(tenantId, documentId)
+        ?: throw DokusException.InternalError("Failed to retrieve created document")
+
+    val ingestionRun = context.ingestionRepository.getById(runId, tenantId)
+        ?: throw DokusException.InternalError("Failed to retrieve created ingestion run")
+
+    return DocumentRecordDto(
+        document = document.copy(downloadUrl = result.url),
+        draft = null,
+        latestIngestion = ingestionRun.toDto(),
+        confirmedEntity = null
+    )
+}
+
+private fun sha256Hex(data: ByteArray): String {
+    val digest = MessageDigest.getInstance("SHA-256").digest(data)
+    return digest.joinToString("") { byte -> "%02x".format(byte) }
+}

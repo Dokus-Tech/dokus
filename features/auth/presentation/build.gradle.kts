@@ -36,13 +36,12 @@ kotlin {
         androidMain.dependencies {
         }
         commonMain.dependencies {
-            implementation(projects.features.auth.data)
             implementation(projects.features.auth.domain)
             implementation(projects.foundation.domain)
 
             implementation(projects.foundation.navigation)
             implementation(projects.foundation.appCommon)
-            implementation(projects.foundation.designSystem)
+            implementation(projects.foundation.aura)
 
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.bundles.koin.compose)
@@ -56,7 +55,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.auth"
+    namespace = "tech.dokus.features.auth"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

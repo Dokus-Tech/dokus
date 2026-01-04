@@ -1,0 +1,75 @@
+<resources>
+    <!-- 400 Validatiefouten -->
+    <string name="exception_validation_error">Validatiefout</string>
+    <string name="exception_invalid_email">Ongeldig e-mailadres</string>
+    <string name="exception_weak_password">Wachtwoord voldoet niet aan de beveiligingseisen</string>
+    <string name="exception_password_do_not_match">Wachtwoorden komen niet overeen</string>
+    <string name="exception_invalid_first_name">Ongeldige voornaam</string>
+    <string name="exception_invalid_last_name">Ongeldige achternaam</string>
+    <string name="exception_invalid_tax_number">Ongeldig fiscaal nummer</string>
+    <string name="exception_invalid_workspace_name">Ongeldige werkruimtenaam</string>
+    <string name="exception_invalid_vat_number">Ongeldig BTW-nummer</string>
+    <string name="exception_invalid_iban">Ongeldige IBAN</string>
+    <string name="exception_invalid_bic">Ongeldige BIC/SWIFT-code</string>
+    <string name="exception_invalid_peppol_id">Ongeldig Peppol-ID</string>
+    <string name="exception_invalid_invoice_number">Ongeldig factuurnummer</string>
+    <string name="exception_invalid_money">Ongeldig geldbedrag</string>
+    <string name="exception_invalid_vat_rate">Ongeldig BTW-tarief</string>
+    <string name="exception_invalid_percentage">Ongeldig percentage</string>
+    <string name="exception_invalid_quantity">Ongeldige hoeveelheid</string>
+    <string name="exception_invoice_client_required">Selecteer een klant</string>
+    <string name="exception_invoice_items_required">Voeg ten minste één geldige regel toe</string>
+    <string name="exception_invoice_due_date_before_issue">De vervaldatum mag niet vóór de uitgiftedatum liggen</string>
+    <string name="exception_invalid_street_name">Ongeldige straatnaam</string>
+    <string name="exception_invalid_city">Ongeldige stad</string>
+    <string name="exception_invalid_postal_code">Ongeldige postcode</string>
+    <string name="exception_invalid_country">Ongeldig land</string>
+    <string name="exception_api_key_required">API-sleutel is vereist</string>
+    <string name="exception_api_secret_required">API-geheim is vereist</string>
+    <string name="exception_invalid_api_credentials">Ongeldige API-referenties. Controleer uw API-sleutel en geheim.</string>
+    <string name="exception_missing_vat_number">Configureer eerst uw BTW-nummer in de werkruimte-instellingen</string>
+    <string name="exception_missing_company_address">Configureer eerst uw bedrijfsadres in de werkruimte-instellingen</string>
+
+    <!-- 401 Authenticatiefouten -->
+    <string name="exception_not_authenticated">Log in om verder te gaan</string>
+    <string name="exception_invalid_credentials">Ongeldig e-mailadres of wachtwoord</string>
+    <string name="exception_token_expired">Authenticatietoken is verlopen</string>
+    <string name="exception_token_invalid">Ongeldig authenticatietoken</string>
+    <string name="exception_refresh_token_expired">Refresh token is verlopen. Log opnieuw in.</string>
+    <string name="exception_refresh_token_revoked">Refresh token is ingetrokken. Log opnieuw in.</string>
+    <string name="exception_session_expired">Uw sessie is verlopen. Log opnieuw in.</string>
+    <string name="exception_session_invalid">Ongeldige sessie. Log opnieuw in.</string>
+    <string name="exception_password_reset_token_expired">Token voor wachtwoordherstel is verlopen. Vraag een nieuwe aan.</string>
+    <string name="exception_password_reset_token_invalid">Ongeldig token voor wachtwoordherstel. Vraag een nieuwe aan.</string>
+    <string name="exception_email_verification_token_expired">E-mailverificatietoken is verlopen. Vraag een nieuwe aan.</string>
+    <string name="exception_email_verification_token_invalid">Ongeldig e-mailverificatietoken. Vraag een nieuwe aan.</string>
+
+    <!-- 403 Autorisatiefouten -->
+    <string name="exception_not_authorized">U heeft geen toegang tot deze bron</string>
+    <string name="exception_account_inactive">Uw account is inactief. Neem contact op met ondersteuning.</string>
+    <string name="exception_account_locked">Uw account is vergrendeld. Neem contact op met ondersteuning om het te ontgrendelen.</string>
+    <string name="exception_email_not_verified">Verifieer uw e-mailadres om verder te gaan</string>
+    <string name="exception_email_already_verified">E-mailadres is al geverifieerd</string>
+    <string name="exception_too_many_sessions">Maximaal aantal gelijktijdige sessies bereikt. Log uit op een ander apparaat.</string>
+
+    <!-- 404 Niet gevonden -->
+    <string name="exception_not_found">De gevraagde bron is niet gevonden</string>
+    <string name="exception_user_not_found">Gebruiker niet gevonden</string>
+
+    <!-- 409 Conflictfouten -->
+    <string name="exception_user_already_exists">Een gebruiker met dit e-mailadres bestaat al</string>
+
+    <!-- 429 Snelheidslimiet fouten -->
+    <string name="exception_too_many_login_attempts">Te veel inlogpogingen. Probeer het later opnieuw.</string>
+
+    <!-- 500 Serverfouten -->
+    <string name="exception_internal_error">Er is een interne fout opgetreden. Probeer het later opnieuw.</string>
+    <string name="exception_tenant_creation_failed">Aanmaken van tenant mislukt. Probeer het opnieuw.</string>
+    <string name="exception_unknown">Er is een onbekende fout opgetreden</string>
+
+    <!-- 501 Niet geïmplementeerd -->
+    <string name="exception_not_implemented">Deze functie is nog niet geïmplementeerd</string>
+
+    <!-- 503 Service niet beschikbaar -->
+    <string name="exception_connection_error">Verbindingsfout. Probeer het later opnieuw.</string>
+</resources>
