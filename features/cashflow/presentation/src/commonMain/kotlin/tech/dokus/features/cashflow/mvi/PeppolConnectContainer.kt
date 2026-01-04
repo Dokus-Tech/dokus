@@ -12,7 +12,7 @@ import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.domain.model.RecommandCompanySummary
-import tech.dokus.features.cashflow.usecases.PeppolUseCase
+import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias Ctx = PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>
@@ -25,7 +25,7 @@ internal typealias Ctx = PipelineContext<PeppolConnectState, PeppolConnectIntent
  */
 internal class PeppolConnectContainer(
     provider: PeppolProvider,
-    private val peppolUseCase: PeppolUseCase,
+    private val connectPeppol: ConnectPeppolUseCase,
 ) : Container<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction> {
 
     companion object {
@@ -128,7 +128,7 @@ internal class PeppolConnectContainer(
                 createCompanyIfMissing = false
             )
 
-            peppolUseCase.connectPeppol(request).fold(
+            connectPeppol(request).fold(
                 onSuccess = { response ->
                     handleConnectResponse(
                         status = response.status,
@@ -252,7 +252,7 @@ internal class PeppolConnectContainer(
                 createCompanyIfMissing = false
             )
 
-            peppolUseCase.connectPeppol(request).fold(
+            connectPeppol(request).fold(
                 onSuccess = { response ->
                     if (response.status == PeppolConnectStatus.Connected) {
                         logger.i { "Connected to company: $companyId" }
@@ -301,7 +301,7 @@ internal class PeppolConnectContainer(
                 createCompanyIfMissing = true
             )
 
-            peppolUseCase.connectPeppol(request).fold(
+            connectPeppol(request).fold(
                 onSuccess = { response ->
                     if (response.status == PeppolConnectStatus.Connected) {
                         logger.i { "Company created and connected" }

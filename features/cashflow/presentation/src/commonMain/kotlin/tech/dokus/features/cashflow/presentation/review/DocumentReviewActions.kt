@@ -3,18 +3,25 @@ package tech.dokus.features.cashflow.presentation.review
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.CounterpartyIntent
-import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.DocumentRejectReason
+import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.ConfirmDocumentRequest
+import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
-import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
+import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewActions(
-    private val documentReviewUseCase: DocumentReviewUseCase,
+    private val updateDocumentDraft: UpdateDocumentDraftUseCase,
+    private val confirmDocument: ConfirmDocumentUseCase,
+    private val rejectDocument: RejectDocumentUseCase,
+    private val getDocumentRecord: GetDocumentRecordUseCase,
     private val mapper: DocumentReviewExtractedDataMapper,
     private val logger: Logger,
 ) {
@@ -27,7 +34,7 @@ internal class DocumentReviewActions(
 
             launch {
                 val updatedData = mapper.buildExtractedDataFromEditable(editableData, originalData)
-                documentReviewUseCase.updateDocumentDraft(
+                updateDocumentDraft(
                     documentId,
                     UpdateDraftRequest(extractedData = updatedData)
                 ).fold(
@@ -85,7 +92,7 @@ internal class DocumentReviewActions(
 
             launch {
                 val updatedData = mapper.buildExtractedDataFromEditable(editableData, originalData)
-                documentReviewUseCase.confirmDocument(
+                confirmDocument(
                     documentId,
                     ConfirmDocumentRequest(
                         documentType = editableData.documentType,
@@ -118,15 +125,16 @@ internal class DocumentReviewActions(
                             }
                         }
                         action(DocumentReviewAction.ShowSuccess(DocumentReviewSuccess.DocumentConfirmed))
+                        val confirmedEntityId = record.confirmedEntity?.let { entity ->
+                            when (entity) {
+                                is FinancialDocumentDto.InvoiceDto -> entity.id.toString()
+                                is FinancialDocumentDto.BillDto -> entity.id.toString()
+                                is FinancialDocumentDto.ExpenseDto -> entity.id.toString()
+                            }
+                        }
                         action(
                             DocumentReviewAction.NavigateToEntity(
-                                entityId = record.confirmedEntity?.let { entity ->
-                                    when (entity) {
-                                        is tech.dokus.domain.model.FinancialDocumentDto.InvoiceDto -> entity.id.toString()
-                                        is tech.dokus.domain.model.FinancialDocumentDto.BillDto -> entity.id.toString()
-                                        is tech.dokus.domain.model.FinancialDocumentDto.ExpenseDto -> entity.id.toString()
-                                    }
-                                } ?: documentId.toString(),
+                                entityId = confirmedEntityId ?: documentId.toString(),
                                 entityType = editableData.documentType
                             )
                         )
@@ -197,7 +205,7 @@ internal class DocumentReviewActions(
             }
 
             launch {
-                documentReviewUseCase.rejectDocument(documentId, RejectDocumentRequest(reason))
+                rejectDocument(documentId, RejectDocumentRequest(reason))
                     .fold(
                         onSuccess = { record ->
                             val draft = record.draft
@@ -238,7 +246,7 @@ internal class DocumentReviewActions(
     }
 
     private suspend fun DocumentReviewCtx.refreshAfterDraftUpdate(documentId: tech.dokus.domain.ids.DocumentId) {
-        documentReviewUseCase.getDocumentRecord(documentId).fold(
+        getDocumentRecord(documentId).fold(
             onSuccess = { record ->
                 val draft = record.draft
                 withState<DocumentReviewState.Content, _> {

@@ -1,13 +1,13 @@
-package tech.dokus.features.auth.usecases
+package tech.dokus.features.auth.gateway
 
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.AvatarUploadResponse
 import tech.dokus.domain.model.TenantSettings
 
 /**
- * Use case for workspace settings and avatar operations.
+ * Gateway for workspace settings and avatar operations.
  */
-interface WorkspaceSettingsUseCase {
+interface WorkspaceSettingsGateway {
     suspend fun getTenantSettings(): Result<TenantSettings>
 
     suspend fun getTenantAddress(): Result<Address?>

@@ -104,7 +104,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.id eq msgUuid) and
-                        (ChatMessagesTable.tenantId eq tenantUuid)
+                    (ChatMessagesTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
             ?.toMessageDto()
@@ -124,7 +124,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.sessionId eq sessionUuid)
+                    (ChatMessagesTable.sessionId eq sessionUuid)
             }
 
         val total = baseQuery.count()
@@ -152,7 +152,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.documentId eq documentUuid)
+                    (ChatMessagesTable.documentId eq documentUuid)
             }
 
         val total = baseQuery.count()
@@ -177,7 +177,7 @@ class ChatRepositoryImpl : ChatRepository {
             .select(ChatMessagesTable.sequenceNumber.max())
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.sessionId eq sessionUuid)
+                    (ChatMessagesTable.sessionId eq sessionUuid)
             }
             .singleOrNull()
             ?.get(ChatMessagesTable.sequenceNumber.max())
@@ -259,7 +259,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.sessionId eq sessionUuid)
+                    (ChatMessagesTable.sessionId eq sessionUuid)
             }
             .orderBy(ChatMessagesTable.sequenceNumber to SortOrder.ASC)
             .toList()
@@ -276,7 +276,7 @@ class ChatRepositoryImpl : ChatRepository {
                     .selectAll()
                     .where {
                         (DocumentsTable.id eq docId) and
-                                (DocumentsTable.tenantId eq tenantUuid)
+                            (DocumentsTable.tenantId eq tenantUuid)
                     }
                     .singleOrNull()
                     ?.get(DocumentsTable.filename)
@@ -311,7 +311,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.sessionId eq sessionUuid)
+                    (ChatMessagesTable.sessionId eq sessionUuid)
             }
             .limit(1)
             .count() > 0
@@ -352,7 +352,7 @@ class ChatRepositoryImpl : ChatRepository {
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.userId eq userUuid)
+                    (ChatMessagesTable.userId eq userUuid)
             }
             .orderBy(ChatMessagesTable.createdAt to SortOrder.DESC)
             .toList()

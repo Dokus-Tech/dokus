@@ -73,7 +73,7 @@ internal class AndroidSecureStorage(
         if (existing != null) return existing
         val keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore")
         val purposes = android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or
-                android.security.keystore.KeyProperties.PURPOSE_DECRYPT
+            android.security.keystore.KeyProperties.PURPOSE_DECRYPT
         val spec = android.security.keystore.KeyGenParameterSpec.Builder(serviceName, purposes)
             .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)

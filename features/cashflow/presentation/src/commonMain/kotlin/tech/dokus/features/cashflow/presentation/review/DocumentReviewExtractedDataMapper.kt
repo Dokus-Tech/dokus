@@ -1,8 +1,8 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import tech.dokus.domain.Money
-import tech.dokus.domain.VatRate
 import tech.dokus.domain.Percentage
+import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.model.ExtractedDocumentData
 

@@ -6,6 +6,11 @@ import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 
+private const val FilenameMaxLength = 255
+private const val ContentTypeMaxLength = 100
+private const val StorageKeyMaxLength = 500
+private const val ContentHashLength = 64
+
 /**
  * Documents table - stores metadata for files uploaded to object storage (MinIO).
  *
@@ -27,15 +32,15 @@ object DocumentsTable : UUIDTable("documents") {
     ).index()
 
     // File metadata
-    val filename = varchar("filename", 255)
-    val contentType = varchar("content_type", 100)
+    val filename = varchar("filename", FilenameMaxLength)
+    val contentType = varchar("content_type", ContentTypeMaxLength)
     val sizeBytes = long("size_bytes")
 
     // Storage reference (MinIO key)
-    val storageKey = varchar("storage_key", 500).index()
+    val storageKey = varchar("storage_key", StorageKeyMaxLength).index()
 
     // Content fingerprint for deduplication (SHA-256 hex)
-    val contentHash = varchar("content_hash", 64).nullable()
+    val contentHash = varchar("content_hash", ContentHashLength).nullable()
 
     // Timestamps
     val uploadedAt = datetime("uploaded_at").defaultExpression(CurrentDateTime)

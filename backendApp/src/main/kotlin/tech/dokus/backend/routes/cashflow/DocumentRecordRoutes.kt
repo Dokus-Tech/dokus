@@ -621,58 +621,93 @@ private suspend fun addDownloadUrl(
 }
 
 private fun validateInvoiceData(data: tech.dokus.domain.model.ExtractedInvoiceFields) {
+    val error = firstInvoiceValidationError(data) ?: return
+    throw DokusException.BadRequest(error)
+}
+
+private fun firstInvoiceValidationError(
+    data: tech.dokus.domain.model.ExtractedInvoiceFields
+): String? {
     if (data.issueDate == null) {
-        throw DokusException.BadRequest("Issue date is required")
+        return "Issue date is required"
     }
-    val subtotal = data.subtotalAmount
-        ?: throw DokusException.BadRequest("Subtotal is required")
+    val subtotal = data.subtotalAmount ?: return "Subtotal is required"
     val total = data.totalAmount
     val vat = data.vatAmount
     if (vat != null && total != null) {
         val expected = subtotal + vat
         val diff = kotlin.math.abs(expected.minor - total.minor)
         if (diff > 1L) {
-            throw DokusException.BadRequest("Amounts are inconsistent")
+            return "Amounts are inconsistent"
         }
     }
+    return null
 }
 
 private fun buildInvoiceItems(
     data: tech.dokus.domain.model.ExtractedInvoiceFields
 ): List<tech.dokus.domain.model.InvoiceItemDto> {
-    val items = data.items?.mapIndexedNotNull { index, item ->
-        val quantity = item.quantity ?: 1.0
-        val lineTotal = item.lineTotal ?: item.unitPrice?.let { unit ->
-            Money.fromDouble(unit.toDouble() * quantity)
-        }
-        val vatAmount = item.vatAmount ?: item.vatRate?.let { rate ->
-            lineTotal?.let { rate.applyTo(it) }
-        }
-        val vatRate = item.vatRate ?: if (lineTotal != null && vatAmount != null && lineTotal.minor != 0L) {
-            VatRate.fromMultiplier(vatAmount.toDouble() / lineTotal.toDouble())
-        } else {
-            VatRate.ZERO
-        }
+    val items = data.items
+        ?.mapIndexedNotNull { index, item -> buildInvoiceItem(item, index) }
+        .orEmpty()
 
-        val finalLineTotal = lineTotal ?: return@mapIndexedNotNull null
-        val finalVatAmount = vatAmount ?: VatRate.ZERO.applyTo(finalLineTotal)
-        val unitPrice = item.unitPrice ?: Money.fromDouble(finalLineTotal.toDouble() / quantity)
+    if (items.isNotEmpty()) return items
 
-        tech.dokus.domain.model.InvoiceItemDto(
-            description = item.description ?: "Line item ${index + 1}",
-            quantity = quantity,
-            unitPrice = unitPrice,
-            vatRate = vatRate,
-            lineTotal = finalLineTotal,
-            vatAmount = finalVatAmount,
-            sortOrder = index
-        )
-    }.orEmpty()
+    return listOf(buildFallbackInvoiceItem(data))
+}
 
-    if (items.isNotEmpty()) {
-        return items
+private fun buildInvoiceItem(
+    item: tech.dokus.domain.model.ExtractedLineItem,
+    index: Int
+): tech.dokus.domain.model.InvoiceItemDto? {
+    val quantity = item.quantity ?: 1.0
+    val lineTotal = resolveLineTotal(item, quantity) ?: return null
+    val vatAmount = resolveVatAmount(item, lineTotal)
+    val vatRate = resolveVatRate(item, lineTotal, vatAmount)
+    val finalVatAmount = vatAmount ?: VatRate.ZERO.applyTo(lineTotal)
+    val unitPrice = item.unitPrice ?: Money.fromDouble(lineTotal.toDouble() / quantity)
+
+    return tech.dokus.domain.model.InvoiceItemDto(
+        description = item.description ?: "Line item ${index + 1}",
+        quantity = quantity,
+        unitPrice = unitPrice,
+        vatRate = vatRate,
+        lineTotal = lineTotal,
+        vatAmount = finalVatAmount,
+        sortOrder = index
+    )
+}
+
+private fun resolveLineTotal(
+    item: tech.dokus.domain.model.ExtractedLineItem,
+    quantity: Double
+): Money? {
+    return item.lineTotal ?: item.unitPrice?.let { unit ->
+        Money.fromDouble(unit.toDouble() * quantity)
     }
+}
 
+private fun resolveVatAmount(
+    item: tech.dokus.domain.model.ExtractedLineItem,
+    lineTotal: Money
+): Money? {
+    return item.vatAmount ?: item.vatRate?.let { rate -> rate.applyTo(lineTotal) }
+}
+
+private fun resolveVatRate(
+    item: tech.dokus.domain.model.ExtractedLineItem,
+    lineTotal: Money,
+    vatAmount: Money?
+): VatRate {
+    val explicitRate = item.vatRate
+    if (explicitRate != null) return explicitRate
+    if (vatAmount == null || lineTotal.minor == 0L) return VatRate.ZERO
+    return VatRate.fromMultiplier(vatAmount.toDouble() / lineTotal.toDouble())
+}
+
+private fun buildFallbackInvoiceItem(
+    data: tech.dokus.domain.model.ExtractedInvoiceFields
+): tech.dokus.domain.model.InvoiceItemDto {
     val subtotal = data.subtotalAmount
         ?: throw DokusException.BadRequest("Subtotal is required")
     val vatAmount = data.vatAmount ?: Money.ZERO
@@ -682,16 +717,14 @@ private fun buildInvoiceItems(
         VatRate.ZERO
     }
 
-    return listOf(
-        tech.dokus.domain.model.InvoiceItemDto(
-            description = data.invoiceNumber ?: "Document total",
-            quantity = 1.0,
-            unitPrice = subtotal,
-            vatRate = vatRate,
-            lineTotal = subtotal,
-            vatAmount = vatAmount,
-            sortOrder = 0
-        )
+    return tech.dokus.domain.model.InvoiceItemDto(
+        description = data.invoiceNumber ?: "Document total",
+        quantity = 1.0,
+        unitPrice = subtotal,
+        vatRate = vatRate,
+        lineTotal = subtotal,
+        vatAmount = vatAmount,
+        sortOrder = 0
     )
 }
 

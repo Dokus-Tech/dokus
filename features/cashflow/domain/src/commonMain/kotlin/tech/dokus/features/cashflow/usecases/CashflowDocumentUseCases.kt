@@ -10,6 +10,9 @@ import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Use case for listing cashflow documents with pagination.
+ *
+ * Two operations are kept together because loadAll is a pagination helper that
+ * relies on the same filters and paging rules as invoke.
  */
 interface LoadCashflowDocumentsUseCase {
     suspend operator fun invoke(
@@ -28,6 +31,9 @@ interface LoadCashflowDocumentsUseCase {
 
 /**
  * Use case for watching pending documents that need review.
+ *
+ * Two operations are kept together because refresh invalidates the same stream
+ * returned by invoke.
  */
 interface WatchPendingDocumentsUseCase {
     operator fun invoke(limit: Int = 100): Flow<DokusState<List<DocumentRecordDto>>>

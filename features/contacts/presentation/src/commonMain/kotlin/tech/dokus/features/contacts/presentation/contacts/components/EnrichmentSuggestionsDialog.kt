@@ -42,7 +42,6 @@ import tech.dokus.foundation.aura.constrains.Constrains
 
 // UI dimension constants
 private val SpacingSmall = 4.dp
-private val SpacingDefault = 8.dp
 private val PaddingHorizontal = 6.dp
 private val PaddingVertical = 2.dp
 private val BadgeCornerRadius = 4.dp

@@ -6,23 +6,41 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedLineItem
-import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
+import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
+import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.platform.Logger
 
+@Suppress("LongParameterList") // Keeps use case dependencies explicit in the reducer.
 internal class DocumentReviewReducer(
-    private val documentReviewUseCase: DocumentReviewUseCase,
+    private val getDocumentRecord: GetDocumentRecordUseCase,
+    private val updateDocumentDraft: UpdateDocumentDraftUseCase,
+    private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
+    private val confirmDocument: ConfirmDocumentUseCase,
+    private val rejectDocument: RejectDocumentUseCase,
+    private val getDocumentPages: GetDocumentPagesUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
     private val mapper = DocumentReviewExtractedDataMapper()
-    private val loader = DocumentReviewLoader(documentReviewUseCase, getContact, logger)
+    private val loader = DocumentReviewLoader(getDocumentRecord, getContact, logger)
     private val editor = DocumentReviewFieldEditor()
-    private val contactBinder = DocumentReviewContactBinder(documentReviewUseCase, getContact, logger)
-    private val preview = DocumentReviewPreview(documentReviewUseCase, logger)
+    private val contactBinder = DocumentReviewContactBinder(updateDocumentDraftContact, getContact, logger)
+    private val preview = DocumentReviewPreview(getDocumentPages, logger)
     private val lineItems = DocumentReviewLineItems()
     private val provenance = DocumentReviewProvenance()
-    private val actions = DocumentReviewActions(documentReviewUseCase, mapper, logger)
+    private val actions = DocumentReviewActions(
+        updateDocumentDraft,
+        confirmDocument,
+        rejectDocument,
+        getDocumentRecord,
+        mapper,
+        logger
+    )
 
     suspend fun DocumentReviewCtx.handleLoadDocument(documentId: DocumentId) =
         with(loader) { handleLoadDocument(documentId) }

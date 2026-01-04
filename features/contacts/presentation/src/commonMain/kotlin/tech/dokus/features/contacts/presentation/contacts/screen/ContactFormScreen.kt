@@ -4,13 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -60,7 +58,7 @@ import tech.dokus.foundation.aura.local.LocalScreenSize
  * - Validation: Real-time field validation with error display
  * - Responsive: Different layouts for desktop and mobile
  *
- * Pure UI: navigation and side-effects are handled in the route.
+ * Pure UI: navigation and side effects are handled in the route.
  */
 @Composable
 internal fun ContactFormScreen(
@@ -75,7 +73,7 @@ internal fun ContactFormScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
-            when (val currentState = state) {
+            when (state) {
                 is ContactFormState.LoadingContact -> {
                     Box(
                         modifier = Modifier
@@ -88,17 +86,17 @@ internal fun ContactFormScreen(
                 }
 
                 is ContactFormState.Editing -> {
-                    if (currentState.ui.showDeleteConfirmation) {
+                    if (state.ui.showDeleteConfirmation) {
                         DeleteContactConfirmationDialog(
-                            contactName = currentState.formData.name.value,
-                            isDeleting = currentState.isDeleting,
+                            contactName = state.formData.name.value,
+                            isDeleting = state.isDeleting,
                             onConfirm = { onIntent(ContactFormIntent.Delete) }
                         ) { onIntent(ContactFormIntent.HideDeleteConfirmation) }
                     }
                     if (isLargeScreen) {
                         DesktopFormLayout(
                             contentPadding = contentPadding,
-                            state = currentState,
+                            state = state,
                             onBackPress = { onIntent(ContactFormIntent.Cancel) },
                             onIntent = onIntent,
                             onNavigateToDuplicate = onNavigateToDuplicate
@@ -106,7 +104,7 @@ internal fun ContactFormScreen(
                     } else {
                         MobileFormLayout(
                             contentPadding = contentPadding,
-                            state = currentState,
+                            state = state,
                             onBackPress = { onIntent(ContactFormIntent.Cancel) },
                             onIntent = onIntent,
                             onNavigateToDuplicate = onNavigateToDuplicate
@@ -116,8 +114,8 @@ internal fun ContactFormScreen(
 
                 is ContactFormState.Error -> {
                     val editingState = ContactFormState.Editing(
-                        contactId = currentState.contactId,
-                        formData = currentState.formData
+                        contactId = state.contactId,
+                        formData = state.formData
                     )
                     if (isLargeScreen) {
                         DesktopFormLayout(

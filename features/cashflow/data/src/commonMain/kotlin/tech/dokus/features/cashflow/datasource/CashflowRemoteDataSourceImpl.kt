@@ -22,8 +22,8 @@ import io.ktor.http.contentType
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.enums.BillStatus
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.IngestionStatus
@@ -39,7 +39,6 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.ConfirmDocumentRequest
-import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
@@ -58,6 +57,7 @@ import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
 import tech.dokus.domain.model.RecordPaymentRequest
+import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.SavePeppolSettingsRequest
@@ -83,6 +83,7 @@ private const val SingleTransmissionLimit = 1
  * HTTP-based implementation of CashflowRemoteDataSource.
  * Uses Ktor HttpClient with type-safe routing to communicate with the cashflow management API.
  */
+@Suppress("LargeClass") // Single API facade; split would add indirection without reducing IO surface.
 internal class CashflowRemoteDataSourceImpl(
     private val httpClient: HttpClient,
     private val endpointProvider: DynamicDokusEndpointProvider

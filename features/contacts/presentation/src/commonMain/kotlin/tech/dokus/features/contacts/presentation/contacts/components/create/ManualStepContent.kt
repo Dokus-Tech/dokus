@@ -36,8 +36,6 @@ import tech.dokus.aura.resources.country_france
 import tech.dokus.aura.resources.country_netherlands
 import tech.dokus.aura.resources.field_optional
 import tech.dokus.aura.resources.field_required
-import tech.dokus.domain.Email
-import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.enums.Country
 import tech.dokus.features.contacts.mvi.CreateContactIntent
@@ -130,7 +128,7 @@ fun ManualStepContent(
     }
 
     // Soft duplicate dialog
-    if (state.softDuplicates != null && state.softDuplicates.isNotEmpty()) {
+    if (!state.softDuplicates.isNullOrEmpty()) {
         SoftDuplicateDialog(
             duplicates = state.softDuplicates,
             onDismiss = { onIntent(CreateContactIntent.DismissSoftDuplicates) },

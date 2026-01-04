@@ -144,7 +144,7 @@ class PostalCodeTest {
     fun `validOrThrows returns same PostalCode for valid input`() {
         val postalCode = PostalCode("1000")
         val result = postalCode.validOrThrows
-        assertSame(postalCode, result)
+        assertEquals(postalCode, result)
     }
 
     @Test

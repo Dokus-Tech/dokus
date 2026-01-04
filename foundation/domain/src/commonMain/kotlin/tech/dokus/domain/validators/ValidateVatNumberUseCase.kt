@@ -1,3 +1,9 @@
+@file:Suppress(
+    "CyclomaticComplexMethod", // Country-specific VAT rules require branching logic.
+    "ReturnCount",
+    "MagicNumber"
+)
+
 package tech.dokus.domain.validators
 
 import tech.dokus.domain.ids.VatNumber

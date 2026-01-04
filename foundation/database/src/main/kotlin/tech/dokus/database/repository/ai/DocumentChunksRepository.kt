@@ -199,7 +199,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                        (DocumentChunksTable.documentId eq documentUuid)
+                    (DocumentChunksTable.documentId eq documentUuid)
             }
             .limit(1)
             .singleOrNull()
@@ -220,7 +220,7 @@ class DocumentChunksRepository : ChunkRepository {
 
         val deleted = DocumentChunksTable.deleteWhere {
             (DocumentChunksTable.tenantId eq tenantUuid) and
-                    (DocumentChunksTable.documentId eq documentUuid)
+                (DocumentChunksTable.documentId eq documentUuid)
         }
 
         logger.debug("Deleted $deleted chunks")
@@ -245,7 +245,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                        (DocumentChunksTable.documentId eq documentUuid)
+                    (DocumentChunksTable.documentId eq documentUuid)
             }
             .orderBy(DocumentChunksTable.chunkIndex to SortOrder.ASC)
             .map { it.toChunkDto() }
@@ -265,7 +265,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.id eq chunkUuid) and
-                        (DocumentChunksTable.tenantId eq tenantUuid)
+                    (DocumentChunksTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
             ?.toChunkDto()
@@ -285,7 +285,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                        (DocumentChunksTable.documentId eq documentUuid)
+                    (DocumentChunksTable.documentId eq documentUuid)
             }
             .count()
     }

@@ -40,8 +40,6 @@ import tech.dokus.aura.resources.country_belgium
 import tech.dokus.aura.resources.country_france
 import tech.dokus.aura.resources.country_netherlands
 import tech.dokus.aura.resources.field_optional
-import tech.dokus.domain.Email
-import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.features.contacts.mvi.CreateContactIntent
@@ -196,13 +194,11 @@ private fun CompanyInfoCard(
 
             // VAT number
             val vatNumber = entity.vatNumber
-            if (vatNumber != null) {
-                Text(
-                    text = stringResource(Res.string.common_vat_value, vatNumber.value),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Text(
+                text = stringResource(Res.string.common_vat_value, vatNumber.value),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             // Country
             val address = entity.address

@@ -4,11 +4,11 @@ import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewPreview(
-    private val documentReviewUseCase: DocumentReviewUseCase,
+    private val getDocumentPages: GetDocumentPagesUseCase,
     private val logger: Logger,
 ) {
     suspend fun DocumentReviewCtx.handleOpenPreviewSheet() {
@@ -62,7 +62,7 @@ internal class DocumentReviewPreview(
             updateState { copy(previewState = DocumentPreviewState.Loading) }
         }
 
-        documentReviewUseCase.getDocumentPages(documentId, dpi, maxPages)
+        getDocumentPages(documentId, dpi, maxPages)
             .fold(
                 onSuccess = { response ->
                     withState<DocumentReviewState.Content, _> {

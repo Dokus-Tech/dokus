@@ -24,49 +24,73 @@ import tech.dokus.features.auth.datasource.TeamRemoteDataSource
 import tech.dokus.features.auth.datasource.TeamRemoteDataSourceImpl
 import tech.dokus.features.auth.datasource.TenantRemoteDataSource
 import tech.dokus.features.auth.datasource.TenantRemoteDataSourceImpl
+import tech.dokus.features.auth.gateway.AuthGateway
+import tech.dokus.features.auth.gateway.TeamSettingsGateway
+import tech.dokus.features.auth.gateway.TeamSettingsGatewayImpl
+import tech.dokus.features.auth.gateway.WorkspaceSettingsGateway
+import tech.dokus.features.auth.gateway.WorkspaceSettingsGatewayImpl
+import tech.dokus.features.auth.initializer.AuthDataInitializer
 import tech.dokus.features.auth.manager.AuthManagerImpl
 import tech.dokus.features.auth.manager.AuthManagerMutable
 import tech.dokus.features.auth.manager.TokenManagerImpl
 import tech.dokus.features.auth.manager.TokenManagerMutable
-import tech.dokus.features.auth.gateway.AuthGateway
-import tech.dokus.features.auth.initializer.AuthDataInitializer
 import tech.dokus.features.auth.repository.AuthRepository
 import tech.dokus.features.auth.storage.TokenStorage
 import tech.dokus.features.auth.usecases.AuthSessionUseCase
 import tech.dokus.features.auth.usecases.AuthSessionUseCaseImpl
+import tech.dokus.features.auth.usecases.CancelInvitationUseCase
+import tech.dokus.features.auth.usecases.CancelInvitationUseCaseImpl
 import tech.dokus.features.auth.usecases.ConnectToServerUseCase
 import tech.dokus.features.auth.usecases.ConnectToServerUseCaseImpl
+import tech.dokus.features.auth.usecases.CreateInvitationUseCase
+import tech.dokus.features.auth.usecases.CreateInvitationUseCaseImpl
 import tech.dokus.features.auth.usecases.CreateTenantUseCase
 import tech.dokus.features.auth.usecases.CreateTenantUseCaseImpl
-import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
-import tech.dokus.features.auth.usecases.GetCurrentUserUseCaseImpl
+import tech.dokus.features.auth.usecases.DeleteWorkspaceAvatarUseCase
+import tech.dokus.features.auth.usecases.DeleteWorkspaceAvatarUseCaseImpl
 import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
 import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCaseImpl
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCaseImpl
+import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
+import tech.dokus.features.auth.usecases.GetCurrentUserUseCaseImpl
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCaseImpl
+import tech.dokus.features.auth.usecases.GetTenantAddressUseCase
+import tech.dokus.features.auth.usecases.GetTenantAddressUseCaseImpl
+import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
+import tech.dokus.features.auth.usecases.GetTenantSettingsUseCaseImpl
 import tech.dokus.features.auth.usecases.HasFreelancerTenantUseCase
 import tech.dokus.features.auth.usecases.HasFreelancerTenantUseCaseImpl
+import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
+import tech.dokus.features.auth.usecases.ListMyTenantsUseCaseImpl
+import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCase
+import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCaseImpl
+import tech.dokus.features.auth.usecases.ListTeamMembersUseCase
+import tech.dokus.features.auth.usecases.ListTeamMembersUseCaseImpl
 import tech.dokus.features.auth.usecases.LoginUseCase
 import tech.dokus.features.auth.usecases.LoginUseCaseImpl
 import tech.dokus.features.auth.usecases.LogoutUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCaseImpl
 import tech.dokus.features.auth.usecases.RegisterAndLoginUseCase
 import tech.dokus.features.auth.usecases.RegisterAndLoginUseCaseImpl
+import tech.dokus.features.auth.usecases.RemoveTeamMemberUseCase
+import tech.dokus.features.auth.usecases.RemoveTeamMemberUseCaseImpl
 import tech.dokus.features.auth.usecases.SearchCompanyUseCaseImpl
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCaseImpl
-import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
-import tech.dokus.features.auth.usecases.ListMyTenantsUseCaseImpl
+import tech.dokus.features.auth.usecases.TransferWorkspaceOwnershipUseCase
+import tech.dokus.features.auth.usecases.TransferWorkspaceOwnershipUseCaseImpl
 import tech.dokus.features.auth.usecases.UpdateProfileUseCase
 import tech.dokus.features.auth.usecases.UpdateProfileUseCaseImpl
+import tech.dokus.features.auth.usecases.UpdateTeamMemberRoleUseCase
+import tech.dokus.features.auth.usecases.UpdateTeamMemberRoleUseCaseImpl
+import tech.dokus.features.auth.usecases.UpdateTenantSettingsUseCase
+import tech.dokus.features.auth.usecases.UpdateTenantSettingsUseCaseImpl
+import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCase
+import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCaseImpl
 import tech.dokus.features.auth.usecases.ValidateServerUseCase
 import tech.dokus.features.auth.usecases.ValidateServerUseCaseImpl
-import tech.dokus.features.auth.usecases.WorkspaceSettingsUseCase
-import tech.dokus.features.auth.usecases.WorkspaceSettingsUseCaseImpl
-import tech.dokus.features.auth.usecases.TeamSettingsUseCase
-import tech.dokus.features.auth.usecases.TeamSettingsUseCaseImpl
 import tech.dokus.features.auth.utils.JwtDecoder
 import tech.dokus.foundation.app.AppDataInitializer
 import tech.dokus.foundation.app.SharedQualifiers
@@ -112,6 +136,8 @@ val authDataModule = module {
 
     // Repositories
     singleOf(::AuthRepository) bind AuthGateway::class
+    singleOf(::WorkspaceSettingsGatewayImpl) bind WorkspaceSettingsGateway::class
+    singleOf(::TeamSettingsGatewayImpl) bind TeamSettingsGateway::class
 }
 
 val authDomainModule = module {
@@ -125,8 +151,18 @@ val authDomainModule = module {
     singleOf(::CreateTenantUseCaseImpl) bind CreateTenantUseCase::class
     singleOf(::ListMyTenantsUseCaseImpl) bind ListMyTenantsUseCase::class
     singleOf(::GetInvoiceNumberPreviewUseCaseImpl) bind GetInvoiceNumberPreviewUseCase::class
-    singleOf(::WorkspaceSettingsUseCaseImpl) bind WorkspaceSettingsUseCase::class
-    singleOf(::TeamSettingsUseCaseImpl) bind TeamSettingsUseCase::class
+    singleOf(::GetTenantSettingsUseCaseImpl) bind GetTenantSettingsUseCase::class
+    singleOf(::GetTenantAddressUseCaseImpl) bind GetTenantAddressUseCase::class
+    singleOf(::UpdateTenantSettingsUseCaseImpl) bind UpdateTenantSettingsUseCase::class
+    singleOf(::UploadWorkspaceAvatarUseCaseImpl) bind UploadWorkspaceAvatarUseCase::class
+    singleOf(::DeleteWorkspaceAvatarUseCaseImpl) bind DeleteWorkspaceAvatarUseCase::class
+    singleOf(::ListTeamMembersUseCaseImpl) bind ListTeamMembersUseCase::class
+    singleOf(::ListPendingInvitationsUseCaseImpl) bind ListPendingInvitationsUseCase::class
+    singleOf(::CreateInvitationUseCaseImpl) bind CreateInvitationUseCase::class
+    singleOf(::CancelInvitationUseCaseImpl) bind CancelInvitationUseCase::class
+    singleOf(::UpdateTeamMemberRoleUseCaseImpl) bind UpdateTeamMemberRoleUseCase::class
+    singleOf(::RemoveTeamMemberUseCaseImpl) bind RemoveTeamMemberUseCase::class
+    singleOf(::TransferWorkspaceOwnershipUseCaseImpl) bind TransferWorkspaceOwnershipUseCase::class
     singleOf(::GetCurrentTenantUseCaseImpl) bind GetCurrentTenantUseCase::class
     singleOf(::GetCurrentTenantIdUseCaseImpl) bind GetCurrentTenantIdUseCase::class
     singleOf(::SelectTenantUseCaseImpl) bind SelectTenantUseCase::class

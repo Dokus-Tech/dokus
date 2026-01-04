@@ -311,22 +311,21 @@ private fun MobileReviewContent(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-
-            DocumentReviewFooter(
-                canConfirm = state.canConfirm,
-                isConfirming = state.isConfirming,
-                isSaving = state.isSaving,
-                isBindingContact = state.isBindingContact,
-                isRejecting = state.isRejecting,
-                hasUnsavedChanges = state.hasUnsavedChanges,
-                isDocumentConfirmed = state.isDocumentConfirmed,
-                isDocumentRejected = state.isDocumentRejected,
-                confirmBlockedReason = state.confirmBlockedReason,
-                onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
-                onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
-                onReject = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
-                onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
-            )
+        DocumentReviewFooter(
+            canConfirm = state.canConfirm,
+            isConfirming = state.isConfirming,
+            isSaving = state.isSaving,
+            isBindingContact = state.isBindingContact,
+            isRejecting = state.isRejecting,
+            hasUnsavedChanges = state.hasUnsavedChanges,
+            isDocumentConfirmed = state.isDocumentConfirmed,
+            isDocumentRejected = state.isDocumentRejected,
+            confirmBlockedReason = state.confirmBlockedReason,
+            onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
+            onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
+            onReject = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
+            onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
+        )
     }
 
     PdfPreviewBottomSheet(

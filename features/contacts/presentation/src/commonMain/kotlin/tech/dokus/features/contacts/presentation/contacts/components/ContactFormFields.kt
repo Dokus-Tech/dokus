@@ -13,8 +13,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -55,7 +53,6 @@ import tech.dokus.aura.resources.contacts_tags_hint
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.field_optional
 import tech.dokus.aura.resources.field_required
-import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.features.contacts.mvi.ContactFormData
 import tech.dokus.foundation.aura.components.DokusCard

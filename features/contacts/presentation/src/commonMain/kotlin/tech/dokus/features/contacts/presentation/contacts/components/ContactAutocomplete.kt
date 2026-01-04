@@ -723,4 +723,3 @@ fun ContactAutocompleteSimple(
         findContactsByVat = findContactsByVat
     )
 }
-

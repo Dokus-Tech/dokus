@@ -2,30 +2,6 @@
 
 package tech.dokus.database.repository.contacts
 
-import tech.dokus.database.tables.cashflow.BillsTable
-import tech.dokus.database.tables.cashflow.ExpensesTable
-import tech.dokus.database.tables.cashflow.InvoicesTable
-import tech.dokus.database.tables.contacts.ContactNotesTable
-import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.domain.City
-import tech.dokus.domain.Email
-import tech.dokus.domain.Name
-import tech.dokus.domain.PhoneNumber
-import tech.dokus.domain.VatRate
-import tech.dokus.domain.fromDbDecimal
-// ContactType removed - roles are now derived from cashflow items
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.ContactActivitySummary
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactMergeResult
-import tech.dokus.domain.model.contact.ContactStats
-import tech.dokus.domain.model.contact.CreateContactRequest
-import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -42,6 +18,29 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.cashflow.BillsTable
+import tech.dokus.database.tables.cashflow.ExpensesTable
+import tech.dokus.database.tables.cashflow.InvoicesTable
+import tech.dokus.database.tables.contacts.ContactNotesTable
+import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.domain.City
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.PhoneNumber
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactMergeResult
+import tech.dokus.domain.model.contact.ContactStats
+import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
+import tech.dokus.foundation.backend.database.dbQuery
 import java.math.BigDecimal
 import java.util.UUID
 

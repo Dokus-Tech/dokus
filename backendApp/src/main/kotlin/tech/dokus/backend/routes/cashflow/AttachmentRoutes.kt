@@ -13,6 +13,7 @@ import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
@@ -99,11 +100,13 @@ internal fun Route.attachmentRoutes() {
 
             val documentId = documentRepository.create(
                 tenantId = tenantId,
-                filename = uploadResult.filename,
-                contentType = uploadResult.contentType,
-                sizeBytes = uploadResult.sizeBytes,
-                storageKey = uploadResult.key,
-                contentHash = null
+                payload = DocumentCreatePayload(
+                    filename = uploadResult.filename,
+                    contentType = uploadResult.contentType,
+                    sizeBytes = uploadResult.sizeBytes,
+                    storageKey = uploadResult.key,
+                    contentHash = null
+                )
             )
 
             // Link document to invoice by updating invoice's documentId
@@ -194,11 +197,13 @@ internal fun Route.attachmentRoutes() {
 
             val documentId = documentRepository.create(
                 tenantId = tenantId,
-                filename = uploadResult.filename,
-                contentType = uploadResult.contentType,
-                sizeBytes = uploadResult.sizeBytes,
-                storageKey = uploadResult.key,
-                contentHash = null
+                payload = DocumentCreatePayload(
+                    filename = uploadResult.filename,
+                    contentType = uploadResult.contentType,
+                    sizeBytes = uploadResult.sizeBytes,
+                    storageKey = uploadResult.key,
+                    contentHash = null
+                )
             )
 
             // Link document to expense by updating expense's documentId
