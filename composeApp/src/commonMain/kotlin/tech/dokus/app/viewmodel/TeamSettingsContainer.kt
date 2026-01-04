@@ -13,7 +13,7 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
-import tech.dokus.features.auth.datasource.TeamRemoteDataSource
+import tech.dokus.features.auth.usecases.TeamSettingsUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias TeamSettingsCtx = PipelineContext<TeamSettingsState, TeamSettingsIntent, TeamSettingsAction>
@@ -26,7 +26,7 @@ internal typealias TeamSettingsCtx = PipelineContext<TeamSettingsState, TeamSett
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class TeamSettingsContainer(
-    private val teamDataSource: TeamRemoteDataSource,
+    private val teamSettingsUseCase: TeamSettingsUseCase,
 ) : Container<TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> {
 
     private val logger = Logger.forClass<TeamSettingsContainer>()
@@ -72,8 +72,8 @@ internal class TeamSettingsContainer(
 
     private suspend fun TeamSettingsCtx.loadTeamData() {
         // Load members
-        val membersResult = teamDataSource.listTeamMembers()
-        val invitationsResult = teamDataSource.listPendingInvitations()
+        val membersResult = teamSettingsUseCase.listTeamMembers()
+        val invitationsResult = teamSettingsUseCase.listPendingInvitations()
 
         membersResult.fold(
             onSuccess = { members ->
@@ -169,7 +169,7 @@ internal class TeamSettingsContainer(
                 role = currentRole
             )
 
-            teamDataSource.createInvitation(request).fold(
+            teamSettingsUseCase.createInvitation(request).fold(
                 onSuccess = {
                     logger.i { "Invitation sent to $currentEmail" }
                     updateState {
@@ -207,7 +207,7 @@ internal class TeamSettingsContainer(
             logger.d { "Cancelling invitation $invitationId" }
             updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
 
-            teamDataSource.cancelInvitation(invitationId).fold(
+            teamSettingsUseCase.cancelInvitation(invitationId).fold(
                 onSuccess = {
                     logger.i { "Invitation cancelled: $invitationId" }
                     updateState {
@@ -244,7 +244,7 @@ internal class TeamSettingsContainer(
             logger.d { "Updating role for $userId to $newRole" }
             updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
 
-            teamDataSource.updateMemberRole(userId, newRole).fold(
+            teamSettingsUseCase.updateMemberRole(userId, newRole).fold(
                 onSuccess = {
                     logger.i { "Role updated for $userId to $newRole" }
                     updateState {
@@ -279,7 +279,7 @@ internal class TeamSettingsContainer(
             logger.d { "Removing member $userId" }
             updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
 
-            teamDataSource.removeMember(userId).fold(
+            teamSettingsUseCase.removeMember(userId).fold(
                 onSuccess = {
                     logger.i { "Member removed: $userId" }
                     updateState {
@@ -316,7 +316,7 @@ internal class TeamSettingsContainer(
             logger.d { "Transferring ownership to $newOwnerId" }
             updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
 
-            teamDataSource.transferOwnership(newOwnerId).fold(
+            teamSettingsUseCase.transferOwnership(newOwnerId).fold(
                 onSuccess = {
                     logger.i { "Ownership transferred to $newOwnerId" }
                     updateState {
@@ -358,7 +358,7 @@ internal class TeamSettingsContainer(
         withState<TeamSettingsState.Content, _> {
             updateState { copy(membersLoading = true) }
 
-            teamDataSource.listTeamMembers().fold(
+            teamSettingsUseCase.listTeamMembers().fold(
                 onSuccess = { members ->
                     logger.i { "Refreshed ${members.size} team members" }
                     updateState {
@@ -377,7 +377,7 @@ internal class TeamSettingsContainer(
         withState<TeamSettingsState.Content, _> {
             updateState { copy(invitationsLoading = true) }
 
-            teamDataSource.listPendingInvitations().fold(
+            teamSettingsUseCase.listPendingInvitations().fold(
                 onSuccess = { invitations ->
                     logger.i { "Refreshed ${invitations.size} pending invitations" }
                     updateState {

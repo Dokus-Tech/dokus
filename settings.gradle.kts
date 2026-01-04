@@ -55,6 +55,7 @@ include(":features:auth:domain")
 
 // Frontend modules
 include(":features:cashflow:data")
+include(":features:cashflow:domain")
 include(":features:cashflow:presentation")
 include(":features:contacts:data")
 include(":features:contacts:domain")

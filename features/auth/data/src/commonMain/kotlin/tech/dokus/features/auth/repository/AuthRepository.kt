@@ -25,6 +25,7 @@ import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.features.auth.datasource.AccountRemoteDataSource
 import tech.dokus.features.auth.datasource.IdentityRemoteDataSource
 import tech.dokus.features.auth.datasource.TenantRemoteDataSource
+import tech.dokus.features.auth.gateway.AuthGateway
 import tech.dokus.features.auth.manager.AuthManagerMutable
 import tech.dokus.features.auth.manager.TokenManagerMutable
 import tech.dokus.foundation.platform.Logger
@@ -36,6 +37,9 @@ private const val EmailPreviewLength = 3
  * Repository for authentication operations.
  * Coordinates between TokenManager, AuthManager, and HTTP DataSources.
  *
+ * This remains as a gateway because token lifecycle and multi-source orchestration
+ * are centralized here and reused across auth use cases.
+ *
  * Error Handling:
  * - HTTP DataSource methods return Result<T>
  * - Repository propagates results to callers
@@ -46,10 +50,10 @@ class AuthRepository(
     private val accountDataSource: AccountRemoteDataSource,
     private val identityDataSource: IdentityRemoteDataSource,
     private val tenantDataSource: TenantRemoteDataSource
-) {
+) : AuthGateway {
     private val logger = Logger.forClass<AuthRepository>()
 
-    val isAuthenticated: StateFlow<Boolean> = tokenManager.isAuthenticated
+    override val isAuthenticated: StateFlow<Boolean> = tokenManager.isAuthenticated
 
     init {
         // Set up token refresh callback
@@ -61,7 +65,7 @@ class AuthRepository(
     /**
      * Initialize auth repository - load stored tokens.
      */
-    suspend fun initialize() {
+    override suspend fun initialize() {
         logger.d { "Initializing auth repository" }
         tokenManager.initialize()
     }
@@ -69,7 +73,7 @@ class AuthRepository(
     /**
      * Login with email and password.
      */
-    suspend fun login(request: LoginRequest): Result<Unit> {
+    override suspend fun login(request: LoginRequest): Result<Unit> {
         logger.d { "Login attempt for email: ${request.email.value.take(EmailPreviewLength)}***" }
 
         val response = identityDataSource.login(request).getOrElse { error ->
@@ -86,7 +90,7 @@ class AuthRepository(
     /**
      * Register a new user account.
      */
-    suspend fun register(request: RegisterRequest): Result<Unit> {
+    override suspend fun register(request: RegisterRequest): Result<Unit> {
         logger.d { "Registration attempt for email: ${request.email.value.take(EmailPreviewLength)}***" }
 
         val response = identityDataSource.register(request).getOrElse { error ->
@@ -103,7 +107,7 @@ class AuthRepository(
     /**
      * Select a tenant and refresh scoped tokens.
      */
-    suspend fun selectTenant(tenantId: TenantId): Result<Unit> {
+    override suspend fun selectTenant(tenantId: TenantId): Result<Unit> {
         logger.d { "Selecting tenant: $tenantId" }
 
         val response = accountDataSource.selectTenant(tenantId).getOrElse { error ->
@@ -120,7 +124,7 @@ class AuthRepository(
      * Create a tenant with address and scope tokens to it.
      */
     @Suppress("LongParameterList") // All tenant creation parameters are required
-    suspend fun createTenant(
+    override suspend fun createTenant(
         type: TenantType,
         legalName: LegalName,
         displayName: DisplayName,
@@ -152,7 +156,7 @@ class AuthRepository(
      * Check if the current user already has a freelancer tenant.
      * Implemented by listing all tenants and filtering for freelancer type.
      */
-    suspend fun hasFreelancerTenant(): Result<Boolean> {
+    override suspend fun hasFreelancerTenant(): Result<Boolean> {
         return tenantDataSource.listMyTenants()
             .map { tenants ->
                 tenants.any { it.type == TenantType.Freelancer }
@@ -165,7 +169,7 @@ class AuthRepository(
     /**
      * Get current user info.
      */
-    suspend fun getCurrentUser(): Result<User> {
+    override suspend fun getCurrentUser(): Result<User> {
         return accountDataSource.getCurrentUser()
             .onFailure { error ->
                 logger.e(error) { "Failed to get current user" }
@@ -175,7 +179,7 @@ class AuthRepository(
     /**
      * Update user profile (first name, last name).
      */
-    suspend fun updateProfile(firstName: Name?, lastName: Name?): Result<User> {
+    override suspend fun updateProfile(firstName: Name?, lastName: Name?): Result<User> {
         logger.d { "Updating user profile" }
         val request = UpdateProfileRequest(
             firstName = firstName,
@@ -193,7 +197,7 @@ class AuthRepository(
     /**
      * Logout current user.
      */
-    suspend fun logout() {
+    override suspend fun logout() {
         logger.d { "Logging out user" }
 
         val token = tokenManager.getValidAccessToken()
@@ -212,7 +216,7 @@ class AuthRepository(
     /**
      * Request password reset email.
      */
-    suspend fun requestPasswordReset(email: Email): Result<Unit> {
+    override suspend fun requestPasswordReset(email: Email): Result<Unit> {
         logger.d { "Password reset requested for: ${email.value.take(EmailPreviewLength)}***" }
         return identityDataSource.requestPasswordReset(email)
             .onFailure { error ->
@@ -223,7 +227,7 @@ class AuthRepository(
     /**
      * Reset password with a token.
      */
-    suspend fun resetPassword(resetToken: String, newPassword: String): Result<Unit> {
+    override suspend fun resetPassword(resetToken: String, newPassword: String): Result<Unit> {
         logger.d { "Resetting password with token" }
         val request = ResetPasswordRequest(newPassword = newPassword)
         return identityDataSource.resetPassword(resetToken, request)

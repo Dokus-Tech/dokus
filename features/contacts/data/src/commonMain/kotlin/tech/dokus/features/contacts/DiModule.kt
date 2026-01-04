@@ -1,13 +1,17 @@
 package tech.dokus.features.contacts
 
 import io.ktor.client.HttpClient
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
+import tech.dokus.features.contacts.datasource.ContactCacheDataSource
+import tech.dokus.features.contacts.datasource.ContactCacheDataSourceImpl
 import tech.dokus.features.contacts.datasource.ContactLocalDataSource
 import tech.dokus.features.contacts.datasource.ContactLocalDataSourceImpl
 import tech.dokus.features.contacts.datasource.ContactsDb
+import tech.dokus.features.contacts.initializer.ContactsDataInitializer
 import tech.dokus.features.contacts.repository.ContactRemoteDataSource
 import tech.dokus.features.contacts.repository.ContactRemoteDataSourceImpl
-import tech.dokus.features.contacts.repository.ContactRepository
 import tech.dokus.features.contacts.usecases.CacheContactsUseCase
 import tech.dokus.features.contacts.usecases.CacheContactsUseCaseImpl
 import tech.dokus.features.contacts.usecases.CreateContactNoteUseCase
@@ -44,6 +48,7 @@ import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCaseImpl
 import tech.dokus.features.contacts.usecases.UpdateContactUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactUseCaseImpl
+import tech.dokus.foundation.app.AppDataInitializer
 
 val contactsNetworkModule = module {
     single<ContactRemoteDataSource> {
@@ -56,18 +61,16 @@ val contactsDataModule = module {
     single { ContactsDb.create() }
     single { get<ContactsDb>().get() }
 
+    // Initialization
+    singleOf(::ContactsDataInitializer) bind AppDataInitializer::class
+
     // Local data source
     single<ContactLocalDataSource> {
         ContactLocalDataSourceImpl(database = get())
     }
 
-    // Repository
-    single {
-        ContactRepository(
-            remoteDataSource = get<ContactRemoteDataSource>(),
-            localDataSource = get<ContactLocalDataSource>()
-        )
-    }
+    // Cache data source
+    singleOf(::ContactCacheDataSourceImpl) bind ContactCacheDataSource::class
 }
 
 val contactsDomainModule = module {

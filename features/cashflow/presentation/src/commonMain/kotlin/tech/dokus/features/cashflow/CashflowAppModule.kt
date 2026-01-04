@@ -2,8 +2,6 @@ package tech.dokus.features.cashflow
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow
 import tech.dokus.aura.resources.cashflow_title
@@ -11,8 +9,6 @@ import tech.dokus.aura.resources.chat_title
 import tech.dokus.aura.resources.ml
 import tech.dokus.aura.resources.settings_group_workspace
 import tech.dokus.aura.resources.settings_peppol
-import tech.dokus.features.cashflow.cache.CashflowDb
-import tech.dokus.features.cashflow.di.cashflowNetworkModule
 import tech.dokus.features.cashflow.di.cashflowPresentationModule
 import tech.dokus.features.cashflow.di.cashflowViewModelModule
 import tech.dokus.features.cashflow.navigation.CashflowHomeNavigationProvider
@@ -36,7 +32,7 @@ import tech.dokus.navigation.destinations.SettingsDestination
  *
  * This module provides authenticated access to the Cashflow backend service (invoices & expenses).
  */
-object CashflowAppModule : AppModule, KoinComponent {
+object CashflowAppModule : AppModule {
     // Presentation layer
     override val navigationProvider: NavigationProvider = CashflowNavigationProvider
     override val homeNavigationProvider: NavigationProvider = CashflowHomeNavigationProvider
@@ -79,7 +75,7 @@ object CashflowAppModule : AppModule, KoinComponent {
     // Data layer - authenticated RPC client
     override val dataDi: AppDataModuleDi = object : AppDataModuleDi {
         override val platform = null
-        override val network = cashflowNetworkModule
+        override val network = null
         override val data = null
     }
 
@@ -88,8 +84,5 @@ object CashflowAppModule : AppModule, KoinComponent {
         override val useCases = null
     }
 
-    override suspend fun initializeData() {
-        val cashflowDb: CashflowDb by inject()
-        cashflowDb.initialize()
-    }
+    override suspend fun initializeData() = Unit
 }

@@ -2,12 +2,9 @@ package tech.dokus.features.auth
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_group_account
 import tech.dokus.aura.resources.settings_profile
-import tech.dokus.features.auth.database.AuthDb
 import tech.dokus.features.auth.di.authPresentationModule
 import tech.dokus.features.auth.navigation.AuthNavigationProvider
 import tech.dokus.foundation.app.AppDataModuleDi
@@ -22,7 +19,7 @@ import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.AuthDestination
 
-object AuthAppModule : AppModule, KoinComponent {
+object AuthAppModule : AppModule {
     // Presentation layer
     override val navigationProvider: NavigationProvider? = AuthNavigationProvider
     override val homeNavigationProvider: NavigationProvider? = null
@@ -49,18 +46,13 @@ object AuthAppModule : AppModule, KoinComponent {
 
     // Data layer
     override val dataDi: AppDataModuleDi = object : AppDataModuleDi {
-        override val platform = authPlatformModule
-        override val network = authNetworkModule
-        override val data = authDataModule
-    }
-
-    override suspend fun initializeData() {
-        val authDb: AuthDb by inject()
-        authDb.initialize()
+        override val platform = null
+        override val network = null
+        override val data = null
     }
 
     // Domain layer
     override val domainDi: AppDomainModuleDi = object : AppDomainModuleDi {
-        override val useCases = authDomainModule
+        override val useCases = null
     }
 }

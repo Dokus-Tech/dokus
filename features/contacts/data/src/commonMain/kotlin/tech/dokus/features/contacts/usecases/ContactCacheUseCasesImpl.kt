@@ -2,20 +2,20 @@ package tech.dokus.features.contacts.usecases
 
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.features.contacts.repository.ContactRepository
+import tech.dokus.features.contacts.datasource.ContactCacheDataSource
 
 internal class GetCachedContactsUseCaseImpl(
-    private val repository: ContactRepository
+    private val cacheDataSource: ContactCacheDataSource
 ) : GetCachedContactsUseCase {
     override suspend fun invoke(tenantId: TenantId): List<ContactDto> {
-        return repository.getCachedContacts(tenantId)
+        return cacheDataSource.getCachedContacts(tenantId)
     }
 }
 
 internal class CacheContactsUseCaseImpl(
-    private val repository: ContactRepository
+    private val cacheDataSource: ContactCacheDataSource
 ) : CacheContactsUseCase {
     override suspend fun invoke(tenantId: TenantId, contacts: List<ContactDto>) {
-        repository.cacheContacts(tenantId, contacts)
+        cacheDataSource.cacheContacts(tenantId, contacts)
     }
 }

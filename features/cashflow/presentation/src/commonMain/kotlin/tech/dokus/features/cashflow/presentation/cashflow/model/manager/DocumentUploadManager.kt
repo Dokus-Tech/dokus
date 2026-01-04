@@ -17,7 +17,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.utils.currentTimeMillis
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.usecases.DocumentUploadUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.components.DroppedFile
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
@@ -39,7 +39,7 @@ import kotlin.time.Duration.Companion.seconds
  * when navigating between screens or closing/opening the sidebar.
  */
 class DocumentUploadManager(
-    private val dataSource: CashflowRemoteDataSource,
+    private val documentUploadUseCase: DocumentUploadUseCase,
     private val maxConcurrentUploads: Int = 3
 ) {
     private val logger = Logger.forClass<DocumentUploadManager>()
@@ -165,7 +165,7 @@ class DocumentUploadManager(
             // If we get here, the deletion wasn't cancelled
             _deletionHandles.update { it - taskId }
 
-            val result = dataSource.deleteDocument(task.documentId)
+            val result = documentUploadUseCase.deleteDocument(task.documentId)
             resultDeferred.complete(result)
 
             if (result.isSuccess) {
@@ -262,7 +262,7 @@ class DocumentUploadManager(
             it.copy(status = UploadStatus.UPLOADING, progress = 0f)
         }
 
-        val result = dataSource.uploadDocumentWithProgress(
+        val result = documentUploadUseCase.uploadDocumentWithProgress(
             fileContent = task.bytes,
             filename = task.fileName,
             contentType = task.mimeType,

@@ -6,23 +6,23 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedLineItem
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewReducer(
-    private val dataSource: CashflowRemoteDataSource,
+    private val documentReviewUseCase: DocumentReviewUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
     private val mapper = DocumentReviewExtractedDataMapper()
-    private val loader = DocumentReviewLoader(dataSource, getContact, logger)
+    private val loader = DocumentReviewLoader(documentReviewUseCase, getContact, logger)
     private val editor = DocumentReviewFieldEditor()
-    private val contactBinder = DocumentReviewContactBinder(dataSource, getContact, logger)
-    private val preview = DocumentReviewPreview(dataSource, logger)
+    private val contactBinder = DocumentReviewContactBinder(documentReviewUseCase, getContact, logger)
+    private val preview = DocumentReviewPreview(documentReviewUseCase, logger)
     private val lineItems = DocumentReviewLineItems()
     private val provenance = DocumentReviewProvenance()
-    private val actions = DocumentReviewActions(dataSource, mapper, logger)
+    private val actions = DocumentReviewActions(documentReviewUseCase, mapper, logger)
 
     suspend fun DocumentReviewCtx.handleLoadDocument(documentId: DocumentId) =
         with(loader) { handleLoadDocument(documentId) }

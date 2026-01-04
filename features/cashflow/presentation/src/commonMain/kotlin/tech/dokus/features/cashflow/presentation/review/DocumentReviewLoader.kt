@@ -7,12 +7,12 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewLoader(
-    private val dataSource: CashflowRemoteDataSource,
+    private val documentReviewUseCase: DocumentReviewUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
@@ -31,7 +31,7 @@ internal class DocumentReviewLoader(
     }
 
     private suspend fun DocumentReviewCtx.fetchDocumentProcessing(documentId: DocumentId) {
-        dataSource.getDocumentRecord(documentId)
+        documentReviewUseCase.getDocumentRecord(documentId)
             .fold(
                 onSuccess = { document ->
                     transitionToContent(documentId, document)

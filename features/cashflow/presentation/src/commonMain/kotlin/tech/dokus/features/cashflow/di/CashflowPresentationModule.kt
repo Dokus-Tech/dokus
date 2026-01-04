@@ -28,12 +28,9 @@ import tech.dokus.features.cashflow.mvi.PeppolSettingsState
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.FilterDocumentsUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadBusinessHealthUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadCashflowDocumentsUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadVatSummaryUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SearchCashflowDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SubmitInvoiceUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.WatchPendingDocumentsUseCase
 import tech.dokus.features.cashflow.presentation.chat.ChatAction
 import tech.dokus.features.cashflow.presentation.chat.ChatContainer
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
@@ -45,30 +42,27 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.app.mvi.container
 
 val cashflowViewModelModule = module {
-    single { DocumentUploadManager(dataSource = get()) }
+    single { DocumentUploadManager(documentUploadUseCase = get()) }
 
     factory { SearchCashflowDocumentsUseCase() }
     factory { FilterDocumentsUseCase() }
-    factory { LoadCashflowDocumentsUseCase(dataSource = get()) }
-    factory { WatchPendingDocumentsUseCase(dataSource = get()) }
     factory { LoadVatSummaryUseCase() }
     factory { LoadBusinessHealthUseCase() }
     factory { ValidateInvoiceUseCase() }
-    factory { SubmitInvoiceUseCase(dataSource = get()) }
 
     // FlowMVI Containers
     container<AddDocumentContainer, AddDocumentState, AddDocumentIntent, AddDocumentAction> {
         AddDocumentContainer(uploadManager = get())
     }
     container<PeppolSettingsContainer, PeppolSettingsState, PeppolSettingsIntent, PeppolSettingsAction> {
-        PeppolSettingsContainer(dataSource = get())
+        PeppolSettingsContainer(peppolUseCase = get())
     }
     container<PeppolSendContainer, PeppolSendState, PeppolSendIntent, PeppolSendAction> {
-        PeppolSendContainer(dataSource = get())
+        PeppolSendContainer(peppolUseCase = get())
     }
     container<PeppolConnectContainer, PeppolConnectState, PeppolConnectIntent, PeppolConnectAction> {
             (params: PeppolConnectContainer.Companion.Params) ->
-        PeppolConnectContainer(provider = params.provider, dataSource = get())
+        PeppolConnectContainer(provider = params.provider, peppolUseCase = get())
     }
     container<CashflowContainer, CashflowState, CashflowIntent, CashflowAction> {
         CashflowContainer(
@@ -83,18 +77,20 @@ val cashflowViewModelModule = module {
     }
     container<CreateInvoiceContainer, CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> {
         CreateInvoiceContainer(
-            tenantDataSource = get(),
+            getInvoiceNumberPreview = get(),
             validateInvoice = get(),
             submitInvoice = get()
         )
     }
     container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
-        DocumentReviewContainer(dataSource = get(), getContact = get())
+        DocumentReviewContainer(documentReviewUseCase = get(), getContact = get())
     }
     container<ChatContainer, ChatState, ChatIntent, ChatAction> {
         ChatContainer(
             sendChatMessageUseCase = get(),
-            chatRepository = get()
+            getChatConfigurationUseCase = get(),
+            listChatSessionsUseCase = get(),
+            getChatSessionHistoryUseCase = get()
         )
     }
 }

@@ -27,8 +27,10 @@ import tech.dokus.domain.model.ai.ChatResponse
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.MessageRole
-import tech.dokus.features.cashflow.usecase.SendChatMessageUseCase
-import tech.dokus.features.cashflow.repository.ChatRepositoryImpl
+import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
+import tech.dokus.features.cashflow.usecases.GetChatSessionHistoryUseCase
+import tech.dokus.features.cashflow.usecases.ListChatSessionsUseCase
+import tech.dokus.features.cashflow.usecases.SendChatMessageUseCase
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -62,7 +64,9 @@ internal typealias ChatCtx = PipelineContext<ChatState, ChatIntent, ChatAction>
  */
 internal class ChatContainer(
     private val sendChatMessageUseCase: SendChatMessageUseCase,
-    private val chatRepository: ChatRepositoryImpl,
+    private val getChatConfigurationUseCase: GetChatConfigurationUseCase,
+    private val listChatSessionsUseCase: ListChatSessionsUseCase,
+    private val getChatSessionHistoryUseCase: GetChatSessionHistoryUseCase,
 ) : Container<ChatState, ChatIntent, ChatAction> {
 
     private val logger = Logger.forClass<ChatContainer>()
@@ -154,7 +158,7 @@ internal class ChatContainer(
         withState<ChatState.Content, _> {
             updateState { copy(isSending = true) }
 
-            chatRepository.getSessionHistory(
+            getChatSessionHistoryUseCase(
                 sessionId = sessionId,
                 page = 0,
                 limit = SessionHistoryLimit,
@@ -436,7 +440,7 @@ internal class ChatContainer(
             loadSessionsJob?.cancel()
 
             loadSessionsJob = launch {
-                chatRepository.listSessions(
+                listChatSessionsUseCase(
                     scope = scope.takeIf { it == ChatScope.AllDocs },
                     documentId = documentId,
                     page = 0,
@@ -481,7 +485,7 @@ internal class ChatContainer(
     // =========================================================================
 
     private suspend fun loadConfiguration(): ChatConfiguration {
-        return chatRepository.getConfiguration().getOrNull()
+        return getChatConfigurationUseCase().getOrNull()
             ?: ChatConfiguration() // Use defaults if fetch fails
     }
 

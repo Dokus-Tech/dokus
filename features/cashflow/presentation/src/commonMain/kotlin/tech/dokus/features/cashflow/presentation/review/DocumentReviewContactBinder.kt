@@ -6,12 +6,12 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewContactBinder(
-    private val dataSource: CashflowRemoteDataSource,
+    private val documentReviewUseCase: DocumentReviewUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
@@ -35,7 +35,7 @@ internal class DocumentReviewContactBinder(
         }
 
         withState<DocumentReviewState.Content, _> {
-            dataSource.updateDocumentDraftContact(documentId, null, CounterpartyIntent.None)
+            documentReviewUseCase.updateDocumentDraftContact(documentId, null, CounterpartyIntent.None)
                 .fold(
                     onSuccess = {
                         val newState = document.draft?.suggestedContactId?.let { suggestedId ->
@@ -92,7 +92,7 @@ internal class DocumentReviewContactBinder(
         }
 
         withState<DocumentReviewState.Content, _> {
-            dataSource.updateDocumentDraftContact(documentId, null, intent)
+            documentReviewUseCase.updateDocumentDraftContact(documentId, null, intent)
                 .fold(
                     onSuccess = {
                         updateState {
@@ -130,7 +130,7 @@ internal class DocumentReviewContactBinder(
             updateState { copy(isBindingContact = true, contactValidationError = null) }
         }
 
-        dataSource.updateDocumentDraftContact(documentId, contactId, CounterpartyIntent.None)
+        documentReviewUseCase.updateDocumentDraftContact(documentId, contactId, CounterpartyIntent.None)
             .fold(
                 onSuccess = {
                     getContact(contactId).fold(

@@ -18,14 +18,15 @@ import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.features.auth.datasource.TenantRemoteDataSource
+import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
 import tech.dokus.features.cashflow.mvi.model.DatePickerTarget
 import tech.dokus.features.cashflow.mvi.model.InvoiceCreationStep
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SubmitInvoiceUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.mapper.toCreateInvoiceRequest
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
+import tech.dokus.features.cashflow.usecases.SubmitInvoiceUseCase
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -50,7 +51,7 @@ internal typealias CreateInvoiceCtx = PipelineContext<CreateInvoiceState, Create
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class CreateInvoiceContainer(
-    private val tenantDataSource: TenantRemoteDataSource,
+    private val getInvoiceNumberPreview: GetInvoiceNumberPreviewUseCase,
     private val validateInvoice: ValidateInvoiceUseCase,
     private val submitInvoice: SubmitInvoiceUseCase,
 ) : Container<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> {
@@ -351,7 +352,7 @@ internal class CreateInvoiceContainer(
 
             logger.d { "Creating invoice for client: ${currentFormState.selectedClient?.name?.value}" }
 
-            submitInvoice(currentFormState).fold(
+            submitInvoice(currentFormState.toCreateInvoiceRequest()).fold(
                 onSuccess = { invoice ->
                     logger.i { "Invoice created: ${invoice.invoiceNumber}" }
                     updateState {
@@ -396,7 +397,7 @@ internal class CreateInvoiceContainer(
                 )
             }
 
-            submitInvoice(currentFormState).fold(
+            submitInvoice(currentFormState.toCreateInvoiceRequest()).fold(
                 onSuccess = { invoice ->
                     logger.i { "Invoice created on retry: ${invoice.invoiceNumber}" }
                     updateState {
@@ -481,7 +482,7 @@ internal class CreateInvoiceContainer(
     // === Private Helpers ===
 
     private suspend fun CreateInvoiceCtx.loadInvoiceNumberPreview() {
-        tenantDataSource.getInvoiceNumberPreview()
+        getInvoiceNumberPreview()
             .onSuccess { preview ->
                 updateState {
                     when (this) {

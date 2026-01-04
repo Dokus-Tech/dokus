@@ -72,11 +72,11 @@ internal val diModuleApp = module {
     container<WorkspaceSettingsContainer, WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
         WorkspaceSettingsContainer(
             getCurrentTenantUseCase = get(),
-            tenantDataSource = get(),
+            workspaceSettingsUseCase = get(),
         )
     }
     container<TeamSettingsContainer, TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> {
-        TeamSettingsContainer(teamDataSource = get())
+        TeamSettingsContainer(teamSettingsUseCase = get())
     }
 
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }

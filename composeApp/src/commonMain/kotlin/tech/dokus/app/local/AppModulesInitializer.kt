@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.AppDataInitializer
+import org.koin.core.context.GlobalContext
 
 /**
  * Handles database and async resource initialization for all app modules.
@@ -20,6 +22,9 @@ fun AppModulesInitializer(
     var isInitialized by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        GlobalContext.get().getAll<AppDataInitializer>().forEach { initializer ->
+            initializer.initialize()
+        }
         modules.forEach { module ->
             module.initializeData()
         }

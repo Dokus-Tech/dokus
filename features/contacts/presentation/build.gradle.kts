@@ -49,7 +49,6 @@ kotlin {
             implementation(projects.foundation.aura)
             implementation(projects.foundation.platform)
             implementation(projects.features.auth.domain)
-            implementation(projects.features.contacts.data)
             implementation(projects.features.contacts.domain)
 
             implementation(project.dependencies.platform(libs.koin.bom))

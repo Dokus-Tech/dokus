@@ -1,11 +1,8 @@
 package tech.dokus.features.contacts
 
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_title
 import tech.dokus.aura.resources.users
-import tech.dokus.features.contacts.datasource.ContactsDb
 import tech.dokus.features.contacts.di.contactsPresentationModule
 import tech.dokus.features.contacts.navigation.ContactsHomeNavigationProvider
 import tech.dokus.features.contacts.navigation.ContactsNavigationProvider
@@ -25,7 +22,7 @@ import tech.dokus.navigation.destinations.HomeDestination
  *
  * This module provides access to the Contacts management features.
  */
-object ContactsAppModule : AppModule, KoinComponent {
+object ContactsAppModule : AppModule {
     // Presentation layer
     override val navigationProvider: NavigationProvider = ContactsNavigationProvider
     override val homeNavigationProvider: NavigationProvider = ContactsHomeNavigationProvider
@@ -49,17 +46,12 @@ object ContactsAppModule : AppModule, KoinComponent {
     // Data layer
     override val dataDi: AppDataModuleDi = object : AppDataModuleDi {
         override val platform = null
-        override val network = contactsNetworkModule
-        override val data = contactsDataModule
+        override val network = null
+        override val data = null
     }
 
     // Domain layer
     override val domainDi: AppDomainModuleDi = object : AppDomainModuleDi {
-        override val useCases = contactsDomainModule
-    }
-
-    override suspend fun initializeData() {
-        val contactsDb: ContactsDb by inject()
-        contactsDb.initialize()
+        override val useCases = null
     }
 }

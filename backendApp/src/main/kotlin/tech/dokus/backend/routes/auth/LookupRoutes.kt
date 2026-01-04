@@ -34,10 +34,14 @@ internal fun Route.lookupRoutes() {
 
             val nameResults = if (name.isValid) {
                 cbeApiClient.searchByName(name)
-            } else Result.success(emptyList())
+            } else {
+                Result.success(emptyList())
+            }
             val numberResults = if (number.isValid) {
                 cbeApiClient.searchByVat(number)
-            } else Result.failure(DokusException.Validation.InvalidVatNumber)
+            } else {
+                Result.failure(DokusException.Validation.InvalidVatNumber)
+            }
 
             if (nameResults.isFailure && numberResults.isFailure) {
                 logger.error(
@@ -53,7 +57,7 @@ internal fun Route.lookupRoutes() {
             }
             val response = EntityLookupResponse(
                 results = results,
-                query = "${name}${number}",
+                query = "${name}$number",
             )
 
             call.respond<EntityLookupResponse>(HttpStatusCode.OK, response)

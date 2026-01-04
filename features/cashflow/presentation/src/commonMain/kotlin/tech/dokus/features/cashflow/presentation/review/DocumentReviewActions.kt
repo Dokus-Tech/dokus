@@ -10,11 +10,11 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewActions(
-    private val dataSource: CashflowRemoteDataSource,
+    private val documentReviewUseCase: DocumentReviewUseCase,
     private val mapper: DocumentReviewExtractedDataMapper,
     private val logger: Logger,
 ) {
@@ -27,7 +27,7 @@ internal class DocumentReviewActions(
 
             launch {
                 val updatedData = mapper.buildExtractedDataFromEditable(editableData, originalData)
-                dataSource.updateDocumentDraft(
+                documentReviewUseCase.updateDocumentDraft(
                     documentId,
                     UpdateDraftRequest(extractedData = updatedData)
                 ).fold(
@@ -85,7 +85,7 @@ internal class DocumentReviewActions(
 
             launch {
                 val updatedData = mapper.buildExtractedDataFromEditable(editableData, originalData)
-                dataSource.confirmDocument(
+                documentReviewUseCase.confirmDocument(
                     documentId,
                     ConfirmDocumentRequest(
                         documentType = editableData.documentType,
@@ -197,7 +197,7 @@ internal class DocumentReviewActions(
             }
 
             launch {
-                dataSource.rejectDocument(documentId, RejectDocumentRequest(reason))
+                documentReviewUseCase.rejectDocument(documentId, RejectDocumentRequest(reason))
                     .fold(
                         onSuccess = { record ->
                             val draft = record.draft
@@ -238,7 +238,7 @@ internal class DocumentReviewActions(
     }
 
     private suspend fun DocumentReviewCtx.refreshAfterDraftUpdate(documentId: tech.dokus.domain.ids.DocumentId) {
-        dataSource.getDocumentRecord(documentId).fold(
+        documentReviewUseCase.getDocumentRecord(documentId).fold(
             onSuccess = { record ->
                 val draft = record.draft
                 withState<DocumentReviewState.Content, _> {
