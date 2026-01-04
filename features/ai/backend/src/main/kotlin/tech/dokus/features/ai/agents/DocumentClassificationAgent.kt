@@ -1,18 +1,23 @@
 package tech.dokus.features.ai.agents
 
-import ai.koog.agents.core.agent.AIAgent
-import ai.koog.agents.core.agent.singleRunStrategy
-import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
+import ai.koog.prompt.message.AttachmentContent
+import ai.koog.prompt.message.ContentPart
+import kotlinx.coroutines.flow.first
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.DocumentClassification
+import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
- * Agent responsible for classifying document types.
+ * Agent responsible for classifying document types using vision models.
  * Step 1 in the two-step document processing pipeline.
+ *
+ * Uses vision-capable LLMs (qwen3-vl) to analyze document images directly,
+ * eliminating the need for OCR preprocessing.
  */
 class DocumentClassificationAgent(
     private val executor: PromptExecutor,
@@ -20,8 +25,8 @@ class DocumentClassificationAgent(
 ) {
     private val logger = loggerFor()
     private val systemPrompt = """
-        You are a document classification specialist.
-        Analyze the provided text and determine the document type.
+        You are a document classification specialist with vision capabilities.
+        Analyze the document image(s) and determine the document type.
 
         Document types:
         - INVOICE: A formal request for payment from a supplier/vendor with invoice number, line items, VAT
@@ -29,43 +34,53 @@ class DocumentClassificationAgent(
         - BILL: A utility or service bill (electricity, phone, internet, subscription services)
         - UNKNOWN: Cannot determine the type
 
-        Key differences:
-        - INVOICE: Has invoice number, payment terms, due date, detailed line items, often B2B
-        - RECEIPT: Proof of completed payment, often from retail stores, has receipt number, immediate payment
-        - BILL: Recurring service charges, account numbers, service periods, utility providers
+        Key visual indicators:
+        - INVOICE: Formal letterhead, invoice number, payment terms, due date, detailed line items, often B2B
+        - RECEIPT: Point-of-sale format, receipt number, store name/logo, immediate payment confirmation
+        - BILL: Utility company branding, account numbers, service periods, recurring charges
 
-        Respond with a JSON object containing:
-        {
-            "documentType": "INVOICE" | "RECEIPT" | "BILL" | "UNKNOWN",
-            "confidence": 0.0 to 1.0,
-            "reasoning": "Brief explanation of why this classification was chosen"
-        }
+        Respond with ONLY a JSON object (no markdown, no explanation):
+        {"documentType": "INVOICE", "confidence": 0.85, "reasoning": "Brief explanation"}
     """.trimIndent()
 
     /**
-     * Classify the document type from OCR text.
+     * Classify the document type from document images using vision model.
+     *
+     * @param images List of document page images (usually just the first page for classification)
+     * @return DocumentClassification with type, confidence, and reasoning
      */
-    suspend fun classify(ocrText: String): DocumentClassification {
-        logger.debug("Classifying document (${ocrText.length} chars)")
+    suspend fun classify(images: List<DocumentImage>): DocumentClassification {
+        logger.debug("Classifying document (${images.size} pages)")
 
-        val userPrompt = """
-            Classify this document:
-
-            $ocrText
-        """.trimIndent()
+        if (images.isEmpty()) {
+            return DocumentClassification(
+                documentType = ClassifiedDocumentType.UNKNOWN,
+                confidence = 0.0,
+                reasoning = "No images provided for classification"
+            )
+        }
 
         return try {
-            val agent = AIAgent(
-                promptExecutor = executor,
-                llmModel = model,
-                strategy = singleRunStrategy(),
-                toolRegistry = ToolRegistry.EMPTY,
-                id = "document-classifier",
-                systemPrompt = systemPrompt
-            )
+            // Build vision prompt with image attachments
+            val visionPrompt = prompt("document-classifier") {
+                system(systemPrompt)
+                user {
+                    text("Classify this ${images.size}-page document:")
+                    images.forEach { docImage ->
+                        image(
+                            ContentPart.Image(
+                                content = AttachmentContent.Binary.Bytes(docImage.imageBytes),
+                                format = "png",
+                                mimeType = docImage.mimeType
+                            )
+                        )
+                    }
+                }
+            }
 
-            val response: String = agent.run(userPrompt)
-            parseClassificationResponse(response)
+            // Execute prompt and get response
+            val response = executor.execute(visionPrompt, model, emptyList()).first()
+            parseClassificationResponse(response.content)
         } catch (e: Exception) {
             logger.error("Failed to classify document", e)
             DocumentClassification(

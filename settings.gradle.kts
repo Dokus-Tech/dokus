@@ -46,7 +46,6 @@ include(":foundation:peppol")
 
 // Backend library (shared by backendApp)
 include(":features:ai:backend")
-include(":foundation:ocr")
 
 // Auth domain for shared types
 include(":features:auth:presentation")

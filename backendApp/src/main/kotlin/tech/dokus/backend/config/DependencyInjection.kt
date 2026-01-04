@@ -65,8 +65,7 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
 import tech.dokus.foundation.backend.storage.MinioStorage
 import tech.dokus.foundation.backend.storage.ObjectStorage
-import tech.dokus.ocr.OcrEngine
-import tech.dokus.ocr.engine.TesseractOcrEngine
+import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.mapper.PeppolMapper
 import tech.dokus.peppol.provider.PeppolProviderFactory
@@ -255,11 +254,11 @@ private val contactsModule = module {
 }
 
 private fun processorModule(appConfig: AppBaseConfig) = module {
-    // AI Service (uses Koog agents for extraction)
+    // AI Service (uses Koog agents for vision-based extraction)
     single { AIService(appConfig.ai) }
 
-    // OCR Engine (Tesseract-based)
-    single<OcrEngine> { TesseractOcrEngine() }
+    // Document Image Service (converts PDFs/images to PNG for vision processing)
+    single { DocumentImageService() }
 
     // Optional RAG services - can be enabled when embeddings are needed
     // single { ChunkingService() }
@@ -270,7 +269,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             ingestionRepository = get(),
             documentStorage = get<DocumentStorageService>(),
             aiService = get(),
-            ocrEngine = get(),
+            documentImageService = get(),
             config = appConfig.processor,
             // RAG chunking/embedding - use repositories from foundation:database
             chunkingService = getOrNull<ChunkingService>(),
