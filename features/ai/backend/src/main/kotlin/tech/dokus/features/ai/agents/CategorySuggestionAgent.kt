@@ -5,8 +5,9 @@ import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
-import tech.dokus.domain.utils.json
+import tech.dokus.domain.utils.parseSafe
 import tech.dokus.features.ai.models.CategorySuggestion
+import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
@@ -97,28 +98,9 @@ class CategorySuggestionAgent(
     }
 
     private fun parseSuggestionResponse(response: String): CategorySuggestion {
-        return try {
-            val jsonString = extractJson(response)
-            json.decodeFromString<CategorySuggestion>(jsonString)
-        } catch (e: Exception) {
-            logger.warn("Failed to parse suggestion response: ${response.take(500)}", e)
+        return parseSafe<CategorySuggestion>(normalizeJson(response)).getOrElse {
+            logger.warn("Failed to parse suggestion response: ${response.take(500)}", it)
             fallbackSuggestion(response)
-        }
-    }
-
-    private fun extractJson(response: String): String {
-        val cleaned = response
-            .replace("```json", "")
-            .replace("```", "")
-            .trim()
-
-        val startIndex = cleaned.indexOf('{')
-        val endIndex = cleaned.lastIndexOf('}')
-
-        return if (startIndex in 0..<endIndex) {
-            cleaned.substring(startIndex, endIndex + 1)
-        } else {
-            cleaned
         }
     }
 

@@ -9,3 +9,7 @@ val json = Json {
     coerceInputValues = false
     prettyPrint = true
 }
+
+inline fun <reified T> parseSafe(value: String): Result<T> {
+    return runCatching { json.decodeFromString<T>(value) }
+}
