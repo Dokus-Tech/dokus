@@ -33,9 +33,11 @@ enum class DocumentUiStatus {
  */
 object DocumentProcessingConstants {
     /**
-     * Confidence threshold for auto-confirmation eligibility.
-     * Documents with extraction confidence >= this value AND linked contact
-     * are marked as "Ready" rather than "Review".
+     * Confidence threshold for "Ready" status eligibility.
+     * Documents with extraction confidence >= this value AND a linked contact
+     * are marked as "Ready to confirm" rather than "Needs attention".
+     * Note: Documents still require explicit user confirmation - this only
+     * affects the status badge display.
      */
-    const val AUTO_CONFIRM_CONFIDENCE_THRESHOLD = 0.90
+    const val READY_STATUS_CONFIDENCE_THRESHOLD = 0.90
 }

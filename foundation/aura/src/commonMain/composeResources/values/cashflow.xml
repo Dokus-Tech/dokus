@@ -22,10 +22,10 @@
     <string name="pending_documents_next">Next</string>
 
     <!-- Document UI Status -->
-    <string name="document_status_queued">Queued</string>
+    <string name="document_status_queued">Waiting</string>
     <string name="document_status_processing">Processing</string>
-    <string name="document_status_review">Review</string>
-    <string name="document_status_ready">Ready</string>
+    <string name="document_status_review">Needs attention</string>
+    <string name="document_status_ready">Ready to confirm</string>
     <string name="document_status_failed">Failed</string>
 
     <!-- Document Table -->

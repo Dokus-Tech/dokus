@@ -2,7 +2,7 @@ package tech.dokus.features.cashflow.presentation.model
 
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.foundation.aura.model.DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
+import tech.dokus.foundation.aura.model.DocumentProcessingConstants.READY_STATUS_CONFIDENCE_THRESHOLD
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 
 /**
@@ -43,11 +43,12 @@ fun DocumentRecordDto.toUiStatus(): DocumentUiStatus {
  */
 private fun DocumentRecordDto.determineSucceededStatus(): DocumentUiStatus {
     val linkedContact = draft?.linkedContactId
-    val confidence = latestIngestion?.confidence ?: 0.0
+    // Coerce to valid range [0.0, 1.0] to handle any malformed data
+    val confidence = (latestIngestion?.confidence ?: 0.0).coerceIn(0.0, 1.0)
 
     // Ready requires both conditions
     val hasLinkedContact = linkedContact != null
-    val hasHighConfidence = confidence >= AUTO_CONFIRM_CONFIDENCE_THRESHOLD
+    val hasHighConfidence = confidence >= READY_STATUS_CONFIDENCE_THRESHOLD
 
     return if (hasLinkedContact && hasHighConfidence) {
         DocumentUiStatus.Ready
