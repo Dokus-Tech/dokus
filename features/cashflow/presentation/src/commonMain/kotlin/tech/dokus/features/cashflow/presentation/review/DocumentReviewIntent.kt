@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIIntent
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ExtractedLineItem
@@ -64,6 +65,9 @@ sealed interface DocumentReviewIntent : MVIIntent {
     // Failed analysis intents
     data object RetryAnalysis : DocumentReviewIntent
     data object DismissFailureBanner : DocumentReviewIntent
+
+    // Manual document type selection (when AI fails or type is unknown)
+    data class SelectDocumentType(val type: DocumentType) : DocumentReviewIntent
 }
 
 enum class InvoiceField {

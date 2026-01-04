@@ -2,6 +2,7 @@
 
 package tech.dokus.features.cashflow.presentation.review
 
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ExtractedDocumentData
@@ -59,6 +60,9 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleUpdateExpenseField(field: ExpenseField, value: Any?) =
         with(editor) { handleUpdateExpenseField(field, value) }
+
+    suspend fun DocumentReviewCtx.handleSelectDocumentType(type: DocumentType) =
+        with(editor) { handleSelectDocumentType(type) }
 
     suspend fun DocumentReviewCtx.handleSelectContact(contactId: ContactId) =
         with(contactBinder) { handleSelectContact(contactId) }
