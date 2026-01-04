@@ -4,10 +4,14 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
+import tech.dokus.features.auth.initializer.AuthDataInitializer
 import tech.dokus.features.auth.manager.AuthManagerMutable
 import tech.dokus.features.auth.manager.TokenManagerMutable
+import tech.dokus.features.contacts.initializer.ContactsDataInitializer
+import tech.dokus.foundation.app.AppDataInitializer
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.SharedQualifiers
 import tech.dokus.foundation.app.network.ServerConnectionMonitor
@@ -23,7 +27,10 @@ internal object AppDataMainModuleDi : AppDataModuleDi {
 
 private val networkModule = module {
     // Connection monitor tracks connection state based on actual API request results
-    single { ServerConnectionMonitor() }
+    singleOf(::ServerConnectionMonitor)
+    single<AppDataInitializer> {
+        AppDataInitializer(get<AuthDataInitializer>(), get<ContactsDataInitializer>())
+    }
 
     single<HttpClient>(SharedQualifiers.httpClientNoAuth) {
         createDynamicBaseHttpClient(

@@ -9,6 +9,7 @@ import tech.dokus.app.local.AppModulesInitializer
 import tech.dokus.app.local.AppModulesProvided
 import tech.dokus.app.local.KoinProvided
 import tech.dokus.app.navigation.DokusNavHost
+import tech.dokus.foundation.app.AppDataInitializer
 import tech.dokus.foundation.app.navigationProviders
 import tech.dokus.foundation.app.network.ServerConnectionMonitor
 import tech.dokus.foundation.app.network.ServerConnectionProvided
@@ -31,6 +32,7 @@ fun App(
         KoinProvided(diModules) {
             val themeManager = koinInject<ThemeManager>()
             val serverConnectionMonitor = koinInject<ServerConnectionMonitor>()
+            val appDataInitializer = koinInject<AppDataInitializer>()
 
             // Provide server connection state to entire app
             // Note: Connection monitoring is now event-driven - the monitor is notified
@@ -38,7 +40,7 @@ fun App(
             ServerConnectionProvided(serverConnectionMonitor) {
                 ThemeManagerProvided(themeManager) {
                     Themed {
-                        AppModulesInitializer(modules) {
+                        AppModulesInitializer(appDataInitializer) {
                             ScreenSizeProvided {
                                 NavControllerProvided(navController) {
                                     DokusNavHost(

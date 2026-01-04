@@ -3,9 +3,11 @@ package tech.dokus.features.auth.initializer
 import tech.dokus.features.auth.database.AuthDb
 import tech.dokus.foundation.app.AppDataInitializer
 
-internal class AuthDataInitializer(
+interface AuthDataInitializer : AppDataInitializer
+
+internal class AuthDataInitializerImpl(
     private val authDb: AuthDb
-) : AppDataInitializer {
+) : AuthDataInitializer {
     override suspend fun initialize() {
         authDb.initialize()
     }
