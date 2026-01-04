@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -73,7 +72,10 @@ import tech.dokus.aura.resources.contacts_saving
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.fields.PTextFieldFree
+import tech.dokus.foundation.aura.constrains.Constrains
 
 // Animation timing constants
 private const val FadeAnimationDurationMs = 200
@@ -579,8 +581,9 @@ private fun DeleteNoteConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = { if (!isDeleting) onDismiss() },
+        title = stringResource(Res.string.contacts_delete_note),
         icon = {
             Icon(
                 imageVector = Icons.Default.Delete,
@@ -588,20 +591,14 @@ private fun DeleteNoteConfirmationDialog(
                 tint = MaterialTheme.colorScheme.error
             )
         },
-        title = {
-            Text(
-                text = stringResource(Res.string.contacts_delete_note),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Column {
+        content = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+            ) {
                 Text(
                     text = stringResource(Res.string.contacts_delete_note_confirm),
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Spacer(modifier = Modifier.height(SpacingSmall))
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = ContainerAlphaDefault),
                     shape = RoundedCornerShape(CardCornerRadius)
@@ -615,7 +612,6 @@ private fun DeleteNoteConfirmationDialog(
                         modifier = Modifier.padding(NoteItemPadding)
                     )
                 }
-                Spacer(modifier = Modifier.height(SpacingSmall))
                 Text(
                     text = stringResource(Res.string.contacts_delete_note_warning),
                     style = MaterialTheme.typography.bodySmall,
@@ -623,40 +619,19 @@ private fun DeleteNoteConfirmationDialog(
                 )
             }
         },
-        confirmButton = {
-            if (isDeleting) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(ProgressIndicatorSize),
-                        strokeWidth = ProgressStrokeWidth
-                    )
-                    Text(
-                        text = stringResource(Res.string.contacts_deleting),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            } else {
-                TextButton(onClick = onConfirm) {
-                    Text(
-                        text = stringResource(Res.string.action_delete),
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-        },
-        dismissButton = {
-            if (!isDeleting) {
-                TextButton(onClick = onDismiss) {
-                    Text(
-                        text = stringResource(Res.string.action_cancel),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_delete),
+            onClick = onConfirm,
+            isLoading = isDeleting,
+            isDestructive = true,
+            enabled = !isDeleting
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_cancel),
+            onClick = onDismiss,
+            enabled = !isDeleting
+        ),
+        dismissOnBackPress = !isDeleting,
+        dismissOnClickOutside = !isDeleting
     )
 }

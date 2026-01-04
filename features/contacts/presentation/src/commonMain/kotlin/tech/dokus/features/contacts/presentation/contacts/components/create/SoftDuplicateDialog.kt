@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +29,8 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.features.contacts.mvi.SoftDuplicateReason
 import tech.dokus.features.contacts.mvi.SoftDuplicateUi
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
@@ -44,8 +45,9 @@ fun SoftDuplicateDialog(
     onViewContact: (ContactId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = onDismiss,
+        title = stringResource(Res.string.contacts_duplicate_warning),
         icon = {
             Icon(
                 imageVector = Icons.Default.Warning,
@@ -53,41 +55,34 @@ fun SoftDuplicateDialog(
                 tint = MaterialTheme.colorScheme.primary
             )
         },
-        title = {
-            Text(
-                text = stringResource(Res.string.contacts_duplicate_warning),
-                style = MaterialTheme.typography.titleMedium
-            )
-        },
-        text = {
-            Column {
+        content = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+            ) {
                 Text(
                     text = stringResource(Res.string.contacts_duplicate_list_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
 
                 duplicates.forEach { duplicate ->
                     DuplicateItem(
                         duplicate = duplicate,
                         onClick = { onViewContact(duplicate.contactId) }
                     )
-                    Spacer(modifier = Modifier.height(Constrains.Spacing.small))
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onContinue) {
-                Text(stringResource(Res.string.contacts_continue_anyway))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.contacts_cancel))
-            }
-        },
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.contacts_continue_anyway),
+            onClick = onContinue
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.contacts_cancel),
+            onClick = onDismiss
+        ),
         modifier = modifier
     )
 }

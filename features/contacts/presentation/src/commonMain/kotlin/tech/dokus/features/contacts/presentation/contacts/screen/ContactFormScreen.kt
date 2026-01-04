@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,11 +22,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -36,7 +33,6 @@ import tech.dokus.aura.resources.action_delete
 import tech.dokus.aura.resources.contacts_delete_confirmation
 import tech.dokus.aura.resources.contacts_delete_contact
 import tech.dokus.aura.resources.contacts_delete_warning
-import tech.dokus.aura.resources.contacts_deleting
 import tech.dokus.aura.resources.contacts_edit_contact
 import tech.dokus.aura.resources.contacts_update_mobile_hint
 import tech.dokus.domain.ids.ContactId
@@ -46,7 +42,10 @@ import tech.dokus.features.contacts.presentation.contacts.components.ContactForm
 import tech.dokus.features.contacts.presentation.contacts.components.ContactFormContent
 import tech.dokus.features.contacts.presentation.contacts.components.ContactFormFields
 import tech.dokus.features.contacts.presentation.contacts.components.DuplicateWarningBanner
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
@@ -310,8 +309,9 @@ private fun DeleteContactConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = { if (!isDeleting) onDismiss() },
+        title = stringResource(Res.string.contacts_delete_contact),
         icon = {
             Icon(
                 imageVector = Icons.Default.Warning,
@@ -319,20 +319,14 @@ private fun DeleteContactConfirmationDialog(
                 tint = MaterialTheme.colorScheme.error
             )
         },
-        title = {
-            Text(
-                text = stringResource(Res.string.contacts_delete_contact),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Column {
+        content = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+            ) {
                 Text(
                     text = stringResource(Res.string.contacts_delete_confirmation, contactName),
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(Res.string.contacts_delete_warning),
                     style = MaterialTheme.typography.bodySmall,
@@ -340,40 +334,19 @@ private fun DeleteContactConfirmationDialog(
                 )
             }
         },
-        confirmButton = {
-            if (isDeleting) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.height(16.dp).width(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Text(
-                        text = stringResource(Res.string.contacts_deleting),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            } else {
-                TextButton(onClick = onConfirm) {
-                    Text(
-                        text = stringResource(Res.string.action_delete),
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-        },
-        dismissButton = {
-            if (!isDeleting) {
-                TextButton(onClick = onDismiss) {
-                    Text(
-                        text = stringResource(Res.string.action_cancel),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_delete),
+            onClick = onConfirm,
+            isLoading = isDeleting,
+            isDestructive = true,
+            enabled = !isDeleting
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_cancel),
+            onClick = onDismiss,
+            enabled = !isDeleting
+        ),
+        dismissOnBackPress = !isDeleting,
+        dismissOnClickOutside = !isDeleting
     )
 }

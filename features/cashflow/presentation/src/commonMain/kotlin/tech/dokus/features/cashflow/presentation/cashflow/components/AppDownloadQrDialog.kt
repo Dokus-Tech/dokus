@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCode2
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,6 +28,9 @@ import tech.dokus.aura.resources.app_download_description
 import tech.dokus.aura.resources.app_download_platforms
 import tech.dokus.aura.resources.app_download_qr_code
 import tech.dokus.aura.resources.app_download_title
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Dialog showing a QR code for downloading the mobile application.
@@ -43,19 +45,13 @@ fun AppDownloadQrDialog(
 ) {
     if (!isVisible) return
 
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(Res.string.app_download_title),
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center
-            )
-        },
-        text = {
+        title = stringResource(Res.string.app_download_title),
+        content = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
             ) {
                 Text(
                     text = stringResource(Res.string.app_download_description),
@@ -64,13 +60,9 @@ fun AppDownloadQrDialog(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
-
                 // QR Code placeholder
                 // TODO: Replace with actual QR code generation library
                 QrCodePlaceholder()
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = stringResource(Res.string.app_download_platforms),
@@ -80,11 +72,10 @@ fun AppDownloadQrDialog(
                 )
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.action_close))
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_close),
+            onClick = onDismiss
+        )
     )
 }
 
