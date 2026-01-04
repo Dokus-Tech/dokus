@@ -6,60 +6,62 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
-import tech.dokus.features.auth.gateway.TeamSettingsGateway
+import tech.dokus.features.auth.gateway.TeamInvitationsGateway
+import tech.dokus.features.auth.gateway.TeamMembersGateway
+import tech.dokus.features.auth.gateway.TeamOwnershipGateway
 
 internal class ListTeamMembersUseCaseImpl(
-    private val teamSettingsGateway: TeamSettingsGateway
+    private val teamMembersGateway: TeamMembersGateway
 ) : ListTeamMembersUseCase {
     override suspend fun invoke(): Result<List<TeamMember>> {
-        return teamSettingsGateway.listTeamMembers()
+        return teamMembersGateway.listTeamMembers()
     }
 }
 
 internal class ListPendingInvitationsUseCaseImpl(
-    private val teamSettingsGateway: TeamSettingsGateway
+    private val teamInvitationsGateway: TeamInvitationsGateway
 ) : ListPendingInvitationsUseCase {
     override suspend fun invoke(): Result<List<TenantInvitation>> {
-        return teamSettingsGateway.listPendingInvitations()
+        return teamInvitationsGateway.listPendingInvitations()
     }
 }
 
 internal class CreateInvitationUseCaseImpl(
-    private val teamSettingsGateway: TeamSettingsGateway
+    private val teamInvitationsGateway: TeamInvitationsGateway
 ) : CreateInvitationUseCase {
     override suspend fun invoke(request: CreateInvitationRequest): Result<TenantInvitation> {
-        return teamSettingsGateway.createInvitation(request)
+        return teamInvitationsGateway.createInvitation(request)
     }
 }
 
 internal class CancelInvitationUseCaseImpl(
-    private val teamSettingsGateway: TeamSettingsGateway
+    private val teamInvitationsGateway: TeamInvitationsGateway
 ) : CancelInvitationUseCase {
     override suspend fun invoke(invitationId: InvitationId): Result<Unit> {
-        return teamSettingsGateway.cancelInvitation(invitationId)
+        return teamInvitationsGateway.cancelInvitation(invitationId)
     }
 }
 
 internal class UpdateTeamMemberRoleUseCaseImpl(
-    private val teamSettingsGateway: TeamSettingsGateway
+    private val teamMembersGateway: TeamMembersGateway
 ) : UpdateTeamMemberRoleUseCase {
     override suspend fun invoke(userId: UserId, newRole: UserRole): Result<Unit> {
-        return teamSettingsGateway.updateMemberRole(userId, newRole)
+        return teamMembersGateway.updateMemberRole(userId, newRole)
     }
 }
 
 internal class RemoveTeamMemberUseCaseImpl(
-    private val teamSettingsGateway: TeamSettingsGateway
+    private val teamMembersGateway: TeamMembersGateway
 ) : RemoveTeamMemberUseCase {
     override suspend fun invoke(userId: UserId): Result<Unit> {
-        return teamSettingsGateway.removeMember(userId)
+        return teamMembersGateway.removeMember(userId)
     }
 }
 
 internal class TransferWorkspaceOwnershipUseCaseImpl(
-    private val teamSettingsGateway: TeamSettingsGateway
+    private val teamOwnershipGateway: TeamOwnershipGateway
 ) : TransferWorkspaceOwnershipUseCase {
     override suspend fun invoke(newOwnerId: UserId): Result<Unit> {
-        return teamSettingsGateway.transferOwnership(newOwnerId)
+        return teamOwnershipGateway.transferOwnership(newOwnerId)
     }
 }

@@ -83,6 +83,4 @@ object CashflowAppModule : AppModule {
     override val domainDi: AppDomainModuleDi = object : AppDomainModuleDi {
         override val useCases = null
     }
-
-    override suspend fun initializeData() = Unit
 }

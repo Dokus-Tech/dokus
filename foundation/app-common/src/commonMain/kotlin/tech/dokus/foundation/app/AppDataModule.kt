@@ -4,13 +4,6 @@ import org.koin.core.module.Module
 
 interface AppDataModule {
     val dataDi: AppDataModuleDi
-
-    /**
-     * Initialize async resources (databases, etc).
-     * Called after Koin initialization, before app usage.
-     * Safe to call multiple times - implementations should be idempotent.
-     */
-    suspend fun initializeData() {}
 }
 
 interface AppDataModuleDi {

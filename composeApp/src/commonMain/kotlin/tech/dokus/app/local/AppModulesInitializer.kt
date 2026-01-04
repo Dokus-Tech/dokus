@@ -6,9 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.koin.core.context.GlobalContext
 import tech.dokus.foundation.app.AppDataInitializer
-import tech.dokus.foundation.app.AppModule
 
 /**
  * Handles database and async resource initialization for all app modules.
@@ -16,18 +14,13 @@ import tech.dokus.foundation.app.AppModule
  */
 @Composable
 fun AppModulesInitializer(
-    modules: List<AppModule>,
+    appDataInitializer: AppDataInitializer,
     content: @Composable () -> Unit
 ) {
     var isInitialized by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        GlobalContext.get().getAll<AppDataInitializer>().forEach { initializer ->
-            initializer.initialize()
-        }
-        modules.forEach { module ->
-            module.initializeData()
-        }
+        appDataInitializer.initialize()
         isInitialized = true
     }
 

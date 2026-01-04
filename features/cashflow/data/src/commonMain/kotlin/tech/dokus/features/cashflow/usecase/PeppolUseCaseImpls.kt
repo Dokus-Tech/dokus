@@ -11,7 +11,11 @@ import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
-import tech.dokus.features.cashflow.gateway.PeppolGateway
+import tech.dokus.features.cashflow.gateway.PeppolConnectionGateway
+import tech.dokus.features.cashflow.gateway.PeppolInboxGateway
+import tech.dokus.features.cashflow.gateway.PeppolInvoiceGateway
+import tech.dokus.features.cashflow.gateway.PeppolRecipientGateway
+import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGateway
 import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
 import tech.dokus.features.cashflow.usecases.DeletePeppolSettingsUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolSettingsUseCase
@@ -23,31 +27,31 @@ import tech.dokus.features.cashflow.usecases.ValidateInvoiceForPeppolUseCase
 import tech.dokus.features.cashflow.usecases.VerifyPeppolRecipientUseCase
 
 internal class ConnectPeppolUseCaseImpl(
-    private val peppolGateway: PeppolGateway
+    private val peppolConnectionGateway: PeppolConnectionGateway
 ) : ConnectPeppolUseCase {
     override suspend fun invoke(request: PeppolConnectRequest): Result<PeppolConnectResponse> {
-        return peppolGateway.connectPeppol(request)
+        return peppolConnectionGateway.connectPeppol(request)
     }
 }
 
 internal class GetPeppolSettingsUseCaseImpl(
-    private val peppolGateway: PeppolGateway
+    private val peppolConnectionGateway: PeppolConnectionGateway
 ) : GetPeppolSettingsUseCase {
     override suspend fun invoke(): Result<PeppolSettingsDto?> {
-        return peppolGateway.getPeppolSettings()
+        return peppolConnectionGateway.getPeppolSettings()
     }
 }
 
 internal class DeletePeppolSettingsUseCaseImpl(
-    private val peppolGateway: PeppolGateway
+    private val peppolConnectionGateway: PeppolConnectionGateway
 ) : DeletePeppolSettingsUseCase {
     override suspend fun invoke(): Result<Unit> {
-        return peppolGateway.deletePeppolSettings()
+        return peppolConnectionGateway.deletePeppolSettings()
     }
 }
 
 internal class ListPeppolTransmissionsUseCaseImpl(
-    private val peppolGateway: PeppolGateway
+    private val peppolTransmissionsGateway: PeppolTransmissionsGateway
 ) : ListPeppolTransmissionsUseCase {
     override suspend fun invoke(
         direction: PeppolTransmissionDirection?,
@@ -55,7 +59,7 @@ internal class ListPeppolTransmissionsUseCaseImpl(
         limit: Int,
         offset: Int
     ): Result<List<PeppolTransmissionDto>> {
-        return peppolGateway.listPeppolTransmissions(
+        return peppolTransmissionsGateway.listPeppolTransmissions(
             direction = direction,
             status = status,
             limit = limit,
@@ -65,41 +69,41 @@ internal class ListPeppolTransmissionsUseCaseImpl(
 }
 
 internal class VerifyPeppolRecipientUseCaseImpl(
-    private val peppolGateway: PeppolGateway
+    private val peppolRecipientGateway: PeppolRecipientGateway
 ) : VerifyPeppolRecipientUseCase {
     override suspend fun invoke(peppolId: String): Result<PeppolVerifyResponse> {
-        return peppolGateway.verifyPeppolRecipient(peppolId)
+        return peppolRecipientGateway.verifyPeppolRecipient(peppolId)
     }
 }
 
 internal class ValidateInvoiceForPeppolUseCaseImpl(
-    private val peppolGateway: PeppolGateway
+    private val peppolInvoiceGateway: PeppolInvoiceGateway
 ) : ValidateInvoiceForPeppolUseCase {
     override suspend fun invoke(invoiceId: InvoiceId): Result<PeppolValidationResult> {
-        return peppolGateway.validateInvoiceForPeppol(invoiceId)
+        return peppolInvoiceGateway.validateInvoiceForPeppol(invoiceId)
     }
 }
 
 internal class SendInvoiceViaPeppolUseCaseImpl(
-    private val peppolGateway: PeppolGateway
+    private val peppolInvoiceGateway: PeppolInvoiceGateway
 ) : SendInvoiceViaPeppolUseCase {
     override suspend fun invoke(invoiceId: InvoiceId): Result<SendInvoiceViaPeppolResponse> {
-        return peppolGateway.sendInvoiceViaPeppol(invoiceId)
+        return peppolInvoiceGateway.sendInvoiceViaPeppol(invoiceId)
     }
 }
 
 internal class PollPeppolInboxUseCaseImpl(
-    private val peppolGateway: PeppolGateway
+    private val peppolInboxGateway: PeppolInboxGateway
 ) : PollPeppolInboxUseCase {
     override suspend fun invoke(): Result<PeppolInboxPollResponse> {
-        return peppolGateway.pollPeppolInbox()
+        return peppolInboxGateway.pollPeppolInbox()
     }
 }
 
 internal class GetPeppolTransmissionForInvoiceUseCaseImpl(
-    private val peppolGateway: PeppolGateway
+    private val peppolInvoiceGateway: PeppolInvoiceGateway
 ) : GetPeppolTransmissionForInvoiceUseCase {
     override suspend fun invoke(invoiceId: InvoiceId): Result<PeppolTransmissionDto?> {
-        return peppolGateway.getPeppolTransmissionForInvoice(invoiceId)
+        return peppolInvoiceGateway.getPeppolTransmissionForInvoice(invoiceId)
     }
 }

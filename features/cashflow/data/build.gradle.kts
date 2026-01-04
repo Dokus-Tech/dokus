@@ -64,6 +64,10 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.kotlinx.coroutines.swing)
         }
+        jvmTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.mockk)
+        }
         wasmJsMain.dependencies {
             implementation(devNpm("copy-webpack-plugin", "9.1.0"))
             implementation("org.jetbrains.kotlinx:kotlinx-browser:0.2")

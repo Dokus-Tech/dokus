@@ -18,7 +18,11 @@ import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
-import tech.dokus.features.cashflow.gateway.PeppolGateway
+import tech.dokus.features.cashflow.gateway.PeppolConnectionGateway
+import tech.dokus.features.cashflow.gateway.PeppolInboxGateway
+import tech.dokus.features.cashflow.gateway.PeppolInvoiceGateway
+import tech.dokus.features.cashflow.gateway.PeppolRecipientGateway
+import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGateway
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -201,7 +205,12 @@ class PeppolUseCasesTest {
         val offset: Int
     )
 
-    private class FakePeppolGateway : PeppolGateway {
+    private class FakePeppolGateway :
+        PeppolConnectionGateway,
+        PeppolTransmissionsGateway,
+        PeppolRecipientGateway,
+        PeppolInvoiceGateway,
+        PeppolInboxGateway {
         var lastConnectRequest: PeppolConnectRequest? = null
         var connectResult: Result<PeppolConnectResponse> = Result.failure(IllegalStateException("missing"))
 

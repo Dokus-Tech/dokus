@@ -12,8 +12,16 @@ import tech.dokus.features.cashflow.gateway.DocumentReviewGateway
 import tech.dokus.features.cashflow.gateway.DocumentReviewGatewayImpl
 import tech.dokus.features.cashflow.gateway.DocumentUploadGateway
 import tech.dokus.features.cashflow.gateway.DocumentUploadGatewayImpl
-import tech.dokus.features.cashflow.gateway.PeppolGateway
-import tech.dokus.features.cashflow.gateway.PeppolGatewayImpl
+import tech.dokus.features.cashflow.gateway.PeppolConnectionGateway
+import tech.dokus.features.cashflow.gateway.PeppolConnectionGatewayImpl
+import tech.dokus.features.cashflow.gateway.PeppolInboxGateway
+import tech.dokus.features.cashflow.gateway.PeppolInboxGatewayImpl
+import tech.dokus.features.cashflow.gateway.PeppolInvoiceGateway
+import tech.dokus.features.cashflow.gateway.PeppolInvoiceGatewayImpl
+import tech.dokus.features.cashflow.gateway.PeppolRecipientGateway
+import tech.dokus.features.cashflow.gateway.PeppolRecipientGatewayImpl
+import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGateway
+import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGatewayImpl
 import tech.dokus.features.cashflow.usecase.ConfirmDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConnectPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.DeleteDocumentUseCaseImpl
@@ -94,7 +102,11 @@ val cashflowNetworkModule = module {
     // GATEWAYS
     // ============================================================================
 
-    singleOf(::PeppolGatewayImpl) bind PeppolGateway::class
+    singleOf(::PeppolConnectionGatewayImpl) bind PeppolConnectionGateway::class
+    singleOf(::PeppolRecipientGatewayImpl) bind PeppolRecipientGateway::class
+    singleOf(::PeppolInvoiceGatewayImpl) bind PeppolInvoiceGateway::class
+    singleOf(::PeppolInboxGatewayImpl) bind PeppolInboxGateway::class
+    singleOf(::PeppolTransmissionsGatewayImpl) bind PeppolTransmissionsGateway::class
     singleOf(::DocumentReviewGatewayImpl) bind DocumentReviewGateway::class
     singleOf(::DocumentUploadGatewayImpl) bind DocumentUploadGateway::class
 

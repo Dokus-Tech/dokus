@@ -10,6 +10,7 @@ import tech.dokus.features.contacts.datasource.ContactLocalDataSource
 import tech.dokus.features.contacts.datasource.ContactLocalDataSourceImpl
 import tech.dokus.features.contacts.datasource.ContactsDb
 import tech.dokus.features.contacts.initializer.ContactsDataInitializer
+import tech.dokus.features.contacts.initializer.ContactsDataInitializerImpl
 import tech.dokus.features.contacts.repository.ContactRemoteDataSource
 import tech.dokus.features.contacts.repository.ContactRemoteDataSourceImpl
 import tech.dokus.features.contacts.usecases.CacheContactsUseCase
@@ -48,7 +49,6 @@ import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCaseImpl
 import tech.dokus.features.contacts.usecases.UpdateContactUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactUseCaseImpl
-import tech.dokus.foundation.app.AppDataInitializer
 
 val contactsNetworkModule = module {
     single<ContactRemoteDataSource> {
@@ -62,12 +62,10 @@ val contactsDataModule = module {
     single { get<ContactsDb>().get() }
 
     // Initialization
-    singleOf(::ContactsDataInitializer) bind AppDataInitializer::class
+    singleOf(::ContactsDataInitializerImpl) bind ContactsDataInitializer::class
 
     // Local data source
-    single<ContactLocalDataSource> {
-        ContactLocalDataSourceImpl(database = get())
-    }
+    singleOf(::ContactLocalDataSourceImpl) bind ContactLocalDataSource::class
 
     // Cache data source
     singleOf(::ContactCacheDataSourceImpl) bind ContactCacheDataSource::class

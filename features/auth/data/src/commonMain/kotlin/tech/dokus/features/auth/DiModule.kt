@@ -25,11 +25,16 @@ import tech.dokus.features.auth.datasource.TeamRemoteDataSourceImpl
 import tech.dokus.features.auth.datasource.TenantRemoteDataSource
 import tech.dokus.features.auth.datasource.TenantRemoteDataSourceImpl
 import tech.dokus.features.auth.gateway.AuthGateway
-import tech.dokus.features.auth.gateway.TeamSettingsGateway
-import tech.dokus.features.auth.gateway.TeamSettingsGatewayImpl
+import tech.dokus.features.auth.gateway.TeamInvitationsGateway
+import tech.dokus.features.auth.gateway.TeamInvitationsGatewayImpl
+import tech.dokus.features.auth.gateway.TeamMembersGateway
+import tech.dokus.features.auth.gateway.TeamMembersGatewayImpl
+import tech.dokus.features.auth.gateway.TeamOwnershipGateway
+import tech.dokus.features.auth.gateway.TeamOwnershipGatewayImpl
 import tech.dokus.features.auth.gateway.WorkspaceSettingsGateway
 import tech.dokus.features.auth.gateway.WorkspaceSettingsGatewayImpl
 import tech.dokus.features.auth.initializer.AuthDataInitializer
+import tech.dokus.features.auth.initializer.AuthDataInitializerImpl
 import tech.dokus.features.auth.manager.AuthManagerImpl
 import tech.dokus.features.auth.manager.AuthManagerMutable
 import tech.dokus.features.auth.manager.TokenManagerImpl
@@ -92,7 +97,6 @@ import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCaseImpl
 import tech.dokus.features.auth.usecases.ValidateServerUseCase
 import tech.dokus.features.auth.usecases.ValidateServerUseCaseImpl
 import tech.dokus.features.auth.utils.JwtDecoder
-import tech.dokus.foundation.app.AppDataInitializer
 import tech.dokus.foundation.app.SharedQualifiers
 import tech.dokus.foundation.sstorage.SecureStorage
 
@@ -132,12 +136,14 @@ val authDataModule = module {
     singleOf(::TokenManagerImpl) binds arrayOf(TokenManager::class, TokenManagerMutable::class)
 
     // Initialization
-    singleOf(::AuthDataInitializer) bind AppDataInitializer::class
+    singleOf(::AuthDataInitializerImpl) bind AuthDataInitializer::class
 
     // Repositories
     singleOf(::AuthRepository) bind AuthGateway::class
     singleOf(::WorkspaceSettingsGatewayImpl) bind WorkspaceSettingsGateway::class
-    singleOf(::TeamSettingsGatewayImpl) bind TeamSettingsGateway::class
+    singleOf(::TeamMembersGatewayImpl) bind TeamMembersGateway::class
+    singleOf(::TeamInvitationsGatewayImpl) bind TeamInvitationsGateway::class
+    singleOf(::TeamOwnershipGatewayImpl) bind TeamOwnershipGateway::class
 }
 
 val authDomainModule = module {
