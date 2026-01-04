@@ -5,6 +5,7 @@ import tech.dokus.features.ai.agents.CategorySuggestionAgent
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
 import tech.dokus.features.ai.agents.InvoiceExtractionAgent
 import tech.dokus.features.ai.agents.ReceiptExtractionAgent
+import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.models.CategorySuggestion
 import tech.dokus.features.ai.models.ClassifiedDocumentType
@@ -40,14 +41,16 @@ class AIService(
     }
 
     private fun logModeConfiguration() {
+        val visionModel = AIModels.visionModel(config.mode)
+        val chatModel = AIModels.chatModel(config.mode)
+
         logger.info("============================================================")
         logger.info("AI Service initialized (VISION-FIRST)")
         logger.info("  Mode: ${config.mode}")
         logger.info("  Ollama Host: ${config.ollamaHost}")
-        logger.info("  Vision Model (Classification): ${config.getModel(ModelPurpose.CLASSIFICATION)}")
-        logger.info("  Vision Model (Extraction): ${config.getModel(ModelPurpose.DOCUMENT_EXTRACTION)}")
-        logger.info("  Chat Model: ${config.getModel(ModelPurpose.CHAT)}")
-        logger.info("  Embedding Model: ${AIProviderFactory.EMBEDDING_MODEL}")
+        logger.info("  Vision Model: ${visionModel.id}")
+        logger.info("  Chat Model: ${chatModel.id}")
+        logger.info("  Embedding Model: ${AIModels.EMBEDDING_MODEL_NAME}")
         logger.info("  Provenance Enabled: ${config.isProvenanceEnabled()}")
         if (config.mode == AIMode.CLOUD && !config.isProvenanceEnabled()) {
             logger.warn("  [!] Cloud mode without ANTHROPIC_API_KEY - provenance disabled")
@@ -120,9 +123,7 @@ class AIService(
         logger.info("Processing document (${images.size} pages)")
         val warnings = mutableListOf<String>()
 
-        if (images.isEmpty()) {
-            throw IllegalArgumentException("No images provided for processing")
-        }
+        require(images.isNotEmpty()) { "No images provided for processing" }
 
         // Step 1: Classify document type (use first page for classification)
         val classificationImages = images.take(1) // Usually first page is enough for classification
@@ -246,14 +247,15 @@ class AIService(
      * Check if the AI service is properly configured and ready.
      * Always true since Ollama is the only provider.
      */
+    @Suppress("FunctionOnlyReturningConstant")
     fun isConfigured(): Boolean = true
 
     /**
      * Get the current configuration summary.
      */
     fun getConfigSummary(): String {
+        val visionModel = AIModels.visionModel(config.mode)
         return "Mode: ${config.mode}, Ollama: ${config.ollamaHost}, " +
-            "Extraction: ${config.getModel(ModelPurpose.DOCUMENT_EXTRACTION)}, " +
-            "Provenance: ${config.isProvenanceEnabled()}"
+            "Vision: ${visionModel.id}, Provenance: ${config.isProvenanceEnabled()}"
     }
 }

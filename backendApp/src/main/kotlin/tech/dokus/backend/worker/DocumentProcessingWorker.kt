@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * - Graceful shutdown support
  * - RAG preparation: chunking and embedding using vision-extracted text
  */
+@Suppress("LongParameterList")
 class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val documentStorage: DocumentStorageService,

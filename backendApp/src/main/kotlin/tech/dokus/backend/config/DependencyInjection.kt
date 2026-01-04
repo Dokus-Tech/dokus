@@ -43,6 +43,7 @@ import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.service.AIService
 import tech.dokus.features.ai.services.ChunkingService
+import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
@@ -65,7 +66,6 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
 import tech.dokus.foundation.backend.storage.MinioStorage
 import tech.dokus.foundation.backend.storage.ObjectStorage
-import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.mapper.PeppolMapper
 import tech.dokus.peppol.provider.PeppolProviderFactory

@@ -33,6 +33,7 @@ import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.ConversationMessage
+import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.RAGService
@@ -311,13 +312,14 @@ internal fun Route.chatRoutes() {
          * Response: ChatConfiguration
          */
         get("/api/v1/chat/config") {
+            val chatModelName = AIModels.chatModel(aiConfig.mode).id
             val configuration = ChatConfiguration(
                 maxMessageLength = 4000,
                 maxChunksPerQuery = 10,
                 defaultChunksPerQuery = 5,
                 streamingEnabled = false,
-                availableModels = listOf(aiConfig.getModel(ModelPurpose.CHAT)),
-                defaultModel = aiConfig.getModel(ModelPurpose.CHAT),
+                availableModels = listOf(chatModelName),
+                defaultModel = chatModelName,
                 crossDocumentChatEnabled = true,
                 minDocumentsForCrossDocChat = 1
             )
@@ -468,7 +470,7 @@ private suspend fun processChat(
         documentId = documentId,
         citations = citations,
         chunksRetrieved = chatResult.chunksRetrieved,
-        aiModel = aiConfig.getModel(ModelPurpose.CHAT),
+        aiModel = AIModels.chatModel(aiConfig.mode).id,
         aiProvider = "ollama",
         generationTimeMs = generationTimeMs,
         promptTokens = null, // TODO: Track from LLM response
@@ -489,7 +491,7 @@ private suspend fun processChat(
         chunksUsed = chatResult.citations.size,
         contextTokens = null,
         generationTimeMs = generationTimeMs,
-        model = aiConfig.getModel(ModelPurpose.CHAT),
+        model = AIModels.chatModel(aiConfig.mode).id,
         provider = "ollama",
         promptTokens = null,
         completionTokens = null,
