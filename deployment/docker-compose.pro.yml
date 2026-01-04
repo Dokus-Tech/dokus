@@ -201,8 +201,9 @@ services:
       MINIO_ACCESS_KEY: dokusadmin
       MINIO_SECRET_KEY: ${MINIO_PASSWORD}
       MINIO_BUCKET: dokus-storage
-      AI_OLLAMA_BASE_URL: ${AI_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
+      # AI configuration (normal mode for self-hosted)
+      DOKUS_AI_MODE: normal
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
       LOG_PATH: /app/logs
     depends_on:
       postgres:

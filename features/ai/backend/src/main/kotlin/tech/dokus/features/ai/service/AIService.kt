@@ -1,6 +1,5 @@
 package tech.dokus.features.ai.service
 
-import tech.dokus.domain.model.ai.AiProvider
 import tech.dokus.features.ai.agents.BillExtractionAgent
 import tech.dokus.features.ai.agents.CategorySuggestionAgent
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
@@ -15,6 +14,7 @@ import tech.dokus.features.ai.models.ExtractedBillData
 import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.models.ExtractedReceiptData
 import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.AIMode
 import tech.dokus.foundation.backend.config.ModelPurpose
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -34,9 +34,29 @@ class AIService(
 ) {
     private val logger = loggerFor()
 
+    init {
+        logModeConfiguration()
+    }
+
+    private fun logModeConfiguration() {
+        logger.info("============================================================")
+        logger.info("AI Service initialized")
+        logger.info("  Mode: ${config.mode}")
+        logger.info("  Ollama Host: ${config.ollamaHost}")
+        logger.info("  Classification Model: ${config.getModel(ModelPurpose.CLASSIFICATION)}")
+        logger.info("  Extraction Model: ${config.getModel(ModelPurpose.DOCUMENT_EXTRACTION)}")
+        logger.info("  Chat Model: ${config.getModel(ModelPurpose.CHAT)}")
+        logger.info("  Embedding Model: ${AIProviderFactory.EMBEDDING_MODEL}")
+        logger.info("  Provenance Enabled: ${config.isProvenanceEnabled()}")
+        if (config.mode == AIMode.CLOUD && !config.isProvenanceEnabled()) {
+            logger.warn("  [!] Cloud mode without ANTHROPIC_API_KEY - provenance disabled")
+        }
+        logger.info("============================================================")
+    }
+
     // Create executor once for all agents
     private val executor by lazy {
-        logger.info("Initializing AI executor: provider=${config.defaultProvider}")
+        logger.info("Initializing Ollama executor: ${config.ollamaHost}")
         AIProviderFactory.createExecutor(config)
     }
 
@@ -217,31 +237,16 @@ class AIService(
 
     /**
      * Check if the AI service is properly configured and ready.
+     * Always true since Ollama is the only provider.
      */
-    fun isConfigured(): Boolean {
-        return when (config.defaultProvider) {
-            AiProvider.Ollama -> config.ollama.enabled
-            AiProvider.OpenAi -> config.openai.enabled && config.openai.apiKey.isNotBlank()
-        }
-    }
+    fun isConfigured(): Boolean = true
 
     /**
      * Get the current configuration summary.
      */
     fun getConfigSummary(): String {
-        return buildString {
-            append("Provider: ${config.defaultProvider}")
-            when (config.defaultProvider) {
-                AiProvider.Ollama -> {
-                    append(", URL: ${config.ollama.baseUrl}")
-                    append(", Model: ${config.ollama.defaultModel}")
-                }
-
-                AiProvider.OpenAi -> {
-                    append(", Model: ${config.openai.defaultModel}")
-                    append(", API Key: ${if (config.openai.apiKey.isNotBlank()) "configured" else "missing"}")
-                }
-            }
-        }
+        return "Mode: ${config.mode}, Ollama: ${config.ollamaHost}, " +
+            "Extraction: ${config.getModel(ModelPurpose.DOCUMENT_EXTRACTION)}, " +
+            "Provenance: ${config.isProvenanceEnabled()}"
     }
 }

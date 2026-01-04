@@ -1,110 +1,90 @@
 package tech.dokus.foundation.backend.config
 
 import com.typesafe.config.Config
-import tech.dokus.domain.model.ai.AiProvider
 
 /**
- * Configuration for the AI service.
- * Supports multiple providers (Ollama for local/self-hosted, OpenAI for cloud).
+ * AI Mode determines model selection and feature availability.
+ *
+ * - LIGHT: Resource-constrained (Raspberry Pi). Uses qwen3:4b for all tasks.
+ * - NORMAL: Self-hosted/local dev. Fast models for chat, quality models for extraction.
+ * - CLOUD: Dokus-managed. Same as normal + provenance tracking via Claude API.
  */
-data class AIConfig(
-    val defaultProvider: AiProvider,
-    val ollama: OllamaConfig,
-    val openai: OpenAIConfig,
-    val models: ModelConfig
-) {
-    /**
-     * Ollama configuration for local/self-hosted LLM inference.
-     */
-    data class OllamaConfig(
-        val enabled: Boolean,
-        val baseUrl: String,
-        val defaultModel: String
-    ) {
-        companion object {
-            fun fromConfig(config: Config): OllamaConfig = OllamaConfig(
-                enabled = config.getBoolean("enabled"),
-                baseUrl = config.getString("base-url"),
-                defaultModel = config.getString("default-model")
-            )
-        }
-    }
-
-    /**
-     * OpenAI configuration for cloud-based inference.
-     */
-    data class OpenAIConfig(
-        val enabled: Boolean,
-        val apiKey: String,
-        val defaultModel: String
-    ) {
-        companion object {
-            fun fromConfig(config: Config): OpenAIConfig = OpenAIConfig(
-                enabled = config.getBoolean("enabled"),
-                apiKey = config.getString("api-key"),
-                defaultModel = config.getString("default-model")
-            )
-        }
-    }
-
-    /**
-     * Model configuration for different AI tasks.
-     */
-    data class ModelConfig(
-        val classification: String,
-        val documentExtraction: String,
-        val categorization: String,
-        val suggestions: String,
-        val chat: String,
-        val embedding: String
-    ) {
-        companion object {
-            fun fromConfig(config: Config): ModelConfig = ModelConfig(
-                classification = config.getString("classification"),
-                documentExtraction = config.getString("document-extraction"),
-                categorization = config.getString("categorization"),
-                suggestions = config.getString("suggestions"),
-                chat = if (config.hasPath("chat")) {
-                    config.getString("chat")
-                } else {
-                    config.getString("document-extraction")
-                },
-                embedding = if (config.hasPath("embedding")) config.getString("embedding") else "nomic-embed-text"
-            )
-        }
-    }
+enum class AIMode(val configValue: String) {
+    LIGHT("light"),
+    NORMAL("normal"),
+    CLOUD("cloud");
 
     companion object {
+        fun fromValue(value: String): AIMode =
+            entries.find { it.configValue == value.lowercase() }
+                ?: throw IllegalArgumentException(
+                    "Unknown AI mode: '$value'. Valid modes: light, normal, cloud"
+                )
+    }
+}
+
+/**
+ * Simplified AI configuration using mode-based model selection.
+ *
+ * Mode determines which models are used for each purpose:
+ * - light: qwen3:4b for everything (optimized for low resources)
+ * - normal: qwen3:4b for fast tasks, qwen3:30b-a3b for extraction
+ * - cloud: Same as normal + provenance via Claude (if ANTHROPIC_API_KEY set)
+ */
+data class AIConfig(
+    val mode: AIMode,
+    val ollamaHost: String,
+    val anthropicApiKey: String?
+) {
+    /**
+     * Get the model name for a specific purpose based on current mode.
+     */
+    fun getModel(purpose: ModelPurpose): String = when (mode) {
+        AIMode.LIGHT -> FAST_MODEL // All tasks use same small model
+        AIMode.NORMAL, AIMode.CLOUD -> when (purpose) {
+            ModelPurpose.CLASSIFICATION -> FAST_MODEL
+            ModelPurpose.CATEGORIZATION -> FAST_MODEL
+            ModelPurpose.SUGGESTIONS -> FAST_MODEL
+            ModelPurpose.CHAT -> FAST_MODEL
+            ModelPurpose.DOCUMENT_EXTRACTION -> QUALITY_MODEL
+            ModelPurpose.EMBEDDING -> EMBEDDING_MODEL
+        }
+    }
+
+    /**
+     * Check if provenance tracking should be enabled.
+     * Only available in cloud mode with valid Anthropic API key.
+     */
+    fun isProvenanceEnabled(): Boolean =
+        mode == AIMode.CLOUD && !anthropicApiKey.isNullOrBlank()
+
+    companion object {
+        // Model constants
+        const val FAST_MODEL = "qwen3:4b"
+        const val QUALITY_MODEL = "qwen3:30b-a3b"
+        const val EMBEDDING_MODEL = "nomic-embed-text"
+
+        // Default Ollama host
+        const val DEFAULT_OLLAMA_HOST = "http://localhost:11434"
+
         /**
          * Load AI config from HOCON configuration.
          */
-        fun fromConfig(config: Config): AIConfig = AIConfig(
-            defaultProvider = AiProvider.fromDbValue(config.getString("default-provider")),
-            ollama = OllamaConfig.fromConfig(config.getConfig("ollama")),
-            openai = OpenAIConfig.fromConfig(config.getConfig("openai")),
-            models = ModelConfig.fromConfig(config.getConfig("models"))
-        )
-    }
+        fun fromConfig(config: Config): AIConfig {
+            val mode = AIMode.fromValue(config.getString("mode"))
+            val ollamaHost = config.getString("ollama-host")
+            val anthropicApiKey = if (config.hasPath("anthropic-api-key")) {
+                config.getString("anthropic-api-key").takeIf { it.isNotBlank() }
+            } else {
+                null
+            }
 
-    /**
-     * Get the model name for a specific purpose.
-     */
-    fun getModel(purpose: ModelPurpose): String = when (purpose) {
-        ModelPurpose.CLASSIFICATION -> models.classification
-        ModelPurpose.DOCUMENT_EXTRACTION -> models.documentExtraction
-        ModelPurpose.CATEGORIZATION -> models.categorization
-        ModelPurpose.SUGGESTIONS -> models.suggestions
-        ModelPurpose.CHAT -> models.chat
-        ModelPurpose.EMBEDDING -> models.embedding
-    }
-
-    /**
-     * Get the embedding model name for the configured provider.
-     * Returns provider-appropriate embedding model.
-     */
-    fun getEmbeddingModel(): String = when (defaultProvider) {
-        AiProvider.Ollama -> models.embedding
-        AiProvider.OpenAi -> if (models.embedding == "nomic-embed-text") "text-embedding-3-small" else models.embedding
+            return AIConfig(
+                mode = mode,
+                ollamaHost = ollamaHost,
+                anthropicApiKey = anthropicApiKey
+            )
+        }
     }
 }
 

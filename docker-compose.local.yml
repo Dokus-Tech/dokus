@@ -131,10 +131,9 @@ services:
       PEPPOL_DEFAULT_PROVIDER: recommand
       PEPPOL_INBOX_POLLING_ENABLED: "true"
       PEPPOL_INBOX_POLLING_INTERVAL_SECONDS: "600"
-      # Processor (always enabled; runs in-process)
-      PROCESSOR_AI_DEFAULT_PROVIDER: local
-      LOCAL_AI_BASE_URL: http://host.docker.internal:11434
-      LOCAL_AI_MODEL: mistral:7b
+      # AI configuration (mode-based)
+      DOKUS_AI_MODE: normal
+      OLLAMA_HOST: http://host.docker.internal:11434
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
     depends_on:

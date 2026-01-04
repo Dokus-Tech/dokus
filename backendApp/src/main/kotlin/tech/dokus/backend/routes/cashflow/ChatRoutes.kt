@@ -316,8 +316,8 @@ internal fun Route.chatRoutes() {
                 maxChunksPerQuery = 10,
                 defaultChunksPerQuery = 5,
                 streamingEnabled = false,
-                availableModels = listOf(aiConfig.models.chat),
-                defaultModel = aiConfig.models.chat,
+                availableModels = listOf(aiConfig.getModel(ModelPurpose.CHAT)),
+                defaultModel = aiConfig.getModel(ModelPurpose.CHAT),
                 crossDocumentChatEnabled = true,
                 minDocumentsForCrossDocChat = 1
             )
@@ -468,8 +468,8 @@ private suspend fun processChat(
         documentId = documentId,
         citations = citations,
         chunksRetrieved = chatResult.chunksRetrieved,
-        aiModel = aiConfig.models.chat,
-        aiProvider = aiConfig.defaultProvider.name.lowercase(),
+        aiModel = aiConfig.getModel(ModelPurpose.CHAT),
+        aiProvider = "ollama",
         generationTimeMs = generationTimeMs,
         promptTokens = null, // TODO: Track from LLM response
         completionTokens = null,
@@ -489,8 +489,8 @@ private suspend fun processChat(
         chunksUsed = chatResult.citations.size,
         contextTokens = null,
         generationTimeMs = generationTimeMs,
-        model = aiConfig.models.chat,
-        provider = aiConfig.defaultProvider.name.lowercase(),
+        model = aiConfig.getModel(ModelPurpose.CHAT),
+        provider = "ollama",
         promptTokens = null,
         completionTokens = null,
         totalTokens = null
