@@ -1,17 +1,22 @@
 package tech.dokus.features.ai.agents
 
-import ai.koog.agents.core.agent.AIAgent
-import ai.koog.agents.core.agent.singleRunStrategy
-import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
+import ai.koog.prompt.message.AttachmentContent
+import ai.koog.prompt.message.ContentPart
+import kotlinx.coroutines.flow.first
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.ExtractedReceiptData
+import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
- * Agent responsible for extracting data from receipt documents.
- * Step 2b in the two-step document processing pipeline (for receipts).
+ * Agent responsible for extracting data from receipt documents using vision models.
+ * Step 2c in the two-step document processing pipeline (for receipts).
+ *
+ * Uses vision-capable LLMs (qwen3-vl) to analyze document images directly,
+ * eliminating the need for OCR preprocessing.
  */
 class ReceiptExtractionAgent(
     private val executor: PromptExecutor,
@@ -20,30 +25,35 @@ class ReceiptExtractionAgent(
     private val logger = loggerFor()
 
     private val systemPrompt = """
-        You are a receipt data extraction specialist.
-        Extract structured data from store receipts and purchase proofs.
-        Always respond with valid JSON matching the requested schema.
+        You are a receipt data extraction specialist with vision capabilities.
+        Analyze the receipt image(s) and extract structured data.
+        Always respond with ONLY valid JSON (no markdown, no explanation).
 
         Extract these fields:
-        - Merchant: name, address, VAT number (if present)
+        - Merchant: name, address, VAT number (if visible)
         - Transaction: date, time, receipt number
         - Items: description, quantity, price (group similar items)
         - Totals: subtotal, VAT amount, total, payment method
-        - Category suggestion based on merchant/items
+        - Category: suggested expense category based on merchant/items
+
+        For each field, include provenance:
+        - pageNumber: Which page (1-indexed) the value appears on
+        - sourceText: The exact text you read from the receipt
+        - fieldConfidence: Confidence in this field (0.0 to 1.0)
 
         Guidelines:
-        - Use null for fields that cannot be found or are unclear
-        - Dates should be in ISO format (YYYY-MM-DD)
-        - Times should be in HH:mm format (24-hour)
-        - Currency should be 3-letter ISO code (EUR, USD, GBP)
-        - Amounts should be strings to preserve precision (e.g., "12.50")
-        - Payment method: "Cash", "Card", "Contactless", "Mobile", etc.
-        - For card payments, extract last 4 digits if visible (e.g., "1234")
-        - Suggest category from: "Office Supplies", "Travel", "Meals", "Transportation",
-          "Software", "Hardware", "Utilities", "Professional Services", "Other"
-        - Confidence should reflect how complete and accurate the extraction is (0.0 to 1.0)
+        - Dates: ISO format (YYYY-MM-DD)
+        - Times: HH:mm format (24-hour)
+        - Currency: 3-letter ISO code (EUR, USD, GBP)
+        - Amounts: Strings to preserve precision (e.g., "12.50")
+        - Payment method: "Cash", "Card", "Contactless", "Mobile"
+        - For card payments, extract last 4 digits if visible
 
-        Respond with a JSON object matching this schema:
+        Categories: Office Supplies, Travel, Meals, Transportation, Software, Hardware, Utilities, Professional Services, Other
+
+        ALSO provide extractedText: A clean transcription of all visible text for indexing.
+
+        JSON Schema:
         {
             "merchantName": "string or null",
             "merchantAddress": "string or null",
@@ -51,48 +61,57 @@ class ReceiptExtractionAgent(
             "receiptNumber": "string or null",
             "transactionDate": "YYYY-MM-DD or null",
             "transactionTime": "HH:mm or null",
-            "items": [
-                {
-                    "description": "string",
-                    "quantity": number or null,
-                    "price": "string or null"
-                }
-            ],
+            "items": [{"description": "...", "quantity": 1, "price": "..."}],
             "currency": "EUR",
             "subtotal": "string or null",
             "vatAmount": "string or null",
             "totalAmount": "string or null",
-            "paymentMethod": "Cash | Card | etc. or null",
+            "paymentMethod": "Cash or Card or null",
             "cardLastFour": "1234 or null",
             "suggestedCategory": "string or null",
-            "confidence": 0.0 to 1.0
+            "confidence": 0.85,
+            "extractedText": "Full text transcription for indexing",
+            "provenance": {
+                "merchantName": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.9},
+                "totalAmount": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.95}
+            }
         }
     """.trimIndent()
 
     /**
-     * Extract receipt data from OCR text.
+     * Extract receipt data from document images using vision model.
+     *
+     * @param images List of document page images
+     * @return ExtractedReceiptData with values, provenance, and extracted text for RAG
      */
-    suspend fun extract(ocrText: String): ExtractedReceiptData {
-        logger.debug("Extracting receipt data (${ocrText.length} chars)")
+    suspend fun extract(images: List<DocumentImage>): ExtractedReceiptData {
+        logger.debug("Extracting receipt data with vision (${images.size} pages)")
 
-        val userPrompt = """
-            Extract receipt data from this text:
-
-            $ocrText
-        """.trimIndent()
+        if (images.isEmpty()) {
+            return ExtractedReceiptData(confidence = 0.0)
+        }
 
         return try {
-            val agent = AIAgent(
-                promptExecutor = executor,
-                llmModel = model,
-                strategy = singleRunStrategy(),
-                toolRegistry = ToolRegistry.EMPTY,
-                id = "receipt-extractor",
-                systemPrompt = systemPrompt
-            )
+            // Build vision prompt with image attachments
+            val visionPrompt = prompt("receipt-extractor") {
+                system(systemPrompt)
+                user {
+                    text("Extract receipt data from this ${images.size}-page document:")
+                    images.forEach { docImage ->
+                        image(
+                            ContentPart.Image(
+                                content = AttachmentContent.Binary.Bytes(docImage.imageBytes),
+                                format = "png",
+                                mimeType = docImage.mimeType
+                            )
+                        )
+                    }
+                }
+            }
 
-            val response: String = agent.run(userPrompt)
-            parseExtractionResponse(response ?: "")
+            // Execute prompt and get response
+            val response = executor.execute(visionPrompt, model, emptyList()).first()
+            parseExtractionResponse(response.content)
         } catch (e: Exception) {
             logger.error("Failed to extract receipt data", e)
             ExtractedReceiptData(confidence = 0.0)

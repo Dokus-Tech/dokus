@@ -83,6 +83,9 @@ data class ExtractedBillData(
     // Metadata
     val confidence: Double = 0.0,
 
+    // Text transcription for RAG indexing (extracted by vision model)
+    val extractedText: String? = null,
+
     // Provenance - links extracted values to source locations
     val provenance: BillProvenance? = null
 )

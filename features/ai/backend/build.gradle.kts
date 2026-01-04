@@ -22,6 +22,9 @@ dependencies {
     implementation(projects.foundation.domain)
     implementation(projects.foundation.backendCommon)
 
+    // PDFBox for PDF to image conversion (vision processing)
+    implementation(libs.pdfbox)
+
     // Ktor HTTP Client (for Ollama/OpenAI embeddings API)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
