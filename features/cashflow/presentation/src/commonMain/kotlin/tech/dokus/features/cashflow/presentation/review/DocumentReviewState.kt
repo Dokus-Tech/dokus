@@ -11,12 +11,24 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.Money
 import tech.dokus.foundation.app.state.DokusState
+
+/**
+ * State for the reject document dialog.
+ * Lifted to MVI state for consistency with other dialogs.
+ */
+@Immutable
+data class RejectDialogState(
+    val selectedReason: DocumentRejectReason = DocumentRejectReason.NotMyBusiness,
+    val otherNote: String = "",
+    val isConfirming: Boolean = false,
+)
 
 private const val MinConfidenceThreshold = 0.0
 private const val PercentageMultiplier = 100
@@ -49,6 +61,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val isDocumentConfirmed: Boolean = false,
         val isDocumentRejected: Boolean = false,
         val showPreviewSheet: Boolean = false,
+        val rejectDialogState: RejectDialogState? = null,
     ) : DocumentReviewState {
 
         val canConfirm: Boolean

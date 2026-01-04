@@ -30,7 +30,7 @@ internal fun DocumentReviewScreen(
                 onBackClick = onBackClick,
                 onChatClick = onOpenChat,
                 onConfirmClick = { onIntent(DocumentReviewIntent.Confirm) },
-                onRejectClick = { onIntent(DocumentReviewIntent.Reject) },
+                onRejectClick = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

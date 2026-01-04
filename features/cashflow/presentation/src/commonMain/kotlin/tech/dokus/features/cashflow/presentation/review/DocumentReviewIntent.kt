@@ -52,9 +52,14 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object DiscardChanges : DocumentReviewIntent
     data object ConfirmDiscardChanges : DocumentReviewIntent
     data object Confirm : DocumentReviewIntent
-    data object Reject : DocumentReviewIntent
-    data class ConfirmReject(val reason: DocumentRejectReason) : DocumentReviewIntent
     data object OpenChat : DocumentReviewIntent
+
+    // Reject dialog intents
+    data object ShowRejectDialog : DocumentReviewIntent
+    data object DismissRejectDialog : DocumentReviewIntent
+    data class SelectRejectReason(val reason: DocumentRejectReason) : DocumentReviewIntent
+    data class UpdateRejectNote(val note: String) : DocumentReviewIntent
+    data object ConfirmReject : DocumentReviewIntent
 }
 
 enum class InvoiceField {

@@ -1,51 +1,36 @@
 package tech.dokus.features.cashflow.presentation.review.route
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_document_confirmed
-import tech.dokus.aura.resources.cashflow_draft_saved
-import tech.dokus.aura.resources.cashflow_reject_prompt
-import tech.dokus.aura.resources.cashflow_reject_title
-import tech.dokus.aura.resources.cashflow_reject_reason_duplicate
-import tech.dokus.aura.resources.cashflow_reject_reason_not_my_business
-import tech.dokus.aura.resources.cashflow_reject_reason_other
-import tech.dokus.aura.resources.cashflow_reject_reason_spam
-import tech.dokus.aura.resources.cashflow_reject_reason_test
-import tech.dokus.aura.resources.cashflow_discard_changes_title
-import tech.dokus.aura.resources.cashflow_discard_changes_message
 import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.action_confirm
+import tech.dokus.aura.resources.cashflow_discard_changes_message
+import tech.dokus.aura.resources.cashflow_discard_changes_title
+import tech.dokus.aura.resources.cashflow_document_confirmed
+import tech.dokus.aura.resources.cashflow_draft_saved
+import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.enums.CounterpartyIntent
-import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
+import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.extensions.localized
@@ -81,8 +66,6 @@ internal fun DocumentReviewRoute(
     var pendingSuccess by remember { mutableStateOf<DocumentReviewSuccess?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
-    var showRejectDialog by remember { mutableStateOf(false) }
-    var selectedRejectReason by remember { mutableStateOf(DocumentRejectReason.NotMyBusiness) }
 
     val successMessage = pendingSuccess?.let { success ->
         when (success) {
@@ -120,9 +103,6 @@ internal fun DocumentReviewRoute(
             is DocumentReviewAction.ShowDiscardConfirmation -> {
                 showDiscardDialog = true
             }
-            is DocumentReviewAction.ShowRejectConfirmation -> {
-                showRejectDialog = true
-            }
         }
     }
 
@@ -153,6 +133,7 @@ internal fun DocumentReviewRoute(
         snackbarHostState = snackbarHostState,
     )
 
+    // Discard changes confirmation dialog
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
@@ -176,84 +157,22 @@ internal fun DocumentReviewRoute(
         )
     }
 
-    if (showRejectDialog) {
-        AlertDialog(
-            onDismissRequest = { showRejectDialog = false },
-            title = { Text(stringResource(Res.string.cashflow_reject_title)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.cashflow_reject_prompt))
-                    RejectReasonOption(
-                        label = stringResource(Res.string.cashflow_reject_reason_not_my_business),
-                        reason = DocumentRejectReason.NotMyBusiness,
-                        selected = selectedRejectReason == DocumentRejectReason.NotMyBusiness,
-                        onSelected = { selectedRejectReason = it }
-                    )
-                    RejectReasonOption(
-                        label = stringResource(Res.string.cashflow_reject_reason_duplicate),
-                        reason = DocumentRejectReason.Duplicate,
-                        selected = selectedRejectReason == DocumentRejectReason.Duplicate,
-                        onSelected = { selectedRejectReason = it }
-                    )
-                    RejectReasonOption(
-                        label = stringResource(Res.string.cashflow_reject_reason_spam),
-                        reason = DocumentRejectReason.Spam,
-                        selected = selectedRejectReason == DocumentRejectReason.Spam,
-                        onSelected = { selectedRejectReason = it }
-                    )
-                    RejectReasonOption(
-                        label = stringResource(Res.string.cashflow_reject_reason_test),
-                        reason = DocumentRejectReason.Test,
-                        selected = selectedRejectReason == DocumentRejectReason.Test,
-                        onSelected = { selectedRejectReason = it }
-                    )
-                    RejectReasonOption(
-                        label = stringResource(Res.string.cashflow_reject_reason_other),
-                        reason = DocumentRejectReason.Other,
-                        selected = selectedRejectReason == DocumentRejectReason.Other,
-                        onSelected = { selectedRejectReason = it }
-                    )
-                }
+    // Reject document dialog (state-driven)
+    (state as? DocumentReviewState.Content)?.rejectDialogState?.let { dialogState ->
+        RejectDocumentDialog(
+            state = dialogState,
+            onReasonSelected = { reason ->
+                container.store.intent(DocumentReviewIntent.SelectRejectReason(reason))
             },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showRejectDialog = false
-                        container.store.intent(
-                            DocumentReviewIntent.ConfirmReject(selectedRejectReason)
-                        )
-                    }
-                ) {
-                    Text(stringResource(Res.string.action_confirm))
-                }
+            onNoteChanged = { note ->
+                container.store.intent(DocumentReviewIntent.UpdateRejectNote(note))
             },
-            dismissButton = {
-                TextButton(onClick = { showRejectDialog = false }) {
-                    Text(stringResource(Res.string.action_cancel))
-                }
+            onConfirm = {
+                container.store.intent(DocumentReviewIntent.ConfirmReject)
+            },
+            onDismiss = {
+                container.store.intent(DocumentReviewIntent.DismissRejectDialog)
             }
         )
-    }
-}
-
-@Composable
-private fun RejectReasonOption(
-    label: String,
-    reason: DocumentRejectReason,
-    selected: Boolean,
-    onSelected: (DocumentRejectReason) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = { onSelected(reason) }
-        )
-        Text(text = label)
     }
 }
