@@ -1,0 +1,50 @@
+<resources>
+    <!-- Team Settings -->
+    <string name="team_settings_title">Участники команды</string>
+    <string name="team_members">Участники команды</string>
+    <string name="team_pending_invitations">Ожидающие приглашения</string>
+    <string name="team_invite_member">Пригласить участника</string>
+    <string name="team_invite_email">Адрес электронной почты</string>
+    <string name="team_invite_role">Роль</string>
+    <string name="team_send_invitation">Отправить приглашение</string>
+    <string name="team_cancel_invitation">Отменить приглашение</string>
+    <string name="team_change_role">Изменить роль</string>
+    <string name="team_remove_member">Удалить участника</string>
+    <string name="team_transfer_ownership">Передать владение</string>
+    <string name="team_owner_badge">Владелец</string>
+    <string name="team_joined">Присоединился</string>
+    <string name="team_last_active">Последняя активность</string>
+    <string name="team_expires">Истекает</string>
+    <string name="team_invited_by">Приглашён</string>
+    <string name="team_no_members">Пока нет участников команды</string>
+    <string name="team_no_invitations">Нет ожидающих приглашений</string>
+    <string name="team_invite_success">Приглашение успешно отправлено</string>
+    <string name="team_invite_failed">Не удалось отправить приглашение</string>
+    <string name="team_invite_cancelled">Приглашение отменено</string>
+    <string name="team_invite_cancel_failed">Не удалось отменить приглашение</string>
+    <string name="team_remove_confirm">Вы уверены, что хотите удалить этого участника?</string>
+    <string name="team_member_removed_success">Участник удалён</string>
+    <string name="team_member_removed_failed">Не удалось удалить участника</string>
+    <string name="team_transfer_confirm">Вы уверены, что хотите передать владение? Вы станете Администратором.</string>
+    <string name="team_ownership_transferred_success">Право собственности передано</string>
+    <string name="team_ownership_transferred_failed">Не удалось передать право собственности</string>
+    <string name="team_only_owner_can_manage">Только владелец рабочего пространства может управлять участниками команды</string>
+    <string name="team_load_members_failed">Не удалось загрузить участников команды</string>
+    <string name="team_load_invitations_failed">Не удалось загрузить приглашения</string>
+    <string name="team_email_required">Требуется e-mail</string>
+    <string name="team_email_invalid">Неверный формат e-mail</string>
+    <string name="team_role_update_success">Роль обновлена</string>
+    <string name="team_role_update_failed">Не удалось обновить роль</string>
+
+    <!-- Role names and descriptions -->
+    <string name="role_owner">Владелец</string>
+    <string name="role_admin">Администратор</string>
+    <string name="role_accountant">Бухгалтер</string>
+    <string name="role_editor">Редактор</string>
+    <string name="role_viewer">Наблюдатель</string>
+    <string name="role_owner_desc">Полный доступ, включая управление командой</string>
+    <string name="role_admin_desc">Полный доступ, кроме управления командой</string>
+    <string name="role_accountant_desc">Счета, клиенты, отчёты и экспорты</string>
+    <string name="role_editor_desc">Создание и редактирование счетов и клиентов</string>
+    <string name="role_viewer_desc">Только просмотр счетов и отчётов</string>
+</resources>

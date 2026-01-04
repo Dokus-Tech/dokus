@@ -65,7 +65,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.auth.domain"
+    namespace = "tech.dokus.features.auth.domain"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

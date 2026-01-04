@@ -1,22 +1,23 @@
 package tech.dokus.app
 
-import tech.dokus.foundation.app.navigationProviders
-import tech.dokus.app.local.AppModulesInitializer
-import tech.dokus.app.local.AppModulesProvided
-import tech.dokus.app.local.KoinProvided
-import tech.dokus.app.navigation.DokusNavHost
-import ai.dokus.foundation.design.local.ScreenSizeProvided
-import ai.dokus.foundation.design.local.ThemeManagerProvided
-import ai.dokus.foundation.design.style.ThemeManager
-import ai.dokus.foundation.design.style.Themed
-import ai.dokus.foundation.navigation.local.NavControllerProvided
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.koin.compose.koinInject
+import tech.dokus.app.local.AppModulesInitializer
+import tech.dokus.app.local.AppModulesProvided
+import tech.dokus.app.local.KoinProvided
+import tech.dokus.app.navigation.DokusNavHost
+import tech.dokus.foundation.app.AppDataInitializer
+import tech.dokus.foundation.app.navigationProviders
 import tech.dokus.foundation.app.network.ServerConnectionMonitor
 import tech.dokus.foundation.app.network.ServerConnectionProvided
+import tech.dokus.foundation.aura.local.ScreenSizeProvided
+import tech.dokus.foundation.aura.local.ThemeManagerProvided
+import tech.dokus.foundation.aura.style.ThemeManager
+import tech.dokus.foundation.aura.style.Themed
+import tech.dokus.navigation.local.NavControllerProvided
 
 @Composable
 fun App(
@@ -31,6 +32,7 @@ fun App(
         KoinProvided(diModules) {
             val themeManager = koinInject<ThemeManager>()
             val serverConnectionMonitor = koinInject<ServerConnectionMonitor>()
+            val appDataInitializer = koinInject<AppDataInitializer>()
 
             // Provide server connection state to entire app
             // Note: Connection monitoring is now event-driven - the monitor is notified
@@ -38,7 +40,7 @@ fun App(
             ServerConnectionProvided(serverConnectionMonitor) {
                 ThemeManagerProvided(themeManager) {
                     Themed {
-                        AppModulesInitializer(modules) {
+                        AppModulesInitializer(appDataInitializer) {
                             ScreenSizeProvided {
                                 NavControllerProvided(navController) {
                                     DokusNavHost(

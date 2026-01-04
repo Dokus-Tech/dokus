@@ -1,7 +1,7 @@
 package tech.dokus.domain
 
-import tech.dokus.domain.exceptions.DokusException
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.validators.ValidateCityUseCase
 import tech.dokus.domain.validators.ValidateEmailUseCase
 import tech.dokus.domain.validators.ValidateLegalNameUseCase
@@ -9,6 +9,8 @@ import tech.dokus.domain.validators.ValidateNameUseCase
 import tech.dokus.domain.validators.ValidatePasswordUseCase
 import tech.dokus.domain.validators.ValidatePhoneNumberUseCase
 import kotlin.jvm.JvmInline
+
+private const val DISPLAY_NAME_MAX_LENGTH = 255
 
 interface ValueClass<T> {
     val value: T
@@ -23,9 +25,10 @@ interface Validatable<ValueClassType> where ValueClassType : ValueClass<*> {
 @JvmInline
 value class Password(override val value: String) : ValueClass<String>, Validatable<Password> {
     override fun toString(): String = value
-    override val isValid get() = ValidatePasswordUseCase(
-        this
-    )
+    override val isValid
+        get() = ValidatePasswordUseCase(
+            this
+        )
 
     override val validOrThrows: Password
         get() = if (isValid) this else throw DokusException.Validation.WeakPassword
@@ -36,12 +39,15 @@ value class Password(override val value: String) : ValueClass<String>, Validatab
 value class Email(override val value: String) : ValueClass<String>, Validatable<Email> {
     override fun toString(): String = value
 
-    override val isValid get() = ValidateEmailUseCase(
-        this
-    )
+    override val isValid
+        get() = ValidateEmailUseCase(this)
 
     override val validOrThrows: Email
         get() = if (isValid) this else throw DokusException.Validation.InvalidEmail
+
+    companion object {
+        val Empty = Email("")
+    }
 }
 
 @Serializable
@@ -52,12 +58,15 @@ value class Name(override val value: String) : ValueClass<String>, Validatable<N
     val initialOrEmpty: String
         get() = value.firstOrNull()?.toString() ?: ""
 
-    override val isValid get() = ValidateNameUseCase(
-        this
-    )
+    override val isValid
+        get() = ValidateNameUseCase(this)
 
     override val validOrThrows: Name
         get() = if (isValid) this else throw DokusException.Validation.InvalidFirstName
+
+    companion object {
+        val Empty = Name("")
+    }
 }
 
 @Serializable
@@ -68,12 +77,15 @@ value class LegalName(override val value: String) : ValueClass<String>, Validata
     val initialOrEmpty: String
         get() = value.firstOrNull()?.toString() ?: ""
 
-    override val isValid get() = ValidateLegalNameUseCase(
-        this
-    )
+    override val isValid
+        get() = ValidateLegalNameUseCase(this)
 
     override val validOrThrows: LegalName
         get() = if (isValid) this else throw DokusException.Validation.InvalidLegalName
+
+    companion object {
+        val Empty = LegalName("")
+    }
 }
 
 @Serializable
@@ -84,7 +96,7 @@ value class DisplayName(override val value: String) : ValueClass<String>, Valida
     val initialOrEmpty: String
         get() = value.firstOrNull()?.toString() ?: ""
 
-    override val isValid get() = value.isNotBlank() && value.length <= 255
+    override val isValid get() = value.isNotBlank() && value.length <= DISPLAY_NAME_MAX_LENGTH
 
     override val validOrThrows: DisplayName
         get() = if (isValid) this else throw DokusException.Validation.InvalidDisplayName
@@ -95,12 +107,15 @@ value class DisplayName(override val value: String) : ValueClass<String>, Valida
 value class PhoneNumber(override val value: String) : ValueClass<String>, Validatable<PhoneNumber> {
     override fun toString(): String = value
 
-    override val isValid get() = ValidatePhoneNumberUseCase(
-        this
-    )
+    override val isValid
+        get() = ValidatePhoneNumberUseCase(this)
 
     override val validOrThrows: PhoneNumber
         get() = if (isValid) this else throw DokusException.Validation.InvalidPhoneNumber
+
+    companion object {
+        val Empty = PhoneNumber("")
+    }
 }
 
 @Serializable
@@ -108,9 +123,10 @@ value class PhoneNumber(override val value: String) : ValueClass<String>, Valida
 value class City(override val value: String) : ValueClass<String>, Validatable<City> {
     override fun toString(): String = value
 
-    override val isValid get() = ValidateCityUseCase(
-        this
-    )
+    override val isValid
+        get() = ValidateCityUseCase(
+            this
+        )
 
     override val validOrThrows: City
         get() = if (isValid) this else throw DokusException.Validation.InvalidCity

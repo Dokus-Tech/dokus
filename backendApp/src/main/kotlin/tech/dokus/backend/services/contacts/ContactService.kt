@@ -1,14 +1,14 @@
 package tech.dokus.backend.services.contacts
 
-import ai.dokus.foundation.database.repository.contacts.ContactRepository
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactRequest
-import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Service for contact business operations.
@@ -58,7 +58,10 @@ class ContactService(
         limit: Int = 50,
         offset: Int = 0
     ): Result<PaginatedResponse<ContactDto>> {
-        logger.debug("Listing contacts for tenant: $tenantId (isActive=$isActive, peppolEnabled=$peppolEnabled, limit=$limit, offset=$offset)")
+        logger.debug(
+            "Listing contacts for tenant: $tenantId " +
+                "(isActive=$isActive, peppolEnabled=$peppolEnabled, limit=$limit, offset=$offset)"
+        )
         return contactRepository.listContacts(
             tenantId,
             isActive,

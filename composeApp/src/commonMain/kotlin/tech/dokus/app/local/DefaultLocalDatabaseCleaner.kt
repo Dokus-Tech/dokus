@@ -1,11 +1,11 @@
 package tech.dokus.app.local
 
-import ai.dokus.app.auth.database.AuthDatabase
-import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import tech.dokus.features.auth.database.AuthDatabase
+import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 
 /**
  * Clears every frontend SQLDelight cache on logout.

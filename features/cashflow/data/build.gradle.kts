@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinPluginSerialization)
-    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -44,6 +43,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.foundation.appCommon)
             implementation(projects.foundation.domain)
+            implementation(projects.features.cashflow.domain)
 
             implementation(libs.kotlinx.serialization)
 
@@ -51,8 +51,6 @@ kotlin {
             implementation(libs.koin.core)
 
             implementation(libs.kotlinx.coroutinesCore)
-            implementation(libs.bundles.sqldelight)
-
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.resources)
             implementation(libs.ktor.client.content.negotiation)
@@ -66,6 +64,10 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.kotlinx.coroutines.swing)
         }
+        jvmTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.mockk)
+        }
         wasmJsMain.dependencies {
             implementation(devNpm("copy-webpack-plugin", "9.1.0"))
             implementation("org.jetbrains.kotlinx:kotlinx-browser:0.2")
@@ -77,7 +79,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.cashflow.data"
+    namespace = "tech.dokus.features.cashflow.data"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -85,14 +87,5 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-}
-
-sqldelight {
-    databases {
-        create("CashflowCacheDatabase") {
-            packageName.set("ai.dokus.app.cashflow.cache")
-            generateAsync.set(true)
-        }
     }
 }

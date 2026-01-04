@@ -1,14 +1,19 @@
 package tech.dokus.domain.ids
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.Validatable
 import tech.dokus.domain.ValueClass
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.validators.ValidatePeppolIdUseCase
 import tech.dokus.domain.validators.ValidateVatNumberUseCase
-import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+
+private const val VAT_COUNTRY_CODE_LENGTH = 2
+private const val BELGIAN_COMPANY_NUMBER_LENGTH = 10
+private const val BELGIAN_COMPANY_FIRST_GROUP_END = 4
+private const val BELGIAN_COMPANY_SECOND_GROUP_END = 7
 
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
@@ -40,16 +45,74 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
     override fun toString(): String = value
 
     val normalized: String
-        get() = value
-            .replace(".", "")
-            .replace(" ", "")
-            .uppercase()
+        get() = normalize(value)
+
+    val countryCode: String?
+        get() = normalized.takeIf {
+            it.length >= VAT_COUNTRY_CODE_LENGTH &&
+                it.substring(0, VAT_COUNTRY_CODE_LENGTH).all { ch -> ch.isLetter() }
+        }?.substring(0, VAT_COUNTRY_CODE_LENGTH)
+
+    val companyNumber: String
+        get() = normalized.let { normalizedValue ->
+            val code = countryCode
+            if (code == null || normalizedValue.length <= VAT_COUNTRY_CODE_LENGTH) {
+                normalizedValue
+            } else {
+                normalizedValue.substring(VAT_COUNTRY_CODE_LENGTH)
+            }
+        }
+
+    val formatted: String
+        get() = format(includeCountry = true)
+
+    val formattedCompanyNumber: String
+        get() = format(includeCountry = false)
+
+    val isBelgian: Boolean
+        get() = countryCode == "BE"
 
     override val isValid: Boolean
         get() = ValidateVatNumberUseCase(this)
 
     override val validOrThrows: VatNumber
         get() = if (isValid) this else throw DokusException.Validation.InvalidVatNumber
+
+    companion object {
+        val Empty = VatNumber("")
+
+        fun normalize(raw: String): String = raw
+            .trim()
+            .uppercase()
+            .replace(Regex("[^A-Z0-9]"), "")
+
+        fun fromCountryAndCompanyNumber(countryCode: String, companyNumber: String): VatNumber {
+            val normalizedCountry = countryCode.trim().uppercase()
+            val normalizedCompany = normalize(companyNumber)
+            return VatNumber("$normalizedCountry$normalizedCompany")
+        }
+    }
+
+    private fun format(includeCountry: Boolean): String {
+        val country = countryCode
+        val formattedCompany = when (country) {
+            "BE" -> formatBelgianCompanyNumber(companyNumber)
+            else -> companyNumber
+        }
+        return if (includeCountry && country != null) {
+            "$country$formattedCompany"
+        } else {
+            formattedCompany
+        }
+    }
+
+    private fun formatBelgianCompanyNumber(number: String): String {
+        val digits = number.filter { it.isDigit() }
+        if (digits.length != BELGIAN_COMPANY_NUMBER_LENGTH) return number
+        return "${digits.substring(0, BELGIAN_COMPANY_FIRST_GROUP_END)}." +
+            "${digits.substring(BELGIAN_COMPANY_FIRST_GROUP_END, BELGIAN_COMPANY_SECOND_GROUP_END)}." +
+            digits.substring(BELGIAN_COMPANY_SECOND_GROUP_END, BELGIAN_COMPANY_NUMBER_LENGTH)
+    }
 }
 
 @OptIn(ExperimentalUuidApi::class)

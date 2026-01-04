@@ -1,0 +1,89 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">D[#]kus</string>
+    <string name="app_slogan">Where sovereignty meets intelligence.</string>
+    <string name="brand_motto">Intelligence. Autonomy. Silence.</string>
+    <string name="copyright">©2025 Dokus</string>
+
+    <!-- Core - Splash -->
+    <string name="bootstrap_state_initializing">Initializing application...</string>
+    <string name="bootstrap_state_authenticating">Verifying authentication...</string>
+    <string name="bootstrap_state_app_version_check">Verifying application version...</string>
+    <string name="bootstrap_state_checking_account_status">Verifying account status...</string>
+
+    <!-- Home -->
+    <string name="home_dashboard">Dashboard</string>
+    <string name="media_title">Media</string>
+    <string name="home_settings">Settings</string>
+
+    <!-- Device Types -->
+    <string name="device_type_ios">iOS</string>
+    <string name="device_type_android">Android</string>
+    <string name="device_type_web">Web</string>
+    <string name="device_type_desktop">Computer</string>
+    <string name="device_type_tablet">Tablet</string>
+
+    <!-- Dashboard - Feature -->
+    <string name="feature_auth">Authentication</string>
+
+    <!-- Slogan Screen -->
+    <string name="slogan_line_2">Crafted for those who build tomorrow.</string>
+    <string name="slogan_line_3">Trusted by those who own today.</string>
+
+    <!-- Keyboard Modifiers -->
+    <string name="key_cmd">CMD</string>
+    <string name="key_ctrl">CTRL</string>
+
+    <!-- Navigation -->
+    <string name="nav_simulations">Simulations</string>
+    <string name="nav_items">Items</string>
+    <string name="nav_banking">Banking</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Chat -->
+    <string name="chat_title">AI Chat</string>
+    <string name="chat_document_title_fallback">Document Chat</string>
+    <string name="chat_title_all_documents">Chat with Documents</string>
+    <string name="chat_scope_single_document">Single document</string>
+    <string name="chat_scope_all_documents">All documents</string>
+    <string name="chat_new_conversation">New conversation</string>
+    <string name="chat_history_action">Chat history</string>
+    <string name="chat_more_options">More options</string>
+    <string name="chat_switch_to_all_documents">Switch to all documents</string>
+    <string name="chat_expand_all_citations">Expand all citations</string>
+    <string name="chat_collapse_all_citations">Collapse all citations</string>
+    <string name="chat_loading">Loading chat...</string>
+    <string name="chat_thinking">Thinking...</string>
+    <string name="chat_prompt_single_document">Ask a question about %1$s</string>
+    <string name="chat_this_document">this document</string>
+    <string name="chat_prompt_all_documents">Ask a question about your documents</string>
+    <string name="chat_empty_description_single">I can help you find information, summarize content, or answer specific questions about the document.</string>
+    <string name="chat_empty_description_all">I can search across all your confirmed documents to find relevant information and answer your questions.</string>
+    <string name="chat_try_asking">Try asking:</string>
+    <string name="chat_example_total_amount">What is the total amount?</string>
+    <string name="chat_example_spend_last_month">What did I spend last month?</string>
+    <string name="chat_example_due_date">When is the due date?</string>
+    <string name="chat_example_invoices_company">Show invoices from Company X</string>
+    <string name="chat_example_format">"%1$s"</string>
+    <string name="chat_message_too_long">Message too long (max %1$d characters)</string>
+    <string name="chat_input_placeholder">Ask a question...</string>
+    <string name="chat_history_title">Chat History</string>
+    <string name="chat_history_empty">No previous conversations</string>
+    <string name="chat_new_chat">New Chat</string>
+    <string name="chat_general_chat">General Chat</string>
+    <string name="chat_message_count_single">%1$d message</string>
+    <string name="chat_message_count_plural">%1$d messages</string>
+    <string name="chat_error_load_conversation">Failed to load conversation: %1$s</string>
+    <string name="chat_error_no_document_selected">No document selected</string>
+    <string name="chat_error_send_message">Failed to send message: %1$s</string>
+    <string name="chat_error_invalid_document_reference">Invalid document reference</string>
+    <string name="chat_send_message">Send message</string>
+    <string name="chat_document_fallback">Document</string>
+    <string name="chat_page_number">Page %1$d</string>
+    <string name="chat_expand_citation">Expand citation</string>
+    <string name="chat_collapse_citation">Collapse citation</string>
+    <string name="chat_view_source_document">View source document</string>
+    <string name="chat_sources_count">Sources (%1$d)</string>
+    <string name="chat_expand_sources">Expand sources</string>
+    <string name="chat_collapse_sources">Collapse sources</string>
+</resources>

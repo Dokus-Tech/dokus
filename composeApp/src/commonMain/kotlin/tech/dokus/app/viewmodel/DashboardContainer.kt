@@ -1,10 +1,5 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.common.PaginationState
-import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -15,7 +10,12 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
+import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.platform.Logger
 
 internal typealias DashboardCtx = PipelineContext<DashboardState, DashboardIntent, DashboardAction>
 

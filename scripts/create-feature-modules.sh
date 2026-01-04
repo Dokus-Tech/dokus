@@ -43,7 +43,7 @@ create_build_gradle() {
     local feature=$1
     local port=$2
     local base_dir="${PROJECT_ROOT}/features/${feature}/backend"
-    local package="ai.dokus.${feature}"
+    local package="tech.dokus.${feature}"
 
     cat > "${base_dir}/build.gradle.kts" << 'EOF'
 plugins {
@@ -69,7 +69,7 @@ kotlin {
 
 dependencies {
     implementation(projects.foundation.domain)
-    implementation(projects.foundation.ktorCommon)
+    implementation(projects.foundation.backendCommon)
     implementation(projects.foundation.apispec)
 
     implementation(libs.kotlinx.serialization)
@@ -171,7 +171,7 @@ tasks.named("build") {
 EOF
 
     sed -i '' "s|PACKAGE_NAME|${package}|g" "${base_dir}/build.gradle.kts"
-    sed -i '' "s|MAIN_CLASS|ai.dokus.${feature}.backend.ApplicationKt|g" "${base_dir}/build.gradle.kts"
+    sed -i '' "s|MAIN_CLASS|tech.dokus.${feature}.backend.ApplicationKt|g" "${base_dir}/build.gradle.kts"
 
     echo -e "${GREEN}✓${NC} Created build.gradle.kts for ${feature}"
 }

@@ -4,13 +4,14 @@ plugins {
     `java-library`
 }
 
-group = "ai.dokus.ai"
+group = "tech.dokus.features.ai"
 version = "1.0.0"
 
 kotlin {
     jvmToolchain(17)
     compilerOptions {
         suppressWarnings.set(true)
+        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
     }
 }
 
@@ -20,7 +21,10 @@ dependencies {
 
     // Foundation dependencies
     implementation(projects.foundation.domain)
-    implementation(projects.foundation.ktorCommon)
+    implementation(projects.foundation.backendCommon)
+
+    // PDFBox for PDF to image conversion (vision processing)
+    implementation(libs.pdfbox)
 
     // Ktor HTTP Client (for Ollama/OpenAI embeddings API)
     implementation(libs.ktor.client.core)

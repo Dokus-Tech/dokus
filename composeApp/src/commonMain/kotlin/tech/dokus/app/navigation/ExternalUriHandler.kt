@@ -1,9 +1,9 @@
 package tech.dokus.app.navigation
 
-import tech.dokus.app.navigation.ExternalUriHandler.onNewUri
-import tech.dokus.domain.model.common.DeepLink
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import tech.dokus.app.navigation.ExternalUriHandler.onNewUri
+import tech.dokus.domain.model.common.DeepLink
 
 /**
  * Singleton handler for external URIs/deep links following the official KMP pattern.

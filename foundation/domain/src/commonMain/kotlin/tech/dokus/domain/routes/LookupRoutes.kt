@@ -1,7 +1,9 @@
 package tech.dokus.domain.routes
 
-import io.ktor.resources.*
+import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.ids.VatNumber
 
 /**
  * Type-safe route definitions for Lookup API.
@@ -18,5 +20,5 @@ class Lookup {
      */
     @Serializable
     @Resource("company")
-    class Company(val parent: Lookup = Lookup(), val name: String)
+    data class Company(val parent: Lookup = Lookup(), val name: LegalName, val number: VatNumber)
 }

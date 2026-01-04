@@ -1,9 +1,9 @@
 package tech.dokus.domain.model
 
-import tech.dokus.domain.Money
-import tech.dokus.domain.enums.Currency
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 
 /**
  * Cashflow overview data with Cash-In / Cash-Out structure.

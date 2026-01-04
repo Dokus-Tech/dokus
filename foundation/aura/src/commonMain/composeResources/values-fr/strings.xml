@@ -1,0 +1,89 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">D[#]kus</string>
+    <string name="app_slogan">Où la souveraineté rencontre l\'intelligence.</string>
+    <string name="brand_motto">Intelligence. Autonomie. Silence.</string>
+    <string name="copyright">©2025 Dokus</string>
+
+    <!-- Core - Splash -->
+    <string name="bootstrap_state_initializing">Initialisation de l\'application...</string>
+    <string name="bootstrap_state_authenticating">Vérification de l\'authentification...</string>
+    <string name="bootstrap_state_app_version_check">Vérification de la version de l\'application...</string>
+    <string name="bootstrap_state_checking_account_status">Vérification du statut du compte...</string>
+
+    <!-- Home -->
+    <string name="home_dashboard">Tableau de bord</string>
+    <string name="media_title">Médias</string>
+    <string name="home_settings">Paramètres</string>
+
+    <!-- Device Types -->
+    <string name="device_type_ios">iOS</string>
+    <string name="device_type_android">Android</string>
+    <string name="device_type_web">Web</string>
+    <string name="device_type_desktop">Ordinateur</string>
+    <string name="device_type_tablet">Tablette</string>
+
+    <!-- Dashboard - Feature -->
+    <string name="feature_auth">Authentification</string>
+
+    <!-- Slogan Screen -->
+    <string name="slogan_line_2">Conçu pour ceux qui construisent demain.</string>
+    <string name="slogan_line_3">Approuvé par ceux qui possèdent aujourd\'hui.</string>
+
+    <!-- Keyboard Modifiers -->
+    <string name="key_cmd">CMD</string>
+    <string name="key_ctrl">CTRL</string>
+
+    <!-- Navigation -->
+    <string name="nav_simulations">Simulations</string>
+    <string name="nav_items">Éléments</string>
+    <string name="nav_banking">Banque</string>
+    <string name="nav_profile">Profil</string>
+
+    <!-- Chat -->
+    <string name="chat_title">Chat IA</string>
+    <string name="chat_document_title_fallback">Chat de documents</string>
+    <string name="chat_title_all_documents">Chat avec des documents</string>
+    <string name="chat_scope_single_document">Document unique</string>
+    <string name="chat_scope_all_documents">Tous les documents</string>
+    <string name="chat_new_conversation">Nouvelle conversation</string>
+    <string name="chat_history_action">Historique du chat</string>
+    <string name="chat_more_options">Plus d'options</string>
+    <string name="chat_switch_to_all_documents">Passer à tous les documents</string>
+    <string name="chat_expand_all_citations">Développer toutes les citations</string>
+    <string name="chat_collapse_all_citations">Réduire toutes les citations</string>
+    <string name="chat_loading">Chargement du chat...</string>
+    <string name="chat_thinking">Réflexion...</string>
+    <string name="chat_prompt_single_document">Posez une question sur %1$s</string>
+    <string name="chat_this_document">ce document</string>
+    <string name="chat_prompt_all_documents">Posez une question sur vos documents</string>
+    <string name="chat_empty_description_single">Je peux vous aider à trouver des informations, résumer le contenu ou répondre à des questions spécifiques sur le document.</string>
+    <string name="chat_empty_description_all">Je peux rechercher dans tous vos documents confirmés pour trouver des informations pertinentes et répondre à vos questions.</string>
+    <string name="chat_try_asking">Essayez de demander :</string>
+    <string name="chat_example_total_amount">Quel est le montant total ?</string>
+    <string name="chat_example_spend_last_month">Qu'ai-je dépensé le mois dernier ?</string>
+    <string name="chat_example_due_date">Quelle est la date d'échéance ?</string>
+    <string name="chat_example_invoices_company">Afficher les factures de la société X</string>
+    <string name="chat_example_format">"%1$s"</string>
+    <string name="chat_message_too_long">Message trop long (max. %1$d caractères)</string>
+    <string name="chat_input_placeholder">Posez une question...</string>
+    <string name="chat_history_title">Historique du chat</string>
+    <string name="chat_history_empty">Aucune conversation précédente</string>
+    <string name="chat_new_chat">Nouveau chat</string>
+    <string name="chat_general_chat">Chat général</string>
+    <string name="chat_message_count_single">%1$d message</string>
+    <string name="chat_message_count_plural">%1$d messages</string>
+    <string name="chat_error_load_conversation">Impossible de charger la conversation : %1$s</string>
+    <string name="chat_error_no_document_selected">Aucun document sélectionné</string>
+    <string name="chat_error_send_message">Impossible d'envoyer le message : %1$s</string>
+    <string name="chat_error_invalid_document_reference">Référence de document invalide</string>
+    <string name="chat_send_message">Envoyer le message</string>
+    <string name="chat_document_fallback">Document</string>
+    <string name="chat_page_number">Page %1$d</string>
+    <string name="chat_expand_citation">Développer la citation</string>
+    <string name="chat_collapse_citation">Réduire la citation</string>
+    <string name="chat_view_source_document">Voir le document source</string>
+    <string name="chat_sources_count">Sources (%1$d)</string>
+    <string name="chat_expand_sources">Développer les sources</string>
+    <string name="chat_collapse_sources">Réduire les sources</string>
+</resources>

@@ -3,7 +3,6 @@ package tech.dokus.foundation.app.state
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 
-
 /**
  * Sealed class implementation of DokusState for pattern matching and exhaustive when statements.
  *
@@ -11,13 +10,16 @@ import tech.dokus.domain.exceptions.DokusException
  * `dataOrNull` for convenient access to data regardless of state (null in non-Success states).
  */
 sealed class DokusStateSimple<DataType>(val dataOrNull: DataType? = null) : DokusState<DataType> {
-    data class Idle<DataType>(private val nothing: Any? = null) : DokusStateSimple<DataType>(),
+    data class Idle<DataType>(private val nothing: Any? = null) :
+        DokusStateSimple<DataType>(),
         DokusState.Idle<DataType>
 
-    data class Loading<DataType>(private val nothing: Any? = null) : DokusStateSimple<DataType>(),
+    data class Loading<DataType>(private val nothing: Any? = null) :
+        DokusStateSimple<DataType>(),
         DokusState.Loading<DataType>
 
-    data class Success<DataType>(override val data: DataType) : DokusStateSimple<DataType>(data),
+    data class Success<DataType>(override val data: DataType) :
+        DokusStateSimple<DataType>(data),
         DokusState.Success<DataType>
 
     data class Error<DataType>(

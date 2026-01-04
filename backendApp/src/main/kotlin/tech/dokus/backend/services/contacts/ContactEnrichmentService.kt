@@ -1,12 +1,17 @@
 package tech.dokus.backend.services.contacts
 
-import ai.dokus.foundation.database.repository.contacts.ContactRepository
+import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.City
+import tech.dokus.domain.Email
+import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.ContactAddress
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Service for progressively enriching contacts with data extracted from documents.
@@ -121,7 +126,7 @@ class ContactEnrichmentService(
 
         logger.info(
             "Enriching contact $contactId with fields: ${toEnrich.map { it.first }}. " +
-                    "Source document: $sourceDocumentId"
+                "Source document: $sourceDocumentId"
         )
 
         val updatedContact = contactRepository.updateContact(contactId, tenantId, updateRequest)
@@ -149,104 +154,17 @@ class ContactEnrichmentService(
         val toEnrich = mutableListOf<Pair<String, String>>()
         val toSkip = mutableListOf<String>()
 
-        // Email
-        if (!data.email.isNullOrBlank()) {
-            if (contact.email == null) {
-                toEnrich.add("email" to data.email)
-            } else {
-                toSkip.add("email")
-            }
-        }
-
-        // Phone
-        if (!data.phone.isNullOrBlank()) {
-            if (contact.phone.isNullOrBlank()) {
-                toEnrich.add("phone" to data.phone)
-            } else {
-                toSkip.add("phone")
-            }
-        }
-
-        // Address Line 1
-        if (!data.addressLine1.isNullOrBlank()) {
-            if (contact.addressLine1.isNullOrBlank()) {
-                toEnrich.add("addressLine1" to data.addressLine1)
-            } else {
-                toSkip.add("addressLine1")
-            }
-        }
-
-        // Address Line 2
-        if (!data.addressLine2.isNullOrBlank()) {
-            if (contact.addressLine2.isNullOrBlank()) {
-                toEnrich.add("addressLine2" to data.addressLine2)
-            } else {
-                toSkip.add("addressLine2")
-            }
-        }
-
-        // City
-        if (!data.city.isNullOrBlank()) {
-            if (contact.city.isNullOrBlank()) {
-                toEnrich.add("city" to data.city)
-            } else {
-                toSkip.add("city")
-            }
-        }
-
-        // Postal Code
-        if (!data.postalCode.isNullOrBlank()) {
-            if (contact.postalCode.isNullOrBlank()) {
-                toEnrich.add("postalCode" to data.postalCode)
-            } else {
-                toSkip.add("postalCode")
-            }
-        }
-
-        // Country
-        if (!data.country.isNullOrBlank()) {
-            if (contact.country.isNullOrBlank()) {
-                toEnrich.add("country" to data.country)
-            } else {
-                toSkip.add("country")
-            }
-        }
-
-        // Peppol ID
-        if (!data.peppolId.isNullOrBlank()) {
-            if (contact.peppolId.isNullOrBlank()) {
-                toEnrich.add("peppolId" to data.peppolId)
-            } else {
-                toSkip.add("peppolId")
-            }
-        }
-
-        // Company Number
-        if (!data.companyNumber.isNullOrBlank()) {
-            if (contact.companyNumber.isNullOrBlank()) {
-                toEnrich.add("companyNumber" to data.companyNumber)
-            } else {
-                toSkip.add("companyNumber")
-            }
-        }
-
-        // Contact Person
-        if (!data.contactPerson.isNullOrBlank()) {
-            if (contact.contactPerson.isNullOrBlank()) {
-                toEnrich.add("contactPerson" to data.contactPerson)
-            } else {
-                toSkip.add("contactPerson")
-            }
-        }
-
-        // VAT Number - special handling: only enrich if contact has none
-        if (!data.vatNumber.isNullOrBlank()) {
-            if (contact.vatNumber == null) {
-                toEnrich.add("vatNumber" to data.vatNumber)
-            } else {
-                toSkip.add("vatNumber")
-            }
-        }
+        collectField("email", data.email, contact.email?.value, toEnrich, toSkip)
+        collectField("phone", data.phone, contact.phone?.value, toEnrich, toSkip)
+        collectField("addressLine1", data.addressLine1, contact.addressLine1, toEnrich, toSkip)
+        collectField("addressLine2", data.addressLine2, contact.addressLine2, toEnrich, toSkip)
+        collectField("city", data.city, contact.city?.value, toEnrich, toSkip)
+        collectField("postalCode", data.postalCode, contact.postalCode, toEnrich, toSkip)
+        collectField("country", data.country, contact.country, toEnrich, toSkip)
+        collectField("peppolId", data.peppolId, contact.peppolId, toEnrich, toSkip)
+        collectField("companyNumber", data.companyNumber, contact.companyNumber, toEnrich, toSkip)
+        collectField("contactPerson", data.contactPerson, contact.contactPerson, toEnrich, toSkip)
+        collectField("vatNumber", data.vatNumber, contact.vatNumber?.value, toEnrich, toSkip)
 
         return toEnrich to toSkip
     }
@@ -256,24 +174,84 @@ class ContactEnrichmentService(
      */
     private fun buildUpdateRequest(fieldsToEnrich: List<Pair<String, String>>): UpdateContactRequest {
         var request = UpdateContactRequest()
+        val addressParts = AddressParts()
 
         for ((field, value) in fieldsToEnrich) {
-            request = when (field) {
-                "email" -> request.copy(email = value)
-                "phone" -> request.copy(phone = value)
-                "addressLine1" -> request.copy(addressLine1 = value)
-                "addressLine2" -> request.copy(addressLine2 = value)
-                "city" -> request.copy(city = value)
-                "postalCode" -> request.copy(postalCode = value)
-                "country" -> request.copy(country = value)
-                "peppolId" -> request.copy(peppolId = value)
-                "companyNumber" -> request.copy(companyNumber = value)
-                "contactPerson" -> request.copy(contactPerson = value)
-                "vatNumber" -> request.copy(vatNumber = value)
-                else -> request
-            }
+            request = applyFieldUpdate(request, field, value, addressParts)
+        }
+
+        addressParts.toContactAddressOrNull()?.let { address ->
+            request = request.copy(address = address)
         }
 
         return request
+    }
+
+    private fun collectField(
+        fieldName: String,
+        newValue: String?,
+        existingValue: String?,
+        toEnrich: MutableList<Pair<String, String>>,
+        toSkip: MutableList<String>
+    ) {
+        if (newValue.isNullOrBlank()) return
+        if (existingValue.isNullOrBlank()) {
+            toEnrich.add(fieldName to newValue)
+        } else {
+            toSkip.add(fieldName)
+        }
+    }
+
+    private fun applyFieldUpdate(
+        request: UpdateContactRequest,
+        field: String,
+        value: String,
+        addressParts: AddressParts
+    ): UpdateContactRequest {
+        return when (field) {
+            "email" -> request.copy(email = Email(value))
+            "phone" -> request.copy(phone = PhoneNumber(value))
+            "addressLine1", "addressLine2", "city", "postalCode", "country" -> {
+                addressParts.apply(field, value)
+                request
+            }
+            "peppolId" -> request.copy(peppolId = value)
+            "companyNumber" -> request.copy(companyNumber = value)
+            "contactPerson" -> request.copy(contactPerson = value)
+            "vatNumber" -> request.copy(vatNumber = VatNumber(value))
+            else -> request
+        }
+    }
+
+    private class AddressParts {
+        private var addressLine1: String? = null
+        private var addressLine2: String? = null
+        private var city: String? = null
+        private var postalCode: String? = null
+        private var country: String? = null
+
+        fun apply(field: String, value: String) {
+            when (field) {
+                "addressLine1" -> addressLine1 = value
+                "addressLine2" -> addressLine2 = value
+                "city" -> city = value
+                "postalCode" -> postalCode = value
+                "country" -> country = value
+            }
+        }
+
+        fun toContactAddressOrNull(): ContactAddress? {
+            val requiredFields = listOf(addressLine1, city, postalCode, country)
+            if (requiredFields.all { it == null }) return null
+            if (requiredFields.any { it == null }) return null
+
+            return ContactAddress(
+                streetLine1 = addressLine1!!,
+                streetLine2 = addressLine2,
+                city = City(city!!),
+                postalCode = postalCode!!,
+                country = country!!
+            )
+        }
     }
 }

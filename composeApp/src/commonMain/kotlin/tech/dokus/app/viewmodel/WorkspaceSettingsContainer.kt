@@ -1,22 +1,32 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.app.auth.datasource.TenantRemoteDataSource
-import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import tech.dokus.domain.ids.Bic
-import tech.dokus.domain.ids.Iban
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.model.TenantSettings
-import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.Bic
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
+import tech.dokus.features.auth.usecases.DeleteWorkspaceAvatarUseCase
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
+import tech.dokus.features.auth.usecases.GetTenantAddressUseCase
+import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
+import tech.dokus.features.auth.usecases.UpdateTenantSettingsUseCase
+import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCase
+import tech.dokus.foundation.platform.Logger
 
-internal typealias WorkspaceSettingsCtx = PipelineContext<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction>
+internal typealias WorkspaceSettingsCtx =
+    PipelineContext<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction>
+
+private const val MAX_PAYMENT_TERMS_DAYS = 365
+private const val MIN_INVOICE_PADDING = 1
+private const val MAX_INVOICE_PADDING = 8
 
 /**
  * Container for Workspace Settings screen using FlowMVI.
@@ -28,7 +38,11 @@ internal typealias WorkspaceSettingsCtx = PipelineContext<WorkspaceSettingsState
  */
 internal class WorkspaceSettingsContainer(
     private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
-    private val tenantDataSource: TenantRemoteDataSource,
+    private val getTenantSettings: GetTenantSettingsUseCase,
+    private val getTenantAddress: GetTenantAddressUseCase,
+    private val updateTenantSettings: UpdateTenantSettingsUseCase,
+    private val uploadWorkspaceAvatar: UploadWorkspaceAvatarUseCase,
+    private val deleteWorkspaceAvatar: DeleteWorkspaceAvatarUseCase,
 ) : Container<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
 
     private val logger = Logger.forClass<WorkspaceSettingsContainer>()
@@ -44,7 +58,9 @@ internal class WorkspaceSettingsContainer(
                     is WorkspaceSettingsIntent.UpdateBic -> handleUpdateBic(intent.value)
                     is WorkspaceSettingsIntent.UpdateAddress -> handleUpdateAddress(intent.value)
                     is WorkspaceSettingsIntent.UpdateInvoicePrefix -> handleUpdateInvoicePrefix(intent.value)
-                    is WorkspaceSettingsIntent.UpdateDefaultPaymentTerms -> handleUpdateDefaultPaymentTerms(intent.value)
+                    is WorkspaceSettingsIntent.UpdateDefaultPaymentTerms -> handleUpdateDefaultPaymentTerms(
+                        intent.value
+                    )
                     is WorkspaceSettingsIntent.UpdateInvoiceYearlyReset -> handleUpdateInvoiceYearlyReset(intent.value)
                     is WorkspaceSettingsIntent.UpdateInvoicePadding -> handleUpdateInvoicePadding(intent.value)
                     is WorkspaceSettingsIntent.UpdateInvoiceIncludeYear -> handleUpdateInvoiceIncludeYear(intent.value)
@@ -65,8 +81,8 @@ internal class WorkspaceSettingsContainer(
         updateState { WorkspaceSettingsState.Loading }
 
         val tenantResult = getCurrentTenantUseCase()
-        val settingsResult = tenantDataSource.getTenantSettings()
-        val addressResult = tenantDataSource.getTenantAddress()
+        val settingsResult = getTenantSettings()
+        val addressResult = getTenantAddress()
 
         val tenant = tenantResult.getOrNull()
         val settings = settingsResult.getOrNull()
@@ -157,7 +173,7 @@ internal class WorkspaceSettingsContainer(
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateDefaultPaymentTerms(value: String) {
         val terms = value.toIntOrNull() ?: return
-        if (terms in 0..365) {
+        if (terms in 0..MAX_PAYMENT_TERMS_DAYS) {
             withState<WorkspaceSettingsState.Content, _> {
                 updateState { copy(form = form.copy(defaultPaymentTerms = terms)) }
             }
@@ -172,7 +188,11 @@ internal class WorkspaceSettingsContainer(
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateInvoicePadding(value: Int) {
         withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(invoicePadding = value.coerceIn(1, 8))) }
+            updateState {
+                copy(
+                    form = form.copy(invoicePadding = value.coerceIn(MIN_INVOICE_PADDING, MAX_INVOICE_PADDING))
+                )
+            }
         }
     }
 
@@ -213,7 +233,7 @@ internal class WorkspaceSettingsContainer(
                 paymentTermsText = form.paymentTermsText.ifBlank { null }
             )
 
-            tenantDataSource.updateTenantSettings(updatedSettings).fold(
+            updateTenantSettings(updatedSettings).fold(
                 onSuccess = {
                     logger.i { "Workspace settings saved" }
                     updateState {
@@ -222,15 +242,20 @@ internal class WorkspaceSettingsContainer(
                             saveState = WorkspaceSettingsState.Content.SaveState.Success
                         )
                     }
-                    action(WorkspaceSettingsAction.ShowSuccess("Settings saved successfully"))
+                    action(WorkspaceSettingsAction.ShowSuccess(WorkspaceSettingsSuccess.SettingsSaved))
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to save workspace settings" }
-                    val message = error.message ?: "Failed to save settings"
-                    updateState {
-                        copy(saveState = WorkspaceSettingsState.Content.SaveState.Error(message))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.WorkspaceSettingsSaveFailed
+                    } else {
+                        exception
                     }
-                    action(WorkspaceSettingsAction.ShowError(message))
+                    updateState {
+                        copy(saveState = WorkspaceSettingsState.Content.SaveState.Error(displayException))
+                    }
+                    action(WorkspaceSettingsAction.ShowError(displayException))
                 }
             )
         }
@@ -257,7 +282,7 @@ internal class WorkspaceSettingsContainer(
                 else -> "image/jpeg"
             }
 
-            tenantDataSource.uploadAvatar(
+            uploadWorkspaceAvatar(
                 imageBytes = imageBytes,
                 filename = filename,
                 contentType = contentType,
@@ -277,11 +302,16 @@ internal class WorkspaceSettingsContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to upload avatar" }
-                    val message = error.message ?: "Failed to upload avatar"
-                    updateState {
-                        copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Error(message))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.WorkspaceAvatarUploadFailed
+                    } else {
+                        exception
                     }
-                    action(WorkspaceSettingsAction.ShowError(message))
+                    updateState {
+                        copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Error(displayException))
+                    }
+                    action(WorkspaceSettingsAction.ShowError(displayException))
                 }
             )
         }
@@ -294,7 +324,7 @@ internal class WorkspaceSettingsContainer(
                 copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Deleting)
             }
 
-            tenantDataSource.deleteAvatar().fold(
+            deleteWorkspaceAvatar().fold(
                 onSuccess = {
                     logger.i { "Avatar deleted" }
                     updateState {
@@ -306,11 +336,16 @@ internal class WorkspaceSettingsContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to delete avatar" }
-                    val message = error.message ?: "Failed to delete avatar"
-                    updateState {
-                        copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Error(message))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.WorkspaceAvatarDeleteFailed
+                    } else {
+                        exception
                     }
-                    action(WorkspaceSettingsAction.ShowError(message))
+                    updateState {
+                        copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Error(displayException))
+                    }
+                    action(WorkspaceSettingsAction.ShowError(displayException))
                 }
             )
         }

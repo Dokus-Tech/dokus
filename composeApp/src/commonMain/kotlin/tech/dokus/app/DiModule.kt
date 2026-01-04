@@ -1,9 +1,5 @@
 package tech.dokus.app
 
-import ai.dokus.foundation.design.style.ThemeManager
-import tech.dokus.domain.config.DynamicDokusEndpointProvider
-import tech.dokus.domain.config.ServerConfigManager
-import tech.dokus.domain.flags.FeatureFlagService
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -29,17 +25,21 @@ import tech.dokus.app.viewmodel.TeamSettingsAction
 import tech.dokus.app.viewmodel.TeamSettingsContainer
 import tech.dokus.app.viewmodel.TeamSettingsIntent
 import tech.dokus.app.viewmodel.TeamSettingsState
+import tech.dokus.app.viewmodel.TeamSettingsUseCases
 import tech.dokus.app.viewmodel.WorkspaceSettingsAction
 import tech.dokus.app.viewmodel.WorkspaceSettingsContainer
 import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
 import tech.dokus.app.viewmodel.WorkspaceSettingsState
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
+import tech.dokus.domain.config.ServerConfigManager
+import tech.dokus.domain.flags.FeatureFlagService
 import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.aura.style.ThemeManager
 
 internal val diModuleApp = module {
     // Server configuration management (bridges platform settings with domain types)
     singleOf(::ServerConfigManagerImpl) bind ServerConfigManager::class
-
 
     // Dynamic endpoint provider (bridges server config to HTTP clients)
     singleOf(::DynamicDokusEndpointProvider)
@@ -73,11 +73,25 @@ internal val diModuleApp = module {
     container<WorkspaceSettingsContainer, WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
         WorkspaceSettingsContainer(
             getCurrentTenantUseCase = get(),
-            tenantDataSource = get(),
+            getTenantSettings = get(),
+            getTenantAddress = get(),
+            updateTenantSettings = get(),
+            uploadWorkspaceAvatar = get(),
+            deleteWorkspaceAvatar = get(),
         )
     }
     container<TeamSettingsContainer, TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> {
-        TeamSettingsContainer(teamDataSource = get())
+        TeamSettingsContainer(
+            useCases = TeamSettingsUseCases(
+                listTeamMembers = get(),
+                listPendingInvitations = get(),
+                createInvitation = get(),
+                cancelInvitation = get(),
+                updateTeamMemberRole = get(),
+                removeTeamMember = get(),
+                transferWorkspaceOwnership = get(),
+            )
+        )
     }
 
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }

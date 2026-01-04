@@ -1,0 +1,53 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+
+comments:
+  ForbiddenComment:
+    active: false  # Allow TODOs during development
+
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 100
+    ignoreAnnotated:
+      - Composable
+  LongParameterList:
+    active: true
+    constructorThreshold: 7
+    functionThreshold: 6
+    ignoreAnnotated:
+      - Composable
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 15
+    ignoreAnnotated:
+      - Composable
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 20
+    thresholdInClasses: 20
+    thresholdInInterfaces: 15
+    thresholdInObjects: 15
+    thresholdInEnums: 15
+
+naming:
+  FunctionNaming:
+    active: true
+    functionPattern: '[a-z][a-zA-Z0-9]*'
+    ignoreAnnotated:
+      - Composable
+  MatchingDeclarationName:
+    active: true
+    mustBeFirst: false
+
+potential-bugs:
+  UnusedPrivateProperty:
+    active: true

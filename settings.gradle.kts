@@ -35,18 +35,17 @@ dependencyResolutionManagement {
 include(":composeApp")
 include(":backendApp")
 
-include(":foundation:design-system")
+include(":foundation:aura")
 
 include(":foundation:app-common")
 include(":foundation:platform")
 include(":foundation:navigation")
-include(":foundation:ktor-common")
+include(":foundation:backend-common")
 include(":foundation:database")
-include(":foundation:peppol-core")
+include(":foundation:peppol")
 
 // Backend library (shared by backendApp)
 include(":features:ai:backend")
-include(":foundation:ocr")
 
 // Auth domain for shared types
 include(":features:auth:presentation")
@@ -55,6 +54,7 @@ include(":features:auth:domain")
 
 // Frontend modules
 include(":features:cashflow:data")
+include(":features:cashflow:domain")
 include(":features:cashflow:presentation")
 include(":features:contacts:data")
 include(":features:contacts:domain")

@@ -1,0 +1,50 @@
+<resources>
+    <!-- Team Settings -->
+    <string name="team_settings_title">Teamleden</string>
+    <string name="team_members">Teamleden</string>
+    <string name="team_pending_invitations">Openstaande uitnodigingen</string>
+    <string name="team_invite_member">Lid uitnodigen</string>
+    <string name="team_invite_email">E-mailadres</string>
+    <string name="team_invite_role">Rol</string>
+    <string name="team_send_invitation">Uitnodiging versturen</string>
+    <string name="team_cancel_invitation">Uitnodiging annuleren</string>
+    <string name="team_change_role">Rol wijzigen</string>
+    <string name="team_remove_member">Lid verwijderen</string>
+    <string name="team_transfer_ownership">Eigenaarschap overdragen</string>
+    <string name="team_owner_badge">Eigenaar</string>
+    <string name="team_joined">Toegetreden op</string>
+    <string name="team_last_active">Laatst actief</string>
+    <string name="team_expires">Verloopt op</string>
+    <string name="team_invited_by">Uitgenodigd door</string>
+    <string name="team_no_members">Nog geen teamleden</string>
+    <string name="team_no_invitations">Geen openstaande uitnodigingen</string>
+    <string name="team_invite_success">Uitnodiging succesvol verzonden</string>
+    <string name="team_invite_failed">Uitnodiging verzenden mislukt</string>
+    <string name="team_invite_cancelled">Uitnodiging geannuleerd</string>
+    <string name="team_invite_cancel_failed">Uitnodiging annuleren mislukt</string>
+    <string name="team_remove_confirm">Weet u zeker dat u dit lid wilt verwijderen?</string>
+    <string name="team_member_removed_success">Lid verwijderd</string>
+    <string name="team_member_removed_failed">Lid verwijderen mislukt</string>
+    <string name="team_transfer_confirm">Weet u zeker dat u het eigenaarschap wilt overdragen? U wordt Admin.</string>
+    <string name="team_ownership_transferred_success">Eigendom overgedragen</string>
+    <string name="team_ownership_transferred_failed">Eigendom overdragen mislukt</string>
+    <string name="team_only_owner_can_manage">Alleen de eigenaar van de werkruimte kan teamleden beheren</string>
+    <string name="team_load_members_failed">Laden van teamleden mislukt</string>
+    <string name="team_load_invitations_failed">Laden van uitnodigingen mislukt</string>
+    <string name="team_email_required">E-mailadres is verplicht</string>
+    <string name="team_email_invalid">Ongeldig e-mailadres</string>
+    <string name="team_role_update_success">Rol bijgewerkt</string>
+    <string name="team_role_update_failed">Rol bijwerken mislukt</string>
+
+    <!-- Role names and descriptions -->
+    <string name="role_owner">Eigenaar</string>
+    <string name="role_admin">Beheerder</string>
+    <string name="role_accountant">Boekhouder</string>
+    <string name="role_editor">Bewerker</string>
+    <string name="role_viewer">Kijker</string>
+    <string name="role_owner_desc">Volledige toegang inclusief teambeheer</string>
+    <string name="role_admin_desc">Volledige toegang behalve teambeheer</string>
+    <string name="role_accountant_desc">Facturen, klanten, rapporten en exports</string>
+    <string name="role_editor_desc">Facturen en klanten aanmaken en bewerken</string>
+    <string name="role_viewer_desc">Alleen-lezen toegang tot facturen en rapporten</string>
+</resources>

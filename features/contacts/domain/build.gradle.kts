@@ -52,7 +52,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.contacts.domain"
+    namespace = "tech.dokus.features.contacts.domain"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

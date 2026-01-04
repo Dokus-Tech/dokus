@@ -1,8 +1,8 @@
 package tech.dokus.foundation.app.cache
 
-import tech.dokus.domain.ids.AttachmentId
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import tech.dokus.domain.ids.AttachmentId
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -147,7 +147,7 @@ class AttachmentCache(
     }
 
     private fun getFilePath(attachmentId: AttachmentId): String {
-        return "$cacheDir/${attachmentId}"
+        return "$cacheDir/$attachmentId"
     }
 
     companion object {

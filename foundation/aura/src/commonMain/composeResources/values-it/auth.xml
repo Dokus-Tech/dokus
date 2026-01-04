@@ -1,0 +1,81 @@
+<resources>
+    <!-- Login Screen -->
+    <string name="auth_login_subtitle">Accedi al tuo account</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_forgot_password">Password dimenticata?</string>
+    <string name="auth_sign_in_button">Accedi</string>
+    <string name="auth_no_account_prefix">Non hai un account? </string>
+    <string name="auth_sign_up_link">Registrati</string>
+
+    <!-- Register Screen -->
+    <string name="auth_register_title">Crea Account</string>
+    <string name="auth_first_name_label">Nome</string>
+    <string name="auth_last_name_label">Cognome</string>
+    <string name="auth_register_button">Registrati</string>
+    <string name="auth_has_account_prefix">Hai già un account? </string>
+    <string name="auth_login_link">Accedi</string>
+
+    <!-- Register Steps -->
+    <string name="auth_register_profile_title">Il tuo profilo</string>
+    <string name="auth_register_credentials_title">Credenziali</string>
+    <string name="auth_register_success_title">Registrazione completata</string>
+
+    <!-- Workspace Wizard -->
+    <string name="auth_step_of">Passo %1$d di %2$d</string>
+    <string name="auth_workspace_type_prompt">Scegli il tipo di spazio di lavoro</string>
+    <string name="auth_workspace_type_company_description">Per aziende registrate</string>
+    <string name="auth_workspace_type_freelancer_description">Per freelance individuali</string>
+    <string name="auth_workspace_type_unavailable">Lo spazio di lavoro freelance esiste già</string>
+    <string name="auth_your_name">Il tuo nome</string>
+    <string name="auth_company_name_prompt">Nome azienda</string>
+    <string name="auth_company_name_subtitle">Cercheremo i dettagli della tua azienda</string>
+    <string name="auth_company_name_label">Nome azienda</string>
+    <string name="auth_company_name_searching">Ricerca...</string>
+    <string name="auth_company_lookup_failed">Ricerca azienda fallita</string>
+    <string name="auth_business_details">Dettagli aziendali</string>
+    <string name="auth_business_details_subtitle">Aggiungi IVA e indirizzo</string>
+
+    <!-- Entity Confirmation -->
+    <string name="auth_entity_single_prompt">È la tua azienda?</string>
+    <string name="auth_entity_single_confirm">Usa questa azienda</string>
+    <string name="auth_entity_manual_entry">Inserisci manualmente</string>
+    <string name="auth_entity_multiple_title">Seleziona la tua azienda</string>
+    <string name="auth_entity_multiple_subtitle">Abbiamo trovato più corrispondenze. Scegline una o inseriscila manualmente.</string>
+
+    <!-- Server Connection -->
+    <string name="auth_server_connection">Connessione al server</string>
+    <string name="auth_server_label">Server</string>
+    <string name="auth_dokus_cloud">Dokus Cloud</string>
+    <string name="auth_server_url">URL del server</string>
+    <string name="auth_server_version">Versione</string>
+    <string name="auth_change_server">Cambia server</string>
+    <string name="auth_reset_cloud">Ripristina al cloud</string>
+    <string name="auth_protocol_http">HTTP</string>
+    <string name="auth_protocol_https">HTTPS</string>
+    <string name="auth_protocol_selector">Selettore protocollo</string>
+    <string name="auth_server_found">Server trovato</string>
+    <string name="auth_server_name_label">Nome server</string>
+    <string name="auth_server_features_label">Funzionalità</string>
+    <string name="auth_server_connecting_will">La connessione:</string>
+    <string name="auth_server_logout_warning">Verrai disconnesso dal server corrente.</string>
+    <string name="auth_server_reset_warning">I dati locali verranno cancellati.</string>
+    <string name="auth_server_reauth_warning">Dovrai accedere di nuovo.</string>
+    <string name="auth_server_details_title">Dettagli server</string>
+    <string name="auth_protocol_label">Protocollo</string>
+    <string name="auth_host_label">Host</string>
+    <string name="auth_port_label">Porta</string>
+    <string name="auth_validating">Validazione...</string>
+    <string name="auth_connecting">Connessione...</string>
+    <string name="auth_validate_connection">Valida connessione</string>
+    <string name="auth_checking_server">Verifica del server...</string>
+    <string name="auth_use_cloud">Usa Dokus Cloud</string>
+    <string name="auth_currently_connected_to">Attualmente connesso a</string>
+    <string name="auth_need_help">Serve aiuto?</string>
+    <string name="auth_help_description">Inserisci i dettagli del server o passa al cloud.</string>
+    <string name="auth_host_required">Host obbligatorio</string>
+    <string name="auth_host_no_spaces">L'host non può contenere spazi</string>
+    <string name="auth_port_required">Porta obbligatoria</string>
+    <string name="auth_port_invalid_number">La porta deve essere un numero</string>
+    <string name="auth_port_out_of_range">La porta deve essere tra 1 e 65535</string>
+</resources>

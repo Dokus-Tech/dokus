@@ -4,7 +4,6 @@ import tech.dokus.domain.exceptions.DokusException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-
 @OptIn(ExperimentalContracts::class)
 fun DokusState<*>.isIdle(): Boolean {
     contract {

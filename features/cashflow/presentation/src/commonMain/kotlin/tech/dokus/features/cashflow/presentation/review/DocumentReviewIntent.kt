@@ -1,0 +1,120 @@
+package tech.dokus.features.cashflow.presentation.review
+
+import androidx.compose.runtime.Immutable
+import pro.respawn.flowmvi.api.MVIIntent
+import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentRejectReason
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.ExtractedLineItem
+
+@Immutable
+sealed interface DocumentReviewIntent : MVIIntent {
+
+    data class LoadDocument(val documentId: DocumentId) : DocumentReviewIntent
+    data object Refresh : DocumentReviewIntent
+
+    data object LoadPreviewPages : DocumentReviewIntent
+    data class LoadMorePages(val maxPages: Int) : DocumentReviewIntent
+    data object RetryLoadPreview : DocumentReviewIntent
+
+    data class UpdateInvoiceField(
+        val field: InvoiceField,
+        val value: Any?,
+    ) : DocumentReviewIntent
+
+    data class UpdateBillField(
+        val field: BillField,
+        val value: Any?,
+    ) : DocumentReviewIntent
+
+    data class UpdateExpenseField(
+        val field: ExpenseField,
+        val value: Any?,
+    ) : DocumentReviewIntent
+
+    data class SelectContact(val contactId: ContactId) : DocumentReviewIntent
+    data object AcceptSuggestedContact : DocumentReviewIntent
+    data object ClearSelectedContact : DocumentReviewIntent
+    data class ContactCreated(val contactId: ContactId) : DocumentReviewIntent
+    data class SetCounterpartyIntent(val intent: CounterpartyIntent) : DocumentReviewIntent
+
+    data object OpenPreviewSheet : DocumentReviewIntent
+    data object ClosePreviewSheet : DocumentReviewIntent
+
+    data object AddLineItem : DocumentReviewIntent
+    data class UpdateLineItem(val index: Int, val item: ExtractedLineItem) : DocumentReviewIntent
+    data class RemoveLineItem(val index: Int) : DocumentReviewIntent
+
+    data class SelectFieldForProvenance(val fieldPath: String?) : DocumentReviewIntent
+
+    data object SaveDraft : DocumentReviewIntent
+    data object DiscardChanges : DocumentReviewIntent
+    data object ConfirmDiscardChanges : DocumentReviewIntent
+    data object Confirm : DocumentReviewIntent
+    data object OpenChat : DocumentReviewIntent
+
+    // Reject dialog intents
+    data object ShowRejectDialog : DocumentReviewIntent
+    data object DismissRejectDialog : DocumentReviewIntent
+    data class SelectRejectReason(val reason: DocumentRejectReason) : DocumentReviewIntent
+    data class UpdateRejectNote(val note: String) : DocumentReviewIntent
+    data object ConfirmReject : DocumentReviewIntent
+
+    // Failed analysis intents
+    data object RetryAnalysis : DocumentReviewIntent
+    data object DismissFailureBanner : DocumentReviewIntent
+}
+
+enum class InvoiceField {
+    CLIENT_NAME,
+    CLIENT_VAT_NUMBER,
+    CLIENT_EMAIL,
+    CLIENT_ADDRESS,
+    INVOICE_NUMBER,
+    ISSUE_DATE,
+    DUE_DATE,
+    SUBTOTAL_AMOUNT,
+    VAT_AMOUNT,
+    TOTAL_AMOUNT,
+    CURRENCY,
+    NOTES,
+    PAYMENT_TERMS,
+    BANK_ACCOUNT,
+}
+
+enum class BillField {
+    SUPPLIER_NAME,
+    SUPPLIER_VAT_NUMBER,
+    SUPPLIER_ADDRESS,
+    INVOICE_NUMBER,
+    ISSUE_DATE,
+    DUE_DATE,
+    AMOUNT,
+    VAT_AMOUNT,
+    VAT_RATE,
+    CURRENCY,
+    CATEGORY,
+    DESCRIPTION,
+    NOTES,
+    PAYMENT_TERMS,
+    BANK_ACCOUNT,
+}
+
+enum class ExpenseField {
+    MERCHANT,
+    MERCHANT_ADDRESS,
+    MERCHANT_VAT_NUMBER,
+    DATE,
+    AMOUNT,
+    VAT_AMOUNT,
+    VAT_RATE,
+    CURRENCY,
+    CATEGORY,
+    DESCRIPTION,
+    IS_DEDUCTIBLE,
+    DEDUCTIBLE_PERCENTAGE,
+    PAYMENT_METHOD,
+    NOTES,
+    RECEIPT_NUMBER,
+}

@@ -1,19 +1,5 @@
 package tech.dokus.backend.config
 
-import tech.dokus.foundation.ktor.config.AIConfig
-import ai.dokus.foundation.database.di.repositoryModules
-import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
-import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
-import ai.dokus.foundation.database.repository.auth.UserRepository
-import ai.dokus.foundation.database.schema.DokusSchema
-import tech.dokus.domain.repository.ChunkRepository
-import ai.dokus.peppol.config.PeppolModuleConfig
-import ai.dokus.peppol.mapper.PeppolMapper
-import ai.dokus.peppol.provider.PeppolProviderFactory
-import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
-import ai.dokus.peppol.service.PeppolConnectionService
-import ai.dokus.peppol.service.PeppolService
-import ai.dokus.peppol.validator.PeppolValidator
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -23,17 +9,11 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import org.slf4j.LoggerFactory
-import ai.dokus.ai.service.AIService
-import ai.dokus.ai.services.ChunkingService
-import ai.dokus.ai.services.EmbeddingService
-import tech.dokus.ocr.OcrEngine
-import tech.dokus.ocr.engine.TesseractOcrEngine
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.DisabledEmailService
 import tech.dokus.backend.services.auth.EmailConfig
@@ -51,28 +31,48 @@ import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
-import tech.dokus.foundation.ktor.cache.RedisClient
-import tech.dokus.foundation.ktor.cache.RedisNamespace
-import tech.dokus.foundation.ktor.cache.redis
-import tech.dokus.foundation.ktor.config.AppBaseConfig
-import tech.dokus.foundation.ktor.config.MinioConfig
-import tech.dokus.foundation.ktor.crypto.AesGcmCredentialCryptoService
-import tech.dokus.foundation.ktor.crypto.CredentialCryptoService
-import tech.dokus.foundation.ktor.crypto.PasswordCryptoService
-import tech.dokus.foundation.ktor.crypto.PasswordCryptoService4j
-import tech.dokus.foundation.ktor.database.DatabaseFactory
-import tech.dokus.foundation.ktor.lookup.CbeApiClient
-import tech.dokus.foundation.ktor.security.JwtGenerator
-import tech.dokus.foundation.ktor.security.JwtValidator
-import tech.dokus.foundation.ktor.security.RedisTokenBlacklistService
-import tech.dokus.foundation.ktor.security.TokenBlacklistService
-import tech.dokus.foundation.ktor.storage.AvatarStorageService
-import tech.dokus.foundation.ktor.storage.DocumentStorageService
-import tech.dokus.foundation.ktor.storage.DocumentUploadValidator
-import tech.dokus.foundation.ktor.storage.MinioStorage
-import tech.dokus.foundation.ktor.storage.ObjectStorage
+import tech.dokus.database.DokusSchema
+import tech.dokus.database.di.repositoryModules
+import tech.dokus.database.repository.auth.PasswordResetTokenRepository
+import tech.dokus.database.repository.auth.RefreshTokenRepository
+import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.utils.json
+import tech.dokus.features.ai.service.AIService
+import tech.dokus.features.ai.services.ChunkingService
+import tech.dokus.features.ai.services.DocumentImageService
+import tech.dokus.features.ai.services.EmbeddingService
+import tech.dokus.foundation.backend.cache.RedisClient
+import tech.dokus.foundation.backend.cache.RedisNamespace
+import tech.dokus.foundation.backend.cache.redis
+import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.MinioConfig
+import tech.dokus.foundation.backend.crypto.AesGcmCredentialCryptoService
+import tech.dokus.foundation.backend.crypto.CredentialCryptoService
+import tech.dokus.foundation.backend.crypto.PasswordCryptoService
+import tech.dokus.foundation.backend.crypto.PasswordCryptoService4j
+import tech.dokus.foundation.backend.database.DatabaseFactory
+import tech.dokus.foundation.backend.lookup.CbeApiClient
+import tech.dokus.foundation.backend.security.JwtGenerator
+import tech.dokus.foundation.backend.security.JwtValidator
+import tech.dokus.foundation.backend.security.RedisTokenBlacklistService
+import tech.dokus.foundation.backend.security.TokenBlacklistService
+import tech.dokus.foundation.backend.storage.AvatarStorageService
+import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.foundation.backend.storage.DocumentUploadValidator
+import tech.dokus.foundation.backend.storage.MinioStorage
+import tech.dokus.foundation.backend.storage.ObjectStorage
+import tech.dokus.peppol.config.PeppolModuleConfig
+import tech.dokus.peppol.mapper.PeppolMapper
+import tech.dokus.peppol.provider.PeppolProviderFactory
+import tech.dokus.peppol.provider.client.RecommandCompaniesClient
+import tech.dokus.peppol.service.PeppolConnectionService
+import tech.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.validator.PeppolValidator
 
 /**
  * Koin setup for the modular monolith server.
@@ -122,11 +122,7 @@ private val httpClientModule = module {
     single {
         HttpClient(CIO) {
             install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    isLenient = true
-                    encodeDefaults = true
-                })
+                json(json)
             }
             install(Logging) {
                 level = LogLevel.INFO
@@ -235,6 +231,9 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { BillService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
 
+    // PDF Preview
+    single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
+
     // Peppol
     single { PeppolModuleConfig.fromConfig(appConfig.config) }
     single { PeppolProviderFactory(get(), get()) }
@@ -255,11 +254,11 @@ private val contactsModule = module {
 }
 
 private fun processorModule(appConfig: AppBaseConfig) = module {
-    // AI Service (uses Koog agents for extraction)
+    // AI Service (uses Koog agents for vision-based extraction)
     single { AIService(appConfig.ai) }
 
-    // OCR Engine (Tesseract-based)
-    single<OcrEngine> { TesseractOcrEngine() }
+    // Document Image Service (converts PDFs/images to PNG for vision processing)
+    single { DocumentImageService() }
 
     // Optional RAG services - can be enabled when embeddings are needed
     // single { ChunkingService() }
@@ -270,7 +269,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             ingestionRepository = get(),
             documentStorage = get<DocumentStorageService>(),
             aiService = get(),
-            ocrEngine = get(),
+            documentImageService = get(),
             config = appConfig.processor,
             // RAG chunking/embedding - use repositories from foundation:database
             chunkingService = getOrNull<ChunkingService>(),

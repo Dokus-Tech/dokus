@@ -1,5 +1,15 @@
 package tech.dokus.domain.model
 
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.Email
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.Money
+import tech.dokus.domain.Name
+import tech.dokus.domain.Percentage
+import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.BankAccountType
 import tech.dokus.domain.enums.BankProvider
 import tech.dokus.domain.enums.BillStatus
@@ -33,16 +43,6 @@ import tech.dokus.domain.ids.TransactionId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.common.Thumbnail
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.Serializable
-import tech.dokus.domain.DisplayName
-import tech.dokus.domain.Email
-import tech.dokus.domain.LegalName
-import tech.dokus.domain.Money
-import tech.dokus.domain.Name
-import tech.dokus.domain.Percentage
-import tech.dokus.domain.VatRate
 
 @Serializable
 data class Tenant(
@@ -308,7 +308,8 @@ data class CreateInvoiceRequest(
     val items: List<InvoiceItemDto>,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
-    val notes: String? = null
+    val notes: String? = null,
+    val documentId: DocumentId? = null
 )
 
 @Serializable

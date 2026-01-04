@@ -74,6 +74,9 @@ fun Application.configureCashflowRoutes() {
         // Document record routes (new canonical document API)
         documentRecordRoutes()
 
+        // Document page preview routes (PDF to PNG)
+        documentPageRoutes()
+
         // Peppol e-invoicing routes
         peppolRoutes()
 

@@ -1,5 +1,9 @@
 package tech.dokus.app.viewmodel
 
+import androidx.compose.runtime.Immutable
+import pro.respawn.flowmvi.api.MVIAction
+import pro.respawn.flowmvi.api.MVIIntent
+import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
@@ -7,10 +11,6 @@ import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
-import androidx.compose.runtime.Immutable
-import pro.respawn.flowmvi.api.MVIAction
-import pro.respawn.flowmvi.api.MVIIntent
-import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -71,8 +71,8 @@ sealed interface TeamSettingsState : MVIState, DokusState<Nothing> {
             data object Idle : ActionState
             data object Processing : ActionState
             data object Inviting : ActionState
-            data class Success(val message: String) : ActionState
-            data class Error(val message: String) : ActionState
+            data class Success(val success: TeamSettingsSuccess) : ActionState
+            data class Error(val error: DokusException) : ActionState
         }
     }
 
@@ -137,11 +137,19 @@ sealed interface TeamSettingsIntent : MVIIntent {
 sealed interface TeamSettingsAction : MVIAction {
 
     /** Show a success message */
-    data class ShowSuccess(val message: String) : TeamSettingsAction
+    data class ShowSuccess(val success: TeamSettingsSuccess) : TeamSettingsAction
 
     /** Show an error message */
-    data class ShowError(val message: String) : TeamSettingsAction
+    data class ShowError(val error: DokusException) : TeamSettingsAction
 
     /** Dismiss the invite dialog */
     data object DismissInviteDialog : TeamSettingsAction
+}
+
+enum class TeamSettingsSuccess {
+    InviteSent,
+    InviteCancelled,
+    RoleUpdated,
+    MemberRemoved,
+    OwnershipTransferred,
 }

@@ -1,17 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.database.repository.auth.AddressRepository
-import ai.dokus.foundation.database.repository.auth.TenantRepository
-import ai.dokus.foundation.database.repository.contacts.ContactRepository
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.model.PeppolConnectRequest
-import tech.dokus.domain.model.SavePeppolSettingsRequest
-import tech.dokus.domain.routes.Peppol
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import ai.dokus.peppol.service.PeppolConnectionService
-import ai.dokus.peppol.service.PeppolService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -24,6 +12,18 @@ import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.cashflow.BillService
 import tech.dokus.backend.services.cashflow.InvoiceService
+import tech.dokus.database.repository.auth.AddressRepository
+import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.model.PeppolConnectRequest
+import tech.dokus.domain.model.SavePeppolSettingsRequest
+import tech.dokus.domain.routes.Peppol
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.peppol.service.PeppolConnectionService
+import tech.dokus.peppol.service.PeppolService
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -197,7 +197,7 @@ internal fun Route.peppolRoutes() {
             if (!contact.peppolEnabled || contact.peppolId.isNullOrBlank()) {
                 throw DokusException.BadRequest(
                     "Contact '${contact.name.value}' is not configured for Peppol. " +
-                    "Please enable Peppol and set a valid Peppol ID for this contact."
+                        "Please enable Peppol and set a valid Peppol ID for this contact."
                 )
             }
 
@@ -205,13 +205,16 @@ internal fun Route.peppolRoutes() {
             val result = peppolService.sendInvoice(invoice, contact, tenant, companyAddress, tenantSettings, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to send invoice via Peppol: ${it.message}") }
 
-            call.respond(HttpStatusCode.OK, SendInvoiceResponse(
-                success = true,
-                transmissionId = result.transmissionId.toString(),
-                status = result.status.name,
-                externalDocumentId = result.externalDocumentId,
-                errorMessage = result.errorMessage
-            ))
+            call.respond(
+                HttpStatusCode.OK,
+                SendInvoiceResponse(
+                    success = true,
+                    transmissionId = result.transmissionId.toString(),
+                    status = result.status.name,
+                    externalDocumentId = result.externalDocumentId,
+                    errorMessage = result.errorMessage
+                )
+            )
         }
 
         /**
@@ -246,7 +249,7 @@ internal fun Route.peppolRoutes() {
             // Validate invoice for Peppol
             val validationResult =
                 peppolService.validateInvoice(invoice, contact, tenant, companyAddress, tenantSettings, tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to validate invoice: ${it.message}") }
+                    .getOrElse { throw DokusException.InternalError("Failed to validate invoice: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, validationResult)
         }

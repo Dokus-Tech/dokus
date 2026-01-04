@@ -1,0 +1,131 @@
+<resources>
+    <!-- Common Actions -->
+    <string name="action_back">Retour</string>
+    <string name="action_save">Enregistrer</string>
+    <string name="action_save_changes">Enregistrer les modifications</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="action_delete">Supprimer</string>
+    <string name="action_confirm">Confirmer</string>
+    <string name="action_continue">Continuer</string>
+    <string name="action_approve">Approuver</string>
+    <string name="action_reject">Rejeter</string>
+    <string name="action_search">Rechercher</string>
+    <string name="action_or">ou</string>
+    <string name="action_next">Suivant</string>
+    <string name="action_change">Modifier</string>
+    <string name="action_close">Fermer</string>
+    <string name="action_upload">Téléverser</string>
+    <string name="action_remove">Supprimer</string>
+    <string name="action_view">Voir</string>
+    <string name="action_done">Terminé</string>
+    <string name="action_connect">Connecter</string>
+    <string name="action_clear">Effacer</string>
+    <string name="action_clear_field">Effacer %1$s</string>
+    <string name="action_expand_options">Développer les options</string>
+    <string name="action_expand">Développer</string>
+    <string name="action_collapse">Réduire</string>
+    <string name="action_select">Sélectionner</string>
+    <string name="action_select_date">Sélectionner une date</string>
+    <string name="action_discard">Ignorer</string>
+    <string name="action_fit">Ajuster</string>
+    <string name="action_zoom_in">Zoomer</string>
+    <string name="action_zoom_out">Dézoomer</string>
+
+    <!-- Common States -->
+    <string name="state_loading">Chargement...</string>
+    <string name="state_error">Une erreur s\'est produite</string>
+    <string name="state_empty">Aucune donnée disponible</string>
+    <string name="state_retry">Réessayer</string>
+    <string name="state_connecting">Connexion...</string>
+    <string name="state_saving">Enregistrement...</string>
+    <string name="state_confirming">Confirmation...</string>
+    <string name="state_unsaved_changes">Vous avez des modifications non enregistrées</string>
+    <string name="state_offline">Hors ligne</string>
+    <string name="state_creating">Création...</string>
+    <string name="state_uploading">Téléversement...</string>
+    <string name="state_sending">Envoi...</string>
+    <string name="state_removing">Suppression...</string>
+
+    <!-- Common Values -->
+    <string name="common_unknown">Inconnu</string>
+    <string name="common_empty_value">-</string>
+    <string name="common_label_value">%1$s : %2$s</string>
+    <string name="common_numbered_step">%1$d. %2$s</string>
+    <string name="common_currency">Devise</string>
+    <string name="common_bank_account">Compte bancaire</string>
+    <string name="common_notes">Notes</string>
+    <string name="common_date">Date</string>
+    <string name="common_vat_value">TVA : %1$s</string>
+    <string name="common_percent_value">%1$s %%</string>
+    <string name="common_file_size_bytes">%1$d o</string>
+    <string name="common_file_size_kb">%1$.1f Ko</string>
+    <string name="common_file_size_mb">%1$.1f Mo</string>
+    <string name="common_country_value">Pays : %1$s</string>
+    <string name="common_action_irreversible">Cette action est irréversible</string>
+    <string name="search_placeholder">Rechercher...</string>
+    <string name="field_required">%1$s *</string>
+    <string name="field_optional">%1$s (optionnel)</string>
+
+    <!-- Connection -->
+    <string name="connection_server_unreachable">Serveur inaccessible</string>
+    <string name="connection_connected">Connecté</string>
+
+    <!-- Dates -->
+    <string name="date_format_long">%2$d %1$s %3$d</string>
+    <string name="date_format_short">%2$d %1$s %3$d</string>
+    <string name="date_month_long_january">janvier</string>
+    <string name="date_month_long_february">février</string>
+    <string name="date_month_long_march">mars</string>
+    <string name="date_month_long_april">avril</string>
+    <string name="date_month_long_may">mai</string>
+    <string name="date_month_long_june">juin</string>
+    <string name="date_month_long_july">juillet</string>
+    <string name="date_month_long_august">août</string>
+    <string name="date_month_long_september">septembre</string>
+    <string name="date_month_long_october">octobre</string>
+    <string name="date_month_long_november">novembre</string>
+    <string name="date_month_long_december">décembre</string>
+    <string name="date_month_short_jan">janv.</string>
+    <string name="date_month_short_feb">févr.</string>
+    <string name="date_month_short_mar">mars</string>
+    <string name="date_month_short_apr">avr.</string>
+    <string name="date_month_short_may">mai</string>
+    <string name="date_month_short_jun">juin</string>
+    <string name="date_month_short_jul">juil.</string>
+    <string name="date_month_short_aug">août</string>
+    <string name="date_month_short_sep">sept.</string>
+    <string name="date_month_short_oct">oct.</string>
+    <string name="date_month_short_nov">nov.</string>
+    <string name="date_month_short_dec">déc.</string>
+
+    <!-- Countries -->
+    <string name="country_belgium">Belgique</string>
+    <string name="country_france">France</string>
+    <string name="country_netherlands">Pays-Bas</string>
+
+    <!-- Under Development -->
+    <string name="under_development_title">Construction de quelque chose de fiable</string>
+    <string name="under_development_subtitle">Cette fonctionnalité est en cours de développement.\nConçu pour répondre à vos besoins.</string>
+
+    <!-- Registration Success -->
+    <string name="registration_success_message">Vous vous êtes inscrit avec succès et vous pouvez maintenant continuer à explorer toutes les fonctionnalités passionnantes que nous avons à offrir.</string>
+
+    <!-- Server Connection -->
+    <string name="connect_to_server">Se connecter au serveur</string>
+    <!-- Legacy aliases for backward compatibility -->
+    <string name="back">Retour</string>
+    <string name="approve">Approuver</string>
+    <string name="reject">Rejeter</string>
+    <string name="save_changes">Enregistrer les modifications</string>
+    <string name="cancel">Annuler</string>
+    <string name="delete">Supprimer</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Recadrer l\'image</string>
+    <string name="image_cropper_apply">Appliquer</string>
+    <string name="image_cropper_hint">Pincez pour zoomer, faites glisser pour déplacer</string>
+    <string name="image_cropper_content_description">Image à recadrer</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Avatar de l\'entreprise</string>
+</resources>

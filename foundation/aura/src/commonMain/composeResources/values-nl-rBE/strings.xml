@@ -1,0 +1,89 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">D[#]kus</string>
+    <string name="app_slogan">Waar soevereiniteit intelligentie ontmoet.</string>
+    <string name="brand_motto">Intelligentie. Autonomie. Stilte.</string>
+    <string name="copyright">©2025 Dokus</string>
+
+    <!-- Core - Splash -->
+    <string name="bootstrap_state_initializing">Applicatie initialiseren...</string>
+    <string name="bootstrap_state_authenticating">Authenticatie verifiëren...</string>
+    <string name="bootstrap_state_app_version_check">Applicatieversie verifiëren...</string>
+    <string name="bootstrap_state_checking_account_status">Accountstatus verifiëren...</string>
+
+    <!-- Home -->
+    <string name="home_dashboard">Dashboard</string>
+    <string name="media_title">Media</string>
+    <string name="home_settings">Instellingen</string>
+
+    <!-- Device Types -->
+    <string name="device_type_ios">iOS</string>
+    <string name="device_type_android">Android</string>
+    <string name="device_type_web">Web</string>
+    <string name="device_type_desktop">Computer</string>
+    <string name="device_type_tablet">Tablet</string>
+
+    <!-- Dashboard - Feature -->
+    <string name="feature_auth">Authenticatie</string>
+
+    <!-- Slogan Screen -->
+    <string name="slogan_line_2">Gemaakt voor wie morgen bouwt.</string>
+    <string name="slogan_line_3">Vertrouwd door wie vandaag bezit.</string>
+
+    <!-- Keyboard Modifiers -->
+    <string name="key_cmd">CMD</string>
+    <string name="key_ctrl">CTRL</string>
+
+    <!-- Navigation -->
+    <string name="nav_simulations">Simulaties</string>
+    <string name="nav_items">Items</string>
+    <string name="nav_banking">Bankieren</string>
+    <string name="nav_profile">Profiel</string>
+
+    <!-- Chat -->
+    <string name="chat_title">AI-chat</string>
+    <string name="chat_document_title_fallback">Documentchat</string>
+    <string name="chat_title_all_documents">Chat met documenten</string>
+    <string name="chat_scope_single_document">Eén document</string>
+    <string name="chat_scope_all_documents">Alle documenten</string>
+    <string name="chat_new_conversation">Nieuw gesprek</string>
+    <string name="chat_history_action">Chatgeschiedenis</string>
+    <string name="chat_more_options">Meer opties</string>
+    <string name="chat_switch_to_all_documents">Overschakelen naar alle documenten</string>
+    <string name="chat_expand_all_citations">Alle citaten uitklappen</string>
+    <string name="chat_collapse_all_citations">Alle citaten inklappen</string>
+    <string name="chat_loading">Chat laden...</string>
+    <string name="chat_thinking">Bezig met denken...</string>
+    <string name="chat_prompt_single_document">Stel een vraag over %1$s</string>
+    <string name="chat_this_document">dit document</string>
+    <string name="chat_prompt_all_documents">Stel een vraag over je documenten</string>
+    <string name="chat_empty_description_single">Ik kan informatie vinden, inhoud samenvatten of specifieke vragen over het document beantwoorden.</string>
+    <string name="chat_empty_description_all">Ik kan in al je bevestigde documenten zoeken om relevante informatie te vinden en je vragen te beantwoorden.</string>
+    <string name="chat_try_asking">Probeer te vragen:</string>
+    <string name="chat_example_total_amount">Wat is het totaalbedrag?</string>
+    <string name="chat_example_spend_last_month">Wat heb ik vorige maand uitgegeven?</string>
+    <string name="chat_example_due_date">Wat is de vervaldatum?</string>
+    <string name="chat_example_invoices_company">Toon facturen van bedrijf X</string>
+    <string name="chat_example_format">"%1$s"</string>
+    <string name="chat_message_too_long">Bericht te lang (max. %1$d tekens)</string>
+    <string name="chat_input_placeholder">Stel een vraag...</string>
+    <string name="chat_history_title">Chatgeschiedenis</string>
+    <string name="chat_history_empty">Geen eerdere gesprekken</string>
+    <string name="chat_new_chat">Nieuwe chat</string>
+    <string name="chat_general_chat">Algemene chat</string>
+    <string name="chat_message_count_single">%1$d bericht</string>
+    <string name="chat_message_count_plural">%1$d berichten</string>
+    <string name="chat_error_load_conversation">Gesprek laden mislukt: %1$s</string>
+    <string name="chat_error_no_document_selected">Geen document geselecteerd</string>
+    <string name="chat_error_send_message">Bericht verzenden mislukt: %1$s</string>
+    <string name="chat_error_invalid_document_reference">Ongeldige documentverwijzing</string>
+    <string name="chat_send_message">Bericht verzenden</string>
+    <string name="chat_document_fallback">Document</string>
+    <string name="chat_page_number">Pagina %1$d</string>
+    <string name="chat_expand_citation">Citaat uitklappen</string>
+    <string name="chat_collapse_citation">Citaat inklappen</string>
+    <string name="chat_view_source_document">Brondocument bekijken</string>
+    <string name="chat_sources_count">Bronnen (%1$d)</string>
+    <string name="chat_expand_sources">Bronnen uitklappen</string>
+    <string name="chat_collapse_sources">Bronnen inklappen</string>
+</resources>
