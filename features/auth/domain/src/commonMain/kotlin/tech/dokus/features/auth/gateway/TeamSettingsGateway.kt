@@ -1,4 +1,4 @@
-package tech.dokus.features.auth.usecases
+package tech.dokus.features.auth.gateway
 
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.InvitationId
@@ -8,9 +8,9 @@ import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 
 /**
- * Use case for managing team members and invitations.
+ * Gateway for team member and invitation management.
  */
-interface TeamSettingsUseCase {
+interface TeamSettingsGateway {
     suspend fun listTeamMembers(): Result<List<TeamMember>>
 
     suspend fun createInvitation(request: CreateInvitationRequest): Result<TenantInvitation>

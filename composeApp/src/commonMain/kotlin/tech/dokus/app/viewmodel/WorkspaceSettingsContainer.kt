@@ -13,8 +13,12 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
-import tech.dokus.features.auth.usecases.WorkspaceSettingsUseCase
+import tech.dokus.features.auth.usecases.DeleteWorkspaceAvatarUseCase
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
+import tech.dokus.features.auth.usecases.GetTenantAddressUseCase
+import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
+import tech.dokus.features.auth.usecases.UpdateTenantSettingsUseCase
+import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias WorkspaceSettingsCtx =
@@ -34,7 +38,11 @@ private const val MAX_INVOICE_PADDING = 8
  */
 internal class WorkspaceSettingsContainer(
     private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
-    private val workspaceSettingsUseCase: WorkspaceSettingsUseCase,
+    private val getTenantSettings: GetTenantSettingsUseCase,
+    private val getTenantAddress: GetTenantAddressUseCase,
+    private val updateTenantSettings: UpdateTenantSettingsUseCase,
+    private val uploadWorkspaceAvatar: UploadWorkspaceAvatarUseCase,
+    private val deleteWorkspaceAvatar: DeleteWorkspaceAvatarUseCase,
 ) : Container<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
 
     private val logger = Logger.forClass<WorkspaceSettingsContainer>()
@@ -73,8 +81,8 @@ internal class WorkspaceSettingsContainer(
         updateState { WorkspaceSettingsState.Loading }
 
         val tenantResult = getCurrentTenantUseCase()
-        val settingsResult = workspaceSettingsUseCase.getTenantSettings()
-        val addressResult = workspaceSettingsUseCase.getTenantAddress()
+        val settingsResult = getTenantSettings()
+        val addressResult = getTenantAddress()
 
         val tenant = tenantResult.getOrNull()
         val settings = settingsResult.getOrNull()
@@ -225,7 +233,7 @@ internal class WorkspaceSettingsContainer(
                 paymentTermsText = form.paymentTermsText.ifBlank { null }
             )
 
-            workspaceSettingsUseCase.updateTenantSettings(updatedSettings).fold(
+            updateTenantSettings(updatedSettings).fold(
                 onSuccess = {
                     logger.i { "Workspace settings saved" }
                     updateState {
@@ -274,7 +282,7 @@ internal class WorkspaceSettingsContainer(
                 else -> "image/jpeg"
             }
 
-            workspaceSettingsUseCase.uploadAvatar(
+            uploadWorkspaceAvatar(
                 imageBytes = imageBytes,
                 filename = filename,
                 contentType = contentType,
@@ -316,7 +324,7 @@ internal class WorkspaceSettingsContainer(
                 copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Deleting)
             }
 
-            workspaceSettingsUseCase.deleteAvatar().fold(
+            deleteWorkspaceAvatar().fold(
                 onSuccess = {
                     logger.i { "Avatar deleted" }
                     updateState {

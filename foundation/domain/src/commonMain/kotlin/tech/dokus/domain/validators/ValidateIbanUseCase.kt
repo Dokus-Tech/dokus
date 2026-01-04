@@ -14,7 +14,7 @@ private const val BelgianIbanLength = 16
 
 // IBAN validation constants
 private const val IbanCountryCodeLength = 4
-private const val LetterToNumberOffset = 10  // A=10, B=11, etc.
+private const val LetterToNumberOffset = 10 // A=10, B=11, etc.
 private const val IbanModDivisor = 97
 private const val IbanValidRemainder = 1L
 private const val DigitBase = 10

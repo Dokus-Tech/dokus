@@ -10,6 +10,11 @@ import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+private const val VAT_COUNTRY_CODE_LENGTH = 2
+private const val BELGIAN_COMPANY_NUMBER_LENGTH = 10
+private const val BELGIAN_COMPANY_FIRST_GROUP_END = 4
+private const val BELGIAN_COMPANY_SECOND_GROUP_END = 7
+
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
@@ -43,13 +48,19 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
         get() = normalize(value)
 
     val countryCode: String?
-        get() = normalized.takeIf { it.length >= 2 && it.substring(0, 2).all { ch -> ch.isLetter() } }
-            ?.substring(0, 2)
+        get() = normalized.takeIf {
+            it.length >= VAT_COUNTRY_CODE_LENGTH &&
+                it.substring(0, VAT_COUNTRY_CODE_LENGTH).all { ch -> ch.isLetter() }
+        }?.substring(0, VAT_COUNTRY_CODE_LENGTH)
 
     val companyNumber: String
         get() = normalized.let { normalizedValue ->
             val code = countryCode
-            if (code == null || normalizedValue.length <= 2) normalizedValue else normalizedValue.substring(2)
+            if (code == null || normalizedValue.length <= VAT_COUNTRY_CODE_LENGTH) {
+                normalizedValue
+            } else {
+                normalizedValue.substring(VAT_COUNTRY_CODE_LENGTH)
+            }
         }
 
     val formatted: String
@@ -97,8 +108,10 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
 
     private fun formatBelgianCompanyNumber(number: String): String {
         val digits = number.filter { it.isDigit() }
-        if (digits.length != 10) return number
-        return "${digits.substring(0, 4)}.${digits.substring(4, 7)}.${digits.substring(7, 10)}"
+        if (digits.length != BELGIAN_COMPANY_NUMBER_LENGTH) return number
+        return "${digits.substring(0, BELGIAN_COMPANY_FIRST_GROUP_END)}." +
+            "${digits.substring(BELGIAN_COMPANY_FIRST_GROUP_END, BELGIAN_COMPANY_SECOND_GROUP_END)}." +
+            digits.substring(BELGIAN_COMPANY_SECOND_GROUP_END, BELGIAN_COMPANY_NUMBER_LENGTH)
     }
 }
 

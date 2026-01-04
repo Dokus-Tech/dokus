@@ -6,12 +6,12 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
+import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewContactBinder(
-    private val documentReviewUseCase: DocumentReviewUseCase,
+    private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
@@ -35,7 +35,7 @@ internal class DocumentReviewContactBinder(
         }
 
         withState<DocumentReviewState.Content, _> {
-            documentReviewUseCase.updateDocumentDraftContact(documentId, null, CounterpartyIntent.None)
+            updateDocumentDraftContact(documentId, null, CounterpartyIntent.None)
                 .fold(
                     onSuccess = {
                         val newState = document.draft?.suggestedContactId?.let { suggestedId ->
@@ -92,15 +92,16 @@ internal class DocumentReviewContactBinder(
         }
 
         withState<DocumentReviewState.Content, _> {
-            documentReviewUseCase.updateDocumentDraftContact(documentId, null, intent)
+            updateDocumentDraftContact(documentId, null, intent)
                 .fold(
                     onSuccess = {
+                        val isPending = intent == CounterpartyIntent.Pending
                         updateState {
                             copy(
                                 counterpartyIntent = intent,
-                                selectedContactId = if (intent == CounterpartyIntent.Pending) null else selectedContactId,
-                                selectedContactSnapshot = if (intent == CounterpartyIntent.Pending) null else selectedContactSnapshot,
-                                contactSelectionState = if (intent == CounterpartyIntent.Pending) {
+                                selectedContactId = if (isPending) null else selectedContactId,
+                                selectedContactSnapshot = if (isPending) null else selectedContactSnapshot,
+                                contactSelectionState = if (isPending) {
                                     ContactSelectionState.NoContact
                                 } else {
                                     contactSelectionState
@@ -130,7 +131,7 @@ internal class DocumentReviewContactBinder(
             updateState { copy(isBindingContact = true, contactValidationError = null) }
         }
 
-        documentReviewUseCase.updateDocumentDraftContact(documentId, contactId, CounterpartyIntent.None)
+        updateDocumentDraftContact(documentId, contactId, CounterpartyIntent.None)
             .fold(
                 onSuccess = {
                     getContact(contactId).fold(

@@ -6,7 +6,12 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
+import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
+import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -30,14 +35,25 @@ internal typealias DocumentReviewCtx = PipelineContext<DocumentReviewState, Docu
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
+@Suppress("LongParameterList") // Explicit use case wiring keeps intent boundaries clear.
 internal class DocumentReviewContainer(
-    private val documentReviewUseCase: DocumentReviewUseCase,
+    private val getDocumentRecord: GetDocumentRecordUseCase,
+    private val updateDocumentDraft: UpdateDocumentDraftUseCase,
+    private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
+    private val confirmDocument: ConfirmDocumentUseCase,
+    private val rejectDocument: RejectDocumentUseCase,
+    private val getDocumentPages: GetDocumentPagesUseCase,
     private val getContact: GetContactUseCase,
 ) : Container<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
 
     private val logger = Logger.forClass<DocumentReviewContainer>()
     private val reducer = DocumentReviewReducer(
-        documentReviewUseCase = documentReviewUseCase,
+        getDocumentRecord = getDocumentRecord,
+        updateDocumentDraft = updateDocumentDraft,
+        updateDocumentDraftContact = updateDocumentDraftContact,
+        confirmDocument = confirmDocument,
+        rejectDocument = rejectDocument,
+        getDocumentPages = getDocumentPages,
         getContact = getContact,
         logger = logger,
     )

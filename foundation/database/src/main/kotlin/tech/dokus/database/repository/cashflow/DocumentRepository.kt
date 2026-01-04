@@ -39,6 +39,14 @@ data class DocumentWithDraftAndIngestion(
     val latestIngestion: IngestionRunSummary?
 )
 
+data class DocumentCreatePayload(
+    val filename: String,
+    val contentType: String,
+    val sizeBytes: Long,
+    val storageKey: String,
+    val contentHash: String?
+)
+
 /**
  * Repository for document CRUD operations.
  * Documents are pure file metadata. Entity linkage is handled by
@@ -54,21 +62,17 @@ class DocumentRepository {
      */
     suspend fun create(
         tenantId: TenantId,
-        filename: String,
-        contentType: String,
-        sizeBytes: Long,
-        storageKey: String,
-        contentHash: String?
+        payload: DocumentCreatePayload
     ): DocumentId = newSuspendedTransaction {
         val id = DocumentId.generate()
         DocumentsTable.insert {
             it[DocumentsTable.id] = UUID.fromString(id.toString())
             it[DocumentsTable.tenantId] = UUID.fromString(tenantId.toString())
-            it[DocumentsTable.filename] = filename
-            it[DocumentsTable.contentType] = contentType
-            it[DocumentsTable.sizeBytes] = sizeBytes
-            it[DocumentsTable.storageKey] = storageKey
-            it[DocumentsTable.contentHash] = contentHash
+            it[DocumentsTable.filename] = payload.filename
+            it[DocumentsTable.contentType] = payload.contentType
+            it[DocumentsTable.sizeBytes] = payload.sizeBytes
+            it[DocumentsTable.storageKey] = payload.storageKey
+            it[DocumentsTable.contentHash] = payload.contentHash
         }
         id
     }

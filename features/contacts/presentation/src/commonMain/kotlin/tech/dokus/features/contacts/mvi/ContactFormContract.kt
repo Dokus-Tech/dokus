@@ -16,8 +16,8 @@ import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 

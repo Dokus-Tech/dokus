@@ -79,9 +79,7 @@ data class ManualContactFormData(
         get() = companyName.isValid && errors.isEmpty()
 
     val isIndividualValid: Boolean
-        get() = fullName.isValid &&
-                (personEmail.isValid || personPhone.isValid) &&
-                errors.isEmpty()
+        get() = fullName.isValid && (personEmail.isValid || personPhone.isValid) && errors.isEmpty()
 }
 
 /**

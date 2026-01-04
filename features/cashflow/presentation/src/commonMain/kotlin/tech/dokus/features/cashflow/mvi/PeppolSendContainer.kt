@@ -14,7 +14,12 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.features.cashflow.usecases.PeppolUseCase
+import tech.dokus.features.cashflow.usecases.GetPeppolTransmissionForInvoiceUseCase
+import tech.dokus.features.cashflow.usecases.ListPeppolTransmissionsUseCase
+import tech.dokus.features.cashflow.usecases.PollPeppolInboxUseCase
+import tech.dokus.features.cashflow.usecases.SendInvoiceViaPeppolUseCase
+import tech.dokus.features.cashflow.usecases.ValidateInvoiceForPeppolUseCase
+import tech.dokus.features.cashflow.usecases.VerifyPeppolRecipientUseCase
 import tech.dokus.foundation.platform.Logger
 
 private typealias SendCtx = PipelineContext<PeppolSendState, PeppolSendIntent, PeppolSendAction>
@@ -28,7 +33,12 @@ private const val PAGE_SIZE = 50
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class PeppolSendContainer(
-    private val peppolUseCase: PeppolUseCase,
+    private val listPeppolTransmissions: ListPeppolTransmissionsUseCase,
+    private val verifyPeppolRecipient: VerifyPeppolRecipientUseCase,
+    private val validateInvoiceForPeppol: ValidateInvoiceForPeppolUseCase,
+    private val sendInvoiceViaPeppol: SendInvoiceViaPeppolUseCase,
+    private val pollPeppolInbox: PollPeppolInboxUseCase,
+    private val getPeppolTransmissionForInvoice: GetPeppolTransmissionForInvoiceUseCase,
 ) : Container<PeppolSendState, PeppolSendIntent, PeppolSendAction> {
 
     private val logger = Logger.forClass<PeppolSendContainer>()
@@ -128,7 +138,7 @@ internal class PeppolSendContainer(
         existingPagination: PaginationState<PeppolTransmissionDto>? = null
     ) {
         val offset = page * PAGE_SIZE
-        val result = peppolUseCase.listPeppolTransmissions(
+        val result = listPeppolTransmissions(
             direction = directionFilter,
             status = statusFilter,
             limit = PAGE_SIZE,
@@ -237,8 +247,7 @@ internal class PeppolSendContainer(
             updateState {
                 copy(verificationState = OperationState.Loading)
             }
-
-            peppolUseCase.verifyPeppolRecipient(peppolId).fold(
+            verifyPeppolRecipient(peppolId).fold(
                 onSuccess = { response ->
                     logger.i { "Recipient verified: registered=${response.registered}" }
                     updateState {
@@ -287,8 +296,7 @@ internal class PeppolSendContainer(
             updateState {
                 copy(validationState = OperationState.Loading)
             }
-
-            peppolUseCase.validateInvoiceForPeppol(invoiceId).fold(
+            validateInvoiceForPeppol(invoiceId).fold(
                 onSuccess = { result ->
                     logger.i { "Invoice validation: valid=${result.isValid}, errors=${result.errors.size}" }
                     updateState {
@@ -337,8 +345,7 @@ internal class PeppolSendContainer(
             updateState {
                 copy(sendState = OperationState.Loading)
             }
-
-            peppolUseCase.sendInvoiceViaPeppol(invoiceId).fold(
+            sendInvoiceViaPeppol(invoiceId).fold(
                 onSuccess = { response ->
                     logger.i { "Invoice sent: transmissionId=${response.transmissionId}, status=${response.status}" }
                     updateState {
@@ -391,8 +398,7 @@ internal class PeppolSendContainer(
             updateState {
                 copy(pollState = OperationState.Loading)
             }
-
-            peppolUseCase.pollPeppolInbox().fold(
+            pollPeppolInbox().fold(
                 onSuccess = { response ->
                     logger.i { "Inbox polled: ${response.newDocuments} new documents" }
                     updateState {
@@ -447,8 +453,7 @@ internal class PeppolSendContainer(
             updateState {
                 copy(transmissionLookup = OperationState.Loading)
             }
-
-            peppolUseCase.getPeppolTransmissionForInvoice(invoiceId).fold(
+            getPeppolTransmissionForInvoice(invoiceId).fold(
                 onSuccess = { transmission ->
                     logger.d { "Transmission found: ${transmission != null}" }
                     updateState {

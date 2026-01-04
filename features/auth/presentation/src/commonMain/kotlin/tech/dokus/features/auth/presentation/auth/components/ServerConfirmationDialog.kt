@@ -16,8 +16,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -56,7 +54,7 @@ import tech.dokus.foundation.aura.constrains.Constrains
  * @param onConfirm Called when user confirms connection
  * @param onDismiss Called when dialog is dismissed
  */
-@Composable
+@androidx.compose.runtime.Composable
 fun ServerConfirmationDialog(
     config: ServerConfig,
     serverInfo: ServerInfo,
@@ -150,7 +148,7 @@ fun ServerConfirmationDialog(
     )
 }
 
-@Composable
+@androidx.compose.runtime.Composable
 private fun ServerInfoRow(
     label: String,
     value: String

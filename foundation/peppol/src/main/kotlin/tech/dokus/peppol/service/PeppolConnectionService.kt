@@ -128,14 +128,11 @@ class PeppolConnectionService(
             testMode = request.testMode
         ).getOrThrow()
     }
-
     private fun RecommandCompany.toSummary(): RecommandCompanySummary = RecommandCompanySummary(
         id = id,
         name = name,
         vatNumber = vatNumber,
         enterpriseNumber = enterpriseNumber
     )
-
 }
-
 private class MissingCompanyAddressException : RuntimeException()

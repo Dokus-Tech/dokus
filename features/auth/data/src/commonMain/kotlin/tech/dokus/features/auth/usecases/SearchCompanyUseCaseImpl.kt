@@ -29,14 +29,16 @@ class SearchCompanyUseCaseImpl(
         name: LegalName?,
         number: VatNumber?
     ): Result<EntityLookupResponse> {
-        logger.d { "Searching for company: $name, $number" }
+        val searchHint = "$name, $number"
+        logger.d { "Searching for company: $searchHint" }
 
         return lookupDataSource.searchCompany(name, number)
             .onSuccess { response ->
-                logger.d { "Found ${response.totalCount} companies for '${name}, ${number}'" }
+                val totalCount = response.totalCount
+                logger.d { "Found $totalCount companies for '$searchHint'" }
             }
             .onFailure { error ->
-                logger.e(error) { "Company search failed for '${name}, ${number}'" }
+                logger.e(error) { "Company search failed for '$searchHint'" }
             }
     }
 }

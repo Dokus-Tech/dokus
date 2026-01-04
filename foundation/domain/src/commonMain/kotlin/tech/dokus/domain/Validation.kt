@@ -85,7 +85,6 @@ value class LegalName(override val value: String) : ValueClass<String>, Validata
 
     companion object {
         val Empty = LegalName("")
-
     }
 }
 

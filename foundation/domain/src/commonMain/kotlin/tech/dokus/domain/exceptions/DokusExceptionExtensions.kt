@@ -19,7 +19,8 @@ val Throwable.asDokusException: DokusException
                 message.contains("could not connect to the server") -> DokusException.ConnectionError(message)
                 message.contains("websocket connection") -> DokusException.ConnectionError(message)
                 message.contains("network is unreachable") -> DokusException.ConnectionError(message)
-                message.contains("io.ktor.serialization.jsonconvertexception") -> DokusException.InternalError("Serialization error")
+                message.contains("io.ktor.serialization.jsonconvertexception") ->
+                    DokusException.InternalError("Serialization error")
                 else -> DokusException.Unknown(this)
             }
         }

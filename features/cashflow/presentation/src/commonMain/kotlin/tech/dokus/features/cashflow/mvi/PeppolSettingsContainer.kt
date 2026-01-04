@@ -8,7 +8,8 @@ import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.PeppolProvider
-import tech.dokus.features.cashflow.usecases.PeppolUseCase
+import tech.dokus.features.cashflow.usecases.DeletePeppolSettingsUseCase
+import tech.dokus.features.cashflow.usecases.GetPeppolSettingsUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias PeppolSettingsCtx = PipelineContext<PeppolSettingsState, PeppolSettingsIntent, PeppolSettingsAction>
@@ -20,7 +21,8 @@ internal typealias PeppolSettingsCtx = PipelineContext<PeppolSettingsState, Pepp
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 class PeppolSettingsContainer(
-    private val peppolUseCase: PeppolUseCase,
+    private val getPeppolSettings: GetPeppolSettingsUseCase,
+    private val deletePeppolSettings: DeletePeppolSettingsUseCase,
 ) : Container<PeppolSettingsState, PeppolSettingsIntent, PeppolSettingsAction> {
 
     private val logger = Logger.forClass<PeppolSettingsContainer>()
@@ -42,7 +44,7 @@ class PeppolSettingsContainer(
         updateState { PeppolSettingsState.Loading }
 
         logger.d { "Loading Peppol settings" }
-        peppolUseCase.getPeppolSettings().fold(
+        getPeppolSettings().fold(
             onSuccess = { settings ->
                 logger.i { "Peppol settings loaded: ${if (settings != null) "configured" else "not configured"}" }
                 updateState {
@@ -86,7 +88,7 @@ class PeppolSettingsContainer(
             }
 
             logger.d { "Deleting Peppol settings" }
-            peppolUseCase.deletePeppolSettings().fold(
+            deletePeppolSettings().fold(
                 onSuccess = {
                     logger.i { "Peppol settings deleted" }
                     action(PeppolSettingsAction.ShowDeleteSuccess)

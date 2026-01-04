@@ -41,6 +41,9 @@ private const val SessionHistoryLimit = 100
 /** Maximum number of recent sessions to display in picker */
 private const val RecentSessionsLimit = 10
 
+/** Maximum characters to include in log previews of user messages */
+private const val MessagePreviewLength = 50
+
 internal typealias ChatCtx = PipelineContext<ChatState, ChatIntent, ChatAction>
 
 /**
@@ -219,7 +222,7 @@ internal class ChatContainer(
             if (message.isBlank()) return@withState
             if (isSending) return@withState
 
-            logger.d { "Sending message: ${message.take(50)}..." }
+            logger.d { "Sending message: ${message.take(MessagePreviewLength)}..." }
 
             // Create optimistic user message
             val optimisticUserMessage = createOptimisticUserMessage(message)
@@ -241,47 +244,26 @@ internal class ChatContainer(
 
             // Send message to API
             sendMessageJob = launch {
-                val result = if (sessionId != null) {
-                    // Continue existing session
-                    sendChatMessageUseCase.continueChat(
-                        sessionId = sessionId,
-                        message = message,
-                        scope = scope,
-                        documentId = documentId
-                    )
-                } else {
-                    // Start new session
-                    when (scope) {
-                        ChatScope.SingleDoc -> {
-                            val docId = documentId
-                            if (docId == null) {
-                                action(
-                                    ChatAction.ShowError(
-                                        DokusException.ChatNoDocumentSelected
-                                    )
-                                )
-                                withState<ChatState.Content, _> {
-                                    updateState {
-                                        copy(
-                                            messages = messages.dropLast(1),
-                                            isSending = false
-                                        )
-                                    }
-                                }
-                                return@launch
-                            }
-                            sendChatMessageUseCase.startDocumentChat(
-                                documentId = docId,
-                                initialMessage = message
-                            )
-                        }
-                        ChatScope.AllDocs -> {
-                            sendChatMessageUseCase.startCrossDocumentChat(
-                                initialMessage = message
+                val docId = if (scope == ChatScope.SingleDoc) documentId else null
+                if (scope == ChatScope.SingleDoc && docId == null) {
+                    action(ChatAction.ShowError(DokusException.ChatNoDocumentSelected))
+                    withState<ChatState.Content, _> {
+                        updateState {
+                            copy(
+                                messages = messages.dropLast(1),
+                                isSending = false
                             )
                         }
                     }
+                    return@launch
                 }
+
+                val result = sendChatMessageUseCase(
+                    message = message,
+                    scope = scope,
+                    documentId = docId,
+                    sessionId = sessionId
+                )
 
                 handleSendMessageResult(result, optimisticUserMessage)
             }

@@ -13,10 +13,26 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
-import tech.dokus.features.auth.usecases.TeamSettingsUseCase
+import tech.dokus.features.auth.usecases.CancelInvitationUseCase
+import tech.dokus.features.auth.usecases.CreateInvitationUseCase
+import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCase
+import tech.dokus.features.auth.usecases.ListTeamMembersUseCase
+import tech.dokus.features.auth.usecases.RemoveTeamMemberUseCase
+import tech.dokus.features.auth.usecases.TransferWorkspaceOwnershipUseCase
+import tech.dokus.features.auth.usecases.UpdateTeamMemberRoleUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias TeamSettingsCtx = PipelineContext<TeamSettingsState, TeamSettingsIntent, TeamSettingsAction>
+
+internal data class TeamSettingsUseCases(
+    val listTeamMembers: ListTeamMembersUseCase,
+    val listPendingInvitations: ListPendingInvitationsUseCase,
+    val createInvitation: CreateInvitationUseCase,
+    val cancelInvitation: CancelInvitationUseCase,
+    val updateTeamMemberRole: UpdateTeamMemberRoleUseCase,
+    val removeTeamMember: RemoveTeamMemberUseCase,
+    val transferWorkspaceOwnership: TransferWorkspaceOwnershipUseCase,
+)
 
 /**
  * Container for Team Settings screen using FlowMVI.
@@ -26,7 +42,7 @@ internal typealias TeamSettingsCtx = PipelineContext<TeamSettingsState, TeamSett
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class TeamSettingsContainer(
-    private val teamSettingsUseCase: TeamSettingsUseCase,
+    private val useCases: TeamSettingsUseCases,
 ) : Container<TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> {
 
     private val logger = Logger.forClass<TeamSettingsContainer>()
@@ -72,8 +88,8 @@ internal class TeamSettingsContainer(
 
     private suspend fun TeamSettingsCtx.loadTeamData() {
         // Load members
-        val membersResult = teamSettingsUseCase.listTeamMembers()
-        val invitationsResult = teamSettingsUseCase.listPendingInvitations()
+        val membersResult = useCases.listTeamMembers()
+        val invitationsResult = useCases.listPendingInvitations()
 
         membersResult.fold(
             onSuccess = { members ->
@@ -169,7 +185,7 @@ internal class TeamSettingsContainer(
                 role = currentRole
             )
 
-            teamSettingsUseCase.createInvitation(request).fold(
+            useCases.createInvitation(request).fold(
                 onSuccess = {
                     logger.i { "Invitation sent to $currentEmail" }
                     updateState {
@@ -207,7 +223,7 @@ internal class TeamSettingsContainer(
             logger.d { "Cancelling invitation $invitationId" }
             updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
 
-            teamSettingsUseCase.cancelInvitation(invitationId).fold(
+            useCases.cancelInvitation(invitationId).fold(
                 onSuccess = {
                     logger.i { "Invitation cancelled: $invitationId" }
                     updateState {
@@ -244,7 +260,7 @@ internal class TeamSettingsContainer(
             logger.d { "Updating role for $userId to $newRole" }
             updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
 
-            teamSettingsUseCase.updateMemberRole(userId, newRole).fold(
+            useCases.updateTeamMemberRole(userId, newRole).fold(
                 onSuccess = {
                     logger.i { "Role updated for $userId to $newRole" }
                     updateState {
@@ -279,7 +295,7 @@ internal class TeamSettingsContainer(
             logger.d { "Removing member $userId" }
             updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
 
-            teamSettingsUseCase.removeMember(userId).fold(
+            useCases.removeTeamMember(userId).fold(
                 onSuccess = {
                     logger.i { "Member removed: $userId" }
                     updateState {
@@ -316,7 +332,7 @@ internal class TeamSettingsContainer(
             logger.d { "Transferring ownership to $newOwnerId" }
             updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
 
-            teamSettingsUseCase.transferOwnership(newOwnerId).fold(
+            useCases.transferWorkspaceOwnership(newOwnerId).fold(
                 onSuccess = {
                     logger.i { "Ownership transferred to $newOwnerId" }
                     updateState {
@@ -358,7 +374,7 @@ internal class TeamSettingsContainer(
         withState<TeamSettingsState.Content, _> {
             updateState { copy(membersLoading = true) }
 
-            teamSettingsUseCase.listTeamMembers().fold(
+            useCases.listTeamMembers().fold(
                 onSuccess = { members ->
                     logger.i { "Refreshed ${members.size} team members" }
                     updateState {
@@ -377,7 +393,7 @@ internal class TeamSettingsContainer(
         withState<TeamSettingsState.Content, _> {
             updateState { copy(invitationsLoading = true) }
 
-            teamSettingsUseCase.listPendingInvitations().fold(
+            useCases.listPendingInvitations().fold(
                 onSuccess = { invitations ->
                     logger.i { "Refreshed ${invitations.size} pending invitations" }
                     updateState {

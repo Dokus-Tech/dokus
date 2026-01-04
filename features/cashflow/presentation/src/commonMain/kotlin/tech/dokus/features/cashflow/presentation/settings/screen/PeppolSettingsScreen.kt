@@ -24,7 +24,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -360,7 +359,7 @@ private fun SettingsContent(
 
 @Composable
 private fun ProviderCard(
-    provider: PeppolProvider,
+    @Suppress("SameParameterValue") provider: PeppolProvider,
     icon: ImageVector,
     description: String,
     onClick: () -> Unit,

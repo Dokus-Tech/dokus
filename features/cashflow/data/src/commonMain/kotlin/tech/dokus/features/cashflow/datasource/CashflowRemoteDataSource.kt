@@ -10,6 +10,7 @@ import io.ktor.client.HttpClient
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.ExpenseCategory
@@ -17,7 +18,6 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.ContactId
@@ -27,7 +27,6 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.ConfirmDocumentRequest
-import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
@@ -46,6 +45,7 @@ import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
 import tech.dokus.domain.model.RecordPaymentRequest
+import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.SavePeppolSettingsRequest

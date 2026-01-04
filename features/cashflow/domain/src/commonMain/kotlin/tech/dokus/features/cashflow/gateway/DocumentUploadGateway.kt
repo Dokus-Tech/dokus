@@ -1,12 +1,12 @@
-package tech.dokus.features.cashflow.usecases
+package tech.dokus.features.cashflow.gateway
 
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDto
 
 /**
- * Use case for uploading and deleting documents.
+ * Gateway for document upload and deletion.
  */
-interface DocumentUploadUseCase {
+interface DocumentUploadGateway {
     suspend fun uploadDocumentWithProgress(
         fileContent: ByteArray,
         filename: String,

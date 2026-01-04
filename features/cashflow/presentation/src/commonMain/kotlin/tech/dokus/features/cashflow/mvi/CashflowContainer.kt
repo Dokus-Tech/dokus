@@ -30,9 +30,9 @@ import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTa
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.FilterDocumentsUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadBusinessHealthUseCase
-import tech.dokus.features.cashflow.usecases.LoadCashflowDocumentsUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadVatSummaryUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SearchCashflowDocumentsUseCase
+import tech.dokus.features.cashflow.usecases.LoadCashflowDocumentsUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger

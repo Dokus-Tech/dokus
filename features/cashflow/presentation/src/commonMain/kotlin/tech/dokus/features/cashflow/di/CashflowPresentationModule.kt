@@ -42,7 +42,12 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.app.mvi.container
 
 val cashflowViewModelModule = module {
-    single { DocumentUploadManager(documentUploadUseCase = get()) }
+    single {
+        DocumentUploadManager(
+            uploadDocumentUseCase = get(),
+            deleteDocumentUseCase = get()
+        )
+    }
 
     factory { SearchCashflowDocumentsUseCase() }
     factory { FilterDocumentsUseCase() }
@@ -55,14 +60,27 @@ val cashflowViewModelModule = module {
         AddDocumentContainer(uploadManager = get())
     }
     container<PeppolSettingsContainer, PeppolSettingsState, PeppolSettingsIntent, PeppolSettingsAction> {
-        PeppolSettingsContainer(peppolUseCase = get())
+        PeppolSettingsContainer(
+            getPeppolSettings = get(),
+            deletePeppolSettings = get()
+        )
     }
     container<PeppolSendContainer, PeppolSendState, PeppolSendIntent, PeppolSendAction> {
-        PeppolSendContainer(peppolUseCase = get())
+        PeppolSendContainer(
+            listPeppolTransmissions = get(),
+            verifyPeppolRecipient = get(),
+            validateInvoiceForPeppol = get(),
+            sendInvoiceViaPeppol = get(),
+            pollPeppolInbox = get(),
+            getPeppolTransmissionForInvoice = get()
+        )
     }
     container<PeppolConnectContainer, PeppolConnectState, PeppolConnectIntent, PeppolConnectAction> {
             (params: PeppolConnectContainer.Companion.Params) ->
-        PeppolConnectContainer(provider = params.provider, peppolUseCase = get())
+        PeppolConnectContainer(
+            provider = params.provider,
+            connectPeppol = get()
+        )
     }
     container<CashflowContainer, CashflowState, CashflowIntent, CashflowAction> {
         CashflowContainer(
@@ -83,7 +101,15 @@ val cashflowViewModelModule = module {
         )
     }
     container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
-        DocumentReviewContainer(documentReviewUseCase = get(), getContact = get())
+        DocumentReviewContainer(
+            getDocumentRecord = get(),
+            updateDocumentDraft = get(),
+            updateDocumentDraftContact = get(),
+            confirmDocument = get(),
+            rejectDocument = get(),
+            getDocumentPages = get(),
+            getContact = get()
+        )
     }
     container<ChatContainer, ChatState, ChatIntent, ChatAction> {
         ChatContainer(

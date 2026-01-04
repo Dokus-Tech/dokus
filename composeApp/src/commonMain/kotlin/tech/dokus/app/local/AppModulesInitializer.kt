@@ -6,9 +6,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import tech.dokus.foundation.app.AppModule
-import tech.dokus.foundation.app.AppDataInitializer
 import org.koin.core.context.GlobalContext
+import tech.dokus.foundation.app.AppDataInitializer
+import tech.dokus.foundation.app.AppModule
 
 /**
  * Handles database and async resource initialization for all app modules.

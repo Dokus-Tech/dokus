@@ -11,7 +11,7 @@ import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionListResponse
 
 /**
- * Use case for sending and continuing chat conversations.
+ * Use case for sending chat messages.
  */
 interface SendChatMessageUseCase {
     suspend operator fun invoke(
@@ -21,22 +21,6 @@ interface SendChatMessageUseCase {
         sessionId: ChatSessionId? = null,
         maxChunks: Int? = null,
         minSimilarity: Float? = null
-    ): Result<ChatResponse>
-
-    suspend fun startDocumentChat(
-        documentId: DocumentId,
-        initialMessage: String
-    ): Result<ChatResponse>
-
-    suspend fun startCrossDocumentChat(
-        initialMessage: String
-    ): Result<ChatResponse>
-
-    suspend fun continueChat(
-        sessionId: ChatSessionId,
-        message: String,
-        scope: ChatScope,
-        documentId: DocumentId? = null
     ): Result<ChatResponse>
 }
 

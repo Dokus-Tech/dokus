@@ -1,4 +1,4 @@
-package tech.dokus.features.cashflow.usecases
+package tech.dokus.features.cashflow.gateway
 
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
@@ -13,9 +13,9 @@ import tech.dokus.domain.model.PeppolVerifyResponse
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 
 /**
- * Use case for Peppol operations.
+ * Gateway for Peppol operations backed by remote services.
  */
-interface PeppolUseCase {
+interface PeppolGateway {
     suspend fun connectPeppol(request: PeppolConnectRequest): Result<PeppolConnectResponse>
 
     suspend fun getPeppolSettings(): Result<PeppolSettingsDto?>

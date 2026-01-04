@@ -4,19 +4,19 @@ import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_confirm_select_contact
 import tech.dokus.aura.resources.cashflow_confirm_missing_fields
+import tech.dokus.aura.resources.cashflow_confirm_select_contact
+import tech.dokus.domain.Money
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedDocumentData
-import tech.dokus.domain.Money
 import tech.dokus.foundation.app.state.DokusState
 
 /**

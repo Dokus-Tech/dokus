@@ -20,9 +20,9 @@ import tech.dokus.domain.Name
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactAddress
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.CreateContactRequest
@@ -35,6 +35,13 @@ import tech.dokus.features.contacts.usecases.UpdateContactUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ContactFormCtx = PipelineContext<ContactFormState, ContactFormIntent, ContactFormAction>
+
+private const val PaymentTermsMinDays = 0
+private const val PaymentTermsMaxDays = 365
+private const val DuplicateVatSearchLimit = 5
+private const val DuplicateEmailSearchLimit = 5
+private const val DuplicateNameSearchLimit = 10
+private const val MinDuplicateNameLength = 3
 
 /**
  * Container for the Contact Form screen (Create/Edit) using FlowMVI.
@@ -278,7 +285,9 @@ internal class ContactFormContainer(
     // ============================================================================
 
     private suspend fun ContactFormCtx.handleUpdateDefaultPaymentTerms(value: Int) {
-        updateFormData { copy(defaultPaymentTerms = value.coerceIn(0, 365)) }
+        updateFormData {
+            copy(defaultPaymentTerms = value.coerceIn(PaymentTermsMinDays, PaymentTermsMaxDays))
+        }
     }
 
     private suspend fun ContactFormCtx.handleUpdateDefaultVatRate(value: String) {
@@ -408,7 +417,7 @@ internal class ContactFormContainer(
 
             // Check by VAT number (highest confidence)
             if (form.vatNumber.value.isNotBlank()) {
-                listContacts(search = form.vatNumber.value, limit = 5).fold(
+                listContacts(search = form.vatNumber.value, limit = DuplicateVatSearchLimit).fold(
                     onSuccess = { contacts ->
                         contacts
                             .filter { it.id != editingId && it.vatNumber?.value == form.vatNumber.value }
@@ -420,10 +429,13 @@ internal class ContactFormContainer(
 
             // Check by email (high confidence)
             if (form.email.value.isNotBlank() && form.email.value.contains("@")) {
-                listContacts(search = form.email.value, limit = 5).fold(
+                listContacts(search = form.email.value, limit = DuplicateEmailSearchLimit).fold(
                     onSuccess = { contacts ->
                         contacts
-                            .filter { it.id != editingId && it.email?.value.equals(form.email.value, ignoreCase = true) }
+                            .filter {
+                                it.id != editingId &&
+                                    it.email?.value.equals(form.email.value, ignoreCase = true)
+                            }
                             .filter { dup -> foundDuplicates.none { it.contact.id == dup.id } }
                             .forEach { foundDuplicates.add(PotentialDuplicate(it, DuplicateReason.Email)) }
                     },
@@ -432,8 +444,8 @@ internal class ContactFormContainer(
             }
 
             // Check by name + country (medium confidence)
-            if (form.name.value.length >= 3 && form.country.isNotBlank()) {
-                listContacts(search = form.name.value, limit = 10).fold(
+            if (form.name.value.length >= MinDuplicateNameLength && form.country.isNotBlank()) {
+                listContacts(search = form.name.value, limit = DuplicateNameSearchLimit).fold(
                     onSuccess = { contacts ->
                         contacts
                             .filter { it.id != editingId }
@@ -705,7 +717,8 @@ private fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateCont
  * Returns null if required address fields are missing.
  */
 private fun ContactFormData.toContactAddress(): ContactAddress? {
-    if (addressLine1.isBlank() || city.value.isBlank() || postalCode.isBlank() || country.isBlank()) {
+    val requiredFields = listOf(addressLine1, city.value, postalCode, country)
+    if (requiredFields.any { it.isBlank() }) {
         return null
     }
     return ContactAddress(

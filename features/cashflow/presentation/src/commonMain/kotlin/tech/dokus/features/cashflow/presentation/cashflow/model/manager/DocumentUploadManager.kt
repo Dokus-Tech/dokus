@@ -17,11 +17,12 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.utils.currentTimeMillis
-import tech.dokus.features.cashflow.usecases.DocumentUploadUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.components.DroppedFile
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
 import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
+import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UploadDocumentUseCase
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,7 +40,8 @@ import kotlin.time.Duration.Companion.seconds
  * when navigating between screens or closing/opening the sidebar.
  */
 class DocumentUploadManager(
-    private val documentUploadUseCase: DocumentUploadUseCase,
+    private val uploadDocumentUseCase: UploadDocumentUseCase,
+    private val deleteDocumentUseCase: DeleteDocumentUseCase,
     private val maxConcurrentUploads: Int = 3
 ) {
     private val logger = Logger.forClass<DocumentUploadManager>()
@@ -165,7 +167,7 @@ class DocumentUploadManager(
             // If we get here, the deletion wasn't cancelled
             _deletionHandles.update { it - taskId }
 
-            val result = documentUploadUseCase.deleteDocument(task.documentId)
+            val result = deleteDocumentUseCase(task.documentId)
             resultDeferred.complete(result)
 
             if (result.isSuccess) {
@@ -262,7 +264,7 @@ class DocumentUploadManager(
             it.copy(status = UploadStatus.UPLOADING, progress = 0f)
         }
 
-        val result = documentUploadUseCase.uploadDocumentWithProgress(
+        val result = uploadDocumentUseCase(
             fileContent = task.bytes,
             filename = task.fileName,
             contentType = task.mimeType,

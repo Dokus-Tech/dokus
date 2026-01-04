@@ -11,33 +11,58 @@ import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 
 /**
- * Use case for document review operations.
+ * Use case for loading a document record for review.
  */
-interface DocumentReviewUseCase {
-    suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto>
+interface GetDocumentRecordUseCase {
+    suspend operator fun invoke(documentId: DocumentId): Result<DocumentRecordDto>
+}
 
-    suspend fun updateDocumentDraft(
+/**
+ * Use case for updating a document draft's extracted data.
+ */
+interface UpdateDocumentDraftUseCase {
+    suspend operator fun invoke(
         documentId: DocumentId,
         request: UpdateDraftRequest
     ): Result<UpdateDraftResponse>
+}
 
-    suspend fun updateDocumentDraftContact(
+/**
+ * Use case for linking a draft document to a contact.
+ */
+interface UpdateDocumentDraftContactUseCase {
+    suspend operator fun invoke(
         documentId: DocumentId,
         contactId: ContactId?,
         counterpartyIntent: CounterpartyIntent? = null
     ): Result<Unit>
+}
 
-    suspend fun confirmDocument(
+/**
+ * Use case for confirming a document.
+ */
+interface ConfirmDocumentUseCase {
+    suspend operator fun invoke(
         documentId: DocumentId,
         request: ConfirmDocumentRequest
     ): Result<DocumentRecordDto>
+}
 
-    suspend fun rejectDocument(
+/**
+ * Use case for rejecting a document.
+ */
+interface RejectDocumentUseCase {
+    suspend operator fun invoke(
         documentId: DocumentId,
         request: RejectDocumentRequest
     ): Result<DocumentRecordDto>
+}
 
-    suspend fun getDocumentPages(
+/**
+ * Use case for loading document preview pages.
+ */
+interface GetDocumentPagesUseCase {
+    suspend operator fun invoke(
         documentId: DocumentId,
         dpi: Int = 150,
         maxPages: Int = 10

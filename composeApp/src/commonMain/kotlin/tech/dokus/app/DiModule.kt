@@ -25,6 +25,7 @@ import tech.dokus.app.viewmodel.TeamSettingsAction
 import tech.dokus.app.viewmodel.TeamSettingsContainer
 import tech.dokus.app.viewmodel.TeamSettingsIntent
 import tech.dokus.app.viewmodel.TeamSettingsState
+import tech.dokus.app.viewmodel.TeamSettingsUseCases
 import tech.dokus.app.viewmodel.WorkspaceSettingsAction
 import tech.dokus.app.viewmodel.WorkspaceSettingsContainer
 import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
@@ -72,11 +73,25 @@ internal val diModuleApp = module {
     container<WorkspaceSettingsContainer, WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
         WorkspaceSettingsContainer(
             getCurrentTenantUseCase = get(),
-            workspaceSettingsUseCase = get(),
+            getTenantSettings = get(),
+            getTenantAddress = get(),
+            updateTenantSettings = get(),
+            uploadWorkspaceAvatar = get(),
+            deleteWorkspaceAvatar = get(),
         )
     }
     container<TeamSettingsContainer, TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> {
-        TeamSettingsContainer(teamSettingsUseCase = get())
+        TeamSettingsContainer(
+            useCases = TeamSettingsUseCases(
+                listTeamMembers = get(),
+                listPendingInvitations = get(),
+                createInvitation = get(),
+                cancelInvitation = get(),
+                updateTeamMemberRole = get(),
+                removeTeamMember = get(),
+                transferWorkspaceOwnership = get(),
+            )
+        )
     }
 
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }

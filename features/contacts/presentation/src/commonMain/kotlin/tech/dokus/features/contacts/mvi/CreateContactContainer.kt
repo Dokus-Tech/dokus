@@ -48,6 +48,7 @@ internal typealias CreateContactCtx = PipelineContext<CreateContactState, Create
  * - Debounced name search (300ms), immediate VAT lookup
  * - Soft duplicate warning on manual submit (name+country)
  */
+@Suppress("TooManyFunctions") // FlowMVI container keeps handlers grouped for this screen.
 internal class CreateContactContainer(
     private val searchCompanyUseCase: SearchCompanyUseCase,
     private val findContactsByName: FindContactsByNameUseCase,
@@ -524,7 +525,7 @@ internal class CreateContactContainer(
                 contacts
                     .filter { contact ->
                         contact.name.value.equals(name, ignoreCase = true) &&
-                                (type != ClientType.Business || contact.country == data.country.dbValue)
+                            (type != ClientType.Business || contact.country == data.country.dbValue)
                     }
                     .map { contact ->
                         SoftDuplicateUi(

@@ -3,10 +3,10 @@
 package tech.dokus.features.cashflow.usecase
 
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.ai.ChatRequest
 import tech.dokus.domain.model.ai.ChatResponse
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
-import tech.dokus.domain.model.ai.ChatRequest
 import tech.dokus.features.cashflow.datasource.ChatRemoteDataSource
 import tech.dokus.features.cashflow.usecases.SendChatMessageUseCase
 
@@ -96,85 +96,5 @@ class SendChatMessageUseCaseImpl(
                 )
             }
         }
-    }
-
-    /**
-     * Start a new single-document chat session.
-     *
-     * Creates a new conversation session for the specified document.
-     * Returns the session ID in the response for continuing the conversation.
-     *
-     * @param documentId The document to chat about
-     * @param initialMessage The first question to ask
-     * @return Result containing the initial response with new session ID
-     */
-    override suspend fun startDocumentChat(
-        documentId: DocumentId,
-        initialMessage: String
-    ): Result<ChatResponse> {
-        require(initialMessage.isNotBlank()) { "Initial message cannot be blank" }
-
-        return chatRemoteDataSource.sendSingleDocumentMessage(
-            documentId = documentId,
-            request = ChatRequest(
-                message = initialMessage.trim(),
-                scope = ChatScope.SingleDoc,
-                documentId = documentId,
-                sessionId = null
-            )
-        )
-    }
-
-    /**
-     * Start a new cross-document chat session.
-     *
-     * Creates a new conversation session for cross-document Q&A.
-     * Returns the session ID in the response for continuing the conversation.
-     *
-     * @param initialMessage The first question to ask
-     * @return Result containing the initial response with new session ID
-     */
-    override suspend fun startCrossDocumentChat(
-        initialMessage: String
-    ): Result<ChatResponse> {
-        require(initialMessage.isNotBlank()) { "Initial message cannot be blank" }
-
-        return chatRemoteDataSource.sendCrossDocumentMessage(
-            request = ChatRequest(
-                message = initialMessage.trim(),
-                scope = ChatScope.AllDocs,
-                documentId = null,
-                sessionId = null
-            )
-        )
-    }
-
-    /**
-     * Continue an existing chat session.
-     *
-     * Sends a follow-up message in an existing conversation,
-     * maintaining the context from previous messages.
-     *
-     * @param sessionId The session to continue
-     * @param message The follow-up question or message
-     * @param scope The chat scope (should match the original session)
-     * @param documentId The document ID (required for [ChatScope.SingleDoc])
-     * @return Result containing the AI response
-     */
-    override suspend fun continueChat(
-        sessionId: ChatSessionId,
-        message: String,
-        scope: ChatScope,
-        documentId: DocumentId?
-    ): Result<ChatResponse> {
-        require(message.isNotBlank()) { "Message cannot be blank" }
-        return chatRemoteDataSource.sendMessage(
-            ChatRequest(
-                message = message.trim(),
-                scope = scope,
-                documentId = documentId,
-                sessionId = sessionId
-            )
-        )
     }
 }

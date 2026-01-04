@@ -55,7 +55,6 @@ import tech.dokus.aura.resources.contacts_add_note
 import tech.dokus.aura.resources.contacts_delete_note
 import tech.dokus.aura.resources.contacts_delete_note_confirm
 import tech.dokus.aura.resources.contacts_delete_note_warning
-import tech.dokus.aura.resources.contacts_deleting
 import tech.dokus.aura.resources.contacts_edit_note
 import tech.dokus.aura.resources.contacts_load_notes_failed
 import tech.dokus.aura.resources.contacts_no_notes
