@@ -21,6 +21,13 @@
     <string name="pending_documents_previous">Previous</string>
     <string name="pending_documents_next">Next</string>
 
+    <!-- Document UI Status -->
+    <string name="document_status_queued">Queued</string>
+    <string name="document_status_processing">Processing</string>
+    <string name="document_status_review">Review</string>
+    <string name="document_status_ready">Ready</string>
+    <string name="document_status_failed">Failed</string>
+
     <!-- Document Table -->
     <string name="document_table_invoice">Invoice</string>
     <string name="document_table_contact">Contact</string>

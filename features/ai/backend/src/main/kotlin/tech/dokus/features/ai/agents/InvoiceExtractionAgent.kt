@@ -261,7 +261,7 @@ class InvoiceExtractionAgent(
         val startIndex = cleaned.indexOf('{')
         val endIndex = cleaned.lastIndexOf('}')
 
-        return if (startIndex >= 0 && endIndex > startIndex) {
+        return if (startIndex in 0..<endIndex) {
             cleaned.substring(startIndex, endIndex + 1)
         } else {
             cleaned
