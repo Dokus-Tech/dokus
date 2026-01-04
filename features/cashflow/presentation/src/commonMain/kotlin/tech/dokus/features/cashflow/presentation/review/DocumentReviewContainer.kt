@@ -126,6 +126,9 @@ internal class DocumentReviewContainer(
                         // === Failed Analysis ===
                         is DocumentReviewIntent.RetryAnalysis -> handleRetryAnalysis()
                         is DocumentReviewIntent.DismissFailureBanner -> handleDismissFailureBanner()
+
+                        // === Manual Document Type Selection ===
+                        is DocumentReviewIntent.SelectDocumentType -> handleSelectDocumentType(intent.type)
                     }
                 }
             }
