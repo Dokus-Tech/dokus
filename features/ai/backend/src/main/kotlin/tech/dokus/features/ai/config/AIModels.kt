@@ -1,5 +1,6 @@
 package tech.dokus.features.ai.config
 
+import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import tech.dokus.foundation.backend.config.AIMode
@@ -37,7 +38,7 @@ object AIModels {
     val VISION_LIGHT = LLModel(
         provider = LLMProvider.Ollama,
         id = "qwen3-vl:2b",
-        capabilities = emptyList(),
+        capabilities = listOf(LLMCapability.Vision.Image),
         contextLength = CONTEXT_32K,
         maxOutputTokens = null
     )
@@ -46,7 +47,7 @@ object AIModels {
     val VISION_QUALITY = LLModel(
         provider = LLMProvider.Ollama,
         id = "qwen3-vl:32b",
-        capabilities = emptyList(),
+        capabilities = listOf(LLMCapability.Vision.Image),
         contextLength = CONTEXT_128K,
         maxOutputTokens = null
     )

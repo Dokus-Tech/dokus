@@ -29,7 +29,7 @@ object AIProviderFactory {
      */
     fun getModel(config: AIConfig, purpose: ModelPurpose): LLModel {
         val model = AIModels.forPurpose(config.mode, purpose)
-        logger.debug("Selected model for $purpose: ${model.id} (mode=${config.mode})")
+        logger.debug("Selected model for {}: {} (mode={})", purpose, model.id, config.mode)
         return model
     }
 
