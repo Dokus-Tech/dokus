@@ -10,7 +10,8 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Name
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.features.auth.repository.AuthRepository
+import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
+import tech.dokus.features.auth.usecases.UpdateProfileUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ProfileSettingsCtx =
@@ -23,7 +24,8 @@ internal typealias ProfileSettingsCtx =
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 class ProfileSettingsContainer(
-    private val authRepository: AuthRepository,
+    private val getCurrentUser: GetCurrentUserUseCase,
+    private val updateProfile: UpdateProfileUseCase,
 ) : Container<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
 
     private val logger = Logger.forClass<ProfileSettingsContainer>()
@@ -54,7 +56,7 @@ class ProfileSettingsContainer(
     private suspend fun ProfileSettingsCtx.loadProfile() {
         logger.d { "Loading user profile" }
 
-        authRepository.getCurrentUser().fold(
+        getCurrentUser().fold(
             onSuccess = { user ->
                 logger.i { "User profile loaded: ${user.email.value}" }
                 updateState { ProfileSettingsState.Viewing(user) }
@@ -129,7 +131,7 @@ class ProfileSettingsContainer(
             val firstName = currentEditFirstName.takeIf { it.value.isNotBlank() }
             val lastName = currentEditLastName.takeIf { it.value.isNotBlank() }
 
-            authRepository.updateProfile(firstName, lastName).fold(
+            updateProfile(firstName, lastName).fold(
                 onSuccess = { updatedUser ->
                     logger.i { "Profile saved successfully" }
                     updateState { ProfileSettingsState.Viewing(updatedUser) }

@@ -53,13 +53,18 @@ val authPresentationModule = module {
         NewPasswordContainer()
     }
     container<WorkspaceSelectContainer, WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> {
-        WorkspaceSelectContainer(tenantDataSource = get(), selectTenantUseCase = get())
+        WorkspaceSelectContainer(listMyTenants = get(), selectTenantUseCase = get())
     }
     container<WorkspaceCreateContainer, WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction> {
-        WorkspaceCreateContainer(authRepository = get(), searchCompanyUseCase = get())
+        WorkspaceCreateContainer(
+            hasFreelancerTenant = get(),
+            getCurrentUser = get(),
+            createTenant = get(),
+            searchCompanyUseCase = get()
+        )
     }
     container<ProfileSettingsContainer, ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
-        ProfileSettingsContainer(authRepository = get())
+        ProfileSettingsContainer(getCurrentUser = get(), updateProfile = get())
     }
     container<ServerConnectionContainer, ServerConnectionState, ServerConnectionIntent, ServerConnectionAction> {
             (params: ServerConnectionContainer.Companion.Params) ->

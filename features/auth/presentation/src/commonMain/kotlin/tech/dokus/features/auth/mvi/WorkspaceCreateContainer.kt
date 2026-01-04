@@ -22,7 +22,9 @@ import tech.dokus.features.auth.presentation.auth.model.AddressFormState
 import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
 import tech.dokus.features.auth.presentation.auth.model.LookupState
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
-import tech.dokus.features.auth.repository.AuthRepository
+import tech.dokus.features.auth.usecases.CreateTenantUseCase
+import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
+import tech.dokus.features.auth.usecases.HasFreelancerTenantUseCase
 import tech.dokus.foundation.platform.Logger
 
 typealias WorkspaceCreateCtx = PipelineContext<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction>
@@ -34,7 +36,9 @@ typealias WorkspaceCreateCtx = PipelineContext<WorkspaceCreateState, WorkspaceCr
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class WorkspaceCreateContainer(
-    private val authRepository: AuthRepository,
+    private val hasFreelancerTenant: HasFreelancerTenantUseCase,
+    private val getCurrentUser: GetCurrentUserUseCase,
+    private val createTenant: CreateTenantUseCase,
     private val searchCompanyUseCase: SearchCompanyUseCase,
 ) : Container<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction> {
 
@@ -69,7 +73,7 @@ internal class WorkspaceCreateContainer(
         logger.d { "Loading user info for workspace creation" }
 
         // First check if user has freelancer workspace
-        val hasFreelancer = authRepository.hasFreelancerTenant().fold(
+        val hasFreelancer = hasFreelancerTenant().fold(
             onSuccess = { it },
             onFailure = { error ->
                 logger.e(error) { "Failed to check freelancer workspace status" }
@@ -84,7 +88,7 @@ internal class WorkspaceCreateContainer(
         )
 
         // Then get user name
-        val userName = authRepository.getCurrentUser().fold(
+        val userName = getCurrentUser().fold(
             onSuccess = { user ->
                 listOfNotNull(
                     user.firstName?.value,
@@ -322,7 +326,7 @@ internal class WorkspaceCreateContainer(
                 country = currentState.address.country,
             )
 
-            authRepository.createTenant(
+            createTenant(
                 type = currentState.tenantType,
                 legalName = effectiveLegalName,
                 displayName = effectiveDisplayName,

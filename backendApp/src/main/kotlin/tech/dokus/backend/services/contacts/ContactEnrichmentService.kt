@@ -273,11 +273,26 @@ class ContactEnrichmentService(
             request = when (field) {
                 "email" -> request.copy(email = Email(value))
                 "phone" -> request.copy(phone = PhoneNumber(value))
-                "addressLine1" -> { addressLine1 = value; request }
-                "addressLine2" -> { addressLine2 = value; request }
-                "city" -> { city = value; request }
-                "postalCode" -> { postalCode = value; request }
-                "country" -> { country = value; request }
+                "addressLine1" -> {
+                    addressLine1 = value
+                    request
+                }
+                "addressLine2" -> {
+                    addressLine2 = value
+                    request
+                }
+                "city" -> {
+                    city = value
+                    request
+                }
+                "postalCode" -> {
+                    postalCode = value
+                    request
+                }
+                "country" -> {
+                    country = value
+                    request
+                }
                 "peppolId" -> request.copy(peppolId = value)
                 "companyNumber" -> request.copy(companyNumber = value)
                 "contactPerson" -> request.copy(contactPerson = value)

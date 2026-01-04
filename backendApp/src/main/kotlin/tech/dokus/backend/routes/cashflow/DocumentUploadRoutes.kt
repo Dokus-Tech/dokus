@@ -8,22 +8,21 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.database.repository.cashflow.BillRepository
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.enums.DraftStatus
-import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
-import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 import java.security.MessageDigest
+import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /** Allowed prefixes for document storage */
 private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses", "receipts")

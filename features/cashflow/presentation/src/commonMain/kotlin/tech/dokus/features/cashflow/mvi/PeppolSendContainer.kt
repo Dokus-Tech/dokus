@@ -14,7 +14,7 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.usecases.PeppolUseCase
 import tech.dokus.foundation.platform.Logger
 
 private typealias SendCtx = PipelineContext<PeppolSendState, PeppolSendIntent, PeppolSendAction>
@@ -28,7 +28,7 @@ private const val PAGE_SIZE = 50
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class PeppolSendContainer(
-    private val dataSource: CashflowRemoteDataSource,
+    private val peppolUseCase: PeppolUseCase,
 ) : Container<PeppolSendState, PeppolSendIntent, PeppolSendAction> {
 
     private val logger = Logger.forClass<PeppolSendContainer>()
@@ -128,7 +128,7 @@ internal class PeppolSendContainer(
         existingPagination: PaginationState<PeppolTransmissionDto>? = null
     ) {
         val offset = page * PAGE_SIZE
-        val result = dataSource.listPeppolTransmissions(
+        val result = peppolUseCase.listPeppolTransmissions(
             direction = directionFilter,
             status = statusFilter,
             limit = PAGE_SIZE,
@@ -238,7 +238,7 @@ internal class PeppolSendContainer(
                 copy(verificationState = OperationState.Loading)
             }
 
-            dataSource.verifyPeppolRecipient(peppolId).fold(
+            peppolUseCase.verifyPeppolRecipient(peppolId).fold(
                 onSuccess = { response ->
                     logger.i { "Recipient verified: registered=${response.registered}" }
                     updateState {
@@ -288,7 +288,7 @@ internal class PeppolSendContainer(
                 copy(validationState = OperationState.Loading)
             }
 
-            dataSource.validateInvoiceForPeppol(invoiceId).fold(
+            peppolUseCase.validateInvoiceForPeppol(invoiceId).fold(
                 onSuccess = { result ->
                     logger.i { "Invoice validation: valid=${result.isValid}, errors=${result.errors.size}" }
                     updateState {
@@ -338,7 +338,7 @@ internal class PeppolSendContainer(
                 copy(sendState = OperationState.Loading)
             }
 
-            dataSource.sendInvoiceViaPeppol(invoiceId).fold(
+            peppolUseCase.sendInvoiceViaPeppol(invoiceId).fold(
                 onSuccess = { response ->
                     logger.i { "Invoice sent: transmissionId=${response.transmissionId}, status=${response.status}" }
                     updateState {
@@ -392,7 +392,7 @@ internal class PeppolSendContainer(
                 copy(pollState = OperationState.Loading)
             }
 
-            dataSource.pollPeppolInbox().fold(
+            peppolUseCase.pollPeppolInbox().fold(
                 onSuccess = { response ->
                     logger.i { "Inbox polled: ${response.newDocuments} new documents" }
                     updateState {
@@ -448,7 +448,7 @@ internal class PeppolSendContainer(
                 copy(transmissionLookup = OperationState.Loading)
             }
 
-            dataSource.getPeppolTransmissionForInvoice(invoiceId).fold(
+            peppolUseCase.getPeppolTransmissionForInvoice(invoiceId).fold(
                 onSuccess = { transmission ->
                     logger.d { "Transmission found: ${transmission != null}" }
                     updateState {

@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinPluginSerialization)
-    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -44,6 +43,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.foundation.appCommon)
             implementation(projects.foundation.domain)
+            implementation(projects.features.cashflow.domain)
 
             implementation(libs.kotlinx.serialization)
 
@@ -51,8 +51,6 @@ kotlin {
             implementation(libs.koin.core)
 
             implementation(libs.kotlinx.coroutinesCore)
-            implementation(libs.bundles.sqldelight)
-
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.resources)
             implementation(libs.ktor.client.content.negotiation)
@@ -85,14 +83,5 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-}
-
-sqldelight {
-    databases {
-        create("CashflowCacheDatabase") {
-            packageName.set("tech.dokus.features.cashflow.cache")
-            generateAsync.set(true)
-        }
     }
 }

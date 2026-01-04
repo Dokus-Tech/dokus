@@ -1,21 +1,21 @@
 package tech.dokus.features.auth.usecases
 
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.features.auth.repository.AuthRepository
+import tech.dokus.features.auth.gateway.AuthGateway
 import tech.dokus.foundation.platform.Logger
 
 /**
  * Scopes the session to the provided tenant by refreshing tokens.
  */
 class SelectTenantUseCaseImpl(
-    private val authRepository: AuthRepository
+    private val authGateway: AuthGateway
 ) : SelectTenantUseCase {
     private val logger = Logger.forClass<SelectTenantUseCaseImpl>()
 
     /**
      * Selects the specified tenant for the current user session.
      *
-     * Delegates to the [AuthRepository] to refresh the user's JWT tokens with the
+     * Delegates to the [AuthGateway] to refresh the user's JWT tokens with the
      * selected tenant scope. This ensures all subsequent API requests are authorized
      * for that tenant's data.
      *
@@ -31,6 +31,6 @@ class SelectTenantUseCaseImpl(
      */
     override suspend operator fun invoke(tenantId: TenantId): Result<Unit> {
         logger.d { "Selecting tenant $tenantId" }
-        return authRepository.selectTenant(tenantId)
+        return authGateway.selectTenant(tenantId)
     }
 }

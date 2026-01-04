@@ -490,10 +490,9 @@ class ContactRepository {
         limit: Int = 5
     ): Result<List<ContactDto>> = runCatching {
         dbQuery {
-            val searchTerm = "%${name.lowercase()}%"
+            val searchTerm = name.lowercase()
             var query = ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (ContactsTable.name like searchTerm) and
                     (ContactsTable.isActive eq true)
             }
 
@@ -506,7 +505,7 @@ class ContactRepository {
             // Filter in-memory for case-insensitive matching and limit
             query.orderBy(ContactsTable.name to SortOrder.ASC)
                 .filter { row ->
-                    row[ContactsTable.name].lowercase().contains(name.lowercase())
+                    row[ContactsTable.name].lowercase().contains(searchTerm)
                 }
                 .take(limit)
                 .map { row -> mapRowToContactDto(row) }

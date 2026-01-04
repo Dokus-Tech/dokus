@@ -36,8 +36,8 @@ kotlin {
         androidMain.dependencies {
         }
         commonMain.dependencies {
-            implementation(projects.features.cashflow.data)
-            implementation(projects.features.auth.data)
+            implementation(projects.features.cashflow.domain)
+            implementation(projects.features.auth.domain)
             implementation(projects.features.contacts.domain)
             implementation(projects.features.contacts.presentation)
             implementation(projects.foundation.domain)

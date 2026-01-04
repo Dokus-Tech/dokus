@@ -13,7 +13,7 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
-import tech.dokus.features.auth.datasource.TenantRemoteDataSource
+import tech.dokus.features.auth.usecases.WorkspaceSettingsUseCase
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -34,7 +34,7 @@ private const val MAX_INVOICE_PADDING = 8
  */
 internal class WorkspaceSettingsContainer(
     private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
-    private val tenantDataSource: TenantRemoteDataSource,
+    private val workspaceSettingsUseCase: WorkspaceSettingsUseCase,
 ) : Container<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
 
     private val logger = Logger.forClass<WorkspaceSettingsContainer>()
@@ -73,8 +73,8 @@ internal class WorkspaceSettingsContainer(
         updateState { WorkspaceSettingsState.Loading }
 
         val tenantResult = getCurrentTenantUseCase()
-        val settingsResult = tenantDataSource.getTenantSettings()
-        val addressResult = tenantDataSource.getTenantAddress()
+        val settingsResult = workspaceSettingsUseCase.getTenantSettings()
+        val addressResult = workspaceSettingsUseCase.getTenantAddress()
 
         val tenant = tenantResult.getOrNull()
         val settings = settingsResult.getOrNull()
@@ -225,7 +225,7 @@ internal class WorkspaceSettingsContainer(
                 paymentTermsText = form.paymentTermsText.ifBlank { null }
             )
 
-            tenantDataSource.updateTenantSettings(updatedSettings).fold(
+            workspaceSettingsUseCase.updateTenantSettings(updatedSettings).fold(
                 onSuccess = {
                     logger.i { "Workspace settings saved" }
                     updateState {
@@ -274,7 +274,7 @@ internal class WorkspaceSettingsContainer(
                 else -> "image/jpeg"
             }
 
-            tenantDataSource.uploadAvatar(
+            workspaceSettingsUseCase.uploadAvatar(
                 imageBytes = imageBytes,
                 filename = filename,
                 contentType = contentType,
@@ -316,7 +316,7 @@ internal class WorkspaceSettingsContainer(
                 copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Deleting)
             }
 
-            tenantDataSource.deleteAvatar().fold(
+            workspaceSettingsUseCase.deleteAvatar().fold(
                 onSuccess = {
                     logger.i { "Avatar deleted" }
                     updateState {

@@ -6,7 +6,7 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.usecases.DocumentReviewUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -31,13 +31,13 @@ internal typealias DocumentReviewCtx = PipelineContext<DocumentReviewState, Docu
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class DocumentReviewContainer(
-    private val dataSource: CashflowRemoteDataSource,
+    private val documentReviewUseCase: DocumentReviewUseCase,
     private val getContact: GetContactUseCase,
 ) : Container<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
 
     private val logger = Logger.forClass<DocumentReviewContainer>()
     private val reducer = DocumentReviewReducer(
-        dataSource = dataSource,
+        documentReviewUseCase = documentReviewUseCase,
         getContact = getContact,
         logger = logger,
     )
