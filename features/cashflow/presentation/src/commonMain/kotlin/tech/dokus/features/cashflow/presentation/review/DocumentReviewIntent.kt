@@ -60,6 +60,10 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class SelectRejectReason(val reason: DocumentRejectReason) : DocumentReviewIntent
     data class UpdateRejectNote(val note: String) : DocumentReviewIntent
     data object ConfirmReject : DocumentReviewIntent
+
+    // Failed analysis intents
+    data object RetryAnalysis : DocumentReviewIntent
+    data object DismissFailureBanner : DocumentReviewIntent
 }
 
 enum class InvoiceField {

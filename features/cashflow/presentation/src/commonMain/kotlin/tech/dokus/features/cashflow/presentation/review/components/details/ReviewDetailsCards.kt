@@ -31,6 +31,7 @@ import tech.dokus.aura.resources.cashflow_invoice_number
 import tech.dokus.aura.resources.cashflow_merchant
 import tech.dokus.aura.resources.cashflow_receipt_number
 import tech.dokus.aura.resources.cashflow_supplier_name
+import tech.dokus.aura.resources.cashflow_processing_identifying_type
 import tech.dokus.aura.resources.cashflow_unknown_document_type
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
@@ -75,7 +76,10 @@ internal fun CounterpartyCard(
     val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(state)
     val hasDraft = listOf(counterparty.name, counterparty.vatNumber, counterparty.address)
         .any { !it.isNullOrBlank() }
-    val actionsEnabled = !state.isBindingContact && !state.isDocumentConfirmed && !state.isDocumentRejected
+    val actionsEnabled = !state.isBindingContact &&
+        !state.isDocumentConfirmed &&
+        !state.isDocumentRejected &&
+        !state.isProcessing
     val hasLinkedContact = state.selectedContactSnapshot != null
     val correctContactLabel = if (hasLinkedContact) {
         Res.string.action_change
@@ -297,10 +301,18 @@ internal fun InvoiceDetailsCard(
                     )
                 }
                 else -> {
+                    // Show neutral placeholder during processing, error text only when truly unknown
+                    val (textRes, textColor) = if (state.isProcessing) {
+                        Res.string.cashflow_processing_identifying_type to
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        Res.string.cashflow_unknown_document_type to
+                            MaterialTheme.colorScheme.error
+                    }
                     Text(
-                        text = stringResource(Res.string.cashflow_unknown_document_type),
+                        text = stringResource(textRes),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
+                        color = textColor,
                     )
                 }
             }

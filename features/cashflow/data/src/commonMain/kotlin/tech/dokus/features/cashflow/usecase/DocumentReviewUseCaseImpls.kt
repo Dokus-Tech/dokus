@@ -8,12 +8,15 @@ import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.ReprocessRequest
+import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.features.cashflow.gateway.DocumentReviewGateway
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 
@@ -86,6 +89,20 @@ internal class GetDocumentPagesUseCaseImpl(
             documentId = documentId,
             dpi = dpi,
             maxPages = maxPages
+        )
+    }
+}
+
+internal class ReprocessDocumentUseCaseImpl(
+    private val documentReviewGateway: DocumentReviewGateway
+) : ReprocessDocumentUseCase {
+    override suspend fun invoke(
+        documentId: DocumentId,
+        request: ReprocessRequest
+    ): Result<ReprocessResponse> {
+        return documentReviewGateway.reprocessDocument(
+            documentId = documentId,
+            request = request
         )
     }
 }

@@ -12,6 +12,7 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -62,7 +63,24 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val isDocumentRejected: Boolean = false,
         val showPreviewSheet: Boolean = false,
         val rejectDialogState: RejectDialogState? = null,
+        val failureBannerDismissed: Boolean = false,
     ) : DocumentReviewState {
+
+        /** True when AI extraction is still in progress (Queued or Processing). */
+        val isProcessing: Boolean
+            get() = document.latestIngestion?.status in listOf(
+                IngestionStatus.Queued,
+                IngestionStatus.Processing
+            )
+
+        /** True when AI extraction failed. */
+        val isFailed: Boolean
+            get() = document.latestIngestion?.status == IngestionStatus.Failed ||
+                !document.latestIngestion?.errorMessage.isNullOrBlank()
+
+        /** Error message from failed extraction, if available. */
+        val failureReason: String?
+            get() = document.latestIngestion?.errorMessage
 
         val canConfirm: Boolean
             get() {
@@ -74,6 +92,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                     !isSaving &&
                     !isRejecting &&
                     !isBindingContact &&
+                    !isProcessing &&
                     confirmBlockedReason == null
                 return baseValid
             }

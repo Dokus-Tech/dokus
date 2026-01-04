@@ -5,6 +5,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
+import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 
@@ -49,5 +50,13 @@ internal class DocumentReviewGatewayImpl(
         documentId = documentId,
         dpi = dpi,
         maxPages = maxPages
+    )
+
+    override suspend fun reprocessDocument(
+        documentId: DocumentId,
+        request: ReprocessRequest
+    ) = cashflowRemoteDataSource.reprocessDocument(
+        documentId = documentId,
+        request = request
     )
 }
