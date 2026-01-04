@@ -14,6 +14,7 @@ import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -21,6 +22,7 @@ internal class DocumentReviewActions(
     private val updateDocumentDraft: UpdateDocumentDraftUseCase,
     private val confirmDocument: ConfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
+    private val reprocessDocument: ReprocessDocumentUseCase,
     private val getDocumentRecord: GetDocumentRecordUseCase,
     private val mapper: DocumentReviewExtractedDataMapper,
     private val logger: Logger,
@@ -242,6 +244,35 @@ internal class DocumentReviewActions(
     suspend fun DocumentReviewCtx.handleOpenChat() {
         withState<DocumentReviewState.Content, _> {
             action(DocumentReviewAction.NavigateToChat(documentId))
+        }
+    }
+
+    // === Failed Analysis Handlers ===
+
+    suspend fun DocumentReviewCtx.handleRetryAnalysis() {
+        withState<DocumentReviewState.Content, _> {
+            logger.d { "Retrying analysis for document: $documentId" }
+
+            launch {
+                reprocessDocument(documentId)
+                    .fold(
+                        onSuccess = { response ->
+                            logger.d { "Reprocess queued: runId=${response.runId}, status=${response.status}" }
+                            // Refresh to get the new ingestion status
+                            refreshAfterDraftUpdate(documentId)
+                        },
+                        onFailure = { error ->
+                            logger.e(error) { "Failed to reprocess document: $documentId" }
+                            action(DocumentReviewAction.ShowError(error.asDokusException))
+                        }
+                    )
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleDismissFailureBanner() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(failureBannerDismissed = true) }
         }
     }
 

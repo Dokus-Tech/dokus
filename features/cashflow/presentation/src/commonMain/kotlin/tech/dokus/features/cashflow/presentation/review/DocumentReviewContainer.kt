@@ -10,6 +10,7 @@ import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
@@ -42,6 +43,7 @@ internal class DocumentReviewContainer(
     private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
     private val confirmDocument: ConfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
+    private val reprocessDocument: ReprocessDocumentUseCase,
     private val getDocumentPages: GetDocumentPagesUseCase,
     private val getContact: GetContactUseCase,
 ) : Container<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
@@ -53,6 +55,7 @@ internal class DocumentReviewContainer(
         updateDocumentDraftContact = updateDocumentDraftContact,
         confirmDocument = confirmDocument,
         rejectDocument = rejectDocument,
+        reprocessDocument = reprocessDocument,
         getDocumentPages = getDocumentPages,
         getContact = getContact,
         logger = logger,
@@ -119,6 +122,10 @@ internal class DocumentReviewContainer(
                         is DocumentReviewIntent.SelectRejectReason -> handleSelectRejectReason(intent.reason)
                         is DocumentReviewIntent.UpdateRejectNote -> handleUpdateRejectNote(intent.note)
                         is DocumentReviewIntent.ConfirmReject -> handleConfirmReject()
+
+                        // === Failed Analysis ===
+                        is DocumentReviewIntent.RetryAnalysis -> handleRetryAnalysis()
+                        is DocumentReviewIntent.DismissFailureBanner -> handleDismissFailureBanner()
                     }
                 }
             }

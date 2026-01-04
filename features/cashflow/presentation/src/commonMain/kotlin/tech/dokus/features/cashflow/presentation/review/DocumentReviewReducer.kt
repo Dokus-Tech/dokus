@@ -10,6 +10,7 @@ import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
@@ -22,6 +23,7 @@ internal class DocumentReviewReducer(
     private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
     private val confirmDocument: ConfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
+    private val reprocessDocument: ReprocessDocumentUseCase,
     private val getDocumentPages: GetDocumentPagesUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
@@ -37,6 +39,7 @@ internal class DocumentReviewReducer(
         updateDocumentDraft,
         confirmDocument,
         rejectDocument,
+        reprocessDocument,
         getDocumentRecord,
         mapper,
         logger
@@ -126,6 +129,13 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleOpenChat() =
         with(actions) { handleOpenChat() }
+
+    // Failed analysis handlers
+    suspend fun DocumentReviewCtx.handleRetryAnalysis() =
+        with(actions) { handleRetryAnalysis() }
+
+    suspend fun DocumentReviewCtx.handleDismissFailureBanner() =
+        with(actions) { handleDismissFailureBanner() }
 
     fun buildExtractedDataFromEditable(
         editable: EditableExtractedData,

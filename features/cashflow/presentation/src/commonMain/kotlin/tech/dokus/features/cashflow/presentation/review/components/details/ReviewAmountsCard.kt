@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_section_amounts
+import tech.dokus.aura.resources.cashflow_processing_calculating_totals
 import tech.dokus.aura.resources.cashflow_unknown_document_type
 import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.invoice_subtotal
@@ -113,10 +114,18 @@ internal fun AmountsCard(
                     )
                 }
                 else -> {
+                    // Show neutral placeholder during processing, error text only when truly unknown
+                    val (textRes, textColor) = if (state.isProcessing) {
+                        Res.string.cashflow_processing_calculating_totals to
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        Res.string.cashflow_unknown_document_type to
+                            MaterialTheme.colorScheme.error
+                    }
                     Text(
-                        text = stringResource(Res.string.cashflow_unknown_document_type),
+                        text = stringResource(textRes),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
+                        color = textColor,
                     )
                 }
             }

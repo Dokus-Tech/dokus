@@ -8,6 +8,8 @@ import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.ReprocessRequest
+import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.UpdateDraftResponse
 
 /**
@@ -42,4 +44,9 @@ interface DocumentReviewGateway {
         dpi: Int = 150,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
+
+    suspend fun reprocessDocument(
+        documentId: DocumentId,
+        request: ReprocessRequest = ReprocessRequest()
+    ): Result<ReprocessResponse>
 }

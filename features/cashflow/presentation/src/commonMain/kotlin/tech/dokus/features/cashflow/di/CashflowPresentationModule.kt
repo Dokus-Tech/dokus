@@ -107,6 +107,7 @@ val cashflowViewModelModule = module {
             updateDocumentDraftContact = get(),
             confirmDocument = get(),
             rejectDocument = get(),
+            reprocessDocument = get(),
             getDocumentPages = get(),
             getContact = get()
         )

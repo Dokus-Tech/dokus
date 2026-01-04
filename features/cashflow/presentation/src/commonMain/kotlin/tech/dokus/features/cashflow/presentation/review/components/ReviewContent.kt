@@ -214,6 +214,21 @@ private fun ReviewDetailsPane(
                     .padding(bottom = Constrains.Spacing.large),
                 verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium),
             ) {
+                // Show failure banner at top when extraction failed
+                AnimatedVisibility(
+                    visible = state.isFailed && !state.failureBannerDismissed,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    AnalysisFailedBanner(
+                        reason = state.failureReason,
+                        isRetrying = state.isProcessing,
+                        onRetry = { onIntent(DocumentReviewIntent.RetryAnalysis) },
+                        onContinueManually = { onIntent(DocumentReviewIntent.DismissFailureBanner) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
                 CounterpartyCard(
                     state = state,
                     onIntent = onIntent,
@@ -289,6 +304,21 @@ private fun MobileReviewContent(
                 PdfPreviewRow(
                     previewState = state.previewState,
                     onClick = { onIntent(DocumentReviewIntent.OpenPreviewSheet) },
+                )
+            }
+
+            // Show failure banner when extraction failed
+            AnimatedVisibility(
+                visible = state.isFailed && !state.failureBannerDismissed,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                AnalysisFailedBanner(
+                    reason = state.failureReason,
+                    isRetrying = state.isProcessing,
+                    onRetry = { onIntent(DocumentReviewIntent.RetryAnalysis) },
+                    onContinueManually = { onIntent(DocumentReviewIntent.DismissFailureBanner) },
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 

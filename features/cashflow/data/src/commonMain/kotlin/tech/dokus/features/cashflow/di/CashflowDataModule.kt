@@ -37,6 +37,7 @@ import tech.dokus.features.cashflow.usecase.ListPeppolTransmissionsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.LoadCashflowDocumentsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.PollPeppolInboxUseCaseImpl
 import tech.dokus.features.cashflow.usecase.RejectDocumentUseCaseImpl
+import tech.dokus.features.cashflow.usecase.ReprocessDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.SendChatMessageUseCaseImpl
 import tech.dokus.features.cashflow.usecase.SendInvoiceViaPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.SubmitInvoiceUseCaseImpl
@@ -61,6 +62,7 @@ import tech.dokus.features.cashflow.usecases.ListPeppolTransmissionsUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowDocumentsUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolInboxUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.SendChatMessageUseCase
 import tech.dokus.features.cashflow.usecases.SendInvoiceViaPeppolUseCase
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceUseCase
@@ -129,6 +131,7 @@ val cashflowNetworkModule = module {
     singleOf(::ConfirmDocumentUseCaseImpl) bind ConfirmDocumentUseCase::class
     singleOf(::RejectDocumentUseCaseImpl) bind RejectDocumentUseCase::class
     singleOf(::GetDocumentPagesUseCaseImpl) bind GetDocumentPagesUseCase::class
+    singleOf(::ReprocessDocumentUseCaseImpl) bind ReprocessDocumentUseCase::class
 
     // Document upload
     singleOf(::UploadDocumentUseCaseImpl) bind UploadDocumentUseCase::class

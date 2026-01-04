@@ -8,6 +8,8 @@ import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.ReprocessRequest
+import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.UpdateDraftResponse
 
 /**
@@ -67,4 +69,15 @@ interface GetDocumentPagesUseCase {
         dpi: Int = 150,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
+}
+
+/**
+ * Use case for re-triggering AI extraction on a document.
+ * This is used when the initial extraction fails and the user wants to retry.
+ */
+interface ReprocessDocumentUseCase {
+    suspend operator fun invoke(
+        documentId: DocumentId,
+        request: ReprocessRequest = ReprocessRequest()
+    ): Result<ReprocessResponse>
 }

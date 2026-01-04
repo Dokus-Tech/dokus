@@ -198,6 +198,11 @@
     <string name="cashflow_confidence_low">Low</string>
     <string name="cashflow_loading_document">Loading document...</string>
     <string name="cashflow_unknown_document_type">Unknown document type</string>
+    <string name="cashflow_processing_identifying_type">Identifying document type...</string>
+    <string name="cashflow_processing_calculating_totals">Calculating totals...</string>
+    <string name="cashflow_analysis_failed_title">Couldn\'t analyze this document</string>
+    <string name="cashflow_analysis_retry">Retry Analysis</string>
+    <string name="cashflow_analysis_continue_manually">Continue Manually</string>
     <string name="cashflow_document_rejected">Document rejected</string>
     <string name="cashflow_client_information">Client Information</string>
     <string name="cashflow_client_name">Client Name</string>
