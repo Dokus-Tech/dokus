@@ -34,9 +34,10 @@ import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.pending_documents_empty
-import tech.dokus.aura.resources.pending_documents_need_confirmation
 import tech.dokus.aura.resources.pending_documents_title
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.features.cashflow.presentation.model.toUiStatus
+import tech.dokus.foundation.aura.components.DocumentStatusBadge
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -57,8 +58,6 @@ private val ShimmerNameHeight = 16.dp
 private val ShimmerBadgeWidth = 100.dp
 private val ShimmerBadgeHeight = 22.dp
 private val BadgeCornerRadius = 16.dp
-private val BadgeHorizontalPadding = 12.dp
-private val BadgeVerticalPadding = 4.dp
 private val LoadingIndicatorSize = 24.dp
 private val LoadingIndicatorStrokeWidth = 2.dp
 
@@ -343,30 +342,11 @@ private fun PendingDocumentItem(
 
         Spacer(Modifier.width(ItemSpacing))
 
-        // "Need confirmation" badge
-        NeedConfirmationBadge()
+        // Status badge
+        DocumentStatusBadge(status = processing.toUiStatus())
     }
 }
 
-/**
- * Badge showing "Need confirmation" status.
- */
-@Composable
-private fun NeedConfirmationBadge(
-    modifier: Modifier = Modifier
-) {
-    Text(
-        text = stringResource(Res.string.pending_documents_need_confirmation),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.error,
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.errorContainer,
-                shape = RoundedCornerShape(BadgeCornerRadius)
-            )
-            .padding(horizontal = BadgeHorizontalPadding, vertical = BadgeVerticalPadding)
-    )
-}
 
 /**
  * Get a display name for a pending document.
@@ -390,7 +370,7 @@ private fun getDocumentDisplayName(record: DocumentRecordDto): String {
                 "$typePrefix $documentNumber"
             }
 
-            !filename.isNullOrBlank() -> {
+            filename.isNotBlank() -> {
                 val nameWithoutExtension = filename.substringBeforeLast(".").uppercase()
                 "$typePrefix $nameWithoutExtension"
             }
