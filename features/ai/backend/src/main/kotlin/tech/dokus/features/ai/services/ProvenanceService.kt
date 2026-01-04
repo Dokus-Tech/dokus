@@ -25,7 +25,10 @@ class ProvenanceService(
         if (config.isProvenanceEnabled()) {
             logger.info("Provenance service initialized (Claude API enabled)")
         } else {
-            logger.debug("Provenance service disabled (mode=${config.mode}, apiKey=${if (config.anthropicApiKey != null) "set" else "not set"})")
+            logger.debug(
+                "Provenance service disabled (mode=${config.mode}, " +
+                    "apiKey=${if (config.anthropicApiKey != null) "set" else "not set"})"
+            )
         }
     }
 
@@ -44,6 +47,7 @@ class ProvenanceService(
      * @param extractedData The extracted invoice fields
      * @return Provenance mapping or null if not enabled
      */
+    @Suppress("UNUSED_PARAMETER")
     suspend fun generateInvoiceProvenance(
         rawText: String,
         extractedData: Map<String, Any?>
@@ -64,6 +68,7 @@ class ProvenanceService(
      *
      * TODO: Implement similarly to invoice provenance.
      */
+    @Suppress("UNUSED_PARAMETER")
     suspend fun generateBillProvenance(
         rawText: String,
         extractedData: Map<String, Any?>
@@ -78,6 +83,7 @@ class ProvenanceService(
      *
      * TODO: Implement similarly to invoice provenance.
      */
+    @Suppress("UNUSED_PARAMETER")
     suspend fun generateReceiptProvenance(
         rawText: String,
         extractedData: Map<String, Any?>

@@ -1,11 +1,14 @@
 package tech.dokus.features.ai.agents
 
-import ai.koog.prompt.dsl.prompt
+import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
+import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.RequestMetaInfo
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.Clock
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.ExtractedBillData
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
@@ -95,22 +98,33 @@ class BillExtractionAgent(
         }
 
         return try {
-            // Build vision prompt with image attachments
-            val visionPrompt = prompt("bill-extractor") {
-                system(systemPrompt)
-                user {
-                    text("Extract bill/supplier invoice data from this ${images.size}-page document:")
-                    images.forEach { docImage ->
-                        image(
-                            ContentPart.Image(
-                                content = AttachmentContent.Binary.Bytes(docImage.imageBytes),
-                                format = "png",
-                                mimeType = docImage.mimeType
-                            )
+            // Build vision prompt with image attachments (direct construction for compatibility)
+            val systemMessage = Message.System(
+                parts = listOf(ContentPart.Text(systemPrompt)),
+                metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
+            )
+
+            val userParts = buildList {
+                add(ContentPart.Text("Extract bill/supplier invoice data from this ${images.size}-page document:"))
+                images.forEach { docImage ->
+                    add(
+                        ContentPart.Image(
+                            content = AttachmentContent.Binary.Bytes(docImage.imageBytes),
+                            format = "png",
+                            mimeType = docImage.mimeType
                         )
-                    }
+                    )
                 }
             }
+            val userMessage = Message.User(
+                parts = userParts,
+                metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
+            )
+
+            val visionPrompt = Prompt(
+                messages = listOf(systemMessage, userMessage),
+                id = "bill-extractor"
+            )
 
             // Execute prompt and get response
             val response = executor.execute(visionPrompt, model, emptyList()).first()

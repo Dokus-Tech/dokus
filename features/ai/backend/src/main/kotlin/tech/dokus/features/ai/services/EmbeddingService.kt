@@ -8,6 +8,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.utils.json
+import tech.dokus.features.ai.config.AIModels
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -30,14 +31,6 @@ class EmbeddingService(
 ) {
     private val logger = loggerFor()
 
-    companion object {
-        /** Embedding model (hardcoded, not configurable) */
-        const val EMBEDDING_MODEL = "nomic-embed-text"
-
-        /** Embedding dimensions for nomic-embed-text */
-        const val EMBEDDING_DIMENSIONS = 768
-    }
-
     /**
      * Result of embedding generation.
      */
@@ -57,15 +50,16 @@ class EmbeddingService(
      * @return EmbeddingResult containing the embedding vector and metadata
      * @throws EmbeddingException if embedding generation fails
      */
+    @Suppress("ThrowsCount")
     suspend fun generateEmbedding(text: String): EmbeddingResult {
         val baseUrl = config.ollamaHost.trimEnd('/')
         val url = "$baseUrl/api/embeddings"
 
-        logger.debug("Generating embedding: model=$EMBEDDING_MODEL, textLength=${text.length}")
+        logger.debug("Generating embedding: model=${AIModels.EMBEDDING_MODEL_NAME}, textLength=${text.length}")
 
         try {
             val request = OllamaEmbeddingRequest(
-                model = EMBEDDING_MODEL,
+                model = AIModels.EMBEDDING_MODEL_NAME,
                 prompt = text
             )
 
@@ -98,7 +92,7 @@ class EmbeddingService(
             return EmbeddingResult(
                 embedding = embedding,
                 dimensions = embedding.size,
-                model = EMBEDDING_MODEL
+                model = AIModels.EMBEDDING_MODEL_NAME
             )
         } catch (e: EmbeddingException) {
             throw e
@@ -128,12 +122,13 @@ class EmbeddingService(
     /**
      * Get the embedding dimensions (always 768 for nomic-embed-text).
      */
-    fun getEmbeddingDimensions(): Int = EMBEDDING_DIMENSIONS
+    fun getEmbeddingDimensions(): Int = AIModels.EMBEDDING_DIMENSIONS
 
     /**
      * Check if the embedding service is available.
      * Always returns true since Ollama is always configured.
      */
+    @Suppress("FunctionOnlyReturningConstant")
     fun isAvailable(): Boolean = true
 }
 

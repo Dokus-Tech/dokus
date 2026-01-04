@@ -26,11 +26,11 @@ enum class AIMode(val configValue: String) {
 }
 
 /**
- * Simplified AI configuration using mode-based model selection.
+ * AI configuration for mode-based model selection.
  *
- * Mode determines which models are used for each purpose:
- * - light: qwen3-vl:2b for vision tasks, qwen3:8b for chat
- * - normal/cloud: qwen3-vl:32b for vision tasks, qwen3:30b-a3b for chat
+ * Mode determines which models are used (defined in AIModels):
+ * - light: Smaller models for resource-constrained environments
+ * - normal/cloud: Larger models for quality
  *
  * Document processing (classification, extraction) uses vision models that
  * analyze document images directly, eliminating the need for OCR.
@@ -41,32 +41,6 @@ data class AIConfig(
     val anthropicApiKey: String?
 ) {
     /**
-     * Get the model name for a specific purpose based on current mode.
-     */
-    fun getModel(purpose: ModelPurpose): String = when (mode) {
-        AIMode.LIGHT -> when (purpose) {
-            // Vision models for document processing
-            ModelPurpose.CLASSIFICATION -> LIGHT_VISION_MODEL
-            ModelPurpose.DOCUMENT_EXTRACTION -> LIGHT_VISION_MODEL
-            // Text models for chat and other tasks
-            ModelPurpose.CATEGORIZATION -> LIGHT_CHAT_MODEL
-            ModelPurpose.SUGGESTIONS -> LIGHT_CHAT_MODEL
-            ModelPurpose.CHAT -> LIGHT_CHAT_MODEL
-            ModelPurpose.EMBEDDING -> EMBEDDING_MODEL
-        }
-        AIMode.NORMAL, AIMode.CLOUD -> when (purpose) {
-            // Vision models for document processing
-            ModelPurpose.CLASSIFICATION -> QUALITY_VISION_MODEL
-            ModelPurpose.DOCUMENT_EXTRACTION -> QUALITY_VISION_MODEL
-            // Text models for chat and other tasks
-            ModelPurpose.CATEGORIZATION -> QUALITY_CHAT_MODEL
-            ModelPurpose.SUGGESTIONS -> QUALITY_CHAT_MODEL
-            ModelPurpose.CHAT -> QUALITY_CHAT_MODEL
-            ModelPurpose.EMBEDDING -> EMBEDDING_MODEL
-        }
-    }
-
-    /**
      * Check if provenance tracking should be enabled.
      * Only available in cloud mode with valid Anthropic API key.
      */
@@ -74,20 +48,6 @@ data class AIConfig(
         mode == AIMode.CLOUD && !anthropicApiKey.isNullOrBlank()
 
     companion object {
-        // Vision models (for document classification and extraction)
-        const val LIGHT_VISION_MODEL = "qwen3-vl:2b"
-        const val QUALITY_VISION_MODEL = "qwen3-vl:32b"
-
-        // Chat/text models (for chat, categorization, suggestions)
-        const val LIGHT_CHAT_MODEL = "qwen3:8b"
-        const val QUALITY_CHAT_MODEL = "qwen3:30b-a3b"
-
-        // Embedding model (always the same)
-        const val EMBEDDING_MODEL = "nomic-embed-text"
-
-        // Default Ollama host
-        const val DEFAULT_OLLAMA_HOST = "http://localhost:11434"
-
         /**
          * Load AI config from HOCON configuration.
          */

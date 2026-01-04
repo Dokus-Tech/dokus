@@ -1,11 +1,14 @@
 package tech.dokus.features.ai.agents
 
-import ai.koog.prompt.dsl.prompt
+import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
+import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.RequestMetaInfo
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.Clock
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.DocumentClassification
@@ -61,22 +64,33 @@ class DocumentClassificationAgent(
         }
 
         return try {
-            // Build vision prompt with image attachments
-            val visionPrompt = prompt("document-classifier") {
-                system(systemPrompt)
-                user {
-                    text("Classify this ${images.size}-page document:")
-                    images.forEach { docImage ->
-                        image(
-                            ContentPart.Image(
-                                content = AttachmentContent.Binary.Bytes(docImage.imageBytes),
-                                format = "png",
-                                mimeType = docImage.mimeType
-                            )
+            // Build vision prompt with image attachments (direct construction for compatibility)
+            val systemMessage = Message.System(
+                parts = listOf(ContentPart.Text(systemPrompt)),
+                metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
+            )
+
+            val userParts = buildList {
+                add(ContentPart.Text("Classify this ${images.size}-page document:"))
+                images.forEach { docImage ->
+                    add(
+                        ContentPart.Image(
+                            content = AttachmentContent.Binary.Bytes(docImage.imageBytes),
+                            format = "png",
+                            mimeType = docImage.mimeType
                         )
-                    }
+                    )
                 }
             }
+            val userMessage = Message.User(
+                parts = userParts,
+                metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
+            )
+
+            val visionPrompt = Prompt(
+                messages = listOf(systemMessage, userMessage),
+                id = "document-classifier"
+            )
 
             // Execute prompt and get response
             val response = executor.execute(visionPrompt, model, emptyList()).first()
