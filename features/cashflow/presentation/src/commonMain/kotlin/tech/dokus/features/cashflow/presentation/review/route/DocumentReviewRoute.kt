@@ -1,9 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review.route
 
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +30,8 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -135,25 +135,24 @@ internal fun DocumentReviewRoute(
 
     // Discard changes confirmation dialog
     if (showDiscardDialog) {
-        AlertDialog(
+        DokusDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text(stringResource(Res.string.cashflow_discard_changes_title)) },
-            text = { Text(stringResource(Res.string.cashflow_discard_changes_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDiscardDialog = false
-                        container.store.intent(DocumentReviewIntent.ConfirmDiscardChanges)
-                    }
-                ) {
-                    Text(stringResource(Res.string.action_confirm))
-                }
+            title = stringResource(Res.string.cashflow_discard_changes_title),
+            content = {
+                Text(stringResource(Res.string.cashflow_discard_changes_message))
             },
-            dismissButton = {
-                TextButton(onClick = { showDiscardDialog = false }) {
-                    Text(stringResource(Res.string.action_cancel))
-                }
-            }
+            primaryAction = DokusDialogAction(
+                text = stringResource(Res.string.action_confirm),
+                onClick = {
+                    showDiscardDialog = false
+                    container.store.intent(DocumentReviewIntent.ConfirmDiscardChanges)
+                },
+                isDestructive = true
+            ),
+            secondaryAction = DokusDialogAction(
+                text = stringResource(Res.string.action_cancel),
+                onClick = { showDiscardDialog = false }
+            )
         )
     }
 

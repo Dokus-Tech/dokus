@@ -12,20 +12,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -38,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
@@ -54,14 +49,10 @@ import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.cancel
 import tech.dokus.aura.resources.role_accountant
-import tech.dokus.aura.resources.role_accountant_desc
 import tech.dokus.aura.resources.role_admin
-import tech.dokus.aura.resources.role_admin_desc
 import tech.dokus.aura.resources.role_editor
-import tech.dokus.aura.resources.role_editor_desc
 import tech.dokus.aura.resources.role_owner
 import tech.dokus.aura.resources.role_viewer
-import tech.dokus.aura.resources.role_viewer_desc
 import tech.dokus.aura.resources.state_sending
 import tech.dokus.aura.resources.team_cancel_invitation
 import tech.dokus.aura.resources.team_change_role
@@ -89,6 +80,9 @@ import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
@@ -443,11 +437,13 @@ private fun InviteDialog(
     onDismiss: () -> Unit,
     onInvite: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.team_invite_member)) },
-        text = {
-            Column {
+    DokusDialog(
+        onDismissRequest = { if (!isInviting) onDismiss() },
+        title = stringResource(Res.string.team_invite_member),
+        content = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 PTextFieldStandard(
                     fieldName = stringResource(Res.string.team_invite_email),
                     value = email,
@@ -455,37 +451,37 @@ private fun InviteDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(Modifier.height(16.dp))
-
                 Text(
                     text = stringResource(Res.string.team_invite_role),
                     style = MaterialTheme.typography.labelMedium
                 )
 
-                Spacer(Modifier.height(8.dp))
-
-                RoleSelector(
-                    selectedRole = role,
-                    onRoleSelected = onRoleChange
+                DokusSelectableRowGroup(
+                    items = UserRole.assignable,
+                    selectedItem = role,
+                    onItemSelected = onRoleChange,
+                    itemText = { getRoleDisplayName(it) },
+                    enabled = !isInviting,
                 )
             }
         },
-        confirmButton = {
-            PPrimaryButton(
-                text = if (isInviting) {
-                    stringResource(Res.string.state_sending)
-                } else {
-                    stringResource(Res.string.team_send_invitation)
-                },
-                enabled = !isInviting && email.isNotBlank(),
-                onClick = onInvite
-            )
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = if (isInviting) {
+                stringResource(Res.string.state_sending)
+            } else {
+                stringResource(Res.string.team_send_invitation)
+            },
+            onClick = onInvite,
+            isLoading = isInviting,
+            enabled = !isInviting && email.isNotBlank()
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.cancel),
+            onClick = onDismiss,
+            enabled = !isInviting
+        ),
+        dismissOnBackPress = !isInviting,
+        dismissOnClickOutside = !isInviting
     )
 }
 
@@ -497,67 +493,27 @@ private fun ChangeRoleDialog(
 ) {
     var selectedRole by remember { mutableStateOf(currentRole) }
 
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.team_change_role)) },
-        text = {
-            RoleSelector(
-                selectedRole = selectedRole,
-                onRoleSelected = { selectedRole = it }
+        title = stringResource(Res.string.team_change_role),
+        content = {
+            DokusSelectableRowGroup(
+                items = UserRole.assignable,
+                selectedItem = selectedRole,
+                onItemSelected = { selectedRole = it },
+                itemText = { getRoleDisplayName(it) },
             )
         },
-        confirmButton = {
-            PPrimaryButton(
-                text = stringResource(Res.string.action_save),
-                enabled = selectedRole != currentRole,
-                onClick = { onRoleSelected(selectedRole) }
-            )
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_save),
+            onClick = { onRoleSelected(selectedRole) },
+            enabled = selectedRole != currentRole
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.cancel),
+            onClick = onDismiss
+        )
     )
-}
-
-@Composable
-private fun RoleSelector(
-    selectedRole: UserRole,
-    onRoleSelected: (UserRole) -> Unit
-) {
-    Column(modifier = Modifier.selectableGroup()) {
-        UserRole.assignable.forEach { role ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .selectable(
-                        selected = role == selectedRole,
-                        onClick = { onRoleSelected(role) },
-                        role = Role.RadioButton
-                    )
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = role == selectedRole,
-                    onClick = null
-                )
-                Spacer(Modifier.width(8.dp))
-                Column {
-                    Text(
-                        text = getRoleDisplayName(role),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = getRoleDescription(role),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -567,21 +523,25 @@ private fun ConfirmationDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(message) },
-        confirmButton = {
-            PPrimaryButton(
-                text = stringResource(Res.string.action_confirm),
-                onClick = onConfirm
+        title = title,
+        content = {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_confirm),
+            onClick = onConfirm,
+            isDestructive = true
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.cancel),
+            onClick = onDismiss
+        )
     )
 }
 
@@ -593,17 +553,6 @@ private fun getRoleDisplayName(role: UserRole): String {
         UserRole.Accountant -> stringResource(Res.string.role_accountant)
         UserRole.Editor -> stringResource(Res.string.role_editor)
         UserRole.Viewer -> stringResource(Res.string.role_viewer)
-    }
-}
-
-@Composable
-private fun getRoleDescription(role: UserRole): String {
-    return when (role) {
-        UserRole.Owner -> ""
-        UserRole.Admin -> stringResource(Res.string.role_admin_desc)
-        UserRole.Accountant -> stringResource(Res.string.role_accountant_desc)
-        UserRole.Editor -> stringResource(Res.string.role_editor_desc)
-        UserRole.Viewer -> stringResource(Res.string.role_viewer_desc)
     }
 }
 

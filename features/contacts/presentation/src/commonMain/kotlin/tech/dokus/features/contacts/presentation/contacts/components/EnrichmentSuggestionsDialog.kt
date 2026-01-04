@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +36,9 @@ import tech.dokus.aura.resources.contacts_enrichment_not_now
 import tech.dokus.aura.resources.contacts_enrichment_suggestions
 import tech.dokus.aura.resources.contacts_select_all
 import tech.dokus.features.contacts.mvi.EnrichmentSuggestion
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import tech.dokus.foundation.aura.constrains.Constrains
 
 // UI dimension constants
 private val SpacingSmall = 4.dp
@@ -67,8 +69,9 @@ internal fun EnrichmentSuggestionsDialog(
     val selectedSuggestions =
         remember { mutableStateListOf<EnrichmentSuggestion>().apply { addAll(suggestions) } }
 
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = onDismiss,
+        title = stringResource(Res.string.contacts_enrichment_suggestions),
         icon = {
             Icon(
                 imageVector = Icons.Default.AutoAwesome,
@@ -76,16 +79,9 @@ internal fun EnrichmentSuggestionsDialog(
                 tint = MaterialTheme.colorScheme.primary
             )
         },
-        title = {
-            Text(
-                text = stringResource(Res.string.contacts_enrichment_suggestions),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
+        content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(SpacingDefault)
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
             ) {
                 Text(
                     text = stringResource(Res.string.contacts_enrichment_hint),
@@ -93,7 +89,7 @@ internal fun EnrichmentSuggestionsDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(SpacingDefault))
+                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
 
                 suggestions.forEach { suggestion ->
                     val isSelected = suggestion in selectedSuggestions
@@ -112,7 +108,7 @@ internal fun EnrichmentSuggestionsDialog(
                 }
 
                 if (suggestions.size > 1) {
-                    Spacer(modifier = Modifier.height(SpacingSmall))
+                    Spacer(modifier = Modifier.height(Constrains.Spacing.xSmall))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
@@ -142,37 +138,22 @@ internal fun EnrichmentSuggestionsDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = { onApply(selectedSuggestions.toList()) },
-                enabled = selectedSuggestions.isNotEmpty()
-            ) {
-                Text(
-                    text = if (selectedSuggestions.size == suggestions.size) {
-                        stringResource(Res.string.contacts_enrichment_apply_all)
-                    } else {
-                        stringResource(
-                            Res.string.contacts_enrichment_apply_selected_count,
-                            selectedSuggestions.size
-                        )
-                    },
-                    fontWeight = FontWeight.Medium,
-                    color = if (selectedSuggestions.isNotEmpty()) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+        primaryAction = DokusDialogAction(
+            text = if (selectedSuggestions.size == suggestions.size) {
+                stringResource(Res.string.contacts_enrichment_apply_all)
+            } else {
+                stringResource(
+                    Res.string.contacts_enrichment_apply_selected_count,
+                    selectedSuggestions.size
                 )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = stringResource(Res.string.contacts_enrichment_not_now),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+            },
+            onClick = { onApply(selectedSuggestions.toList()) },
+            enabled = selectedSuggestions.isNotEmpty()
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.contacts_enrichment_not_now),
+            onClick = onDismiss
+        )
     )
 }
 

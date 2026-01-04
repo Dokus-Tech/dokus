@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +39,9 @@ import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerInfo
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Confirmation dialog shown after server validation.
@@ -61,39 +63,34 @@ fun ServerConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stringResource(Res.string.auth_server_found),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+        title = stringResource(Res.string.auth_server_found),
+        icon = {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp)
+            )
         },
-        text = {
-            Column {
+        content = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+            ) {
                 // Server info card
                 DokusCardSurface(
                     modifier = Modifier.fillMaxWidth(),
                     variant = DokusCardVariant.Soft,
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(Constrains.Spacing.medium)) {
                         ServerInfoRow(stringResource(Res.string.auth_server_name_label), serverInfo.name)
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(Constrains.Spacing.small))
                         ServerInfoRow(stringResource(Res.string.auth_server_version), serverInfo.version)
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(Constrains.Spacing.small))
                         ServerInfoRow(stringResource(Res.string.auth_server_url), config.baseUrl)
                         if (serverInfo.features.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
                             ServerInfoRow(
                                 stringResource(Res.string.auth_server_features_label),
                                 serverInfo.features.joinToString(", ")
@@ -102,11 +99,7 @@ fun ServerConfirmationDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
                 HorizontalDivider()
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // Warning section
                 Row(
@@ -118,7 +111,7 @@ fun ServerConfirmationDialog(
                         tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.size(20.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Constrains.Spacing.small))
                     Column {
                         Text(
                             text = stringResource(Res.string.auth_server_connecting_will),
@@ -126,7 +119,7 @@ fun ServerConfirmationDialog(
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(Constrains.Spacing.xSmall))
                         Text(
                             text = stringResource(Res.string.auth_server_logout_warning),
                             style = MaterialTheme.typography.bodySmall,
@@ -146,23 +139,14 @@ fun ServerConfirmationDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(
-                    text = stringResource(Res.string.action_connect),
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = stringResource(Res.string.action_cancel),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_connect),
+            onClick = onConfirm
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_cancel),
+            onClick = onDismiss
+        )
     )
 }
 

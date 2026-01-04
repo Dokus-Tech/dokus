@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,6 +37,8 @@ import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionSummary
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constrains
 
 @Composable
@@ -47,15 +48,11 @@ internal fun SessionPickerDialog(
     onNewSession: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    DokusDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(Res.string.chat_history_title),
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
+        title = stringResource(Res.string.chat_history_title),
+        scrollableContent = false, // LazyColumn manages its own scrolling
+        content = {
             if (sessions.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -87,22 +84,14 @@ internal fun SessionPickerDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onNewSession) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(Constrains.Spacing.xSmall))
-                Text(stringResource(Res.string.chat_new_chat))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.action_cancel))
-            }
-        }
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.chat_new_chat),
+            onClick = onNewSession
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.action_cancel),
+            onClick = onDismiss
+        )
     )
 }
 

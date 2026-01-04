@@ -79,6 +79,8 @@ data class DokusDialogAction(
  * @param secondaryAction Optional secondary action button (left of primary)
  * @param dismissOnBackPress Whether to dismiss when back/escape is pressed
  * @param dismissOnClickOutside Whether to dismiss when clicking outside the dialog
+ * @param scrollableContent Whether the content area should be scrollable. Set to false when
+ *   content contains its own scrollable elements like LazyColumn.
  */
 @Composable
 fun DokusDialog(
@@ -91,6 +93,7 @@ fun DokusDialog(
     secondaryAction: DokusDialogAction? = null,
     dismissOnBackPress: Boolean = true,
     dismissOnClickOutside: Boolean = true,
+    scrollableContent: Boolean = true,
 ) {
     val focusRequester = remember { FocusRequester() }
 
@@ -159,11 +162,17 @@ fun DokusDialog(
 
                 Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
-                // Content (scrollable)
+                // Content (optionally scrollable)
                 Box(
                     modifier = Modifier
                         .weight(weight = 1f, fill = false)
-                        .verticalScroll(rememberScrollState())
+                        .then(
+                            if (scrollableContent) {
+                                Modifier.verticalScroll(rememberScrollState())
+                            } else {
+                                Modifier
+                            }
+                        )
                 ) {
                     content()
                 }

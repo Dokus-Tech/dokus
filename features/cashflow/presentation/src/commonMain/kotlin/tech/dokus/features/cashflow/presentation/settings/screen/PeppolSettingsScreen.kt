@@ -16,7 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -58,6 +57,8 @@ import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.extensions.description
 import tech.dokus.foundation.aura.extensions.iconized
@@ -92,28 +93,25 @@ fun PeppolSettingsScreen(
     }
 
     if (showDeleteConfirmation) {
-        AlertDialog(
+        DokusDialog(
             onDismissRequest = onDeleteDismiss,
-            title = {
-                Text(text = stringResource(Res.string.peppol_delete_settings))
+            title = stringResource(Res.string.peppol_delete_settings),
+            content = {
+                Text(
+                    text = stringResource(Res.string.peppol_delete_warning),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             },
-            text = {
-                Text(text = stringResource(Res.string.peppol_delete_warning))
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = onDeleteConfirm
-                ) {
-                    Text(text = stringResource(Res.string.action_delete))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = onDeleteDismiss
-                ) {
-                    Text(text = stringResource(Res.string.action_cancel))
-                }
-            }
+            primaryAction = DokusDialogAction(
+                text = stringResource(Res.string.action_delete),
+                onClick = onDeleteConfirm,
+                isDestructive = true
+            ),
+            secondaryAction = DokusDialogAction(
+                text = stringResource(Res.string.action_cancel),
+                onClick = onDeleteDismiss
+            )
         )
     }
 }
