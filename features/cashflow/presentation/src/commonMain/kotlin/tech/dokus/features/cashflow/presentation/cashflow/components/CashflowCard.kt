@@ -2,13 +2,16 @@ package tech.dokus.features.cashflow.presentation.cashflow.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -197,84 +200,82 @@ private fun CashflowDocumentItem(
 }
 
 /**
- * A badge component for displaying document status with colored background.
+ * A status indicator using dot + text pattern (Design System v1).
+ * No filled backgrounds, no pills - just a colored dot and text.
  *
  * @param document The financial document to display status for
- * @param modifier Optional modifier for the badge
+ * @param modifier Optional modifier for the indicator
  */
 @Composable
 private fun DocumentStatusBadge(
     document: FinancialDocumentDto,
     modifier: Modifier = Modifier
 ) {
-    // Determine colors and text based on document type and status
-    val (backgroundColor, textColor, statusText) = when (document) {
+    // Determine color and text based on document type and status
+    val (statusColor, statusText) = when (document) {
         is FinancialDocumentDto.InvoiceDto -> getInvoiceStatusStyle(document.status)
-        is FinancialDocumentDto.ExpenseDto -> Triple(
-            MaterialTheme.colorScheme.surfaceVariant,
+        is FinancialDocumentDto.ExpenseDto -> Pair(
             MaterialTheme.colorScheme.onSurfaceVariant,
             stringResource(Res.string.document_type_expense)
         )
-        is FinancialDocumentDto.BillDto -> Triple(
-            MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.onSecondaryContainer,
+        is FinancialDocumentDto.BillDto -> Pair(
+            MaterialTheme.colorScheme.secondary,
             document.status.toDisplayText()
         )
     }
 
-    Text(
-        text = statusText,
-        style = MaterialTheme.typography.labelSmall,
-        color = textColor,
-        modifier = modifier
-            .background(
-                color = backgroundColor,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(horizontal = 12.dp, vertical = 2.dp)
-    )
+    // Dot + text pattern (Design System v1)
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .background(statusColor, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = statusText,
+            style = MaterialTheme.typography.labelSmall,
+            color = statusColor
+        )
+    }
 }
 
 @Composable
-private fun getInvoiceStatusStyle(status: InvoiceStatus): Triple<Color, Color, String> {
+private fun getInvoiceStatusStyle(status: InvoiceStatus): Pair<Color, String> {
     return when (status) {
-        InvoiceStatus.Draft -> Triple(
-            MaterialTheme.colorScheme.surfaceVariant,
+        InvoiceStatus.Draft -> Pair(
             MaterialTheme.colorScheme.onSurfaceVariant,
             stringResource(Res.string.invoice_status_draft)
         )
-        InvoiceStatus.Sent, InvoiceStatus.Overdue -> Triple(
-            MaterialTheme.colorScheme.errorContainer,
-            MaterialTheme.colorScheme.onErrorContainer,
+        InvoiceStatus.Sent, InvoiceStatus.Overdue -> Pair(
+            MaterialTheme.colorScheme.error,
             if (status == InvoiceStatus.Overdue) {
                 stringResource(Res.string.invoice_status_overdue)
             } else {
                 stringResource(Res.string.pending_documents_need_confirmation)
             }
         )
-        InvoiceStatus.Viewed -> Triple(
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer,
+        InvoiceStatus.Viewed -> Pair(
+            MaterialTheme.colorScheme.primary,
             stringResource(Res.string.invoice_status_viewed)
         )
-        InvoiceStatus.PartiallyPaid -> Triple(
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer,
+        InvoiceStatus.PartiallyPaid -> Pair(
+            MaterialTheme.colorScheme.primary,
             stringResource(Res.string.invoice_status_partial)
         )
-        InvoiceStatus.Paid -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
+        InvoiceStatus.Paid -> Pair(
+            MaterialTheme.colorScheme.tertiary,
             stringResource(Res.string.invoice_status_paid)
         )
-        InvoiceStatus.Cancelled -> Triple(
-            MaterialTheme.colorScheme.surfaceVariant,
+        InvoiceStatus.Cancelled -> Pair(
             MaterialTheme.colorScheme.onSurfaceVariant,
             stringResource(Res.string.invoice_status_cancelled)
         )
-        InvoiceStatus.Refunded -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
+        InvoiceStatus.Refunded -> Pair(
+            MaterialTheme.colorScheme.tertiary,
             stringResource(Res.string.invoice_status_refunded)
         )
     }

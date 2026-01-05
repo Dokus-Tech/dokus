@@ -20,10 +20,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import tech.dokus.foundation.aura.style.isDark
 
-// Card UI constants
+// Card UI constants (Design System v1: no shadows, use borders for separation)
 private val BorderWidth = 1.dp
-private val DefaultElevation = 1.dp
-private val GlassElevation = 2.dp
+private val DefaultElevation = 0.dp
+private val GlassElevation = 0.dp
 private val HeaderFooterSpacing = 12.dp
 private const val SoftSurfaceAlpha = 0.97f
 private const val GlassSurfaceAlpha = 0.93f
@@ -45,7 +45,7 @@ enum class DokusCardPadding(val padding: Int) {
 fun DokusCardSurface(
     modifier: Modifier = Modifier,
     variant: DokusCardVariant = DokusCardVariant.Default,
-    shape: Shape = MaterialTheme.shapes.medium,
+    shape: Shape = MaterialTheme.shapes.small, // Design System v1: panels = 4dp
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     content: @Composable () -> Unit
@@ -57,10 +57,8 @@ fun DokusCardSurface(
         DokusCardVariant.Soft -> colorScheme.surface.copy(alpha = SoftSurfaceAlpha)
     }
     val borderStroke = BorderStroke(BorderWidth, colorScheme.outlineVariant)
-    val shadowElevation = when (variant) {
-        DokusCardVariant.Default -> if (isDark) 0.dp else DefaultElevation
-        DokusCardVariant.Soft -> DefaultElevation
-    }
+    // Design System v1: no shadows, use borders for separation
+    val shadowElevation = 0.dp
 
     if (onClick != null) {
         Surface(

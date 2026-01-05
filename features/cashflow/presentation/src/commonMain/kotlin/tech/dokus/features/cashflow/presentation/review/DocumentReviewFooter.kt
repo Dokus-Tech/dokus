@@ -91,8 +91,8 @@ fun DocumentReviewFooter(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        tonalElevation = 2.dp,
-        shadowElevation = 4.dp,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
     ) {
         if (isDocumentConfirmed || isDocumentRejected) {
             ConfirmedFooter(

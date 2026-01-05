@@ -80,11 +80,11 @@ import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.platform.Logger
 
-// UI dimension constants
+// UI dimension constants (Design System v1: no shadows, 6dp radius)
 private val DropdownTopPadding = 4.dp
-private val DropdownElevation = 8.dp
-private val DropdownCornerRadius = 8.dp
-private val DropdownTonalElevation = 3.dp
+private val DropdownElevation = 0.dp
+private val DropdownCornerRadius = 6.dp
+private val DropdownTonalElevation = 0.dp
 private val DropdownMaxHeight = 300.dp
 private val DropdownResultsMaxHeight = 240.dp
 private val DropdownItemPadding = 12.dp

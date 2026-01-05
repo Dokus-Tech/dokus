@@ -104,7 +104,7 @@ fun ImageCropperDialog(
                 .padding(Constrains.Spacing.large),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = Constrains.Elevation.medium
+            tonalElevation = Constrains.Elevation.modal
         ) {
             Column(
                 modifier = Modifier.padding(Constrains.Spacing.large),
