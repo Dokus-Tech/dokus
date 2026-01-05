@@ -154,7 +154,7 @@ private fun RailNavigationLayout(
             shape = MaterialTheme.shapes.large,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)),
             tonalElevation = 0.dp,
-            shadowElevation = 2.dp,
+            shadowElevation = 0.dp,
         ) {
             Column(
                 modifier = Modifier
@@ -181,7 +181,7 @@ private fun RailNavigationLayout(
             shape = MaterialTheme.shapes.large,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)),
             tonalElevation = 0.dp,
-            shadowElevation = 1.dp,
+            shadowElevation = 0.dp,
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),

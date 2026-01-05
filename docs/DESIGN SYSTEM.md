@@ -1,725 +1,212 @@
+DOKUS DESIGN SYSTEM — BASE (v1)
 
----
+Positioning
+Firstbase × Stripe × Tesla
+Ledger-first. Quiet. Serious. Predictable.
 
-**Revolut structure × Perplexity calm × Belgian reliability**
-  
+If something looks “designed”, it’s probably wrong.
 
-**Version:** 1.0
+⸻
 
-**Status:** Canonical source of truth
+## Core principles
+  1.	Structure over decoration
+        Alignment, spacing, and hierarchy matter more than visual effects.
+  2.	Tables are first-class citizens
+        Documents, Forecast, and Cashflow are ledgers, not feeds.
+  3.	Color is semantic
+        Color communicates state, never decoration.
+  4.	Silence by default
+        No visual noise, no urgency unless legally required.
 
-**Audience:** Product, design, frontend (CMP), contributors
+⸻
 
----
+## Corner radius (locked)
 
-## **0. DESIGN MISSION (NON-NEGOTIABLE)**
+Small, consistent, never expressive.
 
-  
+Allowed radius values
+•	radius-xs → 2dp (rare: tiny elements, dividers)
+•	radius-sm → 4dp (default)
+•	radius-md → 6dp (inputs, buttons, modals)
 
-Dokus is **not**:
+Usage rules
+•	Tables / rows → 0dp
+•	Panels / surfaces → 4dp
+•	Buttons → 6dp
+•	Inputs → 6dp
+•	Modals / sheets → 6dp
 
-- an accounting system
-    
-- a finance toy
-    
-- an AI demo
-    
+Large rounding, pills, or card bubbles are not allowed.
 
-  
+⸻
 
-Dokus **is**:
+3. Elevation & shadows
 
-  
+Default: no shadows.
+•	elevation-0 → everywhere by default
+•	elevation-1 → modals only (very subtle)
 
-> **A financial early-warning system for small Belgian businesses.**
+If separation is needed, use borders, spacing, or background contrast.
 
-  
+⸻
+## Color system
 
-Design must:
+Light mode
 
-- Reduce anxiety
-    
-- Surface risk early
-    
-- Respect uncertainty
-    
-- Remain calm under pressure
-    
-- Feel boring in a reassuring way
-    
+Backgrounds
+•	bg-app → #F8F9FB
+•	bg-surface → #FFFFFF
+•	bg-hover → #F1F5F9
 
-  
+Text
+•	text-primary → #0F172A
+•	text-secondary → #475569
+•	text-muted → #94A3B8
+•	text-disabled → #CBD5E1
 
-If a screen looks impressive but slightly stressful → it is wrong.
+Borders
+•	border-default → #E2E8F0
+•	border-subtle → #EDF2F7
 
----
+⸻
 
-## **1. CORE DESIGN PRINCIPLES**
+Dark mode
 
-1. **Clarity over decoration**
-    
-2. **Hierarchy over density**
-    
-3. **Structure over cleverness**
-    
-4. **Brand as accent, not paint**
-    
-5. **Calm beats cool**
-    
+Backgrounds
+•	bg-app → #020617
+•	bg-surface → #020617
+•	bg-hover → #0B1220
 
----
+Text
+•	text-primary → #E5E7EB
+•	text-secondary → #9CA3AF
+•	text-muted → #6B7280
+•	text-disabled → #4B5563
 
-## **2. TYPOGRAPHY**
+Borders
+•	border-default → #1F2937
 
-  
+Dark mode must feel terminal-grade, not decorative.
 
-### **Primary Typeface**
+⸻
 
-  
+5. Semantic colors (restricted)
 
-**Inter (Variable)**
+Used only to communicate status.
+•	status-processing → #64748B
+•	status-confirmed → #16A34A
+•	status-warning → #D97706
+•	status-error → #B91C1C
 
-  
+Rules
+•	No filled backgrounds by default
+•	Use dot + text
+•	One semantic color per row max
 
-Reasons:
+⸻
 
-- Neutral tone
-    
-- Excellent numerals
-    
-- Tables & finance friendly
-    
-- Industry standard (Stripe, Revolut, Linear)
-    
+6. Typography
 
-  
+Single font family, multiple weights.
 
-### **Allowed Weights**
+Hierarchy
+•	Page title → Medium, 16–18sp
+•	Section header → Medium, 14–15sp
+•	Table header → Medium, 12–13sp
+•	Table/body text → Regular, 13–14sp
+•	Metadata → Regular + muted color
 
-- 400 (Regular)
-    
-- 500 (Medium)
-    
-- 600 (Semibold)
-    
+No oversized hero text. Alignment matters more than size.
 
-  
+⸻
 
-❌ Avoid ≥700 except hero numbers.
+7. Layout & spacing
+   •	Max content width: 1200–1280px
+   •	Centered layout, left-aligned content
+   •	Spacing in 8dp increments
+   •	Tables use tight vertical padding
 
----
+Whitespace is clarity, not decoration.
 
-### **Type Scale**
+⸻
 
-|**Token**|**Size**|**Weight**|**Usage**|
-|---|---|---|---|
-|displayLarge|48|600|Onboarding / empty states|
-|headlineLarge|32|600|Page titles|
-|headlineMedium|24|600|Section headers|
-|titleLarge|20|500|Card titles|
-|titleMedium|16|500|List titles|
-|bodyLarge|16|400|Default body|
-|bodyMedium|14|400|Secondary text|
-|labelLarge|14|500|Buttons|
-|labelMedium|12|500|Metadata|
-|labelSmall|11|500|Captions|
+8. Table / Ledger system
 
-Line height:
+This is the core UI primitive in Dokus.
 
-- Body: **1.35**
-    
-- Titles: **1.2**
-    
+Rules
+•	No cards
+•	No row backgrounds
+•	1px horizontal dividers
+•	Subtle hover background
+•	Full-row click target if interactive
 
----
+Columns
+•	Numeric values right-aligned
+•	Dates aligned
+•	Status column last
 
-## **3. BRAND COLOR (SIGNATURE ONLY)**
+Grouping
+•	Collapsible sections allowed
+•	Headers act as dividers
+•	No animations
 
-  
+⸻
 
-### **Dokus Gold**
+9. Navigation
 
-```
-HEX: #D4AF37
-ARGB: 0xFFD4AF37
-```
+Menu principles
+•	Flat by default
+•	One level of nesting max
+•	Text-first
+•	Icons optional and subtle
 
-### **Rules**
+Active state
+•	Subtle background or thin left bar
+•	No bright highlights
 
-- ❌ Never primary button
-    
-- ❌ Never chart color
-    
-- ❌ Never money values
-    
-- ❌ Never navigation highlight
-    
-- ❌ Never background fill
-    
+Disabled / Coming soon
+•	Reduced opacity
+•	Not clickable
+•	Text suffix: · Coming soon
 
-  
+No badges, no locks, no hype.
 
-Allowed only as:
+⸻
 
-- 1–2dp accent border
-    
-- Small icon tint
-    
-- “Dokus insight” marker
-    
-- Rare divider highlight
-    
+10. Buttons & actions
+    •	Primary actions are neutral
+    •	Secondary actions are outline or text
+    •	Destructive actions require confirmation
 
-  
+Shape
+•	Radius: 6dp
+•	No gradients
+•	No elevation
 
-> Gold is **jewelry**, not wallpaper.
+⸻
 
----
+11. Empty & processing states
 
-## **4. MATERIAL 3 COLOR SYSTEM**
+Empty states
+•	Calm text
+•	No illustrations
+•	No CTA spam
 
-  
+Example: “No documents yet.”
 
-### **Light Theme**
+Processing
+•	Inline, non-blocking
+•	No full-screen loaders
 
-```
-primary              = #3B82F6
-onPrimary            = #FFFFFF
+⸻
 
-primaryContainer     = #E8F0FF
-onPrimaryContainer   = #0B1B3F
+12. Explicitly not allowed
+    •	Card-heavy layouts
+    •	Large rounded corners
+    •	Bright accent colors
+    •	Decorative icons
+    •	Animated UI for delight
+    •	“Friendly SaaS” tone
 
-secondary            = #64748B
-onSecondary          = #FFFFFF
-
-background           = #F8FAFC
-onBackground         = #0F172A
-
-surface              = #FFFFFF
-onSurface            = #0F172A
-
-surfaceVariant       = #F1F5F9
-onSurfaceVariant     = #334155
-
-outline              = #CBD5E1
-outlineVariant       = #E2E8F0
-
-error                = #DC2626
-onError              = #FFFFFF
-errorContainer       = #FEE2E2
-onErrorContainer     = #7F1D1D
-```
-
-### **Dark Theme (Professional)**
-
-```
-primary              = #60A5FA
-onPrimary            = #020617
-
-primaryContainer     = #1E3A8A
-onPrimaryContainer   = #DBEAFE
-
-secondary            = #94A3B8
-onSecondary          = #020617
-
-background           = #020617
-onBackground         = #E5E7EB
-
-surface              = #020617
-onSurface            = #E5E7EB
-
-surfaceVariant       = #0F172A
-onSurfaceVariant     = #CBD5E1
-
-outline              = #334155
-outlineVariant       = #1E293B
-
-error                = #F87171
-onError              = #020617
-errorContainer       = #7F1D1D
-onErrorContainer     = #FEE2E2
-```
-
----
-
-## **5. LAYOUT SYSTEM**
-
-  
-
-### **Desktop (≥1200px)**
-
-```
-[ Navigation ] [ Main Content ] [ Context Panel ]
-```
-
-- Navigation: persistent sidebar
-    
-- Main: lists, dashboards
-    
-- Context panel: details, guidance, AI
-    
-
-  
-
-### **Mobile**
-
-- Bottom navigation
-    
-- Single column
-    
-- Same components, lower density
-    
-
-  
-
-❌ Desktop must never be “scaled mobile”.
-
----
-
-## **6. SURFACE SYSTEM (CRITICAL)**
-
-  
-
-Dokus has **three surface types**.
-
-Nothing else is allowed.
-
----
-
-### **6.1 BASE CARD (DEFAULT WORKHORSE)**
-
-  
-
-**Used for ~80% of UI**
-
-  
-
-Purpose:
-
-- Host data
-    
-- Anchor structure
-    
-- Create predictable rhythm
-    
-
-  
-
-#### **Light theme**
-
-- Background: surface
-    
-- Opacity: 100%
-    
-- Border: 1dp outlineVariant
-    
-- Radius: **12dp**
-    
-- Elevation: **1**
-    
-- Shadow: soft, wide, low opacity
-    
-
-  
-
-#### **Dark theme**
-
-- Background: surfaceVariant
-    
-- Opacity: 100%
-    
-- Border: 1dp outlineVariant
-    
-- Radius: **12dp**
-    
-- Elevation: **0**
-    
-- Shadow: none
-    
-
----
-
-### **6.2 SOFT CARD (MICRO-GLASS VARIANT)**
-
-  
-
-Used sparingly:
-
-- Dashboard hero areas
-    
-- Transitional sections
-    
-- Calm emphasis
-    
-
-  
-
-Properties:
-
-- Background: surface
-    
-- Opacity: **96–98%**
-    
-- Blur: **none**
-    
-- Border: 1dp outlineVariant
-    
-- Radius: **12dp**
-    
-- Elevation: **1**
-    
-
-  
-
-This is **not frosted glass**.
-
-It must remain printable.
-
----
-
-### **6.3 GLASS SURFACE (ACCENT ONLY)**
-
-  
-
-Used for:
-
-- Guidance panels
-    
-- AI explanation
-    
-- Side context panels
-    
-- Modals / sheets
-    
-
-  
-
-Properties:
-
-- Opacity: **92–95%**
-    
-- Blur: **8–16dp**
-    
-- Border: 1dp outlineVariant @ 20%
-    
-- Radius: **16dp**
-    
-- Elevation: **2**
-    
-
-  
-
-❌ Never allowed for:
-
-- Tables
-    
-- Forms
-    
-- Invoices
-    
-- VAT
-    
-- Forecast charts
-    
-
----
-
-## **7. BASE CARD COMPOSABLE CONTRACT**
-
-  
-
-### **Conceptual API (CMP)**
-
-```
-DokusCard
- ├─ variant: Default | Soft
- ├─ padding: Default | Dense
- ├─ header (optional)
- ├─ content (required)
- └─ footer (optional)
-```
-
-### **Defaults**
-
-- Padding (default): 16dp
-    
-- Padding (dense): 12dp
-    
-- Header spacing: 12dp
-    
-- Footer spacing: 12dp
-    
-
-  
-
-Rules:
-
-- Cards never overlap
-    
-- Cards align to grid
-    
-- No card-in-card unless inner is **Soft**
-    
-- No glass-on-glass
-    
-
----
-
-## **8. COMPONENT DEFINITIONS**
-
-  
-
-### **8.1 KPI Card**
-
-- Variant: **Default**
-    
-- Content:
-    
-    - Primary value
-        
-    - Delta vs previous period
-        
-    - Indicator vs forecast
-        
-    
-- ❌ No charts inside
-    
-
----
-
-### **8.2 Forecast Chart (Signature)**
-
-- Surface: **Base Card**
-    
-- Lines:
-    
-    - Actual → solid
-        
-    - Forecast → dashed
-        
-    
-- Markers:
-    
-    - VAT
-        
-    - Corporate tax
-        
-    
-- No decoration
-    
-- No brand color usage
-    
-
----
-
-### **8.3 Status Chip (Mandatory)**
-
-  
-
-States:
-
-- Processing (blue)
-    
-- Needs review (amber)
-    
-- Completed (green)
-    
-- Error (red)
-    
-
-  
-
-Always icon + text.
-
----
-
-### **8.4 Guidance Panel**
-
-- Surface: **Glass**
-    
-- Tone: explanatory, calm
-    
-- Optional gold accent border (1–2dp)
-    
-
-  
-
-Used to reduce anxiety, never to upsell.
-
----
-
-## **9. DASHBOARD SCOPE (STRICT)**
-
-  
-
-Dashboard answers **three questions only**:
-
-1. Where am I now?
-    
-2. Where am I heading?
-    
-3. What will hurt me if I do nothing?
-    
-
-  
-
-### **Allowed on dashboard**
-
-- Spending (current period)
-    
-- Income (current period)
-    
-- Margin (current period)
-    
-- Forecasted balance
-    
-- Forecasted VAT
-    
-- Forecasted corporate tax
-    
-- Net balance after taxes
-    
-
-  
-
-### **Forbidden on dashboard**
-
-- Full tables
-    
-- Accounting jargon
-    
-- Line-by-line expenses
-    
-- Amortisation schedules (summary only)
-    
-
----
-
-## **10. NAVIGATION**
-
-  
-
-### **Desktop**
-
-- Persistent sidebar
-    
-- Text + icon
-    
-- No icon-only nav
-    
-- No hamburger
-    
-
-  
-
-### **Mobile**
-
-- Bottom navigation
-    
-- Max 5 items
-    
-- “More” contains secondary routes
-    
-
----
-
-## **11. ICONOGRAPHY**
-
-- Material Symbols Rounded
-    
-- Size: 20–24dp
-    
-- Icons support text only
-    
-- Icons never replace labels
-    
-
----
-
-## **12. SPACING SYSTEM**
-
-  
-
-Base unit: **8dp**
-
-- Card padding: 16dp
-    
-- Section spacing: 24dp
-    
-- Page padding:
-    
-    - Desktop: 24dp
-        
-    - Mobile: 16dp
-        
-    
-
-  
-
-Whitespace = confidence.
-
----
-
-## **13. MOTION**
-
-- Duration: 150–200ms
-    
-- Ease-out only
-    
-- No bounce
-    
-- No celebration
-    
-
-  
-
-Motion confirms actions — it never entertains.
-
----
-
-## **14. WHAT DOKUS MUST NEVER BECOME**
-
-  
-
-❌ Crypto dashboard
-
-❌ Trading app
-
-❌ Playful SaaS
-
-❌ Government portal
-
-❌ AI toy
-
----
-
-## **FINAL DESIGN STATEMENT**
-
-  
-
-> **Dokus should feel like a Swiss watch for Belgian administration —**
-
-> **precise, calm, modern, and quietly valuable.**
-
----
-
-This file is **the law**.
-
-If something is not defined here, it must not be invented.
-
-  
-
-If you want next, I can:
-
-- Convert this into **CMP theme + composables**
-    
-- Define **tablet-specific rules**
-    
-- Create a **design QA checklist**
-    
-- Or enforce this via **PR review rules**
-    
-
-  
-
-This is a strong, defensible system.
+If it feels boring, it is correct.

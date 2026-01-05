@@ -14,23 +14,23 @@ private const val DokusPrimaryLightHex = 0xFF3B82F6
 private const val DokusPrimaryDarkHex = 0xFF60A5FA
 
 // Color hex constants - Surfaces Light
-private const val DokusBackgroundLightHex = 0xFFF8FAFC
+private const val DokusBackgroundLightHex = 0xFFF8F9FB
 private const val DokusOnBackgroundLightHex = 0xFF0F172A
 private const val DokusSurfaceLightHex = 0xFFFFFFFF
 private const val DokusOnSurfaceLightHex = 0xFF0F172A
 private const val DokusSurfaceVariantLightHex = 0xFFF1F5F9
-private const val DokusOnSurfaceVariantLightHex = 0xFF334155
-private const val DokusOutlineLightHex = 0xFFCBD5E1
-private const val DokusOutlineVariantLightHex = 0xFFE2E8F0
+private const val DokusOnSurfaceVariantLightHex = 0xFF475569
+private const val DokusOutlineLightHex = 0xFFE2E8F0
+private const val DokusOutlineVariantLightHex = 0xFFEDF2F7
 
 // Color hex constants - Surfaces Dark
 private const val DokusBackgroundDarkHex = 0xFF020617
 private const val DokusOnBackgroundDarkHex = 0xFFE5E7EB
 private const val DokusSurfaceDarkHex = 0xFF020617
 private const val DokusOnSurfaceDarkHex = 0xFFE5E7EB
-private const val DokusSurfaceVariantDarkHex = 0xFF0F172A
-private const val DokusOnSurfaceVariantDarkHex = 0xFFCBD5E1
-private const val DokusOutlineDarkHex = 0xFF334155
+private const val DokusSurfaceVariantDarkHex = 0xFF0B1220
+private const val DokusOnSurfaceVariantDarkHex = 0xFF9CA3AF
+private const val DokusOutlineDarkHex = 0xFF1F2937
 private const val DokusOutlineVariantDarkHex = 0xFF1E293B
 
 // Color hex constants - Secondary
@@ -168,3 +168,19 @@ val ColorScheme.isDark: Boolean get() = background.luminance() < DarkLuminanceTh
 // Brand accent access (use intentionally; do not map to primary)
 @Suppress("UnusedReceiverParameter")
 val ColorScheme.brandGold: Color get() = dokusGold
+
+// Semantic status colors (Design System v1)
+@Suppress("UnusedReceiverParameter")
+val ColorScheme.statusProcessing: Color get() = Color(0xFF64748B)
+@Suppress("UnusedReceiverParameter")
+val ColorScheme.statusConfirmed: Color get() = Color(0xFF16A34A)
+@Suppress("UnusedReceiverParameter")
+val ColorScheme.statusWarning: Color get() = Color(0xFFD97706)
+@Suppress("UnusedReceiverParameter")
+val ColorScheme.statusError: Color get() = Color(0xFFB91C1C)
+
+// Text hierarchy tokens (Design System v1)
+val ColorScheme.textMuted: Color
+    get() = if (isDark) Color(0xFF6B7280) else Color(0xFF94A3B8)
+val ColorScheme.textDisabled: Color
+    get() = if (isDark) Color(0xFF4B5563) else Color(0xFFCBD5E1)

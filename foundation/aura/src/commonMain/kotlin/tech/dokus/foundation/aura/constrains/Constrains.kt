@@ -45,27 +45,16 @@ object Constrains {
     }
 
     /**
-     * Corner radius values for rounded shapes.
-     * @deprecated Use MaterialTheme.shapes instead for shape-related values.
-     * - MaterialTheme.shapes.extraSmall (4dp)
-     * - MaterialTheme.shapes.small (8dp)
-     * - MaterialTheme.shapes.medium (12dp)
-     * - MaterialTheme.shapes.large (16dp)
-     * - MaterialTheme.shapes.extraLarge (28dp)
+     * Corner radius values (Design System v1).
+     * Locked at 2dp/4dp/6dp - large radii are not allowed.
+     * - xs (2dp): rare, tiny elements
+     * - sm (4dp): panels, surfaces (default)
+     * - md (6dp): inputs, buttons, modals
      */
-    @Deprecated("Use MaterialTheme.shapes instead for consistent Material Design 3 theming")
     object CornerRadius {
-        @Deprecated("Use MaterialTheme.shapes.extraSmall", ReplaceWith("MaterialTheme.shapes.extraSmall"))
-        val small = 4.dp // Subtle rounding
-
-        @Deprecated("Use MaterialTheme.shapes.small", ReplaceWith("MaterialTheme.shapes.small"))
-        val medium = 8.dp // Default rounding
-
-        @Deprecated("Use MaterialTheme.shapes.medium", ReplaceWith("MaterialTheme.shapes.medium"))
-        val large = 12.dp // Prominent rounding
-
-        @Deprecated("Use MaterialTheme.shapes.large", ReplaceWith("MaterialTheme.shapes.large"))
-        val xLarge = 16.dp // Strong rounding
+        val xs = 2.dp   // Rare, tiny elements
+        val sm = 4.dp   // Panels, surfaces (default)
+        val md = 6.dp   // Inputs, buttons, modals
     }
 
     /**
@@ -95,14 +84,13 @@ object Constrains {
     }
 
     /**
-     * Elevation values for shadows and layering.
-     * Based on Material Design 3 elevation scale.
+     * Elevation values (Design System v1).
+     * No shadows by default - use borders for separation.
+     * Modal elevation only for dialogs/sheets.
      */
     object Elevation {
-        val none = 0.dp // Flat, no elevation
-        val low = 4.dp // Subtle lift
-        val medium = 8.dp // Moderate elevation
-        val high = 16.dp // Prominent elevation
+        val none = 0.dp   // Default everywhere
+        val modal = 1.dp  // Modals only (very subtle)
     }
 
     /**
