@@ -1,3 +1,16 @@
+## [0.1.4] - 05/01/2026
+
+### ✨ New Features
+- Backend consolidated into `backendApp/` with new cashflow document routes, chat endpoints, PDF previews, and background workers
+- AI platform overhaul with new agents, RAG services, model/config updates, and removal of legacy `ai/dokus` packages
+- Domain and foundation migration to `tech/dokus` with expanded models, routes, validators, enums, and exception handling
+- Compose app refactor with new container/contract view models, settings routes, and navigation updates
+
+### 🔧 Improvements
+- Tooling and ops upgrades: detekt baselines/config, CI/release pipeline tweaks, and deployment script revisions
+- Documentation refresh including product/architecture/design system updates and new AI system prompt
+- Localization resource cleanup and font asset pruning
+
 ## [0.1.3] - 23-12-2025
 
 ### ✨ New Features
