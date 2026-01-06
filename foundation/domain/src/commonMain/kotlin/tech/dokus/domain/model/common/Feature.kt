@@ -54,4 +54,10 @@ enum class Feature(
         poolName = "dokus-contacts",
         frontendDbName = "dokus_contacts"
     ),
+    Navigation(
+        serviceName = "navigation",
+        fullPackageName = "tech.dokus.foundation.navigation",
+        poolName = "dokus-navigation",
+        frontendDbName = "dokus_navigation"
+    ),
 }

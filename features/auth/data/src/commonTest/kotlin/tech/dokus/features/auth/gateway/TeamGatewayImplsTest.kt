@@ -1,6 +1,6 @@
 package tech.dokus.features.auth.gateway
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.enums.InvitationStatus
 import tech.dokus.domain.enums.UserRole
@@ -22,7 +22,7 @@ import kotlin.uuid.ExperimentalUuidApi
 class TeamGatewayImplsTest {
 
     @Test
-    fun teamMembersGatewayDelegatesListAndUpdates() = runBlocking {
+    fun teamMembersGatewayDelegatesListAndUpdates() = runTest {
         val remote = FakeTeamRemoteDataSource()
         val teamMember = sampleTeamMember()
         remote.listTeamMembersResult = Result.success(listOf(teamMember))
@@ -43,7 +43,7 @@ class TeamGatewayImplsTest {
     }
 
     @Test
-    fun teamInvitationsGatewayDelegatesInvitationCalls() = runBlocking {
+    fun teamInvitationsGatewayDelegatesInvitationCalls() = runTest {
         val remote = FakeTeamRemoteDataSource()
         val invitation = sampleInvitation()
         remote.createInvitationResult = Result.success(invitation)
@@ -68,7 +68,7 @@ class TeamGatewayImplsTest {
     }
 
     @Test
-    fun teamOwnershipGatewayDelegatesTransfer() = runBlocking {
+    fun teamOwnershipGatewayDelegatesTransfer() = runTest {
         val remote = FakeTeamRemoteDataSource()
         remote.transferOwnershipResult = Result.success(Unit)
 
