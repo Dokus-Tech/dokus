@@ -40,6 +40,21 @@
     <string name="nav_banking">Banking</string>
     <string name="nav_profile">Profile</string>
 
+    <!-- Navigation Sections -->
+    <string name="nav_section_accounting">Accounting</string>
+    <string name="nav_section_company">Company</string>
+    <string name="nav_section_intelligence">Intelligence</string>
+
+    <!-- Navigation Items -->
+    <string name="nav_documents">Documents</string>
+    <string name="nav_clients">Clients</string>
+    <string name="nav_team">Team</string>
+    <string name="nav_vat">VAT</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_forecast">Forecast</string>
+    <string name="nav_more">More</string>
+    <string name="nav_coming_soon_suffix"> · Coming soon</string>
+
     <!-- Chat -->
     <string name="chat_title">AI Chat</string>
     <string name="chat_document_title_fallback">Document Chat</string>

@@ -40,6 +40,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.foundation.domain)
+            implementation(projects.foundation.sstorage)
 
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -53,6 +54,17 @@ kotlin {
 
             api(libs.navigation.compose)
             api(libs.lifecycle.viewmodel.compose)
+
+            // DI - Koin
+            api(project.dependencies.platform(libs.koin.bom))
+            api(libs.koin.core)
+
+            // FlowMVI
+            api(libs.flowmvi.core)
+            api(libs.flowmvi.compose)
+
+            // Coroutines
+            implementation(libs.kotlinx.coroutinesCore)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

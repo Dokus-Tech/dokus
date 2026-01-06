@@ -10,6 +10,10 @@ sealed interface HomeDestination : NavigationDestination {
     data object Dashboard : HomeDestination
 
     @Serializable
+    @SerialName("documents")
+    data object Documents : HomeDestination
+
+    @Serializable
     @SerialName("cashflow")
     data object Cashflow : HomeDestination
 
@@ -18,12 +22,20 @@ sealed interface HomeDestination : NavigationDestination {
     data object Contacts : HomeDestination
 
     @Serializable
+    @SerialName("team")
+    data object Team : HomeDestination
+
+    @Serializable
     @SerialName("ai-chat")
     data object AiChat : HomeDestination
 
     @Serializable
     @SerialName("settings")
     data object Settings : HomeDestination
+
+    @Serializable
+    @SerialName("more")
+    data object More : HomeDestination
 
     @Serializable
     @SerialName("home/under_development")
