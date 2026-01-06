@@ -27,3 +27,4 @@ captures
 .auto-claude-status
 
 backendApp/logs/
+/deployment/.env
