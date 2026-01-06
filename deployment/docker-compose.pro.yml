@@ -2,19 +2,16 @@
 # Optimized for: Mac mini/Mac Studio self-hosting (~100 users)
 #
 # Stack:
-# - Traefik (gateway + routing on :8000)
+# - Traefik (HTTP gateway on port 8000)
 # - PostgreSQL (single DB)
 # - Redis (rate limiting + token blacklist)
-# - MinIO (object storage; must be kept)
+# - MinIO (object storage)
 # - dokus-server (modular monolith backend)
-# - dokus-web (optional UI)
+# - dokus-web (UI)
 #
 # Usage:
 #   docker compose -f docker-compose.pro.yml up -d
 #   ./dokus.sh --profile=pro start
-#
-# Note: When using `deploy.resources` with plain `docker compose`,
-# run via `./dokus.sh` (it uses `--compatibility`) to apply limits.
 
 x-jvm-mac-defaults: &jvm-mac-defaults
   JAVA_OPTS: >-
@@ -185,7 +182,7 @@ services:
       - "traefik.http.routers.minio.middlewares=minio-strip"
 
   # ==========================================================================
-  # BACKEND (single server)
+  # BACKEND
   # ==========================================================================
   dokus-server:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-server:${TAG:-latest}
@@ -201,7 +198,6 @@ services:
       MINIO_ACCESS_KEY: dokusadmin
       MINIO_SECRET_KEY: ${MINIO_PASSWORD}
       MINIO_BUCKET: dokus-storage
-      # AI configuration (normal mode for self-hosted)
       DOKUS_AI_MODE: normal
       OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
       LOG_PATH: /app/logs
@@ -242,7 +238,7 @@ services:
       - "traefik.http.services.api.loadbalancer.healthcheck.interval=30s"
 
   # ==========================================================================
-  # WEB (optional)
+  # WEB UI
   # ==========================================================================
   web:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-web:${TAG:-latest}

@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-# Dokus Cloud Management Script — Neon Onboarding Edition
+# Dokus Management Script
 # Supports: macOS, Linux
-# Usage: ./dokus.sh [--profile=<pro|lite>] [command]
+# Usage: ./dokus.sh [--profile=<cloud|pro|lite>] [command]
 #
 # Profiles:
-#   pro  - High performance for Mac/servers (docker-compose.pro.yml)
-#   lite - Low resource for Raspberry Pi/edge (docker-compose.lite.yml) [default]
+#   cloud - Production HTTPS with Let's Encrypt (docker-compose.cloud.yml)
+#   pro   - Self-host high performance, HTTP:8000 (docker-compose.pro.yml)
+#   lite  - Self-host low resource, HTTP:8000 (docker-compose.lite.yml) [default]
 #
 
 set -e
@@ -67,8 +68,9 @@ DB_NAME="dokus"
 
 # Profile configuration
 # Available profiles:
-#   - pro:  High performance for Mac/servers (docker-compose.pro.yml)
-#   - lite: Low resource for Raspberry Pi/edge (docker-compose.lite.yml) [default]
+#   - cloud: Production HTTPS with Let's Encrypt (docker-compose.cloud.yml)
+#   - pro:   Self-host high performance, HTTP:8000 (docker-compose.pro.yml)
+#   - lite:  Self-host low resource, HTTP:8000 (docker-compose.lite.yml) [default]
 PROFILE_FILE=".dokus-profile"
 DEBUG_MODE_FILE=".dokus-debug"
 DEBUG_MODE=false
@@ -118,11 +120,11 @@ prompt_profile_selection() {
     echo_e "      ${DIM_WHITE}Best for: VPS, cloud servers with public domain${NC}"
     echo ""
     echo_e "  ${SOFT_GREEN}2${NC}   ${BOLD}Pro${NC} ${DIM_WHITE}(Self-Host High Performance)${NC}"
-    echo_e "      ${DIM_WHITE}HTTP:8000, G1GC, 1GB heap, more connections${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, G1GC, 1GB heap${NC}"
     echo_e "      ${DIM_WHITE}Best for: Mac (Apple Silicon), Linux servers${NC}"
     echo ""
     echo_e "  ${SOFT_YELLOW}3${NC}   ${BOLD}Lite${NC} ${DIM_WHITE}(Self-Host Low Resource)${NC}"
-    echo_e "      ${DIM_WHITE}HTTP:8000, SerialGC, 256MB heap, minimal memory${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, SerialGC, 512MB heap${NC}"
     echo_e "      ${DIM_WHITE}Best for: Raspberry Pi 4/5, low-end devices${NC}"
     echo ""
 
@@ -229,7 +231,7 @@ toggle_debug_mode() {
 load_profile
 load_debug_mode
 
-# Gateway configuration (HTTP for self-hosting)
+# Gateway configuration
 GATEWAY_PORT="8000"
 GATEWAY_DASHBOARD_PORT="8080"
 DEFAULT_DOMAIN="localhost"
@@ -248,7 +250,8 @@ get_cloud_domain() {
 }
 
 # Get HTTP status code via the gateway for a given endpoint.
-# For cloud, Traefik routes by Host header, so we probe https://localhost with the domain header.
+# For cloud: Traefik routes by Host header via HTTPS
+# For pro/lite: Traefik routes via HTTP on port 8000
 gateway_http_code() {
     local endpoint="$1"
 
@@ -487,7 +490,7 @@ show_status() {
 
     echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
-    # Check services via gateway (services don't expose ports directly)
+    # Check services via gateway
     local services=(
         "Dokus Server:/api/v1/server/info"
         "Cashflow API:/api/v1/invoices"
@@ -498,24 +501,13 @@ show_status() {
     )
 
     for service_info in "${services[@]}"; do
-        IFS=':' read -r service_name check_type check_target <<< "$service_info"
+        IFS=':' read -r service_name endpoint <<< "$service_info"
         printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} " "$service_name"
 
-        if [ "$check_type" == "container" ]; then
-            # Container-based health check for background workers
-            if docker compose -f "$COMPOSE_FILE" ps --status running -q "$check_target" 2>/dev/null | grep -q .; then
-                echo_e "${SOFT_GREEN}◎ RUNNING${NC}       ${SOFT_GRAY}│${NC}"
-            else
-                echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
-            fi
+        if gateway_is_reachable "$endpoint"; then
+            echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
         else
-            # Gateway-based health check (check_type is actually the endpoint)
-            local endpoint="$check_type"
-            if gateway_is_reachable "$endpoint"; then
-                echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
-            else
-                echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
-            fi
+            echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
         fi
     done
 
@@ -526,7 +518,7 @@ show_status() {
 print_services_info() {
     print_separator
     echo ""
-    echo_e "  ${SOFT_GREEN}${BOLD}API Gateway${NC}\n"
+    echo_e "  ${SOFT_GREEN}${BOLD}API Gateway (Traefik)${NC}\n"
 
     # Cloud profile uses HTTPS with domain
     if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
@@ -542,43 +534,17 @@ print_services_info() {
         echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}https://traefik.${DOMAIN}${NC}                        ${SOFT_GRAY}│${NC}"
         echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
     else
-        # Self-hosting uses HTTP with IP
+        # Self-hosting uses HTTP with IP via Traefik
         local SERVER_IP=$(get_server_ip)
         if [ "$SERVER_IP" = "localhost" ]; then
             SERVER_IP="127.0.0.1"
         fi
 
         echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
-        echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://${SERVER_IP}:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}               ${SOFT_GRAY}│${NC}"
+        echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://${SERVER_IP}:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← Unified API Gateway (HTTP)${NC}        ${SOFT_GRAY}│${NC}"
         echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}http://${SERVER_IP}:${GATEWAY_DASHBOARD_PORT}${NC}                          ${SOFT_GRAY}│${NC}"
         echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
     fi
-
-    echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}📍 API Routes (via Gateway)${NC}\n"
-
-    # Routes table
-    echo_e "  ${SOFT_GRAY}┌─────────────────────────────┬────────────────────────────────────┐${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Route Prefix${NC}                ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                            ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/identity/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/account/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/tenants/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/team/*${NC}             ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/invoices/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/expenses/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/cashflow/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/documents/*${NC}        ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/payments/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/banking/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/contacts/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/*${NC}                          ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Web Frontend (WASM)${NC}              ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}└─────────────────────────────┴────────────────────────────────────┘${NC}"
 
     echo ""
     echo_e "  ${SOFT_CYAN}${BOLD}💾 Infrastructure Services${NC}\n"
@@ -693,7 +659,7 @@ show_mobile_connection() {
         fi
         print_status info "Cloud domain: ${SERVER_HOST}"
     else
-        # Self-hosting uses HTTP
+        # Self-hosting uses HTTP via Traefik gateway
         SERVER_PROTOCOL="http"
         SERVER_PORT="${GATEWAY_PORT}"
 
@@ -1054,11 +1020,11 @@ select_profile() {
     echo_e "      ${DIM_WHITE}File: docker-compose.cloud.yml${NC}"
     echo ""
     echo_e "  ${SOFT_GREEN}2${NC}   ${BOLD}Pro${NC} ${DIM_WHITE}(Self-Host High Performance)${NC}"
-    echo_e "      ${DIM_WHITE}HTTP:8000, G1GC, 1GB heap, more connections${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, G1GC, 1GB heap${NC}"
     echo_e "      ${DIM_WHITE}File: docker-compose.pro.yml${NC}"
     echo ""
     echo_e "  ${SOFT_YELLOW}3${NC}   ${BOLD}Lite${NC} ${DIM_WHITE}(Self-Host Low Resource)${NC}"
-    echo_e "      ${DIM_WHITE}HTTP:8000, SerialGC, 256MB heap, minimal memory${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, SerialGC, 512MB heap${NC}"
     echo_e "      ${DIM_WHITE}File: docker-compose.lite.yml${NC}"
     echo ""
     echo_e "  ${SOFT_GRAY}0${NC}   Cancel"
@@ -1371,8 +1337,8 @@ main() {
             echo ""
             echo_e "  ${SOFT_ORANGE}Profiles:${NC}"
             echo_e "    cloud      Production HTTPS with Let's Encrypt"
-            echo_e "    pro        Self-host high performance (Mac/servers)"
-            echo_e "    lite       Self-host low resource (Raspberry Pi) [default]"
+            echo_e "    pro        Self-host high performance (HTTP:8000)"
+            echo_e "    lite       Self-host low resource (HTTP:8000) [default]"
             echo ""
             echo_e "  ${SOFT_MAGENTA}Examples:${NC}"
             echo_e "    ./dokus.sh                       Interactive menu"
