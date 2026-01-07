@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.TenantPlan

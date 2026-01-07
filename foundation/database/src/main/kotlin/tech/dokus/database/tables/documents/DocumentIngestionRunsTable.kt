@@ -1,4 +1,4 @@
-package tech.dokus.database.tables.cashflow
+package tech.dokus.database.tables.documents
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
@@ -12,7 +12,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
 /**
  * Document ingestion runs table - append-only history of AI extraction attempts.
  *
- * OWNER: cashflow service
+ * OWNER: documents service
  * ACCESS: processor service (read-write for processing updates)
  * CRITICAL: All queries MUST filter by tenant_id for multi-tenant security.
  *

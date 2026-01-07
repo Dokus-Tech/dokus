@@ -660,6 +660,49 @@ enum class UnitCode(val code: String, val description: String) {
 }
 
 // ============================================================================
+// CASHFLOW ENTRIES ENUMS
+// ============================================================================
+
+@Serializable
+enum class CashflowSourceType(override val dbValue: String) : DbEnum {
+    @SerialName("INVOICE")
+    Invoice("INVOICE"),
+
+    @SerialName("BILL")
+    Bill("BILL"),
+
+    @SerialName("EXPENSE")
+    Expense("EXPENSE"),
+
+    @SerialName("MANUAL")
+    Manual("MANUAL")
+}
+
+@Serializable
+enum class CashflowDirection(override val dbValue: String) : DbEnum {
+    @SerialName("IN")
+    In("IN"),
+
+    @SerialName("OUT")
+    Out("OUT")
+}
+
+@Serializable
+enum class CashflowEntryStatus(override val dbValue: String) : DbEnum {
+    @SerialName("OPEN")
+    Open("OPEN"),
+
+    @SerialName("PAID")
+    Paid("PAID"),
+
+    @SerialName("OVERDUE")
+    Overdue("OVERDUE"),
+
+    @SerialName("CANCELLED")
+    Cancelled("CANCELLED")
+}
+
+// ============================================================================
 // EXPENSE ENUMS
 // ============================================================================
 

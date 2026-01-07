@@ -14,10 +14,11 @@ import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.banking.BankConnectionsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.cashflow.BillsTable
-import tech.dokus.database.tables.cashflow.DocumentDraftsTable
-import tech.dokus.database.tables.cashflow.DocumentIngestionRunsTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
+import tech.dokus.database.tables.documents.DocumentDraftsTable
+import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.cashflow.InvoiceItemsTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
@@ -76,6 +77,7 @@ object DokusSchema {
                 InvoiceItemsTable,
                 ExpensesTable,
                 BillsTable,
+                CashflowEntriesTable,
 
                 // ----------------------------
                 // Payments / Banking

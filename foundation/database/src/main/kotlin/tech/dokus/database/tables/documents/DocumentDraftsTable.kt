@@ -1,4 +1,4 @@
-package tech.dokus.database.tables.cashflow
+package tech.dokus.database.tables.documents
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Table
@@ -16,7 +16,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
 /**
  * Document drafts table - editable extraction state (one per document).
  *
- * OWNER: cashflow service
+ * OWNER: documents service
  * CRITICAL: All queries MUST filter by tenant_id for multi-tenant security.
  *
  * This table stores the editable draft state for a document:
