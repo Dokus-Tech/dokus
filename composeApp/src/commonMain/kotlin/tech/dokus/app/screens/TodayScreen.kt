@@ -53,10 +53,10 @@ import compose.icons.feathericons.User
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.viewmodel.DashboardAction
-import tech.dokus.app.viewmodel.DashboardContainer
-import tech.dokus.app.viewmodel.DashboardIntent
-import tech.dokus.app.viewmodel.DashboardState
+import tech.dokus.app.viewmodel.TodayAction
+import tech.dokus.app.viewmodel.TodayContainer
+import tech.dokus.app.viewmodel.TodayIntent
+import tech.dokus.app.viewmodel.TodayState
 import tech.dokus.foundation.aura.components.navigation.UserPreferencesMenu
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_search
@@ -82,12 +82,12 @@ import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
 /**
- * Dashboard screen using FlowMVI Container pattern.
+ * Today screen using FlowMVI Container pattern.
  * Displays workspace info and pending documents on mobile.
  */
 @Composable
-internal fun DashboardScreen(
-    container: DashboardContainer = container()
+internal fun TodayScreen(
+    container: TodayContainer = container()
 ) {
     val navController = LocalNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -108,13 +108,13 @@ internal fun DashboardScreen(
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
-            is DashboardAction.NavigateToDocument -> {
+            is TodayAction.NavigateToDocument -> {
                 // TODO: Navigate to document edit/confirmation screen
             }
-            DashboardAction.NavigateToWorkspaceSelect -> {
+            TodayAction.NavigateToWorkspaceSelect -> {
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
             }
-            is DashboardAction.ShowError -> {
+            is TodayAction.ShowError -> {
                 pendingError = action.error
             }
         }
@@ -122,7 +122,7 @@ internal fun DashboardScreen(
 
     // Refresh tenant when screen appears
     LaunchedEffect(Unit) {
-        container.store.intent(DashboardIntent.RefreshTenant)
+        container.store.intent(TodayIntent.RefreshTenant)
     }
 
     LaunchedEffect(isLargeScreen) {
@@ -130,7 +130,7 @@ internal fun DashboardScreen(
     }
 
     // Extract state data
-    val contentState = state as? DashboardState.Content
+    val contentState = state as? TodayState.Content
     val currentTenant = contentState?.tenantState?.let { if (it.isSuccess()) it.data else null }
     val currentAvatar = contentState?.currentAvatar
     val pendingDocumentsState = contentState?.pendingDocumentsState
@@ -204,7 +204,7 @@ internal fun DashboardScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        // Mobile dashboard content
+        // Mobile today content
         if (!isLargeScreen) {
             Column(
                 modifier = Modifier
@@ -219,16 +219,16 @@ internal fun DashboardScreen(
                     PendingDocumentsCard(
                         state = docsState,
                         onDocumentClick = { /* TODO: Navigate to document edit/confirmation screen */ },
-                        onLoadMore = { container.store.intent(DashboardIntent.LoadMorePendingDocuments) },
+                        onLoadMore = { container.store.intent(TodayIntent.LoadMorePendingDocuments) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
 
-                // Other dashboard widgets can be added here
-                DashboardNotificationsPanel(modifier = Modifier.fillMaxWidth())
+                // Other today widgets can be added here
+                TodayNotificationsPanel(modifier = Modifier.fillMaxWidth())
             }
         } else {
-            // Desktop dashboard content (pending documents shown in Cashflow screen)
+            // Desktop today content (pending documents shown in Cashflow screen)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -237,7 +237,7 @@ internal fun DashboardScreen(
                     .padding(Constrains.Spacing.xLarge),
                 verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xLarge)
             ) {
-                DashboardNotificationsPanel(
+                TodayNotificationsPanel(
                     modifier = Modifier.widthIn(max = 420.dp)
                 )
             }
@@ -245,7 +245,7 @@ internal fun DashboardScreen(
     }
 }
 
-private data class DashboardNotification(
+private data class TodayNotification(
     val title: String,
     val category: String,
     val timeLabel: String,
@@ -253,32 +253,32 @@ private data class DashboardNotification(
 )
 
 @Composable
-private fun DashboardNotificationsPanel(
+private fun TodayNotificationsPanel(
     modifier: Modifier = Modifier
 ) {
     val tabs = listOf("All", "New", "Mailroom", "Agent", "Accounting")
     var selectedTab by rememberSaveable { mutableStateOf(tabs.first()) }
     val notifications = remember {
         listOf(
-            DashboardNotification(
+            TodayNotification(
                 title = "Inland revenue service (IRS)",
                 category = "Mailroom",
                 timeLabel = "Just now",
                 icon = FeatherIcons.Briefcase
             ),
-            DashboardNotification(
+            TodayNotification(
                 title = "Year end bookkeeping report ready for review",
                 category = "Accounting",
                 timeLabel = "2 days ago",
                 icon = FeatherIcons.CheckCircle
             ),
-            DashboardNotification(
+            TodayNotification(
                 title = "Foreign qualification in California was successfully filed",
                 category = "Agent",
                 timeLabel = "2 days ago",
                 icon = FeatherIcons.User
             ),
-            DashboardNotification(
+            TodayNotification(
                 title = "Foreign qualification in New York was successfully filed",
                 category = "Agent",
                 timeLabel = "2 days ago",

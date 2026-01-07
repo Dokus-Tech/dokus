@@ -462,7 +462,7 @@ class AuthService(
         role: UserRole
     ): TenantScope {
         val permissions = getPermissionsForRole(role)
-        val tier = SubscriptionTier.CloudFree // TODO: Get from tenant
+        val tier = SubscriptionTier.Core // TODO: Get from tenant
 
         return TenantScope(
             tenantId = tenantId,

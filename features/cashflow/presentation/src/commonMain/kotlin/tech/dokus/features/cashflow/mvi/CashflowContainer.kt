@@ -22,14 +22,12 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.features.cashflow.presentation.cashflow.components.BusinessHealthData
 import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentSortOption
 import tech.dokus.features.cashflow.presentation.cashflow.components.VatSummaryData
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.FilterDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadBusinessHealthUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadVatSummaryUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SearchCashflowDocumentsUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowDocumentsUseCase
@@ -42,14 +40,14 @@ internal typealias CashflowCtx = PipelineContext<CashflowState, CashflowIntent, 
 /**
  * Container for the Cashflow screen using FlowMVI.
  *
- * Manages documents with pagination, search, sort, VAT summary, and business health.
+ * Manages documents with pagination, search, sort, and VAT summary.
  * Integrates with [DocumentUploadManager] for upload tracking.
  *
  * Features:
  * - Pagination for financial documents with load more
  * - Search with debouncing (cancels previous search on new query)
  * - Pending documents watching with pagination
- * - VAT summary and business health cards
+ * - VAT summary card
  * - Upload manager integration (exposed via [uploadTasks], [uploadedDocuments], [deletionHandles])
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
@@ -60,7 +58,6 @@ internal class CashflowContainer(
     private val filterDocuments: FilterDocumentsUseCase,
     private val watchPendingDocuments: WatchPendingDocumentsUseCase,
     private val loadVatSummary: LoadVatSummaryUseCase,
-    private val loadBusinessHealth: LoadBusinessHealthUseCase,
     private val uploadManager: DocumentUploadManager,
 ) : Container<CashflowState, CashflowIntent, CashflowAction> {
 
@@ -153,12 +150,10 @@ internal class CashflowContainer(
         coroutineScope {
             // Start parallel loading of summary data and documents
             val vatJob = async { loadVatSummaryData() }
-            val healthJob = async { loadBusinessHealthData() }
             val documentsJob = async { loadInitialDocuments() }
 
             // Wait for all to complete
             val vatSummary = vatJob.await()
-            val businessHealth = healthJob.await()
             val documentsResult = documentsJob.await()
 
             // Transition to content state with loaded data
@@ -169,7 +164,6 @@ internal class CashflowContainer(
                         CashflowState.Content(
                             documents = buildDocumentsPaginationState(),
                             vatSummaryState = vatSummary,
-                            businessHealthState = businessHealth,
                             pendingDocumentsState = buildPendingDocumentsState(),
                         )
                     }
@@ -383,14 +377,6 @@ internal class CashflowContainer(
     private suspend fun loadVatSummaryData(): DokusState<VatSummaryData> {
         var result: DokusState<VatSummaryData> = DokusState.loading()
         loadVatSummary().collect { state ->
-            result = state
-        }
-        return result
-    }
-
-    private suspend fun loadBusinessHealthData(): DokusState<BusinessHealthData> {
-        var result: DokusState<BusinessHealthData> = DokusState.loading()
-        loadBusinessHealth().collect { state ->
             result = state
         }
         return result

@@ -183,20 +183,25 @@ enum class Permission(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class SubscriptionTier(override val dbValue: String) : DbEnum {
+    @SerialName("CORE")
+    Core("CORE"),
+
+    @SerialName("ONE")
+    One("ONE"),
+
     @SerialName("SELF_HOSTED")
     SelfHosted("SELF_HOSTED"),
 
-    @SerialName("CLOUD_FREE")
-    CloudFree("CLOUD_FREE"),
-
-    @SerialName("CLOUD_BASIC")
-    CloudBasic("CLOUD_BASIC"),
-
-    @SerialName("CLOUD_PRO")
-    CloudPro("CLOUD_PRO");
+    @SerialName("CORE_FOUNDER")
+    CoreFounder("CORE_FOUNDER");
 
     companion object {
-        val default = CloudFree
+        val default = Core
+
+        /** Tiers with access to Tomorrow (AI/Forecast) features */
+        val premiumTiers = setOf(One)
+
+        fun hasTomorrowAccess(tier: SubscriptionTier): Boolean = tier in premiumTiers
     }
 }
 

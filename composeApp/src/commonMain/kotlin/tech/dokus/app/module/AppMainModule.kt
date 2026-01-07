@@ -10,7 +10,7 @@ import tech.dokus.app.navigation.AppNavigationProvider
 import tech.dokus.app.navigation.HomeNavigationProvider
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chart_bar_trend_up
-import tech.dokus.aura.resources.home_dashboard
+import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.settings_appearance
 import tech.dokus.aura.resources.settings_group_app
 import tech.dokus.aura.resources.settings_group_workspace
@@ -35,9 +35,9 @@ internal object AppMainModule : AppModule {
     override val homeNavigationProvider = HomeNavigationProvider
     override val homeItems: List<HomeItem> = listOf(
         HomeItem(
-            titleRes = Res.string.home_dashboard,
+            titleRes = Res.string.home_today,
             iconRes = Res.drawable.chart_bar_trend_up,
-            destination = HomeDestination.Dashboard,
+            destination = HomeDestination.Today,
             priority = HomeItemPriority.High,
             showTopBar = false
         )

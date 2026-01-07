@@ -27,7 +27,6 @@ import tech.dokus.features.cashflow.mvi.PeppolSettingsIntent
 import tech.dokus.features.cashflow.mvi.PeppolSettingsState
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.FilterDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadBusinessHealthUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadVatSummaryUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SearchCashflowDocumentsUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
@@ -52,7 +51,6 @@ val cashflowViewModelModule = module {
     factory { SearchCashflowDocumentsUseCase() }
     factory { FilterDocumentsUseCase() }
     factory { LoadVatSummaryUseCase() }
-    factory { LoadBusinessHealthUseCase() }
     factory { ValidateInvoiceUseCase() }
 
     // FlowMVI Containers
@@ -89,7 +87,6 @@ val cashflowViewModelModule = module {
             filterDocuments = get(),
             watchPendingDocuments = get(),
             loadVatSummary = get(),
-            loadBusinessHealth = get(),
             uploadManager = get()
         )
     }

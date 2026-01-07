@@ -25,7 +25,7 @@ import tech.dokus.aura.resources.cashflow
 import tech.dokus.aura.resources.cashflow_title
 import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.contacts_title
-import tech.dokus.aura.resources.home_dashboard
+import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.nav_banking
 import tech.dokus.aura.resources.nav_items
 import tech.dokus.aura.resources.nav_profile
@@ -47,10 +47,10 @@ sealed interface TabNavItem {
     val route: String
     val showTopBar: Boolean
 
-    data object Dashboard : TabNavItem {
+    data object Today : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.chart_bar_trend_up)
-        override val title: String @Composable get() = stringResource(Res.string.home_dashboard)
-        override val route: String = "tab/dashboard"
+        override val title: String @Composable get() = stringResource(Res.string.home_today)
+        override val route: String = "tab/today"
         override val showTopBar: Boolean = false
     }
 
@@ -105,7 +105,7 @@ sealed interface TabNavItem {
 }
 
 val navItems = listOf(
-    TabNavItem.Dashboard,
+    TabNavItem.Today,
     TabNavItem.Contacts,
     TabNavItem.Cashflow,
     TabNavItem.Simulations,

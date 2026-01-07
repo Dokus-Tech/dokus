@@ -17,30 +17,30 @@ import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
-internal typealias DashboardCtx = PipelineContext<DashboardState, DashboardIntent, DashboardAction>
+internal typealias TodayCtx = PipelineContext<TodayState, TodayIntent, TodayAction>
 
 /**
- * Container for Dashboard screen using FlowMVI.
+ * Container for Today screen using FlowMVI.
  *
- * Manages the dashboard data including:
+ * Manages the today data including:
  * - Current tenant information
  * - Pending documents for processing
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
-internal class DashboardContainer(
+internal class TodayContainer(
     private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
     private val watchPendingDocuments: WatchPendingDocumentsUseCase,
-) : Container<DashboardState, DashboardIntent, DashboardAction> {
+) : Container<TodayState, TodayIntent, TodayAction> {
 
-    private val logger = Logger.forClass<DashboardContainer>()
+    private val logger = Logger.forClass<TodayContainer>()
 
     // Internal state for pending documents pagination
     private val allPendingDocuments = MutableStateFlow<List<DocumentRecordDto>>(emptyList())
-    private val pendingVisibleCount = MutableStateFlow(DashboardState.PENDING_PAGE_SIZE)
+    private val pendingVisibleCount = MutableStateFlow(TodayState.PENDING_PAGE_SIZE)
 
-    override val store: Store<DashboardState, DashboardIntent, DashboardAction> =
-        store(DashboardState.Content()) {
+    override val store: Store<TodayState, TodayIntent, TodayAction> =
+        store(TodayState.Content()) {
             init {
                 // Start watching pending documents on init
                 launchWatchPendingDocuments()
@@ -48,32 +48,32 @@ internal class DashboardContainer(
 
             reduce { intent ->
                 when (intent) {
-                    is DashboardIntent.RefreshTenant -> handleRefreshTenant()
-                    is DashboardIntent.RefreshPendingDocuments -> handleRefreshPendingDocuments()
-                    is DashboardIntent.LoadMorePendingDocuments -> handleLoadMorePendingDocuments()
+                    is TodayIntent.RefreshTenant -> handleRefreshTenant()
+                    is TodayIntent.RefreshPendingDocuments -> handleRefreshPendingDocuments()
+                    is TodayIntent.LoadMorePendingDocuments -> handleLoadMorePendingDocuments()
                 }
             }
         }
 
-    private suspend fun DashboardCtx.launchWatchPendingDocuments() {
+    private suspend fun TodayCtx.launchWatchPendingDocuments() {
         launch {
             watchPendingDocuments().collectLatest { state ->
                 when (state) {
                     is DokusState.Loading -> {
-                        withState<DashboardState.Content, _> {
+                        withState<TodayState.Content, _> {
                             updateState { copy(pendingDocumentsState = DokusState.loading()) }
                         }
                     }
 
                     is DokusState.Success -> {
                         allPendingDocuments.value = state.data
-                        pendingVisibleCount.value = DashboardState.PENDING_PAGE_SIZE
+                        pendingVisibleCount.value = TodayState.PENDING_PAGE_SIZE
                         updatePendingPaginationState()
                     }
 
                     is DokusState.Error -> {
                         allPendingDocuments.value = emptyList()
-                        withState<DashboardState.Content, _> {
+                        withState<TodayState.Content, _> {
                             updateState {
                                 copy(
                                     pendingDocumentsState = DokusState.error(
@@ -86,7 +86,7 @@ internal class DashboardContainer(
                     }
 
                     is DokusState.Idle -> {
-                        withState<DashboardState.Content, _> {
+                        withState<TodayState.Content, _> {
                             updateState { copy(pendingDocumentsState = DokusState.idle()) }
                         }
                     }
@@ -95,8 +95,8 @@ internal class DashboardContainer(
         }
     }
 
-    private suspend fun DashboardCtx.handleRefreshTenant() {
-        withState<DashboardState.Content, _> {
+    private suspend fun TodayCtx.handleRefreshTenant() {
+        withState<TodayState.Content, _> {
             logger.d { "Refreshing tenant" }
 
             updateState { copy(tenantState = DokusState.loading()) }
@@ -116,7 +116,7 @@ internal class DashboardContainer(
                     updateState {
                         copy(
                             tenantState = DokusState.error(error) {
-                                intent(DashboardIntent.RefreshTenant)
+                                intent(TodayIntent.RefreshTenant)
                             }
                         )
                     }
@@ -130,7 +130,7 @@ internal class DashboardContainer(
         watchPendingDocuments.refresh()
     }
 
-    private suspend fun DashboardCtx.handleLoadMorePendingDocuments() {
+    private suspend fun TodayCtx.handleLoadMorePendingDocuments() {
         val allDocs = allPendingDocuments.value
         val currentVisible = pendingVisibleCount.value
 
@@ -140,13 +140,13 @@ internal class DashboardContainer(
         logger.d { "Loading more pending documents" }
 
         // Increase visible count
-        pendingVisibleCount.value = (currentVisible + DashboardState.PENDING_PAGE_SIZE)
+        pendingVisibleCount.value = (currentVisible + TodayState.PENDING_PAGE_SIZE)
             .coerceAtMost(allDocs.size)
 
         updatePendingPaginationState()
     }
 
-    private suspend fun DashboardCtx.updatePendingPaginationState() {
+    private suspend fun TodayCtx.updatePendingPaginationState() {
         val allDocs = allPendingDocuments.value
         val visibleCount = pendingVisibleCount.value
         val visibleDocs = allDocs.take(visibleCount)
@@ -154,13 +154,13 @@ internal class DashboardContainer(
 
         val paginationState = PaginationState(
             data = visibleDocs,
-            currentPage = visibleCount / DashboardState.PENDING_PAGE_SIZE,
-            pageSize = DashboardState.PENDING_PAGE_SIZE,
+            currentPage = visibleCount / TodayState.PENDING_PAGE_SIZE,
+            pageSize = TodayState.PENDING_PAGE_SIZE,
             hasMorePages = hasMore,
             isLoadingMore = false
         )
 
-        withState<DashboardState.Content, _> {
+        withState<TodayState.Content, _> {
             updateState {
                 copy(pendingDocumentsState = DokusState.success(paginationState))
             }

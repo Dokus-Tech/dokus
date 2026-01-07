@@ -12,7 +12,7 @@
     <string name="bootstrap_state_checking_account_status">Verifica dello stato dell\'account...</string>
 
     <!-- Home -->
-    <string name="home_dashboard">Dashboard</string>
+    <string name="home_today">Oggi</string>
     <string name="media_title">Media</string>
     <string name="home_settings">Impostazioni</string>
 

@@ -9,10 +9,10 @@ import tech.dokus.app.viewmodel.BootstrapAction
 import tech.dokus.app.viewmodel.BootstrapContainer
 import tech.dokus.app.viewmodel.BootstrapIntent
 import tech.dokus.app.viewmodel.BootstrapState
-import tech.dokus.app.viewmodel.DashboardAction
-import tech.dokus.app.viewmodel.DashboardContainer
-import tech.dokus.app.viewmodel.DashboardIntent
-import tech.dokus.app.viewmodel.DashboardState
+import tech.dokus.app.viewmodel.TodayAction
+import tech.dokus.app.viewmodel.TodayContainer
+import tech.dokus.app.viewmodel.TodayIntent
+import tech.dokus.app.viewmodel.TodayState
 import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
@@ -58,8 +58,8 @@ internal val diModuleApp = module {
             serverConfigManager = get(),
         )
     }
-    container<DashboardContainer, DashboardState, DashboardIntent, DashboardAction> {
-        DashboardContainer(
+    container<TodayContainer, TodayState, TodayIntent, TodayAction> {
+        TodayContainer(
             getCurrentTenantUseCase = get(),
             watchPendingDocuments = get(),
         )
