@@ -11,13 +11,11 @@ import tech.dokus.app.navigation.HomeNavigationProvider
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.home_dashboard
-import tech.dokus.aura.resources.home_settings
 import tech.dokus.aura.resources.settings_appearance
 import tech.dokus.aura.resources.settings_group_app
 import tech.dokus.aura.resources.settings_group_workspace
 import tech.dokus.aura.resources.settings_team
 import tech.dokus.aura.resources.settings_workspace_details
-import tech.dokus.aura.resources.user
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
 import tech.dokus.foundation.app.AppModule
@@ -42,14 +40,7 @@ internal object AppMainModule : AppModule {
             destination = HomeDestination.Dashboard,
             priority = HomeItemPriority.High,
             showTopBar = false
-        ),
-        HomeItem(
-            titleRes = Res.string.home_settings,
-            iconRes = Res.drawable.user,
-            destination = HomeDestination.Settings,
-            showTopBar = false,
-            priority = HomeItemPriority.Low,
-        ),
+        )
     )
     override val settingsGroups: List<ModuleSettingsGroup> = listOf(
         ModuleSettingsGroup(

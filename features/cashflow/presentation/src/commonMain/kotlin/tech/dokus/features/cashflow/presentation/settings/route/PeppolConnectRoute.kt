@@ -15,7 +15,14 @@ import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
 @Composable
-internal fun PeppolConnectRoute(
+fun PeppolConnectRoute(
+    provider: PeppolProvider
+) {
+    PeppolConnectRouteInternal(provider = provider)
+}
+
+@Composable
+internal fun PeppolConnectRouteInternal(
     provider: PeppolProvider,
     container: PeppolConnectContainer = container {
         parametersOf(PeppolConnectContainer.Companion.Params(provider))

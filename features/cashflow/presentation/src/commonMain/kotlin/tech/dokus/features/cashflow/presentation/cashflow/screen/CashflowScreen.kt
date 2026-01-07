@@ -1,7 +1,9 @@
 package tech.dokus.features.cashflow.presentation.cashflow.screen
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -15,6 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.components.navigation.UserPreferencesMenu
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.features.cashflow.mvi.CashflowIntent
@@ -160,6 +164,8 @@ internal fun CashflowScreen(
                                 onNavigateToCreateInvoice()
                             }
                         )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        UserPreferencesMenu()
                     }
                 )
             },

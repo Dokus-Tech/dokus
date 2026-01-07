@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.foundation.aura.components.navigation.UserPreferencesMenu
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_select_contact
 import tech.dokus.aura.resources.contacts_select_contact_hint
@@ -132,6 +133,8 @@ internal fun ContactsScreen(
                             onCreateContact()
                         }
                     )
+                    Spacer(modifier = Modifier.width(SpacingMedium))
+                    UserPreferencesMenu()
                 }
             )
         },
