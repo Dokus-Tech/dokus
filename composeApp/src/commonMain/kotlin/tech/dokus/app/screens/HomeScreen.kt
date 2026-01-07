@@ -48,7 +48,6 @@ import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
 import tech.dokus.navigation.destinations.NavigationDestination
-import tech.dokus.navigation.local.NavControllerProvided
 import tech.dokus.navigation.navigateTo
 
 /**
@@ -125,21 +124,18 @@ private fun HomeNavHost(
     startDestination: NavigationDestination,
 ) {
     val transitionsProvider: TransitionsProvider = remember { TransitionsProvider.forTabs() }
-    // Provide home nav controller for screens that need to navigate within home
-    NavControllerProvided(navHostController) {
-        NavHost(
-            navHostController,
-            startDestination = startDestination,
-            enterTransition = { with(transitionsProvider) { enterTransition } },
-            exitTransition = { with(transitionsProvider) { exitTransition } },
-            popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
-            popExitTransition = { with(transitionsProvider) { popExitTransition } },
-            modifier = Modifier.background(MaterialTheme.colorScheme.background),
-        ) {
-            homeNavProviders.forEach { navProvider ->
-                with(navProvider) {
-                    registerGraph()
-                }
+    NavHost(
+        navHostController,
+        startDestination = startDestination,
+        enterTransition = { with(transitionsProvider) { enterTransition } },
+        exitTransition = { with(transitionsProvider) { exitTransition } },
+        popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
+        popExitTransition = { with(transitionsProvider) { popExitTransition } },
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+    ) {
+        homeNavProviders.forEach { navProvider ->
+            with(navProvider) {
+                registerGraph()
             }
         }
     }
