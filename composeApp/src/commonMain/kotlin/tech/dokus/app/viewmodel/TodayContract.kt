@@ -13,9 +13,9 @@ import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.foundation.app.state.DokusState
 
 /**
- * Contract for the Dashboard screen.
+ * Contract for the Today screen.
  *
- * The Dashboard screen displays:
+ * The Today screen displays:
  * - Current tenant/workspace information
  * - Pending documents for processing (mobile only)
  * - Quick actions and widgets
@@ -31,12 +31,12 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface DashboardState : MVIState, DokusState<Nothing> {
+sealed interface TodayState : MVIState, DokusState<Nothing> {
 
     /**
      * Loading state - initial data fetch in progress.
      */
-    data object Loading : DashboardState
+    data object Loading : TodayState
 
     /**
      * Content state - data loaded and ready for display.
@@ -49,7 +49,7 @@ sealed interface DashboardState : MVIState, DokusState<Nothing> {
         val tenantState: DokusState<Tenant?> = DokusState.idle(),
         val currentAvatar: Thumbnail? = null,
         val pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>> = DokusState.idle(),
-    ) : DashboardState
+    ) : TodayState
 
     /**
      * Error state - failed to load initial data.
@@ -60,7 +60,7 @@ sealed interface DashboardState : MVIState, DokusState<Nothing> {
     data class Error(
         override val exception: DokusException,
         override val retryHandler: RetryHandler,
-    ) : DashboardState, DokusState.Error<Nothing>
+    ) : TodayState, DokusState.Error<Nothing>
 
     companion object {
         const val PENDING_PAGE_SIZE = 5
@@ -72,18 +72,18 @@ sealed interface DashboardState : MVIState, DokusState<Nothing> {
 // ============================================================================
 
 @Immutable
-sealed interface DashboardIntent : MVIIntent {
+sealed interface TodayIntent : MVIIntent {
 
     // === Data Loading ===
 
     /** Refresh tenant data */
-    data object RefreshTenant : DashboardIntent
+    data object RefreshTenant : TodayIntent
 
     /** Refresh pending documents */
-    data object RefreshPendingDocuments : DashboardIntent
+    data object RefreshPendingDocuments : TodayIntent
 
     /** Load more pending documents for infinite scroll */
-    data object LoadMorePendingDocuments : DashboardIntent
+    data object LoadMorePendingDocuments : TodayIntent
 }
 
 // ============================================================================
@@ -91,14 +91,14 @@ sealed interface DashboardIntent : MVIIntent {
 // ============================================================================
 
 @Immutable
-sealed interface DashboardAction : MVIAction {
+sealed interface TodayAction : MVIAction {
 
     /** Navigate to document details/edit screen */
-    data class NavigateToDocument(val documentId: String) : DashboardAction
+    data class NavigateToDocument(val documentId: String) : TodayAction
 
     /** Navigate to workspace selection */
-    data object NavigateToWorkspaceSelect : DashboardAction
+    data object NavigateToWorkspaceSelect : TodayAction
 
     /** Show error message */
-    data class ShowError(val error: DokusException) : DashboardAction
+    data class ShowError(val error: DokusException) : TodayAction
 }

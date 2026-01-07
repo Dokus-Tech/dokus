@@ -179,7 +179,6 @@ internal fun CashflowScreen(
                         DesktopCashflowContent(
                             documentsState = DokusState.loading(),
                             vatSummaryState = DokusState.loading(),
-                            businessHealthState = DokusState.loading(),
                             pendingDocumentsState = DokusState.loading(),
                             sortOption = sortOption,
                             contentPadding = contentPadding,
@@ -211,7 +210,6 @@ internal fun CashflowScreen(
                         DesktopCashflowContent(
                             documentsState = DokusState.success(content.documents),
                             vatSummaryState = content.vatSummaryState,
-                            businessHealthState = content.businessHealthState,
                             pendingDocumentsState = content.pendingDocumentsState,
                             sortOption = content.sortOption,
                             contentPadding = contentPadding,
@@ -244,7 +242,6 @@ internal fun CashflowScreen(
                         DesktopCashflowContent(
                             documentsState = DokusState.error(error.exception, error.retryHandler),
                             vatSummaryState = DokusState.error(error.exception, error.retryHandler),
-                            businessHealthState = DokusState.error(error.exception, error.retryHandler),
                             pendingDocumentsState = DokusState.error(error.exception, error.retryHandler),
                             sortOption = sortOption,
                             contentPadding = contentPadding,

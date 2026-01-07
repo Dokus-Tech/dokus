@@ -10,7 +10,6 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.features.cashflow.presentation.cashflow.components.BusinessHealthData
 import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentSortOption
 import tech.dokus.features.cashflow.presentation.cashflow.components.VatSummaryData
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
@@ -23,7 +22,7 @@ import tech.dokus.foundation.app.state.DokusState
  * The Cashflow screen is the main document management hub displaying:
  * - Financial documents (invoices, expenses, bills) with pagination
  * - Pending/processing documents
- * - VAT summary and business health cards
+ * - VAT summary card
  * - Search and sort capabilities
  * - Document upload functionality
  *
@@ -56,7 +55,6 @@ sealed interface CashflowState : MVIState, DokusState<Nothing> {
      * @property pendingDocuments Documents being processed (with pagination)
      * @property pendingDocumentsState Loading state for pending documents
      * @property vatSummaryState Loading state for VAT summary card
-     * @property businessHealthState Loading state for business health card
      * @property uploadTasks Active document upload tasks
      * @property uploadedDocuments Successfully uploaded documents (by task ID)
      * @property deletionHandles Pending deletions with undo capability (by document ID)
@@ -70,7 +68,6 @@ sealed interface CashflowState : MVIState, DokusState<Nothing> {
         val pendingDocuments: PaginationState<DocumentRecordDto> = PaginationState(pageSize = PENDING_PAGE_SIZE),
         val pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>> = DokusState.idle(),
         val vatSummaryState: DokusState<VatSummaryData> = DokusState.loading(),
-        val businessHealthState: DokusState<BusinessHealthData> = DokusState.loading(),
         val uploadTasks: List<DocumentUploadTask> = emptyList(),
         val uploadedDocuments: Map<String, DocumentDto> = emptyMap(),
         val deletionHandles: Map<String, DocumentDeletionHandle> = emptyMap(),

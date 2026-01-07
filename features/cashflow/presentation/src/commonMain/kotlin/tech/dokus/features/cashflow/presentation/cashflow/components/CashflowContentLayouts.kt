@@ -33,12 +33,11 @@ private const val InfiniteScrollThreshold = 5
 
 /**
  * Desktop cashflow content with Figma-matching layout.
- * Shows summary cards (VAT, Business Health, Pending Documents) + documents table.
+ * Shows summary cards (VAT, Pending Documents) + documents table.
  * Each section handles its own loading/error state independently.
  *
  * @param documentsState State for financial documents with pagination
  * @param vatSummaryState State for VAT summary card
- * @param businessHealthState State for business health card
  * @param pendingDocumentsState State for pending documents card
  * @param sortOption Currently selected sort option
  * @param contentPadding Scaffold content padding to apply
@@ -53,7 +52,6 @@ private const val InfiniteScrollThreshold = 5
 fun DesktopCashflowContent(
     documentsState: DokusState<PaginationState<FinancialDocumentDto>>,
     vatSummaryState: DokusState<VatSummaryData>,
-    businessHealthState: DokusState<BusinessHealthData>,
     pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>>,
     sortOption: DocumentSortOption,
     contentPadding: PaddingValues,
@@ -98,7 +96,6 @@ fun DesktopCashflowContent(
         item {
             CashflowSummarySection(
                 vatSummaryState = vatSummaryState,
-                businessHealthState = businessHealthState,
                 pendingDocumentsState = pendingDocumentsState,
                 onPendingDocumentClick = onPendingDocumentClick,
                 onPendingLoadMore = onPendingLoadMore,

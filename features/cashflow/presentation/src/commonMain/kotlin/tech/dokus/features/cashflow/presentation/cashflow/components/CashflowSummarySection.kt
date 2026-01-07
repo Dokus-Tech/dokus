@@ -1,9 +1,7 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +17,6 @@ import tech.dokus.foundation.aura.components.common.OfflineOverlay
 // UI dimensions
 private val SummaryRowHeight = 340.dp
 private val CardSpacing = 24.dp
-private val BusinessHealthMinHeight = 120.dp
 
 // Layout weights
 private const val LeftColumnWeight = 3f
@@ -28,14 +25,13 @@ private const val RightColumnWeight = 2f
 /**
  * Summary cards section for the Cashflow screen desktop layout.
  *
- * Displays a horizontal row with summary cards matching Figma layout:
- * - Left column: VAT Summary (top) + Business Health (bottom)
+ * Displays a horizontal row with summary cards:
+ * - Left column: VAT Summary
  * - Right side: Pending Documents card
  *
  * Each card handles its own loading/error state independently.
  *
  * @param vatSummaryState The DokusState containing VAT summary data
- * @param businessHealthState The DokusState containing business health data
  * @param pendingDocumentsState The DokusState containing pending documents with pagination
  * @param onPendingDocumentClick Callback when a pending document is clicked
  * @param onPendingLoadMore Callback to load more pending documents
@@ -44,7 +40,6 @@ private const val RightColumnWeight = 2f
 @Composable
 fun CashflowSummarySection(
     vatSummaryState: DokusState<VatSummaryData>,
-    businessHealthState: DokusState<BusinessHealthData>,
     pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>>,
     onPendingDocumentClick: (DocumentRecordDto) -> Unit,
     onPendingLoadMore: () -> Unit,
@@ -58,43 +53,22 @@ fun CashflowSummarySection(
             .height(SummaryRowHeight),
         horizontalArrangement = Arrangement.spacedBy(CardSpacing)
     ) {
-        // Left column: VAT Summary + Business Health stacked vertically
-        Column(
+        // Left column: VAT Summary (requires network connection)
+        // When offline with error, show loading skeleton behind overlay instead of error
+        OfflineOverlay(
+            isOffline = !isOnline,
             modifier = Modifier
                 .weight(LeftColumnWeight)
-                .fillMaxHeight(),
-            verticalArrangement = Arrangement.spacedBy(CardSpacing)
+                .fillMaxHeight()
         ) {
-            // VAT Summary Card at top (requires network connection)
-            // When offline with error, show loading skeleton behind overlay instead of error
-            OfflineOverlay(isOffline = !isOnline) {
-                VatSummaryCard(
-                    state = if (!isOnline && vatSummaryState is DokusState.Error) {
-                        DokusState.loading()
-                    } else {
-                        vatSummaryState
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Business Health Card below - fills remaining space (requires network connection)
-            // When offline with error, show loading skeleton behind overlay instead of error
-            OfflineOverlay(
-                isOffline = !isOnline,
-                modifier = Modifier
-                    .defaultMinSize(minHeight = BusinessHealthMinHeight)
-                    .weight(1f)
-            ) {
-                BusinessHealthCard(
-                    state = if (!isOnline && businessHealthState is DokusState.Error) {
-                        DokusState.loading()
-                    } else {
-                        businessHealthState
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            VatSummaryCard(
+                state = if (!isOnline && vatSummaryState is DokusState.Error) {
+                    DokusState.loading()
+                } else {
+                    vatSummaryState
+                },
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         // Right side: Pending Documents Card (requires network connection)

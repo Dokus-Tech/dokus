@@ -18,12 +18,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import tech.dokus.app.navigation.NavDefinition
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
@@ -33,11 +41,34 @@ import tech.dokus.navigation.navigateTo
 /**
  * More screen for mobile navigation.
  * Shows grouped navigation items that don't fit in the bottom bar.
+ * Items requiring a higher tier than the user has are filtered out.
  */
 @Composable
-internal fun MoreScreen() {
+internal fun MoreScreen(
+    tokenManager: TokenManager = koinInject()
+) {
     val navController = LocalNavController.current
     val scrollState = rememberScrollState()
+
+    // Get user's subscription tier from JWT claims
+    var userTier by remember { mutableStateOf(SubscriptionTier.Core) }
+    LaunchedEffect(Unit) {
+        userTier = tokenManager.getCurrentClaims()?.tenant?.subscriptionTier ?: SubscriptionTier.Core
+    }
+
+    // Filter sections to only show items the user has access to
+    val filteredSections = remember(userTier) {
+        NavDefinition.sections.mapNotNull { section ->
+            val accessibleItems = section.items.filter { item ->
+                item.requiredTier == null || SubscriptionTier.hasTomorrowAccess(userTier)
+            }
+            if (accessibleItems.isNotEmpty()) {
+                section.copy(items = accessibleItems)
+            } else {
+                null
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -45,7 +76,7 @@ internal fun MoreScreen() {
             .verticalScroll(scrollState)
             .padding(Constrains.Spacing.large)
     ) {
-        NavDefinition.sections.forEach { section ->
+        filteredSections.forEach { section ->
             MoreSectionHeader(section = section)
             Spacer(modifier = Modifier.height(Constrains.Spacing.small))
 

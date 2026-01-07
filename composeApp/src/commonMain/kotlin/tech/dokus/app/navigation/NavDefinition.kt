@@ -8,7 +8,7 @@ import tech.dokus.aura.resources.cashflow_title
 import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.chat_title
 import tech.dokus.aura.resources.file_text
-import tech.dokus.aura.resources.home_dashboard
+import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.inbox
 import tech.dokus.aura.resources.ml
 import tech.dokus.aura.resources.more_horizontal
@@ -19,7 +19,7 @@ import tech.dokus.aura.resources.nav_more
 import tech.dokus.aura.resources.nav_reports
 import tech.dokus.aura.resources.nav_section_accounting
 import tech.dokus.aura.resources.nav_section_company
-import tech.dokus.aura.resources.nav_section_intelligence
+import tech.dokus.aura.resources.nav_tomorrow
 import tech.dokus.aura.resources.nav_team
 import tech.dokus.aura.resources.nav_vat
 import tech.dokus.aura.resources.settings_peppol
@@ -27,6 +27,7 @@ import tech.dokus.aura.resources.settings_workspace_details
 import tech.dokus.aura.resources.trending_up
 import tech.dokus.aura.resources.user
 import tech.dokus.aura.resources.users
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
@@ -48,7 +49,8 @@ object NavDefinition {
     // ========================================================================
 
     object Routes {
-        const val DASHBOARD = "dashboard"
+        const val TODAY = "today"
+        const val TOMORROW = "tomorrow"
         const val DOCUMENTS = "documents"
         const val CASHFLOW = "cashflow"
         const val CONTACTS = "contacts"
@@ -68,7 +70,7 @@ object NavDefinition {
     object SectionIds {
         const val ACCOUNTING = "accounting"
         const val COMPANY = "company"
-        const val INTELLIGENCE = "intelligence"
+        const val TOMORROW = "tomorrow"
     }
 
     // ========================================================================
@@ -76,11 +78,11 @@ object NavDefinition {
     // ========================================================================
 
     object Items {
-        val dashboard = NavItem(
-            id = "dashboard",
-            titleRes = Res.string.home_dashboard,
+        val today = NavItem(
+            id = "today",
+            titleRes = Res.string.home_today,
             iconRes = Res.drawable.chart_bar_trend_up,
-            route = Routes.DASHBOARD,
+            route = Routes.TODAY,
             comingSoon = false,
             showTopBar = false
         )
@@ -163,7 +165,8 @@ object NavDefinition {
             iconRes = Res.drawable.ml,
             route = Routes.AI_CHAT,
             comingSoon = false,
-            showTopBar = false
+            showTopBar = false,
+            requiredTier = SubscriptionTier.One
         )
 
         val forecast = NavItem(
@@ -172,7 +175,8 @@ object NavDefinition {
             iconRes = Res.drawable.trending_up,
             route = Routes.UNDER_DEVELOPMENT,
             comingSoon = true,
-            showTopBar = true
+            showTopBar = true,
+            requiredTier = SubscriptionTier.One
         )
 
     }
@@ -187,7 +191,7 @@ object NavDefinition {
             titleRes = Res.string.nav_section_accounting,
             iconRes = Res.drawable.chart_bar_trend_up,
             items = listOf(
-                Items.dashboard,
+                Items.today,
                 Items.documents,
                 Items.cashflow,
                 Items.vat,
@@ -208,8 +212,8 @@ object NavDefinition {
             defaultExpanded = false
         ),
         NavSection(
-            id = SectionIds.INTELLIGENCE,
-            titleRes = Res.string.nav_section_intelligence,
+            id = SectionIds.TOMORROW,
+            titleRes = Res.string.nav_tomorrow,
             iconRes = Res.drawable.ml,
             items = listOf(
                 Items.aiChat,
@@ -225,10 +229,10 @@ object NavDefinition {
 
     val mobileTabs: List<MobileTabConfig> = listOf(
         MobileTabConfig(
-            id = "tab_dashboard",
-            titleRes = Res.string.home_dashboard,
+            id = "tab_today",
+            titleRes = Res.string.home_today,
             iconRes = Res.drawable.chart_bar_trend_up,
-            route = Routes.DASHBOARD
+            route = Routes.TODAY
         ),
         MobileTabConfig(
             id = "tab_documents",
@@ -270,7 +274,8 @@ object NavDefinition {
 
     /** Map route string to navigation destination */
     fun routeToDestination(route: String?): NavigationDestination? = when (route) {
-        Routes.DASHBOARD -> HomeDestination.Dashboard
+        Routes.TODAY -> HomeDestination.Today
+        Routes.TOMORROW -> HomeDestination.Tomorrow
         Routes.DOCUMENTS -> HomeDestination.Documents
         Routes.CASHFLOW -> HomeDestination.Cashflow
         Routes.CONTACTS -> HomeDestination.Contacts
@@ -286,7 +291,8 @@ object NavDefinition {
 
     /** Map HomeDestination to route string */
     fun destinationToRoute(destination: HomeDestination): String = when (destination) {
-        HomeDestination.Dashboard -> Routes.DASHBOARD
+        HomeDestination.Today -> Routes.TODAY
+        HomeDestination.Tomorrow -> Routes.TOMORROW
         HomeDestination.Documents -> Routes.DOCUMENTS
         HomeDestination.Cashflow -> Routes.CASHFLOW
         HomeDestination.Contacts -> Routes.CONTACTS

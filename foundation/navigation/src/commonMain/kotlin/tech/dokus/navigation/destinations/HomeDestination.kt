@@ -6,8 +6,12 @@ import kotlinx.serialization.Serializable
 sealed interface HomeDestination : NavigationDestination {
 
     @Serializable
-    @SerialName("dashboard")
-    data object Dashboard : HomeDestination
+    @SerialName("today")
+    data object Today : HomeDestination
+
+    @Serializable
+    @SerialName("tomorrow")
+    data object Tomorrow : HomeDestination
 
     @Serializable
     @SerialName("documents")

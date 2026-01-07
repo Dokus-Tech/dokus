@@ -12,7 +12,7 @@
     <string name="bootstrap_state_checking_account_status">Verifying account status...</string>
 
     <!-- Home -->
-    <string name="home_dashboard">Dashboard</string>
+    <string name="home_today">Today</string>
     <string name="media_title">Media</string>
     <string name="home_settings">Settings</string>
 
@@ -43,7 +43,7 @@
     <!-- Navigation Sections -->
     <string name="nav_section_accounting">Accounting</string>
     <string name="nav_section_company">Company</string>
-    <string name="nav_section_intelligence">Intelligence</string>
+    <string name="nav_tomorrow">Tomorrow</string>
 
     <!-- Navigation Items -->
     <string name="nav_documents">Documents</string>

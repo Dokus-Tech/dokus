@@ -3,6 +3,7 @@ package tech.dokus.foundation.aura.model
 import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
+import tech.dokus.domain.enums.SubscriptionTier
 
 /**
  * Navigation structure - single source of truth for all navigation items.
@@ -32,6 +33,8 @@ data class NavItem(
     val comingSoon: Boolean = false,
     /** Whether to show top bar for this destination */
     val showTopBar: Boolean = false,
+    /** Minimum subscription tier required to access this item (null = available to all tiers) */
+    val requiredTier: SubscriptionTier? = null,
 )
 
 /**
