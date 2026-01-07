@@ -1,4 +1,4 @@
-package tech.dokus.database.tables.cashflow
+package tech.dokus.database.tables.documents
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
@@ -20,7 +20,7 @@ private const val ContentHashLength = 64
  * The actual file content is stored in MinIO, referenced by storageKey.
  * Download URLs are generated on-demand (presigned URLs expire).
  *
- * OWNER: cashflow service
+ * OWNER: documents service
  * ACCESS: processor service (read-only)
  * CRITICAL: All queries MUST filter by tenant_id for tenant isolation.
  */

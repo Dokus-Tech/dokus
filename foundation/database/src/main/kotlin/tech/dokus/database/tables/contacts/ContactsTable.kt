@@ -5,7 +5,7 @@ import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.foundation.backend.database.dbEnumeration
 

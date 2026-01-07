@@ -12,9 +12,9 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.entity.IngestionItemEntity
-import tech.dokus.database.tables.cashflow.DocumentDraftsTable
-import tech.dokus.database.tables.cashflow.DocumentIngestionRunsTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.database.tables.documents.DocumentDraftsTable
+import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IndexingStatus

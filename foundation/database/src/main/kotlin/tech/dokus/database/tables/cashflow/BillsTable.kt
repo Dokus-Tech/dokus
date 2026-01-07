@@ -7,6 +7,7 @@ import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.ExpenseCategory

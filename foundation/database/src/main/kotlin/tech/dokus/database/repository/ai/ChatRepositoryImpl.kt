@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.tables.ai.ChatMessagesTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId

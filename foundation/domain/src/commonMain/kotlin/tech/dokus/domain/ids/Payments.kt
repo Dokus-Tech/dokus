@@ -28,3 +28,15 @@ value class PaymentId(val value: Uuid) {
         fun parse(value: String): PaymentId = PaymentId(Uuid.parse(value))
     }
 }
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class CashflowEntryId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): CashflowEntryId = CashflowEntryId(Uuid.random())
+        fun parse(value: String): CashflowEntryId = CashflowEntryId(Uuid.parse(value))
+    }
+}
