@@ -43,14 +43,13 @@ import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSecti
 import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
-import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
+import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.local.NavControllerProvided
 import tech.dokus.navigation.navigateTo
-import tech.dokus.navigation.rememberSelectedDestination
 
 /**
  * Home screen using FlowMVI Container pattern.
@@ -62,16 +61,9 @@ internal fun HomeScreen(
     container: HomeContainer = container(),
 ) {
     val homeNavProviders = remember(appModules) { appModules.homeNavigationProviders }
-    val homeItems = remember(appModules) { appModules.homeItems }
-
     val homeNavController = rememberNavController()
-
-    val homeDestinations = remember(homeItems) { homeItems.map { it.destination } }
-    val currentDestination = rememberSelectedDestination(homeNavController, homeDestinations)
-
-    val selectedItem = remember(currentDestination) {
-        homeItems.find { it.destination == currentDestination }
-    } ?: homeItems.first()
+    val homeItems = remember(appModules) { appModules.homeItems }
+    val startDestination = remember(homeItems) { homeItems.first().destination }
 
     // Subscribe to store (no actions to handle for this navigation shell)
     container.store.subscribe(DefaultLifecycle) { _ ->
@@ -100,7 +92,7 @@ internal fun HomeScreen(
                     HomeNavHost(
                         navHostController = homeNavController,
                         homeNavProviders = homeNavProviders,
-                        selectedItem = selectedItem
+                        startDestination = startDestination
                     )
                 }
             )
@@ -118,7 +110,7 @@ internal fun HomeScreen(
                     HomeNavHost(
                         navHostController = homeNavController,
                         homeNavProviders = homeNavProviders,
-                        selectedItem = selectedItem
+                        startDestination = startDestination
                     )
                 }
             )
@@ -130,14 +122,14 @@ internal fun HomeScreen(
 private fun HomeNavHost(
     navHostController: NavHostController,
     homeNavProviders: List<NavigationProvider>,
-    selectedItem: HomeItem,
+    startDestination: NavigationDestination,
 ) {
     val transitionsProvider: TransitionsProvider = remember { TransitionsProvider.forTabs() }
     // Provide home nav controller for screens that need to navigate within home
     NavControllerProvided(navHostController) {
         NavHost(
             navHostController,
-            startDestination = selectedItem.destination,
+            startDestination = startDestination,
             enterTransition = { with(transitionsProvider) { enterTransition } },
             exitTransition = { with(transitionsProvider) { exitTransition } },
             popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
