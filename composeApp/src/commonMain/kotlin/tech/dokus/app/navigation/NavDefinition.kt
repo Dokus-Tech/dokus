@@ -9,7 +9,7 @@ import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.chat_title
 import tech.dokus.aura.resources.file_text
 import tech.dokus.aura.resources.home_dashboard
-import tech.dokus.aura.resources.home_settings
+import tech.dokus.aura.resources.inbox
 import tech.dokus.aura.resources.ml
 import tech.dokus.aura.resources.more_horizontal
 import tech.dokus.aura.resources.nav_clients
@@ -22,13 +22,17 @@ import tech.dokus.aura.resources.nav_section_company
 import tech.dokus.aura.resources.nav_section_intelligence
 import tech.dokus.aura.resources.nav_team
 import tech.dokus.aura.resources.nav_vat
-import tech.dokus.aura.resources.settings
+import tech.dokus.aura.resources.settings_peppol
+import tech.dokus.aura.resources.settings_workspace_details
 import tech.dokus.aura.resources.trending_up
+import tech.dokus.aura.resources.user
 import tech.dokus.aura.resources.users
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
+import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 
 /**
  * Navigation definition - single source of truth for all navigation items.
@@ -40,7 +44,7 @@ import tech.dokus.navigation.destinations.HomeDestination
 object NavDefinition {
 
     // ========================================================================
-    // ROUTE STRINGS (matching @SerialName values in HomeDestination)
+    // ROUTE STRINGS (matching @SerialName values in HomeDestination / SettingsDestination)
     // ========================================================================
 
     object Routes {
@@ -51,6 +55,8 @@ object NavDefinition {
         const val TEAM = "team"
         const val AI_CHAT = "ai-chat"
         const val SETTINGS = "settings"
+        const val WORKSPACE_SETTINGS = "settings/workspace"
+        const val PEPPOL_SETTINGS = "settings/peppol"
         const val MORE = "more"
         const val UNDER_DEVELOPMENT = "home/under_development"
     }
@@ -115,6 +121,15 @@ object NavDefinition {
             showTopBar = true
         )
 
+        val companyDetails = NavItem(
+            id = "company_details",
+            titleRes = Res.string.settings_workspace_details,
+            iconRes = Res.drawable.user,
+            route = Routes.WORKSPACE_SETTINGS,
+            comingSoon = false,
+            showTopBar = true
+        )
+
         val clients = NavItem(
             id = "clients",
             titleRes = Res.string.nav_clients,
@@ -129,6 +144,15 @@ object NavDefinition {
             titleRes = Res.string.nav_team,
             iconRes = Res.drawable.users,
             route = Routes.TEAM,
+            comingSoon = false,
+            showTopBar = true
+        )
+
+        val peppol = NavItem(
+            id = "peppol",
+            titleRes = Res.string.settings_peppol,
+            iconRes = Res.drawable.inbox,
+            route = Routes.PEPPOL_SETTINGS,
             comingSoon = false,
             showTopBar = true
         )
@@ -151,14 +175,6 @@ object NavDefinition {
             showTopBar = true
         )
 
-        val settings = NavItem(
-            id = "settings",
-            titleRes = Res.string.home_settings,
-            iconRes = Res.drawable.settings,
-            route = Routes.SETTINGS,
-            comingSoon = false,
-            showTopBar = true
-        )
     }
 
     // ========================================================================
@@ -184,8 +200,10 @@ object NavDefinition {
             titleRes = Res.string.nav_section_company,
             iconRes = Res.drawable.users,
             items = listOf(
+                Items.companyDetails,
                 Items.clients,
-                Items.team
+                Items.team,
+                Items.peppol
             ),
             defaultExpanded = false
         ),
@@ -250,8 +268,8 @@ object NavDefinition {
         }
     }
 
-    /** Map route string to HomeDestination */
-    fun routeToDestination(route: String?): HomeDestination? = when (route) {
+    /** Map route string to navigation destination */
+    fun routeToDestination(route: String?): NavigationDestination? = when (route) {
         Routes.DASHBOARD -> HomeDestination.Dashboard
         Routes.DOCUMENTS -> HomeDestination.Documents
         Routes.CASHFLOW -> HomeDestination.Cashflow
@@ -259,6 +277,8 @@ object NavDefinition {
         Routes.TEAM -> HomeDestination.Team
         Routes.AI_CHAT -> HomeDestination.AiChat
         Routes.SETTINGS -> HomeDestination.Settings
+        Routes.WORKSPACE_SETTINGS -> SettingsDestination.WorkspaceSettings
+        Routes.PEPPOL_SETTINGS -> SettingsDestination.PeppolSettings
         Routes.MORE -> HomeDestination.More
         Routes.UNDER_DEVELOPMENT -> HomeDestination.UnderDevelopment
         else -> null

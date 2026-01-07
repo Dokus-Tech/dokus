@@ -196,7 +196,7 @@ private fun RailNavigationLayout(
                     sections = NavDefinition.sections,
                     expandedSections = expandedSections,
                     selectedRoute = selectedRoute,
-                    settingsItem = NavDefinition.Items.settings,
+                    settingsItem = null,
                     onSectionToggle = { sectionId ->
                         // Accordion behavior: collapse all, expand clicked
                         val currentlyExpanded = expandedSections[sectionId] ?: false

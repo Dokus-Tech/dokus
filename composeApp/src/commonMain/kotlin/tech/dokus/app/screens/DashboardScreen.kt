@@ -48,6 +48,7 @@ import tech.dokus.app.viewmodel.DashboardAction
 import tech.dokus.app.viewmodel.DashboardContainer
 import tech.dokus.app.viewmodel.DashboardIntent
 import tech.dokus.app.viewmodel.DashboardState
+import tech.dokus.foundation.aura.components.navigation.UserPreferencesMenu
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.search_placeholder
@@ -184,6 +185,8 @@ internal fun DashboardScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                    Spacer(Modifier.width(8.dp))
+                    UserPreferencesMenu()
                 }
             )
         },
