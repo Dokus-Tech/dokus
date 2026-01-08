@@ -13,6 +13,7 @@ import tech.dokus.domain.enums.RecommandDirection
 import tech.dokus.domain.enums.RecommandDocumentStatus
 import tech.dokus.domain.enums.UnitCode
 import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolSettingsId
@@ -490,7 +491,7 @@ data class PeppolInboxPollResponse(
 @Serializable
 data class ProcessedPeppolDocument(
     val transmissionId: PeppolTransmissionId,
-    val billId: BillId,
+    val documentId: DocumentId,
     val senderPeppolId: PeppolId,
     val invoiceNumber: String?,
     val totalAmount: Money?,

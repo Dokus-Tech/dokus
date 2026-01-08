@@ -12,6 +12,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.banking.BankingRepository
 import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -56,6 +57,7 @@ val repositoryModuleCashflow = module {
     single { InvoiceRepository(get()) }
     single { ExpenseRepository() }
     single { BillRepository() }
+    single { CashflowEntriesRepository() }
     single { CashflowRepository(get(), get()) }
 }
 

@@ -25,9 +25,11 @@ import tech.dokus.backend.services.auth.RedisRateLimitService
 import tech.dokus.backend.services.auth.SmtpEmailService
 import tech.dokus.backend.services.auth.TeamService
 import tech.dokus.backend.services.cashflow.BillService
+import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceService
+import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
@@ -229,7 +231,9 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { InvoiceService(get()) }
     single { ExpenseService(get()) }
     single { BillService(get()) }
+    single { CashflowEntriesService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
+    single { DocumentConfirmationService(get(), get(), get(), get(), get()) }
 
     // PDF Preview
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }

@@ -3,9 +3,12 @@ package tech.dokus.peppol.mapper
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.ExtractedBillFields
+import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -185,6 +188,54 @@ class PeppolMapper {
             description = document.note,
             notes = "Received via Peppol from $senderPeppolId",
             documentId = null
+        )
+    }
+
+    /**
+     * Convert a received Peppol document to ExtractedDocumentData.
+     * Used when creating Documents+Drafts from Peppol inbox (architectural boundary).
+     */
+    fun toExtractedDocumentData(
+        document: PeppolReceivedDocument,
+        senderPeppolId: String
+    ): ExtractedDocumentData {
+        val seller = document.seller
+        val totals = document.totals
+        val taxTotal = document.taxTotal
+
+        // Parse dates
+        val issueDate = document.issueDate?.let { parseDate(it) }
+        val dueDate = document.dueDate?.let { parseDate(it) } ?: issueDate
+
+        // Calculate amounts
+        val amount = totals?.payableAmount?.let { Money.fromDouble(it) }
+            ?: totals?.taxInclusiveAmount?.let { Money.fromDouble(it) }
+
+        val vatAmount = taxTotal?.taxAmount?.let { Money.fromDouble(it) }
+
+        // Determine VAT rate from tax subtotals
+        val vatRate = taxTotal?.taxSubtotals?.firstOrNull()?.taxPercent?.let { percent ->
+            VatRate.parse(percent.toString())
+        }
+
+        // Infer category from document content
+        val category = inferCategory(document)
+
+        return ExtractedDocumentData(
+            documentType = DocumentType.Bill,
+            bill = ExtractedBillFields(
+                supplierName = seller?.name,
+                supplierVatNumber = seller?.vatNumber,
+                invoiceNumber = document.invoiceNumber,
+                issueDate = issueDate,
+                dueDate = dueDate,
+                amount = amount,
+                vatAmount = vatAmount,
+                vatRate = vatRate,
+                category = category,
+                description = document.note,
+                notes = "Received via Peppol from $senderPeppolId"
+            )
         )
     }
 
