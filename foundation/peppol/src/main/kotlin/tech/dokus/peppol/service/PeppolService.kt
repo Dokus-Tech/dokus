@@ -9,11 +9,12 @@ import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -252,10 +253,13 @@ class PeppolService(
 
     /**
      * Poll the Peppol inbox for new documents.
+     *
+     * Creates Documents with Drafts for user review (architectural boundary).
+     * Bills are created only when the user confirms the draft.
      */
     suspend fun pollInbox(
         tenantId: TenantId,
-        createBillCallback: suspend (CreateBillRequest, TenantId) -> Result<FinancialDocumentDto.BillDto>
+        createDocumentCallback: suspend (ExtractedDocumentData, String, TenantId) -> Result<DocumentId>
     ): Result<PeppolInboxPollResponse> {
         logger.info("Polling Peppol inbox for tenant: $tenantId")
 
@@ -289,19 +293,11 @@ class PeppolService(
                         senderPeppolId = PeppolId(inboxItem.senderPeppolId)
                     ).getOrThrow()
 
-                    // Convert to bill request
-                    val createBillRequest =
-                        mapper.toCreateBillRequest(fullDocument, inboxItem.senderPeppolId)
+                    // Convert to extracted data (for draft)
+                    val extractedData = mapper.toExtractedDocumentData(fullDocument, inboxItem.senderPeppolId)
 
-                    // Create bill via callback
-                    val bill = createBillCallback(createBillRequest, tenantId).getOrThrow()
-
-                    // Link bill to transmission
-                    transmissionRepository.linkBillToTransmission(
-                        transmissionId = transmission.id,
-                        tenantId = tenantId,
-                        billId = bill.id
-                    ).getOrThrow()
+                    // Create document + draft via callback
+                    val documentId = createDocumentCallback(extractedData, inboxItem.senderPeppolId, tenantId).getOrThrow()
 
                     // Update transmission status
                     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -320,15 +316,15 @@ class PeppolService(
                     processedDocuments.add(
                         ProcessedPeppolDocument(
                             transmissionId = transmission.id,
-                            billId = bill.id,
+                            documentId = documentId,
                             senderPeppolId = PeppolId(inboxItem.senderPeppolId),
-                            invoiceNumber = createBillRequest.invoiceNumber,
-                            totalAmount = createBillRequest.amount,
+                            invoiceNumber = extractedData.bill?.invoiceNumber,
+                            totalAmount = extractedData.bill?.amount,
                             receivedAt = now
                         )
                     )
 
-                    logger.info("Processed incoming Peppol document ${inboxItem.id} -> Bill ${bill.id}")
+                    logger.info("Processed incoming Peppol document ${inboxItem.id} -> Document $documentId (needs review)")
                 } catch (e: Exception) {
                     logger.error("Failed to process incoming document ${inboxItem.id}", e)
                     // Continue processing other documents

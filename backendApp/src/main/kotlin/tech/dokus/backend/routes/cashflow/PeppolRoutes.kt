@@ -10,12 +10,17 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
-import tech.dokus.backend.services.cashflow.BillService
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.cashflow.DocumentCreatePayload
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.SavePeppolSettingsRequest
@@ -43,7 +48,8 @@ internal fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
     val peppolConnectionService by inject<PeppolConnectionService>()
     val invoiceService by inject<InvoiceService>()
-    val billService by inject<BillService>()
+    val documentRepository by inject<DocumentRepository>()
+    val draftRepository by inject<DocumentDraftRepository>()
     val contactRepository by inject<ContactRepository>()
     val tenantRepository by inject<TenantRepository>()
     val addressRepository by inject<AddressRepository>()
@@ -263,14 +269,42 @@ internal fun Route.peppolRoutes() {
          * Poll inbox for new documents.
          *
          * Polls the Peppol provider's inbox for new documents and creates
-         * corresponding bills in the system.
+         * Document+Draft records for user review.
+         * Bills are created only when the user confirms the draft.
          */
         post<Peppol.Inbox.Syncs> {
             val tenantId = dokusPrincipal.requireTenantId()
 
-            // Poll inbox with bill creation callback
-            val pollResult = peppolService.pollInbox(tenantId) { createBillRequest, tid ->
-                billService.createBill(tid, createBillRequest)
+            // Poll inbox with document+draft creation callback
+            val pollResult = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid ->
+                runCatching {
+                    // Create document record (Peppol documents don't have a file - use placeholder)
+                    val filename = "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.xml"
+                    val storageKey = "peppol/${tid}/${java.util.UUID.randomUUID()}.xml"
+
+                    val documentId = documentRepository.create(
+                        tenantId = tid,
+                        payload = DocumentCreatePayload(
+                            filename = filename,
+                            contentType = "application/xml",
+                            sizeBytes = 0L,
+                            storageKey = storageKey,
+                            contentHash = null
+                        )
+                    )
+
+                    // Create draft with extracted data
+                    draftRepository.createOrUpdateFromIngestion(
+                        documentId = documentId,
+                        tenantId = tid,
+                        runId = IngestionRunId.generate(), // Synthetic run ID for Peppol
+                        extractedData = extractedData,
+                        documentType = DocumentType.Bill,
+                        force = true
+                    )
+
+                    documentId
+                }
             }.getOrElse { throw DokusException.InternalError("Failed to poll Peppol inbox: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, pollResult)

@@ -13,6 +13,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -30,9 +31,6 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ConfirmDocumentRequest
-import tech.dokus.domain.model.CreateBillRequest
-import tech.dokus.domain.model.CreateExpenseRequest
-import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
@@ -71,6 +69,7 @@ internal fun Route.documentRecordRoutes() {
     val expenseRepository by inject<ExpenseRepository>()
     val billRepository by inject<BillRepository>()
     val minioStorage by inject<MinioDocumentStorageService>()
+    val documentConfirmationService by inject<DocumentConfirmationService>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
 
     authenticateJwt {
@@ -461,89 +460,14 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Entity already exists for this document")
             }
 
-            // Create entity based on type
-            val createdEntity: FinancialDocumentDto = when (resolvedType) {
-                DocumentType.Invoice -> {
-                    val invoiceData = extractedData.invoice
-                        ?: throw DokusException.BadRequest("No invoice data extracted from document")
-
-                    val contactId = draft.linkedContactId
-                        ?: throw DokusException.BadRequest("Invoice requires a linked contact")
-
-                    validateInvoiceData(invoiceData)
-
-                    val items = buildInvoiceItems(invoiceData)
-                    val createRequest = CreateInvoiceRequest(
-                        contactId = contactId,
-                        items = items,
-                        issueDate = invoiceData.issueDate,
-                        dueDate = invoiceData.dueDate,
-                        notes = invoiceData.notes,
-                        documentId = documentId
-                    )
-
-                    invoiceRepository.createInvoice(tenantId, createRequest).getOrThrow()
-                }
-
-                DocumentType.Bill -> {
-                    val billData = extractedData.bill
-                        ?: throw DokusException.BadRequest("No bill data extracted from document")
-
-                    val createRequest = CreateBillRequest(
-                        supplierName = billData.supplierName ?: "Unknown Supplier",
-                        supplierVatNumber = billData.supplierVatNumber,
-                        invoiceNumber = billData.invoiceNumber,
-                        issueDate = billData.issueDate
-                            ?: throw DokusException.BadRequest("Issue date is required"),
-                        dueDate = billData.dueDate ?: billData.issueDate
-                            ?: throw DokusException.BadRequest("Due date is required"),
-                        amount = billData.amount
-                            ?: throw DokusException.BadRequest("Amount is required"),
-                        vatAmount = billData.vatAmount,
-                        vatRate = billData.vatRate,
-                        category = billData.category
-                            ?: throw DokusException.BadRequest("Category is required"),
-                        description = billData.description,
-                        notes = billData.notes,
-                        documentId = documentId
-                    )
-
-                    billRepository.createBill(tenantId, createRequest).getOrThrow()
-                }
-
-                DocumentType.Expense -> {
-                    val expenseData = extractedData.expense
-                        ?: throw DokusException.BadRequest("No expense data extracted from document")
-
-                    val createRequest = CreateExpenseRequest(
-                        date = expenseData.date
-                            ?: throw DokusException.BadRequest("Date is required"),
-                        merchant = expenseData.merchant
-                            ?: throw DokusException.BadRequest("Merchant is required"),
-                        amount = expenseData.amount
-                            ?: throw DokusException.BadRequest("Amount is required"),
-                        vatAmount = expenseData.vatAmount,
-                        vatRate = expenseData.vatRate,
-                        category = expenseData.category
-                            ?: throw DokusException.BadRequest("Category is required"),
-                        description = expenseData.description,
-                        documentId = documentId,
-                        isDeductible = expenseData.isDeductible,
-                        deductiblePercentage = expenseData.deductiblePercentage,
-                        paymentMethod = expenseData.paymentMethod,
-                        notes = expenseData.notes
-                    )
-
-                    expenseRepository.createExpense(tenantId, createRequest).getOrThrow()
-                }
-
-                DocumentType.Unknown -> {
-                    throw DokusException.BadRequest("Cannot confirm document with unknown type")
-                }
-            }
-
-            // Update draft status to confirmed
-            draftRepository.updateDraftStatus(documentId, tenantId, DraftStatus.Confirmed)
+            // Confirm document: creates entity + cashflow entry + marks draft confirmed
+            val createdEntity = documentConfirmationService.confirmDocument(
+                tenantId = tenantId,
+                documentId = documentId,
+                documentType = resolvedType,
+                extractedData = extractedData,
+                linkedContactId = draft.linkedContactId
+            ).getOrThrow()
 
             logger.info("Document confirmed: $documentId -> $resolvedType")
 
