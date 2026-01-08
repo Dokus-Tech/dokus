@@ -6,10 +6,10 @@ import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -21,6 +21,14 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
+
+/**
+ * Result of document confirmation containing both the financial entity and cashflow entry ID.
+ */
+data class ConfirmationResult(
+    val entity: FinancialDocumentDto,
+    val cashflowEntryId: CashflowEntryId
+)
 
 /**
  * Service for document confirmation orchestration.
@@ -63,11 +71,11 @@ class DocumentConfirmationService(
         documentType: DocumentType,
         extractedData: ExtractedDocumentData,
         linkedContactId: ContactId?
-    ): Result<FinancialDocumentDto> = runCatching {
+    ): Result<ConfirmationResult> = runCatching {
         logger.info("Confirming document: $documentId as $documentType for tenant: $tenantId")
 
         // Create financial entity based on type
-        val entity: FinancialDocumentDto = when (documentType) {
+        val result: ConfirmationResult = when (documentType) {
             DocumentType.Invoice -> confirmAsInvoice(tenantId, documentId, extractedData, linkedContactId)
             DocumentType.Bill -> confirmAsBill(tenantId, documentId, extractedData)
             DocumentType.Expense -> confirmAsExpense(tenantId, documentId, extractedData)
@@ -77,8 +85,8 @@ class DocumentConfirmationService(
         // Mark draft as confirmed
         draftRepository.updateDraftStatus(documentId, tenantId, DraftStatus.Confirmed)
 
-        logger.info("Document confirmed: $documentId -> ${entity.javaClass.simpleName}")
-        entity
+        logger.info("Document confirmed: $documentId -> ${result.entity.javaClass.simpleName}, cashflowEntryId: ${result.cashflowEntryId}")
+        result
     }
 
     private suspend fun confirmAsInvoice(
@@ -86,7 +94,7 @@ class DocumentConfirmationService(
         documentId: DocumentId,
         extractedData: ExtractedDocumentData,
         linkedContactId: ContactId?
-    ): FinancialDocumentDto.InvoiceDto {
+    ): ConfirmationResult {
         val invoiceData = extractedData.invoice
             ?: throw DokusException.BadRequest("No invoice data extracted from document")
 
@@ -130,7 +138,7 @@ class DocumentConfirmationService(
 
         // Create cashflow entry for this invoice (Cash-In)
         // CRITICAL: Must succeed for data integrity - fail entire operation if this fails
-        cashflowEntriesService.createFromInvoice(
+        val cashflowEntry = cashflowEntriesService.createFromInvoice(
             tenantId = tenantId,
             invoiceId = UUID.fromString(invoice.id.toString()),
             documentId = documentId,
@@ -140,14 +148,14 @@ class DocumentConfirmationService(
             customerId = contactId
         ).getOrThrow()
 
-        return invoice
+        return ConfirmationResult(entity = invoice, cashflowEntryId = cashflowEntry.id)
     }
 
     private suspend fun confirmAsBill(
         tenantId: TenantId,
         documentId: DocumentId,
         extractedData: ExtractedDocumentData
-    ): FinancialDocumentDto.BillDto {
+    ): ConfirmationResult {
         val billData = extractedData.bill
             ?: throw DokusException.BadRequest("No bill data extracted from document")
 
@@ -174,7 +182,7 @@ class DocumentConfirmationService(
 
         // Create cashflow entry for this bill (Cash-Out)
         // CRITICAL: Must succeed for data integrity - fail entire operation if this fails
-        cashflowEntriesService.createFromBill(
+        val cashflowEntry = cashflowEntriesService.createFromBill(
             tenantId = tenantId,
             billId = UUID.fromString(bill.id.toString()),
             documentId = documentId,
@@ -184,14 +192,14 @@ class DocumentConfirmationService(
             vendorId = null // Bills may not have a linked contact yet
         ).getOrThrow()
 
-        return bill
+        return ConfirmationResult(entity = bill, cashflowEntryId = cashflowEntry.id)
     }
 
     private suspend fun confirmAsExpense(
         tenantId: TenantId,
         documentId: DocumentId,
         extractedData: ExtractedDocumentData
-    ): FinancialDocumentDto.ExpenseDto {
+    ): ConfirmationResult {
         val expenseData = extractedData.expense
             ?: throw DokusException.BadRequest("No expense data extracted from document")
 
@@ -218,7 +226,7 @@ class DocumentConfirmationService(
 
         // Create cashflow entry for this expense (Cash-Out)
         // CRITICAL: Must succeed for data integrity - fail entire operation if this fails
-        cashflowEntriesService.createFromExpense(
+        val cashflowEntry = cashflowEntriesService.createFromExpense(
             tenantId = tenantId,
             expenseId = UUID.fromString(expense.id.toString()),
             documentId = documentId,
@@ -228,6 +236,6 @@ class DocumentConfirmationService(
             vendorId = null // Expenses typically don't have a linked vendor
         ).getOrThrow()
 
-        return expense
+        return ConfirmationResult(entity = expense, cashflowEntryId = cashflowEntry.id)
     }
 }

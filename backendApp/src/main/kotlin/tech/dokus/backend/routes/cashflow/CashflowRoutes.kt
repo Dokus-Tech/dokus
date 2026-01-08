@@ -18,7 +18,8 @@ import io.ktor.server.routing.routing
  * - /api/v1/expenses - Expense CRUD operations
  * - /api/v1/cashflow/cash-out/bills - Bill CRUD operations (supplier invoices)
  *
- * Overview:
+ * Cashflow Projection Ledger:
+ * - /api/v1/cashflow/entries - Cashflow entries (projections from confirmed documents)
  * - /api/v1/cashflow/overview - Cashflow overview dashboard data
  *
  * Attachments:
@@ -27,8 +28,6 @@ import io.ktor.server.routing.routing
  * Documents:
  * - /api/v1/documents/upload - Upload documents to MinIO storage
  * - /api/v1/documents/{id} - Get document by ID with download URL
- * - /api/v1/documents/processing - List documents by processing status
- * - /api/v1/documents/{id}/processing - Get processing details
  * - /api/v1/documents/{id}/confirm - Confirm extraction and create entity
  * - /api/v1/documents/{id}/reject - Reject extraction
  * - /api/v1/documents/{id}/reprocess - Trigger re-extraction
@@ -42,10 +41,10 @@ import io.ktor.server.routing.routing
  * @see expenseRoutes
  * @see billRoutes
  * @see attachmentRoutes
+ * @see cashflowEntriesRoutes
  * @see cashflowOverviewRoutes
- * @see cashflowDocumentRoutes
  * @see documentUploadRoutes
- * @see documentProcessingRoutes
+ * @see documentRecordRoutes
  * @see peppolRoutes
  */
 fun Application.configureCashflowRoutes() {
@@ -62,16 +61,16 @@ fun Application.configureCashflowRoutes() {
         // Attachment routes
         attachmentRoutes()
 
+        // Cashflow entries routes (projection ledger)
+        cashflowEntriesRoutes()
+
         // Cashflow overview
         cashflowOverviewRoutes()
-
-        // Document routes
-        cashflowDocumentRoutes()
 
         // Document upload routes (MinIO)
         documentUploadRoutes()
 
-        // Document record routes (new canonical document API)
+        // Document record routes (canonical document API)
         documentRecordRoutes()
 
         // Document page preview routes (PDF to PNG)
@@ -82,5 +81,8 @@ fun Application.configureCashflowRoutes() {
 
         // Chat routes (RAG-powered document Q&A)
         chatRoutes()
+
+        // Legacy cashflow documents route (deprecated - returns empty list)
+        cashflowDocumentRoutes()
     }
 }

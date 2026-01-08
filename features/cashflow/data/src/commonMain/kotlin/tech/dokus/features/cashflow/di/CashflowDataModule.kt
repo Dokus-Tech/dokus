@@ -22,7 +22,11 @@ import tech.dokus.features.cashflow.gateway.PeppolRecipientGateway
 import tech.dokus.features.cashflow.gateway.PeppolRecipientGatewayImpl
 import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGateway
 import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGatewayImpl
+import tech.dokus.features.cashflow.usecase.CancelCashflowEntryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConfirmDocumentUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetCashflowEntryUseCaseImpl
+import tech.dokus.features.cashflow.usecase.LoadCashflowEntriesUseCaseImpl
+import tech.dokus.features.cashflow.usecase.RecordCashflowPaymentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConnectPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.DeleteDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.DeletePeppolSettingsUseCaseImpl
@@ -35,6 +39,7 @@ import tech.dokus.features.cashflow.usecase.GetPeppolTransmissionForInvoiceUseCa
 import tech.dokus.features.cashflow.usecase.ListChatSessionsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ListPeppolTransmissionsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.LoadCashflowDocumentsUseCaseImpl
+import tech.dokus.features.cashflow.usecase.LoadDocumentRecordsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.PollPeppolInboxUseCaseImpl
 import tech.dokus.features.cashflow.usecase.RejectDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ReprocessDocumentUseCaseImpl
@@ -47,7 +52,11 @@ import tech.dokus.features.cashflow.usecase.UploadDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ValidateInvoiceForPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.VerifyPeppolRecipientUseCaseImpl
 import tech.dokus.features.cashflow.usecase.WatchPendingDocumentsUseCaseImpl
+import tech.dokus.features.cashflow.usecases.CancelCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
+import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
 import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
 import tech.dokus.features.cashflow.usecases.DeletePeppolSettingsUseCase
@@ -60,6 +69,7 @@ import tech.dokus.features.cashflow.usecases.GetPeppolTransmissionForInvoiceUseC
 import tech.dokus.features.cashflow.usecases.ListChatSessionsUseCase
 import tech.dokus.features.cashflow.usecases.ListPeppolTransmissionsUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowDocumentsUseCase
+import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolInboxUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
@@ -152,4 +162,13 @@ val cashflowNetworkModule = module {
     factory<LoadCashflowDocumentsUseCase> { LoadCashflowDocumentsUseCaseImpl(get()) }
     factory<WatchPendingDocumentsUseCase> { WatchPendingDocumentsUseCaseImpl(get()) }
     factory<SubmitInvoiceUseCase> { SubmitInvoiceUseCaseImpl(get()) }
+
+    // Document records (for DocumentsScreen)
+    factory<LoadDocumentRecordsUseCase> { LoadDocumentRecordsUseCaseImpl(get()) }
+
+    // Cashflow entries (for CashflowLedgerScreen)
+    factory<LoadCashflowEntriesUseCase> { LoadCashflowEntriesUseCaseImpl(get()) }
+    factory<GetCashflowEntryUseCase> { GetCashflowEntryUseCaseImpl(get()) }
+    factory<RecordCashflowPaymentUseCase> { RecordCashflowPaymentUseCaseImpl(get()) }
+    factory<CancelCashflowEntryUseCase> { CancelCashflowEntryUseCaseImpl(get()) }
 }

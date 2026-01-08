@@ -350,11 +350,14 @@ private fun MobileReviewContent(
             hasUnsavedChanges = state.hasUnsavedChanges,
             isDocumentConfirmed = state.isDocumentConfirmed,
             isDocumentRejected = state.isDocumentRejected,
+            hasCashflowEntry = state.confirmedCashflowEntryId != null,
             confirmBlockedReason = state.confirmBlockedReason,
             onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
             onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
             onReject = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
             onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
+            onViewEntity = { onIntent(DocumentReviewIntent.ViewEntity) },
+            onViewCashflowEntry = { onIntent(DocumentReviewIntent.ViewCashflowEntry) },
         )
     }
 

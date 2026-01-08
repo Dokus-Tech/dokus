@@ -112,6 +112,22 @@ class CashflowEntriesRepository {
     }
 
     /**
+     * Get entry by document ID.
+     * CRITICAL: MUST filter by tenant_id.
+     */
+    suspend fun getByDocumentId(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): Result<CashflowEntry?> = runCatching {
+        dbQuery {
+            CashflowEntriesTable.selectAll().where {
+                (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (CashflowEntriesTable.documentId eq UUID.fromString(documentId.toString()))
+            }.singleOrNull()?.let { mapRowToEntry(it) }
+        }
+    }
+
+    /**
      * List entries for a tenant with optional filters.
      * CRITICAL: MUST filter by tenant_id.
      */

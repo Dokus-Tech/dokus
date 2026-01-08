@@ -115,6 +115,8 @@ internal class DocumentReviewContainer(
                         is DocumentReviewIntent.ConfirmDiscardChanges -> handleConfirmDiscardChanges()
                         is DocumentReviewIntent.Confirm -> handleConfirm()
                         is DocumentReviewIntent.OpenChat -> handleOpenChat()
+                        is DocumentReviewIntent.ViewCashflowEntry -> handleViewCashflowEntry()
+                        is DocumentReviewIntent.ViewEntity -> handleViewEntity()
 
                         // === Reject Dialog ===
                         is DocumentReviewIntent.ShowRejectDialog -> handleShowRejectDialog()

@@ -82,3 +82,25 @@ data class CashflowEntry(
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
+
+// ============================================================================
+// CASHFLOW ENTRY API REQUEST/RESPONSE MODELS
+// ============================================================================
+
+/**
+ * Request to record a payment against a cashflow entry.
+ */
+@Serializable
+data class CashflowPaymentRequest(
+    val amount: Money,
+    val paidAt: LocalDateTime,
+    val note: String? = null
+)
+
+/**
+ * Request to cancel a cashflow entry.
+ */
+@Serializable
+data class CancelEntryRequest(
+    val reason: String? = null
+)

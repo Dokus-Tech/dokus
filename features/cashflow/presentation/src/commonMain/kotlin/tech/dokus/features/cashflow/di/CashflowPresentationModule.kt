@@ -9,6 +9,14 @@ import tech.dokus.features.cashflow.mvi.CashflowAction
 import tech.dokus.features.cashflow.mvi.CashflowContainer
 import tech.dokus.features.cashflow.mvi.CashflowIntent
 import tech.dokus.features.cashflow.mvi.CashflowState
+import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
+import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
+import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
+import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
+import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerAction
+import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerContainer
+import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
+import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
 import tech.dokus.features.cashflow.mvi.CreateInvoiceAction
 import tech.dokus.features.cashflow.mvi.CreateInvoiceContainer
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
@@ -115,6 +123,18 @@ val cashflowViewModelModule = module {
             getChatConfigurationUseCase = get(),
             listChatSessionsUseCase = get(),
             getChatSessionHistoryUseCase = get()
+        )
+    }
+    container<DocumentsContainer, DocumentsState, DocumentsIntent, DocumentsAction> {
+        DocumentsContainer(
+            loadDocumentRecords = get()
+        )
+    }
+    container<CashflowLedgerContainer, CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> {
+            (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
+        CashflowLedgerContainer(
+            loadCashflowEntries = get(),
+            highlightEntryId = highlightEntryId
         )
     }
 }

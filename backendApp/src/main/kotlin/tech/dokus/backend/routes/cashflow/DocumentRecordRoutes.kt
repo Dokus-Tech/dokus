@@ -15,6 +15,7 @@ import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
@@ -68,6 +69,7 @@ internal fun Route.documentRecordRoutes() {
     val invoiceRepository by inject<InvoiceRepository>()
     val expenseRepository by inject<ExpenseRepository>()
     val billRepository by inject<BillRepository>()
+    val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentConfirmationService by inject<DocumentConfirmationService>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
@@ -401,13 +403,18 @@ internal fun Route.documentRecordRoutes() {
                 val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
                 val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
+                // Look up the cashflow entry for this document
+                val cashflowEntry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId)
+                    .getOrNull()
+
                 call.respond(
                     HttpStatusCode.OK,
                     DocumentRecordDto(
                         document = documentWithUrl,
                         draft = draft.toDto(),
                         latestIngestion = latestIngestion?.toDto(),
-                        confirmedEntity = confirmedEntity
+                        confirmedEntity = confirmedEntity,
+                        cashflowEntryId = cashflowEntry?.id
                     )
                 )
                 return@post
@@ -461,7 +468,7 @@ internal fun Route.documentRecordRoutes() {
             }
 
             // Confirm document: creates entity + cashflow entry + marks draft confirmed
-            val createdEntity = documentConfirmationService.confirmDocument(
+            val confirmationResult = documentConfirmationService.confirmDocument(
                 tenantId = tenantId,
                 documentId = documentId,
                 documentType = resolvedType,
@@ -469,7 +476,7 @@ internal fun Route.documentRecordRoutes() {
                 linkedContactId = draft.linkedContactId
             ).getOrThrow()
 
-            logger.info("Document confirmed: $documentId -> $resolvedType")
+            logger.info("Document confirmed: $documentId -> $resolvedType, cashflowEntryId=${confirmationResult.cashflowEntryId}")
 
             // Return full record
             val document = documentRepository.getById(tenantId, documentId)!!
@@ -483,7 +490,8 @@ internal fun Route.documentRecordRoutes() {
                     document = documentWithUrl,
                     draft = updatedDraft.toDto(),
                     latestIngestion = latestIngestion?.toDto(),
-                    confirmedEntity = createdEntity
+                    confirmedEntity = confirmationResult.entity,
+                    cashflowEntryId = confirmationResult.cashflowEntryId
                 )
             )
         }

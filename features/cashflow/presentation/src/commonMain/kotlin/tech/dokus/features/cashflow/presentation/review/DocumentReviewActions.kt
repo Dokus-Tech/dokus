@@ -105,6 +105,7 @@ internal class DocumentReviewActions(
                         val draft = record.draft
                         val isConfirmed = draft?.draftStatus == DraftStatus.Confirmed
                         val isRejected = draft?.draftStatus == DraftStatus.Rejected
+                        val cashflowEntryId = record.cashflowEntryId
                         withState<DocumentReviewState.Content, _> {
                             val linkedContactId = draft?.linkedContactId
                             updateState {
@@ -116,6 +117,7 @@ internal class DocumentReviewActions(
                                     isConfirming = false,
                                     isDocumentConfirmed = isConfirmed,
                                     isDocumentRejected = isRejected,
+                                    confirmedCashflowEntryId = cashflowEntryId,
                                     counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
                                     selectedContactId = linkedContactId ?: selectedContactId,
                                     contactSelectionState = if (linkedContactId != null) {
@@ -127,19 +129,6 @@ internal class DocumentReviewActions(
                             }
                         }
                         action(DocumentReviewAction.ShowSuccess(DocumentReviewSuccess.DocumentConfirmed))
-                        val confirmedEntityId = record.confirmedEntity?.let { entity ->
-                            when (entity) {
-                                is FinancialDocumentDto.InvoiceDto -> entity.id.toString()
-                                is FinancialDocumentDto.BillDto -> entity.id.toString()
-                                is FinancialDocumentDto.ExpenseDto -> entity.id.toString()
-                            }
-                        }
-                        action(
-                            DocumentReviewAction.NavigateToEntity(
-                                entityId = confirmedEntityId ?: documentId.toString(),
-                                entityType = editableData.documentType
-                            )
-                        )
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to confirm document: $documentId" }
@@ -244,6 +233,33 @@ internal class DocumentReviewActions(
     suspend fun DocumentReviewCtx.handleOpenChat() {
         withState<DocumentReviewState.Content, _> {
             action(DocumentReviewAction.NavigateToChat(documentId))
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleViewCashflowEntry() {
+        withState<DocumentReviewState.Content, _> {
+            val entryId = confirmedCashflowEntryId ?: return@withState
+            action(DocumentReviewAction.NavigateToCashflowEntry(entryId))
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleViewEntity() {
+        withState<DocumentReviewState.Content, _> {
+            val confirmedEntityId = document.confirmedEntity?.let { entity ->
+                when (entity) {
+                    is FinancialDocumentDto.InvoiceDto -> entity.id.toString()
+                    is FinancialDocumentDto.BillDto -> entity.id.toString()
+                    is FinancialDocumentDto.ExpenseDto -> entity.id.toString()
+                }
+            }
+            if (confirmedEntityId != null) {
+                action(
+                    DocumentReviewAction.NavigateToEntity(
+                        entityId = confirmedEntityId,
+                        entityType = editableData.documentType
+                    )
+                )
+            }
         }
     }
 
