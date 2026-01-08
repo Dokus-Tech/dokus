@@ -25,22 +25,6 @@ class Cashflow {
     )
 
     /**
-     * GET /api/v1/cashflow/documents - List combined financial documents
-     *
-     * @deprecated This endpoint is being replaced. Use /api/v1/documents for the inbox
-     * and /api/v1/cashflow/entries for the projection ledger.
-     */
-    @Serializable
-    @Resource("documents")
-    class CashflowDocuments(
-        val parent: Cashflow = Cashflow(),
-        val fromDate: LocalDate? = null,
-        val toDate: LocalDate? = null,
-        val limit: Int = 50,
-        val offset: Int = 0
-    )
-
-    /**
      * GET /api/v1/cashflow/entries - List cashflow entries (projection ledger)
      *
      * Supports filtering by:

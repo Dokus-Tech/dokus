@@ -5,10 +5,6 @@ import tech.dokus.features.cashflow.mvi.AddDocumentAction
 import tech.dokus.features.cashflow.mvi.AddDocumentContainer
 import tech.dokus.features.cashflow.mvi.AddDocumentIntent
 import tech.dokus.features.cashflow.mvi.AddDocumentState
-import tech.dokus.features.cashflow.mvi.CashflowAction
-import tech.dokus.features.cashflow.mvi.CashflowContainer
-import tech.dokus.features.cashflow.mvi.CashflowIntent
-import tech.dokus.features.cashflow.mvi.CashflowState
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
@@ -34,9 +30,6 @@ import tech.dokus.features.cashflow.mvi.PeppolSettingsContainer
 import tech.dokus.features.cashflow.mvi.PeppolSettingsIntent
 import tech.dokus.features.cashflow.mvi.PeppolSettingsState
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.FilterDocumentsUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.LoadVatSummaryUseCase
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.SearchCashflowDocumentsUseCase
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
 import tech.dokus.features.cashflow.presentation.chat.ChatAction
 import tech.dokus.features.cashflow.presentation.chat.ChatContainer
@@ -56,9 +49,6 @@ val cashflowViewModelModule = module {
         )
     }
 
-    factory { SearchCashflowDocumentsUseCase() }
-    factory { FilterDocumentsUseCase() }
-    factory { LoadVatSummaryUseCase() }
     factory { ValidateInvoiceUseCase() }
 
     // FlowMVI Containers
@@ -86,16 +76,6 @@ val cashflowViewModelModule = module {
         PeppolConnectContainer(
             provider = params.provider,
             connectPeppol = get()
-        )
-    }
-    container<CashflowContainer, CashflowState, CashflowIntent, CashflowAction> {
-        CashflowContainer(
-            loadDocuments = get(),
-            searchDocuments = get(),
-            filterDocuments = get(),
-            watchPendingDocuments = get(),
-            loadVatSummary = get(),
-            uploadManager = get()
         )
     }
     container<CreateInvoiceContainer, CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> {

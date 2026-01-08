@@ -23,9 +23,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.search_placeholder
+import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentRow
-import tech.dokus.features.cashflow.presentation.documents.components.DocumentsSearchBar
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentStatusFilterChips
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
+import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 
@@ -103,14 +108,20 @@ private fun DocumentsContent(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        DocumentsSearchBar(
-            searchQuery = state.searchQuery,
-            statusFilter = state.statusFilter,
-            onSearchQueryChange = { onIntent(DocumentsIntent.UpdateSearchQuery(it)) },
-            onStatusFilterChange = { onIntent(DocumentsIntent.UpdateStatusFilter(it)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+        // Search field
+        PSearchFieldCompact(
+            value = state.searchQuery,
+            onValueChange = { onIntent(DocumentsIntent.UpdateSearchQuery(it)) },
+            placeholder = stringResource(Res.string.search_placeholder),
+            onClear = { onIntent(DocumentsIntent.UpdateSearchQuery("")) },
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+
+        // Status filter chips
+        DocumentStatusFilterChips(
+            selectedStatus = state.statusFilter,
+            onStatusSelected = { onIntent(DocumentsIntent.UpdateStatusFilter(it)) },
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
 
         if (documents.isEmpty()) {
