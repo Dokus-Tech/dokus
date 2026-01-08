@@ -81,8 +81,5 @@ fun Application.configureCashflowRoutes() {
 
         // Chat routes (RAG-powered document Q&A)
         chatRoutes()
-
-        // Legacy cashflow documents route (deprecated - returns empty list)
-        cashflowDocumentRoutes()
     }
 }
