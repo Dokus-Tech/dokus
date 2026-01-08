@@ -4,56 +4,31 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
-import tech.dokus.database.repository.cashflow.CashflowRepository
-import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Cashflow
 import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 
 /**
- * Cashflow Document Routes using Ktor Type-Safe Routing
- * Base path: /api/v1/cashflow/documents
+ * @deprecated This route is being replaced. Use /api/v1/documents for the inbox
+ * and /api/v1/cashflow/entries for the projection ledger.
  *
- * All routes require JWT authentication and tenant context.
+ * Returns an empty list for backwards compatibility while the old UI is being migrated.
  */
 internal fun Route.cashflowDocumentRoutes() {
-    val repository by inject<CashflowRepository>()
-    val logger = LoggerFactory.getLogger("CashflowDocumentRoutes")
-
     authenticateJwt {
-        // GET /api/v1/cashflow/documents - List cashflow documents
-        get<Cashflow.CashflowDocuments> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
-
-            if (route.limit !in 1..200) {
-                throw DokusException.BadRequest("Limit must be between 1 and 200")
-            }
-            if (route.offset < 0) {
-                throw DokusException.BadRequest("Offset must be non-negative")
-            }
-
-            val page = repository.listDocuments(
-                tenantId = tenantId,
-                fromDate = route.fromDate,
-                toDate = route.toDate,
-                limit = route.limit,
-                offset = route.offset
+        get<Cashflow.CashflowDocuments> { _ ->
+            // Return empty list - this endpoint is deprecated
+            // The old CashflowScreen will be deleted after migration
+            call.respond(
+                HttpStatusCode.OK,
+                PaginatedResponse<FinancialDocumentDto>(
+                    items = emptyList(),
+                    total = 0L,
+                    limit = 50,
+                    offset = 0
+                )
             )
-                .onSuccess {
-                    logger.info(
-                        "Fetched ${it.items.size} cashflow documents " +
-                            "(offset=${route.offset}, limit=${route.limit}, total=${it.total})"
-                    )
-                }
-                .onFailure {
-                    logger.error("Failed to fetch cashflow documents for tenant=$tenantId", it)
-                    throw DokusException.InternalError("Failed to list cashflow documents: ${it.message}")
-                }
-                .getOrThrow()
-
-            call.respond(HttpStatusCode.OK, page)
         }
     }
 }

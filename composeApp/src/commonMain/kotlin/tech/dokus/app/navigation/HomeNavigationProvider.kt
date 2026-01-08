@@ -13,7 +13,6 @@ import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.app.screens.TodayScreen
-import tech.dokus.app.screens.DocumentsPlaceholderScreen
 import tech.dokus.app.screens.MoreScreen
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
@@ -34,9 +33,8 @@ internal object HomeNavigationProvider : NavigationProvider {
         composable<HomeDestination.Today> {
             TodayScreen()
         }
-        composable<HomeDestination.Documents> {
-            DocumentsPlaceholderScreen()
-        }
+        // Documents is now handled by CashflowHomeNavigationProvider
+        // composable<HomeDestination.Documents> { }
         composable<HomeDestination.Team> {
             TeamSettingsRoute()
         }

@@ -98,6 +98,11 @@ internal fun DocumentReviewRoute(
                 navController.navigateTo(CashFlowDestination.DocumentChat(action.documentId.toString()))
             }
             is DocumentReviewAction.NavigateToEntity -> navController.popBackStack()
+            is DocumentReviewAction.NavigateToCashflowEntry -> {
+                navController.navigateTo(
+                    CashFlowDestination.CashflowLedger(action.entryId.toString())
+                )
+            }
             is DocumentReviewAction.ShowError -> pendingError = action.error
             is DocumentReviewAction.ShowSuccess -> pendingSuccess = action.success
             is DocumentReviewAction.ShowDiscardConfirmation -> {
