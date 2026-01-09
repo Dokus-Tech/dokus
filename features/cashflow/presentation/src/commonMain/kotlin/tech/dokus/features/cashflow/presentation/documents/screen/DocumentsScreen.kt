@@ -39,7 +39,6 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.documents_empty_title
 import tech.dokus.aura.resources.documents_empty_upload_cta
 import tech.dokus.aura.resources.documents_filter_no_match
-import tech.dokus.aura.resources.documents_search_no_results
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentDisplayStatus
@@ -173,6 +172,7 @@ private fun DocumentsContent(
                 // No documents at all
                 DocumentsEmptyState(
                     title = stringResource(Res.string.documents_empty_title),
+                    subtitle = stringResource(Res.string.documents_empty_upload_cta),
                     showUploadCta = true,
                     onUploadClick = onUploadClick,
                     modifier = Modifier.fillMaxSize()
@@ -181,7 +181,7 @@ private fun DocumentsContent(
             documents.isEmpty() && state.searchQuery.isNotEmpty() -> {
                 // Search returned no results
                 DocumentsEmptyState(
-                    title = stringResource(Res.string.documents_search_no_results, state.searchQuery),
+                    title = stringResource(Res.string.documents_filter_no_match),
                     showUploadCta = false,
                     onUploadClick = onUploadClick,
                     modifier = Modifier.fillMaxSize()
@@ -296,6 +296,7 @@ private fun DocumentsContent(
 @Composable
 private fun DocumentsEmptyState(
     title: String,
+    subtitle: String? = null,
     showUploadCta: Boolean,
     onUploadClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -313,6 +314,13 @@ private fun DocumentsEmptyState(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (showUploadCta) {
                 OutlinedButton(onClick = onUploadClick) {
                     Icon(
@@ -321,7 +329,7 @@ private fun DocumentsEmptyState(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.documents_empty_upload_cta))
+                    Text(stringResource(Res.string.documents_upload))
                 }
             }
         }
