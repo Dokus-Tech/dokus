@@ -243,19 +243,21 @@ class RecommandProvider(
 
     /**
      * List all documents with pagination.
-     * GET /api/v1/documents?companyId={}&direction={}&page={}&limit={}
+     * GET /api/v1/documents?companyId={}&direction={}&page={}&limit={}&isUnread={}
      */
     override suspend fun listDocuments(
         direction: PeppolDirection?,
         limit: Int,
-        offset: Int
+        offset: Int,
+        isUnread: Boolean?
     ): Result<PeppolDocumentList> = runCatching {
         ensureConfigured()
         logger.debug(
-            "Listing Peppol documents. Direction: {}, Limit: {}, Offset: {}",
+            "Listing Peppol documents. Direction: {}, Limit: {}, Offset: {}, isUnread: {}",
             direction,
             limit,
-            offset
+            offset,
+            isUnread
         )
 
         // Recommand uses page-based pagination, convert offset to page
@@ -275,6 +277,7 @@ class RecommandProvider(
                     }
                 )
             }
+            isUnread?.let { parameter("isUnread", it) }
         }
 
         if (!response.status.isSuccess()) {

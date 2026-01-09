@@ -62,6 +62,8 @@ data class PeppolSettingsDto(
     val testMode: Boolean = true,
     /** Token for webhook authentication (generated on creation) */
     val webhookToken: String? = null,
+    /** Last time a full sync was performed (used for first connection and weekly sync) */
+    val lastFullSyncAt: LocalDateTime? = null,
     /**
      * Whether credentials are managed by Dokus (cloud deployment).
      * If true: user cannot configure credentials, Peppol is automatic.
@@ -617,10 +619,14 @@ data class RecommandDocumentSummary(
     val counterparty: String, // Peppol ID
     val status: RecommandDocumentStatus,
     val createdAt: String, // ISO timestamp
+    val readAt: String? = null, // ISO timestamp, null if unread
     val invoiceNumber: String? = null,
     val totalAmount: Double? = null,
     val currency: PeppolCurrency? = null
-)
+) {
+    /** Convenience property: true if document is unread (readAt is null) */
+    val isUnread: Boolean get() = readAt == null
+}
 
 // ============================================================================
 // VERIFICATION MODELS

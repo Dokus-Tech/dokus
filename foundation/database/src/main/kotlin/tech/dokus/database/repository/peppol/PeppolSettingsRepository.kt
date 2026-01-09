@@ -153,6 +153,21 @@ class PeppolSettingsRepository(
         }
     }
 
+    /**
+     * Update the lastFullSyncAt timestamp after a full sync.
+     */
+    suspend fun updateLastFullSyncAt(tenantId: TenantId): Result<Unit> = runCatching {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        dbQuery {
+            PeppolSettingsTable.update({
+                PeppolSettingsTable.tenantId eq UUID.fromString(tenantId.toString())
+            }) {
+                it[lastFullSyncAt] = now
+                it[updatedAt] = now
+            }
+        }
+    }
+
     private fun ResultRow.toDto(): PeppolSettingsDto = PeppolSettingsDto(
         id = PeppolSettingsId.parse(this[PeppolSettingsTable.id].value.toString()),
         tenantId = TenantId.parse(this[PeppolSettingsTable.tenantId].toString()),
@@ -161,6 +176,7 @@ class PeppolSettingsRepository(
         isEnabled = this[PeppolSettingsTable.isEnabled],
         testMode = this[PeppolSettingsTable.testMode],
         webhookToken = this[PeppolSettingsTable.webhookToken],
+        lastFullSyncAt = this[PeppolSettingsTable.lastFullSyncAt],
         createdAt = this[PeppolSettingsTable.createdAt],
         updatedAt = this[PeppolSettingsTable.updatedAt]
     )

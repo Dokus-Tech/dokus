@@ -74,12 +74,14 @@ interface PeppolProvider {
      * @param direction Filter by direction (INBOUND/OUTBOUND)
      * @param limit Number of documents to return
      * @param offset Pagination offset
+     * @param isUnread Filter by read status: null = all, true = unread only, false = read only
      * @return Result containing paginated document list
      */
     suspend fun listDocuments(
         direction: PeppolDirection? = null,
         limit: Int = 50,
-        offset: Int = 0
+        offset: Int = 0,
+        isUnread: Boolean? = null
     ): Result<PeppolDocumentList>
 
     /**

@@ -308,6 +308,7 @@ object RecommandMapper {
                     counterpartyPeppolId = doc.counterparty,
                     status = doc.status.toPeppolStatus().name,
                     createdAt = doc.createdAt,
+                    readAt = doc.readAt,
                     invoiceNumber = doc.invoiceNumber,
                     totalAmount = doc.totalAmount,
                     currency = doc.currency?.code
