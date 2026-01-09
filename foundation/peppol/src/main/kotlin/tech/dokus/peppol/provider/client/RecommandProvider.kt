@@ -13,6 +13,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import tech.dokus.domain.model.RecommandDocumentsResponse
 import tech.dokus.domain.model.RecommandInboxDocument
+import tech.dokus.domain.model.RecommandInboxResponse
 import tech.dokus.domain.model.RecommandMarkAsReadRequest
 import tech.dokus.domain.model.RecommandSendResponse
 import tech.dokus.domain.utils.json
@@ -151,7 +152,8 @@ class RecommandProvider(
             throw RecommandApiException(response.status.value, errorBody)
         }
 
-        val items = response.body<List<RecommandInboxDocument>>()
+        val wrapper = response.body<RecommandInboxResponse>()
+        val items = wrapper.documents
         logger.debug("Fetched ${items.size} inbox items")
         items.map { RecommandMapper.fromRecommandInboxItem(it) }
     }.onFailure { e ->
