@@ -269,6 +269,7 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
             peppolService = get(),
             documentRepository = get(),
             draftRepository = get(),
+            ingestionRunRepository = get(),
             confirmationPolicy = get(),
             confirmationService = get()
         )

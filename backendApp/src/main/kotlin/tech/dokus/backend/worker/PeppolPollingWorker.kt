@@ -15,11 +15,11 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.service.PeppolService
@@ -44,6 +44,7 @@ class PeppolPollingWorker(
     private val peppolService: PeppolService,
     private val documentRepository: DocumentRepository,
     private val draftRepository: DocumentDraftRepository,
+    private val ingestionRunRepository: DocumentIngestionRunRepository,
     private val confirmationPolicy: DocumentConfirmationPolicy,
     private val confirmationService: DocumentConfirmationService
 ) {
@@ -211,11 +212,24 @@ class PeppolPollingWorker(
                         )
                     )
 
+                    // Create ingestion run first (satisfies FK constraint on document_drafts)
+                    val runId = ingestionRunRepository.createRun(
+                        documentId = documentId,
+                        tenantId = tid
+                    )
+                    ingestionRunRepository.markAsProcessing(runId, "peppol")
+                    ingestionRunRepository.markAsSucceeded(
+                        runId = runId,
+                        rawText = null,
+                        extractedData = extractedData,
+                        confidence = 1.0 // Peppol data is authoritative
+                    )
+
                     // Create draft with extracted data
                     draftRepository.createOrUpdateFromIngestion(
                         documentId = documentId,
                         tenantId = tid,
-                        runId = IngestionRunId.generate(),
+                        runId = runId,
                         extractedData = extractedData,
                         documentType = DocumentType.Bill,
                         force = true
