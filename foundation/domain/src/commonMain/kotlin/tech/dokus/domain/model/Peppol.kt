@@ -43,8 +43,10 @@ enum class PeppolProvider(val displayName: String) {
 // ============================================================================
 
 /**
- * Peppol settings for a tenant - stores Recommand API credentials.
- * Each tenant must configure their own Peppol Access Point credentials.
+ * Peppol settings for a tenant.
+ *
+ * For cloud deployments: credentials are managed by Dokus (not stored per-tenant)
+ * For self-hosted: credentials are stored encrypted per-tenant
  */
 @Serializable
 data class PeppolSettingsDto(
@@ -60,6 +62,12 @@ data class PeppolSettingsDto(
     val testMode: Boolean = true,
     /** Token for webhook authentication (generated on creation) */
     val webhookToken: String? = null,
+    /**
+     * Whether credentials are managed by Dokus (cloud deployment).
+     * If true: user cannot configure credentials, Peppol is automatic.
+     * If false: user must provide API credentials (self-hosted deployment).
+     */
+    val isManagedCredentials: Boolean = false,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )

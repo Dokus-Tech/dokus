@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
@@ -29,9 +30,9 @@ import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.service.PeppolConnectionService
+import tech.dokus.peppol.service.PeppolCredentialResolver
 import tech.dokus.peppol.service.PeppolService
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -51,6 +52,7 @@ import kotlin.uuid.Uuid
 internal fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
     val peppolConnectionService by inject<PeppolConnectionService>()
+    val peppolCredentialResolver by inject<PeppolCredentialResolver>()
     val invoiceService by inject<InvoiceService>()
     val documentRepository by inject<DocumentRepository>()
     val draftRepository by inject<DocumentDraftRepository>()
@@ -113,9 +115,22 @@ internal fun Route.peppolRoutes() {
         /**
          * DELETE /api/v1/peppol/settings
          * Delete Peppol settings for current tenant.
+         *
+         * For cloud deployments: Returns 403 Forbidden.
+         * Disconnecting from Peppol is a support-only operation for cloud users
+         * to avoid generating support debt from users accidentally disconnecting.
+         *
+         * For self-hosted deployments: Deletes settings (current behavior).
          */
         delete<Peppol.Settings> {
             val tenantId = dokusPrincipal.requireTenantId()
+
+            // Cloud deployments: users cannot disconnect themselves
+            if (peppolCredentialResolver.isManagedCredentials()) {
+                throw DokusException.NotAuthorized(
+                    "Disconnecting from Peppol requires support assistance for cloud-hosted accounts."
+                )
+            }
 
             peppolService.deleteSettings(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to delete Peppol settings: ${it.message}") }
@@ -138,7 +153,14 @@ internal fun Route.peppolRoutes() {
 
         /**
          * POST /api/v1/peppol/settings/connect
-         * Matches (and if needed creates) a Recommand company by tenant VAT and saves credentials only after resolution.
+         *
+         * For cloud deployments:
+         * - Credentials must NOT be provided (400 Bad Request if present)
+         * - Uses Dokus master credentials automatically
+         *
+         * For self-hosted deployments:
+         * - Credentials are REQUIRED (current behavior)
+         * - Matches/creates Recommand company by VAT and saves encrypted credentials
          */
         post<Peppol.Settings.Connect> {
             val tenantId = dokusPrincipal.requireTenantId()
@@ -147,8 +169,21 @@ internal fun Route.peppolRoutes() {
             val companyAddress = addressRepository.getCompanyAddress(tenantId)
             val request = call.receive<PeppolConnectRequest>()
 
-            val result = peppolConnectionService.connectRecommand(tenant, companyAddress, request)
-                .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
+            val result = if (peppolCredentialResolver.isManagedCredentials()) {
+                // Cloud deployment: Reject if credentials are provided
+                if (request.apiKey.isNotBlank() || request.apiSecret.isNotBlank()) {
+                    throw DokusException.BadRequest(
+                        "Cloud deployments cannot provide API credentials. " +
+                            "Peppol is managed automatically by Dokus."
+                    )
+                }
+                peppolConnectionService.connectCloud(tenant, companyAddress)
+                    .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
+            } else {
+                // Self-hosted deployment: Use provided credentials
+                peppolConnectionService.connectRecommand(tenant, companyAddress, request)
+                    .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
+            }
 
             // Trigger immediate poll after successful connection
             if (result.status == PeppolConnectStatus.Connected) {

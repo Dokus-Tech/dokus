@@ -36,15 +36,22 @@ sealed interface PeppolSettingsState : MVIState, DokusState<PeppolSettingsDto?> 
 
     /**
      * No Peppol connection configured - show provider selection.
+     *
+     * @param isManagedPeppol true if Dokus manages Peppol (cloud hosted) - hides manual configuration
      */
-    data object NotConfigured : PeppolSettingsState
+    data class NotConfigured(
+        val isManagedPeppol: Boolean = false,
+    ) : PeppolSettingsState
 
     /**
      * Connected to Peppol - show status and management options.
+     *
+     * @param isManagedPeppol true if Dokus manages Peppol (cloud hosted) - hides disconnect option
      */
     data class Connected(
         val settings: PeppolSettingsDto,
         val connectedCompany: RecommandCompanySummary? = null,
+        val isManagedPeppol: Boolean = false,
     ) : PeppolSettingsState
 
     /**

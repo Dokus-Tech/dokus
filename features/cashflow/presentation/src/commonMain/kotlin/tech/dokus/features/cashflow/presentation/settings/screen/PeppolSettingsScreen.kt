@@ -36,12 +36,15 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.action_delete
 import tech.dokus.aura.resources.common_vat_value
+import tech.dokus.aura.resources.peppol_activating
+import tech.dokus.aura.resources.peppol_activating_hint
 import tech.dokus.aura.resources.peppol_connect_title
 import tech.dokus.aura.resources.peppol_connected
 import tech.dokus.aura.resources.peppol_connected_to
 import tech.dokus.aura.resources.peppol_connection_status
 import tech.dokus.aura.resources.peppol_delete_settings
 import tech.dokus.aura.resources.peppol_delete_warning
+import tech.dokus.aura.resources.peppol_managed_by_dokus
 import tech.dokus.aura.resources.peppol_more_providers_coming
 import tech.dokus.aura.resources.peppol_not_configured
 import tech.dokus.aura.resources.peppol_select_provider_hint
@@ -142,6 +145,7 @@ fun PeppolSettingsContent(
                 isConnected = false,
                 connectedCompany = null,
                 isDeleting = false,
+                isManagedPeppol = state.isManagedPeppol,
                 onIntent = onIntent,
                 modifier = modifier,
                 contentPadding = contentPadding
@@ -153,6 +157,7 @@ fun PeppolSettingsContent(
                 isConnected = true,
                 connectedCompany = state.connectedCompany,
                 isDeleting = false,
+                isManagedPeppol = state.isManagedPeppol,
                 onIntent = onIntent,
                 modifier = modifier,
                 contentPadding = contentPadding
@@ -164,6 +169,7 @@ fun PeppolSettingsContent(
                 isConnected = true,
                 connectedCompany = null,
                 isDeleting = true,
+                isManagedPeppol = false, // Self-hosted only, since cloud can't delete
                 onIntent = onIntent,
                 modifier = modifier,
                 contentPadding = contentPadding
@@ -176,6 +182,7 @@ fun PeppolSettingsContent(
                 isConnected = false,
                 connectedCompany = null,
                 isDeleting = false,
+                isManagedPeppol = false,
                 onIntent = onIntent,
                 modifier = modifier,
                 contentPadding = contentPadding
@@ -189,6 +196,7 @@ private fun SettingsContent(
     isConnected: Boolean,
     connectedCompany: RecommandCompanySummary?,
     isDeleting: Boolean,
+    isManagedPeppol: Boolean,
     onIntent: (PeppolSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
@@ -218,30 +226,57 @@ private fun SettingsContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = if (isConnected) Icons.Default.Check else Icons.Default.Close,
-                        contentDescription = null,
-                        tint = if (isConnected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        },
-                        modifier = Modifier.size(20.dp)
-                    )
+                    // Cloud users who aren't connected are "activating" (auto-provisioning)
+                    val statusText = when {
+                        isConnected -> Res.string.peppol_connected
+                        isManagedPeppol -> Res.string.peppol_activating
+                        else -> Res.string.peppol_not_configured
+                    }
+                    val statusColor = when {
+                        isConnected -> MaterialTheme.colorScheme.primary
+                        isManagedPeppol -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.error
+                    }
+
+                    if (!isConnected && isManagedPeppol) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = statusColor
+                        )
+                    } else {
+                        Icon(
+                            imageVector = if (isConnected) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = statusColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
                     Text(
-                        text = stringResource(
-                            if (isConnected) {
-                                Res.string.peppol_connected
-                            } else {
-                                Res.string.peppol_not_configured
-                            }
-                        ),
+                        text = stringResource(statusText),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (isConnected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        }
+                        color = statusColor
+                    )
+                }
+
+                // Show "Managed by Dokus" badge for cloud users when connected
+                if (isConnected && isManagedPeppol) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(Res.string.peppol_managed_by_dokus),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+
+                // Show hint for cloud users when activating
+                if (!isConnected && isManagedPeppol) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(Res.string.peppol_activating_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -269,8 +304,9 @@ private fun SettingsContent(
             }
         }
 
-        // Provider Selection - Only show if not connected
-        if (!isConnected) {
+        // Provider Selection - Only show for self-hosted tenants when not connected
+        // Cloud tenants have automatic Peppol provisioning - no manual configuration needed
+        if (!isConnected && !isManagedPeppol) {
             DokusCard(
                 modifier = Modifier.fillMaxWidth(),
                 padding = DokusCardPadding.Default,
@@ -315,8 +351,10 @@ private fun SettingsContent(
             }
         }
 
-        // Danger Zone - Delete Settings (only when connected)
-        if (isConnected) {
+        // Danger Zone - Delete Settings
+        // Only show for self-hosted tenants when connected
+        // Cloud tenants cannot disconnect themselves (support-only operation)
+        if (isConnected && !isManagedPeppol) {
             DokusCard(
                 modifier = Modifier.fillMaxWidth(),
                 padding = DokusCardPadding.Default,
