@@ -169,7 +169,13 @@ internal class DocumentsContainer(
                             isLoadingMore = false,
                             hasMorePages = response.hasMore
                         )
-                        updateState { copy(documents = buildPaginationState()) }
+                        updateState {
+                            copy(
+                                documents = buildPaginationState(),
+                                searchQuery = trimmed,
+                                statusFilter = currentStatusFilter
+                            )
+                        }
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to search documents" }
@@ -210,7 +216,13 @@ internal class DocumentsContainer(
                         isLoadingMore = false,
                         hasMorePages = response.hasMore
                     )
-                    updateState { copy(documents = buildPaginationState()) }
+                    updateState {
+                        copy(
+                            documents = buildPaginationState(),
+                            searchQuery = currentSearchQuery,
+                            statusFilter = status
+                        )
+                    }
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to filter documents" }
