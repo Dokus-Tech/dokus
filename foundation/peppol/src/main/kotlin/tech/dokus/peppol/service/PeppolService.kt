@@ -1,8 +1,10 @@
 package tech.dokus.peppol.service
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration.Companion.days
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.domain.enums.PeppolDocumentType
@@ -29,6 +31,9 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.mapper.PeppolMapper
+import tech.dokus.peppol.model.PeppolDirection
+import tech.dokus.peppol.model.PeppolDocumentSummary
+import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.peppol.provider.PeppolProvider
 import tech.dokus.peppol.provider.PeppolProviderFactory
@@ -261,6 +266,10 @@ class PeppolService(
      * Creates Documents with Drafts for user review (architectural boundary).
      * Bills are created only when the user confirms the draft.
      *
+     * Full sync is performed on first connection (lastFullSyncAt is null) or weekly (> 7 days).
+     * Full sync fetches ALL documents via /documents endpoint.
+     * Normal polling fetches only unread documents via /inbox endpoint.
+     *
      * @param tenantId The tenant to poll for
      * @param createDocumentCallback Callback to create document with:
      *   - ExtractedDocumentData: parsed invoice/bill data
@@ -276,10 +285,25 @@ class PeppolService(
 
         return runCatching {
             val provider = createProviderForTenant(tenantId)
+            val settings = settingsRepository.getSettings(tenantId).getOrThrow()
+                ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
 
-            // Fetch inbox
-            val inboxItems = provider.getInbox().getOrThrow()
-            logger.info("Found ${inboxItems.size} documents in Peppol inbox")
+            // Check if full sync needed (first time or > 7 days since last)
+            val lastFullSync = settings.lastFullSyncAt
+            val needsFullSync = lastFullSync == null || isOlderThan(lastFullSync, 7.days)
+
+            // Fetch documents based on sync mode
+            val inboxItems = if (needsFullSync) {
+                // Full sync: get ALL incoming documents via /documents endpoint
+                logger.info("Performing full sync for tenant: $tenantId (lastFullSyncAt: $lastFullSync)")
+                fetchAllIncomingDocuments(provider, settings.peppolId)
+            } else {
+                // Normal polling: only unread via /inbox
+                logger.info("Performing normal poll for tenant: $tenantId")
+                provider.getInbox().getOrThrow()
+            }
+
+            logger.info("Found ${inboxItems.size} documents to process")
 
             val processedDocuments = mutableListOf<ProcessedPeppolDocument>()
 
@@ -354,6 +378,12 @@ class PeppolService(
                 }
             }
 
+            // Update lastFullSyncAt after successful full sync
+            if (needsFullSync) {
+                settingsRepository.updateLastFullSyncAt(tenantId).getOrThrow()
+                logger.info("Updated lastFullSyncAt for tenant: $tenantId")
+            }
+
             PeppolInboxPollResponse(
                 newDocuments = inboxItems.size,
                 processedDocuments = processedDocuments
@@ -364,6 +394,57 @@ class PeppolService(
             logger.error("Failed to poll Peppol inbox", it)
         }
     }
+
+    /**
+     * Fetch ALL incoming documents via /documents endpoint with pagination.
+     * Used for full sync (first connection and weekly).
+     */
+    private suspend fun fetchAllIncomingDocuments(
+        provider: PeppolProvider,
+        receiverPeppolId: PeppolId
+    ): List<PeppolInboxItem> {
+        val allDocs = mutableListOf<PeppolInboxItem>()
+        var offset = 0
+        val limit = 100
+
+        do {
+            val batch = provider.listDocuments(
+                direction = PeppolDirection.INBOUND,
+                limit = limit,
+                offset = offset,
+                isUnread = null // Get ALL documents (both read and unread)
+            ).getOrThrow()
+
+            allDocs.addAll(batch.documents.map { it.toPeppolInboxItem(receiverPeppolId) })
+            offset += limit
+            logger.debug("Full sync: fetched ${allDocs.size} documents so far (hasMore: ${batch.hasMore})")
+        } while (batch.hasMore)
+
+        logger.info("Full sync completed: found ${allDocs.size} total incoming documents")
+        return allDocs
+    }
+
+    /**
+     * Check if a datetime is older than the specified duration.
+     */
+    private fun isOlderThan(dateTime: LocalDateTime, duration: kotlin.time.Duration): Boolean {
+        val threshold = Clock.System.now()
+            .minus(duration)
+            .toLocalDateTime(TimeZone.UTC)
+        return dateTime < threshold
+    }
+
+    /**
+     * Convert a PeppolDocumentSummary (from /documents) to PeppolInboxItem.
+     */
+    private fun PeppolDocumentSummary.toPeppolInboxItem(receiverPeppolId: PeppolId) = PeppolInboxItem(
+        id = id,
+        documentType = documentType,
+        senderPeppolId = counterpartyPeppolId,
+        receiverPeppolId = receiverPeppolId.value,
+        receivedAt = createdAt,
+        isRead = readAt != null
+    )
 
     // ========================================================================
     // TRANSMISSION HISTORY
