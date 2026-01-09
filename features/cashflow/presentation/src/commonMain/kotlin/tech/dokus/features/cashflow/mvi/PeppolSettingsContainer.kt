@@ -44,14 +44,22 @@ class PeppolSettingsContainer(
         updateState { PeppolSettingsState.Loading }
 
         logger.d { "Loading Peppol settings" }
+
         getPeppolSettings().fold(
             onSuccess = { settings ->
                 logger.i { "Peppol settings loaded: ${if (settings != null) "configured" else "not configured"}" }
+                // isManagedCredentials comes from the API response (deployment-level setting)
+                val isManagedPeppol = settings?.isManagedCredentials ?: false
                 updateState {
                     if (settings != null) {
-                        PeppolSettingsState.Connected(settings = settings)
+                        PeppolSettingsState.Connected(
+                            settings = settings,
+                            isManagedPeppol = isManagedPeppol
+                        )
                     } else {
-                        PeppolSettingsState.NotConfigured
+                        // When not configured, we don't know if managed - assume false (self-hosted)
+                        // Cloud deployments will auto-provision, so this state is transient
+                        PeppolSettingsState.NotConfigured(isManagedPeppol = false)
                     }
                 }
             },
@@ -92,7 +100,7 @@ class PeppolSettingsContainer(
                 onSuccess = {
                     logger.i { "Peppol settings deleted" }
                     action(PeppolSettingsAction.ShowDeleteSuccess)
-                    updateState { PeppolSettingsState.NotConfigured }
+                    updateState { PeppolSettingsState.NotConfigured() }
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to delete Peppol settings" }

@@ -134,6 +134,9 @@
     <string name="peppol_no_companies_title">No companies found</string>
     <string name="peppol_no_companies_hint">Create a company on the provider platform to continue</string>
     <string name="peppol_create_company_on_provider">Create company on provider</string>
+    <string name="peppol_activating">Activating</string>
+    <string name="peppol_activating_hint">Peppol is being set up automatically. This usually takes a few moments.</string>
+    <string name="peppol_managed_by_dokus">Managed by Dokus</string>
 
     <!-- Appearance Settings -->
     <string name="appearance_settings_title">Appearance</string>

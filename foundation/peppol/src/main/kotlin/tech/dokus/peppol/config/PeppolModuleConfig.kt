@@ -8,7 +8,8 @@ import com.typesafe.config.Config
  * Loaded from HOCON configuration files following application patterns.
  * Expected configuration path: peppol.*
  *
- * Note: Provider URLs are defined in [PeppolProviderConfig] sealed class,
+ * Note: Hosting mode is determined by DeploymentConfig, not this config.
+ * Provider URLs are defined in [PeppolProviderConfig] sealed class,
  * not in configuration files (URLs are fixed, only API keys vary).
  */
 data class PeppolModuleConfig(
@@ -19,7 +20,10 @@ data class PeppolModuleConfig(
     val inbox: InboxConfig,
 
     /** Global test mode override (if true, all tenants use test mode) */
-    val globalTestMode: Boolean
+    val globalTestMode: Boolean,
+
+    /** Master credentials for cloud-hosted deployments (null if self-hosted) */
+    val masterCredentials: MasterCredentialsConfig?
 ) {
     companion object {
         /**
@@ -30,9 +34,32 @@ data class PeppolModuleConfig(
             return PeppolModuleConfig(
                 defaultProvider = peppolConfig.getString("defaultProvider"),
                 inbox = InboxConfig.fromConfig(peppolConfig.getConfig("inbox")),
-                globalTestMode = peppolConfig.getBoolean("globalTestMode")
+                globalTestMode = peppolConfig.getBoolean("globalTestMode"),
+                masterCredentials = if (peppolConfig.hasPath("master")) {
+                    MasterCredentialsConfig.fromConfig(peppolConfig.getConfig("master"))
+                } else {
+                    null
+                }
             )
         }
+    }
+}
+
+/**
+ * Master Peppol credentials for cloud-hosted deployments.
+ * These are Dokus's own Recommand API credentials used for all cloud tenants.
+ */
+data class MasterCredentialsConfig(
+    /** Dokus master API key for Recommand */
+    val apiKey: String,
+    /** Dokus master API secret for Recommand */
+    val apiSecret: String
+) {
+    companion object {
+        fun fromConfig(config: Config): MasterCredentialsConfig = MasterCredentialsConfig(
+            apiKey = config.getString("apiKey"),
+            apiSecret = config.getString("apiSecret")
+        )
     }
 }
 

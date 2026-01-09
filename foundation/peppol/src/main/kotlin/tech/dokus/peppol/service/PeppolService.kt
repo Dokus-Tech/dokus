@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
-import tech.dokus.database.repository.peppol.PeppolSettingsWithCredentials
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
@@ -32,7 +31,6 @@ import tech.dokus.peppol.mapper.PeppolMapper
 import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.peppol.provider.PeppolProvider
 import tech.dokus.peppol.provider.PeppolProviderFactory
-import tech.dokus.peppol.provider.client.RecommandCredentials
 import tech.dokus.peppol.validator.PeppolValidator
 
 /**
@@ -49,7 +47,8 @@ class PeppolService(
     private val transmissionRepository: PeppolTransmissionRepository,
     private val providerFactory: PeppolProviderFactory,
     private val mapper: PeppolMapper,
-    private val validator: PeppolValidator
+    private val validator: PeppolValidator,
+    private val credentialResolver: PeppolCredentialResolver
 ) {
     private val logger = loggerFor()
 
@@ -59,10 +58,13 @@ class PeppolService(
 
     /**
      * Get Peppol settings for a tenant.
+     * Enriches with isManagedCredentials based on deployment configuration.
      */
     suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> {
         logger.debug("Getting Peppol settings for tenant: {}", tenantId)
-        return settingsRepository.getSettings(tenantId)
+        return settingsRepository.getSettings(tenantId).map { settings ->
+            settings?.copy(isManagedCredentials = credentialResolver.isManagedCredentials())
+        }
     }
 
     /**
@@ -169,12 +171,12 @@ class PeppolService(
         logger.info("Sending invoice ${invoice.id} via Peppol for tenant: $tenantId")
 
         return runCatching {
-            // Get settings and create provider
-            val credentials = settingsRepository.getSettingsWithCredentials(tenantId).getOrThrow()
+            // Get settings and create provider using centralized credential resolver
+            val peppolSettings = settingsRepository.getSettings(tenantId).getOrThrow()
                 ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
 
-            val peppolSettings = credentials.settings
-            val provider = createProvider(credentials)
+            val resolvedCredentials = credentialResolver.resolve(tenantId)
+            val provider = providerFactory.createProvider(resolvedCredentials)
 
             // Validate
             val validationResult = validator.validateForSending(
@@ -389,29 +391,11 @@ class PeppolService(
     }
 
     /**
-     * Create a provider for a tenant using their saved credentials.
+     * Create a provider for a tenant using the centralized credential resolver.
+     * Handles both cloud (master creds) and self-hosted (per-tenant creds) automatically.
      */
     private suspend fun createProviderForTenant(tenantId: TenantId): PeppolProvider {
-        val credentials = settingsRepository.getSettingsWithCredentials(tenantId).getOrThrow()
-            ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
-
-        return createProvider(credentials)
-    }
-
-    /**
-     * Create a provider from decrypted credentials.
-     */
-    private fun createProvider(credentials: PeppolSettingsWithCredentials): PeppolProvider {
-        // For now, we only support Recommand
-        // In the future, we can read provider_id from settings
-        val recommandCredentials = RecommandCredentials(
-            companyId = credentials.settings.companyId,
-            apiKey = credentials.apiKey,
-            apiSecret = credentials.apiSecret,
-            peppolId = credentials.settings.peppolId.value,
-            testMode = credentials.settings.testMode
-        )
-
-        return providerFactory.createProvider(recommandCredentials)
+        val resolvedCredentials = credentialResolver.resolve(tenantId)
+        return providerFactory.createProvider(resolvedCredentials)
     }
 }
