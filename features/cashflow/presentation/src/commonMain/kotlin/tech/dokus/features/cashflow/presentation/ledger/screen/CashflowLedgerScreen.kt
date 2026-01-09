@@ -3,37 +3,52 @@ package tech.dokus.features.cashflow.presentation.ledger.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import tech.dokus.domain.Money
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_ledger_empty_hint
+import tech.dokus.aura.resources.cashflow_ledger_empty_title
+import tech.dokus.aura.resources.cashflow_ledger_filter_custom
+import tech.dokus.aura.resources.cashflow_ledger_filter_next_3_months
+import tech.dokus.aura.resources.cashflow_ledger_filter_this_month
+import tech.dokus.aura.resources.cashflow_ledger_filter_in
+import tech.dokus.aura.resources.cashflow_ledger_filter_out
+import tech.dokus.aura.resources.cashflow_ledger_filter_open
+import tech.dokus.aura.resources.cashflow_ledger_filter_paid
+import tech.dokus.aura.resources.cashflow_ledger_filter_overdue
+import tech.dokus.aura.resources.cashflow_ledger_filter_cancelled
+import tech.dokus.aura.resources.documents_filter_all
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.features.cashflow.presentation.ledger.components.CashflowEntryRow
+import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
+import tech.dokus.features.cashflow.presentation.common.components.filters.DokusFilterChipRow
+import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
+import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
+import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
+import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerHeaderRow
+import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerMobileRow
+import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerOverview
+import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerTableRow
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowFilters
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DateRangeFilter
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 @Composable
 internal fun CashflowLedgerScreen(
@@ -78,17 +93,15 @@ private fun CashflowLedgerContent(
     onIntent: (CashflowLedgerIntent) -> Unit
 ) {
     val listState = rememberLazyListState()
+    val isLargeScreen = LocalScreenSize.current.isLarge
 
     // Trigger load more when near bottom
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            val totalItems = listState.layoutInfo.totalItemsCount
-            lastVisibleItem >= totalItems - 5 &&
-                state.entries.hasMorePages &&
-                !state.entries.isLoadingMore
-        }
-    }
+    val shouldLoadMore = rememberLoadMoreTrigger(
+        listState = listState,
+        hasMore = state.entries.hasMorePages,
+        isLoading = state.entries.isLoadingMore,
+        buffer = 5
+    )
 
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) {
@@ -96,130 +109,88 @@ private fun CashflowLedgerContent(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Summary header
-        CashflowSummaryHeader(
-            totalIn = state.totalIn,
-            totalOut = state.totalOut
+    // Single unified surface for all content
+    DokusTableSurface(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+        header = null // We handle sections inside
+    ) {
+        // Overview section (status bar only)
+        CashflowLedgerOverview(
+            entries = state.entries.data,
+            modifier = Modifier.padding(16.dp)
         )
 
-        // Filters
+        DokusTableDivider()
+
+        // Filters section
         CashflowFiltersBar(
             filters = state.filters,
             onDateRangeChange = { onIntent(CashflowLedgerIntent.UpdateDateRangeFilter(it)) },
             onDirectionChange = { onIntent(CashflowLedgerIntent.UpdateDirectionFilter(it)) },
             onStatusChange = { onIntent(CashflowLedgerIntent.UpdateStatusFilter(it)) },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )
 
-        // Entries list
-        LazyColumn(
-            state = listState,
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(
-                items = state.entries.data,
-                key = { it.id.toString() }
-            ) { entry ->
-                CashflowEntryRow(
-                    entry = entry,
-                    isHighlighted = entry.id == state.highlightedEntryId,
-                    onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) }
-                )
-            }
+        DokusTableDivider()
 
-            if (state.entries.isLoadingMore) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-            }
+        // Table header (desktop only)
+        if (isLargeScreen) {
+            CashflowLedgerHeaderRow()
+            DokusTableDivider()
+        }
 
-            if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No entries found",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+        // Table body OR empty state - both inside the surface
+        if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
+            DokusEmptyState(
+                title = stringResource(Res.string.cashflow_ledger_empty_title),
+                subtitle = stringResource(Res.string.cashflow_ledger_empty_hint),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(32.dp)
+            )
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f)
+            ) {
+                itemsIndexed(
+                    items = state.entries.data,
+                    key = { _, entry -> entry.id.toString() }
+                ) { index, entry ->
+                    if (isLargeScreen) {
+                        CashflowLedgerTableRow(
+                            entry = entry,
+                            isHighlighted = entry.id == state.highlightedEntryId,
+                            onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) }
+                        )
+                    } else {
+                        CashflowLedgerMobileRow(
+                            entry = entry,
+                            onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) }
                         )
                     }
+
+                    if (index < state.entries.data.size - 1) {
+                        DokusTableDivider()
+                    }
+                }
+
+                if (state.entries.isLoadingMore) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        }
+                    }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun CashflowSummaryHeader(
-    totalIn: Long,
-    totalOut: Long,
-    modifier: Modifier = Modifier
-) {
-    val net = totalIn - totalOut
-    val netColor = when {
-        net > 0 -> MaterialTheme.colorScheme.tertiary
-        net < 0 -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.onSurface
-    }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Expected In",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = Money(totalIn).toDisplayString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.tertiary
-            )
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Expected Out",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = Money(totalOut).toDisplayString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Net",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = Money(net).toDisplayString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = netColor
-            )
         }
     }
 }
@@ -237,34 +208,31 @@ private fun CashflowFiltersBar(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Date range filters
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        DokusFilterChipRow {
             FilterChip(
                 selected = filters.dateRange == DateRangeFilter.ThisMonth,
                 onClick = { onDateRangeChange(DateRangeFilter.ThisMonth) },
-                label = { Text("This Month") }
+                label = { Text(stringResource(Res.string.cashflow_ledger_filter_this_month)) }
             )
             FilterChip(
                 selected = filters.dateRange == DateRangeFilter.Next3Months,
                 onClick = { onDateRangeChange(DateRangeFilter.Next3Months) },
-                label = { Text("Next 3 Months") }
+                label = { Text(stringResource(Res.string.cashflow_ledger_filter_next_3_months)) }
             )
             FilterChip(
                 selected = filters.dateRange == DateRangeFilter.AllTime,
-                onClick = { onDateRangeChange(DateRangeFilter.AllTime) },
-                label = { Text("All") }
+                onClick = { },
+                enabled = false,
+                label = { Text(stringResource(Res.string.cashflow_ledger_filter_custom)) }
             )
         }
 
         // Direction and status filters
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        DokusFilterChipRow {
             FilterChip(
                 selected = filters.direction == null,
                 onClick = { onDirectionChange(null) },
-                label = { Text("All") }
+                label = { Text(stringResource(Res.string.documents_filter_all)) }
             )
             FilterChip(
                 selected = filters.direction == CashflowDirection.In,
@@ -273,7 +241,7 @@ private fun CashflowFiltersBar(
                         if (filters.direction == CashflowDirection.In) null else CashflowDirection.In
                     )
                 },
-                label = { Text("In") }
+                label = { Text(stringResource(Res.string.cashflow_ledger_filter_in)) }
             )
             FilterChip(
                 selected = filters.direction == CashflowDirection.Out,
@@ -282,7 +250,15 @@ private fun CashflowFiltersBar(
                         if (filters.direction == CashflowDirection.Out) null else CashflowDirection.Out
                     )
                 },
-                label = { Text("Out") }
+                label = { Text(stringResource(Res.string.cashflow_ledger_filter_out)) }
+            )
+        }
+
+        DokusFilterChipRow {
+            FilterChip(
+                selected = filters.status == null,
+                onClick = { onStatusChange(null) },
+                label = { Text(stringResource(Res.string.documents_filter_all)) }
             )
             FilterChip(
                 selected = filters.status == CashflowEntryStatus.Open,
@@ -291,7 +267,7 @@ private fun CashflowFiltersBar(
                         if (filters.status == CashflowEntryStatus.Open) null else CashflowEntryStatus.Open
                     )
                 },
-                label = { Text("Open") }
+                label = { Text(stringResource(Res.string.cashflow_ledger_filter_open)) }
             )
             FilterChip(
                 selected = filters.status == CashflowEntryStatus.Paid,
@@ -300,7 +276,25 @@ private fun CashflowFiltersBar(
                         if (filters.status == CashflowEntryStatus.Paid) null else CashflowEntryStatus.Paid
                     )
                 },
-                label = { Text("Paid") }
+                label = { Text(stringResource(Res.string.cashflow_ledger_filter_paid)) }
+            )
+            FilterChip(
+                selected = filters.status == CashflowEntryStatus.Overdue,
+                onClick = {
+                    onStatusChange(
+                        if (filters.status == CashflowEntryStatus.Overdue) null else CashflowEntryStatus.Overdue
+                    )
+                },
+                label = { Text(stringResource(Res.string.cashflow_ledger_filter_overdue)) }
+            )
+            FilterChip(
+                selected = filters.status == CashflowEntryStatus.Cancelled,
+                onClick = {
+                    onStatusChange(
+                        if (filters.status == CashflowEntryStatus.Cancelled) null else CashflowEntryStatus.Cancelled
+                    )
+                },
+                label = { Text(stringResource(Res.string.cashflow_ledger_filter_cancelled)) }
             )
         }
     }

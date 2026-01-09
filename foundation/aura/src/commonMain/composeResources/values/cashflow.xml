@@ -7,6 +7,35 @@
     <string name="cashflow_search">Search</string>
     <string name="cashflow_search_placeholder">Search...</string>
 
+    <!-- Cashflow Ledger -->
+    <string name="cashflow_ledger_expected_in">Expected In</string>
+    <string name="cashflow_ledger_expected_out">Expected Out</string>
+    <string name="cashflow_ledger_net">Net</string>
+    <string name="cashflow_ledger_due_date">Due date</string>
+    <string name="cashflow_ledger_counterparty">Source</string>
+    <string name="cashflow_ledger_direction">Direction</string>
+    <string name="cashflow_ledger_amount">Amount</string>
+    <string name="cashflow_ledger_status">Status</string>
+    <string name="cashflow_ledger_view_details">View details</string>
+    <string name="cashflow_ledger_direction_in">In</string>
+    <string name="cashflow_ledger_direction_out">Out</string>
+    <string name="cashflow_ledger_status_open">Open</string>
+    <string name="cashflow_ledger_status_paid">Paid</string>
+    <string name="cashflow_ledger_status_overdue">Overdue</string>
+    <string name="cashflow_ledger_status_cancelled">Cancelled</string>
+    <string name="cashflow_ledger_filter_this_month">This month</string>
+    <string name="cashflow_ledger_filter_next_3_months">Next 3 months</string>
+    <string name="cashflow_ledger_filter_custom">Custom</string>
+    <string name="cashflow_ledger_filter_in">In</string>
+    <string name="cashflow_ledger_filter_out">Out</string>
+    <string name="cashflow_ledger_filter_open">Open</string>
+    <string name="cashflow_ledger_filter_paid">Paid</string>
+    <string name="cashflow_ledger_filter_overdue">Overdue</string>
+    <string name="cashflow_ledger_filter_cancelled">Cancelled</string>
+    <string name="cashflow_ledger_empty_title">No entries found</string>
+    <string name="cashflow_ledger_empty_hint">Try adjusting your filters</string>
+    <string name="cashflow_ledger_items">%1$d items</string>
+
     <!-- Document Types -->
     <string name="document_type_invoice">Invoice</string>
     <string name="document_type_expense">Expense</string>

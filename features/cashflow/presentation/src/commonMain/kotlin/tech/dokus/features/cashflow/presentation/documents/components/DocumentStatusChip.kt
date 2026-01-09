@@ -1,17 +1,8 @@
 package tech.dokus.features.cashflow.presentation.documents.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_status_failed
@@ -20,7 +11,7 @@ import tech.dokus.aura.resources.draft_status_confirmed
 import tech.dokus.aura.resources.draft_status_needs_review
 import tech.dokus.aura.resources.draft_status_ready
 import tech.dokus.aura.resources.draft_status_rejected
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.features.cashflow.presentation.common.components.chips.DokusStatusChip
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.statusError
 import tech.dokus.foundation.aura.style.statusProcessing
@@ -43,22 +34,11 @@ internal fun DocumentStatusChip(
         DocumentDisplayStatus.Failed -> colorScheme.statusError to Res.string.document_status_failed
         DocumentDisplayStatus.Rejected -> colorScheme.statusError to Res.string.draft_status_rejected
     }
-    val backgroundColor = statusColor.copy(alpha = 0.2f)
-    val textColor = statusColor
     val label = stringResource(labelRes)
 
-    Box(
+    DokusStatusChip(
+        label = label,
+        color = statusColor,
         modifier = modifier
-            .clip(RoundedCornerShape(Constrains.CornerRadius.sm))
-            .background(backgroundColor)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-            color = textColor,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
+    )
 }

@@ -1,6 +1,5 @@
 package tech.dokus.features.cashflow.presentation.documents.screen
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +16,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,7 +26,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,14 +38,16 @@ import tech.dokus.aura.resources.documents_empty_upload_cta
 import tech.dokus.aura.resources.documents_filter_no_match
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.aura.resources.search_placeholder
-import tech.dokus.features.cashflow.presentation.documents.components.DocumentDisplayStatus
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentMobileRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableHeaderRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentStatusFilterChips
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
-import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
+import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
+import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
+import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -114,15 +113,12 @@ private fun DocumentsContent(
     val isLargeScreen = LocalScreenSize.current.isLarge
 
     // Load more when near the end
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            val totalItems = listState.layoutInfo.totalItemsCount
-            state.documents.hasMorePages &&
-                !state.documents.isLoadingMore &&
-                lastVisibleItem >= totalItems - 3
-        }
-    }
+    val shouldLoadMore = rememberLoadMoreTrigger(
+        listState = listState,
+        hasMore = state.documents.hasMorePages,
+        isLoading = state.documents.isLoadingMore,
+        buffer = 3
+    )
 
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) {
@@ -170,80 +166,80 @@ private fun DocumentsContent(
         when {
             documents.isEmpty() && state.searchQuery.isEmpty() && state.statusFilter == null -> {
                 // No documents at all
-                DocumentsEmptyState(
+                DokusEmptyState(
                     title = stringResource(Res.string.documents_empty_title),
                     subtitle = stringResource(Res.string.documents_empty_upload_cta),
-                    showUploadCta = true,
-                    onUploadClick = onUploadClick,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    action = {
+                        OutlinedButton(onClick = onUploadClick) {
+                            Icon(
+                                imageVector = Icons.Default.Upload,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(Res.string.documents_upload))
+                        }
+                    }
                 )
             }
             documents.isEmpty() && state.searchQuery.isNotEmpty() -> {
                 // Search returned no results
-                DocumentsEmptyState(
+                DokusEmptyState(
                     title = stringResource(Res.string.documents_filter_no_match),
-                    showUploadCta = false,
-                    onUploadClick = onUploadClick,
                     modifier = Modifier.fillMaxSize()
                 )
             }
             documents.isEmpty() -> {
                 // Filter returned no results
-                DocumentsEmptyState(
+                DokusEmptyState(
                     title = stringResource(Res.string.documents_filter_no_match),
-                    showUploadCta = false,
-                    onUploadClick = onUploadClick,
                     modifier = Modifier.fillMaxSize()
                 )
             }
             else -> {
                 // Documents list in a card surface
-                DokusCardSurface(
+                DokusTableSurface(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 16.dp),
+                    header = if (isLargeScreen) {
+                        { DocumentTableHeaderRow() }
+                    } else {
+                        null
+                    }
                 ) {
                     if (isLargeScreen) {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            DocumentTableHeaderRow()
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                                thickness = 1.dp
-                            )
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                            ) {
-                                itemsIndexed(
-                                    items = documents,
-                                    key = { _, doc -> doc.document.id.toString() }
-                                ) { index, document ->
-                                    DocumentTableRow(
-                                        document = document,
-                                        onClick = { onIntent(DocumentsIntent.OpenDocument(document.document.id)) }
-                                    )
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            itemsIndexed(
+                                items = documents,
+                                key = { _, doc -> doc.document.id.toString() }
+                            ) { index, document ->
+                                DocumentTableRow(
+                                    document = document,
+                                    onClick = { onIntent(DocumentsIntent.OpenDocument(document.document.id)) }
+                                )
 
-                                    if (index < documents.size - 1) {
-                                        HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant,
-                                            thickness = 1.dp
-                                        )
-                                    }
+                                if (index < documents.size - 1) {
+                                    DokusTableDivider()
                                 }
+                            }
 
-                                if (state.documents.isLoadingMore) {
-                                    item {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                                        }
+                            if (state.documents.isLoadingMore) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
                                     }
                                 }
                             }
@@ -263,10 +259,7 @@ private fun DocumentsContent(
                                 )
 
                                 if (index < documents.size - 1) {
-                                    HorizontalDivider(
-                                        color = MaterialTheme.colorScheme.outlineVariant,
-                                        thickness = 1.dp
-                                    )
+                                    DokusTableDivider()
                                 }
                             }
 
@@ -284,52 +277,6 @@ private fun DocumentsContent(
                             }
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Empty state for the documents list.
- */
-@Composable
-private fun DocumentsEmptyState(
-    title: String,
-    subtitle: String? = null,
-    showUploadCta: Boolean,
-    onUploadClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (showUploadCta) {
-                OutlinedButton(onClick = onUploadClick) {
-                    Icon(
-                        imageVector = Icons.Default.Upload,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.documents_upload))
                 }
             }
         }
