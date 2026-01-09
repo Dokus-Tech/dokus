@@ -92,8 +92,9 @@ class PeppolSettingsRepository(
                     .map { it.toDto() }
                     .single()
             } else {
-                // Create new
+                // Create new with generated webhook token
                 val newId = UUID.randomUUID()
+                val newWebhookToken = UUID.randomUUID().toString().replace("-", "")
                 PeppolSettingsTable.insert {
                     it[id] = newId
                     it[PeppolSettingsTable.tenantId] = tenantUuid
@@ -103,6 +104,7 @@ class PeppolSettingsRepository(
                     it[peppolId] = request.peppolId
                     it[isEnabled] = request.isEnabled
                     it[testMode] = request.testMode
+                    it[webhookToken] = newWebhookToken
                     it[createdAt] = now
                     it[updatedAt] = now
                 }
@@ -127,6 +129,30 @@ class PeppolSettingsRepository(
         }
     }
 
+    /**
+     * Find tenant ID by webhook token.
+     * Used by webhook endpoint to resolve tenant from token.
+     */
+    suspend fun getTenantIdByWebhookToken(token: String): Result<TenantId?> = runCatching {
+        dbQuery {
+            PeppolSettingsTable.selectAll()
+                .where { PeppolSettingsTable.webhookToken eq token }
+                .map { TenantId.parse(it[PeppolSettingsTable.tenantId].toString()) }
+                .singleOrNull()
+        }
+    }
+
+    /**
+     * Get all enabled Peppol settings (for polling worker).
+     */
+    suspend fun getAllEnabled(): Result<List<PeppolSettingsDto>> = runCatching {
+        dbQuery {
+            PeppolSettingsTable.selectAll()
+                .where { PeppolSettingsTable.isEnabled eq true }
+                .map { it.toDto() }
+        }
+    }
+
     private fun ResultRow.toDto(): PeppolSettingsDto = PeppolSettingsDto(
         id = PeppolSettingsId.parse(this[PeppolSettingsTable.id].value.toString()),
         tenantId = TenantId.parse(this[PeppolSettingsTable.tenantId].toString()),
@@ -134,6 +160,7 @@ class PeppolSettingsRepository(
         peppolId = PeppolId(this[PeppolSettingsTable.peppolId]),
         isEnabled = this[PeppolSettingsTable.isEnabled],
         testMode = this[PeppolSettingsTable.testMode],
+        webhookToken = this[PeppolSettingsTable.webhookToken],
         createdAt = this[PeppolSettingsTable.createdAt],
         updatedAt = this[PeppolSettingsTable.updatedAt]
     )

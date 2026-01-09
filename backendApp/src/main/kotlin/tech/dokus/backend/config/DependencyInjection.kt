@@ -35,6 +35,7 @@ import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.worker.DocumentProcessingWorker
+import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.database.DokusSchema
 import tech.dokus.database.di.repositoryModules
@@ -70,6 +71,8 @@ import tech.dokus.foundation.backend.storage.MinioStorage
 import tech.dokus.foundation.backend.storage.ObjectStorage
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.mapper.PeppolMapper
+import tech.dokus.peppol.policy.DefaultDocumentConfirmationPolicy
+import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
 import tech.dokus.peppol.service.PeppolConnectionService
@@ -246,6 +249,19 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { PeppolValidator() }
     single { PeppolConnectionService(get(), get()) }
     single { PeppolService(get(), get(), get(), get(), get()) }
+    single<DocumentConfirmationPolicy> { DefaultDocumentConfirmationPolicy() }
+
+    // Peppol Polling Worker
+    single {
+        PeppolPollingWorker(
+            peppolSettingsRepository = get(),
+            peppolService = get(),
+            documentRepository = get(),
+            draftRepository = get(),
+            confirmationPolicy = get(),
+            confirmationService = get()
+        )
+    }
 
     // AI / RAG config (repositories are in repositoryModules)
     single<AIConfig> { appConfig.ai }

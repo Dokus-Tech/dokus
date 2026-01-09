@@ -1,0 +1,254 @@
+package tech.dokus.backend.worker
+
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import org.slf4j.LoggerFactory
+import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.database.repository.cashflow.DocumentCreatePayload
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.peppol.PeppolSettingsRepository
+import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.peppol.policy.DocumentConfirmationPolicy
+import tech.dokus.peppol.service.PeppolService
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+
+/**
+ * Background worker that polls Peppol inbox for each enabled tenant.
+ *
+ * Features:
+ * - Staggered polling: Each tenant is polled on a 15-30 minute interval
+ * - pollNow(tenantId): Immediate poll for a specific tenant (for webhook trigger)
+ * - Tracks lastPollTime per tenant to avoid hammering the API
+ * - Graceful shutdown support
+ */
+class PeppolPollingWorker(
+    private val peppolSettingsRepository: PeppolSettingsRepository,
+    private val peppolService: PeppolService,
+    private val documentRepository: DocumentRepository,
+    private val draftRepository: DocumentDraftRepository,
+    private val confirmationPolicy: DocumentConfirmationPolicy,
+    private val confirmationService: DocumentConfirmationService
+) {
+    private val logger = LoggerFactory.getLogger(PeppolPollingWorker::class.java)
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private var pollingJob: Job? = null
+    private val isRunning = AtomicBoolean(false)
+
+    // Track last poll time per tenant
+    private val lastPollTimes = ConcurrentHashMap<TenantId, Instant>()
+
+    // Mutex to prevent concurrent polls for the same tenant
+    private val pollMutexes = ConcurrentHashMap<TenantId, Mutex>()
+
+    // Polling configuration
+    private val pollInterval = 20.minutes // Base interval between checks
+    private val minTimeBetweenPolls = 5.minutes // Minimum time between polls per tenant
+    private val tenantPollDelay = 30.seconds // Stagger delay between tenants
+
+    /**
+     * Start the polling worker.
+     */
+    fun start() {
+        if (!isRunning.compareAndSet(false, true)) {
+            logger.warn("Peppol polling worker already running")
+            return
+        }
+
+        logger.info("Starting Peppol polling worker (interval=${pollInterval.inWholeMinutes}min)")
+
+        pollingJob = scope.launch {
+            while (isActive && isRunning.get()) {
+                try {
+                    pollAllEnabledTenants()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    logger.error("Error in Peppol polling loop", e)
+                }
+
+                delay(pollInterval)
+            }
+        }
+    }
+
+    /**
+     * Stop the polling worker gracefully.
+     */
+    fun stop() {
+        if (!isRunning.compareAndSet(true, false)) {
+            logger.warn("Peppol polling worker not running")
+            return
+        }
+
+        logger.info("Stopping Peppol polling worker...")
+        pollingJob?.cancel()
+        pollingJob = null
+        logger.info("Peppol polling worker stopped")
+    }
+
+    /**
+     * Trigger an immediate poll for a specific tenant.
+     * Used by webhook endpoint to trigger polling when notified.
+     *
+     * @param tenantId The tenant to poll
+     * @return true if poll was triggered, false if skipped (too recent)
+     */
+    suspend fun pollNow(tenantId: TenantId): Boolean {
+        val lastPoll = lastPollTimes[tenantId]
+        if (lastPoll != null) {
+            val elapsed = Clock.System.now() - lastPoll
+            if (elapsed < minTimeBetweenPolls) {
+                logger.debug(
+                    "Skipping poll for tenant $tenantId - polled ${elapsed.inWholeSeconds}s ago"
+                )
+                return false
+            }
+        }
+
+        logger.info("Triggering immediate poll for tenant: $tenantId")
+
+        scope.launch {
+            pollTenant(tenantId)
+        }
+
+        return true
+    }
+
+    /**
+     * Poll all enabled tenants with staggered timing.
+     */
+    private suspend fun pollAllEnabledTenants() {
+        val enabledSettings = peppolSettingsRepository.getAllEnabled()
+            .getOrElse {
+                logger.error("Failed to get enabled Peppol settings", it)
+                return
+            }
+
+        if (enabledSettings.isEmpty()) {
+            logger.debug("No enabled Peppol tenants to poll")
+            return
+        }
+
+        logger.info("Starting Peppol inbox poll for ${enabledSettings.size} tenants")
+
+        for (settings in enabledSettings) {
+            if (!isRunning.get()) break
+
+            val tenantId = settings.tenantId
+
+            // Check if enough time has passed since last poll
+            val lastPoll = lastPollTimes[tenantId]
+            if (lastPoll != null) {
+                val elapsed = Clock.System.now() - lastPoll
+                if (elapsed < minTimeBetweenPolls) {
+                    logger.debug(
+                        "Skipping tenant $tenantId - polled ${elapsed.inWholeMinutes}min ago"
+                    )
+                    continue
+                }
+            }
+
+            try {
+                pollTenant(tenantId)
+            } catch (e: Exception) {
+                logger.error("Failed to poll tenant $tenantId", e)
+            }
+
+            // Stagger polls between tenants
+            delay(tenantPollDelay)
+        }
+    }
+
+    /**
+     * Poll a single tenant's Peppol inbox.
+     */
+    private suspend fun pollTenant(tenantId: TenantId) {
+        // Get or create mutex for this tenant
+        val mutex = pollMutexes.computeIfAbsent(tenantId) { Mutex() }
+
+        // Skip if already polling this tenant
+        if (!mutex.tryLock()) {
+            logger.debug("Already polling tenant $tenantId, skipping")
+            return
+        }
+
+        try {
+            logger.debug("Polling Peppol inbox for tenant: $tenantId")
+
+            val result = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid ->
+                runCatching {
+                    // Create document record with PEPPOL source
+                    val filename = "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.xml"
+                    val storageKey = "peppol/$tid/${UUID.randomUUID()}.xml"
+
+                    val documentId = documentRepository.create(
+                        tenantId = tid,
+                        payload = DocumentCreatePayload(
+                            filename = filename,
+                            contentType = "application/xml",
+                            sizeBytes = 0L,
+                            storageKey = storageKey,
+                            contentHash = null,
+                            source = DocumentSource.Peppol
+                        )
+                    )
+
+                    // Create draft with extracted data
+                    draftRepository.createOrUpdateFromIngestion(
+                        documentId = documentId,
+                        tenantId = tid,
+                        runId = IngestionRunId.generate(),
+                        extractedData = extractedData,
+                        documentType = DocumentType.Bill,
+                        force = true
+                    )
+
+                    // Auto-confirm if policy allows (PEPPOL documents are always auto-confirmed)
+                    if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, extractedData, tid)) {
+                        confirmationService.confirmDocument(
+                            tenantId = tid,
+                            documentId = documentId,
+                            documentType = DocumentType.Bill,
+                            extractedData = extractedData,
+                            linkedContactId = null
+                        ).getOrThrow()
+                    }
+
+                    documentId
+                }
+            }
+
+            result.onSuccess { response ->
+                logger.info(
+                    "Peppol poll completed for tenant $tenantId: " +
+                        "${response.processedDocuments.size} documents processed"
+                )
+            }.onFailure { e ->
+                logger.error("Peppol poll failed for tenant $tenantId", e)
+            }
+
+            // Update last poll time
+            lastPollTimes[tenantId] = Clock.System.now()
+        } finally {
+            mutex.unlock()
+        }
+    }
+}

@@ -5,6 +5,8 @@ import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.foundation.backend.database.dbEnumeration
 
 private const val FilenameMaxLength = 255
 private const val ContentTypeMaxLength = 100
@@ -41,6 +43,9 @@ object DocumentsTable : UUIDTable("documents") {
 
     // Content fingerprint for deduplication (SHA-256 hex)
     val contentHash = varchar("content_hash", ContentHashLength).nullable()
+
+    // Document source (where it came from)
+    val documentSource = dbEnumeration<DocumentSource>("document_source").default(DocumentSource.Upload)
 
     // Timestamps
     val uploadedAt = datetime("uploaded_at").defaultExpression(CurrentDateTime)

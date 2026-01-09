@@ -37,6 +37,9 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
     val isEnabled = bool("is_enabled").default(false)
     val testMode = bool("test_mode").default(true)
 
+    // Webhook configuration
+    val webhookToken = varchar("webhook_token", 64).nullable().uniqueIndex()
+
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)

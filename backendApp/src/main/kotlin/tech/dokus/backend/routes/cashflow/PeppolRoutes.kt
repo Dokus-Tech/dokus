@@ -11,16 +11,19 @@ import io.ktor.server.routing.Route
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.cashflow.InvoiceService
+import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.routes.Peppol
@@ -52,6 +55,8 @@ internal fun Route.peppolRoutes() {
     val contactRepository by inject<ContactRepository>()
     val tenantRepository by inject<TenantRepository>()
     val addressRepository by inject<AddressRepository>()
+    val confirmationPolicy by inject<DocumentConfirmationPolicy>()
+    val confirmationService by inject<DocumentConfirmationService>()
 
     authenticateJwt {
         // ================================================================
@@ -267,9 +272,9 @@ internal fun Route.peppolRoutes() {
          * POST /api/v1/peppol/inbox/syncs
          * Poll inbox for new documents.
          *
-         * Polls the Peppol provider's inbox for new documents and creates
-         * Document+Draft records for user review.
-         * Bills are created only when the user confirms the draft.
+         * Polls the Peppol provider's inbox for new documents and:
+         * - Creates Document+Draft records
+         * - Auto-confirms PEPPOL documents (creates Bills immediately)
          */
         post<Peppol.Inbox.Syncs> {
             val tenantId = dokusPrincipal.requireTenantId()
@@ -277,7 +282,7 @@ internal fun Route.peppolRoutes() {
             // Poll inbox with document+draft creation callback
             val pollResult = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid ->
                 runCatching {
-                    // Create document record (Peppol documents don't have a file - use placeholder)
+                    // Create document record with PEPPOL source
                     val filename = "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.xml"
                     val storageKey = "peppol/$tid/${java.util.UUID.randomUUID()}.xml"
 
@@ -288,7 +293,8 @@ internal fun Route.peppolRoutes() {
                             contentType = "application/xml",
                             sizeBytes = 0L,
                             storageKey = storageKey,
-                            contentHash = null
+                            contentHash = null,
+                            source = DocumentSource.Peppol
                         )
                     )
 
@@ -301,6 +307,20 @@ internal fun Route.peppolRoutes() {
                         documentType = DocumentType.Bill,
                         force = true
                     )
+
+                    // Auto-confirm if policy allows (PEPPOL documents are always auto-confirmed)
+                    if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, extractedData, tid)) {
+                        confirmationService.confirmDocument(
+                            tenantId = tid,
+                            documentId = documentId,
+                            documentType = DocumentType.Bill,
+                            extractedData = extractedData,
+                            linkedContactId = null // Bills don't require linked contacts
+                        ).onFailure { e ->
+                            // Log but don't fail - document+draft still created
+                            throw e
+                        }
+                    }
 
                     documentId
                 }

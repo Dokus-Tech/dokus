@@ -58,6 +58,8 @@ data class PeppolSettingsDto(
     val isEnabled: Boolean = false,
     /** Whether to use test mode (doesn't send to real Peppol network) */
     val testMode: Boolean = true,
+    /** Token for webhook authentication (generated on creation) */
+    val webhookToken: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
