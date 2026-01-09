@@ -24,10 +24,12 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolConnectRequest
+import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolService
@@ -57,6 +59,7 @@ internal fun Route.peppolRoutes() {
     val addressRepository by inject<AddressRepository>()
     val confirmationPolicy by inject<DocumentConfirmationPolicy>()
     val confirmationService by inject<DocumentConfirmationService>()
+    val peppolPollingWorker by inject<PeppolPollingWorker>()
 
     authenticateJwt {
         // ================================================================
@@ -146,6 +149,11 @@ internal fun Route.peppolRoutes() {
 
             val result = peppolConnectionService.connectRecommand(tenant, companyAddress, request)
                 .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
+
+            // Trigger immediate poll after successful connection
+            if (result.status == PeppolConnectStatus.Connected) {
+                peppolPollingWorker.pollNow(tenantId)
+            }
 
             call.respond(HttpStatusCode.OK, result)
         }
