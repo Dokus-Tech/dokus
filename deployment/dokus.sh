@@ -847,10 +847,25 @@ initial_setup() {
         DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "app.dokus.tech" "DOMAIN")
         ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "contact@dokus.tech" "ACME_EMAIL")
 
+        echo ""
+        print_status task "Peppol Configuration (Dokus-managed e-invoicing)"
+        echo_e "  ${DIM_WHITE}Cloud deployments use Dokus master credentials for Peppol.${NC}"
+        echo_e "  ${DIM_WHITE}Users won't need to configure their own API keys.${NC}"
+        echo ""
+
+        PEPPOL_MASTER_API_KEY=$(prompt_with_default "Peppol (Recommand) API Key:" "" "PEPPOL_MASTER_API_KEY")
+        PEPPOL_MASTER_API_SECRET=$(prompt_with_default "Peppol (Recommand) API Secret:" "" "PEPPOL_MASTER_API_SECRET")
+
         cat > .env << EOF
 # Dokus Cloud Environment Configuration
 # Generated on $(date)
 # Profile: Cloud (HTTPS with Let's Encrypt)
+
+# ============================================================================
+# DEPLOYMENT MODE
+# ============================================================================
+# Cloud: Dokus manages credentials (Peppol, etc.) on behalf of users
+DOKUS_HOSTING_MODE=cloud
 
 # ============================================================================
 # REQUIRED - Core Credentials
@@ -865,6 +880,13 @@ JWT_SECRET=$JWT_SECRET_VAL
 # ============================================================================
 DOMAIN=$DOMAIN
 ACME_EMAIL=$ACME_EMAIL
+
+# ============================================================================
+# PEPPOL (E-Invoicing via Recommand)
+# Cloud mode: Dokus master credentials used for all tenants
+# ============================================================================
+PEPPOL_MASTER_API_KEY=$PEPPOL_MASTER_API_KEY
+PEPPOL_MASTER_API_SECRET=$PEPPOL_MASTER_API_SECRET
 
 # ============================================================================
 # STORAGE - Public URL for presigned URLs (MinIO via Traefik)
@@ -883,6 +905,12 @@ EOF
 # Dokus Self-Hosting Environment Configuration
 # Generated on $(date)
 # Profile: ${DOKUS_PROFILE:-lite}
+
+# ============================================================================
+# DEPLOYMENT MODE
+# ============================================================================
+# Self-hosted: Users configure their own credentials (Peppol, etc.)
+DOKUS_HOSTING_MODE=self-hosted
 
 # ============================================================================
 # REQUIRED - Core Credentials
