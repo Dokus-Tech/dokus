@@ -19,7 +19,6 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolConnectRequest
@@ -280,7 +279,7 @@ internal fun Route.peppolRoutes() {
                 runCatching {
                     // Create document record (Peppol documents don't have a file - use placeholder)
                     val filename = "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.xml"
-                    val storageKey = "peppol/${tid}/${java.util.UUID.randomUUID()}.xml"
+                    val storageKey = "peppol/$tid/${java.util.UUID.randomUUID()}.xml"
 
                     val documentId = documentRepository.create(
                         tenantId = tid,

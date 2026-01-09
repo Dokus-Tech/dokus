@@ -38,7 +38,6 @@ import tech.dokus.features.cashflow.usecase.GetPeppolSettingsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetPeppolTransmissionForInvoiceUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ListChatSessionsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ListPeppolTransmissionsUseCaseImpl
-import tech.dokus.features.cashflow.usecase.LoadCashflowDocumentsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.LoadDocumentRecordsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.PollPeppolInboxUseCaseImpl
 import tech.dokus.features.cashflow.usecase.RejectDocumentUseCaseImpl
@@ -68,7 +67,6 @@ import tech.dokus.features.cashflow.usecases.GetPeppolSettingsUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolTransmissionForInvoiceUseCase
 import tech.dokus.features.cashflow.usecases.ListChatSessionsUseCase
 import tech.dokus.features.cashflow.usecases.ListPeppolTransmissionsUseCase
-import tech.dokus.features.cashflow.usecases.LoadCashflowDocumentsUseCase
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolInboxUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
@@ -159,7 +157,6 @@ val cashflowNetworkModule = module {
     singleOf(::GetPeppolTransmissionForInvoiceUseCaseImpl) bind GetPeppolTransmissionForInvoiceUseCase::class
 
     // Cashflow documents
-    factory<LoadCashflowDocumentsUseCase> { LoadCashflowDocumentsUseCaseImpl(get()) }
     factory<WatchPendingDocumentsUseCase> { WatchPendingDocumentsUseCaseImpl(get()) }
     factory<SubmitInvoiceUseCase> { SubmitInvoiceUseCaseImpl(get()) }
 

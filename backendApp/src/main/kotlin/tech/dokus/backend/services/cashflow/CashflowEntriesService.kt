@@ -22,6 +22,7 @@ import java.util.UUID
  *
  * This is the normalized source of truth for cashflow data.
  */
+@Suppress("LongParameterList")
 class CashflowEntriesService(
     private val cashflowEntriesRepository: CashflowEntriesRepository
 ) {
@@ -148,7 +149,11 @@ class CashflowEntriesService(
     ): Result<List<CashflowEntry>> {
         logger.debug(
             "Listing cashflow entries for tenant: {} (from={}, to={}, direction={}, status={})",
-            tenantId, fromDate, toDate, direction, status
+            tenantId,
+            fromDate,
+            toDate,
+            direction,
+            status
         )
         return cashflowEntriesRepository.listEntries(tenantId, fromDate, toDate, direction, status)
             .onSuccess { logger.debug("Retrieved ${it.size} cashflow entries") }

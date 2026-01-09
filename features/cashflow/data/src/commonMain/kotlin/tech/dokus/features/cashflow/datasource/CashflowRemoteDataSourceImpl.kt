@@ -510,24 +510,6 @@ internal class CashflowRemoteDataSourceImpl(
     // STATISTICS & OVERVIEW
     // ============================================================================
 
-    override suspend fun listCashflowDocuments(
-        fromDate: LocalDate?,
-        toDate: LocalDate?,
-        limit: Int,
-        offset: Int
-    ): Result<PaginatedResponse<FinancialDocumentDto>> {
-        return runCatching {
-            httpClient.get(
-                Cashflow.CashflowDocuments(
-                    fromDate = fromDate,
-                    toDate = toDate,
-                    limit = limit,
-                    offset = offset
-                )
-            ).body()
-        }
-    }
-
     override suspend fun getCashflowOverview(
         fromDate: LocalDate,
         toDate: LocalDate

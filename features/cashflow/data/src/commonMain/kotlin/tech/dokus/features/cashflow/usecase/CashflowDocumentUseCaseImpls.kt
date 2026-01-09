@@ -5,74 +5,17 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
-import kotlinx.datetime.LocalDate
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
-import tech.dokus.features.cashflow.usecases.LoadCashflowDocumentsUseCase
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
 
 private const val DefaultDocumentLimit = 100
-
-internal class LoadCashflowDocumentsUseCaseImpl(
-    private val cashflowRemoteDataSource: CashflowRemoteDataSource
-) : LoadCashflowDocumentsUseCase {
-    override suspend fun invoke(
-        page: Int,
-        pageSize: Int,
-        fromDate: LocalDate?,
-        toDate: LocalDate?
-    ): Result<PaginatedResponse<FinancialDocumentDto>> {
-        require(page >= 0) { "Page must be non-negative" }
-        require(pageSize > 0) { "Page size must be positive" }
-
-        val offset = page * pageSize
-        return cashflowRemoteDataSource.listCashflowDocuments(
-            fromDate = fromDate,
-            toDate = toDate,
-            limit = pageSize,
-            offset = offset
-        )
-    }
-
-    override suspend fun loadAll(
-        pageSize: Int,
-        fromDate: LocalDate?,
-        toDate: LocalDate?
-    ): Result<List<FinancialDocumentDto>> {
-        require(pageSize > 0) { "Page size must be positive" }
-
-        val allDocuments = mutableListOf<FinancialDocumentDto>()
-        var offset = 0
-        var hasMore: Boolean
-
-        do {
-            val pageResult = cashflowRemoteDataSource.listCashflowDocuments(
-                fromDate = fromDate,
-                toDate = toDate,
-                limit = pageSize,
-                offset = offset
-            )
-
-            if (pageResult.isFailure) {
-                return Result.failure(pageResult.exceptionOrNull()!!)
-            }
-
-            val page = pageResult.getOrThrow()
-            allDocuments.addAll(page.items)
-            hasMore = page.hasMore
-            offset += pageSize
-        } while (hasMore)
-
-        return Result.success(allDocuments)
-    }
-}
 
 internal class WatchPendingDocumentsUseCaseImpl(
     private val cashflowRemoteDataSource: CashflowRemoteDataSource

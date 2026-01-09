@@ -85,10 +85,12 @@ class DocumentConfirmationService(
         // Mark draft as confirmed
         draftRepository.updateDraftStatus(documentId, tenantId, DraftStatus.Confirmed)
 
-        logger.info("Document confirmed: $documentId -> ${result.entity.javaClass.simpleName}, cashflowEntryId: ${result.cashflowEntryId}")
+        val entityType = result.entity.javaClass.simpleName
+        logger.info("Document confirmed: $documentId -> $entityType, entryId: ${result.cashflowEntryId}")
         result
     }
 
+    @Suppress("CyclomaticComplexMethod")
     private suspend fun confirmAsInvoice(
         tenantId: TenantId,
         documentId: DocumentId,
@@ -151,6 +153,7 @@ class DocumentConfirmationService(
         return ConfirmationResult(entity = invoice, cashflowEntryId = cashflowEntry.id)
     }
 
+    @Suppress("ThrowsCount")
     private suspend fun confirmAsBill(
         tenantId: TenantId,
         documentId: DocumentId,
@@ -195,6 +198,7 @@ class DocumentConfirmationService(
         return ConfirmationResult(entity = bill, cashflowEntryId = cashflowEntry.id)
     }
 
+    @Suppress("ThrowsCount")
     private suspend fun confirmAsExpense(
         tenantId: TenantId,
         documentId: DocumentId,
