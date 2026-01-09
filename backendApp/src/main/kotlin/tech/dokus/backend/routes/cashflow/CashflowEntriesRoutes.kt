@@ -8,7 +8,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
-import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
@@ -23,6 +22,8 @@ import tech.dokus.foundation.backend.security.dokusPrincipal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+private const val MAX_PAGE_SIZE = 200
+
 /**
  * Cashflow Entries API Routes using Ktor Type-Safe Routing
  * Base path: /api/v1/cashflow/entries
@@ -33,17 +34,17 @@ import kotlin.uuid.Uuid
  * All routes require JWT authentication and tenant context.
  */
 @OptIn(ExperimentalUuidApi::class)
+@Suppress("LongMethod", "CyclomaticComplexMethod", "ThrowsCount")
 internal fun Route.cashflowEntriesRoutes() {
     val cashflowEntriesService by inject<CashflowEntriesService>()
-    val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
 
     authenticateJwt {
         // GET /api/v1/cashflow/entries - List cashflow entries with filters
         get<Cashflow.Entries> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
 
-            if (route.limit !in 1..200) {
-                throw DokusException.BadRequest("Limit must be between 1 and 200")
+            if (route.limit !in 1..MAX_PAGE_SIZE) {
+                throw DokusException.BadRequest("Limit must be between 1 and $MAX_PAGE_SIZE")
             }
             if (route.offset < 0) {
                 throw DokusException.BadRequest("Offset must be non-negative")

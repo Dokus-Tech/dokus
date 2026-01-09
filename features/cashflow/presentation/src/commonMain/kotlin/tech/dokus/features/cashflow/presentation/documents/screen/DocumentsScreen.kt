@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_no_documents
 import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentRow
@@ -129,7 +130,7 @@ private fun DocumentsContent(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No documents found")
+                Text(stringResource(Res.string.cashflow_no_documents))
             }
         } else {
             LazyColumn(

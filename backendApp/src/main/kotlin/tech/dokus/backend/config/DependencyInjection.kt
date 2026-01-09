@@ -29,10 +29,10 @@ import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceService
-import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker

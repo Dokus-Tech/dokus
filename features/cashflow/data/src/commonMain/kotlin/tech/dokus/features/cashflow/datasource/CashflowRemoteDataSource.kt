@@ -377,17 +377,6 @@ interface CashflowRemoteDataSource {
     // ============================================================================
 
     /**
-     * List combined cashflow documents (invoices + expenses) with pagination.
-     * GET /api/v1/cashflow/documents?fromDate={fromDate}&toDate={toDate}&limit={limit}&offset={offset}
-     */
-    suspend fun listCashflowDocuments(
-        fromDate: LocalDate? = null,
-        toDate: LocalDate? = null,
-        limit: Int = 50,
-        offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto>>
-
-    /**
      * Get cashflow overview for a date range
      * GET /api/v1/cashflow/overview?fromDate={fromDate}&toDate={toDate}
      */
