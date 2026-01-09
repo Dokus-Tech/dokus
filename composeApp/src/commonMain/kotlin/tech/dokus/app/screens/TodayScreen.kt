@@ -57,7 +57,6 @@ import tech.dokus.app.viewmodel.TodayAction
 import tech.dokus.app.viewmodel.TodayContainer
 import tech.dokus.app.viewmodel.TodayIntent
 import tech.dokus.app.viewmodel.TodayState
-import tech.dokus.foundation.aura.components.navigation.UserPreferencesMenu
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.search_placeholder
@@ -72,11 +71,12 @@ import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.components.layout.DokusPanelListItem
 import tech.dokus.foundation.aura.components.layout.DokusTabbedPanel
+import tech.dokus.foundation.aura.components.navigation.UserPreferencesMenu
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo

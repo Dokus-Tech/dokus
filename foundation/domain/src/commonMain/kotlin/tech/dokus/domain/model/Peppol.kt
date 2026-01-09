@@ -305,17 +305,28 @@ data class RecommandValidationError(
 
 /**
  * Recommand API: Inbox document (received from Peppol network).
+ * Field names match the actual Recommand API schema.
  */
 @Serializable
 data class RecommandInboxDocument(
     val id: String,
-    val documentType: String,
-    val sender: String, // Peppol ID
-    val receiver: String, // Peppol ID
-    val receivedAt: String, // ISO timestamp
-    val isRead: Boolean,
-    val document: RecommandReceivedDocument? = null
-)
+    val teamId: String? = null,
+    val companyId: String? = null,
+    val direction: String? = null,
+    val senderId: String, // Peppol ID of sender
+    val receiverId: String, // Peppol ID of receiver
+    val docTypeId: String? = null,
+    val processId: String? = null,
+    val countryC1: String? = null,
+    val type: String, // "invoice", "creditNote", etc.
+    val readAt: String? = null, // ISO timestamp, null if unread
+    val createdAt: String, // ISO timestamp
+    val updatedAt: String? = null,
+    val parsed: RecommandReceivedDocument? = null
+) {
+    /** Convenience property: true if document is unread (readAt is null) */
+    val isUnread: Boolean get() = readAt == null
+}
 
 /**
  * Recommand API: Inbox response wrapper.

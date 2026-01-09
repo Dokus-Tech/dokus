@@ -9,10 +9,6 @@ import tech.dokus.app.viewmodel.BootstrapAction
 import tech.dokus.app.viewmodel.BootstrapContainer
 import tech.dokus.app.viewmodel.BootstrapIntent
 import tech.dokus.app.viewmodel.BootstrapState
-import tech.dokus.app.viewmodel.TodayAction
-import tech.dokus.app.viewmodel.TodayContainer
-import tech.dokus.app.viewmodel.TodayIntent
-import tech.dokus.app.viewmodel.TodayState
 import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
@@ -26,6 +22,10 @@ import tech.dokus.app.viewmodel.TeamSettingsContainer
 import tech.dokus.app.viewmodel.TeamSettingsIntent
 import tech.dokus.app.viewmodel.TeamSettingsState
 import tech.dokus.app.viewmodel.TeamSettingsUseCases
+import tech.dokus.app.viewmodel.TodayAction
+import tech.dokus.app.viewmodel.TodayContainer
+import tech.dokus.app.viewmodel.TodayIntent
+import tech.dokus.app.viewmodel.TodayState
 import tech.dokus.app.viewmodel.WorkspaceSettingsAction
 import tech.dokus.app.viewmodel.WorkspaceSettingsContainer
 import tech.dokus.app.viewmodel.WorkspaceSettingsIntent

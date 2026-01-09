@@ -19,8 +19,8 @@ import tech.dokus.aura.resources.nav_more
 import tech.dokus.aura.resources.nav_reports
 import tech.dokus.aura.resources.nav_section_accounting
 import tech.dokus.aura.resources.nav_section_company
-import tech.dokus.aura.resources.nav_tomorrow
 import tech.dokus.aura.resources.nav_team
+import tech.dokus.aura.resources.nav_tomorrow
 import tech.dokus.aura.resources.nav_vat
 import tech.dokus.aura.resources.settings_peppol
 import tech.dokus.aura.resources.settings_workspace_details
@@ -31,8 +31,8 @@ import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
-import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 
 /**
@@ -178,7 +178,6 @@ object NavDefinition {
             showTopBar = true,
             requiredTier = SubscriptionTier.One
         )
-
     }
 
     // ========================================================================
