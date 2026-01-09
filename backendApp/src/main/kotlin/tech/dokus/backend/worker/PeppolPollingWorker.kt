@@ -21,8 +21,11 @@ import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.RecommandDocumentDetail
+import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.service.PeppolService
+import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -46,7 +49,8 @@ class PeppolPollingWorker(
     private val draftRepository: DocumentDraftRepository,
     private val ingestionRunRepository: DocumentIngestionRunRepository,
     private val confirmationPolicy: DocumentConfirmationPolicy,
-    private val confirmationService: DocumentConfirmationService
+    private val confirmationService: DocumentConfirmationService,
+    private val documentStorageService: DocumentStorageService
 ) {
     private val logger = LoggerFactory.getLogger(PeppolPollingWorker::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -194,18 +198,39 @@ class PeppolPollingWorker(
         try {
             logger.debug("Polling Peppol inbox for tenant: $tenantId")
 
-            val result = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid ->
+            val result = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid, documentDetail ->
                 runCatching {
-                    // Create document record with PEPPOL source
-                    val filename = "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.xml"
-                    val storageKey = "peppol/$tid/${UUID.randomUUID()}.xml"
+                    // Find PDF attachment (if any)
+                    val pdfAttachment = documentDetail?.parsed?.attachments
+                        ?.firstOrNull { it.mimeCode == "application/pdf" && !it.embeddedDocument.isNullOrEmpty() }
+
+                    // Upload PDF if available
+                    val uploadResult = if (pdfAttachment != null) {
+                        val pdfBytes = Base64.getDecoder().decode(pdfAttachment.embeddedDocument)
+                        documentStorageService.uploadDocument(
+                            tenantId = tid,
+                            prefix = "peppol",
+                            filename = pdfAttachment.filename
+                                ?: "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.pdf",
+                            data = pdfBytes,
+                            contentType = "application/pdf"
+                        )
+                    } else null
+
+                    // Use uploaded PDF info if available, otherwise fallback to XML metadata
+                    val filename = uploadResult?.filename
+                        ?: "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.xml"
+                    val storageKey = uploadResult?.key
+                        ?: "peppol/$tid/${UUID.randomUUID()}.xml"
+                    val sizeBytes = uploadResult?.sizeBytes ?: 0L
+                    val contentType = uploadResult?.contentType ?: "application/xml"
 
                     val documentId = documentRepository.create(
                         tenantId = tid,
                         payload = DocumentCreatePayload(
                             filename = filename,
-                            contentType = "application/xml",
-                            sizeBytes = 0L,
+                            contentType = contentType,
+                            sizeBytes = sizeBytes,
                             storageKey = storageKey,
                             contentHash = null,
                             source = DocumentSource.Peppol

@@ -11,6 +11,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import tech.dokus.domain.model.RecommandDocumentDetail
 import tech.dokus.domain.model.RecommandDocumentResponse
 import tech.dokus.domain.model.RecommandDocumentsResponse
 import tech.dokus.domain.model.RecommandInboxResponse
@@ -187,6 +188,32 @@ class RecommandProvider(
             RecommandMapper.fromRecommandDocumentDetail(detail)
         }.onFailure { e ->
             logger.error("Failed to fetch Peppol document: $documentId", e)
+        }
+
+    /**
+     * Get raw document detail including attachments.
+     * Used by PeppolPollingWorker to extract PDF attachments.
+     * GET /api/v1/documents/{documentId}
+     */
+    suspend fun getDocumentDetail(documentId: String): Result<RecommandDocumentDetail> =
+        runCatching {
+            ensureConfigured()
+            logger.debug("Fetching raw document detail: $documentId")
+
+            val response = httpClient.get("$baseUrl/api/v1/documents/$documentId") {
+                basicAuth(credentials.apiKey, credentials.apiSecret)
+            }
+
+            if (!response.status.isSuccess()) {
+                val errorBody = response.bodyAsText()
+                logger.error("Recommand API error: ${response.status} - $errorBody")
+                throw RecommandApiException(response.status.value, errorBody)
+            }
+
+            response.body<RecommandDocumentResponse>().document
+                ?: throw IllegalStateException("Document response is missing document for ID: $documentId")
+        }.onFailure { e ->
+            logger.error("Failed to fetch raw document detail: $documentId", e)
         }
 
     /**

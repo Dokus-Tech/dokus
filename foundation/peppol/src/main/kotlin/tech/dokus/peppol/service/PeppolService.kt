@@ -17,6 +17,7 @@ import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.domain.model.RecommandDocumentDetail
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.ProcessedPeppolDocument
@@ -31,6 +32,7 @@ import tech.dokus.peppol.mapper.PeppolMapper
 import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.peppol.provider.PeppolProvider
 import tech.dokus.peppol.provider.PeppolProviderFactory
+import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.validator.PeppolValidator
 
 /**
@@ -258,10 +260,17 @@ class PeppolService(
      *
      * Creates Documents with Drafts for user review (architectural boundary).
      * Bills are created only when the user confirms the draft.
+     *
+     * @param tenantId The tenant to poll for
+     * @param createDocumentCallback Callback to create document with:
+     *   - ExtractedDocumentData: parsed invoice/bill data
+     *   - String: sender Peppol ID
+     *   - TenantId: tenant ID
+     *   - RecommandDocumentDetail?: raw document detail with attachments (Recommand only)
      */
     suspend fun pollInbox(
         tenantId: TenantId,
-        createDocumentCallback: suspend (ExtractedDocumentData, String, TenantId) -> Result<DocumentId>
+        createDocumentCallback: suspend (ExtractedDocumentData, String, TenantId, RecommandDocumentDetail?) -> Result<DocumentId>
     ): Result<PeppolInboxPollResponse> {
         logger.info("Polling Peppol inbox for tenant: $tenantId")
 
@@ -287,6 +296,11 @@ class PeppolService(
                     // Fetch full document content
                     val fullDocument = provider.getDocument(inboxItem.id).getOrThrow()
 
+                    // Fetch raw document detail for attachment extraction (Recommand-specific)
+                    val rawDetail = (provider as? RecommandProvider)
+                        ?.getDocumentDetail(inboxItem.id)
+                        ?.getOrNull()
+
                     // Create transmission record
                     val transmission = transmissionRepository.createTransmission(
                         tenantId = tenantId,
@@ -302,7 +316,8 @@ class PeppolService(
                     val documentId = createDocumentCallback(
                         extractedData,
                         inboxItem.senderPeppolId,
-                        tenantId
+                        tenantId,
+                        rawDetail
                     ).getOrThrow()
 
                     // Update transmission status

@@ -322,52 +322,16 @@ internal fun Route.peppolRoutes() {
         post<Peppol.Inbox.Syncs> {
             val tenantId = dokusPrincipal.requireTenantId()
 
-            // Poll inbox with document+draft creation callback
-            val pollResult = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid ->
-                runCatching {
-                    // Create document record with PEPPOL source
-                    val filename = "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.xml"
-                    val storageKey = "peppol/$tid/${java.util.UUID.randomUUID()}.xml"
-
-                    val documentId = documentRepository.create(
-                        tenantId = tid,
-                        payload = DocumentCreatePayload(
-                            filename = filename,
-                            contentType = "application/xml",
-                            sizeBytes = 0L,
-                            storageKey = storageKey,
-                            contentHash = null,
-                            source = DocumentSource.Peppol
-                        )
-                    )
-
-                    // Create draft with extracted data
-                    draftRepository.createOrUpdateFromIngestion(
-                        documentId = documentId,
-                        tenantId = tid,
-                        runId = IngestionRunId.generate(), // Synthetic run ID for Peppol
-                        extractedData = extractedData,
-                        documentType = DocumentType.Bill,
-                        force = true
-                    )
-
-                    // Auto-confirm if policy allows (PEPPOL documents are always auto-confirmed)
-                    if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, extractedData, tid)) {
-                        confirmationService.confirmDocument(
-                            tenantId = tid,
-                            documentId = documentId,
-                            documentType = DocumentType.Bill,
-                            extractedData = extractedData,
-                            linkedContactId = null // Bills don't require linked contacts
-                        ).onFailure { e ->
-                            // Log but don't fail - document+draft still created
-                            throw e
-                        }
-                    }
-
-                    documentId
-                }
-            }.getOrElse { throw DokusException.InternalError("Failed to poll Peppol inbox: ${it.message}") }
+            // Use PeppolPollingWorker for consistent PDF handling
+            val polled = peppolPollingWorker.pollNow(tenantId)
+            if (!polled) {
+                throw DokusException.BadRequest("Poll skipped - last poll was too recent")
+            }
+            // Return empty response - actual results come from worker
+            val pollResult = tech.dokus.domain.model.PeppolInboxPollResponse(
+                newDocuments = 0,
+                processedDocuments = emptyList()
+            )
 
             call.respond(HttpStatusCode.OK, pollResult)
         }
