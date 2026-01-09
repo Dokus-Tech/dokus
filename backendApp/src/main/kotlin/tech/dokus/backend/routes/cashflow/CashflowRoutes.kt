@@ -79,6 +79,9 @@ fun Application.configureCashflowRoutes() {
         // Peppol e-invoicing routes
         peppolRoutes()
 
+        // Peppol webhook routes (NOT authenticated - uses webhook token)
+        peppolWebhookRoutes()
+
         // Chat routes (RAG-powered document Q&A)
         chatRoutes()
     }

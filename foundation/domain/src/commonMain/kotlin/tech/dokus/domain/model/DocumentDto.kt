@@ -2,6 +2,7 @@ package tech.dokus.domain.model
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 
@@ -21,6 +22,7 @@ data class DocumentDto(
     val contentType: String,
     val sizeBytes: Long,
     val storageKey: String,
+    val source: DocumentSource = DocumentSource.Upload,
     val uploadedAt: LocalDateTime,
     val downloadUrl: String? = null
 )

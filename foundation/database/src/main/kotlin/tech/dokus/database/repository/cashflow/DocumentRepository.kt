@@ -16,6 +16,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTrans
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
@@ -44,7 +45,8 @@ data class DocumentCreatePayload(
     val contentType: String,
     val sizeBytes: Long,
     val storageKey: String,
-    val contentHash: String?
+    val contentHash: String?,
+    val source: DocumentSource = DocumentSource.Upload
 )
 
 /**
@@ -73,6 +75,7 @@ class DocumentRepository {
             it[DocumentsTable.sizeBytes] = payload.sizeBytes
             it[DocumentsTable.storageKey] = payload.storageKey
             it[DocumentsTable.contentHash] = payload.contentHash
+            it[DocumentsTable.documentSource] = payload.source
         }
         id
     }
@@ -394,6 +397,7 @@ class DocumentRepository {
             contentType = this[DocumentsTable.contentType],
             sizeBytes = this[DocumentsTable.sizeBytes],
             storageKey = this[DocumentsTable.storageKey],
+            source = this[DocumentsTable.documentSource],
             uploadedAt = this[DocumentsTable.uploadedAt],
             downloadUrl = null // Generated on-demand by the service layer
         )
