@@ -49,7 +49,6 @@ import tech.dokus.aura.resources.document_type_expense
 import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.document_type_unclassified
 import tech.dokus.aura.resources.documents_table_document
-import tech.dokus.aura.resources.documents_table_open
 import tech.dokus.aura.resources.documents_table_status
 import tech.dokus.aura.resources.documents_view_details
 import tech.dokus.domain.Money
@@ -104,10 +103,7 @@ internal fun DocumentTableHeaderRow(
             HeaderLabel(text = stringResource(Res.string.document_table_date))
         }
         DokusTableCell(DocumentTableColumns.Action) {
-            HeaderLabel(
-                text = stringResource(Res.string.documents_table_open),
-                textAlign = TextAlign.Center
-            )
+            Spacer(modifier = Modifier.width(1.dp))
         }
     }
 }
@@ -118,7 +114,7 @@ internal fun DocumentTableRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val counterparty = extractCounterparty(document)
+    val primaryTitle = resolveDocumentPrimaryTitle(document)
     val documentType = extractDocumentType(document)
     val amount = extractAmount(document)
     val status = computeDisplayStatus(document)
@@ -133,15 +129,15 @@ internal fun DocumentTableRow(
         DokusTableCell(DocumentTableColumns.Document) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = counterparty,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    text = primaryTitle,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = documentType,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -187,7 +183,7 @@ internal fun DocumentMobileRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val counterparty = extractCounterparty(document)
+    val primaryTitle = resolveDocumentPrimaryTitle(document)
     val documentType = extractDocumentType(document)
     val amount = extractAmount(document)
     val status = computeDisplayStatus(document)
@@ -203,8 +199,8 @@ internal fun DocumentMobileRow(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = counterparty,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                text = primaryTitle,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -227,7 +223,7 @@ internal fun DocumentMobileRow(
         ) {
             Text(
                 text = documentType,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -236,7 +232,7 @@ internal fun DocumentMobileRow(
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = dateLabel,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -287,12 +283,12 @@ private fun HeaderLabel(
 }
 
 @Composable
-private fun extractCounterparty(document: DocumentRecordDto): String {
+private fun resolveDocumentPrimaryTitle(document: DocumentRecordDto): String {
     val extractedData = document.draft?.extractedData
     return extractedData?.invoice?.clientName?.takeIf { it.isNotBlank() }
         ?: extractedData?.bill?.supplierName?.takeIf { it.isNotBlank() }
         ?: extractedData?.expense?.merchant?.takeIf { it.isNotBlank() }
-        ?: document.document.filename
+        ?: document.document.filename?.takeIf { it.isNotBlank() }
         ?: stringResource(Res.string.common_unknown)
 }
 

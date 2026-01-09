@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -42,7 +43,7 @@ internal fun DocumentStatusChip(
         DocumentDisplayStatus.Failed -> colorScheme.statusError to Res.string.document_status_failed
         DocumentDisplayStatus.Rejected -> colorScheme.statusError to Res.string.draft_status_rejected
     }
-    val backgroundColor = statusColor.copy(alpha = 0.12f)
+    val backgroundColor = statusColor.copy(alpha = 0.2f)
     val textColor = statusColor
     val label = stringResource(labelRes)
 
@@ -54,7 +55,7 @@ internal fun DocumentStatusChip(
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
             color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
