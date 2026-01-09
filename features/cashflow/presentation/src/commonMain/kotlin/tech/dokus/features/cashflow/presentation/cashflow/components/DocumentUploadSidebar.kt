@@ -198,8 +198,10 @@ fun DocumentUploadSidebar(
 
                         Spacer(modifier = Modifier.height(ContentPadding))
 
+                        val hasUploads = tasks.isNotEmpty()
+
                         // Upload list section header
-                        if (tasks.isNotEmpty()) {
+                        if (hasUploads) {
                             Text(
                                 text = stringResource(Res.string.upload_uploads_title),
                                 style = MaterialTheme.typography.titleSmall,
@@ -209,7 +211,7 @@ fun DocumentUploadSidebar(
                             Spacer(modifier = Modifier.height(InstructionsSpacing))
                         }
 
-                        if (tasks.isNotEmpty()) {
+                        if (hasUploads) {
                             // Scrollable upload list
                             DocumentUploadList(
                                 tasks = tasks,
@@ -217,14 +219,16 @@ fun DocumentUploadSidebar(
                                 deletionHandles = deletionHandles,
                                 uploadManager = uploadManager,
                                 scrollable = true,
+                                showEmptyState = false,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
                             )
                         } else {
+                            Spacer(modifier = Modifier.weight(1f))
                             Text(
                                 text = stringResource(Res.string.upload_no_documents),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }

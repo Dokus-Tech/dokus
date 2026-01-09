@@ -45,11 +45,12 @@ fun DocumentUploadList(
     uploadManager: DocumentUploadManager,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    scrollable: Boolean = false
+    scrollable: Boolean = false,
+    showEmptyState: Boolean = true
 ) {
-    if (tasks.isEmpty()) {
+    if (tasks.isEmpty() && showEmptyState) {
         EmptyUploadList(modifier = modifier.padding(contentPadding))
-    } else {
+    } else if (tasks.isNotEmpty()) {
         val scrollModifier = if (scrollable) {
             Modifier.verticalScroll(rememberScrollState())
         } else {
