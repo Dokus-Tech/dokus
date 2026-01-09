@@ -144,11 +144,11 @@ object RecommandMapper {
     fun fromRecommandInboxItem(item: RecommandInboxDocument): PeppolInboxItem {
         return PeppolInboxItem(
             id = item.id,
-            documentType = item.documentType,
-            senderPeppolId = item.sender,
-            receiverPeppolId = item.receiver,
-            receivedAt = item.receivedAt,
-            isRead = item.isRead
+            documentType = item.type,
+            senderPeppolId = item.senderId,
+            receiverPeppolId = item.receiverId,
+            receivedAt = item.createdAt,
+            isRead = !item.isUnread
         )
     }
 
@@ -158,8 +158,8 @@ object RecommandMapper {
     ): PeppolReceivedDocument {
         return PeppolReceivedDocument(
             id = item.id,
-            documentType = item.documentType,
-            senderPeppolId = item.sender,
+            documentType = item.type,
+            senderPeppolId = item.senderId,
             invoiceNumber = document.invoiceNumber,
             issueDate = document.issueDate,
             dueDate = document.dueDate,

@@ -180,7 +180,7 @@ class RecommandProvider(
             }
 
             val item = response.body<RecommandInboxDocument>()
-            val document = item.document
+            val document = item.parsed
                 ?: throw IllegalStateException("Document content is missing for ID: $documentId")
 
             RecommandMapper.fromRecommandDocument(item, document)
