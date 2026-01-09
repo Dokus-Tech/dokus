@@ -7,13 +7,13 @@ import com.typesafe.config.Config
  *
  * Loaded from HOCON configuration files following application patterns.
  * Expected configuration path: peppol.*
+ *
+ * Note: Provider URLs are defined in [PeppolProviderConfig] sealed class,
+ * not in configuration files (URLs are fixed, only API keys vary).
  */
 data class PeppolModuleConfig(
     /** Default provider ID (e.g., "recommand") */
     val defaultProvider: String,
-
-    /** Recommand provider configuration */
-    val recommand: RecommandConfig,
 
     /** Inbox polling configuration */
     val inbox: InboxConfig,
@@ -29,28 +29,10 @@ data class PeppolModuleConfig(
             val peppolConfig = config.getConfig("peppol")
             return PeppolModuleConfig(
                 defaultProvider = peppolConfig.getString("defaultProvider"),
-                recommand = RecommandConfig.fromConfig(peppolConfig.getConfig("recommand")),
                 inbox = InboxConfig.fromConfig(peppolConfig.getConfig("inbox")),
                 globalTestMode = peppolConfig.getBoolean("globalTestMode")
             )
         }
-    }
-}
-
-/**
- * Recommand provider configuration.
- */
-data class RecommandConfig(
-    /** Production API base URL */
-    val baseUrl: String,
-    /** Test/sandbox API base URL */
-    val testUrl: String
-) {
-    companion object {
-        fun fromConfig(config: Config): RecommandConfig = RecommandConfig(
-            baseUrl = config.getString("baseUrl"),
-            testUrl = config.getString("testUrl")
-        )
     }
 }
 

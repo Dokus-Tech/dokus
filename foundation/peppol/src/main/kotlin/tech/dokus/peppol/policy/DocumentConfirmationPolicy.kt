@@ -43,10 +43,10 @@ class DefaultDocumentConfirmationPolicy : DocumentConfirmationPolicy {
         tenantId: TenantId
     ): Boolean {
         return when (source) {
-            DocumentSource.Peppol -> true   // Certified network, always trust
-            DocumentSource.Manual -> true   // User entered it themselves
-            DocumentSource.Upload -> false  // Needs review (AI extraction)
-            DocumentSource.Email -> false   // Needs review (AI extraction)
+            DocumentSource.Peppol -> true // Certified network, always trust
+            DocumentSource.Manual -> true // User entered it themselves
+            DocumentSource.Upload -> false // Needs review (AI extraction)
+            DocumentSource.Email -> false // Needs review (AI extraction)
         }
     }
 }

@@ -243,8 +243,8 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
 
     // Peppol
     single { PeppolModuleConfig.fromConfig(appConfig.config) }
-    single { PeppolProviderFactory(get(), get()) }
-    single { RecommandCompaniesClient(get(), get()) }
+    single { PeppolProviderFactory(get()) }
+    single { RecommandCompaniesClient(get()) }
     single { PeppolMapper() }
     single { PeppolValidator() }
     single { PeppolConnectionService(get(), get()) }

@@ -297,7 +297,11 @@ class PeppolService(
                     val extractedData = mapper.toExtractedDocumentData(fullDocument, inboxItem.senderPeppolId)
 
                     // Create document + draft via callback
-                    val documentId = createDocumentCallback(extractedData, inboxItem.senderPeppolId, tenantId).getOrThrow()
+                    val documentId = createDocumentCallback(
+                        extractedData,
+                        inboxItem.senderPeppolId,
+                        tenantId
+                    ).getOrThrow()
 
                     // Update transmission status
                     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -324,7 +328,9 @@ class PeppolService(
                         )
                     )
 
-                    logger.info("Processed incoming Peppol document ${inboxItem.id} -> Document $documentId (needs review)")
+                    logger.info(
+                        "Processed incoming Peppol document ${inboxItem.id} -> Document $documentId (needs review)"
+                    )
                 } catch (e: Exception) {
                     logger.error("Failed to process incoming document ${inboxItem.id}", e)
                     // Continue processing other documents

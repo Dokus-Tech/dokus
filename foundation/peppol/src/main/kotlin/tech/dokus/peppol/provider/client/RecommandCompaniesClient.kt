@@ -12,20 +12,18 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
-import tech.dokus.peppol.config.PeppolModuleConfig
+import tech.dokus.peppol.config.PeppolProviderConfig
 
 class RecommandCompaniesClient(
     private val httpClient: HttpClient,
-    private val config: PeppolModuleConfig,
 ) {
+    private val baseUrl = PeppolProviderConfig.Recommand.baseUrl
+
     suspend fun listCompanies(
         apiKey: String,
         apiSecret: String,
         vatNumber: String,
-        testMode: Boolean,
     ): Result<List<RecommandCompany>> = runCatching {
-        val baseUrl = baseUrl(testMode)
-
         val response = httpClient.get("$baseUrl/api/v1/companies") {
             basicAuth(apiKey, apiSecret)
             parameter("vatNumber", vatNumber)
@@ -46,10 +44,7 @@ class RecommandCompaniesClient(
         apiKey: String,
         apiSecret: String,
         request: RecommandCreateCompanyRequest,
-        testMode: Boolean,
     ): Result<RecommandCompany> = runCatching {
-        val baseUrl = baseUrl(testMode)
-
         val response = httpClient.post("$baseUrl/api/v1/companies") {
             basicAuth(apiKey, apiSecret)
             contentType(ContentType.Application.Json)
@@ -66,28 +61,23 @@ class RecommandCompaniesClient(
 
         response.body<RecommandCreateCompanyResponse>().company
     }
-
-    private fun baseUrl(testMode: Boolean): String {
-        val effectiveTestMode = config.globalTestMode || testMode
-        return if (effectiveTestMode) config.recommand.testUrl else config.recommand.baseUrl
-    }
 }
 
 @Serializable
 data class RecommandCompany(
     val id: String,
-    val teamId: String,
+    val teamId: String? = null,
     val name: String,
-    val address: String,
-    val postalCode: String,
-    val city: String,
-    val country: String,
-    val enterpriseNumber: String,
+    val address: String? = null,
+    val postalCode: String? = null,
+    val city: String? = null,
+    val country: String? = null,
+    val enterpriseNumber: String? = null,
     val vatNumber: String,
-    val isSmpRecipient: Boolean,
-    val isOutgoingDocumentValidationEnforced: Boolean,
-    val createdAt: String,
-    val updatedAt: String,
+    val isSmpRecipient: Boolean? = null,
+    val isOutgoingDocumentValidationEnforced: Boolean? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
 )
 
 @Serializable

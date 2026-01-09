@@ -40,7 +40,6 @@ class PeppolConnectionService(
                 apiKey = request.apiKey,
                 apiSecret = request.apiSecret,
                 vatNumber = vatNormalized,
-                testMode = request.testMode
             ).getOrThrow()
         } catch (e: RecommandUnauthorizedException) {
             logger.warn("Recommand credentials rejected for tenant {}", tenant.id)
@@ -125,7 +124,6 @@ class PeppolConnectionService(
                 country = country,
                 vatNumber = vatNumber.normalized
             ),
-            testMode = request.testMode
         ).getOrThrow()
     }
     private fun RecommandCompany.toSummary(): RecommandCompanySummary = RecommandCompanySummary(

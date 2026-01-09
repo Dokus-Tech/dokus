@@ -17,6 +17,7 @@ import tech.dokus.domain.model.RecommandMarkAsReadRequest
 import tech.dokus.domain.model.RecommandSendResponse
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.peppol.config.PeppolProviderConfig
 import tech.dokus.peppol.model.PeppolDirection
 import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolInboxItem
@@ -31,7 +32,6 @@ import tech.dokus.peppol.provider.PeppolProvider
  * Peppol provider implementation for Recommand.eu
  *
  * API Reference: https://peppol.recommand.eu/api-reference
- * Base URL: https://app.recommand.eu
  *
  * Endpoints used:
  * - POST /api/v1/{companyId}/send - Send documents
@@ -42,18 +42,16 @@ import tech.dokus.peppol.provider.PeppolProvider
  */
 class RecommandProvider(
     private val httpClient: HttpClient,
-    private val productionBaseUrl: String = "https://app.recommand.eu",
-    private val testBaseUrl: String = "https://test.recommand.eu",
-    private val globalTestMode: Boolean = false,
 ) : PeppolProvider {
 
     private val logger = loggerFor()
+    private val config = PeppolProviderConfig.Recommand
 
-    override val providerId = "recommand"
-    override val providerName = "Recommand.eu"
+    override val providerId = config.providerId
+    override val providerName = config.providerName
 
     private lateinit var credentials: RecommandCredentials
-    private var baseUrl: String = productionBaseUrl
+    private val baseUrl: String = config.baseUrl
 
     private val isConfigured: Boolean
         get() = ::credentials.isInitialized
@@ -63,7 +61,6 @@ class RecommandProvider(
             "RecommandProvider requires RecommandCredentials, got ${credentials::class.simpleName}"
         }
         this.credentials = credentials
-        baseUrl = if (globalTestMode || credentials.testMode) testBaseUrl else productionBaseUrl
         logger.debug("Configured RecommandProvider for company: ${credentials.companyId}")
     }
 
