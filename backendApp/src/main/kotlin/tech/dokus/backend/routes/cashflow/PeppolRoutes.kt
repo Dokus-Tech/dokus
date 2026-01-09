@@ -23,12 +23,12 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolService
 import kotlin.uuid.ExperimentalUuidApi

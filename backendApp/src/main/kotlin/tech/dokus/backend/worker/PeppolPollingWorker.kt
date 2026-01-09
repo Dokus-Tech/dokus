@@ -9,7 +9,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.slf4j.LoggerFactory
@@ -39,6 +38,7 @@ import kotlin.time.Duration.Companion.seconds
  * - Tracks lastPollTime per tenant to avoid hammering the API
  * - Graceful shutdown support
  */
+@Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
 class PeppolPollingWorker(
     private val peppolSettingsRepository: PeppolSettingsRepository,
     private val peppolService: PeppolService,
