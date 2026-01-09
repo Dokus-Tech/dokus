@@ -43,13 +43,16 @@ import tech.dokus.aura.resources.documents_search_no_results
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentDisplayStatus
-import tech.dokus.features.cashflow.presentation.documents.components.DocumentRow
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentMobileRow
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableHeaderRow
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentStatusFilterChips
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 @Composable
 internal fun DocumentsScreen(
@@ -109,6 +112,7 @@ private fun DocumentsContent(
 ) {
     val listState = rememberLazyListState()
     val documents = state.documents.data
+    val isLargeScreen = LocalScreenSize.current.isLarge
 
     // Load more when near the end
     val shouldLoadMore by remember {
@@ -200,37 +204,82 @@ private fun DocumentsContent(
                         .padding(horizontal = 16.dp)
                         .padding(bottom = 16.dp)
                 ) {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        itemsIndexed(
-                            items = documents,
-                            key = { _, doc -> doc.document.id.toString() }
-                        ) { index, document ->
-                            DocumentRow(
-                                document = document,
-                                onClick = { onIntent(DocumentsIntent.OpenDocument(document.document.id)) }
+                    if (isLargeScreen) {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            DocumentTableHeaderRow()
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                thickness = 1.dp
                             )
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                            ) {
+                                itemsIndexed(
+                                    items = documents,
+                                    key = { _, doc -> doc.document.id.toString() }
+                                ) { index, document ->
+                                    DocumentTableRow(
+                                        document = document,
+                                        onClick = { onIntent(DocumentsIntent.OpenDocument(document.document.id)) }
+                                    )
 
-                            // Add divider between rows (not after last item)
-                            if (index < documents.size - 1) {
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                    thickness = 1.dp
-                                )
+                                    if (index < documents.size - 1) {
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant,
+                                            thickness = 1.dp
+                                        )
+                                    }
+                                }
+
+                                if (state.documents.isLoadingMore) {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                        }
+                                    }
+                                }
                             }
                         }
+                    } else {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            itemsIndexed(
+                                items = documents,
+                                key = { _, doc -> doc.document.id.toString() }
+                            ) { index, document ->
+                                DocumentMobileRow(
+                                    document = document,
+                                    onClick = { onIntent(DocumentsIntent.OpenDocument(document.document.id)) }
+                                )
 
-                        if (state.documents.isLoadingMore) {
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                if (index < documents.size - 1) {
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.outlineVariant,
+                                        thickness = 1.dp
+                                    )
+                                }
+                            }
+
+                            if (state.documents.isLoadingMore) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                    }
                                 }
                             }
                         }

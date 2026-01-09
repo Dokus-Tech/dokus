@@ -9,16 +9,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_status_failed
 import tech.dokus.aura.resources.document_status_processing
-import tech.dokus.aura.resources.document_status_ready
-import tech.dokus.aura.resources.document_status_review
 import tech.dokus.aura.resources.draft_status_confirmed
+import tech.dokus.aura.resources.draft_status_needs_review
+import tech.dokus.aura.resources.draft_status_ready
 import tech.dokus.aura.resources.draft_status_rejected
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.style.statusConfirmed
+import tech.dokus.foundation.aura.style.statusError
+import tech.dokus.foundation.aura.style.statusProcessing
+import tech.dokus.foundation.aura.style.statusWarning
 
 /**
  * A chip displaying the document status with appropriate colors.
@@ -28,50 +33,31 @@ internal fun DocumentStatusChip(
     status: DocumentDisplayStatus,
     modifier: Modifier = Modifier
 ) {
-    val (backgroundColor, textColor, labelRes) = when (status) {
-        DocumentDisplayStatus.Processing -> Triple(
-            Color(0xFFFFF3E0), // Light orange
-            Color(0xFFE65100), // Dark orange
-            Res.string.document_status_processing
-        )
-        DocumentDisplayStatus.NeedsReview -> Triple(
-            Color(0xFFE3F2FD), // Light blue
-            Color(0xFF1565C0), // Dark blue
-            Res.string.document_status_review
-        )
-        DocumentDisplayStatus.Ready -> Triple(
-            Color(0xFFE8F5E9), // Light green
-            Color(0xFF2E7D32), // Dark green
-            Res.string.document_status_ready
-        )
-        DocumentDisplayStatus.Confirmed -> Triple(
-            Color(0xFFE0F2F1), // Light teal
-            Color(0xFF00695C), // Dark teal
-            Res.string.draft_status_confirmed
-        )
-        DocumentDisplayStatus.Failed -> Triple(
-            Color(0xFFFFEBEE), // Light red
-            Color(0xFFC62828), // Dark red
-            Res.string.document_status_failed
-        )
-        DocumentDisplayStatus.Rejected -> Triple(
-            Color(0xFFFCE4EC), // Light pink
-            Color(0xFFAD1457), // Dark pink
-            Res.string.draft_status_rejected
-        )
+    val colorScheme = MaterialTheme.colorScheme
+    val (statusColor, labelRes) = when (status) {
+        DocumentDisplayStatus.Processing -> colorScheme.statusProcessing to Res.string.document_status_processing
+        DocumentDisplayStatus.NeedsReview -> colorScheme.statusWarning to Res.string.draft_status_needs_review
+        DocumentDisplayStatus.Ready -> colorScheme.statusConfirmed to Res.string.draft_status_ready
+        DocumentDisplayStatus.Confirmed -> colorScheme.statusConfirmed to Res.string.draft_status_confirmed
+        DocumentDisplayStatus.Failed -> colorScheme.statusError to Res.string.document_status_failed
+        DocumentDisplayStatus.Rejected -> colorScheme.statusError to Res.string.draft_status_rejected
     }
+    val backgroundColor = statusColor.copy(alpha = 0.12f)
+    val textColor = statusColor
     val label = stringResource(labelRes)
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(Constrains.CornerRadius.sm))
             .background(backgroundColor)
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = textColor
+            color = textColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
