@@ -318,6 +318,15 @@ data class RecommandInboxDocument(
 )
 
 /**
+ * Recommand API: Inbox response wrapper.
+ */
+@Serializable
+data class RecommandInboxResponse(
+    val success: Boolean,
+    val documents: List<RecommandInboxDocument> = emptyList()
+)
+
+/**
  * Recommand API: Received document content.
  */
 @Serializable
