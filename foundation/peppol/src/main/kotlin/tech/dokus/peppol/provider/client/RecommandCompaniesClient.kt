@@ -66,18 +66,17 @@ class RecommandCompaniesClient(
 @Serializable
 data class RecommandCompany(
     val id: String,
-    val teamId: String? = null,
+    val teamId: String,
     val name: String,
-    val address: String? = null,
-    val postalCode: String? = null,
-    val city: String? = null,
-    val country: String? = null,
-    val enterpriseNumber: String? = null,
+    val address: String,
+    val postalCode: String,
+    val city: String,
+    val country: String,
+    val enterpriseNumber: String,
     val vatNumber: String,
-    val isSmpRecipient: Boolean? = null,
-    val isOutgoingDocumentValidationEnforced: Boolean? = null,
-    val createdAt: String? = null,
-    val updatedAt: String? = null,
+    val isSmpRecipient: Boolean,
+    val createdAt: String,
+    val updatedAt: String,
 )
 
 @Serializable
@@ -90,7 +89,7 @@ data class RecommandCreateCompanyRequest(
     val enterpriseNumber: String? = null,
     val vatNumber: String? = null,
     val isSmpRecipient: Boolean = true,
-    val isOutgoingDocumentValidationEnforced: Boolean = true,
+    val skipDefaultCompanySetup: Boolean = false,
 )
 
 @Serializable
