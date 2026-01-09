@@ -271,7 +271,8 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
             draftRepository = get(),
             ingestionRunRepository = get(),
             confirmationPolicy = get(),
-            confirmationService = get()
+            confirmationService = get(),
+            documentStorageService = get()
         )
     }
 

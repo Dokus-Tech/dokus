@@ -431,7 +431,8 @@ data class RecommandParsedDocument(
     val paymentMeans: List<RecommandParsedPaymentMeans>? = null,
     val totals: RecommandParsedTotals? = null,
     val vat: RecommandParsedVat? = null,
-    val currency: String? = null
+    val currency: String? = null,
+    val attachments: List<RecommandParsedAttachment>? = null
 )
 
 /**
@@ -504,6 +505,20 @@ data class RecommandParsedVatSubtotal(
     val vatAmount: String? = null,
     val category: String? = null,
     val percentage: String? = null
+)
+
+/**
+ * Recommand API: Parsed attachment from document.
+ * PDF invoices are embedded as base64 in the embeddedDocument field.
+ */
+@Serializable
+data class RecommandParsedAttachment(
+    val id: String? = null,
+    val url: String? = null,
+    val filename: String? = null,
+    val mimeCode: String? = null,
+    val description: String? = null,
+    val embeddedDocument: String? = null  // base64-encoded content
 )
 
 /**
