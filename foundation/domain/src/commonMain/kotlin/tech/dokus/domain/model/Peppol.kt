@@ -304,25 +304,54 @@ data class RecommandValidationError(
 )
 
 /**
+ * Recommand API: Validation result for a document.
+ */
+@Serializable
+data class RecommandValidation(
+    val result: String, // "valid", "invalid", "not_supported", "error"
+    val errors: List<RecommandValidationError> = emptyList()
+)
+
+/**
+ * Recommand API: Label attached to a document.
+ */
+@Serializable
+data class RecommandLabel(
+    val id: String,
+    val externalId: String? = null,
+    val name: String,
+    val colorHex: String
+)
+
+/**
  * Recommand API: Inbox document (received from Peppol network).
+ * This is the structure returned by /api/v1/inbox - NO parsed field.
  * Field names match the actual Recommand API schema.
  */
 @Serializable
 data class RecommandInboxDocument(
     val id: String,
-    val teamId: String? = null,
-    val companyId: String? = null,
-    val direction: String? = null,
+    val teamId: String,
+    val companyId: String,
+    val direction: String, // "incoming" or "outgoing"
     val senderId: String, // Peppol ID of sender
     val receiverId: String, // Peppol ID of receiver
-    val docTypeId: String? = null,
-    val processId: String? = null,
-    val countryC1: String? = null,
+    val docTypeId: String,
+    val processId: String,
+    val countryC1: String,
     val type: String, // "invoice", "creditNote", etc.
     val readAt: String? = null, // ISO timestamp, null if unread
     val createdAt: String, // ISO timestamp
-    val updatedAt: String? = null,
-    val parsed: RecommandReceivedDocument? = null
+    val updatedAt: String,
+    val validation: RecommandValidation,
+    val sentOverPeppol: Boolean,
+    val sentOverEmail: Boolean,
+    val emailRecipients: List<String> = emptyList(),
+    val labels: List<RecommandLabel> = emptyList(),
+    val peppolMessageId: String? = null,
+    val peppolConversationId: String? = null,
+    val receivedPeppolSignalMessage: String? = null,
+    val envelopeId: String? = null
 ) {
     /** Convenience property: true if document is unread (readAt is null) */
     val isUnread: Boolean get() = readAt == null
@@ -335,6 +364,146 @@ data class RecommandInboxDocument(
 data class RecommandInboxResponse(
     val success: Boolean,
     val documents: List<RecommandInboxDocument> = emptyList()
+)
+
+/**
+ * Recommand API: Full document detail (returned by /api/v1/documents/{id}).
+ * Includes all inbox fields PLUS xml and parsed content.
+ */
+@Serializable
+data class RecommandDocumentDetail(
+    val id: String,
+    val teamId: String,
+    val companyId: String,
+    val direction: String,
+    val senderId: String,
+    val receiverId: String,
+    val docTypeId: String,
+    val processId: String,
+    val countryC1: String,
+    val type: String,
+    val readAt: String? = null,
+    val createdAt: String,
+    val updatedAt: String,
+    val validation: RecommandValidation,
+    val sentOverPeppol: Boolean,
+    val sentOverEmail: Boolean,
+    val emailRecipients: List<String> = emptyList(),
+    val labels: List<RecommandLabel> = emptyList(),
+    val peppolMessageId: String? = null,
+    val peppolConversationId: String? = null,
+    val receivedPeppolSignalMessage: String? = null,
+    val envelopeId: String? = null,
+    // Additional fields only in single document response
+    val xml: String? = null,
+    val parsed: RecommandParsedDocument? = null
+) {
+    val isUnread: Boolean get() = readAt == null
+}
+
+/**
+ * Recommand API: Single document response wrapper.
+ */
+@Serializable
+data class RecommandDocumentResponse(
+    val success: Boolean,
+    val document: RecommandDocumentDetail? = null
+)
+
+/**
+ * Recommand API: Parsed document content (Invoice or CreditNote).
+ * This is the structure inside the "parsed" field of a document detail.
+ */
+@Serializable
+data class RecommandParsedDocument(
+    val invoiceNumber: String? = null,
+    val creditNoteNumber: String? = null,
+    val issueDate: String? = null,
+    val dueDate: String? = null,
+    val note: String? = null,
+    val buyerReference: String? = null,
+    val purchaseOrderReference: String? = null,
+    val salesOrderReference: String? = null,
+    val despatchReference: String? = null,
+    val seller: RecommandParsedParty? = null,
+    val buyer: RecommandParsedParty? = null,
+    val lines: List<RecommandParsedLine>? = null,
+    val paymentMeans: List<RecommandParsedPaymentMeans>? = null,
+    val totals: RecommandParsedTotals? = null,
+    val vat: RecommandParsedVat? = null,
+    val currency: String? = null
+)
+
+/**
+ * Recommand API: Parsed party (seller/buyer) from document.
+ */
+@Serializable
+data class RecommandParsedParty(
+    val vatNumber: String? = null,
+    val enterpriseNumber: String? = null,
+    val name: String,
+    val street: String? = null,
+    val street2: String? = null,
+    val city: String? = null,
+    val postalZone: String? = null,
+    val country: String? = null,
+    val email: String? = null,
+    val phone: String? = null
+)
+
+/**
+ * Recommand API: Parsed line item from document.
+ */
+@Serializable
+data class RecommandParsedLine(
+    val id: String? = null,
+    val name: String? = null,
+    val description: String? = null,
+    val quantity: String? = null,
+    val unitCode: String? = null,
+    val netPriceAmount: String? = null,
+    val netAmount: String? = null,
+    val vat: RecommandParsedLineVat? = null
+)
+
+@Serializable
+data class RecommandParsedLineVat(
+    val category: String? = null,
+    val percentage: String? = null
+)
+
+@Serializable
+data class RecommandParsedPaymentMeans(
+    val name: String? = null,
+    val paymentMethod: String? = null,
+    val reference: String? = null,
+    val iban: String? = null,
+    val financialInstitutionBranch: String? = null
+)
+
+@Serializable
+data class RecommandParsedTotals(
+    val linesAmount: String? = null,
+    val discountAmount: String? = null,
+    val surchargeAmount: String? = null,
+    val taxExclusiveAmount: String? = null,
+    val taxInclusiveAmount: String? = null,
+    val payableAmount: String? = null,
+    val paidAmount: String? = null
+)
+
+@Serializable
+data class RecommandParsedVat(
+    val totalVatAmount: String? = null,
+    val subtotals: List<RecommandParsedVatSubtotal>? = null
+)
+
+@Serializable
+data class RecommandParsedVatSubtotal(
+    val taxableAmount: String? = null,
+    val vatAmount: String? = null,
+    val category: String? = null,
+    val percentage: String? = null
 )
 
 /**

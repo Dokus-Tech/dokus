@@ -2,10 +2,13 @@ package tech.dokus.peppol.provider.client
 
 import tech.dokus.domain.enums.PeppolDocumentType.Companion.toApiValue
 import tech.dokus.domain.enums.RecommandDirection
+import tech.dokus.domain.model.RecommandDocumentDetail
 import tech.dokus.domain.model.RecommandDocumentsResponse
 import tech.dokus.domain.model.RecommandInboxDocument
 import tech.dokus.domain.model.RecommandInvoiceDocument
 import tech.dokus.domain.model.RecommandLineItem
+import tech.dokus.domain.model.RecommandParsedDocument
+import tech.dokus.domain.model.RecommandParsedParty
 import tech.dokus.domain.model.RecommandParty
 import tech.dokus.domain.model.RecommandPaymentMeans
 import tech.dokus.domain.model.RecommandReceivedDocument
@@ -189,6 +192,73 @@ object RecommandMapper {
             },
             note = document.note,
             currencyCode = document.documentCurrencyCode
+        )
+    }
+
+    /**
+     * Map from the single document detail response (GET /api/v1/documents/{id}).
+     * This uses RecommandParsedDocument which has the new structure with lines, totals, vat.
+     */
+    fun fromRecommandDocumentDetail(detail: RecommandDocumentDetail): PeppolReceivedDocument {
+        val parsed = detail.parsed
+        return PeppolReceivedDocument(
+            id = detail.id,
+            documentType = detail.type,
+            senderPeppolId = detail.senderId,
+            invoiceNumber = parsed?.invoiceNumber ?: parsed?.creditNoteNumber,
+            issueDate = parsed?.issueDate,
+            dueDate = parsed?.dueDate,
+            seller = parsed?.seller?.let { fromRecommandParsedParty(it) },
+            buyer = parsed?.buyer?.let { fromRecommandParsedParty(it) },
+            lineItems = parsed?.lines?.map { line ->
+                PeppolReceivedLineItem(
+                    id = line.id,
+                    name = line.name,
+                    description = line.description,
+                    quantity = line.quantity?.toDoubleOrNull(),
+                    unitCode = line.unitCode,
+                    unitPrice = line.netPriceAmount?.toDoubleOrNull(),
+                    lineTotal = line.netAmount?.toDoubleOrNull(),
+                    taxCategory = line.vat?.category,
+                    taxPercent = line.vat?.percentage?.toDoubleOrNull()
+                )
+            },
+            totals = parsed?.totals?.let {
+                PeppolMonetaryTotals(
+                    lineExtensionAmount = it.linesAmount?.toDoubleOrNull(),
+                    taxExclusiveAmount = it.taxExclusiveAmount?.toDoubleOrNull(),
+                    taxInclusiveAmount = it.taxInclusiveAmount?.toDoubleOrNull(),
+                    payableAmount = it.payableAmount?.toDoubleOrNull()
+                )
+            },
+            taxTotal = parsed?.vat?.let {
+                PeppolTaxTotal(
+                    taxAmount = it.totalVatAmount?.toDoubleOrNull(),
+                    taxSubtotals = it.subtotals?.map { sub ->
+                        PeppolTaxSubtotal(
+                            taxableAmount = sub.taxableAmount?.toDoubleOrNull(),
+                            taxAmount = sub.vatAmount?.toDoubleOrNull(),
+                            taxCategory = sub.category,
+                            taxPercent = sub.percentage?.toDoubleOrNull()
+                        )
+                    }
+                )
+            },
+            note = parsed?.note,
+            currencyCode = parsed?.currency
+        )
+    }
+
+    private fun fromRecommandParsedParty(party: RecommandParsedParty): PeppolParty {
+        return PeppolParty(
+            name = party.name,
+            vatNumber = party.vatNumber,
+            streetName = party.street,
+            cityName = party.city,
+            postalZone = party.postalZone,
+            countryCode = party.country,
+            contactEmail = party.email,
+            contactName = null
         )
     }
 

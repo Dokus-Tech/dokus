@@ -11,8 +11,8 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import tech.dokus.domain.model.RecommandDocumentResponse
 import tech.dokus.domain.model.RecommandDocumentsResponse
-import tech.dokus.domain.model.RecommandInboxDocument
 import tech.dokus.domain.model.RecommandInboxResponse
 import tech.dokus.domain.model.RecommandMarkAsReadRequest
 import tech.dokus.domain.model.RecommandSendResponse
@@ -163,6 +163,7 @@ class RecommandProvider(
     /**
      * Get full document content by ID.
      * GET /api/v1/documents/{documentId}
+     * Returns {"success": true, "document": {...}} with parsed content
      */
     override suspend fun getDocument(documentId: String): Result<PeppolReceivedDocument> =
         runCatching {
@@ -179,11 +180,11 @@ class RecommandProvider(
                 throw RecommandApiException(response.status.value, errorBody)
             }
 
-            val item = response.body<RecommandInboxDocument>()
-            val document = item.parsed
-                ?: throw IllegalStateException("Document content is missing for ID: $documentId")
+            val wrapper = response.body<RecommandDocumentResponse>()
+            val detail = wrapper.document
+                ?: throw IllegalStateException("Document response is missing document for ID: $documentId")
 
-            RecommandMapper.fromRecommandDocument(item, document)
+            RecommandMapper.fromRecommandDocumentDetail(detail)
         }.onFailure { e ->
             logger.error("Failed to fetch Peppol document: $documentId", e)
         }
