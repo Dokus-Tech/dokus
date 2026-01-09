@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.usecase
 
 import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
@@ -17,6 +18,7 @@ internal class LoadDocumentRecordsUseCaseImpl(
         page: Int,
         pageSize: Int,
         draftStatus: DraftStatus?,
+        ingestionStatus: IngestionStatus?,
         search: String?
     ): Result<PaginatedResponse<DocumentRecordDto>> {
         require(page >= 0) { "Page must be non-negative" }
@@ -24,6 +26,7 @@ internal class LoadDocumentRecordsUseCaseImpl(
 
         return remoteDataSource.listDocuments(
             draftStatus = draftStatus,
+            ingestionStatus = ingestionStatus,
             search = search?.takeIf { it.isNotBlank() },
             page = page,
             limit = pageSize

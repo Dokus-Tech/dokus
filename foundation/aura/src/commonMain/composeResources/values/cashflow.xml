@@ -28,6 +28,21 @@
     <string name="document_status_ready">Ready to confirm</string>
     <string name="document_status_failed">Failed</string>
 
+    <!-- Documents Screen -->
+    <string name="documents_empty_title">No documents yet</string>
+    <string name="documents_empty_upload_cta">Upload your first document</string>
+    <string name="documents_filter_no_match">No documents match this filter</string>
+    <string name="documents_search_no_results">No results for \"%1$s\"</string>
+    <string name="documents_filter_all">All</string>
+    <string name="documents_filter_processing">Processing</string>
+    <string name="documents_filter_needs_review">Needs review</string>
+    <string name="documents_filter_ready">Ready</string>
+    <string name="documents_filter_confirmed">Confirmed</string>
+    <string name="documents_filter_failed">Failed</string>
+    <string name="documents_filter_rejected">Rejected</string>
+    <string name="documents_upload">Upload</string>
+    <string name="documents_view_details">View details</string>
+
     <!-- Document Table -->
     <string name="document_table_invoice">Invoice</string>
     <string name="document_table_contact">Contact</string>
