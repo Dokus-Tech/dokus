@@ -65,11 +65,11 @@
     <!-- Document Upload -->
     <string name="upload_documents_title">Загрузить документы</string>
     <string name="upload_add_document">Добавить документ</string>
-    <string name="upload_drag_hint">или перетащите файлы сюда</string>
-    <string name="upload_instructions">Чтобы импортировать изображение или отсканировать документ для счёта, убедитесь, что файл чёткий и в совместимом формате.</string>
+    <string name="upload_drag_hint">Поддерживаются PDF, JPG, PNG</string>
+    <string name="upload_instructions">Документы будут обработаны автоматически.</string>
     <string name="upload_no_app_hint">Нет приложения? Нажмите здесь</string>
     <string name="upload_uploads_title">Загрузки</string>
-    <string name="upload_no_documents">Нет загружаемых документов</string>
+    <string name="upload_no_documents">Нет активных загрузок</string>
     <string name="upload_release_to_upload">Отпустите для загрузки</string>
     <string name="upload_documents_absorbed">Документы будут обработаны</string>
 
@@ -283,8 +283,8 @@
     <string name="invoice_validation_due_date_before_issue">Срок оплаты не может быть раньше даты выставления</string>
 
     <!-- Upload -->
-    <string name="upload_select_or_drag">Выберите файлы или перетащите их сюда</string>
-    <string name="upload_drop_files">Перетащите файлы для загрузки</string>
+    <string name="upload_select_or_drag">Перетащите файлы сюда или нажмите, чтобы загрузить</string>
+    <string name="upload_drop_files">Перетащите файлы сюда</string>
     <string name="upload_with_camera">Загрузить с камеры</string>
     <string name="upload_select_file">Выберите файл</string>
     <string name="upload_status_deleting">Удаление...</string>

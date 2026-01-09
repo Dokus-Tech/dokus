@@ -65,11 +65,11 @@
     <!-- Document Upload -->
     <string name="upload_documents_title">Documenten uploaden</string>
     <string name="upload_add_document">Document toevoegen</string>
-    <string name="upload_drag_hint">of sleep bestanden hierheen</string>
-    <string name="upload_instructions">Om een afbeelding te importeren of een document te scannen voor uw factuur, zorg ervoor dat het bestand duidelijk is en in een compatibel formaat.</string>
+    <string name="upload_drag_hint">PDF, JPG, PNG ondersteund</string>
+    <string name="upload_instructions">Documenten worden automatisch verwerkt.</string>
     <string name="upload_no_app_hint">Heeft u de applicatie niet? Klik hier</string>
     <string name="upload_uploads_title">Uploads</string>
-    <string name="upload_no_documents">Geen documenten worden geüpload</string>
+    <string name="upload_no_documents">Geen actieve uploads</string>
     <string name="upload_release_to_upload">Loslaten om te uploaden</string>
     <string name="upload_documents_absorbed">Documenten worden geabsorbeerd</string>
 
@@ -283,8 +283,8 @@
     <string name="invoice_validation_due_date_before_issue">De vervaldatum mag niet vóór de uitgiftedatum liggen</string>
 
     <!-- Upload -->
-    <string name="upload_select_or_drag">Selecteer bestanden of sleep ze hierheen</string>
-    <string name="upload_drop_files">Laat bestanden los om te uploaden</string>
+    <string name="upload_select_or_drag">Sleep bestanden hierheen of klik om te uploaden</string>
+    <string name="upload_drop_files">Sleep bestanden hierheen</string>
     <string name="upload_with_camera">Uploaden met camera</string>
     <string name="upload_select_file">Selecteer een bestand</string>
     <string name="upload_status_deleting">Verwijderen...</string>
