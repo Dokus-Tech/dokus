@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -26,6 +27,9 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.upload_status_deleting
+
+private val UploadRowHeight = 60.dp
+private val UploadRowPadding = 10.dp
 
 /**
  * File icon with a customizable overlay indicator.
@@ -183,7 +187,8 @@ fun UploadItemRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(12.dp),
+            .padding(UploadRowPadding)
+            .heightIn(min = UploadRowHeight, max = UploadRowHeight),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {

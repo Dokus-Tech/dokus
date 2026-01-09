@@ -65,11 +65,11 @@
     <!-- Document Upload -->
     <string name="upload_documents_title">Carica documenti</string>
     <string name="upload_add_document">Aggiungi documento</string>
-    <string name="upload_drag_hint">o trascina i file qui</string>
-    <string name="upload_instructions">Per importare un\'immagine o scansionare un documento per la fattura, assicurati che il file sia chiaro e in un formato compatibile.</string>
+    <string name="upload_drag_hint">PDF, JPG, PNG supportati</string>
+    <string name="upload_instructions">I documenti verranno elaborati automaticamente.</string>
     <string name="upload_no_app_hint">Non hai l\'applicazione? Clicca qui</string>
     <string name="upload_uploads_title">Caricamenti</string>
-    <string name="upload_no_documents">Nessun documento in caricamento</string>
+    <string name="upload_no_documents">Nessun caricamento attivo</string>
     <string name="upload_release_to_upload">Rilascia per caricare</string>
     <string name="upload_documents_absorbed">I documenti verranno elaborati</string>
 
@@ -283,8 +283,8 @@
     <string name="invoice_validation_due_date_before_issue">La data di scadenza non può essere precedente alla data di emissione</string>
 
     <!-- Upload -->
-    <string name="upload_select_or_drag">Seleziona file o trascinali qui</string>
-    <string name="upload_drop_files">Rilascia i file per caricarli</string>
+    <string name="upload_select_or_drag">Trascina i file qui o fai clic per caricare</string>
+    <string name="upload_drop_files">Trascina i file qui</string>
     <string name="upload_with_camera">Carica con la fotocamera</string>
     <string name="upload_select_file">Seleziona un file</string>
     <string name="upload_status_deleting">Eliminazione...</string>

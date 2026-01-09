@@ -91,11 +91,11 @@
     <!-- Document Upload -->
     <string name="upload_documents_title">Upload Documents</string>
     <string name="upload_add_document">Add Document</string>
-    <string name="upload_drag_hint">or drag files here</string>
-    <string name="upload_instructions">To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format.</string>
+    <string name="upload_drag_hint">PDF, JPG, PNG supported</string>
+    <string name="upload_instructions">Documents will be processed automatically.</string>
     <string name="upload_no_app_hint">Don\'t have the application? Click here</string>
     <string name="upload_uploads_title">Uploads</string>
-    <string name="upload_no_documents">No documents uploading</string>
+    <string name="upload_no_documents">No active uploads</string>
     <string name="upload_release_to_upload">Release to Upload</string>
     <string name="upload_documents_absorbed">Documents will be absorbed</string>
 
@@ -317,8 +317,8 @@
     <string name="invoice_validation_due_date_before_issue">Due date cannot be before issue date</string>
 
     <!-- Upload -->
-    <string name="upload_select_or_drag">Select files or drag them here</string>
-    <string name="upload_drop_files">Drop files to upload</string>
+    <string name="upload_select_or_drag">Drop files here or click to upload</string>
+    <string name="upload_drop_files">Drop files here</string>
     <string name="upload_with_camera">Upload with camera</string>
     <string name="upload_select_file">Select a file</string>
     <string name="upload_status_deleting">Deleting...</string>

@@ -41,6 +41,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.cashflow_add_document
 import tech.dokus.aura.resources.upload_instructions
+import tech.dokus.aura.resources.upload_no_documents
 import tech.dokus.aura.resources.upload_no_app_hint
 import tech.dokus.aura.resources.upload_uploads_title
 import tech.dokus.domain.model.DocumentDto
@@ -56,7 +57,7 @@ private const val SlideDurationMs = 300
 
 // Sidebar dimensions
 private val SidebarMinWidth = 320.dp
-private val SidebarMaxWidth = 400.dp
+private val SidebarMaxWidth = 360.dp
 
 // Spacing
 private val ContentPadding = 16.dp
@@ -115,11 +116,6 @@ fun DocumentUploadSidebar(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.scrim.copy(alpha = ScrimAlpha))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onDismiss
-                    )
             )
         }
 
@@ -179,7 +175,7 @@ fun DocumentUploadSidebar(
 
                         Spacer(modifier = Modifier.height(UploadZoneSpacing))
 
-                        // Instructions
+                        // Supporting text
                         Text(
                             text = stringResource(Res.string.upload_instructions),
                             style = MaterialTheme.typography.bodySmall,
@@ -213,17 +209,25 @@ fun DocumentUploadSidebar(
                             Spacer(modifier = Modifier.height(InstructionsSpacing))
                         }
 
-                        // Scrollable upload list
-                        DocumentUploadList(
-                            tasks = tasks,
-                            documents = documents,
-                            deletionHandles = deletionHandles,
-                            uploadManager = uploadManager,
-                            scrollable = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        )
+                        if (tasks.isNotEmpty()) {
+                            // Scrollable upload list
+                            DocumentUploadList(
+                                tasks = tasks,
+                                documents = documents,
+                                deletionHandles = deletionHandles,
+                                uploadManager = uploadManager,
+                                scrollable = true,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(Res.string.upload_no_documents),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
