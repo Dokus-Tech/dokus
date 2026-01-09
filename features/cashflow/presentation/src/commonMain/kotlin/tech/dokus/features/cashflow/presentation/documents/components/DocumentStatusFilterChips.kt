@@ -1,14 +1,9 @@
 package tech.dokus.features.cashflow.presentation.documents.components
 
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.documents_filter_all
@@ -18,6 +13,7 @@ import tech.dokus.aura.resources.documents_filter_needs_review
 import tech.dokus.aura.resources.documents_filter_processing
 import tech.dokus.aura.resources.documents_filter_ready
 import tech.dokus.aura.resources.documents_filter_rejected
+import tech.dokus.features.cashflow.presentation.common.components.filters.DokusFilterChipRow
 
 /**
  * Status filter chips for the documents list.
@@ -29,10 +25,7 @@ internal fun DocumentStatusFilterChips(
     onStatusSelected: (DocumentDisplayStatus?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    DokusFilterChipRow(modifier = modifier) {
         // All
         FilterChip(
             selected = selectedStatus == null,

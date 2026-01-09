@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,19 +25,6 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_unknown
-import tech.dokus.aura.resources.date_format_short
-import tech.dokus.aura.resources.date_month_short_apr
-import tech.dokus.aura.resources.date_month_short_aug
-import tech.dokus.aura.resources.date_month_short_dec
-import tech.dokus.aura.resources.date_month_short_feb
-import tech.dokus.aura.resources.date_month_short_jan
-import tech.dokus.aura.resources.date_month_short_jul
-import tech.dokus.aura.resources.date_month_short_jun
-import tech.dokus.aura.resources.date_month_short_mar
-import tech.dokus.aura.resources.date_month_short_may
-import tech.dokus.aura.resources.date_month_short_nov
-import tech.dokus.aura.resources.date_month_short_oct
-import tech.dokus.aura.resources.date_month_short_sep
 import tech.dokus.aura.resources.document_table_amount
 import tech.dokus.aura.resources.document_table_date
 import tech.dokus.aura.resources.document_type_bill
@@ -56,6 +40,9 @@ import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableChevronIcon
+import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableHeaderLabel
+import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
@@ -85,22 +72,22 @@ internal fun DocumentTableHeaderRow(
         contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
     ) {
         DokusTableCell(DocumentTableColumns.Document) {
-            HeaderLabel(text = stringResource(Res.string.documents_table_document))
+            DokusTableHeaderLabel(text = stringResource(Res.string.documents_table_document))
         }
         DokusTableCell(DocumentTableColumns.Amount) {
-            HeaderLabel(
+            DokusTableHeaderLabel(
                 text = stringResource(Res.string.document_table_amount),
                 textAlign = TextAlign.End
             )
         }
         DokusTableCell(DocumentTableColumns.Status) {
-            HeaderLabel(
+            DokusTableHeaderLabel(
                 text = stringResource(Res.string.documents_table_status),
                 textAlign = TextAlign.Center
             )
         }
         DokusTableCell(DocumentTableColumns.Date) {
-            HeaderLabel(text = stringResource(Res.string.document_table_date))
+            DokusTableHeaderLabel(text = stringResource(Res.string.document_table_date))
         }
         DokusTableCell(DocumentTableColumns.Action) {
             Spacer(modifier = Modifier.width(1.dp))
@@ -118,7 +105,7 @@ internal fun DocumentTableRow(
     val documentType = extractDocumentType(document)
     val amount = extractAmount(document)
     val status = computeDisplayStatus(document)
-    val dateLabel = formatDate(extractDocumentDate(document))
+    val dateLabel = formatShortDate(extractDocumentDate(document))
 
     DokusTableRow(
         modifier = modifier,
@@ -167,10 +154,8 @@ internal fun DocumentTableRow(
             )
         }
         DokusTableCell(DocumentTableColumns.Action) {
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
+            DokusTableChevronIcon(
                 contentDescription = stringResource(Res.string.documents_view_details),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(ActionIconSize)
             )
         }
@@ -187,7 +172,7 @@ internal fun DocumentMobileRow(
     val documentType = extractDocumentType(document)
     val amount = extractAmount(document)
     val status = computeDisplayStatus(document)
-    val dateLabel = formatDate(extractDocumentDate(document))
+    val dateLabel = formatShortDate(extractDocumentDate(document))
 
     Column(
         modifier = modifier
@@ -268,21 +253,6 @@ internal fun computeDisplayStatus(document: DocumentRecordDto): DocumentDisplayS
 }
 
 @Composable
-private fun HeaderLabel(
-    text: String,
-    textAlign: TextAlign = TextAlign.Start
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = textAlign,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
-    )
-}
-
-@Composable
 private fun resolveDocumentPrimaryTitle(document: DocumentRecordDto): String {
     val extractedData = document.draft?.extractedData
     return extractedData?.invoice?.clientName?.takeIf { it.isNotBlank() }
@@ -327,28 +297,6 @@ private fun extractDocumentDate(document: DocumentRecordDto): LocalDate {
         ?: extractedData?.bill?.issueDate
         ?: extractedData?.expense?.date
         ?: document.document.uploadedAt.date
-}
-
-@Composable
-private fun formatDate(date: LocalDate): String {
-    val months = listOf(
-        stringResource(Res.string.date_month_short_jan),
-        stringResource(Res.string.date_month_short_feb),
-        stringResource(Res.string.date_month_short_mar),
-        stringResource(Res.string.date_month_short_apr),
-        stringResource(Res.string.date_month_short_may),
-        stringResource(Res.string.date_month_short_jun),
-        stringResource(Res.string.date_month_short_jul),
-        stringResource(Res.string.date_month_short_aug),
-        stringResource(Res.string.date_month_short_sep),
-        stringResource(Res.string.date_month_short_oct),
-        stringResource(Res.string.date_month_short_nov),
-        stringResource(Res.string.date_month_short_dec)
-    )
-    val monthName = months.getOrElse(date.month.ordinal) {
-        stringResource(Res.string.common_unknown)
-    }
-    return stringResource(Res.string.date_format_short, monthName, date.day, date.year)
 }
 
 private fun Money.toDisplayStringSafe(): String {

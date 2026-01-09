@@ -1,7 +1,6 @@
 package tech.dokus.features.cashflow.presentation.ledger.mvi
 
 import androidx.compose.runtime.Immutable
-import kotlinx.datetime.LocalDate
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
@@ -49,15 +48,7 @@ sealed interface CashflowLedgerState : MVIState, DokusState<Nothing> {
         val filters: CashflowFilters = CashflowFilters(),
         val highlightedEntryId: CashflowEntryId? = null,
         val isRefreshing: Boolean = false
-    ) : CashflowLedgerState {
-        val totalIn: Long
-            get() = entries.data.filter { it.direction == CashflowDirection.In }
-                .sumOf { it.amountGross.minor }
-
-        val totalOut: Long
-            get() = entries.data.filter { it.direction == CashflowDirection.Out }
-                .sumOf { it.amountGross.minor }
-    }
+    ) : CashflowLedgerState
 
     data class Error(
         override val exception: DokusException,
