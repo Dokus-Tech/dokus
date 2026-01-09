@@ -5,11 +5,11 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentDisplayStatus
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -39,7 +39,7 @@ sealed interface DocumentsState : MVIState, DokusState<Nothing> {
     data class Content(
         val documents: PaginationState<DocumentRecordDto>,
         val searchQuery: String = "",
-        val statusFilter: DraftStatus? = null,
+        val statusFilter: DocumentDisplayStatus? = null,
     ) : DocumentsState
 
     /**
@@ -72,7 +72,7 @@ sealed interface DocumentsIntent : MVIIntent {
     data class UpdateSearchQuery(val query: String) : DocumentsIntent
 
     /** Update status filter */
-    data class UpdateStatusFilter(val status: DraftStatus?) : DocumentsIntent
+    data class UpdateStatusFilter(val status: DocumentDisplayStatus?) : DocumentsIntent
 
     /** Open a document for review */
     data class OpenDocument(val documentId: DocumentId) : DocumentsIntent

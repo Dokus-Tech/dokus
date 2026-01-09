@@ -11,9 +11,11 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentDisplayStatus
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -37,7 +39,7 @@ internal class DocumentsContainer(
 
     private var loadedDocuments: List<DocumentRecordDto> = emptyList()
     private var paginationInfo = PaginationInfo()
-    private var currentStatusFilter: DraftStatus? = null
+    private var currentStatusFilter: DocumentDisplayStatus? = null
     private var currentSearchQuery: String = ""
 
     override val store: Store<DocumentsState, DocumentsIntent, DocumentsAction> =
@@ -62,10 +64,12 @@ internal class DocumentsContainer(
 
         updateState { DocumentsState.Loading }
 
+        val (draftStatus, ingestionStatus) = currentStatusFilter.toApiFilters()
         loadDocumentRecords(
             page = 0,
             pageSize = PAGE_SIZE,
-            draftStatus = currentStatusFilter,
+            draftStatus = draftStatus,
+            ingestionStatus = ingestionStatus,
             search = currentSearchQuery.takeIf { it.isNotEmpty() }
         ).fold(
             onSuccess = { response ->
@@ -103,10 +107,12 @@ internal class DocumentsContainer(
             updateState { copy(documents = buildPaginationState()) }
 
             val nextPage = paginationInfo.currentPage + 1
+            val (draftStatus, ingestionStatus) = statusFilter.toApiFilters()
             loadDocumentRecords(
                 page = nextPage,
                 pageSize = PAGE_SIZE,
-                draftStatus = statusFilter,
+                draftStatus = draftStatus,
+                ingestionStatus = ingestionStatus,
                 search = searchQuery.takeIf { it.isNotEmpty() }
             ).fold(
                 onSuccess = { response ->
@@ -148,10 +154,12 @@ internal class DocumentsContainer(
             }
 
             searchJob = launch {
+                val (draftStatus, ingestionStatus) = currentStatusFilter.toApiFilters()
                 loadDocumentRecords(
                     page = 0,
                     pageSize = PAGE_SIZE,
-                    draftStatus = currentStatusFilter,
+                    draftStatus = draftStatus,
+                    ingestionStatus = ingestionStatus,
                     search = trimmed.takeIf { it.isNotEmpty() }
                 ).fold(
                     onSuccess = { response ->
@@ -171,7 +179,7 @@ internal class DocumentsContainer(
         }
     }
 
-    private suspend fun DocumentsCtx.handleUpdateStatusFilter(status: DraftStatus?) {
+    private suspend fun DocumentsCtx.handleUpdateStatusFilter(status: DocumentDisplayStatus?) {
         currentStatusFilter = status
 
         withState<DocumentsState.Content, _> {
@@ -187,10 +195,12 @@ internal class DocumentsContainer(
                 )
             }
 
+            val (draftStatus, ingestionStatus) = status.toApiFilters()
             loadDocumentRecords(
                 page = 0,
                 pageSize = PAGE_SIZE,
-                draftStatus = status,
+                draftStatus = draftStatus,
+                ingestionStatus = ingestionStatus,
                 search = currentSearchQuery.takeIf { it.isNotEmpty() }
             ).fold(
                 onSuccess = { response ->
@@ -228,6 +238,22 @@ internal class DocumentsContainer(
         val isLoadingMore: Boolean = false,
         val hasMorePages: Boolean = true
     )
+
+    /**
+     * Maps DocumentDisplayStatus to API filter parameters.
+     * Returns a pair of (draftStatus, ingestionStatus) to use in the API call.
+     */
+    private fun DocumentDisplayStatus?.toApiFilters(): Pair<DraftStatus?, IngestionStatus?> {
+        return when (this) {
+            null -> null to null
+            DocumentDisplayStatus.Processing -> null to IngestionStatus.Processing
+            DocumentDisplayStatus.NeedsReview -> DraftStatus.NeedsReview to null
+            DocumentDisplayStatus.Ready -> DraftStatus.Ready to null
+            DocumentDisplayStatus.Confirmed -> DraftStatus.Confirmed to null
+            DocumentDisplayStatus.Failed -> null to IngestionStatus.Failed
+            DocumentDisplayStatus.Rejected -> DraftStatus.Rejected to null
+        }
+    }
 
     companion object {
         private const val PAGE_SIZE = 20
