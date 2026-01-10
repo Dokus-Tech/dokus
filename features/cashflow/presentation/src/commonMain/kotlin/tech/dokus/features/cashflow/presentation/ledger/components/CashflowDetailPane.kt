@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -32,7 +33,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -324,8 +324,8 @@ private fun CashflowStatusBanner(
 
     val (backgroundColor, textColor, statusText) = when {
         entry.status == CashflowEntryStatus.Paid -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer,
             "Paid"
         )
         entry.status == CashflowEntryStatus.Cancelled -> Triple(
@@ -339,13 +339,13 @@ private fun CashflowStatusBanner(
             "Overdue - ${-daysUntilDue} days overdue"
         )
         isPartiallyPaid -> Triple(
-            MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.onSecondaryContainer,
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.onTertiaryContainer,
             "Partially paid - ${entry.currency.displaySign}${entry.remainingAmount.toDisplayString()} remaining"
         )
         else -> Triple(
-            MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.onSecondaryContainer,
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.onTertiaryContainer,
             if (daysUntilDue >= 0) "Open - Due in $daysUntilDue days" else "Open - Due"
         )
     }
@@ -532,16 +532,24 @@ private fun CashflowSourceDocumentCard(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        OutlinedButton(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth()
+        Row(
+            modifier = Modifier
+                .clickable(onClick = onClick)
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Description,
                 contentDescription = null,
-                modifier = Modifier.padding(end = 8.dp)
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp)
             )
-            Text("View document")
+            Text(
+                text = "View document",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
@@ -573,20 +581,23 @@ private fun CashflowPaymentFooter(
             )
         },
         primaryAction = {
-            Button(
-                onClick = { if (formState.isOptionsExpanded) onSubmit() else onQuickSubmit() },
-                enabled = !formState.isSubmitting
-            ) {
-                if (formState.isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .height(16.dp)
-                            .width(16.dp),
-                        strokeWidth = 2.dp
-                    )
+            // Only show quick action when collapsed
+            if (!formState.isOptionsExpanded) {
+                Button(
+                    onClick = onQuickSubmit,
+                    enabled = !formState.isSubmitting
+                ) {
+                    if (formState.isSubmitting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .height(16.dp)
+                                .width(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                    Text("Mark as paid")
                 }
-                Text(if (formState.isOptionsExpanded) "Confirm payment" else "Mark as paid")
             }
         },
         expandedContent = {
@@ -596,6 +607,7 @@ private fun CashflowPaymentFooter(
                 onDateChange = onDateChange,
                 onAmountTextChange = onAmountTextChange,
                 onNoteChange = onNoteChange,
+                onSubmit = onSubmit,
                 onCancel = onCancel
             )
         }
@@ -609,6 +621,7 @@ private fun PaymentOptionsForm(
     onDateChange: (LocalDate) -> Unit,
     onAmountTextChange: (String) -> Unit,
     onNoteChange: (String) -> Unit,
+    onSubmit: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -616,15 +629,14 @@ private fun PaymentOptionsForm(
         modifier = modifier.padding(top = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // TODO: Add date picker when available
-        // For now, showing paidAt as read-only
+        // Date (read-only for now)
         Text(
             text = "Date: ${formatShortDate(formState.paidAt)}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Amount field - uses amountText, not parsed Money
+        // Amount field
         OutlinedTextField(
             value = formState.amountText,
             onValueChange = onAmountTextChange,
@@ -650,9 +662,29 @@ private fun PaymentOptionsForm(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Cancel button
-        TextButton(onClick = onCancel) {
-            Text("Cancel")
+        // Action buttons - side by side
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+        ) {
+            TextButton(onClick = onCancel) {
+                Text("Cancel")
+            }
+            Button(
+                onClick = onSubmit,
+                enabled = !formState.isSubmitting
+            ) {
+                if (formState.isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .height(16.dp)
+                            .width(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+                Text("Confirm payment")
+            }
         }
     }
 }
