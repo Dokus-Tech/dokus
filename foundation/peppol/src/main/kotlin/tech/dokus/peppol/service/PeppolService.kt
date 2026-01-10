@@ -19,7 +19,6 @@ import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
-import tech.dokus.domain.model.RecommandDocumentDetail
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.ProcessedPeppolDocument
@@ -38,6 +37,7 @@ import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.peppol.provider.PeppolProvider
 import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandProvider
+import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
 import tech.dokus.peppol.validator.PeppolValidator
 
 /**

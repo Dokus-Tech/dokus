@@ -12,9 +12,10 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
-import tech.dokus.peppol.provider.client.RecommandCompany
-import tech.dokus.peppol.provider.client.RecommandCreateCompanyRequest
 import tech.dokus.peppol.provider.client.RecommandUnauthorizedException
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCompany
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCompanyCountry
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateCompanyRequest
 
 class PeppolConnectionService(
     private val settingsRepository: PeppolSettingsRepository,
@@ -123,7 +124,7 @@ class PeppolConnectionService(
                 address = street,
                 postalCode = postalCode,
                 city = city,
-                country = country,
+                country = RecommandCompanyCountry.valueOf(country),
                 vatNumber = vatNumber.normalized
             ),
         ).getOrThrow()
@@ -241,7 +242,7 @@ class PeppolConnectionService(
                 address = street,
                 postalCode = postalCode,
                 city = city,
-                country = country,
+                country = RecommandCompanyCountry.valueOf(country),
                 vatNumber = vatNumber.normalized
             ),
         ).getOrThrow()

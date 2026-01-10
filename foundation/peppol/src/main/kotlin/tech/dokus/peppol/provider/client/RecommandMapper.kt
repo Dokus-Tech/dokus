@@ -1,27 +1,14 @@
 package tech.dokus.peppol.provider.client
 
-import tech.dokus.domain.enums.PeppolDocumentType.Companion.toApiValue
-import tech.dokus.domain.enums.RecommandDirection
-import tech.dokus.domain.model.RecommandDocumentDetail
-import tech.dokus.domain.model.RecommandDocumentsResponse
-import tech.dokus.domain.model.RecommandInboxDocument
-import tech.dokus.domain.model.RecommandInvoiceDocument
-import tech.dokus.domain.model.RecommandLineItem
-import tech.dokus.domain.model.RecommandParsedDocument
-import tech.dokus.domain.model.RecommandParsedParty
-import tech.dokus.domain.model.RecommandParty
-import tech.dokus.domain.model.RecommandPaymentMeans
-import tech.dokus.domain.model.RecommandReceivedDocument
-import tech.dokus.domain.model.RecommandReceivedLineItem
-import tech.dokus.domain.model.RecommandSendDocumentType
-import tech.dokus.domain.model.RecommandSendRequest
-import tech.dokus.domain.model.RecommandSendResponse
-import tech.dokus.domain.model.RecommandVerifyResponse
+import java.util.Locale
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
+import tech.dokus.domain.utils.json
 import tech.dokus.peppol.model.PeppolDirection
 import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolDocumentSummary
 import tech.dokus.peppol.model.PeppolDocumentType
-import tech.dokus.peppol.model.PeppolError
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolLineItem
 import tech.dokus.peppol.model.PeppolMonetaryTotals
@@ -33,9 +20,31 @@ import tech.dokus.peppol.model.PeppolSendResponse
 import tech.dokus.peppol.model.PeppolTaxSubtotal
 import tech.dokus.peppol.model.PeppolTaxTotal
 import tech.dokus.peppol.model.PeppolVerifyResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCreditNote
+import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
+import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDirection
+import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentSummary
+import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentType
+import tech.dokus.peppol.provider.client.recommand.model.RecommandGetDocumentsResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandInboxDocument
+import tech.dokus.peppol.provider.client.recommand.model.RecommandInvoice
+import tech.dokus.peppol.provider.client.recommand.model.RecommandLine
+import tech.dokus.peppol.provider.client.recommand.model.RecommandParty
+import tech.dokus.peppol.provider.client.recommand.model.RecommandPaymentMeans
+import tech.dokus.peppol.provider.client.recommand.model.RecommandPaymentMethod
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSendDocumentRequest
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSendDocumentResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSendInvoice
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingCreditNote
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingInvoice
+import tech.dokus.peppol.provider.client.recommand.model.RecommandTotals
+import tech.dokus.peppol.provider.client.recommand.model.RecommandVat
+import tech.dokus.peppol.provider.client.recommand.model.RecommandVatCategory
+import tech.dokus.peppol.provider.client.recommand.model.RecommandVatTotals
+import tech.dokus.peppol.provider.client.recommand.model.RecommandVerifyRecipientResponse
 
 /**
- * Maps between provider-agnostic Peppol models and Recommand-specific models.
+ * Maps between provider-agnostic Peppol models and Recommand-specific API models.
  */
 object RecommandMapper {
 
@@ -44,86 +53,113 @@ object RecommandMapper {
     // ========================================================================
 
     /**
-     * Convert generic Peppol send request to Recommand-specific format.
+     * Convert provider-agnostic send request to Recommand send request body.
+     *
+     * Used in:
+     * - `POST /api/v1/{companyId}/send` (path params: `companyId`)
      */
-    fun toRecommandRequest(request: PeppolSendRequest): RecommandSendRequest {
-        val invoice = request.invoice
+    fun toRecommandRequest(request: PeppolSendRequest): RecommandSendDocumentRequest {
+        val documentType = toRecommandDocumentType(request.documentType)
 
-        return RecommandSendRequest(
+        val documentJson = when (documentType) {
+            RecommandDocumentType.Invoice -> json.encodeToJsonElement(toRecommandSendInvoice(request.invoice))
+            else -> error("Unsupported Peppol documentType=$documentType for current PeppolSendRequest mapping")
+        }
+
+        return RecommandSendDocumentRequest(
             recipient = request.recipientPeppolId,
-            documentType = toRecommandDocumentType(request.documentType),
-            document = RecommandInvoiceDocument(
-                invoiceNumber = invoice.invoiceNumber,
-                issueDate = invoice.issueDate.toString(),
-                dueDate = invoice.dueDate.toString(),
-                buyer = toRecommandParty(invoice.buyer),
-                seller = toRecommandParty(invoice.seller),
-                lineItems = invoice.lineItems.map { toRecommandLineItem(it) },
-                note = invoice.note,
-                buyerReference = invoice.buyer.companyNumber ?: invoice.buyer.vatNumber,
-                paymentMeans = invoice.paymentInfo?.let {
-                    RecommandPaymentMeans(
-                        iban = it.iban,
-                        bic = it.bic,
-                        paymentMeansCode = it.paymentMeansCode,
-                        paymentId = it.paymentId
+            documentType = documentType,
+            document = documentJson,
+        )
+    }
+
+    private fun toRecommandSendInvoice(invoice: tech.dokus.peppol.model.PeppolInvoiceData): RecommandSendInvoice {
+        return RecommandSendInvoice(
+            invoiceNumber = invoice.invoiceNumber,
+            issueDate = invoice.issueDate,
+            dueDate = invoice.dueDate,
+            seller = toRecommandParty(invoice.seller),
+            buyer = toRecommandParty(invoice.buyer),
+            buyerReference = invoice.buyer.companyNumber ?: invoice.buyer.vatNumber,
+            lines = invoice.lineItems.map(::toRecommandLine),
+            paymentMeans = invoice.paymentInfo
+                ?.takeIf { it.iban != null }
+                ?.let {
+                    listOf(
+                        RecommandPaymentMeans(
+                            iban = requireNotNull(it.iban),
+                            paymentMethod = paymentMethodForPaymentMeansCode(it.paymentMeansCode),
+                            reference = it.paymentId ?: "",
+                        )
                     )
                 },
-                documentCurrencyCode = invoice.currencyCode
-            )
+            note = invoice.note,
+            currency = invoice.currencyCode,
         )
     }
 
     private fun toRecommandParty(party: PeppolParty): RecommandParty {
+        val street = requireNotNull(party.streetName) { "Missing streetName for party ${party.name}" }
+        val city = requireNotNull(party.cityName) { "Missing cityName for party ${party.name}" }
+        val postalZone = requireNotNull(party.postalZone) { "Missing postalZone for party ${party.name}" }
+        val country = requireNotNull(party.countryCode) { "Missing countryCode for party ${party.name}" }
+
         return RecommandParty(
             vatNumber = party.vatNumber,
+            enterpriseNumber = party.companyNumber,
             name = party.name,
-            streetName = party.streetName,
-            cityName = party.cityName,
-            postalZone = party.postalZone,
-            countryCode = party.countryCode,
-            contactEmail = party.contactEmail,
-            contactName = party.contactName
+            street = street,
+            city = city,
+            postalZone = postalZone,
+            country = country,
+            email = party.contactEmail,
         )
     }
 
-    private fun toRecommandLineItem(item: PeppolLineItem): RecommandLineItem {
-        return RecommandLineItem(
+    private fun toRecommandLine(item: PeppolLineItem): RecommandLine {
+        val vatCategory = runCatching { RecommandVatCategory.valueOf(item.taxCategory) }.getOrDefault(RecommandVatCategory.S)
+        return RecommandLine(
             id = item.id,
             name = item.name,
             description = item.description,
-            quantity = item.quantity,
+            quantity = item.quantity.asDecimalString(),
             unitCode = item.unitCode,
-            unitPrice = item.unitPrice,
-            lineTotal = item.lineTotal,
-            taxCategory = item.taxCategory,
-            taxPercent = item.taxPercent
+            netPriceAmount = item.unitPrice.asDecimalString(),
+            netAmount = item.lineTotal.asDecimalString(),
+            vat = RecommandVat(
+                category = vatCategory,
+                percentage = item.taxPercent.asDecimalString(),
+            ),
         )
+    }
+
+    private fun paymentMethodForPaymentMeansCode(code: String): RecommandPaymentMethod = when (code) {
+        "10" -> RecommandPaymentMethod.Cash
+        "30", "58" -> RecommandPaymentMethod.CreditTransfer
+        "31", "59" -> RecommandPaymentMethod.DebitTransfer
+        "48", "49" -> RecommandPaymentMethod.BankCard
+        else -> RecommandPaymentMethod.CreditTransfer
+    }
+
+    private fun Double.asDecimalString(scale: Int = 2): String = "%.${scale}f".format(Locale.ROOT, this)
+
+    private fun toRecommandDocumentType(type: PeppolDocumentType): RecommandDocumentType = when (type) {
+        PeppolDocumentType.INVOICE -> RecommandDocumentType.Invoice
+        PeppolDocumentType.DEBIT_NOTE -> RecommandDocumentType.Invoice
+        PeppolDocumentType.CREDIT_NOTE ->
+            error("PeppolDocumentType.CREDIT_NOTE is not supported by the current PeppolSendRequest model")
+        PeppolDocumentType.ORDER ->
+            error("PeppolDocumentType.ORDER is not supported by the current PeppolSendRequest model")
     }
 
     // ========================================================================
     // SEND RESPONSE MAPPING
     // ========================================================================
 
-    /**
-     * Convert Recommand response to generic Peppol format.
-     */
-    fun fromRecommandResponse(response: RecommandSendResponse): PeppolSendResponse {
+    fun fromRecommandResponse(response: RecommandSendDocumentResponse): PeppolSendResponse {
         return PeppolSendResponse(
             success = response.success,
-            externalDocumentId = response.documentId,
-            errorMessage = if (!response.success) {
-                response.errors?.joinToString("; ") { it.message } ?: response.message
-            } else {
-                null
-            },
-            errors = response.errors?.map {
-                PeppolError(
-                    code = it.code,
-                    message = it.message,
-                    field = it.field
-                )
-            } ?: emptyList()
+            externalDocumentId = response.id,
         )
     }
 
@@ -131,12 +167,12 @@ object RecommandMapper {
     // VERIFY RESPONSE MAPPING
     // ========================================================================
 
-    fun fromRecommandVerifyResponse(response: RecommandVerifyResponse): PeppolVerifyResponse {
+    fun fromRecommandVerifyResponse(response: RecommandVerifyRecipientResponse): PeppolVerifyResponse {
         return PeppolVerifyResponse(
-            registered = response.registered,
-            participantId = response.participantId,
-            name = response.name,
-            documentTypes = response.documentTypes ?: emptyList()
+            registered = response.isValid,
+            participantId = null,
+            name = null,
+            documentTypes = emptyList(),
         )
     }
 
@@ -147,109 +183,139 @@ object RecommandMapper {
     fun fromRecommandInboxItem(item: RecommandInboxDocument): PeppolInboxItem {
         return PeppolInboxItem(
             id = item.id,
-            documentType = item.type,
+            documentType = item.type.toApiValue(),
             senderPeppolId = item.senderId,
             receiverPeppolId = item.receiverId,
             receivedAt = item.createdAt,
-            isRead = !item.isUnread
+            isRead = item.readAt != null,
         )
     }
 
-    fun fromRecommandDocument(
-        item: RecommandInboxDocument,
-        document: RecommandReceivedDocument
-    ): PeppolReceivedDocument {
-        return PeppolReceivedDocument(
-            id = item.id,
-            documentType = item.type,
-            senderPeppolId = item.senderId,
-            invoiceNumber = document.invoiceNumber,
-            issueDate = document.issueDate,
-            dueDate = document.dueDate,
-            seller = document.seller?.let { fromRecommandParty(it) },
-            buyer = document.buyer?.let { fromRecommandParty(it) },
-            lineItems = document.lineItems?.map { fromRecommandReceivedLineItem(it) },
-            totals = document.legalMonetaryTotal?.let {
-                PeppolMonetaryTotals(
-                    lineExtensionAmount = it.lineExtensionAmount,
-                    taxExclusiveAmount = it.taxExclusiveAmount,
-                    taxInclusiveAmount = it.taxInclusiveAmount,
-                    payableAmount = it.payableAmount
-                )
-            },
-            taxTotal = document.taxTotal?.let {
-                PeppolTaxTotal(
-                    taxAmount = it.taxAmount,
-                    taxSubtotals = it.taxSubtotals?.map { sub ->
-                        PeppolTaxSubtotal(
-                            taxableAmount = sub.taxableAmount,
-                            taxAmount = sub.taxAmount,
-                            taxCategory = sub.taxCategory,
-                            taxPercent = sub.taxPercent
-                        )
-                    }
-                )
-            },
-            note = document.note,
-            currencyCode = document.documentCurrencyCode
-        )
-    }
+    // ========================================================================
+    // DOCUMENT DETAIL MAPPING
+    // ========================================================================
 
-    /**
-     * Map from the single document detail response (GET /api/v1/documents/{id}).
-     * This uses RecommandParsedDocument which has the new structure with lines, totals, vat.
-     */
     fun fromRecommandDocumentDetail(detail: RecommandDocumentDetail): PeppolReceivedDocument {
-        val parsed = detail.parsed
+        val parsed = detail.parsed ?: return PeppolReceivedDocument(
+            id = detail.id,
+            documentType = detail.type.toApiValue(),
+            senderPeppolId = detail.senderId,
+            invoiceNumber = null,
+            issueDate = null,
+            dueDate = null,
+            seller = null,
+            buyer = null,
+            lineItems = null,
+            totals = null,
+            taxTotal = null,
+            note = null,
+            currencyCode = null,
+        )
+
+        return when (detail.type) {
+            RecommandDocumentType.Invoice -> fromParsedInvoice(detail, json.decodeFromJsonElement<RecommandInvoice>(parsed))
+            RecommandDocumentType.CreditNote -> fromParsedCreditNote(detail, json.decodeFromJsonElement<RecommandCreditNote>(parsed))
+            RecommandDocumentType.SelfBillingInvoice ->
+                fromParsedSelfBillingInvoice(detail, json.decodeFromJsonElement<RecommandSelfBillingInvoice>(parsed))
+            RecommandDocumentType.SelfBillingCreditNote ->
+                fromParsedSelfBillingCreditNote(detail, json.decodeFromJsonElement<RecommandSelfBillingCreditNote>(parsed))
+            RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml -> PeppolReceivedDocument(
+                id = detail.id,
+                documentType = detail.type.toApiValue(),
+                senderPeppolId = detail.senderId,
+                invoiceNumber = null,
+                issueDate = null,
+                dueDate = null,
+                seller = null,
+                buyer = null,
+                lineItems = null,
+                totals = null,
+                taxTotal = null,
+                note = null,
+                currencyCode = null,
+            )
+        }
+    }
+
+    private fun fromParsedInvoice(detail: RecommandDocumentDetail, invoice: RecommandInvoice): PeppolReceivedDocument {
         return PeppolReceivedDocument(
             id = detail.id,
-            documentType = detail.type,
+            documentType = detail.type.toApiValue(),
             senderPeppolId = detail.senderId,
-            invoiceNumber = parsed?.invoiceNumber ?: parsed?.creditNoteNumber,
-            issueDate = parsed?.issueDate,
-            dueDate = parsed?.dueDate,
-            seller = parsed?.seller?.let { fromRecommandParsedParty(it) },
-            buyer = parsed?.buyer?.let { fromRecommandParsedParty(it) },
-            lineItems = parsed?.lines?.map { line ->
-                PeppolReceivedLineItem(
-                    id = line.id,
-                    name = line.name,
-                    description = line.description,
-                    quantity = line.quantity?.toDoubleOrNull(),
-                    unitCode = line.unitCode,
-                    unitPrice = line.netPriceAmount?.toDoubleOrNull(),
-                    lineTotal = line.netAmount?.toDoubleOrNull(),
-                    taxCategory = line.vat?.category,
-                    taxPercent = line.vat?.percentage?.toDoubleOrNull()
-                )
-            },
-            totals = parsed?.totals?.let {
-                PeppolMonetaryTotals(
-                    lineExtensionAmount = it.linesAmount?.toDoubleOrNull(),
-                    taxExclusiveAmount = it.taxExclusiveAmount?.toDoubleOrNull(),
-                    taxInclusiveAmount = it.taxInclusiveAmount?.toDoubleOrNull(),
-                    payableAmount = it.payableAmount?.toDoubleOrNull()
-                )
-            },
-            taxTotal = parsed?.vat?.let {
-                PeppolTaxTotal(
-                    taxAmount = it.totalVatAmount?.toDoubleOrNull(),
-                    taxSubtotals = it.subtotals?.map { sub ->
-                        PeppolTaxSubtotal(
-                            taxableAmount = sub.taxableAmount?.toDoubleOrNull(),
-                            taxAmount = sub.vatAmount?.toDoubleOrNull(),
-                            taxCategory = sub.category,
-                            taxPercent = sub.percentage?.toDoubleOrNull()
-                        )
-                    }
-                )
-            },
-            note = parsed?.note,
-            currencyCode = parsed?.currency
+            invoiceNumber = invoice.invoiceNumber,
+            issueDate = invoice.issueDate.toString(),
+            dueDate = invoice.dueDate?.toString(),
+            seller = invoice.seller.let(::fromRecommandParty),
+            buyer = invoice.buyer.let(::fromRecommandParty),
+            lineItems = invoice.lines.map(::fromRecommandLine),
+            totals = invoice.totals?.let(::toPeppolMonetaryTotals),
+            taxTotal = invoice.vat?.let(::toPeppolTaxTotal),
+            note = invoice.note,
+            currencyCode = invoice.currency,
         )
     }
 
-    private fun fromRecommandParsedParty(party: RecommandParsedParty): PeppolParty {
+    private fun fromParsedCreditNote(detail: RecommandDocumentDetail, creditNote: RecommandCreditNote): PeppolReceivedDocument {
+        return PeppolReceivedDocument(
+            id = detail.id,
+            documentType = detail.type.toApiValue(),
+            senderPeppolId = detail.senderId,
+            invoiceNumber = creditNote.creditNoteNumber,
+            issueDate = creditNote.issueDate.toString(),
+            dueDate = null,
+            seller = creditNote.seller.let(::fromRecommandParty),
+            buyer = creditNote.buyer.let(::fromRecommandParty),
+            lineItems = creditNote.lines.map(::fromRecommandLine),
+            totals = creditNote.totals?.let(::toPeppolMonetaryTotals),
+            taxTotal = creditNote.vat?.let(::toPeppolTaxTotal),
+            note = creditNote.note,
+            currencyCode = creditNote.currency,
+        )
+    }
+
+    private fun fromParsedSelfBillingInvoice(
+        detail: RecommandDocumentDetail,
+        invoice: RecommandSelfBillingInvoice
+    ): PeppolReceivedDocument {
+        return PeppolReceivedDocument(
+            id = detail.id,
+            documentType = detail.type.toApiValue(),
+            senderPeppolId = detail.senderId,
+            invoiceNumber = invoice.invoiceNumber,
+            issueDate = invoice.issueDate.toString(),
+            dueDate = invoice.dueDate?.toString(),
+            seller = invoice.seller.let(::fromRecommandParty),
+            buyer = invoice.buyer.let(::fromRecommandParty),
+            lineItems = invoice.lines.map(::fromRecommandLine),
+            totals = invoice.totals?.let(::toPeppolMonetaryTotals),
+            taxTotal = invoice.vat?.let(::toPeppolTaxTotal),
+            note = invoice.note,
+            currencyCode = invoice.currency,
+        )
+    }
+
+    private fun fromParsedSelfBillingCreditNote(
+        detail: RecommandDocumentDetail,
+        creditNote: RecommandSelfBillingCreditNote
+    ): PeppolReceivedDocument {
+        return PeppolReceivedDocument(
+            id = detail.id,
+            documentType = detail.type.toApiValue(),
+            senderPeppolId = detail.senderId,
+            invoiceNumber = creditNote.creditNoteNumber,
+            issueDate = creditNote.issueDate.toString(),
+            dueDate = null,
+            seller = creditNote.seller.let(::fromRecommandParty),
+            buyer = creditNote.buyer.let(::fromRecommandParty),
+            lineItems = creditNote.lines.map(::fromRecommandLine),
+            totals = creditNote.totals?.let(::toPeppolMonetaryTotals),
+            taxTotal = creditNote.vat?.let(::toPeppolTaxTotal),
+            note = creditNote.note,
+            currencyCode = creditNote.currency,
+        )
+    }
+
+    private fun fromRecommandParty(party: RecommandParty): PeppolParty {
         return PeppolParty(
             name = party.name,
             vatNumber = party.vatNumber,
@@ -258,36 +324,45 @@ object RecommandMapper {
             postalZone = party.postalZone,
             countryCode = party.country,
             contactEmail = party.email,
-            contactName = null
+            contactName = null,
+            companyNumber = party.enterpriseNumber,
         )
     }
 
-    private fun fromRecommandParty(party: RecommandParty): PeppolParty {
-        return PeppolParty(
-            name = party.name,
-            vatNumber = party.vatNumber,
-            streetName = party.streetName,
-            cityName = party.cityName,
-            postalZone = party.postalZone,
-            countryCode = party.countryCode,
-            contactEmail = party.contactEmail,
-            contactName = party.contactName
-        )
-    }
-
-    private fun fromRecommandReceivedLineItem(
-        item: RecommandReceivedLineItem
-    ): PeppolReceivedLineItem {
+    private fun fromRecommandLine(line: RecommandLine): PeppolReceivedLineItem {
         return PeppolReceivedLineItem(
-            id = item.id,
-            name = item.name,
-            description = item.description,
-            quantity = item.quantity,
-            unitCode = item.unitCode,
-            unitPrice = item.unitPrice,
-            lineTotal = item.lineExtensionAmount,
-            taxCategory = item.taxCategory,
-            taxPercent = item.taxPercent
+            id = line.id,
+            name = line.name,
+            description = line.description,
+            quantity = line.quantity.toDoubleOrNull(),
+            unitCode = line.unitCode,
+            unitPrice = line.netPriceAmount.toDoubleOrNull(),
+            lineTotal = line.netAmount?.toDoubleOrNull(),
+            taxCategory = line.vat.category.name,
+            taxPercent = line.vat.percentage.toDoubleOrNull(),
+        )
+    }
+
+    private fun toPeppolMonetaryTotals(totals: RecommandTotals): PeppolMonetaryTotals {
+        return PeppolMonetaryTotals(
+            lineExtensionAmount = totals.linesAmount?.toDoubleOrNull(),
+            taxExclusiveAmount = totals.taxExclusiveAmount.toDoubleOrNull(),
+            taxInclusiveAmount = totals.taxInclusiveAmount.toDoubleOrNull(),
+            payableAmount = (totals.payableAmount ?: totals.taxInclusiveAmount).toDoubleOrNull(),
+        )
+    }
+
+    private fun toPeppolTaxTotal(vat: RecommandVatTotals): PeppolTaxTotal {
+        return PeppolTaxTotal(
+            taxAmount = vat.totalVatAmount.toDoubleOrNull(),
+            taxSubtotals = vat.subtotals.map { sub ->
+                PeppolTaxSubtotal(
+                    taxableAmount = sub.taxableAmount.toDoubleOrNull(),
+                    taxAmount = sub.vatAmount.toDoubleOrNull(),
+                    taxCategory = sub.category.name,
+                    taxPercent = sub.percentage.toDoubleOrNull(),
+                )
+            },
         )
     }
 
@@ -295,43 +370,100 @@ object RecommandMapper {
     // DOCUMENT LIST MAPPING
     // ========================================================================
 
-    fun fromRecommandDocumentsResponse(response: RecommandDocumentsResponse): PeppolDocumentList {
+    fun fromRecommandDocumentsResponse(response: RecommandGetDocumentsResponse): PeppolDocumentList {
+        val docs = response.documents.map { doc ->
+            val counterparty = when (doc.direction) {
+                RecommandDocumentDirection.Incoming -> doc.senderId
+                RecommandDocumentDirection.Outgoing -> doc.receiverId
+            }
+
+            val parsedSummary = extractSummaryFromParsed(doc.type, doc.parsed)
+
+            PeppolDocumentSummary(
+                id = doc.id,
+                documentType = doc.type.toApiValue(),
+                direction = when (doc.direction) {
+                    RecommandDocumentDirection.Incoming -> PeppolDirection.INBOUND
+                    RecommandDocumentDirection.Outgoing -> PeppolDirection.OUTBOUND
+                },
+                counterpartyPeppolId = counterparty,
+                status = doc.validation.result.name.lowercase(),
+                createdAt = doc.createdAt,
+                readAt = doc.readAt,
+                invoiceNumber = parsedSummary.invoiceNumber,
+                totalAmount = parsedSummary.totalAmount,
+                currency = parsedSummary.currency,
+            )
+        }
+
         return PeppolDocumentList(
-            documents = response.data.map { doc ->
-                PeppolDocumentSummary(
-                    id = doc.id,
-                    documentType = doc.documentType.toApiValue(),
-                    direction = when (doc.direction) {
-                        RecommandDirection.Outgoing -> PeppolDirection.OUTBOUND
-                        RecommandDirection.Incoming -> PeppolDirection.INBOUND
-                    },
-                    counterpartyPeppolId = doc.counterparty,
-                    status = doc.status.toPeppolStatus().name,
-                    createdAt = doc.createdAt,
-                    readAt = doc.readAt,
-                    invoiceNumber = doc.invoiceNumber,
-                    totalAmount = doc.totalAmount,
-                    currency = doc.currency?.code
-                )
-            },
-            total = response.total,
-            hasMore = response.hasMore
+            documents = docs,
+            total = response.pagination.total.toInt(),
+            hasMore = response.pagination.page < response.pagination.totalPages,
         )
     }
 
-    // ========================================================================
-    // DOCUMENT TYPE MAPPING
-    // ========================================================================
+    private data class ParsedSummary(
+        val invoiceNumber: String?,
+        val totalAmount: Double?,
+        val currency: String?,
+    )
 
-    /**
-     * Map provider-agnostic document type to Recommand-specific enum.
-     */
-    private fun toRecommandDocumentType(type: PeppolDocumentType): RecommandSendDocumentType {
+    private fun extractSummaryFromParsed(
+        type: RecommandDocumentType,
+        parsed: JsonElement?,
+    ): ParsedSummary {
+        if (parsed == null) return ParsedSummary(invoiceNumber = null, totalAmount = null, currency = null)
+
         return when (type) {
-            PeppolDocumentType.INVOICE -> RecommandSendDocumentType.Invoice
-            PeppolDocumentType.CREDIT_NOTE -> RecommandSendDocumentType.CreditNote
-            PeppolDocumentType.DEBIT_NOTE -> RecommandSendDocumentType.Invoice // Debit notes sent as invoice
-            PeppolDocumentType.ORDER -> RecommandSendDocumentType.Xml // Orders require UBL XML
+            RecommandDocumentType.Invoice -> {
+                val invoice = json.decodeFromJsonElement<RecommandInvoice>(parsed)
+                ParsedSummary(
+                    invoiceNumber = invoice.invoiceNumber,
+                    totalAmount = invoice.totals?.payableAmount?.toDoubleOrNull()
+                        ?: invoice.totals?.taxInclusiveAmount?.toDoubleOrNull(),
+                    currency = invoice.currency,
+                )
+            }
+            RecommandDocumentType.CreditNote -> {
+                val creditNote = json.decodeFromJsonElement<RecommandCreditNote>(parsed)
+                ParsedSummary(
+                    invoiceNumber = creditNote.creditNoteNumber,
+                    totalAmount = creditNote.totals?.payableAmount?.toDoubleOrNull()
+                        ?: creditNote.totals?.taxInclusiveAmount?.toDoubleOrNull(),
+                    currency = creditNote.currency,
+                )
+            }
+            RecommandDocumentType.SelfBillingInvoice -> {
+                val invoice = json.decodeFromJsonElement<RecommandSelfBillingInvoice>(parsed)
+                ParsedSummary(
+                    invoiceNumber = invoice.invoiceNumber,
+                    totalAmount = invoice.totals?.payableAmount?.toDoubleOrNull()
+                        ?: invoice.totals?.taxInclusiveAmount?.toDoubleOrNull(),
+                    currency = invoice.currency,
+                )
+            }
+            RecommandDocumentType.SelfBillingCreditNote -> {
+                val creditNote = json.decodeFromJsonElement<RecommandSelfBillingCreditNote>(parsed)
+                ParsedSummary(
+                    invoiceNumber = creditNote.creditNoteNumber,
+                    totalAmount = creditNote.totals?.payableAmount?.toDoubleOrNull()
+                        ?: creditNote.totals?.taxInclusiveAmount?.toDoubleOrNull(),
+                    currency = creditNote.currency,
+                )
+            }
+            RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml ->
+                ParsedSummary(invoiceNumber = null, totalAmount = null, currency = null)
         }
     }
+
+    private fun RecommandDocumentType.toApiValue(): String = when (this) {
+        RecommandDocumentType.Invoice -> "invoice"
+        RecommandDocumentType.CreditNote -> "creditNote"
+        RecommandDocumentType.SelfBillingInvoice -> "selfBillingInvoice"
+        RecommandDocumentType.SelfBillingCreditNote -> "selfBillingCreditNote"
+        RecommandDocumentType.MessageLevelResponse -> "messageLevelResponse"
+        RecommandDocumentType.Xml -> "xml"
+    }
 }
+
