@@ -228,6 +228,21 @@ enum class ClientType(override val dbValue: String) : DbEnum {
 // ContactType removed - roles are now derived from cashflow items
 // See Contact.kt for DerivedContactRoles
 
+/**
+ * Source of contact creation - tracks how a contact was added to the system.
+ */
+@Serializable
+enum class ContactSource(override val dbValue: String) : DbEnum {
+    @SerialName("manual")
+    Manual("manual"),
+
+    @SerialName("ai")
+    AI("ai"),
+
+    @SerialName("peppol")
+    Peppol("peppol")
+}
+
 // ============================================================================
 // INVOICE ENUMS
 // ============================================================================

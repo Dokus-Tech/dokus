@@ -7,6 +7,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.enums.ContactSource
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
@@ -60,6 +61,7 @@ object ContactsTable : UUIDTable("contacts") {
     val createdFromDocumentId = uuid("created_from_document_id")
         .references(DocumentsTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable() // Track which document led to this contact's creation (user-confirmed)
+    val contactSource = dbEnumeration<ContactSource>("source").default(ContactSource.Manual)
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

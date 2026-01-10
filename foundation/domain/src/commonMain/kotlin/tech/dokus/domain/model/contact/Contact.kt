@@ -9,6 +9,7 @@ import tech.dokus.domain.Name
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.DocumentId
@@ -57,7 +58,9 @@ data class ContactDto(
     /** True for system-managed contacts like "Unknown / Unassigned" */
     val isSystemContact: Boolean = false,
     /** Source document ID if contact was created from AI extraction */
-    val createdFromDocumentId: DocumentId? = null
+    val createdFromDocumentId: DocumentId? = null,
+    /** How this contact was created (Manual, AI, Peppol) */
+    val source: ContactSource = ContactSource.Manual
 )
 
 /**
@@ -111,7 +114,9 @@ data class CreateContactRequest(
     val peppolId: String? = null,
     val peppolEnabled: Boolean = false,
     val tags: String? = null,
-    val initialNote: String? = null
+    val initialNote: String? = null,
+    /** How this contact was created (Manual, AI, Peppol) */
+    val source: ContactSource = ContactSource.Manual
 )
 
 /**

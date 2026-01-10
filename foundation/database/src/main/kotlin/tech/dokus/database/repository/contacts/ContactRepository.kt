@@ -35,6 +35,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactMergeResult
 import tech.dokus.domain.model.contact.ContactStats
@@ -83,6 +84,7 @@ class ContactRepository {
                 it[peppolId] = request.peppolId
                 it[peppolEnabled] = request.peppolEnabled
                 it[tags] = request.tags
+                it[contactSource] = request.source
             }
 
             // Fetch and return the created contact
@@ -777,7 +779,8 @@ class ContactRepository {
             isSystemContact = row[ContactsTable.isSystemContact],
             createdFromDocumentId = row[ContactsTable.createdFromDocumentId]?.let {
                 DocumentId.parse(it.toString())
-            }
+            },
+            source = row[ContactsTable.contactSource]
             // derivedRoles and activitySummary are populated by service layer on demand
         )
     }
