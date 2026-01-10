@@ -18,10 +18,16 @@ import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
+import tech.dokus.domain.Name
+import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.peppol.provider.client.recommand.model.RecommandAttachment
@@ -57,7 +63,8 @@ class PeppolPollingWorker(
     private val ingestionRunRepository: DocumentIngestionRunRepository,
     private val confirmationPolicy: DocumentConfirmationPolicy,
     private val confirmationService: DocumentConfirmationService,
-    private val documentStorageService: DocumentStorageService
+    private val documentStorageService: DocumentStorageService,
+    private val contactRepository: ContactRepository
 ) {
     private val logger = LoggerFactory.getLogger(PeppolPollingWorker::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -297,12 +304,20 @@ class PeppolPollingWorker(
 
                     // Auto-confirm if policy allows (PEPPOL documents are always auto-confirmed)
                     if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, extractedData, tid)) {
+                        // Find or create contact from Peppol data
+                        val linkedContactId = findOrCreateContactForPeppol(
+                            tenantId = tid,
+                            supplierName = extractedData.bill?.supplierName,
+                            supplierVatNumber = extractedData.bill?.supplierVatNumber,
+                            peppolId = senderPeppolId
+                        )
+
                         confirmationService.confirmDocument(
                             tenantId = tid,
                             documentId = documentId,
                             documentType = DocumentType.Bill,
                             extractedData = extractedData,
-                            linkedContactId = null
+                            linkedContactId = linkedContactId
                         ).getOrThrow()
                     }
 
@@ -324,5 +339,46 @@ class PeppolPollingWorker(
         } finally {
             mutex.unlock()
         }
+    }
+
+    /**
+     * Find or create a contact for a Peppol document.
+     * Matching priority:
+     * 1. VAT number (most reliable)
+     * 2. Peppol ID
+     * 3. Auto-create if we have enough data
+     */
+    private suspend fun findOrCreateContactForPeppol(
+        tenantId: TenantId,
+        supplierName: String?,
+        supplierVatNumber: String?,
+        peppolId: String?
+    ): ContactId? {
+        // 1. Try VAT number (most reliable) - already normalized in repository
+        if (!supplierVatNumber.isNullOrBlank()) {
+            contactRepository.findByVatNumber(tenantId, supplierVatNumber)
+                .getOrNull()?.let { return it.id }
+        }
+
+        // 2. Try Peppol ID
+        if (!peppolId.isNullOrBlank()) {
+            contactRepository.findByPeppolId(tenantId, peppolId)
+                .getOrNull()?.let { return it.id }
+        }
+
+        // 3. Auto-create if we have enough data
+        if (!supplierName.isNullOrBlank()) {
+            val request = CreateContactRequest(
+                name = Name(supplierName),
+                vatNumber = supplierVatNumber?.let { VatNumber(it) },
+                peppolId = peppolId,
+                peppolEnabled = !peppolId.isNullOrBlank(),
+                source = ContactSource.Peppol
+            )
+            val newContact = contactRepository.createContact(tenantId, request).getOrNull()
+            return newContact?.id
+        }
+
+        return null
     }
 }
