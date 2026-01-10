@@ -7,12 +7,42 @@
     <string name="cashflow_search">Search</string>
     <string name="cashflow_search_placeholder">Search...</string>
 
+    <!-- Cashflow Ledger -->
+    <string name="cashflow_ledger_expected_in">Expected In</string>
+    <string name="cashflow_ledger_expected_out">Expected Out</string>
+    <string name="cashflow_ledger_net">Net</string>
+    <string name="cashflow_ledger_due_date">Due date</string>
+    <string name="cashflow_ledger_contact">Contact</string>
+    <string name="cashflow_ledger_description">Description</string>
+    <string name="cashflow_ledger_amount">Amount</string>
+    <string name="cashflow_ledger_status">Status</string>
+    <string name="cashflow_ledger_view_details">View details</string>
+    <string name="cashflow_ledger_direction_in">In</string>
+    <string name="cashflow_ledger_direction_out">Out</string>
+    <string name="cashflow_ledger_status_open">Open</string>
+    <string name="cashflow_ledger_status_paid">Paid</string>
+    <string name="cashflow_ledger_status_overdue">Overdue</string>
+    <string name="cashflow_ledger_status_cancelled">Cancelled</string>
+    <string name="cashflow_ledger_filter_this_month">This month</string>
+    <string name="cashflow_ledger_filter_next_3_months">Next 3 months</string>
+    <string name="cashflow_ledger_filter_custom">Custom</string>
+    <string name="cashflow_ledger_filter_in">In</string>
+    <string name="cashflow_ledger_filter_out">Out</string>
+    <string name="cashflow_ledger_filter_open">Open</string>
+    <string name="cashflow_ledger_filter_paid">Paid</string>
+    <string name="cashflow_ledger_filter_overdue">Overdue</string>
+    <string name="cashflow_ledger_filter_cancelled">Cancelled</string>
+    <string name="cashflow_ledger_empty_title">No entries found</string>
+    <string name="cashflow_ledger_empty_hint">Try adjusting your filters</string>
+    <string name="cashflow_ledger_items">%1$d items</string>
+
     <!-- Document Types -->
     <string name="document_type_invoice">Invoice</string>
     <string name="document_type_expense">Expense</string>
     <string name="document_type_bill">Bill</string>
     <string name="document_type_document">Document</string>
     <string name="document_type_unknown">Unknown</string>
+    <string name="document_type_unclassified">Unclassified</string>
 
     <!-- Pending Documents -->
     <string name="pending_documents_title">Cash flow</string>
@@ -27,6 +57,24 @@
     <string name="document_status_review">Needs attention</string>
     <string name="document_status_ready">Ready to confirm</string>
     <string name="document_status_failed">Failed</string>
+
+    <!-- Documents Screen -->
+    <string name="documents_empty_title">No documents yet</string>
+    <string name="documents_empty_upload_cta">Upload your first document</string>
+    <string name="documents_filter_no_match">No documents match this filter</string>
+    <string name="documents_search_no_results">No results for \"%1$s\"</string>
+    <string name="documents_filter_all">All</string>
+    <string name="documents_filter_processing">Processing</string>
+    <string name="documents_filter_needs_review">Needs review</string>
+    <string name="documents_filter_ready">Ready</string>
+    <string name="documents_filter_confirmed">Confirmed</string>
+    <string name="documents_filter_failed">Failed</string>
+    <string name="documents_filter_rejected">Rejected</string>
+    <string name="documents_upload">Upload</string>
+    <string name="documents_view_details">View details</string>
+    <string name="documents_table_document">Document</string>
+    <string name="documents_table_status">Status</string>
+    <string name="documents_table_open">Open</string>
 
     <!-- Document Table -->
     <string name="document_table_invoice">Invoice</string>
@@ -72,11 +120,11 @@
     <!-- Document Upload -->
     <string name="upload_documents_title">Upload Documents</string>
     <string name="upload_add_document">Add Document</string>
-    <string name="upload_drag_hint">or drag files here</string>
-    <string name="upload_instructions">To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format.</string>
+    <string name="upload_drag_hint">PDF, JPG, PNG supported</string>
+    <string name="upload_instructions">Documents will be processed automatically.</string>
     <string name="upload_no_app_hint">Don\'t have the application? Click here</string>
     <string name="upload_uploads_title">Uploads</string>
-    <string name="upload_no_documents">No documents uploading</string>
+    <string name="upload_no_documents">No active uploads</string>
     <string name="upload_release_to_upload">Release to Upload</string>
     <string name="upload_documents_absorbed">Documents will be absorbed</string>
 
@@ -188,8 +236,8 @@
     <string name="cashflow_document_review_title">Document Review</string>
     <string name="cashflow_chat_with_document">Chat with Document</string>
     <string name="cashflow_confidence_badge">AI: %1$d%%</string>
-    <string name="cashflow_counterparty_details_title">Counterparty &amp; Details</string>
-    <string name="cashflow_counterparty_ai_extracted">Counterparty (AI extracted)</string>
+    <string name="cashflow_contact_details_title">Contact Details</string>
+    <string name="cashflow_contact_ai_extracted">Contact (AI extracted)</string>
     <string name="cashflow_action_correct_contact">Correct contact</string>
     <string name="cashflow_action_ignore">Ignore</string>
     <string name="cashflow_confidence_label">AI</string>
@@ -205,18 +253,14 @@
     <string name="cashflow_analysis_retry">Retry Analysis</string>
     <string name="cashflow_analysis_continue_manually">Continue Manually</string>
     <string name="cashflow_document_rejected">Document rejected</string>
-    <string name="cashflow_client_information">Client Information</string>
-    <string name="cashflow_client_name">Client Name</string>
+    <string name="cashflow_contact_information">Contact Information</string>
+    <string name="cashflow_contact_name">Contact Name</string>
     <string name="cashflow_invoice_details_section">Invoice Details</string>
     <string name="cashflow_section_amounts">Amounts</string>
     <string name="cashflow_section_additional_information">Additional Information</string>
     <string name="cashflow_invoice_number">Invoice Number</string>
     <string name="cashflow_vat_amount">VAT Amount</string>
     <string name="cashflow_bill_details_section">Bill Details</string>
-    <string name="cashflow_supplier_information">Supplier Information</string>
-    <string name="cashflow_supplier_name">Supplier Name</string>
-    <string name="cashflow_merchant_information">Merchant Information</string>
-    <string name="cashflow_merchant">Merchant</string>
     <string name="cashflow_expense_details_section">Expense Details</string>
     <string name="cashflow_receipt_number">Receipt Number</string>
     <string name="cashflow_payment_method">Payment Method</string>
@@ -241,8 +285,6 @@
     <string name="cashflow_suggested_contacts">Suggested contacts:</string>
 
     <!-- Contact Selection -->
-    <string name="cashflow_client_label">Client</string>
-    <string name="cashflow_supplier_label">Supplier</string>
     <string name="cashflow_contact_label">Contact</string>
     <string name="cashflow_saving_contact">Saving contact...</string>
     <string name="cashflow_no_contact_selected">No contact selected</string>
@@ -298,8 +340,8 @@
     <string name="invoice_validation_due_date_before_issue">Due date cannot be before issue date</string>
 
     <!-- Upload -->
-    <string name="upload_select_or_drag">Select files or drag them here</string>
-    <string name="upload_drop_files">Drop files to upload</string>
+    <string name="upload_select_or_drag">Drop files here or click to upload</string>
+    <string name="upload_drop_files">Drop files here</string>
     <string name="upload_with_camera">Upload with camera</string>
     <string name="upload_select_file">Select a file</string>
     <string name="upload_status_deleting">Deleting...</string>

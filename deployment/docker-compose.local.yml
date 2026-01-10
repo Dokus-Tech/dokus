@@ -1,0 +1,70 @@
+# Local development override for Dokus
+# Use with: docker compose -f docker-compose.lite.yml -f docker-compose.local.yml up -d
+# Builds server from source, enables debug, uses hardcoded dev credentials
+
+services:
+  traefik:
+    volumes:
+      - ./traefik/traefik.local.yml:/etc/traefik/traefik.yml:ro
+    deploy:
+
+  postgres:
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: devpassword
+    deploy:
+
+  redis:
+    command: redis-server --appendonly yes --requirepass devredispass
+    environment:
+      REDIS_PASSWORD: devredispass
+    deploy:
+
+  minio:
+    environment:
+      MINIO_ROOT_PASSWORD: dokusadminpassword
+    deploy:
+
+  dokus-server:
+    build:
+      context: ..
+      dockerfile: backendApp/Dockerfile.dev
+    image: dokus-server:local
+    ports:
+      - "5005:5005"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
+      REDIS_PASSWORD: devredispass
+      MINIO_SECRET_KEY: dokusadminpassword
+      MINIO_PASSWORD: dokusadminpassword
+      JWT_SECRET: local-secret-key-for-development-only
+      JWT_ISSUER: local.dokus.tech
+      JWT_AUDIENCE: dokus-api-local
+      LOG_LEVEL: DEBUG
+    env_file: []
+    deploy:
+    volumes:
+      - ../logs-local:/app/logs
+
+  web:
+    deploy:
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: dokus-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@dokus.ai
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - dokus-network
+    profiles:
+      - tools
+
+volumes:
+  pgadmin-data:

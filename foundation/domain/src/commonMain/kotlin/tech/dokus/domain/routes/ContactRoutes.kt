@@ -9,13 +9,13 @@ import kotlinx.serialization.Serializable
  *
  * SECURITY: All operations are scoped to the authenticated user's tenant via JWT.
  * NOTE: ContactType was removed - roles are now derived from cashflow items.
+ * NOTE: peppolEnabled filter removed - PEPPOL status is now in PeppolDirectoryCacheTable.
  */
 @Serializable
 @Resource("/api/v1/contacts")
 class Contacts(
     val search: String? = null,
     val active: Boolean? = null,
-    val peppolEnabled: Boolean? = null,
     val limit: Int = 50,
     val offset: Int = 0
 ) {
@@ -69,14 +69,17 @@ class Contacts(
         @Resource("activity")
         class Activity(val parent: Id)
 
+        // NOTE: PATCH /api/v1/contacts/{id}/peppol route removed
+        // PEPPOL status is now managed via PeppolDirectoryCacheRepository
+
         /**
-         * GET/PUT /api/v1/contacts/{id}/peppol
-         * GET - Get Peppol configuration for contact
-         * PUT - Update Peppol configuration
+         * GET /api/v1/contacts/{id}/peppol-status
+         * Get PEPPOL network status for this contact.
+         * Returns cached status by default, use ?refresh=true to force lookup.
          */
         @Serializable
-        @Resource("peppol")
-        class Peppol(val parent: Id)
+        @Resource("peppol-status")
+        class PeppolStatus(val parent: Id, val refresh: Boolean = false)
 
         /**
          * POST /api/v1/contacts/{id}/merge-into/{targetId}

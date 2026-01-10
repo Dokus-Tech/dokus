@@ -79,11 +79,6 @@ private fun ContactDetailsScreenContent(
         else -> emptyList()
     }
 
-    val isTogglingPeppol: Boolean = when (state) {
-        is ContactDetailsState.Content -> state.isTogglingPeppol
-        else -> false
-    }
-
     Scaffold(
         topBar = {
             ContactDetailsTopBar(
@@ -104,10 +99,8 @@ private fun ContactDetailsScreenContent(
             contactState = contactState,
             activityState = activityState,
             notesState = notesState,
-            isTogglingPeppol = isTogglingPeppol,
             isOnline = isOnline,
             contentPadding = contentPadding,
-            onPeppolToggle = { enabled -> onIntent(ContactDetailsIntent.TogglePeppol(enabled)) },
             onAddNote = {
                 if (isDesktop) {
                     onIntent(ContactDetailsIntent.ShowNotesSidePanel)

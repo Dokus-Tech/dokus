@@ -12,7 +12,6 @@ import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
-import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 
 /**
@@ -21,10 +20,10 @@ import tech.dokus.domain.model.contact.UpdateContactRequest
  */
 interface ContactRemoteDataSource {
     // CRUD Operations
+    // NOTE: peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
     suspend fun listContacts(
         search: String? = null,
         isActive: Boolean? = null,
-        peppolEnabled: Boolean? = null,
         limit: Int = 50,
         offset: Int = 0
     ): Result<List<ContactDto>>
@@ -52,11 +51,7 @@ interface ContactRemoteDataSource {
 
     suspend fun deleteContact(contactId: ContactId): Result<Unit>
 
-    // Peppol Operations
-    suspend fun updateContactPeppol(
-        contactId: ContactId,
-        request: UpdateContactPeppolRequest
-    ): Result<ContactDto>
+    // NOTE: Peppol Operations removed - PEPPOL status is in PeppolDirectoryCacheTable
 
     // Activity Operations
     suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary>

@@ -14,6 +14,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
@@ -61,6 +62,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val isRejecting: Boolean = false,
         val isDocumentConfirmed: Boolean = false,
         val isDocumentRejected: Boolean = false,
+        val confirmedCashflowEntryId: CashflowEntryId? = null,
         val showPreviewSheet: Boolean = false,
         val rejectDialogState: RejectDialogState? = null,
         val failureBannerDismissed: Boolean = false,

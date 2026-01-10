@@ -1,7 +1,7 @@
 package tech.dokus.features.cashflow.usecase
 
 import kotlinx.datetime.LocalDateTime
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
@@ -32,7 +32,7 @@ import kotlin.uuid.ExperimentalUuidApi
 class PeppolUseCasesTest {
 
     @Test
-    fun connectPeppolDelegatesToGateway() = runBlocking {
+    fun connectPeppolDelegatesToGateway() = runTest {
         val gateway = FakePeppolGateway()
         val response = PeppolConnectResponse(status = PeppolConnectStatus.Connected)
         gateway.connectResult = Result.success(response)
@@ -52,7 +52,7 @@ class PeppolUseCasesTest {
     }
 
     @Test
-    fun getPeppolSettingsDelegatesToGateway() = runBlocking {
+    fun getPeppolSettingsDelegatesToGateway() = runTest {
         val gateway = FakePeppolGateway()
         val settings = sampleSettings()
         gateway.settingsResult = Result.success(settings)
@@ -65,7 +65,7 @@ class PeppolUseCasesTest {
     }
 
     @Test
-    fun deletePeppolSettingsDelegatesToGateway() = runBlocking {
+    fun deletePeppolSettingsDelegatesToGateway() = runTest {
         val gateway = FakePeppolGateway()
         gateway.deleteSettingsResult = Result.success(Unit)
 
@@ -77,7 +77,7 @@ class PeppolUseCasesTest {
     }
 
     @Test
-    fun listPeppolTransmissionsDelegatesToGateway() = runBlocking {
+    fun listPeppolTransmissionsDelegatesToGateway() = runTest {
         val gateway = FakePeppolGateway()
         val transmission = sampleTransmission()
         gateway.listResult = Result.success(listOf(transmission))
@@ -103,7 +103,7 @@ class PeppolUseCasesTest {
     }
 
     @Test
-    fun verifyRecipientDelegatesToGateway() = runBlocking {
+    fun verifyRecipientDelegatesToGateway() = runTest {
         val gateway = FakePeppolGateway()
         val response = PeppolVerifyResponse(registered = true, participantId = "0208:BE0123456789")
         gateway.verifyResult = Result.success(response)
@@ -116,7 +116,7 @@ class PeppolUseCasesTest {
     }
 
     @Test
-    fun validateInvoiceDelegatesToGateway() = runBlocking {
+    fun validateInvoiceDelegatesToGateway() = runTest {
         val gateway = FakePeppolGateway()
         val response = PeppolValidationResult(isValid = true)
         gateway.validateResult = Result.success(response)
@@ -130,7 +130,7 @@ class PeppolUseCasesTest {
     }
 
     @Test
-    fun sendInvoiceDelegatesToGateway() = runBlocking {
+    fun sendInvoiceDelegatesToGateway() = runTest {
         val gateway = FakePeppolGateway()
         val response = SendInvoiceViaPeppolResponse(
             transmissionId = PeppolTransmissionId.parse("00000000-0000-0000-0000-000000000020"),
@@ -147,7 +147,7 @@ class PeppolUseCasesTest {
     }
 
     @Test
-    fun pollInboxDelegatesToGateway() = runBlocking {
+    fun pollInboxDelegatesToGateway() = runTest {
         val gateway = FakePeppolGateway()
         val response = PeppolInboxPollResponse(newDocuments = 0, processedDocuments = emptyList())
         gateway.pollResult = Result.success(response)
@@ -160,7 +160,7 @@ class PeppolUseCasesTest {
     }
 
     @Test
-    fun getTransmissionForInvoiceDelegatesToGateway() = runBlocking {
+    fun getTransmissionForInvoiceDelegatesToGateway() = runTest {
         val gateway = FakePeppolGateway()
         val transmission = sampleTransmission()
         gateway.getTransmissionResult = Result.success(transmission)

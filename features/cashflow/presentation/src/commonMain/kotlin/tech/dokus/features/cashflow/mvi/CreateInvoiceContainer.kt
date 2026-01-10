@@ -541,9 +541,11 @@ internal class CreateInvoiceContainer(
 
     /**
      * Check if Peppol is available for the selected client.
+     * NOTE: PEPPOL availability is now resolved at send time via PeppolRecipientResolver.
+     * This always returns true when a client is selected.
      */
     fun isPeppolAvailable(formState: CreateInvoiceFormState): Boolean {
-        return formState.selectedClient != null && formState.clientHasPeppolId
+        return formState.selectedClient != null
     }
 
     @OptIn(ExperimentalTime::class)

@@ -11,12 +11,9 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import tech.dokus.domain.model.RecommandDocumentsResponse
-import tech.dokus.domain.model.RecommandInboxDocument
-import tech.dokus.domain.model.RecommandMarkAsReadRequest
-import tech.dokus.domain.model.RecommandSendResponse
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.peppol.config.PeppolProviderConfig
 import tech.dokus.peppol.model.PeppolDirection
 import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolInboxItem
@@ -26,12 +23,19 @@ import tech.dokus.peppol.model.PeppolSendResponse
 import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.peppol.provider.PeppolCredentials
 import tech.dokus.peppol.provider.PeppolProvider
+import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
+import tech.dokus.peppol.provider.client.recommand.model.RecommandGetDocumentResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandGetDocumentsResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandGetInboxResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandMarkAsReadRequest
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSearchPeppolDirectoryRequest
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSearchPeppolDirectoryResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSendDocumentResponse
 
 /**
  * Peppol provider implementation for Recommand.eu
  *
  * API Reference: https://peppol.recommand.eu/api-reference
- * Base URL: https://app.recommand.eu
  *
  * Endpoints used:
  * - POST /api/v1/{companyId}/send - Send documents
@@ -42,18 +46,16 @@ import tech.dokus.peppol.provider.PeppolProvider
  */
 class RecommandProvider(
     private val httpClient: HttpClient,
-    private val productionBaseUrl: String = "https://app.recommand.eu",
-    private val testBaseUrl: String = "https://test.recommand.eu",
-    private val globalTestMode: Boolean = false,
 ) : PeppolProvider {
 
     private val logger = loggerFor()
+    private val config = PeppolProviderConfig.Recommand
 
-    override val providerId = "recommand"
-    override val providerName = "Recommand.eu"
+    override val providerId = config.providerId
+    override val providerName = config.providerName
 
     private lateinit var credentials: RecommandCredentials
-    private var baseUrl: String = productionBaseUrl
+    private val baseUrl: String = config.baseUrl
 
     private val isConfigured: Boolean
         get() = ::credentials.isInitialized
@@ -63,7 +65,6 @@ class RecommandProvider(
             "RecommandProvider requires RecommandCredentials, got ${credentials::class.simpleName}"
         }
         this.credentials = credentials
-        baseUrl = if (globalTestMode || credentials.testMode) testBaseUrl else productionBaseUrl
         logger.debug("Configured RecommandProvider for company: ${credentials.companyId}")
     }
 
@@ -94,13 +95,12 @@ class RecommandProvider(
                 throw RecommandApiException(response.status.value, errorBody)
             }
 
-            val result = response.body<RecommandSendResponse>()
+            val result = response.body<RecommandSendDocumentResponse>()
 
             if (result.success) {
-                logger.info("Document sent successfully. Document ID: ${result.documentId}")
+                logger.info("Document sent successfully. Document ID: ${result.id}")
             } else {
-                val errors = result.errors?.joinToString { it.message } ?: "Unknown error"
-                logger.warn("Document send failed. Errors: $errors")
+                logger.warn("Document send failed. Response: {}", result)
             }
 
             RecommandMapper.fromRecommandResponse(result)
@@ -154,7 +154,8 @@ class RecommandProvider(
             throw RecommandApiException(response.status.value, errorBody)
         }
 
-        val items = response.body<List<RecommandInboxDocument>>()
+        val wrapper = response.body<RecommandGetInboxResponse>()
+        val items = wrapper.documents
         logger.debug("Fetched ${items.size} inbox items")
         items.map { RecommandMapper.fromRecommandInboxItem(it) }
     }.onFailure { e ->
@@ -164,11 +165,39 @@ class RecommandProvider(
     /**
      * Get full document content by ID.
      * GET /api/v1/documents/{documentId}
+     * Returns {"success": true, "document": {...}} with parsed content
      */
     override suspend fun getDocument(documentId: String): Result<PeppolReceivedDocument> =
         runCatching {
             ensureConfigured()
             logger.debug("Fetching Peppol document: $documentId")
+
+            val response = httpClient.get("$baseUrl/api/v1/documents/$documentId") {
+                basicAuth(credentials.apiKey, credentials.apiSecret)
+            }
+
+        if (!response.status.isSuccess()) {
+            val errorBody = response.bodyAsText()
+            logger.error("Recommand API error: ${response.status} - $errorBody")
+            throw RecommandApiException(response.status.value, errorBody)
+        }
+
+        val detail = response.body<RecommandGetDocumentResponse>().document
+
+        RecommandMapper.fromRecommandDocumentDetail(detail)
+    }.onFailure { e ->
+        logger.error("Failed to fetch Peppol document: $documentId", e)
+    }
+
+    /**
+     * Get raw document detail including attachments.
+     * Used by PeppolPollingWorker to extract PDF attachments.
+     * GET /api/v1/documents/{documentId}
+     */
+    suspend fun getDocumentDetail(documentId: String): Result<RecommandDocumentDetail> =
+        runCatching {
+            ensureConfigured()
+            logger.debug("Fetching raw document detail: $documentId")
 
             val response = httpClient.get("$baseUrl/api/v1/documents/$documentId") {
                 basicAuth(credentials.apiKey, credentials.apiSecret)
@@ -180,13 +209,9 @@ class RecommandProvider(
                 throw RecommandApiException(response.status.value, errorBody)
             }
 
-            val item = response.body<RecommandInboxDocument>()
-            val document = item.document
-                ?: throw IllegalStateException("Document content is missing for ID: $documentId")
-
-            RecommandMapper.fromRecommandDocument(item, document)
+            response.body<RecommandGetDocumentResponse>().document
         }.onFailure { e ->
-            logger.error("Failed to fetch Peppol document: $documentId", e)
+            logger.error("Failed to fetch raw document detail: $documentId", e)
         }
 
     /**
@@ -216,19 +241,21 @@ class RecommandProvider(
 
     /**
      * List all documents with pagination.
-     * GET /api/v1/documents?companyId={}&direction={}&page={}&limit={}
+     * GET /api/v1/documents?companyId={}&direction={}&page={}&limit={}&isUnread={}
      */
     override suspend fun listDocuments(
         direction: PeppolDirection?,
         limit: Int,
-        offset: Int
+        offset: Int,
+        isUnread: Boolean?
     ): Result<PeppolDocumentList> = runCatching {
         ensureConfigured()
         logger.debug(
-            "Listing Peppol documents. Direction: {}, Limit: {}, Offset: {}",
+            "Listing Peppol documents. Direction: {}, Limit: {}, Offset: {}, isUnread: {}",
             direction,
             limit,
-            offset
+            offset,
+            isUnread
         )
 
         // Recommand uses page-based pagination, convert offset to page
@@ -248,6 +275,7 @@ class RecommandProvider(
                     }
                 )
             }
+            isUnread?.let { parameter("isUnread", it) }
         }
 
         if (!response.status.isSuccess()) {
@@ -256,8 +284,8 @@ class RecommandProvider(
             throw RecommandApiException(response.status.value, errorBody)
         }
 
-        val result = response.body<RecommandDocumentsResponse>()
-        logger.debug("Fetched ${result.data.size} documents")
+        val result = response.body<RecommandGetDocumentsResponse>()
+        logger.debug("Fetched ${result.documents.size} documents")
         RecommandMapper.fromRecommandDocumentsResponse(result)
     }.onFailure { e ->
         logger.error("Failed to list Peppol documents", e)
@@ -295,7 +323,54 @@ class RecommandProvider(
         val recommandRequest = RecommandMapper.toRecommandRequest(request)
         return json.encodeToString(recommandRequest)
     }
+
+    /**
+     * Search the PEPPOL directory by query (typically VAT number).
+     * POST /api/v1/search-peppol-directory
+     *
+     * @param query The search query (e.g., VAT number)
+     * @return List of matching participants with their supported document types
+     */
+    suspend fun searchDirectory(query: String): Result<List<PeppolDirectorySearchResult>> =
+        runCatching {
+            ensureConfigured()
+            logger.debug("Searching PEPPOL directory: $query")
+
+            val response = httpClient.post("$baseUrl/api/v1/search-peppol-directory") {
+                contentType(ContentType.Application.Json)
+                basicAuth(credentials.apiKey, credentials.apiSecret)
+                setBody(RecommandSearchPeppolDirectoryRequest(query = query))
+            }
+
+            if (!response.status.isSuccess()) {
+                val errorBody = response.bodyAsText()
+                logger.error("Recommand API error: ${response.status} - $errorBody")
+                throw RecommandApiException(response.status.value, errorBody)
+            }
+
+            val result = response.body<RecommandSearchPeppolDirectoryResponse>()
+            logger.debug("Directory search returned ${result.results.size} results")
+
+            result.results.map { r ->
+                PeppolDirectorySearchResult(
+                    peppolAddress = r.peppolAddress,
+                    name = r.name,
+                    supportedDocumentTypes = r.supportedDocumentTypes
+                )
+            }
+        }.onFailure { e ->
+            logger.error("Failed to search PEPPOL directory: $query", e)
+        }
 }
+
+/**
+ * Result from PEPPOL directory search.
+ */
+data class PeppolDirectorySearchResult(
+    val peppolAddress: String,
+    val name: String,
+    val supportedDocumentTypes: List<String>
+)
 
 /**
  * Exception thrown when Recommand API returns an error response.

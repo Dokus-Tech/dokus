@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.worker.DocumentProcessingWorker
+import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.config.AppBaseConfig
@@ -17,15 +18,19 @@ private val logger = loggerFor("BackgroundWorkers")
 fun Application.configureBackgroundWorkers(appConfig: AppBaseConfig) {
     val processingWorker by inject<DocumentProcessingWorker>()
     val rateLimitCleanupWorker by inject<RateLimitCleanupWorker>()
+    val peppolPollingWorker by inject<PeppolPollingWorker>()
 
     monitor.subscribe(ApplicationStarted) {
         rateLimitCleanupWorker.start()
         logger.info("Starting document processing worker")
         processingWorker.start()
+        logger.info("Starting Peppol polling worker")
+        peppolPollingWorker.start()
     }
 
     monitor.subscribe(ApplicationStopping) {
         processingWorker.stop()
+        peppolPollingWorker.stop()
 
         // Close optional Redis connection if present.
         val redisClient = runCatching { getKoin().getOrNull<RedisClient>() }.getOrNull()

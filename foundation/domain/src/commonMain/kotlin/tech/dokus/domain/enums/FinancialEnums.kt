@@ -183,20 +183,25 @@ enum class Permission(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class SubscriptionTier(override val dbValue: String) : DbEnum {
+    @SerialName("CORE")
+    Core("CORE"),
+
+    @SerialName("ONE")
+    One("ONE"),
+
     @SerialName("SELF_HOSTED")
     SelfHosted("SELF_HOSTED"),
 
-    @SerialName("CLOUD_FREE")
-    CloudFree("CLOUD_FREE"),
-
-    @SerialName("CLOUD_BASIC")
-    CloudBasic("CLOUD_BASIC"),
-
-    @SerialName("CLOUD_PRO")
-    CloudPro("CLOUD_PRO");
+    @SerialName("CORE_FOUNDER")
+    CoreFounder("CORE_FOUNDER");
 
     companion object {
-        val default = CloudFree
+        val default = Core
+
+        /** Tiers with access to Tomorrow (AI/Forecast) features */
+        val premiumTiers = setOf(One)
+
+        fun hasTomorrowAccess(tier: SubscriptionTier): Boolean = tier in premiumTiers
     }
 }
 
@@ -222,6 +227,21 @@ enum class ClientType(override val dbValue: String) : DbEnum {
 
 // ContactType removed - roles are now derived from cashflow items
 // See Contact.kt for DerivedContactRoles
+
+/**
+ * Source of contact creation - tracks how a contact was added to the system.
+ */
+@Serializable
+enum class ContactSource(override val dbValue: String) : DbEnum {
+    @SerialName("manual")
+    Manual("manual"),
+
+    @SerialName("ai")
+    AI("ai"),
+
+    @SerialName("peppol")
+    Peppol("peppol")
+}
 
 // ============================================================================
 // INVOICE ENUMS
@@ -652,6 +672,49 @@ enum class UnitCode(val code: String, val description: String) {
     companion object {
         fun fromCode(code: String): UnitCode = entries.find { it.code == code } ?: Each
     }
+}
+
+// ============================================================================
+// CASHFLOW ENTRIES ENUMS
+// ============================================================================
+
+@Serializable
+enum class CashflowSourceType(override val dbValue: String) : DbEnum {
+    @SerialName("INVOICE")
+    Invoice("INVOICE"),
+
+    @SerialName("BILL")
+    Bill("BILL"),
+
+    @SerialName("EXPENSE")
+    Expense("EXPENSE"),
+
+    @SerialName("MANUAL")
+    Manual("MANUAL")
+}
+
+@Serializable
+enum class CashflowDirection(override val dbValue: String) : DbEnum {
+    @SerialName("IN")
+    In("IN"),
+
+    @SerialName("OUT")
+    Out("OUT")
+}
+
+@Serializable
+enum class CashflowEntryStatus(override val dbValue: String) : DbEnum {
+    @SerialName("OPEN")
+    Open("OPEN"),
+
+    @SerialName("PAID")
+    Paid("PAID"),
+
+    @SerialName("OVERDUE")
+    Overdue("OVERDUE"),
+
+    @SerialName("CANCELLED")
+    Cancelled("CANCELLED")
 }
 
 // ============================================================================

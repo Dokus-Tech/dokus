@@ -172,8 +172,6 @@ private fun DesktopFormLayout(
         onCityChange = { onIntent(ContactFormIntent.UpdateCity(it)) },
         onPostalCodeChange = { onIntent(ContactFormIntent.UpdatePostalCode(it)) },
         onCountryChange = { onIntent(ContactFormIntent.UpdateCountry(it)) },
-        onPeppolIdChange = { onIntent(ContactFormIntent.UpdatePeppolId(it)) },
-        onPeppolEnabledChange = { onIntent(ContactFormIntent.UpdatePeppolEnabled(it)) },
         onDefaultPaymentTermsChange = { onIntent(ContactFormIntent.UpdateDefaultPaymentTerms(it)) },
         onDefaultVatRateChange = { onIntent(ContactFormIntent.UpdateDefaultVatRate(it)) },
         onTagsChange = { onIntent(ContactFormIntent.UpdateTags(it)) },
@@ -262,8 +260,6 @@ private fun MobileFormLayout(
                 onCityChange = { onIntent(ContactFormIntent.UpdateCity(it)) },
                 onPostalCodeChange = { onIntent(ContactFormIntent.UpdatePostalCode(it)) },
                 onCountryChange = { onIntent(ContactFormIntent.UpdateCountry(it)) },
-                onPeppolIdChange = { onIntent(ContactFormIntent.UpdatePeppolId(it)) },
-                onPeppolEnabledChange = { onIntent(ContactFormIntent.UpdatePeppolEnabled(it)) },
                 onDefaultPaymentTermsChange = {
                     onIntent(
                         ContactFormIntent.UpdateDefaultPaymentTerms(

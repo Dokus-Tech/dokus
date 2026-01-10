@@ -4,7 +4,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.logging.SIMPLE
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -25,14 +27,18 @@ import tech.dokus.backend.services.auth.RedisRateLimitService
 import tech.dokus.backend.services.auth.SmtpEmailService
 import tech.dokus.backend.services.auth.TeamService
 import tech.dokus.backend.services.cashflow.BillService
+import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
+import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.DocumentProcessingWorker
+import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.database.DokusSchema
 import tech.dokus.database.di.repositoryModules
@@ -50,6 +56,7 @@ import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.DeploymentConfig
 import tech.dokus.foundation.backend.config.MinioConfig
 import tech.dokus.foundation.backend.crypto.AesGcmCredentialCryptoService
 import tech.dokus.foundation.backend.crypto.CredentialCryptoService
@@ -68,9 +75,14 @@ import tech.dokus.foundation.backend.storage.MinioStorage
 import tech.dokus.foundation.backend.storage.ObjectStorage
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.mapper.PeppolMapper
+import tech.dokus.peppol.policy.DefaultDocumentConfirmationPolicy
+import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
+import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.service.PeppolConnectionService
+import tech.dokus.peppol.service.PeppolCredentialResolver
+import tech.dokus.peppol.service.PeppolCredentialResolverImpl
 import tech.dokus.peppol.service.PeppolService
 import tech.dokus.peppol.validator.PeppolValidator
 
@@ -125,7 +137,8 @@ private val httpClientModule = module {
                 json(json)
             }
             install(Logging) {
-                level = LogLevel.INFO
+                logger = Logger.SIMPLE
+                level = LogLevel.ALL
             }
             engine {
                 requestTimeout = 120_000 // 2 minutes for AI / external calls
@@ -226,29 +239,57 @@ private fun authModule(appConfig: AppBaseConfig) = module {
 }
 
 private fun cashflowModule(appConfig: AppBaseConfig) = module {
-    single { InvoiceService(get()) }
+    single { InvoiceService(get(), get()) }
     single { ExpenseService(get()) }
-    single { BillService(get()) }
+    single { BillService(get(), get()) }
+    single { CashflowEntriesService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
+    single { DocumentConfirmationService(get(), get(), get(), get()) }
 
     // PDF Preview
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
 
+    // Deployment config (hosting mode)
+    single { DeploymentConfig.fromConfig(appConfig.config) }
+
     // Peppol
     single { PeppolModuleConfig.fromConfig(appConfig.config) }
-    single { PeppolProviderFactory(get(), get()) }
-    single { RecommandCompaniesClient(get(), get()) }
+    single { PeppolProviderFactory(get()) }
+    single { RecommandCompaniesClient(get()) }
+    single { RecommandProvider(get()) } // For directory lookups
     single { PeppolMapper() }
     single { PeppolValidator() }
-    single { PeppolConnectionService(get(), get()) }
-    single { PeppolService(get(), get(), get(), get(), get()) }
+    // Centralized credential resolver - ALL Peppol operations use this
+    single<PeppolCredentialResolver> { PeppolCredentialResolverImpl(get(), get(), get()) }
+    single { PeppolConnectionService(get(), get(), get()) }
+    single { PeppolService(get(), get(), get(), get(), get(), get()) }
+
+    // PEPPOL Directory Cache - resolves recipients via cache-first lookup
+    single { PeppolRecipientResolver(get(), get(), get(), get()) }
+    single<DocumentConfirmationPolicy> { DefaultDocumentConfirmationPolicy() }
+
+    // Peppol Polling Worker
+    single {
+        PeppolPollingWorker(
+            peppolSettingsRepository = get(),
+            peppolService = get(),
+            documentRepository = get(),
+            draftRepository = get(),
+            ingestionRunRepository = get(),
+            confirmationPolicy = get(),
+            confirmationService = get(),
+            documentStorageService = get(),
+            contactRepository = get()
+        )
+    }
 
     // AI / RAG config (repositories are in repositoryModules)
     single<AIConfig> { appConfig.ai }
 }
 
 private val contactsModule = module {
-    single { ContactService(get()) }
+    // NOTE: ContactService takes optional PeppolDirectoryCacheRepository for cache invalidation
+    single { ContactService(get(), getOrNull()) }
     single { ContactNoteService(get()) }
     single { ContactMatchingService(get()) }
 }
@@ -271,6 +312,8 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             aiService = get(),
             documentImageService = get(),
             config = appConfig.processor,
+            draftRepository = get(),
+            contactMatchingService = get(),
             // RAG chunking/embedding - use repositories from foundation:database
             chunkingService = getOrNull<ChunkingService>(),
             embeddingService = getOrNull<EmbeddingService>(),

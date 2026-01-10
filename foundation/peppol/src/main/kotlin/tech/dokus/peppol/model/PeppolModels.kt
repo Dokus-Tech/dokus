@@ -203,7 +203,11 @@ data class PeppolDocumentSummary(
     val counterpartyPeppolId: String,
     val status: String,
     val createdAt: String,
+    val readAt: String? = null, // ISO timestamp, null if unread
     val invoiceNumber: String?,
     val totalAmount: Double?,
     val currency: String?
-)
+) {
+    /** Convenience property: true if document is unread (readAt is null) */
+    val isUnread: Boolean get() = readAt == null
+}

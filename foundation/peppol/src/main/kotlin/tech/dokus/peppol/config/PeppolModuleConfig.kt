@@ -7,19 +7,23 @@ import com.typesafe.config.Config
  *
  * Loaded from HOCON configuration files following application patterns.
  * Expected configuration path: peppol.*
+ *
+ * Note: Hosting mode is determined by DeploymentConfig, not this config.
+ * Provider URLs are defined in [PeppolProviderConfig] sealed class,
+ * not in configuration files (URLs are fixed, only API keys vary).
  */
 data class PeppolModuleConfig(
     /** Default provider ID (e.g., "recommand") */
     val defaultProvider: String,
 
-    /** Recommand provider configuration */
-    val recommand: RecommandConfig,
-
     /** Inbox polling configuration */
     val inbox: InboxConfig,
 
     /** Global test mode override (if true, all tenants use test mode) */
-    val globalTestMode: Boolean
+    val globalTestMode: Boolean,
+
+    /** Master credentials for cloud-hosted deployments (null if self-hosted) */
+    val masterCredentials: MasterCredentialsConfig?
 ) {
     companion object {
         /**
@@ -29,27 +33,32 @@ data class PeppolModuleConfig(
             val peppolConfig = config.getConfig("peppol")
             return PeppolModuleConfig(
                 defaultProvider = peppolConfig.getString("defaultProvider"),
-                recommand = RecommandConfig.fromConfig(peppolConfig.getConfig("recommand")),
                 inbox = InboxConfig.fromConfig(peppolConfig.getConfig("inbox")),
-                globalTestMode = peppolConfig.getBoolean("globalTestMode")
+                globalTestMode = peppolConfig.getBoolean("globalTestMode"),
+                masterCredentials = if (peppolConfig.hasPath("master")) {
+                    MasterCredentialsConfig.fromConfig(peppolConfig.getConfig("master"))
+                } else {
+                    null
+                }
             )
         }
     }
 }
 
 /**
- * Recommand provider configuration.
+ * Master Peppol credentials for cloud-hosted deployments.
+ * These are Dokus's own Recommand API credentials used for all cloud tenants.
  */
-data class RecommandConfig(
-    /** Production API base URL */
-    val baseUrl: String,
-    /** Test/sandbox API base URL */
-    val testUrl: String
+data class MasterCredentialsConfig(
+    /** Dokus master API key for Recommand */
+    val apiKey: String,
+    /** Dokus master API secret for Recommand */
+    val apiSecret: String
 ) {
     companion object {
-        fun fromConfig(config: Config): RecommandConfig = RecommandConfig(
-            baseUrl = config.getString("baseUrl"),
-            testUrl = config.getString("testUrl")
+        fun fromConfig(config: Config): MasterCredentialsConfig = MasterCredentialsConfig(
+            apiKey = config.getString("apiKey"),
+            apiSecret = config.getString("apiSecret")
         )
     }
 }

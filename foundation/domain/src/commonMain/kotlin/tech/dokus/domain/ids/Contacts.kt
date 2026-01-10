@@ -28,3 +28,15 @@ value class ContactNoteId(val value: Uuid) {
         fun parse(value: String): ContactNoteId = ContactNoteId(Uuid.parse(value))
     }
 }
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class ContactAddressId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): ContactAddressId = ContactAddressId(Uuid.random())
+        fun parse(value: String): ContactAddressId = ContactAddressId(Uuid.parse(value))
+    }
+}

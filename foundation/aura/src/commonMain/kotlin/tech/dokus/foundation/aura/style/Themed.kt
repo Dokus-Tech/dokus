@@ -1,18 +1,30 @@
 package tech.dokus.foundation.aura.style
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RippleConfiguration
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 import tech.dokus.foundation.aura.local.LocalThemeManager
 import tech.dokus.foundation.platform.activePlatform
 import tech.dokus.foundation.platform.isWeb
+
+// Dokus Design System v1 Shapes - locked at 2/4/6dp
+private val dokusShapes = Shapes(
+    extraSmall = RoundedCornerShape(2.dp),  // radius-xs: rare, tiny elements
+    small = RoundedCornerShape(4.dp),       // radius-sm: panels/surfaces
+    medium = RoundedCornerShape(6.dp),      // radius-md: inputs, buttons, modals
+    large = RoundedCornerShape(6.dp),       // capped at 6dp per design system
+    extraLarge = RoundedCornerShape(6.dp),  // capped at 6dp per design system
+)
 
 /**
  * Themed wrapper that applies Material3 theme to content.
@@ -60,7 +72,7 @@ fun Themed(
             rippleAlpha = calmRippleAlpha
         )
     ) {
-        MaterialTheme(colorScheme = colorScheme, typography = typography) {
+        MaterialTheme(colorScheme = colorScheme, typography = typography, shapes = dokusShapes) {
             content()
         }
     }

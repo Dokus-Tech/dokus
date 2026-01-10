@@ -2,7 +2,7 @@ package tech.dokus.foundation.aura.tooling
 
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chart_bar_trend_up
-import tech.dokus.aura.resources.home_dashboard
+import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.home_settings
 import tech.dokus.aura.resources.user
 import tech.dokus.domain.Email
@@ -20,9 +20,9 @@ val mockUserId = UserId("preview-user-id")
 
 val homeItemMocks = listOf(
     HomeItem(
-        titleRes = Res.string.home_dashboard,
+        titleRes = Res.string.home_today,
         iconRes = Res.drawable.chart_bar_trend_up,
-        destination = HomeDestination.Dashboard,
+        destination = HomeDestination.Today,
         priority = HomeItemPriority.High,
     ),
     HomeItem(

@@ -13,7 +13,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
@@ -21,8 +23,6 @@ import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.domain.Money
-import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
@@ -30,9 +30,6 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ConfirmDocumentRequest
-import tech.dokus.domain.model.CreateBillRequest
-import tech.dokus.domain.model.CreateExpenseRequest
-import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
@@ -70,7 +67,9 @@ internal fun Route.documentRecordRoutes() {
     val invoiceRepository by inject<InvoiceRepository>()
     val expenseRepository by inject<ExpenseRepository>()
     val billRepository by inject<BillRepository>()
+    val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
     val minioStorage by inject<MinioDocumentStorageService>()
+    val documentConfirmationService by inject<DocumentConfirmationService>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
 
     authenticateJwt {
@@ -402,13 +401,18 @@ internal fun Route.documentRecordRoutes() {
                 val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
                 val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
+                // Look up the cashflow entry for this document
+                val cashflowEntry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId)
+                    .getOrNull()
+
                 call.respond(
                     HttpStatusCode.OK,
                     DocumentRecordDto(
                         document = documentWithUrl,
                         draft = draft.toDto(),
                         latestIngestion = latestIngestion?.toDto(),
-                        confirmedEntity = confirmedEntity
+                        confirmedEntity = confirmedEntity,
+                        cashflowEntryId = cashflowEntry?.id
                     )
                 )
                 return@post
@@ -461,91 +465,17 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Entity already exists for this document")
             }
 
-            // Create entity based on type
-            val createdEntity: FinancialDocumentDto = when (resolvedType) {
-                DocumentType.Invoice -> {
-                    val invoiceData = extractedData.invoice
-                        ?: throw DokusException.BadRequest("No invoice data extracted from document")
+            // Confirm document: creates entity + cashflow entry + marks draft confirmed
+            val confirmationResult = documentConfirmationService.confirmDocument(
+                tenantId = tenantId,
+                documentId = documentId,
+                documentType = resolvedType,
+                extractedData = extractedData,
+                linkedContactId = draft.linkedContactId
+            ).getOrThrow()
 
-                    val contactId = draft.linkedContactId
-                        ?: throw DokusException.BadRequest("Invoice requires a linked contact")
-
-                    validateInvoiceData(invoiceData)
-
-                    val items = buildInvoiceItems(invoiceData)
-                    val createRequest = CreateInvoiceRequest(
-                        contactId = contactId,
-                        items = items,
-                        issueDate = invoiceData.issueDate,
-                        dueDate = invoiceData.dueDate,
-                        notes = invoiceData.notes,
-                        documentId = documentId
-                    )
-
-                    invoiceRepository.createInvoice(tenantId, createRequest).getOrThrow()
-                }
-
-                DocumentType.Bill -> {
-                    val billData = extractedData.bill
-                        ?: throw DokusException.BadRequest("No bill data extracted from document")
-
-                    val createRequest = CreateBillRequest(
-                        supplierName = billData.supplierName ?: "Unknown Supplier",
-                        supplierVatNumber = billData.supplierVatNumber,
-                        invoiceNumber = billData.invoiceNumber,
-                        issueDate = billData.issueDate
-                            ?: throw DokusException.BadRequest("Issue date is required"),
-                        dueDate = billData.dueDate ?: billData.issueDate
-                            ?: throw DokusException.BadRequest("Due date is required"),
-                        amount = billData.amount
-                            ?: throw DokusException.BadRequest("Amount is required"),
-                        vatAmount = billData.vatAmount,
-                        vatRate = billData.vatRate,
-                        category = billData.category
-                            ?: throw DokusException.BadRequest("Category is required"),
-                        description = billData.description,
-                        notes = billData.notes,
-                        documentId = documentId
-                    )
-
-                    billRepository.createBill(tenantId, createRequest).getOrThrow()
-                }
-
-                DocumentType.Expense -> {
-                    val expenseData = extractedData.expense
-                        ?: throw DokusException.BadRequest("No expense data extracted from document")
-
-                    val createRequest = CreateExpenseRequest(
-                        date = expenseData.date
-                            ?: throw DokusException.BadRequest("Date is required"),
-                        merchant = expenseData.merchant
-                            ?: throw DokusException.BadRequest("Merchant is required"),
-                        amount = expenseData.amount
-                            ?: throw DokusException.BadRequest("Amount is required"),
-                        vatAmount = expenseData.vatAmount,
-                        vatRate = expenseData.vatRate,
-                        category = expenseData.category
-                            ?: throw DokusException.BadRequest("Category is required"),
-                        description = expenseData.description,
-                        documentId = documentId,
-                        isDeductible = expenseData.isDeductible,
-                        deductiblePercentage = expenseData.deductiblePercentage,
-                        paymentMethod = expenseData.paymentMethod,
-                        notes = expenseData.notes
-                    )
-
-                    expenseRepository.createExpense(tenantId, createRequest).getOrThrow()
-                }
-
-                DocumentType.Unknown -> {
-                    throw DokusException.BadRequest("Cannot confirm document with unknown type")
-                }
-            }
-
-            // Update draft status to confirmed
-            draftRepository.updateDraftStatus(documentId, tenantId, DraftStatus.Confirmed)
-
-            logger.info("Document confirmed: $documentId -> $resolvedType")
+            val entryId = confirmationResult.cashflowEntryId
+            logger.info("Document confirmed: $documentId -> $resolvedType, cashflowEntryId=$entryId")
 
             // Return full record
             val document = documentRepository.getById(tenantId, documentId)!!
@@ -559,7 +489,8 @@ internal fun Route.documentRecordRoutes() {
                     document = documentWithUrl,
                     draft = updatedDraft.toDto(),
                     latestIngestion = latestIngestion?.toDto(),
-                    confirmedEntity = createdEntity
+                    confirmedEntity = confirmationResult.entity,
+                    cashflowEntryId = confirmationResult.cashflowEntryId
                 )
             )
         }
@@ -618,114 +549,6 @@ private suspend fun addDownloadUrl(
         null
     }
     return document.copy(downloadUrl = downloadUrl)
-}
-
-private fun validateInvoiceData(data: tech.dokus.domain.model.ExtractedInvoiceFields) {
-    val error = firstInvoiceValidationError(data) ?: return
-    throw DokusException.BadRequest(error)
-}
-
-private fun firstInvoiceValidationError(
-    data: tech.dokus.domain.model.ExtractedInvoiceFields
-): String? {
-    if (data.issueDate == null) {
-        return "Issue date is required"
-    }
-    val subtotal = data.subtotalAmount ?: return "Subtotal is required"
-    val total = data.totalAmount
-    val vat = data.vatAmount
-    if (vat != null && total != null) {
-        val expected = subtotal + vat
-        val diff = kotlin.math.abs(expected.minor - total.minor)
-        if (diff > 1L) {
-            return "Amounts are inconsistent"
-        }
-    }
-    return null
-}
-
-private fun buildInvoiceItems(
-    data: tech.dokus.domain.model.ExtractedInvoiceFields
-): List<tech.dokus.domain.model.InvoiceItemDto> {
-    val items = data.items
-        ?.mapIndexedNotNull { index, item -> buildInvoiceItem(item, index) }
-        .orEmpty()
-
-    if (items.isNotEmpty()) return items
-
-    return listOf(buildFallbackInvoiceItem(data))
-}
-
-private fun buildInvoiceItem(
-    item: tech.dokus.domain.model.ExtractedLineItem,
-    index: Int
-): tech.dokus.domain.model.InvoiceItemDto? {
-    val quantity = item.quantity ?: 1.0
-    val lineTotal = resolveLineTotal(item, quantity) ?: return null
-    val vatAmount = resolveVatAmount(item, lineTotal)
-    val vatRate = resolveVatRate(item, lineTotal, vatAmount)
-    val finalVatAmount = vatAmount ?: VatRate.ZERO.applyTo(lineTotal)
-    val unitPrice = item.unitPrice ?: Money.fromDouble(lineTotal.toDouble() / quantity)
-
-    return tech.dokus.domain.model.InvoiceItemDto(
-        description = item.description ?: "Line item ${index + 1}",
-        quantity = quantity,
-        unitPrice = unitPrice,
-        vatRate = vatRate,
-        lineTotal = lineTotal,
-        vatAmount = finalVatAmount,
-        sortOrder = index
-    )
-}
-
-private fun resolveLineTotal(
-    item: tech.dokus.domain.model.ExtractedLineItem,
-    quantity: Double
-): Money? {
-    return item.lineTotal ?: item.unitPrice?.let { unit ->
-        Money.fromDouble(unit.toDouble() * quantity)
-    }
-}
-
-private fun resolveVatAmount(
-    item: tech.dokus.domain.model.ExtractedLineItem,
-    lineTotal: Money
-): Money? {
-    return item.vatAmount ?: item.vatRate?.let { rate -> rate.applyTo(lineTotal) }
-}
-
-private fun resolveVatRate(
-    item: tech.dokus.domain.model.ExtractedLineItem,
-    lineTotal: Money,
-    vatAmount: Money?
-): VatRate {
-    val explicitRate = item.vatRate
-    if (explicitRate != null) return explicitRate
-    if (vatAmount == null || lineTotal.minor == 0L) return VatRate.ZERO
-    return VatRate.fromMultiplier(vatAmount.toDouble() / lineTotal.toDouble())
-}
-
-private fun buildFallbackInvoiceItem(
-    data: tech.dokus.domain.model.ExtractedInvoiceFields
-): tech.dokus.domain.model.InvoiceItemDto {
-    val subtotal = data.subtotalAmount
-        ?: throw DokusException.BadRequest("Subtotal is required")
-    val vatAmount = data.vatAmount ?: Money.ZERO
-    val vatRate = if (subtotal.minor != 0L && vatAmount.minor != 0L) {
-        VatRate.fromMultiplier(vatAmount.toDouble() / subtotal.toDouble())
-    } else {
-        VatRate.ZERO
-    }
-
-    return tech.dokus.domain.model.InvoiceItemDto(
-        description = data.invoiceNumber ?: "Document total",
-        quantity = 1.0,
-        unitPrice = subtotal,
-        vatRate = vatRate,
-        lineTotal = subtotal,
-        vatAmount = vatAmount,
-        sortOrder = 0
-    )
 }
 
 internal suspend fun findConfirmedEntity(

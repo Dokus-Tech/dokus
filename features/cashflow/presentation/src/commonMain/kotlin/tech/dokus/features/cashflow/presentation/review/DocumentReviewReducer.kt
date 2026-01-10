@@ -134,6 +134,12 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleOpenChat() =
         with(actions) { handleOpenChat() }
 
+    suspend fun DocumentReviewCtx.handleViewCashflowEntry() =
+        with(actions) { handleViewCashflowEntry() }
+
+    suspend fun DocumentReviewCtx.handleViewEntity() =
+        with(actions) { handleViewEntity() }
+
     // Failed analysis handlers
     suspend fun DocumentReviewCtx.handleRetryAnalysis() =
         with(actions) { handleRetryAnalysis() }

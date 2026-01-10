@@ -12,6 +12,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.banking.BankingRepository
 import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -19,9 +20,11 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactNoteRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.payment.PaymentRepository
+import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
@@ -56,6 +59,7 @@ val repositoryModuleCashflow = module {
     single { InvoiceRepository(get()) }
     single { ExpenseRepository() }
     single { BillRepository() }
+    single { CashflowEntriesRepository() }
     single { CashflowRepository(get(), get()) }
 }
 
@@ -69,6 +73,7 @@ val repositoryModuleCashflow = module {
 val repositoryModulePeppol = module {
     single { PeppolSettingsRepository(get<CredentialCryptoService>()) }
     single { PeppolTransmissionRepository() }
+    single { PeppolDirectoryCacheRepository() }
 }
 
 /**
@@ -106,9 +111,11 @@ val repositoryModulePayment = module {
 /**
  * Contacts repositories module.
  * Provides repositories for unified contact management (customers AND vendors).
+ * Includes address management via ContactAddressRepository.
  */
 val repositoryModuleContacts = module {
     single { ContactRepository() }
+    single { ContactAddressRepository() }
     single { ContactNoteRepository() }
 }
 

@@ -5,8 +5,9 @@ import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.enums.ContactSource
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
@@ -36,16 +37,8 @@ object ContactsTable : UUIDTable("contacts") {
     // Business type (Individual/Business/Government) - role is now derived from cashflow items
     val businessType = dbEnumeration<ClientType>("business_type").default(ClientType.Business)
 
-    // Peppol e-invoicing (Belgium 2026 mandate)
-    val peppolId = varchar("peppol_id", 255).nullable()
-    val peppolEnabled = bool("peppol_enabled").default(false)
-
-    // Address
-    val addressLine1 = varchar("address_line_1", 255).nullable()
-    val addressLine2 = varchar("address_line_2", 255).nullable()
-    val city = varchar("city", 100).nullable()
-    val postalCode = varchar("postal_code", 20).nullable()
-    val country = varchar("country", 2).nullable() // ISO 3166-1 alpha-2
+    // NOTE: PEPPOL fields (peppolId, peppolEnabled) moved to PeppolDirectoryCacheTable
+    // PEPPOL recipient capability is discovery data, not contact master data
 
     // Defaults for invoicing
     val defaultPaymentTerms = integer("default_payment_terms").default(30)
@@ -60,6 +53,7 @@ object ContactsTable : UUIDTable("contacts") {
     val createdFromDocumentId = uuid("created_from_document_id")
         .references(DocumentsTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable() // Track which document led to this contact's creation (user-confirmed)
+    val contactSource = dbEnumeration<ContactSource>("source").default(ContactSource.Manual)
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

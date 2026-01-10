@@ -65,11 +65,11 @@
     <!-- Document Upload -->
     <string name="upload_documents_title">Dokumente hochladen</string>
     <string name="upload_add_document">Dokument hinzufügen</string>
-    <string name="upload_drag_hint">oder Dateien hierher ziehen</string>
-    <string name="upload_instructions">Um ein Bild zu importieren oder ein Dokument für Ihre Rechnung zu scannen, stellen Sie sicher, dass die Datei klar und in einem kompatiblen Format ist.</string>
+    <string name="upload_drag_hint">PDF, JPG, PNG unterstützt</string>
+    <string name="upload_instructions">Dokumente werden automatisch verarbeitet.</string>
     <string name="upload_no_app_hint">Sie haben die Anwendung nicht? Klicken Sie hier</string>
     <string name="upload_uploads_title">Uploads</string>
-    <string name="upload_no_documents">Keine Dokumente werden hochgeladen</string>
+    <string name="upload_no_documents">Keine aktiven Uploads</string>
     <string name="upload_release_to_upload">Zum Hochladen loslassen</string>
     <string name="upload_documents_absorbed">Dokumente werden absorbiert</string>
 
@@ -283,8 +283,8 @@
     <string name="invoice_validation_due_date_before_issue">Fälligkeitsdatum darf nicht vor dem Ausstellungsdatum liegen</string>
 
     <!-- Upload -->
-    <string name="upload_select_or_drag">Dateien auswählen oder hierher ziehen</string>
-    <string name="upload_drop_files">Dateien zum Hochladen ablegen</string>
+    <string name="upload_select_or_drag">Dateien hier ablegen oder zum Hochladen klicken</string>
+    <string name="upload_drop_files">Dateien hier ablegen</string>
     <string name="upload_with_camera">Mit Kamera hochladen</string>
     <string name="upload_select_file">Datei auswählen</string>
     <string name="upload_status_deleting">Löschen...</string>

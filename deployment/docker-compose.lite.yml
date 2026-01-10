@@ -2,19 +2,16 @@
 # Optimized for: Raspberry Pi / edge (personal use)
 #
 # Stack:
-# - Traefik (gateway + routing on :8000)
+# - Traefik (HTTP gateway on port 8000)
 # - PostgreSQL (single DB; tuned for lower memory)
 # - Redis (required; tuned for low memory)
-# - MinIO (object storage; must be kept)
+# - MinIO (object storage)
 # - dokus-server (modular monolith backend)
-# - dokus-web (optional UI)
+# - dokus-web (UI)
 #
 # Usage:
 #   docker compose -f docker-compose.lite.yml up -d
 #   ./dokus.sh --profile=lite start
-#
-# Note: When using `deploy.resources` with plain `docker compose`,
-# run via `./dokus.sh` (it uses `--compatibility`) to apply limits.
 
 x-jvm-pi-defaults: &jvm-pi-defaults
   JAVA_OPTS: >-
@@ -187,7 +184,7 @@ services:
       - "traefik.http.routers.minio.middlewares=minio-strip"
 
   # ==========================================================================
-  # BACKEND (single server)
+  # BACKEND
   # ==========================================================================
   dokus-server:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-server:${TAG:-latest}
@@ -203,7 +200,6 @@ services:
       MINIO_ACCESS_KEY: dokusadmin
       MINIO_SECRET_KEY: ${MINIO_PASSWORD}
       MINIO_BUCKET: dokus-storage
-      # AI configuration (light mode for low resources)
       DOKUS_AI_MODE: light
       OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
       LOG_PATH: /app/logs
@@ -240,9 +236,11 @@ services:
       - "traefik.http.routers.api.priority=1000"
       - "traefik.http.routers.api.middlewares=rate-limit@file,cors-api@file,compress@file"
       - "traefik.http.services.api.loadbalancer.server.port=8080"
+      - "traefik.http.services.api.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.api.loadbalancer.healthcheck.interval=30s"
 
   # ==========================================================================
-  # WEB (optional)
+  # WEB UI
   # ==========================================================================
   web:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-web:${TAG:-latest}

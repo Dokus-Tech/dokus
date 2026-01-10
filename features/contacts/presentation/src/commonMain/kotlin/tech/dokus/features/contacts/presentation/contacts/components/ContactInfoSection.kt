@@ -23,8 +23,6 @@ import tech.dokus.foundation.aura.components.common.DokusErrorContent
 @Composable
 internal fun ContactInfoSection(
     state: DokusState<ContactDto>,
-    onPeppolToggle: (Boolean) -> Unit,
-    isTogglingPeppol: Boolean,
     modifier: Modifier = Modifier
 ) {
     DokusCard(
@@ -44,9 +42,7 @@ internal fun ContactInfoSection(
             when (state) {
                 is DokusState.Loading, is DokusState.Idle -> ContactInfoSkeleton()
                 is DokusState.Success -> ContactInfoContent(
-                    contact = state.data,
-                    onPeppolToggle = onPeppolToggle,
-                    isTogglingPeppol = isTogglingPeppol
+                    contact = state.data
                 )
                 is DokusState.Error -> {
                     androidx.compose.foundation.layout.Box(

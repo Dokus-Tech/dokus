@@ -13,8 +13,8 @@ import tech.dokus.aura.resources.cashflow_invoice_number
 import tech.dokus.aura.resources.cashflow_section_additional_information
 import tech.dokus.aura.resources.cashflow_section_amounts
 import tech.dokus.aura.resources.cashflow_select_category
-import tech.dokus.aura.resources.cashflow_supplier_information
-import tech.dokus.aura.resources.cashflow_supplier_name
+import tech.dokus.aura.resources.cashflow_contact_information
+import tech.dokus.aura.resources.cashflow_contact_name
 import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.common_bank_account
 import tech.dokus.aura.resources.common_currency
@@ -49,10 +49,10 @@ internal fun BillForm(
     Column(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
     ) {
-        SectionHeader(stringResource(Res.string.cashflow_supplier_information))
+        SectionHeader(stringResource(Res.string.cashflow_contact_information))
 
         PTextFieldStandard(
-            fieldName = stringResource(Res.string.cashflow_supplier_name),
+            fieldName = stringResource(Res.string.cashflow_contact_name),
             value = fields.supplierName,
             onValueChange = { onFieldUpdate(BillField.SUPPLIER_NAME, it) },
             modifier = Modifier.fillMaxWidth()

@@ -27,8 +27,10 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
 
     // Common API configuration (used by Recommand and similar providers)
     val companyId = varchar("company_id", 255)
-    val apiKey = varchar("api_key", 512) // Encrypted
-    val apiSecret = varchar("api_secret", 512) // Encrypted
+
+    // API credentials - NULL for cloud tenants (master creds from env), encrypted for self-hosted
+    val apiKey = varchar("api_key", 512).nullable()
+    val apiSecret = varchar("api_secret", 512).nullable()
 
     // Tenant's Peppol participant ID (format: scheme:identifier)
     val peppolId = varchar("peppol_id", 255)
@@ -36,6 +38,12 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
     // Feature flags
     val isEnabled = bool("is_enabled").default(false)
     val testMode = bool("test_mode").default(true)
+
+    // Webhook configuration
+    val webhookToken = varchar("webhook_token", 64).nullable().uniqueIndex()
+
+    // Sync tracking - used for initial sync and weekly full sync
+    val lastFullSyncAt = datetime("last_full_sync_at").nullable()
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

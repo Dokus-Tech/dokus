@@ -9,8 +9,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.database.entity.IngestionItemEntity
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
+import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -54,6 +58,8 @@ class DocumentProcessingWorker(
     private val aiService: AIService,
     private val documentImageService: DocumentImageService,
     private val config: ProcessorConfig,
+    private val draftRepository: DocumentDraftRepository,
+    private val contactMatchingService: ContactMatchingService,
     // Optional RAG dependencies - if provided, chunking and embedding will be performed
     private val chunkingService: ChunkingService? = null,
     private val embeddingService: EmbeddingService? = null,
@@ -221,6 +227,21 @@ class DocumentProcessingWorker(
                 force = false // Don't overwrite user edits
             )
 
+            // Best-effort: suggest a contact match for the counterparty (if not user-edited/linked).
+            runCatching {
+                updateContactSuggestionIfApplicable(
+                    tenantId = TenantId.parse(tenantId),
+                    documentId = DocumentId.parse(documentId),
+                    documentType = documentType,
+                    extractedData = extractedData
+                )
+            }.onFailure { e ->
+                logger.warn(
+                    "Contact suggestion failed for document $documentId (tenant=$tenantId): ${e.message}",
+                    e
+                )
+            }
+
             logger.info(
                 "Processed doc $documentId: type=$documentType, " +
                     "conf=${result.confidence}, threshold=$meetsThreshold"
@@ -385,6 +406,68 @@ class DocumentProcessingWorker(
                 cause = e
             )
         }
+    }
+
+    private suspend fun updateContactSuggestionIfApplicable(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        documentType: DocumentType,
+        extractedData: tech.dokus.domain.model.ExtractedDocumentData
+    ) {
+        val draft = draftRepository.getByDocumentId(documentId, tenantId) ?: return
+        if (draft.linkedContactId != null) return
+        if (draft.counterpartyIntent == CounterpartyIntent.Pending) return
+        if (draft.draftVersion > 0) return // user-edited: don't override suggestion
+
+        val extractedCounterparty = when (documentType) {
+            DocumentType.Invoice -> extractedData.invoice?.let { inv ->
+                ContactMatchingService.ExtractedCounterparty(
+                    name = inv.clientName,
+                    vatNumber = inv.clientVatNumber,
+                    email = inv.clientEmail,
+                    address = inv.clientAddress
+                )
+            }
+            DocumentType.Bill -> extractedData.bill?.let { bill ->
+                ContactMatchingService.ExtractedCounterparty(
+                    name = bill.supplierName,
+                    vatNumber = bill.supplierVatNumber,
+                    address = bill.supplierAddress
+                )
+            }
+            DocumentType.Expense -> extractedData.expense?.let { exp ->
+                ContactMatchingService.ExtractedCounterparty(
+                    name = exp.merchant,
+                    vatNumber = exp.merchantVatNumber,
+                    address = exp.merchantAddress
+                )
+            }
+            DocumentType.Unknown -> null
+        } ?: return
+
+        if (
+            extractedCounterparty.name.isNullOrBlank() &&
+            extractedCounterparty.vatNumber.isNullOrBlank() &&
+            extractedCounterparty.peppolId.isNullOrBlank()
+        ) {
+            return
+        }
+
+        val suggestion = contactMatchingService.findMatch(tenantId, extractedCounterparty).getOrThrow()
+        if (suggestion.contactId == null) return
+
+        val reason = listOfNotNull(
+            suggestion.matchReason.name,
+            suggestion.matchDetails
+        ).joinToString(": ")
+
+        draftRepository.updateContactSuggestion(
+            documentId = documentId,
+            tenantId = tenantId,
+            contactId = suggestion.contactId,
+            confidence = suggestion.confidence,
+            reason = reason
+        )
     }
 }
 

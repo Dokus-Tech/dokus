@@ -52,6 +52,9 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     val rawRequest = text("raw_request").nullable()
     val rawResponse = text("raw_response").nullable()
 
+    // Raw UBL XML storage (MinIO key) - source of truth for inbound docs
+    val rawUblXmlKey = varchar("raw_ubl_xml_key", 500).nullable()
+
     // Timestamps
     val transmittedAt = datetime("transmitted_at").nullable()
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

@@ -3,11 +3,15 @@ package tech.dokus.features.cashflow.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.features.cashflow.presentation.cashflow.route.AddDocumentRoute
 import tech.dokus.features.cashflow.presentation.cashflow.route.CreateInvoiceRoute
 import tech.dokus.features.cashflow.presentation.chat.route.ChatRoute
+import tech.dokus.features.cashflow.presentation.ledger.route.CashflowLedgerRoute
 import tech.dokus.features.cashflow.presentation.review.route.DocumentReviewRoute
 import tech.dokus.features.cashflow.presentation.settings.route.PeppolConnectRoute
 import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
@@ -32,6 +36,12 @@ internal object CashflowNavigationProvider : NavigationProvider {
             val route = backStackEntry.toRoute<CashFlowDestination.DocumentChat>()
             val documentId = DocumentId.parse(route.documentId)
             ChatRoute(documentId = documentId)
+        }
+        composable<CashFlowDestination.CashflowLedger> { backStackEntry ->
+            val route = backStackEntry.toRoute<CashFlowDestination.CashflowLedger>()
+            @OptIn(ExperimentalUuidApi::class)
+            val entryId = route.highlightEntryId?.let { CashflowEntryId(Uuid.parse(it)) }
+            CashflowLedgerRoute(highlightEntryId = entryId)
         }
         composable<SettingsDestination.PeppolSettings> {
             PeppolSettingsRoute()

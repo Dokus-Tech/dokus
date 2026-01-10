@@ -102,15 +102,24 @@ SYMBOL_SMALL="⋄"
 
 # Configuration
 PROJECT_NAME="dokus"
-COMPOSE_FILE="docker-compose.local.yml"
+COMPOSE_FILE="deployment/docker-compose.lite.yml -f deployment/docker-compose.local.yml"
 SERVER_SERVICE_DIR="backendApp"
 
 # Database configuration - consolidated single database
-DB_CONTAINER="postgres-local"
+DB_CONTAINER="dokus-postgres"
+DB_SERVICE="postgres"  # Service name for docker-compose exec
 DB_PORT="15432"
 DB_NAME="dokus"
 DB_USER="dev"
 DB_PASSWORD="devpassword"
+
+# Export dev credentials for docker-compose variable substitution
+export DB_PASSWORD="devpassword"
+export REDIS_PASSWORD="devredispass"
+export MINIO_PASSWORD="dokusadminpassword"
+
+# Ensure empty .env exists (compose validates before applying overrides)
+touch deployment/.env 2>/dev/null || true
 
 # AI/Ollama configuration
 OLLAMA_PORT="11434"
@@ -191,13 +200,13 @@ print_gradient_header() {
 
     echo ""
     header_pulse
-    echo -n "  "
+    printf "  "
     beam_line $width
     printf "  ${SOFT_MAGENTA}▌${NC} ${BOLD}${BRIGHT_WHITE}%s${NC}\n" "$title"
     if [ -n "$subtitle" ]; then
         printf "  ${SOFT_MAGENTA}▌${NC} ${DIM_WHITE}%s${NC}\n" "$subtitle"
     fi
-    echo -n "  "
+    printf "  "
     beam_line $width
     echo ""
 }
@@ -210,7 +219,7 @@ print_rounded_header() {
 # Function to print a section divider
 print_divider() {
     local width=${2:-72}
-    echo -n "  "
+    printf "  "
     beam_line "$width"
 }
 
@@ -366,13 +375,13 @@ build_app() {
     echo ""
     echo_e "  ${SOFT_CYAN}${BOLD}Phase 2: Building Docker image${NC}\n"
 
-    print_simple_status building "Building server-local image..."
-    docker-compose -f $COMPOSE_FILE build server-local > /dev/null 2>&1
+    print_simple_status building "Building dokus-server image..."
+    docker-compose -f $COMPOSE_FILE build dokus-server > /dev/null 2>&1
     if [ $? -ne 0 ]; then
-        print_status error "server-local Docker image build failed"
+        print_status error "dokus-server Docker image build failed"
         exit 1
     fi
-    print_simple_status success "server-local image ready"
+    print_simple_status success "dokus-server image ready"
 
     echo ""
     echo_e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}Server build complete${NC}"
@@ -402,39 +411,39 @@ start_services() {
         # Wait for PostgreSQL database
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "PostgreSQL ($DB_NAME)"
         for i in {1..30}; do
-            if docker-compose -f $COMPOSE_FILE exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+            if docker-compose -f $COMPOSE_FILE exec -T $DB_SERVICE pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
                 echo_e "${SOFT_GREEN}◎ Ready${NC}"
                 break
             fi
             if [ $i -eq 30 ]; then
                 echo_e "${SOFT_RED}⨯ Timeout${NC}"
             fi
-            echo -n "."
+            printf "."
             sleep 1
         done
 
         # Wait for Redis
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Redis Cache"
         for i in {1..30}; do
-            if docker-compose -f $COMPOSE_FILE exec -T redis-local redis-cli --pass devredispass ping &>/dev/null; then
+            if docker-compose -f $COMPOSE_FILE exec -T redis redis-cli --pass devredispass ping &>/dev/null; then
                 echo_e "${SOFT_GREEN}◎ Ready${NC}"
                 break
             fi
-            echo -n "."
+            printf "."
             sleep 1
         done
 
         # Wait for MinIO
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "MinIO Storage"
         for i in {1..30}; do
-            if docker-compose -f $COMPOSE_FILE exec -T minio-local curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
+            if docker-compose -f $COMPOSE_FILE exec -T minio curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
                 echo_e "${SOFT_GREEN}◎ Ready${NC}"
                 break
             fi
             if [ $i -eq 30 ]; then
                 echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
             fi
-            echo -n "."
+            printf "."
             sleep 1
         done
 
@@ -456,7 +465,7 @@ start_services() {
             if [ $i -eq 30 ]; then
                 echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
             fi
-            echo -n "."
+            printf "."
             sleep 1
         done
 
@@ -481,7 +490,7 @@ start_services() {
                 if [ $i -eq 30 ]; then
                     echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
                 fi
-                echo -n "."
+                printf "."
                 sleep 1
             done
         done
@@ -545,7 +554,7 @@ show_status() {
 
     # Check PostgreSQL database
     printf "  ${SOFT_GRAY}│${NC} PostgreSQL ($DB_NAME)     ${SOFT_GRAY}│${NC} "
-    if docker-compose -f $COMPOSE_FILE exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+    if docker-compose -f $COMPOSE_FILE exec -T $DB_SERVICE pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -553,7 +562,7 @@ show_status() {
 
     # Redis
     printf "  ${SOFT_GRAY}│${NC} Redis Cache             ${SOFT_GRAY}│${NC} "
-    if docker-compose -f $COMPOSE_FILE exec -T redis-local redis-cli --pass devredispass ping &>/dev/null; then
+    if docker-compose -f $COMPOSE_FILE exec -T redis redis-cli --pass devredispass ping &>/dev/null; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -561,7 +570,7 @@ show_status() {
 
     # MinIO
     printf "  ${SOFT_GRAY}│${NC} MinIO Storage           ${SOFT_GRAY}│${NC} "
-    if docker-compose -f $COMPOSE_FILE exec -T minio-local curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
+    if docker-compose -f $COMPOSE_FILE exec -T minio curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -595,7 +604,7 @@ show_status() {
 
     # Services - Check via gateway using path-based routing
     local services=(
-        "Dokus Server:server-local:/api/v1/server/info"
+        "Dokus Server:dokus-server:/api/v1/server/info"
     )
 
     check_service() {
@@ -663,10 +672,10 @@ reset_db() {
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_status loading "Resetting database..."
-        docker-compose -f $COMPOSE_FILE stop $DB_CONTAINER > /dev/null 2>&1
-        docker-compose -f $COMPOSE_FILE rm -f $DB_CONTAINER > /dev/null 2>&1
-        docker volume rm the-predict_postgres-local 2>/dev/null || true
-        docker-compose -f $COMPOSE_FILE up -d $DB_CONTAINER > /dev/null 2>&1
+        docker-compose -f $COMPOSE_FILE stop postgres > /dev/null 2>&1
+        docker-compose -f $COMPOSE_FILE rm -f postgres > /dev/null 2>&1
+        docker volume rm deployment_postgres-data 2>/dev/null || true
+        docker-compose -f $COMPOSE_FILE up -d postgres > /dev/null 2>&1
         echo ""
         print_status success "Database reset complete"
     else
@@ -681,13 +690,13 @@ access_db() {
 
     print_status info "Connecting to database ($DB_NAME)..."
     echo ""
-    docker-compose -f $COMPOSE_FILE exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME
+    docker-compose -f $COMPOSE_FILE exec $DB_SERVICE psql -U $DB_USER -d $DB_NAME
 }
 
 # Function to access Redis
 access_redis() {
     print_gradient_header "🗄️  Redis CLI Access"
-    docker-compose -f $COMPOSE_FILE exec redis-local redis-cli -a devredispass
+    docker-compose -f $COMPOSE_FILE exec redis redis-cli -a devredispass
 }
 
 # Function to check Ollama status
@@ -983,7 +992,7 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}PostgreSQL${NC}           ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:$DB_PORT${NC} • ${SOFT_GRAY}$DB_NAME${NC}         ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:19000${NC} • ${SOFT_GRAY}Console: 19001${NC}    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:9000${NC} • ${SOFT_GRAY}Console: 9001${NC}      ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Ollama AI${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:11434${NC} • ${SOFT_GRAY}API endpoint${NC}     ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
@@ -1036,7 +1045,7 @@ watch_mode() {
             | while read num ; do
                 print_color "$SOFT_YELLOW" "🔄 Changes detected, rebuilding server..."
                 build_app
-                docker-compose -f $COMPOSE_FILE restart server-local
+                docker-compose -f $COMPOSE_FILE restart dokus-server
                 print_color "$SOFT_GREEN" "✓ Server restarted"
             done
     else

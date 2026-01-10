@@ -68,7 +68,7 @@ object TenantMappers {
         streetLine2 = this[AddressTable.streetLine2],
         city = this[AddressTable.city],
         postalCode = this[AddressTable.postalCode],
-        country = this[AddressTable.country],
+        country = this[AddressTable.country], // Now stored as ISO 3166-1 alpha-2 string
         createdAt = this[AddressTable.createdAt],
         updatedAt = this[AddressTable.updatedAt]
     )

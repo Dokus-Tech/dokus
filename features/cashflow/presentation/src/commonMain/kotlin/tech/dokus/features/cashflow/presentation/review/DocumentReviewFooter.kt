@@ -56,6 +56,7 @@ import tech.dokus.foundation.aura.constrains.Constrains
  *
  * Post-confirmation layout:
  * - Success message: "Document confirmed"
+ * - [View Entity] [View Cashflow Entry] buttons
  * - [Chat with Document] button
  *
  * @param canConfirm Whether document can be confirmed
@@ -66,11 +67,14 @@ import tech.dokus.foundation.aura.constrains.Constrains
  * @param hasUnsavedChanges Whether there are unsaved field edits
  * @param isDocumentConfirmed Whether document has been confirmed
  * @param isDocumentRejected Whether document has been rejected
+ * @param hasCashflowEntry Whether a cashflow entry was created
  * @param confirmBlockedReason Why confirm is blocked (for error display)
  * @param onConfirm Callback for confirm action
  * @param onSaveChanges Callback for save action
  * @param onReject Callback for reject action
  * @param onOpenChat Callback to open document chat
+ * @param onViewEntity Callback to view the created entity
+ * @param onViewCashflowEntry Callback to view the cashflow entry
  */
 @Composable
 fun DocumentReviewFooter(
@@ -82,27 +86,34 @@ fun DocumentReviewFooter(
     hasUnsavedChanges: Boolean,
     isDocumentConfirmed: Boolean,
     isDocumentRejected: Boolean,
+    hasCashflowEntry: Boolean,
     confirmBlockedReason: StringResource?,
     onConfirm: () -> Unit,
     onSaveChanges: () -> Unit,
     onReject: () -> Unit,
     onOpenChat: () -> Unit,
+    onViewEntity: () -> Unit,
+    onViewCashflowEntry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        tonalElevation = 2.dp,
-        shadowElevation = 4.dp,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
     ) {
         if (isDocumentConfirmed || isDocumentRejected) {
             ConfirmedFooter(
                 onOpenChat = onOpenChat,
+                onViewEntity = onViewEntity,
+                onViewCashflowEntry = onViewCashflowEntry,
                 label = if (isDocumentRejected) {
                     stringResource(Res.string.cashflow_document_rejected)
                 } else {
                     stringResource(Res.string.cashflow_document_confirmed)
                 },
-                showChat = !isDocumentRejected
+                showChat = !isDocumentRejected,
+                showViewActions = isDocumentConfirmed,
+                hasCashflowEntry = hasCashflowEntry
             )
         } else {
             PendingFooter(
@@ -256,8 +267,12 @@ private fun PendingFooter(
 @Composable
 private fun ConfirmedFooter(
     onOpenChat: () -> Unit,
+    onViewEntity: () -> Unit,
+    onViewCashflowEntry: () -> Unit,
     label: String,
     showChat: Boolean,
+    showViewActions: Boolean,
+    hasCashflowEntry: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -284,6 +299,31 @@ private fun ConfirmedFooter(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.tertiary,
             )
+        }
+
+        // View entity and cashflow entry buttons
+        if (showViewActions) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Constrains.Spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+            ) {
+                OutlinedButton(
+                    onClick = onViewEntity,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("View Document")
+                }
+                if (hasCashflowEntry) {
+                    OutlinedButton(
+                        onClick = onViewCashflowEntry,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text("View Cashflow")
+                    }
+                }
+            }
         }
 
         // Chat button

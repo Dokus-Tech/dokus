@@ -10,14 +10,13 @@ internal class ListContactsUseCaseImpl(
     override suspend fun invoke(
         search: String?,
         isActive: Boolean?,
-        peppolEnabled: Boolean?,
         limit: Int,
         offset: Int
     ): Result<List<ContactDto>> {
+        // NOTE: peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
         return remoteDataSource.listContacts(
             search = search,
             isActive = isActive,
-            peppolEnabled = peppolEnabled,
             limit = limit,
             offset = offset
         )

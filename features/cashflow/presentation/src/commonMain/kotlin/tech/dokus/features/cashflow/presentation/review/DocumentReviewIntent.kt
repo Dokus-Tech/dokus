@@ -54,6 +54,8 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object ConfirmDiscardChanges : DocumentReviewIntent
     data object Confirm : DocumentReviewIntent
     data object OpenChat : DocumentReviewIntent
+    data object ViewCashflowEntry : DocumentReviewIntent
+    data object ViewEntity : DocumentReviewIntent
 
     // Reject dialog intents
     data object ShowRejectDialog : DocumentReviewIntent

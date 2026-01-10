@@ -184,19 +184,3 @@ services:
       - "traefik.http.routers.api.middlewares=rate-limit@file,cors-api@file,compress@file"
       - "traefik.http.services.api.loadbalancer.server.port=8080"
 
-  # =========================================================
-  # Web UI (optional)
-  # =========================================================
-  web:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-web:${TAG:-latest}
-    container_name: dokus-web
-    restart: unless-stopped
-    networks:
-      - dokus-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/`)"
-      - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.web.middlewares=compress@file"
-      - "traefik.http.services.web.loadbalancer.server.port=8080"

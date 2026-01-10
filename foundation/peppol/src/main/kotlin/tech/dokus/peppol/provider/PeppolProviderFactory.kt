@@ -2,7 +2,6 @@ package tech.dokus.peppol.provider
 
 import io.ktor.client.HttpClient
 import tech.dokus.foundation.backend.utils.loggerFor
-import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandProvider
 
 /**
@@ -12,7 +11,6 @@ import tech.dokus.peppol.provider.client.RecommandProvider
  */
 class PeppolProviderFactory(
     private val httpClient: HttpClient,
-    private val config: PeppolModuleConfig
 ) {
     private val logger = loggerFor()
     private val providerFactories = mutableMapOf<String, () -> PeppolProvider>()
@@ -20,12 +18,7 @@ class PeppolProviderFactory(
     init {
         // Register default providers
         registerProvider("recommand") {
-            RecommandProvider(
-                httpClient = httpClient,
-                productionBaseUrl = config.recommand.baseUrl,
-                testBaseUrl = config.recommand.testUrl,
-                globalTestMode = config.globalTestMode
-            )
+            RecommandProvider(httpClient = httpClient)
         }
     }
 

@@ -24,7 +24,6 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_active
 import tech.dokus.aura.resources.contacts_customer
 import tech.dokus.aura.resources.contacts_inactive
-import tech.dokus.aura.resources.contacts_peppol
 import tech.dokus.aura.resources.contacts_supplier
 import tech.dokus.aura.resources.contacts_vendor
 import tech.dokus.domain.model.contact.ContactDto
@@ -90,13 +89,8 @@ internal fun ContactCard(
                     ContactRoleBadges(roles = roles)
                 }
 
-                // Peppol badge
-                if (contact.peppolEnabled) {
-                    ContactBadge(
-                        text = stringResource(Res.string.contacts_peppol),
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
+                // NOTE: PEPPOL badge removed - PEPPOL status is now in PeppolDirectoryCacheTable
+                // To show PEPPOL status, use the /contacts/{id}/peppol-status endpoint
 
                 // Tags
                 contact.tags?.let { tagsString ->

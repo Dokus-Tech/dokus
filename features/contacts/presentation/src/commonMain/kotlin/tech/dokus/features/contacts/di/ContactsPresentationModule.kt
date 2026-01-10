@@ -45,7 +45,6 @@ val contactsPresentationModule = module {
             createContactNote = get(),
             updateContactNote = get(),
             deleteContactNote = get(),
-            updateContactPeppol = get(),
             getCachedContacts = get(),
             cacheContacts = get(),
             getCurrentTenantId = get()

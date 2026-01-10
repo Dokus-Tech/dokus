@@ -327,7 +327,6 @@ internal class ContactsContainer(
             ContactRoleFilter.All -> listContacts(
                 search = searchQueryValue,
                 isActive = activeFilterValue,
-                peppolEnabled = peppolFilter,
                 limit = ContactsState.PAGE_SIZE,
                 offset = page * ContactsState.PAGE_SIZE
             )

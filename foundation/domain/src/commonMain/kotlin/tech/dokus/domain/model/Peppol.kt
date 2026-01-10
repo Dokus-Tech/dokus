@@ -1,18 +1,16 @@
 package tech.dokus.domain.model
 
 import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.PaymentMeansCode
-import tech.dokus.domain.enums.PeppolCurrency
 import tech.dokus.domain.enums.PeppolDocumentType
+import tech.dokus.domain.enums.PeppolLookupSource
+import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
-import tech.dokus.domain.enums.RecommandDirection
-import tech.dokus.domain.enums.RecommandDocumentStatus
-import tech.dokus.domain.enums.UnitCode
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolSettingsId
@@ -42,8 +40,10 @@ enum class PeppolProvider(val displayName: String) {
 // ============================================================================
 
 /**
- * Peppol settings for a tenant - stores Recommand API credentials.
- * Each tenant must configure their own Peppol Access Point credentials.
+ * Peppol settings for a tenant.
+ *
+ * For cloud deployments: credentials are managed by Dokus (not stored per-tenant)
+ * For self-hosted: credentials are stored encrypted per-tenant
  */
 @Serializable
 data class PeppolSettingsDto(
@@ -57,6 +57,16 @@ data class PeppolSettingsDto(
     val isEnabled: Boolean = false,
     /** Whether to use test mode (doesn't send to real Peppol network) */
     val testMode: Boolean = true,
+    /** Token for webhook authentication (generated on creation) */
+    val webhookToken: String? = null,
+    /** Last time a full sync was performed (used for first connection and weekly sync) */
+    val lastFullSyncAt: LocalDateTime? = null,
+    /**
+     * Whether credentials are managed by Dokus (cloud deployment).
+     * If true: user cannot configure credentials, Peppol is automatic.
+     * If false: user must provide API credentials (self-hosted deployment).
+     */
+    val isManagedCredentials: Boolean = false,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
@@ -171,243 +181,6 @@ data class PeppolTransmissionDto(
 )
 
 // ============================================================================
-// RECOMMAND API MODELS
-// ============================================================================
-
-/**
- * Recommand API: Send document request.
- */
-@Serializable
-data class RecommandSendRequest(
-    /** Peppol ID format: "scheme:identifier" (e.g., "0208:BE0123456789") */
-    val recipient: String,
-    /** Document type to send */
-    val documentType: RecommandSendDocumentType,
-    /** Invoice document in simplified JSON format */
-    val document: RecommandInvoiceDocument? = null,
-    /** Required when documentType is XML - the UBL document type ID */
-    val doctypeId: String? = null
-)
-
-/**
- * Document types for sending via Recommand API.
- */
-@Serializable
-enum class RecommandSendDocumentType {
-    @SerialName("invoice")
-    Invoice,
-
-    @SerialName("creditNote")
-    CreditNote,
-
-    @SerialName("selfBillingInvoice")
-    SelfBillingInvoice,
-
-    @SerialName("selfBillingCreditNote")
-    SelfBillingCreditNote,
-
-    @SerialName("xml")
-    Xml
-}
-
-/**
- * Recommand API: Invoice document in simplified JSON format.
- * Recommand automatically converts this to UBL XML.
- */
-@Serializable
-data class RecommandInvoiceDocument(
-    val invoiceNumber: String,
-    /** ISO format: YYYY-MM-DD */
-    val issueDate: String,
-    /** ISO format: YYYY-MM-DD */
-    val dueDate: String,
-    val buyer: RecommandParty,
-    /** Optional - uses company profile if not provided */
-    val seller: RecommandParty? = null,
-    val lineItems: List<RecommandLineItem>,
-    val note: String? = null,
-    /** Purchase order reference or buyer reference */
-    val buyerReference: String? = null,
-    val paymentMeans: RecommandPaymentMeans? = null,
-    /** ISO 4217 currency code */
-    val documentCurrencyCode: String = "EUR"
-)
-
-@Serializable
-data class RecommandParty(
-    val vatNumber: String? = null,
-    val name: String,
-    val streetName: String? = null,
-    val cityName: String? = null,
-    val postalZone: String? = null,
-    /** ISO 3166-1 alpha-2 country code */
-    val countryCode: String? = null,
-    val contactEmail: String? = null,
-    val contactName: String? = null
-)
-
-@Serializable
-data class RecommandLineItem(
-    /** Line item ID (usually sequential: "1", "2", etc.) */
-    val id: String,
-    val name: String,
-    val description: String? = null,
-    val quantity: Double,
-    /** UNCL5305 unit code (default: C62 = "unit") */
-    val unitCode: String = UnitCode.Each.code,
-    val unitPrice: Double,
-    val lineTotal: Double,
-    /** UNCL5305 tax category code (S, Z, E, AE, K, G, O, etc.) */
-    val taxCategory: String,
-    /** VAT percentage (e.g., 21.0 for 21%) */
-    val taxPercent: Double
-)
-
-@Serializable
-data class RecommandPaymentMeans(
-    val iban: String? = null,
-    val bic: String? = null,
-    /** UNCL4461 payment means code (default: 30 = Credit transfer) */
-    val paymentMeansCode: String = PaymentMeansCode.CreditTransfer.code,
-    /** Structured payment reference (e.g., Belgian OGM/VCS) */
-    val paymentId: String? = null
-)
-
-/**
- * Recommand API: Send document response.
- */
-@Serializable
-data class RecommandSendResponse(
-    val success: Boolean,
-    val documentId: String? = null,
-    val message: String? = null,
-    val errors: List<RecommandValidationError>? = null
-)
-
-@Serializable
-data class RecommandValidationError(
-    val code: String? = null,
-    val message: String,
-    val field: String? = null,
-    val rule: String? = null
-)
-
-/**
- * Recommand API: Inbox document (received from Peppol network).
- */
-@Serializable
-data class RecommandInboxDocument(
-    val id: String,
-    val documentType: String,
-    val sender: String, // Peppol ID
-    val receiver: String, // Peppol ID
-    val receivedAt: String, // ISO timestamp
-    val isRead: Boolean,
-    val document: RecommandReceivedDocument? = null
-)
-
-/**
- * Recommand API: Received document content.
- */
-@Serializable
-data class RecommandReceivedDocument(
-    val invoiceNumber: String? = null,
-    val issueDate: String? = null,
-    val dueDate: String? = null,
-    val seller: RecommandParty? = null,
-    val buyer: RecommandParty? = null,
-    val lineItems: List<RecommandReceivedLineItem>? = null,
-    val legalMonetaryTotal: RecommandMonetaryTotal? = null,
-    val taxTotal: RecommandTaxTotal? = null,
-    val note: String? = null,
-    val documentCurrencyCode: String? = null
-)
-
-@Serializable
-data class RecommandReceivedLineItem(
-    val id: String? = null,
-    val name: String? = null,
-    val description: String? = null,
-    val quantity: Double? = null,
-    val unitCode: String? = null,
-    val unitPrice: Double? = null,
-    val lineExtensionAmount: Double? = null,
-    val taxCategory: String? = null,
-    val taxPercent: Double? = null
-)
-
-@Serializable
-data class RecommandMonetaryTotal(
-    val lineExtensionAmount: Double? = null,
-    val taxExclusiveAmount: Double? = null,
-    val taxInclusiveAmount: Double? = null,
-    val payableAmount: Double? = null
-)
-
-@Serializable
-data class RecommandTaxTotal(
-    val taxAmount: Double? = null,
-    val taxSubtotals: List<RecommandTaxSubtotal>? = null
-)
-
-@Serializable
-data class RecommandTaxSubtotal(
-    val taxableAmount: Double? = null,
-    val taxAmount: Double? = null,
-    val taxCategory: String? = null,
-    val taxPercent: Double? = null
-)
-
-/**
- * Recommand API: Verify recipient on Peppol network.
- */
-@Serializable
-data class RecommandVerifyRequest(
-    val participantId: String
-)
-
-@Serializable
-data class RecommandVerifyResponse(
-    val registered: Boolean,
-    val participantId: String? = null,
-    val name: String? = null,
-    val documentTypes: List<String>? = null
-)
-
-/**
- * Recommand API: Mark document as read request.
- */
-@Serializable
-data class RecommandMarkAsReadRequest(
-    val read: Boolean
-)
-
-/**
- * Recommand API: List documents response.
- */
-@Serializable
-data class RecommandDocumentsResponse(
-    val data: List<RecommandDocumentSummary> = emptyList(),
-    val total: Int = 0,
-    @SerialName("has_more")
-    val hasMore: Boolean = false
-)
-
-@Serializable
-data class RecommandDocumentSummary(
-    val id: String,
-    @SerialName("documentType")
-    val documentType: PeppolDocumentType,
-    val direction: RecommandDirection,
-    val counterparty: String, // Peppol ID
-    val status: RecommandDocumentStatus,
-    val createdAt: String, // ISO timestamp
-    val invoiceNumber: String? = null,
-    val totalAmount: Double? = null,
-    val currency: PeppolCurrency? = null
-)
-
-// ============================================================================
 // VERIFICATION MODELS
 // ============================================================================
 
@@ -490,9 +263,52 @@ data class PeppolInboxPollResponse(
 @Serializable
 data class ProcessedPeppolDocument(
     val transmissionId: PeppolTransmissionId,
-    val billId: BillId,
+    val documentId: DocumentId,
     val senderPeppolId: PeppolId,
     val invoiceNumber: String?,
     val totalAmount: Money?,
     val receivedAt: LocalDateTime
+)
+
+// ============================================================================
+// PEPPOL DIRECTORY CACHE MODELS
+// ============================================================================
+
+/**
+ * Cache-row model for directory lookup results.
+ * Only stored values, no UNKNOWN status (that's API-only).
+ * Timestamps are non-null since they're always set on insert/update.
+ */
+@Serializable
+data class PeppolResolution(
+    val contactId: ContactId,
+    val status: PeppolLookupStatus,
+    val participantId: String? = null,
+    val scheme: String? = null,
+    val supportedDocTypes: List<String> = emptyList(),
+    val source: PeppolLookupSource,
+    val vatNumberSnapshot: String? = null,
+    val companyNumberSnapshot: String? = null,
+    val lastCheckedAt: LocalDateTime,
+    val expiresAt: LocalDateTime? = null,
+    val errorMessage: String? = null
+)
+
+/**
+ * API response for PEPPOL status endpoint.
+ * Can return "unknown" status when no cache entry exists.
+ */
+@Serializable
+data class PeppolStatusResponse(
+    /** "found" | "not_found" | "error" | "unknown" */
+    val status: String,
+    val participantId: String? = null,
+    val supportedDocTypes: List<String> = emptyList(),
+    /** "directory" | "manual" | null (if unknown) */
+    val source: String? = null,
+    val lastCheckedAt: LocalDateTime? = null,
+    val expiresAt: LocalDateTime? = null,
+    /** true if fetched via ?refresh=true this request */
+    val refreshed: Boolean,
+    val errorMessage: String? = null
 )

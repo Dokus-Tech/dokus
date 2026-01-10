@@ -360,11 +360,11 @@ internal class WorkspaceSettingsContainer(
 
 private fun Address.toDisplayString(): String {
     val parts = buildList {
-        add(streetLine1)
+        streetLine1?.let { add(it) }
         streetLine2?.takeIf { it.isNotBlank() }?.let { add(it) }
-        val cityLine = listOf(postalCode, city).filter { it.isNotBlank() }.joinToString(" ")
+        val cityLine = listOfNotNull(postalCode, city).filter { it.isNotBlank() }.joinToString(" ")
         if (cityLine.isNotBlank()) add(cityLine)
-        add(country.dbValue)
+        country?.let { add(it) }  // country is now ISO-2 string directly
     }
     return parts.joinToString(", ")
 }

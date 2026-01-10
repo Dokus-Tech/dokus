@@ -7,6 +7,7 @@ import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
@@ -67,13 +68,15 @@ data class DocumentDraftDto(
  * - latestIngestion: Current/last ingestion run (present if any runs exist)
  *   - Selection priority: Processing > latest Succeeded/Failed > latest Queued
  * - confirmedEntity: The created Invoice/Bill/Expense (present if confirmed)
+ * - cashflowEntryId: The created cashflow entry ID (present if confirmed)
  */
 @Serializable
 data class DocumentRecordDto(
     val document: DocumentDto,
     val draft: DocumentDraftDto?,
     val latestIngestion: DocumentIngestionDto?,
-    val confirmedEntity: FinancialDocumentDto?
+    val confirmedEntity: FinancialDocumentDto?,
+    val cashflowEntryId: CashflowEntryId? = null
 )
 
 /**

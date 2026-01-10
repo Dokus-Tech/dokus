@@ -3,12 +3,15 @@ package tech.dokus.domain.model.contact
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.AddressType
 import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.enums.ContactSource
+import tech.dokus.domain.ids.AddressId
+import tech.dokus.domain.ids.ContactAddressId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.DocumentId
@@ -28,22 +31,18 @@ data class ContactDto(
     val email: Email? = null,
     val vatNumber: VatNumber? = null,
     val businessType: ClientType = ClientType.Business,
-    val addressLine1: String? = null,
-    val addressLine2: String? = null,
-    val city: City? = null,
-    val postalCode: String? = null,
-    val country: String? = null,
     val contactPerson: String? = null,
     val phone: PhoneNumber? = null,
     val companyNumber: String? = null,
     val defaultPaymentTerms: Int = 30,
     val defaultVatRate: VatRate? = null,
-    val peppolId: String? = null,
-    val peppolEnabled: Boolean = false,
+    // NOTE: PEPPOL fields moved to PeppolDirectoryCacheTable - use /peppol-status endpoint
     val tags: String? = null,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
+    // Addresses (multiple per contact, via join table)
+    val addresses: List<ContactAddressDto> = emptyList(),
     // Aggregated counts for UI (optional, populated by service layer)
     val invoiceCount: Long = 0,
     val billCount: Long = 0,
@@ -57,8 +56,28 @@ data class ContactDto(
     /** True for system-managed contacts like "Unknown / Unassigned" */
     val isSystemContact: Boolean = false,
     /** Source document ID if contact was created from AI extraction */
-    val createdFromDocumentId: DocumentId? = null
-)
+    val createdFromDocumentId: DocumentId? = null,
+    /** How this contact was created (Manual, AI, Peppol) */
+    val source: ContactSource = ContactSource.Manual
+) {
+    // Backward-compatible convenience accessors for UI that expects single address
+    // Uses the first/default address from the addresses list
+
+    /** First address street line 1 (backward-compatible) */
+    val addressLine1: String? get() = addresses.firstOrNull()?.address?.streetLine1
+
+    /** First address street line 2 (backward-compatible) */
+    val addressLine2: String? get() = addresses.firstOrNull()?.address?.streetLine2
+
+    /** First address city (backward-compatible) */
+    val city: String? get() = addresses.firstOrNull()?.address?.city
+
+    /** First address postal code (backward-compatible) */
+    val postalCode: String? get() = addresses.firstOrNull()?.address?.postalCode
+
+    /** First address country ISO-2 code (backward-compatible) */
+    val country: String? get() = addresses.firstOrNull()?.address?.country
+}
 
 /**
  * Contact note with history tracking.
@@ -77,21 +96,53 @@ data class ContactNoteDto(
 )
 
 // ============================================================================
-// REQUEST DTOs
+// ADDRESS DTOs
 // ============================================================================
 
 /**
- * Address input for contact create/update requests.
- * Encapsulates all address-related fields.
+ * Address data (stored in AddressTable).
+ * All fields nullable to support AI partial extraction.
  */
 @Serializable
-data class ContactAddress(
-    val streetLine1: String,
+data class AddressDto(
+    val id: AddressId,
+    val streetLine1: String? = null,
     val streetLine2: String? = null,
-    val city: City,
-    val postalCode: String,
-    val country: String
+    val city: String? = null,
+    val postalCode: String? = null,
+    val country: String? = null  // ISO 3166-1 alpha-2
 )
+
+/**
+ * Contact address with type classification.
+ * Links a contact to an address with additional metadata.
+ */
+@Serializable
+data class ContactAddressDto(
+    val id: ContactAddressId,
+    val address: AddressDto,
+    val addressType: AddressType,
+    val isDefault: Boolean
+)
+
+/**
+ * Input for creating/updating a contact address.
+ * All fields nullable to support AI partial extraction.
+ */
+@Serializable
+data class ContactAddressInput(
+    val streetLine1: String? = null,
+    val streetLine2: String? = null,
+    val city: String? = null,
+    val postalCode: String? = null,
+    val country: String? = null,  // ISO 3166-1 alpha-2
+    val addressType: AddressType = AddressType.Registered,
+    val isDefault: Boolean = true
+)
+
+// ============================================================================
+// REQUEST DTOs
+// ============================================================================
 
 /**
  * Request DTO for creating a contact.
@@ -103,20 +154,21 @@ data class CreateContactRequest(
     val phone: PhoneNumber? = null,
     val vatNumber: VatNumber? = null,
     val businessType: ClientType = ClientType.Business,
-    val address: ContactAddress? = null,
+    val addresses: List<ContactAddressInput> = emptyList(),
     val contactPerson: String? = null,
     val companyNumber: String? = null,
     val defaultPaymentTerms: Int = 30,
     val defaultVatRate: String? = null,
-    val peppolId: String? = null,
-    val peppolEnabled: Boolean = false,
     val tags: String? = null,
-    val initialNote: String? = null
+    val initialNote: String? = null,
+    /** How this contact was created (Manual, AI, Peppol) */
+    val source: ContactSource = ContactSource.Manual
 )
 
 /**
  * Request DTO for updating a contact.
  * All fields are optional - only provided fields will be updated.
+ * Note: Addresses are managed separately via ContactAddressRepository.
  */
 @Serializable
 data class UpdateContactRequest(
@@ -125,13 +177,10 @@ data class UpdateContactRequest(
     val phone: PhoneNumber? = null,
     val vatNumber: VatNumber? = null,
     val businessType: ClientType? = null,
-    val address: ContactAddress? = null,
     val contactPerson: String? = null,
     val companyNumber: String? = null,
     val defaultPaymentTerms: Int? = null,
     val defaultVatRate: String? = null,
-    val peppolId: String? = null,
-    val peppolEnabled: Boolean? = null,
     val tags: String? = null,
     val isActive: Boolean? = null
 )
@@ -175,8 +224,7 @@ data class ContactStats(
     val inactiveContacts: Long,
     val customerCount: Long,
     val vendorCount: Long,
-    val bothCount: Long,
-    val peppolEnabledContacts: Long
+    val bothCount: Long
 )
 
 // ============================================================================
@@ -221,9 +269,6 @@ data class DerivedContactRoles(
 enum class ContactMatchReason {
     @SerialName("vat_number")
     VatNumber, // Matched by VAT number (high confidence)
-
-    @SerialName("peppol_id")
-    PeppolId, // Matched by Peppol participant ID (high confidence)
 
     @SerialName("company_number")
     CompanyNumber, // Matched by company registration number

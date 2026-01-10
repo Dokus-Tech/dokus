@@ -10,14 +10,17 @@ import tech.dokus.domain.model.RecommandCompanySummary
 import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
-import tech.dokus.peppol.provider.client.RecommandCompany
-import tech.dokus.peppol.provider.client.RecommandCreateCompanyRequest
 import tech.dokus.peppol.provider.client.RecommandUnauthorizedException
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCompany
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCompanyCountry
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateCompanyRequest
 
 class PeppolConnectionService(
     private val settingsRepository: PeppolSettingsRepository,
     private val recommandCompaniesClient: RecommandCompaniesClient,
+    private val moduleConfig: PeppolModuleConfig,
 ) {
     private val logger = loggerFor()
 
@@ -40,7 +43,6 @@ class PeppolConnectionService(
                 apiKey = request.apiKey,
                 apiSecret = request.apiSecret,
                 vatNumber = vatNormalized,
-                testMode = request.testMode
             ).getOrThrow()
         } catch (e: RecommandUnauthorizedException) {
             logger.warn("Recommand credentials rejected for tenant {}", tenant.id)
@@ -108,9 +110,9 @@ class PeppolConnectionService(
         val street = address.streetLine1
         val postalCode = address.postalCode
         val city = address.city
-        val country = address.country.dbValue
+        val country = address.country  // Now stored as ISO-2 string directly
 
-        if (street.isBlank() || postalCode.isBlank() || city.isBlank()) {
+        if (street.isNullOrBlank() || postalCode.isNullOrBlank() || city.isNullOrBlank() || country.isNullOrBlank()) {
             throw MissingCompanyAddressException()
         }
 
@@ -122,10 +124,9 @@ class PeppolConnectionService(
                 address = street,
                 postalCode = postalCode,
                 city = city,
-                country = country,
+                country = RecommandCompanyCountry.valueOf(country),
                 vatNumber = vatNumber.normalized
             ),
-            testMode = request.testMode
         ).getOrThrow()
     }
     private fun RecommandCompany.toSummary(): RecommandCompanySummary = RecommandCompanySummary(
@@ -134,5 +135,117 @@ class PeppolConnectionService(
         vatNumber = vatNumber,
         enterpriseNumber = enterpriseNumber
     )
+
+    // ========================================================================
+    // CLOUD CONNECTION (using master credentials)
+    // ========================================================================
+
+    /**
+     * Connect a cloud-hosted tenant to Peppol using Dokus master credentials.
+     * This is called automatically for cloud tenants - no user input required.
+     *
+     * @param tenant The tenant to connect
+     * @param companyAddress The tenant's company address (for creating new companies)
+     * @param testMode Whether to use test mode (usually determined by deployment env)
+     * @return Connection result
+     */
+    suspend fun connectCloud(
+        tenant: Tenant,
+        companyAddress: Address?,
+        testMode: Boolean = moduleConfig.globalTestMode
+    ): Result<PeppolConnectResponse> = runCatching {
+        val masterCreds = moduleConfig.masterCredentials
+            ?: return@runCatching PeppolConnectResponse(
+                status = PeppolConnectStatus.InvalidCredentials,
+                // This shouldn't happen in cloud - indicates misconfiguration
+            )
+
+        val tenantVat = tenant.vatNumber
+            ?: return@runCatching PeppolConnectResponse(PeppolConnectStatus.MissingVatNumber)
+
+        val vatNormalized = tenantVat.normalized
+
+        val companies = try {
+            recommandCompaniesClient.listCompanies(
+                apiKey = masterCreds.apiKey,
+                apiSecret = masterCreds.apiSecret,
+                vatNumber = vatNormalized,
+            ).getOrThrow()
+        } catch (e: RecommandUnauthorizedException) {
+            logger.error("Master Peppol credentials rejected - check PEPPOL_MASTER_API_KEY/SECRET")
+            return@runCatching PeppolConnectResponse(PeppolConnectStatus.InvalidCredentials)
+        }
+
+        val matchingCompanies = companies
+            .filter { VatNumber(it.vatNumber).normalized == vatNormalized }
+            .sortedBy { it.name.lowercase() }
+
+        // For cloud, auto-select single match or auto-create if none
+        val resolvedCompany = when {
+            matchingCompanies.size == 1 -> matchingCompanies.single()
+            matchingCompanies.isEmpty() -> {
+                // Auto-create company for cloud tenants
+                createCompanyForCloudTenant(tenant, tenantVat, companyAddress, masterCreds.apiKey, masterCreds.apiSecret)
+            }
+            else -> {
+                // Multiple matches - pick the first one for cloud (or could log a warning)
+                logger.warn("Multiple Peppol companies found for tenant ${tenant.id}, using first match")
+                matchingCompanies.first()
+            }
+        }
+
+        val peppolId = "0208:$vatNormalized"
+
+        // Save settings WITHOUT credentials (cloud tenants use master creds)
+        val savedSettings = settingsRepository.saveCloudSettings(
+            tenantId = tenant.id,
+            companyId = resolvedCompany.id,
+            peppolId = peppolId,
+            isEnabled = true,
+            testMode = testMode
+        ).getOrThrow()
+
+        logger.info("Cloud tenant ${tenant.id} connected to Peppol with company ${resolvedCompany.id}")
+
+        PeppolConnectResponse(
+            status = PeppolConnectStatus.Connected,
+            settings = savedSettings,
+            company = resolvedCompany.toSummary(),
+            createdCompany = matchingCompanies.isEmpty()
+        )
+    }
+
+    private suspend fun createCompanyForCloudTenant(
+        tenant: Tenant,
+        vatNumber: VatNumber,
+        companyAddress: Address?,
+        apiKey: String,
+        apiSecret: String,
+    ): RecommandCompany {
+        val address = companyAddress ?: throw MissingCompanyAddressException()
+        val street = address.streetLine1
+        val postalCode = address.postalCode
+        val city = address.city
+        val country = address.country  // Now stored as ISO-2 string directly
+
+        if (street.isNullOrBlank() || postalCode.isNullOrBlank() || city.isNullOrBlank() || country.isNullOrBlank()) {
+            throw MissingCompanyAddressException()
+        }
+
+        logger.info("Creating Peppol company for cloud tenant ${tenant.id}")
+
+        return recommandCompaniesClient.createCompany(
+            apiKey = apiKey,
+            apiSecret = apiSecret,
+            request = RecommandCreateCompanyRequest(
+                name = tenant.legalName.value,
+                address = street,
+                postalCode = postalCode,
+                city = city,
+                country = RecommandCompanyCountry.valueOf(country),
+                vatNumber = vatNumber.normalized
+            ),
+        ).getOrThrow()
+    }
 }
 private class MissingCompanyAddressException : RuntimeException()

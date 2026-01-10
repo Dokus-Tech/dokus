@@ -5,12 +5,12 @@ import tech.dokus.domain.model.contact.ContactDto
 
 /**
  * Use case for listing contacts with optional filters.
+ * NOTE: peppolEnabled filter removed - PEPPOL status is in PeppolDirectoryCacheTable
  */
 interface ListContactsUseCase {
     suspend operator fun invoke(
         search: String? = null,
         isActive: Boolean? = null,
-        peppolEnabled: Boolean? = null,
         limit: Int = 50,
         offset: Int = 0
     ): Result<List<ContactDto>>

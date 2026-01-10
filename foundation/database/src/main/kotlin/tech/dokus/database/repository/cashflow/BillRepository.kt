@@ -14,6 +14,7 @@ import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateBillRequest
@@ -82,6 +83,7 @@ class BillRepository {
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
                     documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                    contactId = row[BillsTable.contactId]?.let { ContactId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
                     paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                     paymentMethod = row[BillsTable.paymentMethod],
@@ -123,6 +125,7 @@ class BillRepository {
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
                     documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                    contactId = row[BillsTable.contactId]?.let { ContactId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
                     paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                     paymentMethod = row[BillsTable.paymentMethod],
@@ -189,6 +192,7 @@ class BillRepository {
                         currency = row[BillsTable.currency],
                         description = row[BillsTable.description],
                         documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                        contactId = row[BillsTable.contactId]?.let { ContactId.parse(it.toString()) },
                         paidAt = row[BillsTable.paidAt],
                         paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                         paymentMethod = row[BillsTable.paymentMethod],
@@ -239,6 +243,7 @@ class BillRepository {
                         currency = row[BillsTable.currency],
                         description = row[BillsTable.description],
                         documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                        contactId = row[BillsTable.contactId]?.let { ContactId.parse(it.toString()) },
                         paidAt = row[BillsTable.paidAt],
                         paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                         paymentMethod = row[BillsTable.paymentMethod],
@@ -331,6 +336,7 @@ class BillRepository {
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
                     documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                    contactId = row[BillsTable.contactId]?.let { ContactId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
                     paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                     paymentMethod = row[BillsTable.paymentMethod],
@@ -396,6 +402,7 @@ class BillRepository {
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
                     documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                    contactId = row[BillsTable.contactId]?.let { ContactId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
                     paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                     paymentMethod = row[BillsTable.paymentMethod],
@@ -469,6 +476,7 @@ class BillRepository {
                 currency = row[BillsTable.currency],
                 description = row[BillsTable.description],
                 documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                contactId = row[BillsTable.contactId]?.let { ContactId.parse(it.toString()) },
                 paidAt = row[BillsTable.paidAt],
                 paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                 paymentMethod = row[BillsTable.paymentMethod],

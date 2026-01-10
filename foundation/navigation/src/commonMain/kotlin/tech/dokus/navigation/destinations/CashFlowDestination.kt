@@ -27,4 +27,13 @@ sealed interface CashFlowDestination : NavigationDestination {
     @Serializable
     @SerialName("cashflow/document_chat")
     data class DocumentChat(val documentId: String) : CashFlowDestination
+
+    /**
+     * Cashflow ledger screen with optional entry highlighting.
+     * Used for deep linking to a specific cashflow entry.
+     * @param highlightEntryId The cashflow entry ID to highlight (UUID string), or null
+     */
+    @Serializable
+    @SerialName("cashflow/ledger")
+    data class CashflowLedger(val highlightEntryId: String? = null) : CashFlowDestination
 }

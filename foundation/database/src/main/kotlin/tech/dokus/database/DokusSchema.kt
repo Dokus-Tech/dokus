@@ -14,14 +14,16 @@ import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.banking.BankConnectionsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.cashflow.BillsTable
-import tech.dokus.database.tables.cashflow.DocumentDraftsTable
-import tech.dokus.database.tables.cashflow.DocumentIngestionRunsTable
-import tech.dokus.database.tables.cashflow.DocumentsTable
+import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoiceItemsTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
+import tech.dokus.database.tables.contacts.ContactAddressesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.database.tables.documents.DocumentDraftsTable
+import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
 import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
@@ -64,9 +66,10 @@ object DokusSchema {
                 DocumentDraftsTable,
 
                 // ----------------------------
-                // Contacts (depends on docs/users)
+                // Contacts (depends on docs/users/addresses)
                 // ----------------------------
                 ContactsTable,
+                ContactAddressesTable,  // Join table: contacts -> addresses
                 ContactNotesTable,
 
                 // ----------------------------
@@ -76,6 +79,7 @@ object DokusSchema {
                 InvoiceItemsTable,
                 ExpensesTable,
                 BillsTable,
+                CashflowEntriesTable,
 
                 // ----------------------------
                 // Payments / Banking

@@ -10,6 +10,9 @@ import io.ktor.client.HttpClient
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.CashflowDirection
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
@@ -20,12 +23,16 @@ import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.AttachmentDto
+import tech.dokus.domain.model.CancelEntryRequest
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
+import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
@@ -370,17 +377,6 @@ interface CashflowRemoteDataSource {
     // ============================================================================
 
     /**
-     * List combined cashflow documents (invoices + expenses) with pagination.
-     * GET /api/v1/cashflow/documents?fromDate={fromDate}&toDate={toDate}&limit={limit}&offset={offset}
-     */
-    suspend fun listCashflowDocuments(
-        fromDate: LocalDate? = null,
-        toDate: LocalDate? = null,
-        limit: Int = 50,
-        offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto>>
-
-    /**
      * Get cashflow overview for a date range
      * GET /api/v1/cashflow/overview?fromDate={fromDate}&toDate={toDate}
      */
@@ -388,6 +384,58 @@ interface CashflowRemoteDataSource {
         fromDate: LocalDate,
         toDate: LocalDate
     ): Result<CashflowOverview>
+
+    // ============================================================================
+    // CASHFLOW ENTRIES (Projection Ledger)
+    // ============================================================================
+
+    /**
+     * List cashflow entries with optional filtering.
+     * GET /api/v1/cashflow/entries?fromDate={fromDate}&toDate={toDate}&direction={direction}&status={status}&sourceType={sourceType}&entryId={entryId}&limit={limit}&offset={offset}
+     *
+     * @param fromDate Filter by event date start
+     * @param toDate Filter by event date end
+     * @param direction Filter by direction (IN/OUT)
+     * @param status Filter by status (OPEN/PAID/OVERDUE/CANCELLED)
+     * @param sourceType Filter by source type (INVOICE/BILL/EXPENSE)
+     * @param entryId Exact match by entry ID (for deep links)
+     * @param limit Items per page
+     * @param offset Pagination offset
+     */
+    suspend fun listCashflowEntries(
+        fromDate: LocalDate? = null,
+        toDate: LocalDate? = null,
+        direction: CashflowDirection? = null,
+        status: CashflowEntryStatus? = null,
+        sourceType: CashflowSourceType? = null,
+        entryId: CashflowEntryId? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<PaginatedResponse<CashflowEntry>>
+
+    /**
+     * Get a single cashflow entry by ID.
+     * GET /api/v1/cashflow/entries/{id}
+     */
+    suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntry>
+
+    /**
+     * Record a payment against a cashflow entry.
+     * POST /api/v1/cashflow/entries/{id}/payments
+     */
+    suspend fun recordCashflowPayment(
+        entryId: CashflowEntryId,
+        request: CashflowPaymentRequest
+    ): Result<CashflowEntry>
+
+    /**
+     * Cancel a cashflow entry.
+     * POST /api/v1/cashflow/entries/{id}/cancel
+     */
+    suspend fun cancelCashflowEntry(
+        entryId: CashflowEntryId,
+        request: CancelEntryRequest? = null
+    ): Result<CashflowEntry>
 
     // ============================================================================
     // DOCUMENT MANAGEMENT (AI Extraction Pipeline)

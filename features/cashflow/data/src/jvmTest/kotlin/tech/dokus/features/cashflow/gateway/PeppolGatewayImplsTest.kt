@@ -5,7 +5,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
-import tech.dokus.domain.enums.PeppolConnectStatus
+import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection

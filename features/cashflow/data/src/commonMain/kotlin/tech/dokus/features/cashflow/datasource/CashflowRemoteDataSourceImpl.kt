@@ -22,6 +22,9 @@ import io.ktor.http.contentType
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.CashflowDirection
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
@@ -32,12 +35,16 @@ import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.AttachmentDto
+import tech.dokus.domain.model.CancelEntryRequest
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
+import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
@@ -503,24 +510,6 @@ internal class CashflowRemoteDataSourceImpl(
     // STATISTICS & OVERVIEW
     // ============================================================================
 
-    override suspend fun listCashflowDocuments(
-        fromDate: LocalDate?,
-        toDate: LocalDate?,
-        limit: Int,
-        offset: Int
-    ): Result<PaginatedResponse<FinancialDocumentDto>> {
-        return runCatching {
-            httpClient.get(
-                Cashflow.CashflowDocuments(
-                    fromDate = fromDate,
-                    toDate = toDate,
-                    limit = limit,
-                    offset = offset
-                )
-            ).body()
-        }
-    }
-
     override suspend fun getCashflowOverview(
         fromDate: LocalDate,
         toDate: LocalDate
@@ -532,6 +521,71 @@ internal class CashflowRemoteDataSourceImpl(
                     toDate = toDate
                 )
             ).body()
+        }
+    }
+
+    // ============================================================================
+    // CASHFLOW ENTRIES (Projection Ledger)
+    // ============================================================================
+
+    override suspend fun listCashflowEntries(
+        fromDate: LocalDate?,
+        toDate: LocalDate?,
+        direction: CashflowDirection?,
+        status: CashflowEntryStatus?,
+        sourceType: CashflowSourceType?,
+        entryId: CashflowEntryId?,
+        limit: Int,
+        offset: Int
+    ): Result<PaginatedResponse<CashflowEntry>> {
+        return runCatching {
+            httpClient.get(
+                Cashflow.Entries(
+                    fromDate = fromDate,
+                    toDate = toDate,
+                    direction = direction?.name,
+                    status = status?.name,
+                    sourceType = sourceType?.name,
+                    entryId = entryId?.toString(),
+                    limit = limit,
+                    offset = offset
+                )
+            ).body()
+        }
+    }
+
+    override suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntry> {
+        return runCatching {
+            val entriesRoute = Cashflow.Entries()
+            httpClient.get(Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())).body()
+        }
+    }
+
+    override suspend fun recordCashflowPayment(
+        entryId: CashflowEntryId,
+        request: CashflowPaymentRequest
+    ): Result<CashflowEntry> {
+        return runCatching {
+            val entriesRoute = Cashflow.Entries()
+            val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())
+            httpClient.post(Cashflow.Entries.Id.Payments(parent = idRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun cancelCashflowEntry(
+        entryId: CashflowEntryId,
+        request: CancelEntryRequest?
+    ): Result<CashflowEntry> {
+        return runCatching {
+            val entriesRoute = Cashflow.Entries()
+            val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())
+            httpClient.post(Cashflow.Entries.Id.Cancel(parent = idRoute)) {
+                contentType(ContentType.Application.Json)
+                request?.let { setBody(it) }
+            }.body()
         }
     }
 

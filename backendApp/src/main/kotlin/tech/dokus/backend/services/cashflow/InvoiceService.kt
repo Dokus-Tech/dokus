@@ -1,14 +1,19 @@
 package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.LocalDate
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.utils.loggerFor
+import java.util.UUID
 
 /**
  * Service for invoice business operations.
@@ -18,7 +23,8 @@ import tech.dokus.foundation.backend.utils.loggerFor
  * and delegates data access to the repository layer.
  */
 class InvoiceService(
-    private val invoiceRepository: InvoiceRepository
+    private val invoiceRepository: InvoiceRepository,
+    private val cashflowEntriesRepository: CashflowEntriesRepository
 ) {
     private val logger = loggerFor()
 
@@ -129,5 +135,40 @@ class InvoiceService(
         tenantId: TenantId
     ): Result<Boolean> {
         return invoiceRepository.exists(invoiceId, tenantId)
+    }
+
+    /**
+     * Record a payment for an invoice and synchronize its cashflow entry (if present).
+     */
+    suspend fun recordPayment(
+        invoiceId: InvoiceId,
+        tenantId: TenantId,
+        request: RecordPaymentRequest
+    ): Result<Unit> = runCatching {
+        val update = invoiceRepository.recordPayment(
+            invoiceId = invoiceId,
+            tenantId = tenantId,
+            amount = request.amount,
+            paymentDate = request.paymentDate,
+            paymentMethod = request.paymentMethod
+        ).getOrThrow()
+
+        // Best-effort: update cashflow entry projection if it exists.
+        val entry = cashflowEntriesRepository.getBySource(
+            tenantId = tenantId,
+            sourceType = CashflowSourceType.Invoice,
+            sourceId = UUID.fromString(invoiceId.toString())
+        ).getOrNull() ?: return@runCatching
+
+        val remaining = update.totalAmount - update.paidAmount
+        val newRemaining = if (remaining.isNegative) tech.dokus.domain.Money.ZERO else remaining
+        val newStatus = if (newRemaining.minor <= 0) CashflowEntryStatus.Paid else entry.status
+
+        cashflowEntriesRepository.updateRemainingAmountAndStatus(
+            entryId = entry.id,
+            tenantId = tenantId,
+            newRemainingAmount = newRemaining,
+            newStatus = newStatus
+        ).getOrThrow()
     }
 }
