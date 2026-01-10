@@ -70,7 +70,6 @@ fun InteractiveInvoiceDocument(
                     // Client section - clickable
                     InvoiceClientSection(
                         client = formState.selectedClient,
-                        showPeppolWarning = formState.showPeppolWarning,
                         onClick = onClientClick
                     )
 

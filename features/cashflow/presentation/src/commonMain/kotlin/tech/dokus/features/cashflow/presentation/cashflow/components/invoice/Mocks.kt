@@ -52,8 +52,6 @@ object Mocks {
         name = Name("Acme Corporation"),
         email = Email("billing@acme.com"),
         vatNumber = VatNumber("BE0123456789"),
-        peppolId = "0208:0123456789",
-        peppolEnabled = true,
         addresses = listOf(
             ContactAddressDto(
                 id = ContactAddressId.generate(),
@@ -80,8 +78,6 @@ object Mocks {
         name = Name("Local Business BVBA"),
         email = Email("contact@localbusiness.be"),
         vatNumber = VatNumber("BE9876543210"),
-        peppolId = null,
-        peppolEnabled = false,
         addresses = listOf(
             ContactAddressDto(
                 id = ContactAddressId.generate(),
