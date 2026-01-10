@@ -79,6 +79,8 @@ data class CashflowEntry(
     val currency: Currency,
     val status: CashflowEntryStatus,
     val counterpartyId: ContactId?,
+    val counterpartyName: String? = null,
+    val description: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )

@@ -12,6 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,21 +35,12 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_ledger_amount
 import tech.dokus.aura.resources.cashflow_ledger_counterparty
-import tech.dokus.aura.resources.cashflow_ledger_direction
+import tech.dokus.aura.resources.cashflow_ledger_description
 import tech.dokus.aura.resources.cashflow_ledger_due_date
 import tech.dokus.aura.resources.cashflow_ledger_status
-import tech.dokus.aura.resources.cashflow_ledger_view_details
-import tech.dokus.aura.resources.cashflow_ledger_direction_in
-import tech.dokus.aura.resources.cashflow_ledger_direction_out
-import tech.dokus.aura.resources.cashflow_ledger_status_cancelled
-import tech.dokus.aura.resources.cashflow_ledger_status_open
-import tech.dokus.aura.resources.cashflow_ledger_status_overdue
-import tech.dokus.aura.resources.cashflow_ledger_status_paid
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.features.cashflow.presentation.common.components.chips.DokusStatusChip
-import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableChevronIcon
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableHeaderLabel
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
@@ -50,16 +49,16 @@ import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.constrains.Constrains
 
 private val TableRowHeight = 56.dp
-private val ActionIconSize = 18.dp
+private val DirectionIconSize = 16.dp
+private val StatusIconSize = 20.dp
 
 @Immutable
 private object CashflowTableColumns {
-    val DueDate = DokusTableColumnSpec(weight = 0.9f)
-    val Counterparty = DokusTableColumnSpec(weight = 2.2f)
-    val Direction = DokusTableColumnSpec(width = 88.dp, horizontalAlignment = Alignment.CenterHorizontally)
-    val Amount = DokusTableColumnSpec(weight = 0.9f, horizontalAlignment = Alignment.End)
-    val Status = DokusTableColumnSpec(width = 120.dp, horizontalAlignment = Alignment.CenterHorizontally)
-    val Action = DokusTableColumnSpec(width = 36.dp, horizontalAlignment = Alignment.CenterHorizontally)
+    val DueDate = DokusTableColumnSpec(weight = 0.8f)
+    val Counterparty = DokusTableColumnSpec(weight = 1.5f)
+    val Description = DokusTableColumnSpec(weight = 1.5f)
+    val Status = DokusTableColumnSpec(width = 48.dp, horizontalAlignment = Alignment.CenterHorizontally)
+    val Amount = DokusTableColumnSpec(weight = 1f, horizontalAlignment = Alignment.End)
 }
 
 @Composable
@@ -78,9 +77,12 @@ internal fun CashflowLedgerHeaderRow(
         DokusTableCell(CashflowTableColumns.Counterparty) {
             DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_counterparty))
         }
-        DokusTableCell(CashflowTableColumns.Direction) {
+        DokusTableCell(CashflowTableColumns.Description) {
+            DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_description))
+        }
+        DokusTableCell(CashflowTableColumns.Status) {
             DokusTableHeaderLabel(
-                text = stringResource(Res.string.cashflow_ledger_direction),
+                text = stringResource(Res.string.cashflow_ledger_status),
                 textAlign = TextAlign.Center
             )
         }
@@ -89,15 +91,6 @@ internal fun CashflowLedgerHeaderRow(
                 text = stringResource(Res.string.cashflow_ledger_amount),
                 textAlign = TextAlign.End
             )
-        }
-        DokusTableCell(CashflowTableColumns.Status) {
-            DokusTableHeaderLabel(
-                text = stringResource(Res.string.cashflow_ledger_status),
-                textAlign = TextAlign.Center
-            )
-        }
-        DokusTableCell(CashflowTableColumns.Action) {
-            Spacer(modifier = Modifier.width(1.dp))
         }
     }
 }
@@ -136,33 +129,46 @@ internal fun CashflowLedgerTableRow(
         }
         DokusTableCell(CashflowTableColumns.Counterparty) {
             Text(
-                text = formatSourceLabel(entry),
+                text = entry.counterpartyName ?: "—",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
-        DokusTableCell(CashflowTableColumns.Direction) {
-            CashflowDirectionChip(direction = entry.direction)
+        DokusTableCell(CashflowTableColumns.Description) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = if (entry.direction == CashflowDirection.In) {
+                        Icons.AutoMirrored.Filled.TrendingUp
+                    } else {
+                        Icons.AutoMirrored.Filled.TrendingDown
+                    },
+                    contentDescription = null,
+                    tint = directionColor(entry.direction),
+                    modifier = Modifier.size(DirectionIconSize)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = entry.description ?: "—",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        DokusTableCell(CashflowTableColumns.Status) {
+            CashflowStatusIcon(status = entry.status)
         }
         DokusTableCell(CashflowTableColumns.Amount) {
             Text(
                 text = entry.amountGross.toDisplayString(),
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                color = amountColor(entry.direction),
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.End,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
-            )
-        }
-        DokusTableCell(CashflowTableColumns.Status) {
-            CashflowStatusChip(status = entry.status)
-        }
-        DokusTableCell(CashflowTableColumns.Action) {
-            DokusTableChevronIcon(
-                contentDescription = stringResource(Res.string.cashflow_ledger_view_details),
-                modifier = Modifier.size(ActionIconSize)
             )
         }
     }
@@ -186,13 +192,28 @@ internal fun CashflowLedgerMobileRow(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = formatSourceLabel(entry),
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = if (entry.direction == CashflowDirection.In) {
+                        Icons.AutoMirrored.Filled.TrendingUp
+                    } else {
+                        Icons.AutoMirrored.Filled.TrendingDown
+                    },
+                    contentDescription = null,
+                    tint = directionColor(entry.direction),
+                    modifier = Modifier.size(DirectionIconSize)
+                )
+                Text(
+                    text = entry.counterpartyName ?: "—",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -207,74 +228,43 @@ internal fun CashflowLedgerMobileRow(
                 Text(
                     text = entry.amountGross.toDisplayString(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = amountColor(entry.direction),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CashflowStatusChip(status = entry.status)
-            DokusTableChevronIcon(
-                contentDescription = null,
-                modifier = Modifier.size(ActionIconSize)
-            )
-        }
+        CashflowStatusIcon(status = entry.status)
     }
 }
 
 @Composable
-private fun CashflowDirectionChip(
-    direction: CashflowDirection,
-    modifier: Modifier = Modifier
-) {
-    val (label, color) = when (direction) {
-        CashflowDirection.In -> stringResource(Res.string.cashflow_ledger_direction_in) to
-            MaterialTheme.colorScheme.tertiary
-        CashflowDirection.Out -> stringResource(Res.string.cashflow_ledger_direction_out) to
-            MaterialTheme.colorScheme.error
-    }
-
-    DokusStatusChip(
-        label = label,
-        color = color,
-        modifier = modifier
-    )
-}
-
-@Composable
-internal fun CashflowStatusChip(
+private fun CashflowStatusIcon(
     status: CashflowEntryStatus,
     modifier: Modifier = Modifier
 ) {
-    val (label, color) = when (status) {
-        CashflowEntryStatus.Open -> stringResource(Res.string.cashflow_ledger_status_open) to
-            MaterialTheme.colorScheme.primary
-        CashflowEntryStatus.Paid -> stringResource(Res.string.cashflow_ledger_status_paid) to
+    val (icon, color) = when (status) {
+        CashflowEntryStatus.Open -> Icons.Default.RadioButtonUnchecked to
+            MaterialTheme.colorScheme.onSurfaceVariant
+        CashflowEntryStatus.Paid -> Icons.Default.CheckCircle to
             MaterialTheme.colorScheme.tertiary
-        CashflowEntryStatus.Overdue -> stringResource(Res.string.cashflow_ledger_status_overdue) to
+        CashflowEntryStatus.Overdue -> Icons.Default.Warning to
             MaterialTheme.colorScheme.error
-        CashflowEntryStatus.Cancelled -> stringResource(Res.string.cashflow_ledger_status_cancelled) to
+        CashflowEntryStatus.Cancelled -> Icons.Default.Cancel to
             MaterialTheme.colorScheme.outline
     }
 
-    DokusStatusChip(
-        label = label,
-        color = color,
-        modifier = modifier
+    Icon(
+        imageVector = icon,
+        contentDescription = null,
+        tint = color,
+        modifier = modifier.size(StatusIconSize)
     )
 }
 
-private fun formatSourceLabel(entry: CashflowEntry): String {
-    return entry.sourceType.name.lowercase().replaceFirstChar { it.uppercase() }
-}
-
 @Composable
-private fun amountColor(direction: CashflowDirection) = when (direction) {
+private fun directionColor(direction: CashflowDirection) = when (direction) {
     CashflowDirection.In -> MaterialTheme.colorScheme.tertiary
     CashflowDirection.Out -> MaterialTheme.colorScheme.error
 }

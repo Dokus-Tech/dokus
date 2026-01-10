@@ -12,8 +12,8 @@
     <string name="cashflow_ledger_expected_out">Expected Out</string>
     <string name="cashflow_ledger_net">Net</string>
     <string name="cashflow_ledger_due_date">Due date</string>
-    <string name="cashflow_ledger_counterparty">Source</string>
-    <string name="cashflow_ledger_direction">Direction</string>
+    <string name="cashflow_ledger_counterparty">Counterparty</string>
+    <string name="cashflow_ledger_description">Description</string>
     <string name="cashflow_ledger_amount">Amount</string>
     <string name="cashflow_ledger_status">Status</string>
     <string name="cashflow_ledger_view_details">View details</string>
