@@ -11,12 +11,6 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import tech.dokus.domain.model.RecommandDocumentDetail
-import tech.dokus.domain.model.RecommandDocumentResponse
-import tech.dokus.domain.model.RecommandDocumentsResponse
-import tech.dokus.domain.model.RecommandInboxResponse
-import tech.dokus.domain.model.RecommandMarkAsReadRequest
-import tech.dokus.domain.model.RecommandSendResponse
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolProviderConfig
@@ -29,6 +23,12 @@ import tech.dokus.peppol.model.PeppolSendResponse
 import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.peppol.provider.PeppolCredentials
 import tech.dokus.peppol.provider.PeppolProvider
+import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
+import tech.dokus.peppol.provider.client.recommand.model.RecommandGetDocumentResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandGetDocumentsResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandGetInboxResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandMarkAsReadRequest
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSendDocumentResponse
 
 /**
  * Peppol provider implementation for Recommand.eu
@@ -93,13 +93,12 @@ class RecommandProvider(
                 throw RecommandApiException(response.status.value, errorBody)
             }
 
-            val result = response.body<RecommandSendResponse>()
+            val result = response.body<RecommandSendDocumentResponse>()
 
             if (result.success) {
-                logger.info("Document sent successfully. Document ID: ${result.documentId}")
+                logger.info("Document sent successfully. Document ID: ${result.id}")
             } else {
-                val errors = result.errors?.joinToString { it.message } ?: "Unknown error"
-                logger.warn("Document send failed. Errors: $errors")
+                logger.warn("Document send failed. Response: {}", result)
             }
 
             RecommandMapper.fromRecommandResponse(result)
@@ -153,7 +152,7 @@ class RecommandProvider(
             throw RecommandApiException(response.status.value, errorBody)
         }
 
-        val wrapper = response.body<RecommandInboxResponse>()
+        val wrapper = response.body<RecommandGetInboxResponse>()
         val items = wrapper.documents
         logger.debug("Fetched ${items.size} inbox items")
         items.map { RecommandMapper.fromRecommandInboxItem(it) }
@@ -175,20 +174,18 @@ class RecommandProvider(
                 basicAuth(credentials.apiKey, credentials.apiSecret)
             }
 
-            if (!response.status.isSuccess()) {
-                val errorBody = response.bodyAsText()
-                logger.error("Recommand API error: ${response.status} - $errorBody")
-                throw RecommandApiException(response.status.value, errorBody)
-            }
-
-            val wrapper = response.body<RecommandDocumentResponse>()
-            val detail = wrapper.document
-                ?: throw IllegalStateException("Document response is missing document for ID: $documentId")
-
-            RecommandMapper.fromRecommandDocumentDetail(detail)
-        }.onFailure { e ->
-            logger.error("Failed to fetch Peppol document: $documentId", e)
+        if (!response.status.isSuccess()) {
+            val errorBody = response.bodyAsText()
+            logger.error("Recommand API error: ${response.status} - $errorBody")
+            throw RecommandApiException(response.status.value, errorBody)
         }
+
+        val detail = response.body<RecommandGetDocumentResponse>().document
+
+        RecommandMapper.fromRecommandDocumentDetail(detail)
+    }.onFailure { e ->
+        logger.error("Failed to fetch Peppol document: $documentId", e)
+    }
 
     /**
      * Get raw document detail including attachments.
@@ -210,8 +207,7 @@ class RecommandProvider(
                 throw RecommandApiException(response.status.value, errorBody)
             }
 
-            response.body<RecommandDocumentResponse>().document
-                ?: throw IllegalStateException("Document response is missing document for ID: $documentId")
+            response.body<RecommandGetDocumentResponse>().document
         }.onFailure { e ->
             logger.error("Failed to fetch raw document detail: $documentId", e)
         }
@@ -286,8 +282,8 @@ class RecommandProvider(
             throw RecommandApiException(response.status.value, errorBody)
         }
 
-        val result = response.body<RecommandDocumentsResponse>()
-        logger.debug("Fetched ${result.data.size} documents")
+        val result = response.body<RecommandGetDocumentsResponse>()
+        logger.debug("Fetched ${result.documents.size} documents")
         RecommandMapper.fromRecommandDocumentsResponse(result)
     }.onFailure { e ->
         logger.error("Failed to list Peppol documents", e)

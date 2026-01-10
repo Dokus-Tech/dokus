@@ -11,7 +11,10 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.serialization.Serializable
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCompany
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateCompanyRequest
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateCompanyResponse
+import tech.dokus.peppol.provider.client.recommand.model.RecommandGetCompaniesResponse
 import tech.dokus.peppol.config.PeppolProviderConfig
 
 class RecommandCompaniesClient(
@@ -37,7 +40,7 @@ class RecommandCompaniesClient(
             throw RecommandApiException(response.status.value, response.bodyAsText())
         }
 
-        response.body<RecommandListCompaniesResponse>().companies
+        response.body<RecommandGetCompaniesResponse>().companies
     }
 
     suspend fun createCompany(
@@ -62,47 +65,6 @@ class RecommandCompaniesClient(
         response.body<RecommandCreateCompanyResponse>().company
     }
 }
-
-@Serializable
-data class RecommandCompany(
-    val id: String,
-    val teamId: String,
-    val name: String,
-    val address: String,
-    val postalCode: String,
-    val city: String,
-    val country: String,
-    val enterpriseNumber: String,
-    val vatNumber: String,
-    val isSmpRecipient: Boolean,
-    val createdAt: String,
-    val updatedAt: String,
-)
-
-@Serializable
-data class RecommandCreateCompanyRequest(
-    val name: String,
-    val address: String,
-    val postalCode: String,
-    val city: String,
-    val country: String,
-    val enterpriseNumber: String? = null,
-    val vatNumber: String? = null,
-    val isSmpRecipient: Boolean = true,
-    val skipDefaultCompanySetup: Boolean = false,
-)
-
-@Serializable
-private data class RecommandListCompaniesResponse(
-    val success: Boolean,
-    val companies: List<RecommandCompany>,
-)
-
-@Serializable
-private data class RecommandCreateCompanyResponse(
-    val success: Boolean,
-    val company: RecommandCompany,
-)
 
 class RecommandUnauthorizedException(
     val statusCode: Int,

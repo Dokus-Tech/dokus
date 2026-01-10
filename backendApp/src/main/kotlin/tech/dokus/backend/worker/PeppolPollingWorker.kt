@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
@@ -21,8 +22,15 @@ import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.RecommandDocumentDetail
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.peppol.provider.client.recommand.model.RecommandAttachment
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCreditNote
+import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
+import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentType
+import tech.dokus.peppol.provider.client.recommand.model.RecommandInvoice
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingCreditNote
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingInvoice
 import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.service.PeppolService
 import java.util.Base64
@@ -182,6 +190,22 @@ class PeppolPollingWorker(
         }
     }
 
+    private fun extractAttachments(documentDetail: RecommandDocumentDetail): List<RecommandAttachment>? {
+        val parsed = documentDetail.parsed ?: return null
+
+        return when (documentDetail.type) {
+            RecommandDocumentType.Invoice ->
+                json.decodeFromJsonElement<RecommandInvoice>(parsed).attachments
+            RecommandDocumentType.CreditNote ->
+                json.decodeFromJsonElement<RecommandCreditNote>(parsed).attachments
+            RecommandDocumentType.SelfBillingInvoice ->
+                json.decodeFromJsonElement<RecommandSelfBillingInvoice>(parsed).attachments
+            RecommandDocumentType.SelfBillingCreditNote ->
+                json.decodeFromJsonElement<RecommandSelfBillingCreditNote>(parsed).attachments
+            RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml -> null
+        }
+    }
+
     /**
      * Poll a single tenant's Peppol inbox.
      */
@@ -201,17 +225,19 @@ class PeppolPollingWorker(
             val result = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid, documentDetail ->
                 runCatching {
                     // Find PDF attachment (if any)
-                    val pdfAttachment = documentDetail?.parsed?.attachments
+                    val pdfAttachment = documentDetail
+                        ?.let(::extractAttachments)
                         ?.firstOrNull { it.mimeCode == "application/pdf" && !it.embeddedDocument.isNullOrEmpty() }
 
                     // Upload PDF if available
                     val uploadResult = if (pdfAttachment != null) {
-                        val pdfBytes = Base64.getDecoder().decode(pdfAttachment.embeddedDocument)
+                        val pdfBytes = Base64.getDecoder().decode(requireNotNull(pdfAttachment.embeddedDocument))
                         documentStorageService.uploadDocument(
                             tenantId = tid,
                             prefix = "peppol",
-                            filename = pdfAttachment.filename
-                                ?: "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.pdf",
+                            filename = pdfAttachment.filename.ifBlank {
+                                "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.pdf"
+                            },
                             data = pdfBytes,
                             contentType = "application/pdf"
                         )
