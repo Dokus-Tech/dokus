@@ -93,13 +93,9 @@ fun InvoiceSendOptionsPanel(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            // Peppol warning for Belgian clients
-            if (formState.showPeppolWarning) {
-                PeppolWarningBanner()
-            }
-
             // Delivery method options
-            DeliveryMethodOption.all(showPeppolWarning = formState.showPeppolWarning).forEach { option ->
+            // NOTE: PEPPOL status is now resolved at send time via PeppolRecipientResolver
+            DeliveryMethodOption.all().forEach { option ->
                 DeliveryMethodOptionRow(
                     option = option,
                     isSelected = selectedMethod == option.deliveryMethod,

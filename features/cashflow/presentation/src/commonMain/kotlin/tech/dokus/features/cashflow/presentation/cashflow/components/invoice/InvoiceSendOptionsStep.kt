@@ -110,12 +110,8 @@ fun InvoiceSendOptionsStep(
         // Invoice summary card
         MobileInvoiceSummaryCard(formState = formState)
 
-        // Peppol warning for Belgian clients
-        if (formState.showPeppolWarning) {
-            MobilePeppolWarningBanner()
-        }
-
         // Delivery method options
+        // NOTE: PEPPOL status is now resolved at send time via PeppolRecipientResolver
         Text(
             text = stringResource(Res.string.invoice_choose_delivery_method),
             style = MaterialTheme.typography.titleMedium,
@@ -123,7 +119,7 @@ fun InvoiceSendOptionsStep(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        DeliveryMethodOption.all(showPeppolWarning = formState.showPeppolWarning).forEach { option ->
+        DeliveryMethodOption.all().forEach { option ->
             MobileDeliveryMethodOptionRow(
                 option = option,
                 isSelected = selectedMethod == option.deliveryMethod,

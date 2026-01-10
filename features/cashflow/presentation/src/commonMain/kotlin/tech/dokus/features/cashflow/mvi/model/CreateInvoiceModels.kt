@@ -107,25 +107,6 @@ data class CreateInvoiceFormState(
     val isValid: Boolean
         get() = selectedClient != null && items.any { it.isValid }
 
-    /**
-     * Check if selected client is Belgian (for Peppol validation).
-     */
-    val isClientBelgian: Boolean
-        get() = selectedClient?.country?.equals("BE", ignoreCase = true) == true ||
-            selectedClient?.country?.equals("Belgium", ignoreCase = true) == true
-
-    /**
-     * Check if selected client has Peppol ID configured.
-     */
-    val clientHasPeppolId: Boolean
-        get() = selectedClient?.peppolId != null
-
-    /**
-     * Show Peppol warning for Belgian clients without Peppol ID.
-     */
-    val showPeppolWarning: Boolean
-        get() = isClientBelgian && !clientHasPeppolId && selectedClient != null
-
     companion object {
         /**
          * Create initial form state with today's date and default due date.

@@ -56,7 +56,6 @@ import tech.dokus.aura.resources.invoice_no_clients_found
 import tech.dokus.aura.resources.invoice_no_clients_match
 import tech.dokus.aura.resources.invoice_search_clients
 import tech.dokus.aura.resources.invoice_select_client
-import tech.dokus.aura.resources.peppol_id_missing
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -75,7 +74,6 @@ private val ErrorIconSpacing = 8.dp
 private val ListItemPadding = 12.dp
 private val ListItemSpacing = 12.dp
 private val ClientIconSize = 24.dp
-private val PeppolWarningIconSize = 14.dp
 private val SelectedIndicatorSize = 20.dp
 private val ClientNameSpacing = 8.dp
 
@@ -307,10 +305,8 @@ private fun ClientListItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val isBelgian = client.country?.equals("BE", ignoreCase = true) == true ||
-        client.country?.equals("Belgium", ignoreCase = true) == true
-    val hasPeppolId = client.peppolId != null
-    val showPeppolWarning = isBelgian && !hasPeppolId
+    // NOTE: PEPPOL status is now resolved via PeppolRecipientResolver at send time
+    // The warning for missing PEPPOL ID is no longer shown in the client list
 
     Row(
         modifier = modifier
@@ -357,15 +353,6 @@ private fun ClientListItem(
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-
-                if (showPeppolWarning) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = stringResource(Res.string.peppol_id_missing),
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(PeppolWarningIconSize)
-                    )
-                }
             }
 
             client.email?.let { email ->

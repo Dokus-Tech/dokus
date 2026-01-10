@@ -45,8 +45,6 @@ import tech.dokus.features.contacts.usecases.MergeContactsUseCase
 import tech.dokus.features.contacts.usecases.MergeContactsUseCaseImpl
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCaseImpl
-import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCase
-import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCaseImpl
 import tech.dokus.features.contacts.usecases.UpdateContactUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactUseCaseImpl
 
@@ -97,6 +95,5 @@ val contactsDomainModule = module {
 
     // Activity use cases
     single<GetContactActivityUseCase> { GetContactActivityUseCaseImpl(get()) }
-    single<UpdateContactPeppolUseCase> { UpdateContactPeppolUseCaseImpl(get()) }
     single<MergeContactsUseCase> { MergeContactsUseCaseImpl(get()) }
 }
