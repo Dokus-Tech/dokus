@@ -192,7 +192,7 @@ sealed interface ContactFormState : MVIState, DokusState<Nothing> {
                     formData.vatNumber != (original.vatNumber ?: VatNumber.Empty) ||
                     formData.businessType != original.businessType ||
                     formData.addressLine1 != (original.addressLine1 ?: "") ||
-                    formData.city != (original.city ?: City("")) ||
+                    formData.city.value != (original.city ?: "") ||
                     formData.country != (original.country ?: "") ||
                     formData.peppolId != (original.peppolId ?: "") ||
                     formData.peppolEnabled != original.peppolEnabled

@@ -110,9 +110,9 @@ class PeppolConnectionService(
         val street = address.streetLine1
         val postalCode = address.postalCode
         val city = address.city
-        val country = address.country.dbValue
+        val country = address.country  // Now stored as ISO-2 string directly
 
-        if (street.isBlank() || postalCode.isBlank() || city.isBlank()) {
+        if (street.isNullOrBlank() || postalCode.isNullOrBlank() || city.isNullOrBlank() || country.isNullOrBlank()) {
             throw MissingCompanyAddressException()
         }
 
@@ -226,9 +226,9 @@ class PeppolConnectionService(
         val street = address.streetLine1
         val postalCode = address.postalCode
         val city = address.city
-        val country = address.country.dbValue
+        val country = address.country  // Now stored as ISO-2 string directly
 
-        if (street.isBlank() || postalCode.isBlank() || city.isBlank()) {
+        if (street.isNullOrBlank() || postalCode.isNullOrBlank() || city.isNullOrBlank() || country.isNullOrBlank()) {
             throw MissingCompanyAddressException()
         }
 

@@ -23,7 +23,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.ContactAddress
+import tech.dokus.domain.model.contact.ContactAddressInput
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
@@ -661,7 +661,7 @@ private fun ContactDto.toFormData(): ContactFormData = ContactFormData(
     businessType = businessType,
     addressLine1 = addressLine1 ?: "",
     addressLine2 = addressLine2 ?: "",
-    city = city ?: City(""),
+    city = City(city ?: ""),  // Wrap in City for form validation
     postalCode = postalCode ?: "",
     country = country ?: "",
     peppolId = peppolId ?: "",
@@ -674,6 +674,7 @@ private fun ContactDto.toFormData(): ContactFormData = ContactFormData(
 
 /**
  * Convert ContactFormData to CreateContactRequest.
+ * Note: Addresses are managed separately via ContactAddressRepository.
  */
 private fun ContactFormData.toCreateRequest(): CreateContactRequest = CreateContactRequest(
     name = name,
@@ -681,7 +682,7 @@ private fun ContactFormData.toCreateRequest(): CreateContactRequest = CreateCont
     phone = phone.takeIf { it.value.isNotBlank() },
     vatNumber = vatNumber.takeIf { it.value.isNotBlank() },
     businessType = businessType,
-    address = toContactAddress(),
+    addresses = toContactAddresses(),
     contactPerson = contactPerson.takeIf { it.isNotBlank() },
     companyNumber = companyNumber.takeIf { it.isNotBlank() },
     defaultPaymentTerms = defaultPaymentTerms,
@@ -694,6 +695,7 @@ private fun ContactFormData.toCreateRequest(): CreateContactRequest = CreateCont
 
 /**
  * Convert ContactFormData to UpdateContactRequest.
+ * Note: Addresses are managed separately via ContactAddressRepository.
  */
 private fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateContactRequest(
     name = name,
@@ -701,7 +703,7 @@ private fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateCont
     phone = phone.takeIf { it.value.isNotBlank() },
     vatNumber = vatNumber.takeIf { it.value.isNotBlank() },
     businessType = businessType,
-    address = toContactAddress(),
+    // Note: Address updates are handled separately via ContactAddressRepository
     contactPerson = contactPerson.takeIf { it.isNotBlank() },
     companyNumber = companyNumber.takeIf { it.isNotBlank() },
     defaultPaymentTerms = defaultPaymentTerms,
@@ -713,19 +715,21 @@ private fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateCont
 )
 
 /**
- * Convert address fields to ContactAddress if valid.
- * Returns null if required address fields are missing.
+ * Convert address fields to list of ContactAddressInput for create request.
+ * Returns empty list if required address fields are missing.
  */
-private fun ContactFormData.toContactAddress(): ContactAddress? {
+private fun ContactFormData.toContactAddresses(): List<ContactAddressInput> {
     val requiredFields = listOf(addressLine1, city.value, postalCode, country)
     if (requiredFields.any { it.isBlank() }) {
-        return null
+        return emptyList()
     }
-    return ContactAddress(
-        streetLine1 = addressLine1,
-        streetLine2 = addressLine2.takeIf { it.isNotBlank() },
-        city = city,
-        postalCode = postalCode,
-        country = country
+    return listOf(
+        ContactAddressInput(
+            streetLine1 = addressLine1,
+            streetLine2 = addressLine2.takeIf { it.isNotBlank() },
+            city = city.value,  // Extract value from City wrapper
+            postalCode = postalCode,
+            country = country
+        )
     )
 }

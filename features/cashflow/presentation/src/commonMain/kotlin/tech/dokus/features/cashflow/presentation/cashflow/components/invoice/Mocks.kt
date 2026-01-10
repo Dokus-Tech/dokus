@@ -2,13 +2,17 @@ package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.PhoneNumber
+import tech.dokus.domain.enums.AddressType
+import tech.dokus.domain.ids.AddressId
+import tech.dokus.domain.ids.ContactAddressId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.AddressDto
+import tech.dokus.domain.model.contact.ContactAddressDto
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
@@ -50,10 +54,20 @@ object Mocks {
         vatNumber = VatNumber("BE0123456789"),
         peppolId = "0208:0123456789",
         peppolEnabled = true,
-        addressLine1 = "123 Business Street",
-        city = City("Brussels"),
-        postalCode = "1000",
-        country = "BE",
+        addresses = listOf(
+            ContactAddressDto(
+                id = ContactAddressId.generate(),
+                address = AddressDto(
+                    id = AddressId.generate(),
+                    streetLine1 = "123 Business Street",
+                    city = "Brussels",
+                    postalCode = "1000",
+                    country = "BE"
+                ),
+                addressType = AddressType.Registered,
+                isDefault = true
+            )
+        ),
         phone = PhoneNumber("+32 2 123 4567"),
         createdAt = now,
         updatedAt = now
@@ -68,10 +82,20 @@ object Mocks {
         vatNumber = VatNumber("BE9876543210"),
         peppolId = null,
         peppolEnabled = false,
-        addressLine1 = "456 Commerce Lane",
-        city = City("Antwerp"),
-        postalCode = "2000",
-        country = "BE",
+        addresses = listOf(
+            ContactAddressDto(
+                id = ContactAddressId.generate(),
+                address = AddressDto(
+                    id = AddressId.generate(),
+                    streetLine1 = "456 Commerce Lane",
+                    city = "Antwerp",
+                    postalCode = "2000",
+                    country = "BE"
+                ),
+                addressType = AddressType.Registered,
+                isDefault = true
+            )
+        ),
         phone = null,
         createdAt = now,
         updatedAt = now

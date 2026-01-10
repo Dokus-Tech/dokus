@@ -41,13 +41,6 @@ object ContactsTable : UUIDTable("contacts") {
     val peppolId = varchar("peppol_id", 255).nullable()
     val peppolEnabled = bool("peppol_enabled").default(false)
 
-    // Address
-    val addressLine1 = varchar("address_line_1", 255).nullable()
-    val addressLine2 = varchar("address_line_2", 255).nullable()
-    val city = varchar("city", 100).nullable()
-    val postalCode = varchar("postal_code", 20).nullable()
-    val country = varchar("country", 2).nullable() // ISO 3166-1 alpha-2
-
     // Defaults for invoicing
     val defaultPaymentTerms = integer("default_payment_terms").default(30)
     val defaultVatRate = decimal("default_vat_rate", 5, 2).nullable()

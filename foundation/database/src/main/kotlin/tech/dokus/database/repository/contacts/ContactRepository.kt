@@ -23,7 +23,6 @@ import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.PhoneNumber
@@ -35,7 +34,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
-import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactMergeResult
 import tech.dokus.domain.model.contact.ContactStats
@@ -56,8 +54,9 @@ import java.util.UUID
 class ContactRepository {
 
     /**
-     * Create a new contact
-     * CRITICAL: MUST include tenant_id for multi-tenancy security
+     * Create a new contact.
+     * Note: Addresses are managed separately via ContactAddressRepository.
+     * CRITICAL: MUST include tenant_id for multi-tenancy security.
      */
     suspend fun createContact(
         tenantId: TenantId,
@@ -72,11 +71,7 @@ class ContactRepository {
                 it[vatNumber] = request.vatNumber?.value
                 // contactType removed - roles are derived from cashflow items
                 it[businessType] = request.businessType
-                it[addressLine1] = request.address?.streetLine1
-                it[addressLine2] = request.address?.streetLine2
-                it[city] = request.address?.city?.value
-                it[postalCode] = request.address?.postalCode
-                it[country] = request.address?.country
+                // Addresses are now in ContactAddressesTable join table
                 it[contactPerson] = request.contactPerson
                 it[companyNumber] = request.companyNumber
                 it[defaultPaymentTerms] = request.defaultPaymentTerms
@@ -87,7 +82,7 @@ class ContactRepository {
                 it[contactSource] = request.source
             }
 
-            // Fetch and return the created contact
+            // Fetch and return the created contact (addresses populated by caller)
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq contactId.value) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
@@ -199,8 +194,9 @@ class ContactRepository {
     }
 
     /**
-     * Update a contact
-     * CRITICAL: MUST filter by tenant_id
+     * Update a contact.
+     * Note: Addresses are managed separately via ContactAddressRepository.
+     * CRITICAL: MUST filter by tenant_id.
      */
     suspend fun updateContact(
         contactId: ContactId,
@@ -219,6 +215,7 @@ class ContactRepository {
             }
 
             // Update contact (only non-null fields)
+            // Addresses are managed separately via ContactAddressRepository
             ContactsTable.update({
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
@@ -229,13 +226,6 @@ class ContactRepository {
                 request.vatNumber?.let { value -> it[vatNumber] = value.value }
                 // contactType removed - roles are derived from cashflow items
                 request.businessType?.let { value -> it[businessType] = value }
-                request.address?.let { addr ->
-                    it[addressLine1] = addr.streetLine1
-                    it[addressLine2] = addr.streetLine2
-                    it[city] = addr.city.value
-                    it[postalCode] = addr.postalCode
-                    it[country] = addr.country
-                }
                 request.contactPerson?.let { value -> it[contactPerson] = value }
                 request.companyNumber?.let { value -> it[companyNumber] = value }
                 request.defaultPaymentTerms?.let { value -> it[defaultPaymentTerms] = value }
@@ -246,7 +236,7 @@ class ContactRepository {
                 request.isActive?.let { value -> it[isActive] = value }
             }
 
-            // Fetch and return the updated contact
+            // Fetch and return the updated contact (addresses populated by caller)
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
@@ -481,26 +471,22 @@ class ContactRepository {
     }
 
     /**
-     * Find contacts by name (case-insensitive partial match)
+     * Find contacts by name (case-insensitive partial match).
      * Returns up to [limit] active matches sorted by name.
+     *
+     * Note: Country filtering removed - country is now in AddressTable.
+     * TODO: Re-implement country filtering with JOIN to ContactAddressesTable/AddressTable if needed.
      */
     suspend fun findByName(
         tenantId: TenantId,
         name: String,
-        country: String? = null,
         limit: Int = 5
     ): Result<List<ContactDto>> = runCatching {
         dbQuery {
             val searchTerm = name.lowercase()
-            var query = ContactsTable.selectAll().where {
+            val query = ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (ContactsTable.isActive eq true)
-            }
-
-            if (country != null) {
-                query = query.andWhere {
-                    ContactsTable.country eq country.uppercase()
-                }
             }
 
             // Filter in-memory for case-insensitive matching and limit
@@ -749,7 +735,8 @@ class ContactRepository {
     // =========================================================================
 
     /**
-     * Map a database row to ContactDto
+     * Map a database row to ContactDto.
+     * Note: addresses list is empty - caller should populate via ContactAddressRepository.
      */
     private fun mapRowToContactDto(row: ResultRow): ContactDto {
         return ContactDto(
@@ -759,11 +746,7 @@ class ContactRepository {
             email = row[ContactsTable.email]?.let { Email(it) },
             vatNumber = row[ContactsTable.vatNumber]?.let { VatNumber(it) },
             businessType = row[ContactsTable.businessType],
-            addressLine1 = row[ContactsTable.addressLine1],
-            addressLine2 = row[ContactsTable.addressLine2],
-            city = row[ContactsTable.city]?.let { City(it) },
-            postalCode = row[ContactsTable.postalCode],
-            country = row[ContactsTable.country],
+            // Addresses are now in ContactAddressesTable, populated by caller
             contactPerson = row[ContactsTable.contactPerson],
             phone = row[ContactsTable.phone]?.let { PhoneNumber(it) },
             companyNumber = row[ContactsTable.companyNumber],
@@ -781,7 +764,7 @@ class ContactRepository {
                 DocumentId.parse(it.toString())
             },
             source = row[ContactsTable.contactSource]
-            // derivedRoles and activitySummary are populated by service layer on demand
+            // addresses, derivedRoles and activitySummary are populated by service layer on demand
         )
     }
 }

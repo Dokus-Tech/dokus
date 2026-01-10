@@ -1,14 +1,12 @@
 package tech.dokus.backend.services.contacts
 
 import tech.dokus.database.repository.contacts.ContactRepository
-import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.ContactAddress
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -143,6 +141,9 @@ class ContactEnrichmentService(
     /**
      * Calculate which fields can be enriched and which should be skipped.
      *
+     * Note: Address fields are managed separately via ContactAddressRepository.
+     * Address enrichment data is logged but not applied here.
+     *
      * @return Pair of (fieldsToEnrich, fieldsToSkip)
      *         fieldsToEnrich is List<Pair<fieldName, newValue>>
      *         fieldsToSkip is List<fieldName>
@@ -156,11 +157,8 @@ class ContactEnrichmentService(
 
         collectField("email", data.email, contact.email?.value, toEnrich, toSkip)
         collectField("phone", data.phone, contact.phone?.value, toEnrich, toSkip)
-        collectField("addressLine1", data.addressLine1, contact.addressLine1, toEnrich, toSkip)
-        collectField("addressLine2", data.addressLine2, contact.addressLine2, toEnrich, toSkip)
-        collectField("city", data.city, contact.city?.value, toEnrich, toSkip)
-        collectField("postalCode", data.postalCode, contact.postalCode, toEnrich, toSkip)
-        collectField("country", data.country, contact.country, toEnrich, toSkip)
+        // Address fields are now managed separately via ContactAddressRepository
+        // TODO: Consider adding address enrichment through ContactAddressRepository
         collectField("peppolId", data.peppolId, contact.peppolId, toEnrich, toSkip)
         collectField("companyNumber", data.companyNumber, contact.companyNumber, toEnrich, toSkip)
         collectField("contactPerson", data.contactPerson, contact.contactPerson, toEnrich, toSkip)
@@ -174,14 +172,9 @@ class ContactEnrichmentService(
      */
     private fun buildUpdateRequest(fieldsToEnrich: List<Pair<String, String>>): UpdateContactRequest {
         var request = UpdateContactRequest()
-        val addressParts = AddressParts()
 
         for ((field, value) in fieldsToEnrich) {
-            request = applyFieldUpdate(request, field, value, addressParts)
-        }
-
-        addressParts.toContactAddressOrNull()?.let { address ->
-            request = request.copy(address = address)
+            request = applyFieldUpdate(request, field, value)
         }
 
         return request
@@ -205,53 +198,17 @@ class ContactEnrichmentService(
     private fun applyFieldUpdate(
         request: UpdateContactRequest,
         field: String,
-        value: String,
-        addressParts: AddressParts
+        value: String
     ): UpdateContactRequest {
         return when (field) {
             "email" -> request.copy(email = Email(value))
             "phone" -> request.copy(phone = PhoneNumber(value))
-            "addressLine1", "addressLine2", "city", "postalCode", "country" -> {
-                addressParts.apply(field, value)
-                request
-            }
+            // Address fields are now managed separately via ContactAddressRepository
             "peppolId" -> request.copy(peppolId = value)
             "companyNumber" -> request.copy(companyNumber = value)
             "contactPerson" -> request.copy(contactPerson = value)
             "vatNumber" -> request.copy(vatNumber = VatNumber(value))
             else -> request
-        }
-    }
-
-    private class AddressParts {
-        private var addressLine1: String? = null
-        private var addressLine2: String? = null
-        private var city: String? = null
-        private var postalCode: String? = null
-        private var country: String? = null
-
-        fun apply(field: String, value: String) {
-            when (field) {
-                "addressLine1" -> addressLine1 = value
-                "addressLine2" -> addressLine2 = value
-                "city" -> city = value
-                "postalCode" -> postalCode = value
-                "country" -> country = value
-            }
-        }
-
-        fun toContactAddressOrNull(): ContactAddress? {
-            val requiredFields = listOf(addressLine1, city, postalCode, country)
-            if (requiredFields.all { it == null }) return null
-            if (requiredFields.any { it == null }) return null
-
-            return ContactAddress(
-                streetLine1 = addressLine1!!,
-                streetLine2 = addressLine2,
-                city = City(city!!),
-                postalCode = postalCode!!,
-                country = country!!
-            )
         }
     }
 }
