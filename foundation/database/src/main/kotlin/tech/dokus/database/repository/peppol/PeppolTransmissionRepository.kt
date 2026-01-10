@@ -42,6 +42,7 @@ class PeppolTransmissionRepository {
         documentType: PeppolDocumentType,
         invoiceId: InvoiceId? = null,
         billId: BillId? = null,
+        externalDocumentId: String? = null,
         recipientPeppolId: PeppolId? = null,
         senderPeppolId: PeppolId? = null
     ): Result<PeppolTransmissionDto> = runCatching {
@@ -57,6 +58,7 @@ class PeppolTransmissionRepository {
                 it[status] = PeppolStatus.Pending
                 it[PeppolTransmissionsTable.invoiceId] = invoiceId?.let { inv -> UUID.fromString(inv.toString()) }
                 it[PeppolTransmissionsTable.billId] = billId?.let { b -> UUID.fromString(b.toString()) }
+                it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId
                 it[PeppolTransmissionsTable.recipientPeppolId] = recipientPeppolId?.value
                 it[PeppolTransmissionsTable.senderPeppolId] = senderPeppolId?.value
                 it[createdAt] = now
@@ -67,6 +69,25 @@ class PeppolTransmissionRepository {
                 .where { PeppolTransmissionsTable.id eq newId }
                 .map { it.toDto() }
                 .single()
+        }
+    }
+
+    /**
+     * Check if a transmission exists for a given external provider document ID.
+     * Useful for deduping inbound inbox polling (e.g. weekly full sync).
+     */
+    suspend fun existsByExternalDocumentId(
+        tenantId: TenantId,
+        externalDocumentId: String
+    ): Result<Boolean> = runCatching {
+        dbQuery {
+            PeppolTransmissionsTable.selectAll()
+                .where {
+                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                        (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
+                }
+                .limit(1)
+                .any()
         }
     }
 

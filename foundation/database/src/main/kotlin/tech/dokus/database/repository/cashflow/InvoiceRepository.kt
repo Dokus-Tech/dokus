@@ -3,6 +3,7 @@ package tech.dokus.database.repository.cashflow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -25,6 +26,7 @@ import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -363,6 +365,81 @@ class InvoiceRepository(
                 it[InvoicesTable.status] = status
             }
             updatedRows > 0
+        }
+    }
+
+    data class InvoicePaymentUpdate(
+        val totalAmount: Money,
+        val paidAmount: Money,
+        val status: InvoiceStatus
+    )
+
+    /**
+     * Record a payment against an invoice by updating paid amount and status.
+     *
+     * This is a simplified payment model (no payment ledger yet):
+     * - paid_amount is accumulated
+     * - status transitions to PARTIALLY_PAID or PAID
+     * - paid_at is set when the invoice becomes fully paid
+     */
+    suspend fun recordPayment(
+        invoiceId: InvoiceId,
+        tenantId: TenantId,
+        amount: Money,
+        paymentDate: LocalDate,
+        paymentMethod: PaymentMethod
+    ): Result<InvoicePaymentUpdate> = runCatching {
+        require(amount.minor > 0) { "Payment amount must be positive" }
+
+        dbQuery {
+            val invoiceUuid = UUID.fromString(invoiceId.toString())
+            val tenantUuid = UUID.fromString(tenantId.toString())
+
+            val row = InvoicesTable.selectAll().where {
+                (InvoicesTable.id eq invoiceUuid) and (InvoicesTable.tenantId eq tenantUuid)
+            }.singleOrNull() ?: throw IllegalArgumentException("Invoice not found or access denied")
+
+            val total = Money.fromDbDecimal(row[InvoicesTable.totalAmount])
+            val currentPaid = Money.fromDbDecimal(row[InvoicesTable.paidAmount])
+
+            // Idempotency: already fully paid
+            if (currentPaid.minor >= total.minor) {
+                return@dbQuery InvoicePaymentUpdate(
+                    totalAmount = total,
+                    paidAmount = total,
+                    status = InvoiceStatus.Paid
+                )
+            }
+
+            val newPaidRaw = currentPaid + amount
+            val newPaid = if (newPaidRaw.minor >= total.minor) total else newPaidRaw
+
+            val newStatus = if (newPaid.minor >= total.minor) {
+                InvoiceStatus.Paid
+            } else {
+                InvoiceStatus.PartiallyPaid
+            }
+
+            val paidAt = if (newStatus == InvoiceStatus.Paid) {
+                LocalDateTime(paymentDate.year, paymentDate.monthNumber, paymentDate.dayOfMonth, 12, 0, 0)
+            } else {
+                null
+            }
+
+            InvoicesTable.update({
+                (InvoicesTable.id eq invoiceUuid) and (InvoicesTable.tenantId eq tenantUuid)
+            }) {
+                it[InvoicesTable.paidAmount] = newPaid.toDbDecimal()
+                it[InvoicesTable.status] = newStatus
+                it[InvoicesTable.paymentMethod] = paymentMethod
+                it[InvoicesTable.paidAt] = paidAt
+            }
+
+            InvoicePaymentUpdate(
+                totalAmount = total,
+                paidAmount = newPaid,
+                status = newStatus
+            )
         }
     }
 

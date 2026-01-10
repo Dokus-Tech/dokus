@@ -309,6 +309,17 @@ class PeppolService(
 
             for (inboxItem in inboxItems) {
                 try {
+                    // Dedupe: avoid re-importing documents during weekly/full sync.
+                    // Use the provider document id as stable externalDocumentId.
+                    val alreadyImported = transmissionRepository
+                        .existsByExternalDocumentId(tenantId, inboxItem.id)
+                        .getOrThrow()
+                    if (alreadyImported) {
+                        logger.debug("Skipping already-imported Peppol document {}", inboxItem.id)
+                        provider.markAsRead(inboxItem.id).getOrNull() // Best-effort
+                        continue
+                    }
+
                     // Validate incoming document
                     val validationResult =
                         validator.validateIncoming(inboxItem.id, inboxItem.senderPeppolId)
@@ -326,11 +337,13 @@ class PeppolService(
                         ?.getOrNull()
 
                     // Create transmission record
+                    val peppolDocumentType = PeppolDocumentType.fromApiValue(inboxItem.documentType)
                     val transmission = transmissionRepository.createTransmission(
                         tenantId = tenantId,
                         direction = PeppolTransmissionDirection.Inbound,
-                        documentType = PeppolDocumentType.Invoice,
-                        senderPeppolId = PeppolId(inboxItem.senderPeppolId)
+                        documentType = peppolDocumentType,
+                        externalDocumentId = inboxItem.id,
+                        senderPeppolId = PeppolId(inboxItem.senderPeppolId),
                     ).getOrThrow()
 
                     // Convert to extracted data (for draft)

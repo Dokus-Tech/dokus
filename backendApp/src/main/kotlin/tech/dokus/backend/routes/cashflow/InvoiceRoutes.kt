@@ -136,8 +136,14 @@ internal fun Route.invoiceRoutes() {
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
             val request = call.receive<RecordPaymentRequest>()
 
-            // TODO: Implement payment recording via PaymentService when available
-            throw DokusException.InternalError("Payment recording not yet implemented")
+            if (request.invoiceId != invoiceId) {
+                throw DokusException.BadRequest("Invoice ID mismatch")
+            }
+
+            invoiceService.recordPayment(invoiceId, tenantId, request)
+                .getOrElse { throw DokusException.InternalError("Failed to record payment: ${it.message}") }
+
+            call.respond(HttpStatusCode.NoContent)
         }
 
         // POST /api/v1/invoices/{id}/emails - Send invoice via email

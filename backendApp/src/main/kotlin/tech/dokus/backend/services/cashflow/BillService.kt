@@ -1,10 +1,14 @@
 package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.LocalDate
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.BillStatistics
+import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateBillRequest
@@ -12,6 +16,7 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.utils.loggerFor
+import java.util.UUID
 
 /**
  * Service for bill business operations.
@@ -21,7 +26,8 @@ import tech.dokus.foundation.backend.utils.loggerFor
  * and delegates data access to the repository layer.
  */
 class BillService(
-    private val billRepository: BillRepository
+    private val billRepository: BillRepository,
+    private val cashflowEntriesRepository: CashflowEntriesRepository
 ) {
     private val logger = loggerFor()
 
@@ -122,7 +128,26 @@ class BillService(
         request: MarkBillPaidRequest
     ): Result<FinancialDocumentDto.BillDto> {
         logger.info("Marking bill as paid: $billId")
-        return billRepository.markBillPaid(billId, tenantId, request)
+        return runCatching {
+            val bill = billRepository.markBillPaid(billId, tenantId, request).getOrThrow()
+
+            val entry = cashflowEntriesRepository.getBySource(
+                tenantId = tenantId,
+                sourceType = CashflowSourceType.Bill,
+                sourceId = UUID.fromString(billId.toString())
+            ).getOrNull()
+
+            if (entry != null) {
+                cashflowEntriesRepository.updateRemainingAmountAndStatus(
+                    entryId = entry.id,
+                    tenantId = tenantId,
+                    newRemainingAmount = Money.ZERO,
+                    newStatus = CashflowEntryStatus.Paid
+                ).getOrThrow()
+            }
+
+            bill
+        }
             .onSuccess { logger.info("Bill marked as paid: $billId") }
             .onFailure { logger.error("Failed to mark bill as paid: $billId", it) }
     }
