@@ -41,10 +41,6 @@ import tech.dokus.aura.resources.contacts_name
 import tech.dokus.aura.resources.contacts_note
 import tech.dokus.aura.resources.contacts_payment_defaults
 import tech.dokus.aura.resources.contacts_payment_terms
-import tech.dokus.aura.resources.contacts_peppol_enabled
-import tech.dokus.aura.resources.contacts_peppol_id
-import tech.dokus.aura.resources.contacts_peppol_id_hint
-import tech.dokus.aura.resources.contacts_peppol_settings
 import tech.dokus.aura.resources.contacts_phone
 import tech.dokus.aura.resources.contacts_postal_code
 import tech.dokus.aura.resources.contacts_status
@@ -85,8 +81,6 @@ internal fun ContactFormFields(
     onCityChange: (String) -> Unit,
     onPostalCodeChange: (String) -> Unit,
     onCountryChange: (String) -> Unit,
-    onPeppolIdChange: (String) -> Unit,
-    onPeppolEnabledChange: (Boolean) -> Unit,
     onDefaultPaymentTermsChange: (Int) -> Unit,
     onDefaultVatRateChange: (String) -> Unit,
     onTagsChange: (String) -> Unit,
@@ -238,41 +232,8 @@ internal fun ContactFormFields(
             )
         }
 
-        // Peppol Settings Section
-        ContactFormSection(title = stringResource(Res.string.contacts_peppol_settings)) {
-            // Peppol Enabled Toggle
-            FormField(label = stringResource(Res.string.contacts_peppol_enabled)) {
-                Switch(
-                    checked = formData.peppolEnabled,
-                    onCheckedChange = onPeppolEnabledChange
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Peppol ID (only shown/required when Peppol is enabled)
-            PTextFieldStandard(
-                fieldName = if (formData.peppolEnabled) {
-                    stringResource(
-                        Res.string.field_required,
-                        stringResource(Res.string.contacts_peppol_id)
-                    )
-                } else {
-                    stringResource(Res.string.contacts_peppol_id)
-                },
-                value = formData.peppolId,
-                onValueChange = onPeppolIdChange,
-                error = formData.errors["peppolId"],
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Peppol ID format hint
-            Text(
-                text = stringResource(Res.string.contacts_peppol_id_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        // NOTE: PEPPOL Settings Section removed - PEPPOL status is now discovery data
+        // in PeppolDirectoryCacheTable, resolved via /contacts/{id}/peppol-status endpoint
 
         // Defaults Section
         ContactFormSection(title = stringResource(Res.string.contacts_payment_defaults)) {

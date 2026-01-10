@@ -37,9 +37,8 @@ object ContactsTable : UUIDTable("contacts") {
     // Business type (Individual/Business/Government) - role is now derived from cashflow items
     val businessType = dbEnumeration<ClientType>("business_type").default(ClientType.Business)
 
-    // Peppol e-invoicing (Belgium 2026 mandate)
-    val peppolId = varchar("peppol_id", 255).nullable()
-    val peppolEnabled = bool("peppol_enabled").default(false)
+    // NOTE: PEPPOL fields (peppolId, peppolEnabled) moved to PeppolDirectoryCacheTable
+    // PEPPOL recipient capability is discovery data, not contact master data
 
     // Defaults for invoicing
     val defaultPaymentTerms = integer("default_payment_terms").default(30)

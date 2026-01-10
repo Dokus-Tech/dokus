@@ -31,6 +31,9 @@ class ContactEnrichmentService(
     /**
      * Data that can be used to enrich an existing contact.
      * Typically extracted from AI document processing.
+     *
+     * NOTE: peppolId removed - PEPPOL IDs are now discovered via directory lookup
+     * and stored in PeppolDirectoryCacheTable, not on contacts.
      */
     data class EnrichmentData(
         val email: String? = null,
@@ -40,7 +43,6 @@ class ContactEnrichmentService(
         val city: String? = null,
         val postalCode: String? = null,
         val country: String? = null,
-        val peppolId: String? = null,
         val companyNumber: String? = null,
         val contactPerson: String? = null,
         val vatNumber: String? = null
@@ -159,7 +161,7 @@ class ContactEnrichmentService(
         collectField("phone", data.phone, contact.phone?.value, toEnrich, toSkip)
         // Address fields are now managed separately via ContactAddressRepository
         // TODO: Consider adding address enrichment through ContactAddressRepository
-        collectField("peppolId", data.peppolId, contact.peppolId, toEnrich, toSkip)
+        // NOTE: peppolId removed - PEPPOL IDs are in PeppolDirectoryCacheTable
         collectField("companyNumber", data.companyNumber, contact.companyNumber, toEnrich, toSkip)
         collectField("contactPerson", data.contactPerson, contact.contactPerson, toEnrich, toSkip)
         collectField("vatNumber", data.vatNumber, contact.vatNumber?.value, toEnrich, toSkip)
@@ -204,7 +206,7 @@ class ContactEnrichmentService(
             "email" -> request.copy(email = Email(value))
             "phone" -> request.copy(phone = PhoneNumber(value))
             // Address fields are now managed separately via ContactAddressRepository
-            "peppolId" -> request.copy(peppolId = value)
+            // NOTE: peppolId removed - PEPPOL IDs are in PeppolDirectoryCacheTable
             "companyNumber" -> request.copy(companyNumber = value)
             "contactPerson" -> request.copy(contactPerson = value)
             "vatNumber" -> request.copy(vatNumber = VatNumber(value))

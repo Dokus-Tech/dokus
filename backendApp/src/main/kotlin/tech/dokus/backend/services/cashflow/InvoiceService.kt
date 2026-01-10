@@ -3,9 +3,9 @@ package tech.dokus.backend.services.cashflow
 import kotlinx.datetime.LocalDate
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateInvoiceRequest

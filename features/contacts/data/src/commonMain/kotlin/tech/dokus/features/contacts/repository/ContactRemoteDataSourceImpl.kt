@@ -4,7 +4,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
-import io.ktor.client.plugins.resources.patch
 import io.ktor.client.plugins.resources.post
 import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.setBody
@@ -21,7 +20,6 @@ import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
-import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
 import tech.dokus.foundation.platform.Logger
@@ -35,10 +33,10 @@ internal class ContactRemoteDataSourceImpl(
 ) : ContactRemoteDataSource {
     private val logger = Logger.forClass<ContactRemoteDataSourceImpl>()
 
+    // NOTE: peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
     override suspend fun listContacts(
         search: String?,
         isActive: Boolean?,
-        peppolEnabled: Boolean?,
         limit: Int,
         offset: Int
     ): Result<List<ContactDto>> {
@@ -48,7 +46,6 @@ internal class ContactRemoteDataSourceImpl(
                 Contacts(
                     search = search,
                     active = isActive,
-                    peppolEnabled = peppolEnabled,
                     limit = limit,
                     offset = offset
                 )
@@ -160,23 +157,7 @@ internal class ContactRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun updateContactPeppol(
-        contactId: ContactId,
-        request: UpdateContactPeppolRequest
-    ): Result<ContactDto> {
-        logger.d { "Updating contact Peppol: $contactId, enabled=${request.peppolEnabled}" }
-        return runCatching {
-            val contactIdRoute = Contacts.Id(id = contactId.toString())
-            httpClient.patch(Contacts.Id.Peppol(parent = contactIdRoute)) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body<ContactDto>()
-        }.onSuccess { contact ->
-            logger.i { "Updated contact Peppol settings: ${contact.id}" }
-        }.onFailure { error ->
-            logger.e(error) { "Failed to update contact Peppol: $contactId" }
-        }
-    }
+    // NOTE: updateContactPeppol removed - PEPPOL status is in PeppolDirectoryCacheTable
 
     override suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary> {
         logger.d { "Getting contact activity: $contactId" }

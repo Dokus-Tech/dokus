@@ -26,10 +26,8 @@ internal fun ContactDetailsContent(
     contactState: DokusState<ContactDto>,
     activityState: DokusState<ContactActivitySummary>,
     notesState: DokusState<List<ContactNoteDto>>,
-    isTogglingPeppol: Boolean,
     isOnline: Boolean,
     contentPadding: PaddingValues,
-    onPeppolToggle: (Boolean) -> Unit,
     onAddNote: () -> Unit,
     onEditNote: (ContactNoteDto) -> Unit,
     onDeleteNote: (ContactNoteDto) -> Unit
@@ -60,9 +58,7 @@ internal fun ContactDetailsContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ContactInfoSection(
-                    state = contactState,
-                    onPeppolToggle = onPeppolToggle,
-                    isTogglingPeppol = isTogglingPeppol
+                    state = contactState
                 )
 
                 OfflineOverlay(isOffline = !isOnline) {

@@ -30,6 +30,7 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.provider.client.recommand.model.RecommandAttachment
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCreditNote
 import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
@@ -37,7 +38,6 @@ import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentType
 import tech.dokus.peppol.provider.client.recommand.model.RecommandInvoice
 import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingCreditNote
 import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingInvoice
-import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.service.PeppolService
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
@@ -54,7 +54,7 @@ import kotlin.time.Duration.Companion.seconds
  * - Tracks lastPollTime per tenant to avoid hammering the API
  * - Graceful shutdown support
  */
-@Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
+@Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements", "LongParameterList")
 class PeppolPollingWorker(
     private val peppolSettingsRepository: PeppolSettingsRepository,
     private val peppolService: PeppolService,
@@ -215,6 +215,7 @@ class PeppolPollingWorker(
     /**
      * Poll a single tenant's Peppol inbox.
      */
+    @Suppress("LongMethod") // Complex inbox polling with document creation and confirmation
     private suspend fun pollTenant(tenantId: TenantId) {
         // Get or create mutex for this tenant
         val mutex = pollMutexes.computeIfAbsent(tenantId) { Mutex() }
@@ -263,7 +264,7 @@ class PeppolPollingWorker(
 
                         else -> {
                             // We must store an actual artifact to keep downloads functional.
-                            throw IllegalStateException("Peppol document has no PDF attachment and no XML payload")
+                            error("Peppol document has no PDF attachment and no XML payload")
                         }
                     }
 
@@ -308,8 +309,7 @@ class PeppolPollingWorker(
                         val linkedContactId = findOrCreateContactForPeppol(
                             tenantId = tid,
                             supplierName = extractedData.bill?.supplierName,
-                            supplierVatNumber = extractedData.bill?.supplierVatNumber,
-                            peppolId = senderPeppolId
+                            supplierVatNumber = extractedData.bill?.supplierVatNumber
                         )
 
                         confirmationService.confirmDocument(
@@ -351,8 +351,7 @@ class PeppolPollingWorker(
     private suspend fun findOrCreateContactForPeppol(
         tenantId: TenantId,
         supplierName: String?,
-        supplierVatNumber: String?,
-        peppolId: String?
+        supplierVatNumber: String?
     ): ContactId? {
         // 1. Try VAT number (most reliable) - already normalized in repository
         if (!supplierVatNumber.isNullOrBlank()) {
@@ -360,19 +359,14 @@ class PeppolPollingWorker(
                 .getOrNull()?.let { return it.id }
         }
 
-        // 2. Try Peppol ID
-        if (!peppolId.isNullOrBlank()) {
-            contactRepository.findByPeppolId(tenantId, peppolId)
-                .getOrNull()?.let { return it.id }
-        }
+        // NOTE: PEPPOL ID matching removed - peppolId is now discovery data in PeppolDirectoryCacheTable
+        // We find contacts by VAT/company number instead
 
-        // 3. Auto-create if we have enough data
+        // 2. Auto-create if we have enough data
         if (!supplierName.isNullOrBlank()) {
             val request = CreateContactRequest(
                 name = Name(supplierName),
                 vatNumber = supplierVatNumber?.let { VatNumber(it) },
-                peppolId = peppolId,
-                peppolEnabled = !peppolId.isNullOrBlank(),
                 source = ContactSource.Peppol
             )
             val newContact = contactRepository.createContact(tenantId, request).getOrNull()

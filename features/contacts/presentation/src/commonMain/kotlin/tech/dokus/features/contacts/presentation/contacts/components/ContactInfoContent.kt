@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
@@ -18,9 +16,7 @@ import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,8 +36,6 @@ import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_payment_defaults
 import tech.dokus.aura.resources.contacts_payment_terms
 import tech.dokus.aura.resources.contacts_payment_terms_value
-import tech.dokus.aura.resources.contacts_peppol_enabled
-import tech.dokus.aura.resources.contacts_peppol_settings
 import tech.dokus.aura.resources.contacts_phone
 import tech.dokus.aura.resources.contacts_tags
 import tech.dokus.aura.resources.contacts_vat_number
@@ -50,9 +44,7 @@ import tech.dokus.domain.model.contact.ContactDto
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ContactInfoContent(
-    contact: ContactDto,
-    onPeppolToggle: (Boolean) -> Unit,
-    isTogglingPeppol: Boolean
+    contact: ContactDto
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -170,50 +162,8 @@ internal fun ContactInfoContent(
             )
         }
 
-        HorizontalDivider()
-
-        Text(
-            text = stringResource(Res.string.contacts_peppol_settings),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.LocalShipping,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Column {
-                    Text(
-                        text = stringResource(Res.string.contacts_peppol_enabled),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    contact.peppolId?.let { id ->
-                        Text(
-                            text = id,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            Switch(
-                checked = contact.peppolEnabled,
-                onCheckedChange = onPeppolToggle,
-                enabled = !isTogglingPeppol && contact.peppolId != null
-            )
-        }
+        // NOTE: PEPPOL Settings section removed - PEPPOL status is now discovery data
+        // in PeppolDirectoryCacheTable, resolved via /contacts/{id}/peppol-status endpoint
 
         HorizontalDivider()
 

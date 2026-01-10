@@ -91,8 +91,6 @@ private const val PaneWidthFraction = 0.4f
  * @param onCityChange Callback for city field changes
  * @param onPostalCodeChange Callback for postal code field changes
  * @param onCountryChange Callback for country field changes
- * @param onPeppolIdChange Callback for Peppol ID field changes
- * @param onPeppolEnabledChange Callback for Peppol enabled toggle
  * @param onDefaultPaymentTermsChange Callback for payment terms field changes
  * @param onDefaultVatRateChange Callback for VAT rate field changes
  * @param onTagsChange Callback for tags field changes
@@ -126,8 +124,6 @@ fun ContactFormPane(
     onCityChange: (String) -> Unit,
     onPostalCodeChange: (String) -> Unit,
     onCountryChange: (String) -> Unit,
-    onPeppolIdChange: (String) -> Unit,
-    onPeppolEnabledChange: (Boolean) -> Unit,
     onDefaultPaymentTermsChange: (Int) -> Unit,
     onDefaultVatRateChange: (String) -> Unit,
     onTagsChange: (String) -> Unit,
@@ -247,8 +243,6 @@ fun ContactFormPane(
                                 onCityChange = onCityChange,
                                 onPostalCodeChange = onPostalCodeChange,
                                 onCountryChange = onCountryChange,
-                                onPeppolIdChange = onPeppolIdChange,
-                                onPeppolEnabledChange = onPeppolEnabledChange,
                                 onDefaultPaymentTermsChange = onDefaultPaymentTermsChange,
                                 onDefaultVatRateChange = onDefaultVatRateChange,
                                 onTagsChange = onTagsChange,

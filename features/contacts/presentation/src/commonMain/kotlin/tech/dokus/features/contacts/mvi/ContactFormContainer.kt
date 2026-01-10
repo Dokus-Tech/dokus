@@ -49,11 +49,13 @@ private const val MinDuplicateNameLength = 3
  * Manages form state, validation, duplicate detection, and CRUD operations.
  *
  * Features:
- * - Form field validation (name required, email format, Peppol ID format)
+ * - Form field validation (name required, email format)
  * - Duplicate detection with debouncing
  * - Country and business type pickers
  * - Delete confirmation dialog
  * - Create and update contact operations
+ *
+ * NOTE: PEPPOL fields removed - PEPPOL status is in PeppolDirectoryCacheTable.
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
@@ -109,9 +111,7 @@ internal class ContactFormContainer(
                     is ContactFormIntent.UpdatePostalCode -> handleUpdatePostalCode(intent.value)
                     is ContactFormIntent.UpdateCountry -> handleUpdateCountry(intent.value)
 
-                    // Peppol Field Updates
-                    is ContactFormIntent.UpdatePeppolId -> handleUpdatePeppolId(intent.value)
-                    is ContactFormIntent.UpdatePeppolEnabled -> handleUpdatePeppolEnabled(intent.value)
+                    // NOTE: PEPPOL intents removed - PEPPOL status is in PeppolDirectoryCacheTable
 
                     // Defaults Field Updates
                     is ContactFormIntent.UpdateDefaultPaymentTerms -> handleUpdateDefaultPaymentTerms(intent.value)
@@ -261,24 +261,7 @@ internal class ContactFormContainer(
         checkDuplicatesDebounced()
     }
 
-    // ============================================================================
-    // PEPPOL FIELD HANDLERS
-    // ============================================================================
-
-    private suspend fun ContactFormCtx.handleUpdatePeppolId(value: String) {
-        updateFormData {
-            val errors = if (value.isNotBlank() && !value.contains(":")) {
-                errors + ("peppolId" to DokusException.Validation.InvalidPeppolId)
-            } else {
-                errors - "peppolId"
-            }
-            copy(peppolId = value, errors = errors)
-        }
-    }
-
-    private suspend fun ContactFormCtx.handleUpdatePeppolEnabled(value: Boolean) {
-        updateFormData { copy(peppolEnabled = value) }
-    }
+    // NOTE: PEPPOL FIELD HANDLERS removed - PEPPOL status is in PeppolDirectoryCacheTable
 
     // ============================================================================
     // DEFAULTS FIELD HANDLERS
@@ -483,15 +466,7 @@ internal class ContactFormContainer(
             errors["email"] = DokusException.Validation.InvalidEmail
         }
 
-        // Optional validation: Peppol ID format
-        if (formData.peppolId.isNotBlank() && !formData.peppolId.contains(":")) {
-            errors["peppolId"] = DokusException.Validation.InvalidPeppolId
-        }
-
-        // Optional validation: Peppol ID required if enabled
-        if (formData.peppolEnabled && formData.peppolId.isBlank()) {
-            errors["peppolId"] = DokusException.Validation.PeppolIdRequired
-        }
+        // NOTE: PEPPOL validation removed - PEPPOL status is in PeppolDirectoryCacheTable
 
         return errors
     }
@@ -664,8 +639,7 @@ private fun ContactDto.toFormData(): ContactFormData = ContactFormData(
     city = City(city ?: ""),  // Wrap in City for form validation
     postalCode = postalCode ?: "",
     country = country ?: "",
-    peppolId = peppolId ?: "",
-    peppolEnabled = peppolEnabled,
+    // NOTE: peppolId/peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
     defaultPaymentTerms = defaultPaymentTerms,
     defaultVatRate = defaultVatRate?.toString() ?: "",
     tags = tags ?: "",
@@ -687,8 +661,7 @@ private fun ContactFormData.toCreateRequest(): CreateContactRequest = CreateCont
     companyNumber = companyNumber.takeIf { it.isNotBlank() },
     defaultPaymentTerms = defaultPaymentTerms,
     defaultVatRate = defaultVatRate.takeIf { it.isNotBlank() },
-    peppolId = peppolId.takeIf { it.isNotBlank() },
-    peppolEnabled = peppolEnabled,
+    // NOTE: peppolId/peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
     tags = tags.takeIf { it.isNotBlank() },
     initialNote = initialNote.takeIf { it.isNotBlank() }
 )
@@ -708,8 +681,7 @@ private fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateCont
     companyNumber = companyNumber.takeIf { it.isNotBlank() },
     defaultPaymentTerms = defaultPaymentTerms,
     defaultVatRate = defaultVatRate.takeIf { it.isNotBlank() },
-    peppolId = peppolId.takeIf { it.isNotBlank() },
-    peppolEnabled = peppolEnabled,
+    // NOTE: peppolId/peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
     tags = tags.takeIf { it.isNotBlank() },
     isActive = isActive
 )

@@ -24,7 +24,7 @@ import tech.dokus.foundation.app.state.DokusState
  * 3. Error → Failed to load contact with retry option
  *
  * Features:
- * - Contact information display with Peppol toggle
+ * - Contact information display
  * - Activity summary (invoices, bills, expenses)
  * - Notes management (add, edit, delete)
  * - Enrichment suggestions
@@ -54,7 +54,6 @@ sealed interface ContactDetailsState : MVIState, DokusState<Nothing> {
      * @property notesState State of notes list (independent loading)
      * @property enrichmentSuggestions Available enrichment suggestions
      * @property uiState UI state for dialogs and panels
-     * @property isTogglingPeppol Whether Peppol toggle is in progress
      * @property isSavingNote Whether note save is in progress
      * @property isDeletingNote Whether note deletion is in progress
      */
@@ -65,7 +64,6 @@ sealed interface ContactDetailsState : MVIState, DokusState<Nothing> {
         val notesState: DokusState<List<ContactNoteDto>> = DokusState.loading(),
         val enrichmentSuggestions: List<EnrichmentSuggestion> = emptyList(),
         val uiState: ContactDetailsUiState = ContactDetailsUiState(),
-        val isTogglingPeppol: Boolean = false,
         val isSavingNote: Boolean = false,
         val isDeletingNote: Boolean = false,
     ) : ContactDetailsState
@@ -98,11 +96,6 @@ sealed interface ContactDetailsIntent : MVIIntent {
 
     /** Refresh all contact data */
     data object Refresh : ContactDetailsIntent
-
-    // === Peppol ===
-
-    /** Toggle Peppol enabled status */
-    data class TogglePeppol(val enabled: Boolean) : ContactDetailsIntent
 
     // === Notes Dialog Management ===
 
@@ -199,7 +192,6 @@ sealed interface ContactDetailsAction : MVIAction {
 
 @Immutable
 sealed interface ContactDetailsSuccess {
-    data object PeppolUpdated : ContactDetailsSuccess
     data object NoteAdded : ContactDetailsSuccess
     data object NoteUpdated : ContactDetailsSuccess
     data object NoteDeleted : ContactDetailsSuccess

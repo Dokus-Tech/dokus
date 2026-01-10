@@ -35,6 +35,7 @@ class PeppolMapper {
 
     /**
      * Convert a domain invoice to a Peppol send request.
+     * NOTE: recipientPeppolId should be resolved via PeppolRecipientResolver before calling this.
      */
     fun toSendRequest(
         invoice: FinancialDocumentDto.InvoiceDto,
@@ -42,11 +43,9 @@ class PeppolMapper {
         tenant: Tenant,
         tenantSettings: TenantSettings,
         peppolSettings: PeppolSettingsDto,
-        companyAddress: Address?
+        companyAddress: Address?,
+        recipientPeppolId: String
     ): PeppolSendRequest {
-        val recipientPeppolId = contact.peppolId
-            ?: throw IllegalArgumentException("Contact must have a Peppol ID to send via Peppol")
-
         return PeppolSendRequest(
             recipientPeppolId = recipientPeppolId,
             documentType = PeppolDocumentType.INVOICE,

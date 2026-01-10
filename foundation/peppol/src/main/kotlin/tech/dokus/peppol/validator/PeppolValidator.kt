@@ -23,6 +23,7 @@ class PeppolValidator {
 
     /**
      * Validate an invoice before sending via Peppol.
+     * NOTE: recipientPeppolId should be resolved via PeppolRecipientResolver before calling this.
      */
     fun validateForSending(
         invoice: FinancialDocumentDto.InvoiceDto,
@@ -30,7 +31,8 @@ class PeppolValidator {
         tenant: Tenant,
         companyAddress: Address?,
         tenantSettings: TenantSettings,
-        peppolSettings: PeppolSettingsDto
+        peppolSettings: PeppolSettingsDto,
+        recipientPeppolId: String?
     ): PeppolValidationResult {
         val errors = mutableListOf<PeppolValidationError>()
         val warnings = mutableListOf<PeppolValidationWarning>()
@@ -64,22 +66,21 @@ class PeppolValidator {
             )
         }
 
-        // Recipient Validation
-        val contactPeppolId = contact.peppolId
-        if (contactPeppolId.isNullOrBlank()) {
+        // Recipient Validation (uses resolved PEPPOL ID)
+        if (recipientPeppolId.isNullOrBlank()) {
             errors.add(
                 PeppolValidationError(
                     code = "MISSING_RECIPIENT_PEPPOL_ID",
-                    message = "Contact does not have a Peppol ID configured",
-                    field = "contact.peppolId"
+                    message = "Contact does not have a resolved Peppol ID",
+                    field = "recipientPeppolId"
                 )
             )
-        } else if (!isValidPeppolId(contactPeppolId)) {
+        } else if (!isValidPeppolId(recipientPeppolId)) {
             errors.add(
                 PeppolValidationError(
                     code = "INVALID_RECIPIENT_PEPPOL_ID",
-                    message = "Contact Peppol ID format is invalid. Expected format: scheme:identifier",
-                    field = "contact.peppolId"
+                    message = "Recipient Peppol ID format is invalid. Expected format: scheme:identifier",
+                    field = "recipientPeppolId"
                 )
             )
         }

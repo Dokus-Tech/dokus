@@ -28,6 +28,8 @@ import tech.dokus.peppol.provider.client.recommand.model.RecommandGetDocumentRes
 import tech.dokus.peppol.provider.client.recommand.model.RecommandGetDocumentsResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandGetInboxResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandMarkAsReadRequest
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSearchPeppolDirectoryRequest
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSearchPeppolDirectoryResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandSendDocumentResponse
 
 /**
@@ -321,7 +323,54 @@ class RecommandProvider(
         val recommandRequest = RecommandMapper.toRecommandRequest(request)
         return json.encodeToString(recommandRequest)
     }
+
+    /**
+     * Search the PEPPOL directory by query (typically VAT number).
+     * POST /api/v1/search-peppol-directory
+     *
+     * @param query The search query (e.g., VAT number)
+     * @return List of matching participants with their supported document types
+     */
+    suspend fun searchDirectory(query: String): Result<List<PeppolDirectorySearchResult>> =
+        runCatching {
+            ensureConfigured()
+            logger.debug("Searching PEPPOL directory: $query")
+
+            val response = httpClient.post("$baseUrl/api/v1/search-peppol-directory") {
+                contentType(ContentType.Application.Json)
+                basicAuth(credentials.apiKey, credentials.apiSecret)
+                setBody(RecommandSearchPeppolDirectoryRequest(query = query))
+            }
+
+            if (!response.status.isSuccess()) {
+                val errorBody = response.bodyAsText()
+                logger.error("Recommand API error: ${response.status} - $errorBody")
+                throw RecommandApiException(response.status.value, errorBody)
+            }
+
+            val result = response.body<RecommandSearchPeppolDirectoryResponse>()
+            logger.debug("Directory search returned ${result.results.size} results")
+
+            result.results.map { r ->
+                PeppolDirectorySearchResult(
+                    peppolAddress = r.peppolAddress,
+                    name = r.name,
+                    supportedDocumentTypes = r.supportedDocumentTypes
+                )
+            }
+        }.onFailure { e ->
+            logger.error("Failed to search PEPPOL directory: $query", e)
+        }
 }
+
+/**
+ * Result from PEPPOL directory search.
+ */
+data class PeppolDirectorySearchResult(
+    val peppolAddress: String,
+    val name: String,
+    val supportedDocumentTypes: List<String>
+)
 
 /**
  * Exception thrown when Recommand API returns an error response.

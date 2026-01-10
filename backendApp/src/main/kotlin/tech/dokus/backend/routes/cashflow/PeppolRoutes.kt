@@ -11,18 +11,12 @@ import io.ktor.server.routing.Route
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.cashflow.InvoiceService
-import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.cashflow.DocumentCreatePayload
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.contacts.ContactRepository
-import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectStatus
@@ -30,7 +24,6 @@ import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolCredentialResolver
 import tech.dokus.peppol.service.PeppolService
@@ -53,14 +46,11 @@ internal fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
     val peppolConnectionService by inject<PeppolConnectionService>()
     val peppolCredentialResolver by inject<PeppolCredentialResolver>()
+    val peppolRecipientResolver by inject<PeppolRecipientResolver>()
     val invoiceService by inject<InvoiceService>()
-    val documentRepository by inject<DocumentRepository>()
-    val draftRepository by inject<DocumentDraftRepository>()
     val contactRepository by inject<ContactRepository>()
     val tenantRepository by inject<TenantRepository>()
     val addressRepository by inject<AddressRepository>()
-    val confirmationPolicy by inject<DocumentConfirmationPolicy>()
-    val confirmationService by inject<DocumentConfirmationService>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()
 
     authenticateJwt {
@@ -246,16 +236,28 @@ internal fun Route.peppolRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
                 ?: throw DokusException.NotFound("Contact not found for invoice")
 
-            // Verify contact has Peppol enabled
-            if (!contact.peppolEnabled || contact.peppolId.isNullOrBlank()) {
+            // Resolve PEPPOL recipient ID (cache-first lookup)
+            val (resolution, _) = peppolRecipientResolver.resolveRecipient(tenantId, invoice.contactId)
+                .getOrElse { throw DokusException.InternalError("Failed to resolve PEPPOL recipient: ${it.message}") }
+
+            val recipientPeppolId = resolution?.participantId
+            if (recipientPeppolId.isNullOrBlank()) {
                 throw DokusException.BadRequest(
-                    "Contact '${contact.name.value}' is not configured for Peppol. " +
-                        "Please enable Peppol and set a valid Peppol ID for this contact."
+                    "Contact '${contact.name.value}' is not registered on the PEPPOL network. " +
+                        "Please verify their PEPPOL status before sending."
                 )
             }
 
             // Send invoice via Peppol
-            val result = peppolService.sendInvoice(invoice, contact, tenant, companyAddress, tenantSettings, tenantId)
+            val result = peppolService.sendInvoice(
+                invoice,
+                contact,
+                tenant,
+                companyAddress,
+                tenantSettings,
+                tenantId,
+                recipientPeppolId
+            )
                 .getOrElse { throw DokusException.InternalError("Failed to send invoice via Peppol: ${it.message}") }
 
             call.respond(
@@ -299,9 +301,22 @@ internal fun Route.peppolRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
                 ?: throw DokusException.NotFound("Contact not found for invoice")
 
+            // Resolve PEPPOL recipient ID (for validation)
+            val (resolution, _) = peppolRecipientResolver.resolveRecipient(tenantId, invoice.contactId)
+                .getOrNull() ?: Pair(null, false)
+            val recipientPeppolId = resolution?.participantId
+
             // Validate invoice for Peppol
             val validationResult =
-                peppolService.validateInvoice(invoice, contact, tenant, companyAddress, tenantSettings, tenantId)
+                peppolService.validateInvoice(
+                    invoice,
+                    contact,
+                    tenant,
+                    companyAddress,
+                    tenantSettings,
+                    tenantId,
+                    recipientPeppolId
+                )
                     .getOrElse { throw DokusException.InternalError("Failed to validate invoice: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, validationResult)

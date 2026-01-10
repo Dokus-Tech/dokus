@@ -24,6 +24,7 @@ import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactNoteRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.payment.PaymentRepository
+import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
@@ -72,6 +73,7 @@ val repositoryModuleCashflow = module {
 val repositoryModulePeppol = module {
     single { PeppolSettingsRepository(get<CredentialCryptoService>()) }
     single { PeppolTransmissionRepository() }
+    single { PeppolDirectoryCacheRepository() }
 }
 
 /**

@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.contacts
 
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -18,7 +19,8 @@ import tech.dokus.foundation.backend.utils.loggerFor
  * to the repository layer.
  */
 class ContactService(
-    private val contactRepository: ContactRepository
+    private val contactRepository: ContactRepository,
+    private val peppolCacheRepository: PeppolDirectoryCacheRepository? = null // Optional for cache invalidation
 ) {
     private val logger = loggerFor()
 
@@ -49,23 +51,22 @@ class ContactService(
 
     /**
      * List contacts with optional filters.
+     * NOTE: peppolEnabled filter removed - PEPPOL status is now in PeppolDirectoryCacheTable
      */
     suspend fun listContacts(
         tenantId: TenantId,
         isActive: Boolean? = null,
-        peppolEnabled: Boolean? = null,
         searchQuery: String? = null,
         limit: Int = 50,
         offset: Int = 0
     ): Result<PaginatedResponse<ContactDto>> {
         logger.debug(
             "Listing contacts for tenant: $tenantId " +
-                "(isActive=$isActive, peppolEnabled=$peppolEnabled, limit=$limit, offset=$offset)"
+                "(isActive=$isActive, limit=$limit, offset=$offset)"
         )
         return contactRepository.listContacts(
             tenantId,
             isActive,
-            peppolEnabled,
             searchQuery,
             limit,
             offset
@@ -106,6 +107,7 @@ class ContactService(
 
     /**
      * Update a contact.
+     * Invalidates PEPPOL cache if VAT number or company number changes.
      */
     suspend fun updateContact(
         contactId: ContactId,
@@ -113,25 +115,21 @@ class ContactService(
         request: UpdateContactRequest
     ): Result<ContactDto> {
         logger.info("Updating contact: $contactId for tenant: $tenantId")
+
+        // Invalidate PEPPOL cache if VAT or company number is being updated
+        // (cache staleness is detected by snapshot comparison, but proactive invalidation is cleaner)
+        if (request.vatNumber != null || request.companyNumber != null) {
+            peppolCacheRepository?.invalidateForContact(tenantId, contactId)?.onSuccess {
+                if (it) logger.debug("Invalidated PEPPOL cache for contact: $contactId")
+            }
+        }
+
         return contactRepository.updateContact(contactId, tenantId, request)
             .onSuccess { logger.info("Contact updated: $contactId") }
             .onFailure { logger.error("Failed to update contact: $contactId", it) }
     }
 
-    /**
-     * Update a contact's Peppol settings.
-     */
-    suspend fun updateContactPeppol(
-        contactId: ContactId,
-        tenantId: TenantId,
-        peppolId: String?,
-        peppolEnabled: Boolean
-    ): Result<ContactDto> {
-        logger.info("Updating contact Peppol settings: $contactId (peppolId=$peppolId, peppolEnabled=$peppolEnabled)")
-        return contactRepository.updateContactPeppol(contactId, tenantId, peppolId, peppolEnabled)
-            .onSuccess { logger.info("Contact Peppol settings updated: $contactId") }
-            .onFailure { logger.error("Failed to update contact Peppol settings: $contactId", it) }
-    }
+    // NOTE: updateContactPeppol() removed - PEPPOL status is now managed by PeppolDirectoryCacheRepository
 
     /**
      * Delete a contact.
@@ -191,18 +189,5 @@ class ContactService(
             .onFailure { logger.error("Failed to get contact stats for tenant: $tenantId", it) }
     }
 
-    /**
-     * List Peppol-enabled contacts.
-     */
-    suspend fun listPeppolEnabledContacts(tenantId: TenantId): Result<List<ContactDto>> {
-        logger.debug("Listing Peppol-enabled contacts for tenant: $tenantId")
-        return contactRepository.listPeppolEnabledContacts(tenantId)
-            .onSuccess { logger.debug("Retrieved ${it.size} Peppol-enabled contacts") }
-            .onFailure {
-                logger.error(
-                    "Failed to list Peppol-enabled contacts for tenant: $tenantId",
-                    it
-                )
-            }
-    }
+    // NOTE: listPeppolEnabledContacts() removed - PEPPOL status is now in PeppolDirectoryCacheTable
 }

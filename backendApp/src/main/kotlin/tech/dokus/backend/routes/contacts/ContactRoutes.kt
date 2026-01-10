@@ -4,7 +4,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
 import io.ktor.server.resources.get
-import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
 import io.ktor.server.resources.put
 import io.ktor.server.response.respond
@@ -12,6 +11,7 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -19,7 +19,6 @@ import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
-import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -41,6 +40,7 @@ fun Route.contactRoutes() {
     val contactService by inject<ContactService>()
     val contactNoteService by inject<ContactNoteService>()
     val contactRepository by inject<ContactRepository>()
+    val peppolResolver by inject<PeppolRecipientResolver>()
 
     authenticateJwt {
         // ================================================================
@@ -66,7 +66,7 @@ fun Route.contactRoutes() {
             val contacts = contactService.listContacts(
                 tenantId = tenantId,
                 isActive = route.active,
-                peppolEnabled = route.peppolEnabled,
+                // NOTE: peppolEnabled filter removed - PEPPOL status is now in PeppolDirectoryCacheTable
                 searchQuery = route.search,
                 limit = route.limit,
                 offset = route.offset
@@ -190,27 +190,31 @@ fun Route.contactRoutes() {
         // ================================================================
 
         /**
-         * PATCH /api/v1/contacts/{id}/peppol
-         * Update a contact's Peppol settings.
+         * GET /api/v1/contacts/{id}/peppol-status
+         * Get PEPPOL network status for a contact.
+         * Returns cached status by default, use ?refresh=true to force lookup.
          */
-        patch<Contacts.Id.Peppol> { route ->
+        get<Contacts.Id.PeppolStatus> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val contactId = ContactId.parse(route.parent.id)
-            val request = call.receive<UpdateContactPeppolRequest>()
 
-            val contact = contactService.updateContactPeppol(
-                contactId = contactId,
+            val (resolution, refreshed) = peppolResolver.resolveRecipient(
                 tenantId = tenantId,
-                peppolId = request.peppolId,
-                peppolEnabled = request.peppolEnabled
+                contactId = contactId,
+                forceRefresh = route.refresh
             ).getOrElse {
                 throw DokusException.InternalError(
-                    "Failed to update contact Peppol settings: ${it.message}"
+                    "Failed to resolve PEPPOL status: ${it.message}"
                 )
             }
 
-            call.respond(HttpStatusCode.OK, contact)
+            val response = peppolResolver.toStatusResponse(resolution, refreshed)
+            call.respond(HttpStatusCode.OK, response)
         }
+
+        // NOTE: PATCH /api/v1/contacts/{id}/peppol endpoint removed
+        // PEPPOL status is now managed via PeppolDirectoryCacheRepository
+        // Use GET /api/v1/contacts/{id}/peppol-status?refresh=true instead
 
         // ================================================================
         // ACTIVITY OPERATIONS
