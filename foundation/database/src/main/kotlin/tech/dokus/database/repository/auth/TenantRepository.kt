@@ -73,13 +73,15 @@ class TenantRepository {
         }.value
 
         // Create address (required for all tenants)
+        // Address ID = tenant ID for 1:1 lookup
         AddressTable.insert {
+            it[AddressTable.id] = tenantId
             it[AddressTable.tenantId] = tenantId
             it[streetLine1] = address.streetLine1
             it[streetLine2] = address.streetLine2
             it[city] = address.city
             it[postalCode] = address.postalCode
-            it[country] = address.country
+            it[country] = address.country.dbValue  // Convert enum to ISO-2 string
         }
 
         // Create default settings for the tenant

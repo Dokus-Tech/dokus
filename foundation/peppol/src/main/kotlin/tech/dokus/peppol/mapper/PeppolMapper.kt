@@ -68,15 +68,18 @@ class PeppolMapper {
 
     /**
      * Convert contact to Peppol buyer party.
+     * Uses the first/default address from contact.addresses list.
      */
     private fun toBuyerParty(contact: ContactDto): PeppolParty {
+        // Get first address (default) from contact's addresses list
+        val address = contact.addresses.firstOrNull()?.address
         return PeppolParty(
             name = contact.name.value,
             vatNumber = contact.vatNumber?.value,
-            streetName = contact.addressLine1,
-            cityName = contact.city?.value,
-            postalZone = contact.postalCode,
-            countryCode = contact.country,
+            streetName = address?.streetLine1,
+            cityName = address?.city,
+            postalZone = address?.postalCode,
+            countryCode = address?.country,
             contactEmail = contact.email?.value,
             contactName = contact.contactPerson,
             companyNumber = contact.companyNumber
@@ -93,7 +96,7 @@ class PeppolMapper {
             streetName = companyAddress?.streetLine1,
             cityName = companyAddress?.city,
             postalZone = companyAddress?.postalCode,
-            countryCode = companyAddress?.country?.dbValue
+            countryCode = companyAddress?.country  // Already ISO-2 string
         )
     }
 

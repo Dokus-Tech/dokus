@@ -27,6 +27,7 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
 
     // Common API configuration (used by Recommand and similar providers)
     val companyId = varchar("company_id", 255)
+
     // API credentials - NULL for cloud tenants (master creds from env), encrypted for self-hosted
     val apiKey = varchar("api_key", 512).nullable()
     val apiSecret = varchar("api_secret", 512).nullable()

@@ -292,7 +292,7 @@ fun ContactAutocomplete(
                                 vatNumber = contact.vatNumber?.value,
                                 addressLine1 = contact.addressLine1,
                                 addressLine2 = contact.addressLine2,
-                                city = contact.city?.value,
+                                city = contact.city,
                                 postalCode = contact.postalCode,
                                 country = contact.country,
                                 defaultPaymentTerms = contact.defaultPaymentTerms,

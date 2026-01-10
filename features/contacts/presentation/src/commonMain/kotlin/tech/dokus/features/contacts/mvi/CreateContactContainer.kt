@@ -20,7 +20,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.ContactAddress
+import tech.dokus.domain.model.contact.ContactAddressInput
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.usecases.SearchCompanyUseCase
@@ -303,15 +303,17 @@ internal class CreateContactContainer(
                 phone = phone.takeIf { it.isValid },
                 vatNumber = vatNumber,
                 businessType = ClientType.Business,
-                address = entity.address?.let { addr ->
-                    ContactAddress(
-                        streetLine1 = addr.streetLine1,
-                        streetLine2 = addr.streetLine2,
-                        city = City(addr.city),
-                        postalCode = addr.postalCode,
-                        country = addr.country.dbValue
+                addresses = entity.address?.let { addr ->
+                    listOf(
+                        ContactAddressInput(
+                            streetLine1 = addr.streetLine1,
+                            streetLine2 = addr.streetLine2,
+                            city = addr.city,
+                            postalCode = addr.postalCode,
+                            country = addr.country.dbValue
+                        )
                     )
-                }
+                } ?: emptyList()
             )
 
             createContact(request).fold(

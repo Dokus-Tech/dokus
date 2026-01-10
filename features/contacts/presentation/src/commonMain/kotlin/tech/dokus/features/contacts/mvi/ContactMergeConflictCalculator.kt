@@ -74,7 +74,7 @@ internal object ContactMergeConflictCalculator {
             source.addressLine2,
             target.addressLine2
         )
-        addConflictIfDifferent("city", Res.string.contacts_city, source.city?.value, target.city?.value)
+        addConflictIfDifferent("city", Res.string.contacts_city, source.city, target.city)
         addConflictIfDifferent("postalCode", Res.string.contacts_postal_code, source.postalCode, target.postalCode)
         addConflictIfDifferent("country", Res.string.contacts_country, source.country, target.country)
         addConflictIfDifferent("peppolId", Res.string.contacts_peppol_id, source.peppolId, target.peppolId)

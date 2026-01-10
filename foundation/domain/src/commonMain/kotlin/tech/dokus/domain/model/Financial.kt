@@ -61,15 +61,21 @@ data class Tenant(
     val avatar: Thumbnail? = null,
 )
 
+/**
+ * Shared address model used for both tenant company addresses and contact addresses.
+ * All fields nullable to support AI partial extraction for contact addresses.
+ * Tenant company addresses enforce required fields at service layer.
+ * Country stored as ISO 3166-1 alpha-2 string (e.g., "BE", "NL").
+ */
 @Serializable
 data class Address(
     val id: AddressId,
     val tenantId: TenantId,
-    val streetLine1: String,
+    val streetLine1: String? = null,
     val streetLine2: String? = null,
-    val city: String,
-    val postalCode: String,
-    val country: Country,
+    val city: String? = null,
+    val postalCode: String? = null,
+    val country: String? = null,  // ISO 3166-1 alpha-2
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )

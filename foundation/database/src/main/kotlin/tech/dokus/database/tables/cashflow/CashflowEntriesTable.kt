@@ -13,7 +13,6 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.Currency
 import tech.dokus.foundation.backend.database.dbEnumeration
-import java.math.BigDecimal
 
 /**
  * Cashflow entries table - projection layer for all financial flows.

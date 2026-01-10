@@ -104,52 +104,39 @@ class ContactMatchingService(
             }
         }
 
-        // 4. Try name + country (medium confidence)
-        if (!extracted.name.isNullOrBlank() && !extracted.country.isNullOrBlank()) {
+        // 4. Try name (confidence based on country presence)
+        // Note: Country filtering removed from contacts table (now in address table).
+        // TODO: Re-implement country matching via JOIN with ContactAddressesTable/AddressTable.
+        if (!extracted.name.isNullOrBlank()) {
             val matches = contactRepository.findByName(
                 tenantId,
                 extracted.name,
-                country = extracted.country,
                 limit = 1
             ).getOrNull()
 
             if (!matches.isNullOrEmpty()) {
                 val match = matches.first()
                 // Calculate confidence based on name similarity
-                val confidence = calculateNameSimilarity(extracted.name, match.name.value) * 0.8f
-                if (confidence >= 0.5f) {
-                    logger.info("Matched contact by name+country: ${match.id} for: ${extracted.name}")
-                    return@runCatching ContactSuggestion(
-                        contactId = match.id,
-                        contact = match,
-                        confidence = confidence,
-                        matchReason = ContactMatchReason.NameAndCountry,
-                        matchDetails = "Matched name \"${match.name.value}\" in ${extracted.country}"
-                    )
+                // Give higher confidence if we have country in extracted data (even though we can't filter by it yet)
+                val baseMultiplier = if (!extracted.country.isNullOrBlank()) 0.6f else 0.5f
+                val matchReason = if (!extracted.country.isNullOrBlank()) {
+                    ContactMatchReason.NameAndCountry
+                } else {
+                    ContactMatchReason.NameOnly
                 }
-            }
-        }
-
-        // 5. Try name only (low confidence)
-        if (!extracted.name.isNullOrBlank()) {
-            val matches = contactRepository.findByName(
-                tenantId,
-                extracted.name,
-                country = null,
-                limit = 1
-            ).getOrNull()
-
-            if (!matches.isNullOrEmpty()) {
-                val match = matches.first()
-                val confidence = calculateNameSimilarity(extracted.name, match.name.value) * 0.5f
+                val confidence = calculateNameSimilarity(extracted.name, match.name.value) * baseMultiplier
                 if (confidence >= 0.25f) {
-                    logger.info("Matched contact by name only: ${match.id} for: ${extracted.name}")
+                    logger.info("Matched contact by name: ${match.id} for: ${extracted.name}")
                     return@runCatching ContactSuggestion(
                         contactId = match.id,
                         contact = match,
                         confidence = confidence,
-                        matchReason = ContactMatchReason.NameOnly,
-                        matchDetails = "Partial name match: \"${match.name.value}\""
+                        matchReason = matchReason,
+                        matchDetails = if (!extracted.country.isNullOrBlank()) {
+                            "Matched name \"${match.name.value}\" (country: ${extracted.country})"
+                        } else {
+                            "Partial name match: \"${match.name.value}\""
+                        }
                     )
                 }
             }
