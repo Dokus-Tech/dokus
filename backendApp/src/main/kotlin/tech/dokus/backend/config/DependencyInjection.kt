@@ -237,12 +237,12 @@ private fun authModule(appConfig: AppBaseConfig) = module {
 }
 
 private fun cashflowModule(appConfig: AppBaseConfig) = module {
-    single { InvoiceService(get()) }
+    single { InvoiceService(get(), get()) }
     single { ExpenseService(get()) }
-    single { BillService(get()) }
+    single { BillService(get(), get()) }
     single { CashflowEntriesService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
-    single { DocumentConfirmationService(get(), get(), get(), get(), get()) }
+    single { DocumentConfirmationService(get(), get(), get(), get()) }
 
     // PDF Preview
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
@@ -304,6 +304,8 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             aiService = get(),
             documentImageService = get(),
             config = appConfig.processor,
+            draftRepository = get(),
+            contactMatchingService = get(),
             // RAG chunking/embedding - use repositories from foundation:database
             chunkingService = getOrNull<ChunkingService>(),
             embeddingService = getOrNull<EmbeddingService>(),

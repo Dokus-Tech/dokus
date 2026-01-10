@@ -34,7 +34,6 @@ import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingInv
 import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.service.PeppolService
 import java.util.Base64
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.minutes
@@ -229,35 +228,45 @@ class PeppolPollingWorker(
                         ?.let(::extractAttachments)
                         ?.firstOrNull { it.mimeCode == "application/pdf" && !it.embeddedDocument.isNullOrEmpty() }
 
-                    // Upload PDF if available
-                    val uploadResult = if (pdfAttachment != null) {
-                        val pdfBytes = Base64.getDecoder().decode(requireNotNull(pdfAttachment.embeddedDocument))
-                        documentStorageService.uploadDocument(
-                            tenantId = tid,
-                            prefix = "peppol",
-                            filename = pdfAttachment.filename.ifBlank {
-                                "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.pdf"
-                            },
-                            data = pdfBytes,
-                            contentType = "application/pdf"
-                        )
-                    } else null
+                    val uploadResult = when {
+                        pdfAttachment != null -> {
+                            val pdfBytes = Base64.getDecoder().decode(requireNotNull(pdfAttachment.embeddedDocument))
+                            documentStorageService.uploadDocument(
+                                tenantId = tid,
+                                prefix = "peppol",
+                                filename = pdfAttachment.filename.ifBlank {
+                                    "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.pdf"
+                                },
+                                data = pdfBytes,
+                                contentType = "application/pdf"
+                            )
+                        }
 
-                    // Use uploaded PDF info if available, otherwise fallback to XML metadata
-                    val filename = uploadResult?.filename
-                        ?: "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.xml"
-                    val storageKey = uploadResult?.key
-                        ?: "peppol/$tid/${UUID.randomUUID()}.xml"
-                    val sizeBytes = uploadResult?.sizeBytes ?: 0L
-                    val contentType = uploadResult?.contentType ?: "application/xml"
+                        !documentDetail?.xml.isNullOrBlank() -> {
+                            val xmlBytes = requireNotNull(documentDetail).xml.encodeToByteArray()
+                            val fallbackId = documentDetail.envelopeId ?: documentDetail.id
+                            documentStorageService.uploadDocument(
+                                tenantId = tid,
+                                prefix = "peppol",
+                                filename = "peppol-$fallbackId.xml",
+                                data = xmlBytes,
+                                contentType = "application/xml"
+                            )
+                        }
+
+                        else -> {
+                            // We must store an actual artifact to keep downloads functional.
+                            throw IllegalStateException("Peppol document has no PDF attachment and no XML payload")
+                        }
+                    }
 
                     val documentId = documentRepository.create(
                         tenantId = tid,
                         payload = DocumentCreatePayload(
-                            filename = filename,
-                            contentType = contentType,
-                            sizeBytes = sizeBytes,
-                            storageKey = storageKey,
+                            filename = uploadResult.filename,
+                            contentType = uploadResult.contentType,
+                            sizeBytes = uploadResult.sizeBytes,
+                            storageKey = uploadResult.key,
                             contentHash = null,
                             source = DocumentSource.Peppol
                         )
