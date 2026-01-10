@@ -33,10 +33,13 @@ import tech.dokus.foundation.app.state.DokusState
  * 6. Error → Failed operation with retry option
  *
  * Features:
- * - Form field validation (name required, email format, Peppol ID format)
+ * - Form field validation (name required, email format)
  * - Duplicate detection with debouncing
  * - Country and business type pickers
  * - Delete confirmation dialog
+ *
+ * NOTE: PEPPOL fields (peppolId, peppolEnabled) removed - PEPPOL status is now
+ * discovered via directory lookup and stored in PeppolDirectoryCacheTable.
  */
 
 // ============================================================================
@@ -67,9 +70,7 @@ data class ContactFormData(
     val postalCode: String = "",
     val country: String = "",
 
-    // Peppol settings
-    val peppolId: String = "",
-    val peppolEnabled: Boolean = false,
+    // NOTE: PEPPOL fields removed - PEPPOL status is in PeppolDirectoryCacheTable
 
     // Defaults
     val defaultPaymentTerms: Int = 30,
@@ -103,12 +104,7 @@ data class ContactFormData(
     val isVatValid: Boolean
         get() = vatNumber.value.isBlank() || vatNumber.isValid
 
-    /**
-     * Check if Peppol ID format is valid (if provided).
-     * Expected format: scheme:identifier (e.g., "0208:BE0123456789")
-     */
-    val isPeppolIdValid: Boolean
-        get() = peppolId.isBlank() || peppolId.contains(":")
+    // NOTE: isPeppolIdValid removed - PEPPOL status is in PeppolDirectoryCacheTable
 }
 
 /**
@@ -183,6 +179,7 @@ sealed interface ContactFormState : MVIState, DokusState<Nothing> {
 
         /**
          * Whether the form has unsaved changes.
+         * NOTE: PEPPOL comparison removed - PEPPOL status is in PeppolDirectoryCacheTable
          */
         val hasChanges: Boolean
             get() = originalContact?.let { original ->
@@ -193,9 +190,7 @@ sealed interface ContactFormState : MVIState, DokusState<Nothing> {
                     formData.businessType != original.businessType ||
                     formData.addressLine1 != (original.addressLine1 ?: "") ||
                     formData.city.value != (original.city ?: "") ||
-                    formData.country != (original.country ?: "") ||
-                    formData.peppolId != (original.peppolId ?: "") ||
-                    formData.peppolEnabled != original.peppolEnabled
+                    formData.country != (original.country ?: "")
             } ?: formData.name.value.isNotBlank()
     }
 
@@ -272,13 +267,7 @@ sealed interface ContactFormIntent : MVIIntent {
     /** Update country (after picker selection) */
     data class UpdateCountry(val value: String) : ContactFormIntent
 
-    // === Peppol Field Updates ===
-
-    /** Update Peppol ID field */
-    data class UpdatePeppolId(val value: String) : ContactFormIntent
-
-    /** Toggle Peppol enabled status */
-    data class UpdatePeppolEnabled(val value: Boolean) : ContactFormIntent
+    // NOTE: PEPPOL intents removed - PEPPOL status is in PeppolDirectoryCacheTable
 
     // === Defaults Field Updates ===
 

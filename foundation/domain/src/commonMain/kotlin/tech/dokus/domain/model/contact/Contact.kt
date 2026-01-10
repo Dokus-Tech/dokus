@@ -36,8 +36,7 @@ data class ContactDto(
     val companyNumber: String? = null,
     val defaultPaymentTerms: Int = 30,
     val defaultVatRate: VatRate? = null,
-    val peppolId: String? = null,
-    val peppolEnabled: Boolean = false,
+    // NOTE: PEPPOL fields moved to PeppolDirectoryCacheTable - use /peppol-status endpoint
     val tags: String? = null,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
@@ -160,8 +159,6 @@ data class CreateContactRequest(
     val companyNumber: String? = null,
     val defaultPaymentTerms: Int = 30,
     val defaultVatRate: String? = null,
-    val peppolId: String? = null,
-    val peppolEnabled: Boolean = false,
     val tags: String? = null,
     val initialNote: String? = null,
     /** How this contact was created (Manual, AI, Peppol) */
@@ -184,8 +181,6 @@ data class UpdateContactRequest(
     val companyNumber: String? = null,
     val defaultPaymentTerms: Int? = null,
     val defaultVatRate: String? = null,
-    val peppolId: String? = null,
-    val peppolEnabled: Boolean? = null,
     val tags: String? = null,
     val isActive: Boolean? = null
 )
@@ -229,8 +224,7 @@ data class ContactStats(
     val inactiveContacts: Long,
     val customerCount: Long,
     val vendorCount: Long,
-    val bothCount: Long,
-    val peppolEnabledContacts: Long
+    val bothCount: Long
 )
 
 // ============================================================================
@@ -275,9 +269,6 @@ data class DerivedContactRoles(
 enum class ContactMatchReason {
     @SerialName("vat_number")
     VatNumber, // Matched by VAT number (high confidence)
-
-    @SerialName("peppol_id")
-    PeppolId, // Matched by Peppol participant ID (high confidence)
 
     @SerialName("company_number")
     CompanyNumber, // Matched by company registration number

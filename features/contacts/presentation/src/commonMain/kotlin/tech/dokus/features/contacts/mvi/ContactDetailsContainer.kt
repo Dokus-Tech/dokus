@@ -20,7 +20,6 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
-import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
 import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
 import tech.dokus.features.contacts.usecases.CacheContactsUseCase
 import tech.dokus.features.contacts.usecases.CreateContactNoteUseCase
@@ -30,7 +29,6 @@ import tech.dokus.features.contacts.usecases.GetContactActivityUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
-import tech.dokus.features.contacts.usecases.UpdateContactPeppolUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
@@ -39,11 +37,11 @@ internal typealias ContactDetailsCtx = PipelineContext<ContactDetailsState, Cont
 /**
  * Container for the Contact Details screen using FlowMVI.
  *
- * Manages contact details display, notes CRUD, Peppol toggle, merge, and enrichment features.
+ * Manages contact details display, notes CRUD, merge, and enrichment features.
  * Implements cache-first strategy for offline support.
  *
  * Features:
- * - Contact information display with Peppol toggle
+ * - Contact information display
  * - Activity summary (invoices, bills, expenses)
  * - Notes management (add, edit, delete)
  * - Enrichment suggestions
@@ -59,7 +57,6 @@ internal class ContactDetailsContainer(
     private val createContactNote: CreateContactNoteUseCase,
     private val updateContactNote: UpdateContactNoteUseCase,
     private val deleteContactNote: DeleteContactNoteUseCase,
-    private val updateContactPeppol: UpdateContactPeppolUseCase,
     private val getCachedContacts: GetCachedContactsUseCase,
     private val cacheContacts: CacheContactsUseCase,
     private val getCurrentTenantId: GetCurrentTenantIdUseCase,
@@ -80,9 +77,6 @@ internal class ContactDetailsContainer(
                     // Loading
                     is ContactDetailsIntent.LoadContact -> handleLoadContact(intent.contactId)
                     is ContactDetailsIntent.Refresh -> handleRefresh()
-
-                    // Peppol
-                    is ContactDetailsIntent.TogglePeppol -> handleTogglePeppol(intent.enabled)
 
                     // Notes Dialog Management
                     is ContactDetailsIntent.ShowAddNoteDialog -> handleShowAddNoteDialog()
@@ -298,54 +292,6 @@ internal class ContactDetailsContainer(
                 }
             }
         )
-    }
-
-    // ============================================================================
-    // PEPPOL HANDLERS
-    // ============================================================================
-
-    private suspend fun ContactDetailsCtx.handleTogglePeppol(enabled: Boolean) {
-        withState<ContactDetailsState.Content, _> {
-            // If enabling Peppol, require a Peppol ID
-            if (enabled && contact.peppolId.isNullOrBlank()) {
-                logger.w { "Cannot enable Peppol without Peppol ID" }
-                action(ContactDetailsAction.ShowError(DokusException.Validation.PeppolIdRequired))
-                return@withState
-            }
-
-            updateState { copy(isTogglingPeppol = true) }
-
-            logger.d { "Toggling Peppol: $enabled for contact $contactId" }
-
-            val request = UpdateContactPeppolRequest(
-                peppolId = contact.peppolId,
-                peppolEnabled = enabled
-            )
-
-            updateContactPeppol(contactId, request).fold(
-                onSuccess = { updatedContact ->
-                    logger.i { "Peppol updated: ${updatedContact.peppolEnabled}" }
-                    updateState {
-                        copy(
-                            contact = updatedContact,
-                            isTogglingPeppol = false
-                        )
-                    }
-                    action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.PeppolUpdated))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to toggle Peppol" }
-                    updateState { copy(isTogglingPeppol = false) }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.ContactPeppolUpdateFailed
-                    } else {
-                        exception
-                    }
-                    action(ContactDetailsAction.ShowError(displayException))
-                }
-            )
-        }
     }
 
     // ============================================================================

@@ -9,7 +9,6 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.andWhere
@@ -76,8 +75,6 @@ class ContactRepository {
                 it[companyNumber] = request.companyNumber
                 it[defaultPaymentTerms] = request.defaultPaymentTerms
                 it[defaultVatRate] = request.defaultVatRate?.let { rate -> BigDecimal(rate) }
-                it[peppolId] = request.peppolId
-                it[peppolEnabled] = request.peppolEnabled
                 it[tags] = request.tags
                 it[contactSource] = request.source
             }
@@ -118,7 +115,6 @@ class ContactRepository {
     suspend fun listContacts(
         tenantId: TenantId,
         isActive: Boolean? = null,
-        peppolEnabled: Boolean? = null,
         searchQuery: String? = null,
         limit: Int = 50,
         offset: Int = 0
@@ -132,9 +128,7 @@ class ContactRepository {
             if (isActive != null) {
                 query = query.andWhere { ContactsTable.isActive eq isActive }
             }
-            if (peppolEnabled != null) {
-                query = query.andWhere { ContactsTable.peppolEnabled eq peppolEnabled }
-            }
+            // NOTE: peppolEnabled filter removed - PEPPOL status is now in PeppolDirectoryCacheTable
             if (!searchQuery.isNullOrBlank()) {
                 query = query.andWhere {
                     (ContactsTable.name like "%$searchQuery%") or
@@ -173,7 +167,7 @@ class ContactRepository {
     ): Result<PaginatedResponse<ContactDto>> = runCatching {
         // TODO: Proper implementation requires JOIN with InvoicesTable to find contacts with invoices
         // For now, delegate to listContacts
-        listContacts(tenantId, isActive, null, null, limit, offset).getOrThrow()
+        listContacts(tenantId, isActive, null, limit, offset).getOrThrow()
     }
 
     /**
@@ -190,7 +184,7 @@ class ContactRepository {
     ): Result<PaginatedResponse<ContactDto>> = runCatching {
         // TODO: Proper implementation requires JOIN with BillsTable/ExpensesTable
         // For now, delegate to listContacts
-        listContacts(tenantId, isActive, null, null, limit, offset).getOrThrow()
+        listContacts(tenantId, isActive, null, limit, offset).getOrThrow()
     }
 
     /**
@@ -230,8 +224,7 @@ class ContactRepository {
                 request.companyNumber?.let { value -> it[companyNumber] = value }
                 request.defaultPaymentTerms?.let { value -> it[defaultPaymentTerms] = value }
                 request.defaultVatRate?.let { value -> it[defaultVatRate] = BigDecimal(value) }
-                request.peppolId?.let { value -> it[peppolId] = value }
-                request.peppolEnabled?.let { value -> it[peppolEnabled] = value }
+                // NOTE: peppolId/peppolEnabled removed - PEPPOL status is now in PeppolDirectoryCacheTable
                 request.tags?.let { value -> it[tags] = value }
                 request.isActive?.let { value -> it[isActive] = value }
             }
@@ -246,44 +239,7 @@ class ContactRepository {
         }
     }
 
-    /**
-     * Update contact's Peppol settings
-     * CRITICAL: MUST filter by tenant_id
-     */
-    suspend fun updateContactPeppol(
-        contactId: ContactId,
-        tenantId: TenantId,
-        peppolId: String?,
-        peppolEnabled: Boolean
-    ): Result<ContactDto> = runCatching {
-        dbQuery {
-            // Verify contact exists and belongs to tenant
-            val exists = ContactsTable.selectAll().where {
-                (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.count() > 0
-
-            if (!exists) {
-                throw IllegalArgumentException("Contact not found or access denied")
-            }
-
-            ContactsTable.update({
-                (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }) {
-                it[ContactsTable.peppolId] = peppolId
-                it[ContactsTable.peppolEnabled] = peppolEnabled
-            }
-
-            // Fetch and return the updated contact
-            ContactsTable.selectAll().where {
-                (ContactsTable.id eq UUID.fromString(contactId.toString())) and
-                    (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.single().let { row ->
-                mapRowToContactDto(row)
-            }
-        }
-    }
+    // NOTE: updateContactPeppol() removed - PEPPOL status is now managed by PeppolDirectoryCacheRepository
 
     /**
      * Delete a contact
@@ -369,7 +325,7 @@ class ContactRepository {
             val totalContacts = allContacts.count()
             val activeContacts = allContacts.copy().andWhere { ContactsTable.isActive eq true }.count()
             val inactiveContacts = totalContacts - activeContacts
-            val peppolEnabledContacts = allContacts.copy().andWhere { ContactsTable.peppolEnabled eq true }.count()
+            // NOTE: peppolEnabledContacts removed - PEPPOL status is now in PeppolDirectoryCacheTable
 
             // TODO: customer/vendor/both counts require JOIN with cashflow tables to derive from actual usage
             // For now, return 0 - these will be computed from derived roles
@@ -383,26 +339,12 @@ class ContactRepository {
                 inactiveContacts = inactiveContacts,
                 customerCount = customerCount,
                 vendorCount = vendorCount,
-                bothCount = bothCount,
-                peppolEnabledContacts = peppolEnabledContacts
+                bothCount = bothCount
             )
         }
     }
 
-    /**
-     * Get Peppol-enabled contacts for a tenant
-     * CRITICAL: MUST filter by tenant_id
-     */
-    suspend fun listPeppolEnabledContacts(tenantId: TenantId): Result<List<ContactDto>> = runCatching {
-        dbQuery {
-            ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (ContactsTable.peppolEnabled eq true) and
-                    (ContactsTable.peppolId.isNotNull())
-            }.orderBy(ContactsTable.name to SortOrder.ASC)
-                .map { row -> mapRowToContactDto(row) }
-        }
-    }
+    // NOTE: listPeppolEnabledContacts() removed - PEPPOL status is now in PeppolDirectoryCacheTable
 
     // =========================================================================
     // CONTACT MATCHING (for AI document processing)
@@ -432,24 +374,7 @@ class ContactRepository {
         }
     }
 
-    /**
-     * Find a contact by Peppol ID (exact match)
-     * Returns the first active match.
-     */
-    suspend fun findByPeppolId(
-        tenantId: TenantId,
-        peppolId: String
-    ): Result<ContactDto?> = runCatching {
-        dbQuery {
-            ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (ContactsTable.peppolId eq peppolId) and
-                    (ContactsTable.isActive eq true)
-            }.singleOrNull()?.let { row ->
-                mapRowToContactDto(row)
-            }
-        }
-    }
+    // NOTE: findByPeppolId() removed - PEPPOL participant ID is now in PeppolDirectoryCacheTable
 
     /**
      * Find a contact by company number (exact match)
@@ -752,8 +677,7 @@ class ContactRepository {
             companyNumber = row[ContactsTable.companyNumber],
             defaultPaymentTerms = row[ContactsTable.defaultPaymentTerms],
             defaultVatRate = row[ContactsTable.defaultVatRate]?.let { VatRate.fromDbDecimal(it) },
-            peppolId = row[ContactsTable.peppolId],
-            peppolEnabled = row[ContactsTable.peppolEnabled],
+            // NOTE: peppolId/peppolEnabled removed - PEPPOL status is now in PeppolDirectoryCacheTable
             tags = row[ContactsTable.tags],
             isActive = row[ContactsTable.isActive],
             createdAt = row[ContactsTable.createdAt],

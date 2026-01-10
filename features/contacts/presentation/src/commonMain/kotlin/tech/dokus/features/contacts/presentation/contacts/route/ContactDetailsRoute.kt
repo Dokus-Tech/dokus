@@ -17,7 +17,6 @@ import tech.dokus.aura.resources.contacts_enrichment_applied_single
 import tech.dokus.aura.resources.contacts_note_added
 import tech.dokus.aura.resources.contacts_note_deleted
 import tech.dokus.aura.resources.contacts_note_updated
-import tech.dokus.aura.resources.contacts_peppol_update_success
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.features.contacts.mvi.ContactDetailsAction
@@ -50,8 +49,6 @@ internal fun ContactDetailsRoute(
 
     val successMessage = pendingSuccess?.let { success ->
         when (success) {
-            ContactDetailsSuccess.PeppolUpdated ->
-                stringResource(Res.string.contacts_peppol_update_success)
             ContactDetailsSuccess.NoteAdded ->
                 stringResource(Res.string.contacts_note_added)
             ContactDetailsSuccess.NoteUpdated ->

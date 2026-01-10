@@ -4,8 +4,11 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.PeppolDocumentType
+import tech.dokus.domain.enums.PeppolLookupSource
+import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
@@ -265,4 +268,47 @@ data class ProcessedPeppolDocument(
     val invoiceNumber: String?,
     val totalAmount: Money?,
     val receivedAt: LocalDateTime
+)
+
+// ============================================================================
+// PEPPOL DIRECTORY CACHE MODELS
+// ============================================================================
+
+/**
+ * Cache-row model for directory lookup results.
+ * Only stored values, no UNKNOWN status (that's API-only).
+ * Timestamps are non-null since they're always set on insert/update.
+ */
+@Serializable
+data class PeppolResolution(
+    val contactId: ContactId,
+    val status: PeppolLookupStatus,
+    val participantId: String? = null,
+    val scheme: String? = null,
+    val supportedDocTypes: List<String> = emptyList(),
+    val source: PeppolLookupSource,
+    val vatNumberSnapshot: String? = null,
+    val companyNumberSnapshot: String? = null,
+    val lastCheckedAt: LocalDateTime,
+    val expiresAt: LocalDateTime? = null,
+    val errorMessage: String? = null
+)
+
+/**
+ * API response for PEPPOL status endpoint.
+ * Can return "unknown" status when no cache entry exists.
+ */
+@Serializable
+data class PeppolStatusResponse(
+    /** "found" | "not_found" | "error" | "unknown" */
+    val status: String,
+    val participantId: String? = null,
+    val supportedDocTypes: List<String> = emptyList(),
+    /** "directory" | "manual" | null (if unknown) */
+    val source: String? = null,
+    val lastCheckedAt: LocalDateTime? = null,
+    val expiresAt: LocalDateTime? = null,
+    /** true if fetched via ?refresh=true this request */
+    val refreshed: Boolean,
+    val errorMessage: String? = null
 )

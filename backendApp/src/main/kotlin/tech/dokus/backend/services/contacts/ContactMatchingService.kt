@@ -14,11 +14,12 @@ import tech.dokus.foundation.backend.utils.loggerFor
  *
  * Matching priority (highest confidence first):
  * 1. VAT Number (exact match) → confidence 0.95+
- * 2. Peppol ID (exact match) → confidence 0.95+
- * 3. Company Number (exact match) → confidence 0.90
- * 4. Name + Country (fuzzy) → confidence 0.6-0.8
- * 5. Name only (fuzzy) → confidence 0.3-0.5
- * 6. No match → confidence 0.0
+ * 2. Company Number (exact match) → confidence 0.90
+ * 3. Name + Country (fuzzy) → confidence 0.6-0.8
+ * 4. Name only (fuzzy) → confidence 0.3-0.5
+ * 5. No match → confidence 0.0
+ *
+ * NOTE: PEPPOL ID matching removed - PEPPOL participant IDs are now in PeppolDirectoryCacheTable
  */
 class ContactMatchingService(
     private val contactRepository: ContactRepository
@@ -28,11 +29,14 @@ class ContactMatchingService(
     /**
      * Extracted counterparty data from a document.
      * Used as input for matching.
+     *
+     * NOTE: peppolId is kept for extraction but not used for matching.
+     * PEPPOL IDs are discovered via directory lookup, not contact master data.
      */
     data class ExtractedCounterparty(
         val name: String? = null,
         val vatNumber: String? = null,
-        val peppolId: String? = null,
+        val peppolId: String? = null, // Extracted but not used for matching
         val companyNumber: String? = null,
         val country: String? = null,
         val email: String? = null,
@@ -73,22 +77,9 @@ class ContactMatchingService(
             }
         }
 
-        // 2. Try Peppol ID (highest confidence)
-        if (!extracted.peppolId.isNullOrBlank()) {
-            val match = contactRepository.findByPeppolId(tenantId, extracted.peppolId).getOrNull()
-            if (match != null) {
-                logger.info("Matched contact by Peppol ID: ${match.id} for Peppol: ${extracted.peppolId}")
-                return@runCatching ContactSuggestion(
-                    contactId = match.id,
-                    contact = match,
-                    confidence = 0.97f,
-                    matchReason = ContactMatchReason.PeppolId,
-                    matchDetails = "Matched Peppol ID: ${extracted.peppolId}"
-                )
-            }
-        }
+        // NOTE: PEPPOL ID matching removed - PEPPOL IDs are now in PeppolDirectoryCacheTable
 
-        // 3. Try company number (high confidence)
+        // 2. Try company number (high confidence)
         if (!extracted.companyNumber.isNullOrBlank()) {
             val match =
                 contactRepository.findByCompanyNumber(tenantId, extracted.companyNumber).getOrNull()
@@ -104,7 +95,7 @@ class ContactMatchingService(
             }
         }
 
-        // 4. Try name (confidence based on country presence)
+        // 3. Try name (confidence based on country presence)
         // Note: Country filtering removed from contacts table (now in address table).
         // TODO: Re-implement country matching via JOIN with ContactAddressesTable/AddressTable.
         if (!extracted.name.isNullOrBlank()) {
@@ -142,7 +133,7 @@ class ContactMatchingService(
             }
         }
 
-        // 6. No match found
+        // 4. No match found
         logger.debug("No contact match found for: {}", extracted)
         ContactSuggestion(
             contactId = null,

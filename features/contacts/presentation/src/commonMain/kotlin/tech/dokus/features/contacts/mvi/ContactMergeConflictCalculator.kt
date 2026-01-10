@@ -11,7 +11,6 @@ import tech.dokus.aura.resources.contacts_country
 import tech.dokus.aura.resources.contacts_default_vat_rate
 import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_payment_terms
-import tech.dokus.aura.resources.contacts_peppol_id
 import tech.dokus.aura.resources.contacts_phone
 import tech.dokus.aura.resources.contacts_postal_code
 import tech.dokus.aura.resources.contacts_tags
@@ -77,7 +76,7 @@ internal object ContactMergeConflictCalculator {
         addConflictIfDifferent("city", Res.string.contacts_city, source.city, target.city)
         addConflictIfDifferent("postalCode", Res.string.contacts_postal_code, source.postalCode, target.postalCode)
         addConflictIfDifferent("country", Res.string.contacts_country, source.country, target.country)
-        addConflictIfDifferent("peppolId", Res.string.contacts_peppol_id, source.peppolId, target.peppolId)
+        // NOTE: peppolId removed - PEPPOL status is now in PeppolDirectoryCacheTable
         addConflictIfDifferent("tags", Res.string.contacts_tags, source.tags, target.tags)
 
         if (source.defaultPaymentTerms != target.defaultPaymentTerms) {

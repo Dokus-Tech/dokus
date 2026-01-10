@@ -36,6 +36,7 @@ import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
+import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
@@ -78,6 +79,7 @@ import tech.dokus.peppol.policy.DefaultDocumentConfirmationPolicy
 import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
+import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolCredentialResolver
 import tech.dokus.peppol.service.PeppolCredentialResolverImpl
@@ -254,12 +256,16 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { PeppolModuleConfig.fromConfig(appConfig.config) }
     single { PeppolProviderFactory(get()) }
     single { RecommandCompaniesClient(get()) }
+    single { RecommandProvider(get()) } // For directory lookups
     single { PeppolMapper() }
     single { PeppolValidator() }
     // Centralized credential resolver - ALL Peppol operations use this
     single<PeppolCredentialResolver> { PeppolCredentialResolverImpl(get(), get(), get()) }
     single { PeppolConnectionService(get(), get(), get()) }
     single { PeppolService(get(), get(), get(), get(), get(), get()) }
+
+    // PEPPOL Directory Cache - resolves recipients via cache-first lookup
+    single { PeppolRecipientResolver(get(), get(), get(), get()) }
     single<DocumentConfirmationPolicy> { DefaultDocumentConfirmationPolicy() }
 
     // Peppol Polling Worker
@@ -282,7 +288,8 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
 }
 
 private val contactsModule = module {
-    single { ContactService(get()) }
+    // NOTE: ContactService takes optional PeppolDirectoryCacheRepository for cache invalidation
+    single { ContactService(get(), getOrNull()) }
     single { ContactNoteService(get()) }
     single { ContactMatchingService(get()) }
 }

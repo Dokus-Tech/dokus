@@ -119,6 +119,7 @@ class PeppolService(
 
     /**
      * Validate an invoice for Peppol sending without actually sending it.
+     * NOTE: recipientPeppolId should be resolved via PeppolRecipientResolver before calling this.
      */
     suspend fun validateInvoice(
         invoice: FinancialDocumentDto.InvoiceDto,
@@ -126,7 +127,8 @@ class PeppolService(
         tenant: Tenant,
         companyAddress: Address?,
         tenantSettings: TenantSettings,
-        tenantId: TenantId
+        tenantId: TenantId,
+        recipientPeppolId: String?
     ): Result<PeppolValidationResult> {
         logger.debug("Validating invoice {} for Peppol sending", invoice.id)
 
@@ -140,7 +142,8 @@ class PeppolService(
                 tenant,
                 companyAddress,
                 tenantSettings,
-                peppolSettings
+                peppolSettings,
+                recipientPeppolId
             )
         }
     }
@@ -166,6 +169,7 @@ class PeppolService(
 
     /**
      * Send an invoice via Peppol.
+     * NOTE: recipientPeppolId should be resolved via PeppolRecipientResolver before calling this.
      */
     suspend fun sendInvoice(
         invoice: FinancialDocumentDto.InvoiceDto,
@@ -173,7 +177,8 @@ class PeppolService(
         tenant: Tenant,
         companyAddress: Address?,
         tenantSettings: TenantSettings,
-        tenantId: TenantId
+        tenantId: TenantId,
+        recipientPeppolId: String
     ): Result<SendInvoiceViaPeppolResponse> {
         logger.info("Sending invoice ${invoice.id} via Peppol for tenant: $tenantId")
 
@@ -192,7 +197,8 @@ class PeppolService(
                 tenant,
                 companyAddress,
                 tenantSettings,
-                peppolSettings
+                peppolSettings,
+                recipientPeppolId
             )
 
             if (!validationResult.isValid) {
@@ -200,10 +206,7 @@ class PeppolService(
                 throw IllegalArgumentException("Invoice validation failed: $errorMessages")
             }
 
-            // Create transmission record
-            val recipientPeppolId = contact.peppolId
-                ?: throw IllegalArgumentException("Contact must have a Peppol ID")
-
+            // Create transmission record (recipientPeppolId passed as parameter)
             val transmission = transmissionRepository.createTransmission(
                 tenantId = tenantId,
                 direction = PeppolTransmissionDirection.Outbound,
@@ -220,7 +223,8 @@ class PeppolService(
                     tenant,
                     tenantSettings,
                     peppolSettings,
-                    companyAddress
+                    companyAddress,
+                    recipientPeppolId
                 )
             val rawRequest = provider.serializeRequest(sendRequest)
 
