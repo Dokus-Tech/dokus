@@ -18,19 +18,17 @@ import tech.dokus.aura.resources.cashflow_action_correct_contact
 import tech.dokus.aura.resources.cashflow_action_ignore
 import tech.dokus.aura.resources.cashflow_bill_details_section
 import tech.dokus.aura.resources.cashflow_bound_to
-import tech.dokus.aura.resources.cashflow_client_name
+import tech.dokus.aura.resources.cashflow_contact_name
 import tech.dokus.aura.resources.cashflow_confidence_high
 import tech.dokus.aura.resources.cashflow_confidence_label
 import tech.dokus.aura.resources.cashflow_confidence_low
 import tech.dokus.aura.resources.cashflow_confidence_medium
 import tech.dokus.aura.resources.cashflow_contact_label
-import tech.dokus.aura.resources.cashflow_counterparty_ai_extracted
+import tech.dokus.aura.resources.cashflow_contact_ai_extracted
 import tech.dokus.aura.resources.cashflow_expense_details_section
 import tech.dokus.aura.resources.cashflow_invoice_details_section
 import tech.dokus.aura.resources.cashflow_invoice_number
-import tech.dokus.aura.resources.cashflow_merchant
 import tech.dokus.aura.resources.cashflow_receipt_number
-import tech.dokus.aura.resources.cashflow_supplier_name
 import tech.dokus.aura.resources.cashflow_processing_identifying_type
 import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_unknown_document_type
@@ -91,12 +89,7 @@ internal fun CounterpartyCard(
         Res.string.cashflow_action_correct_contact
     }
 
-    val nameLabel = when (state.editableData.documentType) {
-        DocumentType.Invoice -> stringResource(Res.string.cashflow_client_name)
-        DocumentType.Bill -> stringResource(Res.string.cashflow_supplier_name)
-        DocumentType.Expense -> stringResource(Res.string.cashflow_merchant)
-        else -> stringResource(Res.string.cashflow_contact_label)
-    }
+    val nameLabel = stringResource(Res.string.cashflow_contact_name)
 
     val confidence = (
         state.originalData?.overallConfidence
@@ -134,7 +127,7 @@ internal fun CounterpartyCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = stringResource(Res.string.cashflow_counterparty_ai_extracted),
+                    text = stringResource(Res.string.cashflow_contact_ai_extracted),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                 )

@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_client_information
-import tech.dokus.aura.resources.cashflow_client_name
+import tech.dokus.aura.resources.cashflow_contact_information
+import tech.dokus.aura.resources.cashflow_contact_name
 import tech.dokus.aura.resources.cashflow_invoice_details_section
 import tech.dokus.aura.resources.cashflow_invoice_number
 import tech.dokus.aura.resources.cashflow_section_additional_information
@@ -44,10 +44,10 @@ internal fun InvoiceForm(
     Column(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
     ) {
-        SectionHeader(stringResource(Res.string.cashflow_client_information))
+        SectionHeader(stringResource(Res.string.cashflow_contact_information))
 
         PTextFieldStandard(
-            fieldName = stringResource(Res.string.cashflow_client_name),
+            fieldName = stringResource(Res.string.cashflow_contact_name),
             value = fields.clientName,
             onValueChange = { onFieldUpdate(InvoiceField.CLIENT_NAME, it) },
             modifier = Modifier.fillMaxWidth()

@@ -47,7 +47,7 @@
 
     <!-- Navigation Items -->
     <string name="nav_documents">Documents</string>
-    <string name="nav_clients">Clients</string>
+    <string name="nav_contacts">Contacts</string>
     <string name="nav_team">Team</string>
     <string name="nav_vat">VAT</string>
     <string name="nav_reports">Reports</string>

@@ -53,7 +53,7 @@ class CashflowEntriesRepository {
         eventDate: LocalDate,
         amountGross: Money,
         amountVat: Money,
-        counterpartyId: ContactId?
+        contactId: ContactId?
     ): Result<CashflowEntry> = runCatching {
         dbQuery {
             val entryId = CashflowEntriesTable.insertAndGetId {
@@ -67,7 +67,7 @@ class CashflowEntriesRepository {
                 it[CashflowEntriesTable.amountVat] = amountVat.toDbDecimal()
                 it[CashflowEntriesTable.remainingAmount] = amountGross.toDbDecimal()
                 it[CashflowEntriesTable.status] = CashflowEntryStatus.Open
-                it[CashflowEntriesTable.counterpartyId] = counterpartyId?.let { id -> UUID.fromString(id.toString()) }
+                it[CashflowEntriesTable.counterpartyId] = contactId?.let { id -> UUID.fromString(id.toString()) }
             }
 
             mapRowToEntry(
@@ -171,7 +171,7 @@ class CashflowEntriesRepository {
                 .map { row ->
                     mapRowToEntry(
                         row = row,
-                        counterpartyName = row.getOrNull(ContactsTable.name)
+                        contactName = row.getOrNull(ContactsTable.name)
                     )
                 }
         }
@@ -241,7 +241,7 @@ class CashflowEntriesRepository {
 
     private fun mapRowToEntry(
         row: org.jetbrains.exposed.v1.core.ResultRow,
-        counterpartyName: String? = null
+        contactName: String? = null
     ): CashflowEntry {
         return CashflowEntry(
             id = CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
@@ -256,8 +256,8 @@ class CashflowEntriesRepository {
             remainingAmount = Money.fromDbDecimal(row[CashflowEntriesTable.remainingAmount]),
             currency = row[CashflowEntriesTable.currency],
             status = row[CashflowEntriesTable.status],
-            counterpartyId = row[CashflowEntriesTable.counterpartyId]?.let { ContactId.parse(it.toString()) },
-            counterpartyName = counterpartyName,
+            contactId = row[CashflowEntriesTable.counterpartyId]?.let { ContactId.parse(it.toString()) },
+            contactName = contactName,
             description = null, // Will be AI-generated in future
             createdAt = row[CashflowEntriesTable.createdAt],
             updatedAt = row[CashflowEntriesTable.updatedAt]

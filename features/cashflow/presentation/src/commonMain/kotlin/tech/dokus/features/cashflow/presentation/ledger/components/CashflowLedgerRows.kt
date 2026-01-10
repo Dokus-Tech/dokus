@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_ledger_amount
-import tech.dokus.aura.resources.cashflow_ledger_counterparty
+import tech.dokus.aura.resources.cashflow_ledger_contact
 import tech.dokus.aura.resources.cashflow_ledger_description
 import tech.dokus.aura.resources.cashflow_ledger_due_date
 import tech.dokus.aura.resources.cashflow_ledger_status
@@ -75,7 +75,7 @@ internal fun CashflowLedgerHeaderRow(
             DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_due_date))
         }
         DokusTableCell(CashflowTableColumns.Counterparty) {
-            DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_counterparty))
+            DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_contact))
         }
         DokusTableCell(CashflowTableColumns.Description) {
             DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_description))
@@ -129,7 +129,7 @@ internal fun CashflowLedgerTableRow(
         }
         DokusTableCell(CashflowTableColumns.Counterparty) {
             Text(
-                text = entry.counterpartyName ?: "—",
+                text = entry.contactName ?: "—",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -207,7 +207,7 @@ internal fun CashflowLedgerMobileRow(
                     modifier = Modifier.size(DirectionIconSize)
                 )
                 Text(
-                    text = entry.counterpartyName ?: "—",
+                    text = entry.contactName ?: "—",
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
