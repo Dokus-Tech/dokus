@@ -1,6 +1,7 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.LocalDate
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -11,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
+import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
@@ -129,6 +131,7 @@ class CashflowEntriesRepository {
 
     /**
      * List entries for a tenant with optional filters.
+     * Includes LEFT JOIN to contacts to fetch counterparty name.
      * CRITICAL: MUST filter by tenant_id.
      */
     suspend fun listEntries(
@@ -139,9 +142,17 @@ class CashflowEntriesRepository {
         status: CashflowEntryStatus? = null
     ): Result<List<CashflowEntry>> = runCatching {
         dbQuery {
-            var query = CashflowEntriesTable.selectAll().where {
-                CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())
-            }
+            var query = CashflowEntriesTable
+                .join(
+                    ContactsTable,
+                    JoinType.LEFT,
+                    onColumn = CashflowEntriesTable.counterpartyId,
+                    otherColumn = ContactsTable.id
+                )
+                .selectAll()
+                .where {
+                    CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())
+                }
 
             if (fromDate != null) {
                 query = query.andWhere { CashflowEntriesTable.eventDate greaterEq fromDate }
@@ -157,7 +168,12 @@ class CashflowEntriesRepository {
             }
 
             query.orderBy(CashflowEntriesTable.eventDate to SortOrder.ASC)
-                .map { mapRowToEntry(it) }
+                .map { row ->
+                    mapRowToEntry(
+                        row = row,
+                        counterpartyName = row.getOrNull(ContactsTable.name)
+                    )
+                }
         }
     }
 
@@ -223,7 +239,10 @@ class CashflowEntriesRepository {
         }
     }
 
-    private fun mapRowToEntry(row: org.jetbrains.exposed.v1.core.ResultRow): CashflowEntry {
+    private fun mapRowToEntry(
+        row: org.jetbrains.exposed.v1.core.ResultRow,
+        counterpartyName: String? = null
+    ): CashflowEntry {
         return CashflowEntry(
             id = CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
             tenantId = TenantId.parse(row[CashflowEntriesTable.tenantId].toString()),
@@ -238,6 +257,8 @@ class CashflowEntriesRepository {
             currency = row[CashflowEntriesTable.currency],
             status = row[CashflowEntriesTable.status],
             counterpartyId = row[CashflowEntriesTable.counterpartyId]?.let { ContactId.parse(it.toString()) },
+            counterpartyName = counterpartyName,
+            description = null, // Will be AI-generated in future
             createdAt = row[CashflowEntriesTable.createdAt],
             updatedAt = row[CashflowEntriesTable.updatedAt]
         )
