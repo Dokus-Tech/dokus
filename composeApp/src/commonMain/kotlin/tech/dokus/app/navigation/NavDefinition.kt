@@ -12,7 +12,7 @@ import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.inbox
 import tech.dokus.aura.resources.ml
 import tech.dokus.aura.resources.more_horizontal
-import tech.dokus.aura.resources.nav_clients
+import tech.dokus.aura.resources.nav_contacts
 import tech.dokus.aura.resources.nav_documents
 import tech.dokus.aura.resources.nav_forecast
 import tech.dokus.aura.resources.nav_more
@@ -132,9 +132,9 @@ object NavDefinition {
             showTopBar = true
         )
 
-        val clients = NavItem(
-            id = "clients",
-            titleRes = Res.string.nav_clients,
+        val contacts = NavItem(
+            id = "contacts",
+            titleRes = Res.string.nav_contacts,
             iconRes = Res.drawable.users,
             route = Routes.CONTACTS,
             comingSoon = false,
@@ -204,7 +204,7 @@ object NavDefinition {
             iconRes = Res.drawable.users,
             items = listOf(
                 Items.companyDetails,
-                Items.clients,
+                Items.contacts,
                 Items.team,
                 Items.peppol
             ),

@@ -38,7 +38,7 @@ class CashflowEntriesService(
         dueDate: LocalDate,
         amountGross: Money,
         amountVat: Money,
-        customerId: ContactId?
+        contactId: ContactId?
     ): Result<CashflowEntry> {
         logger.info("Creating cashflow entry for invoice: $invoiceId, tenant: $tenantId")
         return cashflowEntriesRepository.createEntry(
@@ -50,7 +50,7 @@ class CashflowEntriesService(
             eventDate = dueDate,
             amountGross = amountGross,
             amountVat = amountVat,
-            counterpartyId = customerId
+            contactId = contactId
         )
             .onSuccess { logger.info("Cashflow entry created: ${it.id} for invoice: $invoiceId") }
             .onFailure { logger.error("Failed to create cashflow entry for invoice: $invoiceId", it) }
@@ -66,7 +66,7 @@ class CashflowEntriesService(
         dueDate: LocalDate,
         amountGross: Money,
         amountVat: Money,
-        vendorId: ContactId?
+        contactId: ContactId?
     ): Result<CashflowEntry> {
         logger.info("Creating cashflow entry for bill: $billId, tenant: $tenantId")
         return cashflowEntriesRepository.createEntry(
@@ -78,7 +78,7 @@ class CashflowEntriesService(
             eventDate = dueDate,
             amountGross = amountGross,
             amountVat = amountVat,
-            counterpartyId = vendorId
+            contactId = contactId
         )
             .onSuccess { logger.info("Cashflow entry created: ${it.id} for bill: $billId") }
             .onFailure { logger.error("Failed to create cashflow entry for bill: $billId", it) }
@@ -94,7 +94,7 @@ class CashflowEntriesService(
         expenseDate: LocalDate,
         amountGross: Money,
         amountVat: Money,
-        vendorId: ContactId?
+        contactId: ContactId?
     ): Result<CashflowEntry> {
         logger.info("Creating cashflow entry for expense: $expenseId, tenant: $tenantId")
         return cashflowEntriesRepository.createEntry(
@@ -106,7 +106,7 @@ class CashflowEntriesService(
             eventDate = expenseDate,
             amountGross = amountGross,
             amountVat = amountVat,
-            counterpartyId = vendorId
+            contactId = contactId
         )
             .onSuccess { logger.info("Cashflow entry created: ${it.id} for expense: $expenseId") }
             .onFailure { logger.error("Failed to create cashflow entry for expense: $expenseId", it) }

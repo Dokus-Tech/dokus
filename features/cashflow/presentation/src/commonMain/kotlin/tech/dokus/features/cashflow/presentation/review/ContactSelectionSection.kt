@@ -44,14 +44,12 @@ import tech.dokus.aura.resources.action_change
 import tech.dokus.aura.resources.cashflow_ai_suggested
 import tech.dokus.aura.resources.cashflow_bound_to
 import tech.dokus.aura.resources.cashflow_choose_different
-import tech.dokus.aura.resources.cashflow_client_label
 import tech.dokus.aura.resources.cashflow_contact_label
 import tech.dokus.aura.resources.cashflow_contact_selected
 import tech.dokus.aura.resources.cashflow_no_contact_selected
 import tech.dokus.aura.resources.cashflow_saving_contact
 import tech.dokus.aura.resources.cashflow_select_contact
 import tech.dokus.aura.resources.cashflow_suggested_contact
-import tech.dokus.aura.resources.cashflow_supplier_label
 import tech.dokus.aura.resources.cashflow_use_this_contact
 import tech.dokus.aura.resources.common_percent_value
 import tech.dokus.aura.resources.common_unknown
@@ -125,11 +123,7 @@ fun ContactSelectionSection(
     onCreateNewContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sectionLabel = when (documentType) {
-        DocumentType.Invoice -> stringResource(Res.string.cashflow_client_label)
-        DocumentType.Bill -> stringResource(Res.string.cashflow_supplier_label)
-        else -> stringResource(Res.string.cashflow_contact_label)
-    }
+    val sectionLabel = stringResource(Res.string.cashflow_contact_label)
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Section header

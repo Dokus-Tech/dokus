@@ -12,7 +12,7 @@
     <string name="cashflow_ledger_expected_out">Expected Out</string>
     <string name="cashflow_ledger_net">Net</string>
     <string name="cashflow_ledger_due_date">Due date</string>
-    <string name="cashflow_ledger_counterparty">Counterparty</string>
+    <string name="cashflow_ledger_contact">Contact</string>
     <string name="cashflow_ledger_description">Description</string>
     <string name="cashflow_ledger_amount">Amount</string>
     <string name="cashflow_ledger_status">Status</string>
@@ -236,8 +236,8 @@
     <string name="cashflow_document_review_title">Document Review</string>
     <string name="cashflow_chat_with_document">Chat with Document</string>
     <string name="cashflow_confidence_badge">AI: %1$d%%</string>
-    <string name="cashflow_counterparty_details_title">Counterparty &amp; Details</string>
-    <string name="cashflow_counterparty_ai_extracted">Counterparty (AI extracted)</string>
+    <string name="cashflow_contact_details_title">Contact Details</string>
+    <string name="cashflow_contact_ai_extracted">Contact (AI extracted)</string>
     <string name="cashflow_action_correct_contact">Correct contact</string>
     <string name="cashflow_action_ignore">Ignore</string>
     <string name="cashflow_confidence_label">AI</string>
@@ -253,18 +253,14 @@
     <string name="cashflow_analysis_retry">Retry Analysis</string>
     <string name="cashflow_analysis_continue_manually">Continue Manually</string>
     <string name="cashflow_document_rejected">Document rejected</string>
-    <string name="cashflow_client_information">Client Information</string>
-    <string name="cashflow_client_name">Client Name</string>
+    <string name="cashflow_contact_information">Contact Information</string>
+    <string name="cashflow_contact_name">Contact Name</string>
     <string name="cashflow_invoice_details_section">Invoice Details</string>
     <string name="cashflow_section_amounts">Amounts</string>
     <string name="cashflow_section_additional_information">Additional Information</string>
     <string name="cashflow_invoice_number">Invoice Number</string>
     <string name="cashflow_vat_amount">VAT Amount</string>
     <string name="cashflow_bill_details_section">Bill Details</string>
-    <string name="cashflow_supplier_information">Supplier Information</string>
-    <string name="cashflow_supplier_name">Supplier Name</string>
-    <string name="cashflow_merchant_information">Merchant Information</string>
-    <string name="cashflow_merchant">Merchant</string>
     <string name="cashflow_expense_details_section">Expense Details</string>
     <string name="cashflow_receipt_number">Receipt Number</string>
     <string name="cashflow_payment_method">Payment Method</string>
@@ -289,8 +285,6 @@
     <string name="cashflow_suggested_contacts">Suggested contacts:</string>
 
     <!-- Contact Selection -->
-    <string name="cashflow_client_label">Client</string>
-    <string name="cashflow_supplier_label">Supplier</string>
     <string name="cashflow_contact_label">Contact</string>
     <string name="cashflow_saving_contact">Saving contact...</string>
     <string name="cashflow_no_contact_selected">No contact selected</string>

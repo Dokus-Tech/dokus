@@ -32,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_counterparty_details_title
+import tech.dokus.aura.resources.cashflow_contact_details_title
 import tech.dokus.aura.resources.cashflow_loading_document
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewFooter
@@ -195,7 +195,7 @@ private fun ReviewDetailsPane(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = stringResource(Res.string.cashflow_counterparty_details_title),
+            text = stringResource(Res.string.cashflow_contact_details_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = Constrains.Spacing.small),

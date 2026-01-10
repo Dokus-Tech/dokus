@@ -16,7 +16,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_deductible_percentage
 import tech.dokus.aura.resources.cashflow_expense_details_section
 import tech.dokus.aura.resources.cashflow_is_deductible
-import tech.dokus.aura.resources.cashflow_merchant
+import tech.dokus.aura.resources.cashflow_contact_name
 import tech.dokus.aura.resources.cashflow_payment_method
 import tech.dokus.aura.resources.cashflow_receipt_number
 import tech.dokus.aura.resources.cashflow_section_additional_information
@@ -53,7 +53,7 @@ internal fun ExpenseForm(
         SectionHeader(stringResource(Res.string.cashflow_expense_details_section))
 
         PTextFieldStandard(
-            fieldName = stringResource(Res.string.cashflow_merchant),
+            fieldName = stringResource(Res.string.cashflow_contact_name),
             value = fields.merchant,
             onValueChange = { onFieldUpdate(ExpenseField.MERCHANT, it) },
             modifier = Modifier.fillMaxWidth()
