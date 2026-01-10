@@ -43,15 +43,27 @@ data class CashflowFilters(
 
 /**
  * Payment form state for recording payments against cashflow entries.
+ *
+ * Uses amountText + amount pattern: TextField always updates amountText,
+ * parsing updates amount when valid. Validate only on submit.
  */
 @Immutable
 data class PaymentFormState(
     val paidAt: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-    val amount: Money = Money.ZERO,
+    val amountText: String = "",
+    val amount: Money? = null,
     val note: String = "",
     val isSubmitting: Boolean = false,
-    val amountError: String? = null
-)
+    val amountError: String? = null,
+    val isOptionsExpanded: Boolean = false
+) {
+    companion object {
+        fun withAmount(amount: Money): PaymentFormState = PaymentFormState(
+            amountText = amount.toDisplayString(),
+            amount = amount
+        )
+    }
+}
 
 /**
  * State for CashflowLedgerScreen.
@@ -94,10 +106,15 @@ sealed interface CashflowLedgerIntent : MVIIntent {
     data class SelectEntry(val entryId: CashflowEntryId) : CashflowLedgerIntent
     data object CloseDetailPane : CashflowLedgerIntent
     data class UpdatePaymentDate(val date: LocalDate) : CashflowLedgerIntent
-    data class UpdatePaymentAmount(val amount: Money) : CashflowLedgerIntent
+    data class UpdatePaymentAmountText(val text: String) : CashflowLedgerIntent
     data class UpdatePaymentNote(val note: String) : CashflowLedgerIntent
     data object SubmitPayment : CashflowLedgerIntent
     data class OpenDocument(val documentId: DocumentId) : CashflowLedgerIntent
+
+    // Payment options intents
+    data object TogglePaymentOptions : CashflowLedgerIntent
+    data object QuickMarkAsPaid : CashflowLedgerIntent
+    data object CancelPaymentOptions : CashflowLedgerIntent
 }
 
 /**

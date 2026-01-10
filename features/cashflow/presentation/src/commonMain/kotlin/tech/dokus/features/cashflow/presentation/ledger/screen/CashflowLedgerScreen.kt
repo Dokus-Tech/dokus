@@ -207,9 +207,12 @@ private fun CashflowLedgerContent(
             isFullScreen = !isLargeScreen,
             onDismiss = { onIntent(CashflowLedgerIntent.CloseDetailPane) },
             onPaymentDateChange = { onIntent(CashflowLedgerIntent.UpdatePaymentDate(it)) },
-            onPaymentAmountChange = { onIntent(CashflowLedgerIntent.UpdatePaymentAmount(it)) },
+            onPaymentAmountTextChange = { onIntent(CashflowLedgerIntent.UpdatePaymentAmountText(it)) },
             onPaymentNoteChange = { onIntent(CashflowLedgerIntent.UpdatePaymentNote(it)) },
             onSubmitPayment = { onIntent(CashflowLedgerIntent.SubmitPayment) },
+            onTogglePaymentOptions = { onIntent(CashflowLedgerIntent.TogglePaymentOptions) },
+            onQuickMarkAsPaid = { onIntent(CashflowLedgerIntent.QuickMarkAsPaid) },
+            onCancelPaymentOptions = { onIntent(CashflowLedgerIntent.CancelPaymentOptions) },
             onOpenDocument = { onIntent(CashflowLedgerIntent.OpenDocument(it)) }
         )
     }

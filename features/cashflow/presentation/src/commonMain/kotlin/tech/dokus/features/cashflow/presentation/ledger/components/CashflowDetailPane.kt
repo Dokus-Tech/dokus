@@ -27,7 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -58,6 +59,7 @@ import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.ledger.mvi.PaymentFormState
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.layout.DokusExpandableAction
 
 // UI dimension constants
 private val FormContentPadding = 16.dp
@@ -85,9 +87,12 @@ private const val PaneWidthFraction = 0.4f
  * @param isFullScreen Whether to display as full-screen (mobile)
  * @param onDismiss Callback when the pane should be dismissed
  * @param onPaymentDateChange Callback when payment date changes
- * @param onPaymentAmountChange Callback when payment amount changes
+ * @param onPaymentAmountTextChange Callback when payment amount text changes
  * @param onPaymentNoteChange Callback when payment note changes
  * @param onSubmitPayment Callback when payment form is submitted
+ * @param onTogglePaymentOptions Callback to toggle options panel
+ * @param onQuickMarkAsPaid Callback for one-click mark as paid
+ * @param onCancelPaymentOptions Callback to cancel options and reset
  * @param onOpenDocument Callback when source document is clicked
  */
 @Composable
@@ -98,9 +103,12 @@ internal fun CashflowDetailPane(
     isFullScreen: Boolean,
     onDismiss: () -> Unit,
     onPaymentDateChange: (LocalDate) -> Unit,
-    onPaymentAmountChange: (Money) -> Unit,
+    onPaymentAmountTextChange: (String) -> Unit,
     onPaymentNoteChange: (String) -> Unit,
     onSubmitPayment: () -> Unit,
+    onTogglePaymentOptions: () -> Unit,
+    onQuickMarkAsPaid: () -> Unit,
+    onCancelPaymentOptions: () -> Unit,
     onOpenDocument: (DocumentId) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -178,9 +186,12 @@ internal fun CashflowDetailPane(
                             paymentFormState = paymentFormState,
                             onDismiss = onDismiss,
                             onPaymentDateChange = onPaymentDateChange,
-                            onPaymentAmountChange = onPaymentAmountChange,
+                            onPaymentAmountTextChange = onPaymentAmountTextChange,
                             onPaymentNoteChange = onPaymentNoteChange,
                             onSubmitPayment = onSubmitPayment,
+                            onTogglePaymentOptions = onTogglePaymentOptions,
+                            onQuickMarkAsPaid = onQuickMarkAsPaid,
+                            onCancelPaymentOptions = onCancelPaymentOptions,
                             onOpenDocument = onOpenDocument
                         )
                     }
@@ -196,9 +207,12 @@ private fun CashflowDetailContent(
     paymentFormState: PaymentFormState,
     onDismiss: () -> Unit,
     onPaymentDateChange: (LocalDate) -> Unit,
-    onPaymentAmountChange: (Money) -> Unit,
+    onPaymentAmountTextChange: (String) -> Unit,
     onPaymentNoteChange: (String) -> Unit,
     onSubmitPayment: () -> Unit,
+    onTogglePaymentOptions: () -> Unit,
+    onQuickMarkAsPaid: () -> Unit,
+    onCancelPaymentOptions: () -> Unit,
     onOpenDocument: (DocumentId) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -245,14 +259,19 @@ private fun CashflowDetailContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        // Payment form (if status != Paid)
+        // Payment footer (if status != Paid)
         if (entry.status != CashflowEntryStatus.Paid) {
-            CashflowPaymentForm(
+            HorizontalDivider()
+            CashflowPaymentFooter(
+                entry = entry,
                 formState = paymentFormState,
-                maxAmount = entry.remainingAmount,
-                onAmountChange = onPaymentAmountChange,
+                onToggleOptions = onTogglePaymentOptions,
+                onQuickSubmit = onQuickMarkAsPaid,
+                onDateChange = onPaymentDateChange,
+                onAmountTextChange = onPaymentAmountTextChange,
                 onNoteChange = onPaymentNoteChange,
                 onSubmit = onSubmitPayment,
+                onCancel = onCancelPaymentOptions,
                 modifier = Modifier.padding(FormContentPadding)
             )
         }
@@ -528,32 +547,87 @@ private fun CashflowSourceDocumentCard(
 }
 
 @Composable
-private fun CashflowPaymentForm(
+private fun CashflowPaymentFooter(
+    entry: CashflowEntry,
     formState: PaymentFormState,
-    maxAmount: Money,
-    onAmountChange: (Money) -> Unit,
+    onToggleOptions: () -> Unit,
+    onQuickSubmit: () -> Unit,
+    onDateChange: (LocalDate) -> Unit,
+    onAmountTextChange: (String) -> Unit,
     onNoteChange: (String) -> Unit,
     onSubmit: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val defaultSubtext = "${entry.remainingAmount.toDisplayString()} today"
+
+    DokusExpandableAction(
+        isExpanded = formState.isOptionsExpanded,
+        onToggleExpand = onToggleOptions,
+        modifier = modifier,
+        subtext = {
+            Text(
+                text = defaultSubtext,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        primaryAction = {
+            Button(
+                onClick = { if (formState.isOptionsExpanded) onSubmit() else onQuickSubmit() },
+                enabled = !formState.isSubmitting
+            ) {
+                if (formState.isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .height(16.dp)
+                            .width(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+                Text(if (formState.isOptionsExpanded) "Confirm payment" else "Mark as paid")
+            }
+        },
+        expandedContent = {
+            PaymentOptionsForm(
+                formState = formState,
+                maxAmount = entry.remainingAmount,
+                onDateChange = onDateChange,
+                onAmountTextChange = onAmountTextChange,
+                onNoteChange = onNoteChange,
+                onCancel = onCancel
+            )
+        }
+    )
+}
+
+@Composable
+private fun PaymentOptionsForm(
+    formState: PaymentFormState,
+    maxAmount: Money,
+    onDateChange: (LocalDate) -> Unit,
+    onAmountTextChange: (String) -> Unit,
+    onNoteChange: (String) -> Unit,
+    onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.padding(top = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        HorizontalDivider()
-
+        // TODO: Add date picker when available
+        // For now, showing paidAt as read-only
         Text(
-            text = "Record Payment",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            text = "Date: ${formatShortDate(formState.paidAt)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Amount field
+        // Amount field - uses amountText, not parsed Money
         OutlinedTextField(
-            value = formState.amount.toDisplayString(),
-            onValueChange = { input ->
-                Money.parse(input)?.let { onAmountChange(it) }
-            },
+            value = formState.amountText,
+            onValueChange = onAmountTextChange,
             label = { Text("Amount") },
             supportingText = {
                 if (formState.amountError != null) {
@@ -576,16 +650,9 @@ private fun CashflowPaymentForm(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Submit button
-        Button(
-            onClick = onSubmit,
-            enabled = !formState.isSubmitting && formState.amount.minor > 0,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text(if (formState.isSubmitting) "Recording..." else "Mark as Paid")
+        // Cancel button
+        TextButton(onClick = onCancel) {
+            Text("Cancel")
         }
     }
 }

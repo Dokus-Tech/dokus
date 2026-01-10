@@ -74,10 +74,14 @@ internal class CashflowLedgerContainer(
                     is CashflowLedgerIntent.SelectEntry -> handleSelectEntry(intent.entryId)
                     is CashflowLedgerIntent.CloseDetailPane -> handleCloseDetailPane()
                     is CashflowLedgerIntent.UpdatePaymentDate -> handleUpdatePaymentDate(intent.date)
-                    is CashflowLedgerIntent.UpdatePaymentAmount -> handleUpdatePaymentAmount(intent.amount)
+                    is CashflowLedgerIntent.UpdatePaymentAmountText -> handleUpdatePaymentAmountText(intent.text)
                     is CashflowLedgerIntent.UpdatePaymentNote -> handleUpdatePaymentNote(intent.note)
                     is CashflowLedgerIntent.SubmitPayment -> handleSubmitPayment()
                     is CashflowLedgerIntent.OpenDocument -> handleOpenDocument(intent.documentId)
+                    // Payment options intents
+                    is CashflowLedgerIntent.TogglePaymentOptions -> handleTogglePaymentOptions()
+                    is CashflowLedgerIntent.QuickMarkAsPaid -> handleQuickMarkAsPaid()
+                    is CashflowLedgerIntent.CancelPaymentOptions -> handleCancelPaymentOptions()
                 }
             }
         }
@@ -208,7 +212,7 @@ internal class CashflowLedgerContainer(
             updateState {
                 copy(
                     selectedEntryId = entryId,
-                    paymentFormState = PaymentFormState(amount = entry.remainingAmount)
+                    paymentFormState = PaymentFormState.withAmount(entry.remainingAmount)
                 )
             }
         }
@@ -233,10 +237,15 @@ internal class CashflowLedgerContainer(
         }
     }
 
-    private suspend fun CashflowLedgerCtx.handleUpdatePaymentAmount(amount: Money) {
+    private suspend fun CashflowLedgerCtx.handleUpdatePaymentAmountText(text: String) {
         withState<CashflowLedgerState.Content, _> {
+            val parsed = Money.parse(text)
             updateState {
-                copy(paymentFormState = paymentFormState.copy(amount = amount, amountError = null))
+                copy(paymentFormState = paymentFormState.copy(
+                    amountText = text,
+                    amount = parsed,
+                    amountError = null
+                ))
             }
         }
     }
@@ -254,14 +263,15 @@ internal class CashflowLedgerContainer(
             val entry = entries.data.find { it.id == selectedEntryId } ?: return@withState
             val form = paymentFormState
 
-            // Validate: amount > 0
-            if (form.amount.minor <= 0) {
+            // Validate: amount must be valid
+            val amount = form.amount
+            if (amount == null || amount.minor <= 0) {
                 updateState { copy(paymentFormState = form.copy(amountError = "Amount must be positive")) }
                 return@withState
             }
 
             // Validate: amount <= remainingAmount
-            if (form.amount > entry.remainingAmount) {
+            if (amount > entry.remainingAmount) {
                 updateState { copy(paymentFormState = form.copy(amountError = "Amount exceeds remaining")) }
                 return@withState
             }
@@ -271,7 +281,7 @@ internal class CashflowLedgerContainer(
             recordPayment(
                 entryId = entry.id,
                 request = CashflowPaymentRequest(
-                    amount = form.amount,
+                    amount = amount,
                     paidAt = form.paidAt.atTime(0, 0),
                     note = form.note.ifBlank { null }
                 )
@@ -294,7 +304,7 @@ internal class CashflowLedgerContainer(
                             paymentFormState = if (fullyPaid) {
                                 PaymentFormState()
                             } else {
-                                PaymentFormState(amount = updatedEntry.remainingAmount)
+                                PaymentFormState.withAmount(updatedEntry.remainingAmount)
                             }
                         )
                     }
@@ -311,6 +321,45 @@ internal class CashflowLedgerContainer(
 
     private suspend fun CashflowLedgerCtx.handleOpenDocument(documentId: DocumentId) {
         action(CashflowLedgerAction.NavigateToDocumentReview(documentId.toString()))
+    }
+
+    private suspend fun CashflowLedgerCtx.handleTogglePaymentOptions() {
+        withState<CashflowLedgerState.Content, _> {
+            updateState {
+                copy(paymentFormState = paymentFormState.copy(
+                    isOptionsExpanded = !paymentFormState.isOptionsExpanded,
+                    amountError = null
+                ))
+            }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleQuickMarkAsPaid() {
+        withState<CashflowLedgerState.Content, _> {
+            val entry = entries.data.find { it.id == selectedEntryId } ?: return@withState
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+
+            // Set defaults
+            updateState {
+                copy(paymentFormState = PaymentFormState.withAmount(entry.remainingAmount).copy(
+                    paidAt = today,
+                    note = ""
+                ))
+            }
+        }
+        // Dispatch SubmitPayment intent (same validation path)
+        intent(CashflowLedgerIntent.SubmitPayment)
+    }
+
+    private suspend fun CashflowLedgerCtx.handleCancelPaymentOptions() {
+        withState<CashflowLedgerState.Content, _> {
+            val entry = entries.data.find { it.id == selectedEntryId } ?: return@withState
+            updateState {
+                copy(paymentFormState = PaymentFormState.withAmount(entry.remainingAmount).copy(
+                    isOptionsExpanded = false
+                ))
+            }
+        }
     }
 
     private fun buildPaginationState(): PaginationState<CashflowEntry> {
