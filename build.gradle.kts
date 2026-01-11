@@ -149,3 +149,37 @@ tasks.register("checkAll") {
     description = "Runs detekt and custom guardrails."
     dependsOn("detektAll", "detektKmp", "checkKotlinFileSize", "checkNoNavInComponents")
 }
+
+// Screenshot Testing Tasks (Paparazzi)
+tasks.register("recordScreenshots") {
+    group = "verification"
+    description = "Record new baseline screenshots for all modules."
+    dependsOn(
+        ":foundation:aura:recordPaparazziDebug",
+        ":features:auth:presentation:recordPaparazziDebug",
+        ":features:cashflow:presentation:recordPaparazziDebug",
+        ":features:contacts:presentation:recordPaparazziDebug"
+    )
+}
+
+tasks.register("verifyScreenshots") {
+    group = "verification"
+    description = "Verify screenshots against baselines for all modules."
+    dependsOn(
+        ":foundation:aura:verifyPaparazziDebug",
+        ":features:auth:presentation:verifyPaparazziDebug",
+        ":features:cashflow:presentation:verifyPaparazziDebug",
+        ":features:contacts:presentation:verifyPaparazziDebug"
+    )
+}
+
+tasks.register("screenshotTests") {
+    group = "verification"
+    description = "Run all Paparazzi screenshot tests across modules."
+    dependsOn(
+        ":foundation:aura:testDebugUnitTest",
+        ":features:auth:presentation:testDebugUnitTest",
+        ":features:cashflow:presentation:testDebugUnitTest",
+        ":features:contacts:presentation:testDebugUnitTest"
+    )
+}
