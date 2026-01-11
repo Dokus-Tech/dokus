@@ -14,9 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.components.DokusGlassSurface
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
-import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
 /**
@@ -24,14 +26,21 @@ import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
  * Note: DokusDialog uses Dialog() which creates a separate window,
  * so we test the dialog content layout directly using DokusGlassSurface.
  */
-class DialogScreenshotTest {
+@RunWith(Parameterized::class)
+class DialogScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
 
     @get:Rule
-    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(viewport)
 
     @Test
     fun dialogContent_simple() {
-        paparazzi.snapshotBothThemes("DialogContent_simple") {
+        paparazzi.snapshotAllViewports("DialogContent_simple", viewport) {
             DokusGlassSurface(
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
@@ -57,7 +66,7 @@ class DialogScreenshotTest {
 
     @Test
     fun dialogContent_withIcon() {
-        paparazzi.snapshotBothThemes("DialogContent_withIcon") {
+        paparazzi.snapshotAllViewports("DialogContent_withIcon", viewport) {
             DokusGlassSurface(
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
@@ -89,7 +98,7 @@ class DialogScreenshotTest {
 
     @Test
     fun dialogContent_confirmStyle() {
-        paparazzi.snapshotBothThemes("DialogContent_confirmStyle") {
+        paparazzi.snapshotAllViewports("DialogContent_confirmStyle", viewport) {
             DokusGlassSurface(
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {

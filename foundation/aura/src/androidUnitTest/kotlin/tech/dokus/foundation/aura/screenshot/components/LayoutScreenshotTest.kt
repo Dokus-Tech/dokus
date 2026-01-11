@@ -9,20 +9,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
-import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class LayoutScreenshotTest {
+@RunWith(Parameterized::class)
+class LayoutScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
 
     @get:Rule
-    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(viewport)
 
     @Test
     fun pCollapsibleSection_expanded() {
-        paparazzi.snapshotBothThemes("PCollapsibleSection_expanded") {
+        paparazzi.snapshotAllViewports("PCollapsibleSection_expanded", viewport) {
             PCollapsibleSection(
                 title = "Section Title",
                 isExpanded = true,
@@ -40,7 +49,7 @@ class LayoutScreenshotTest {
 
     @Test
     fun pCollapsibleSection_collapsed() {
-        paparazzi.snapshotBothThemes("PCollapsibleSection_collapsed") {
+        paparazzi.snapshotAllViewports("PCollapsibleSection_collapsed", viewport) {
             PCollapsibleSection(
                 title = "Collapsed Section",
                 isExpanded = false,
@@ -54,7 +63,7 @@ class LayoutScreenshotTest {
 
     @Test
     fun pCollapsibleSection_multipleSections() {
-        paparazzi.snapshotBothThemes("PCollapsibleSection_multipleSections") {
+        paparazzi.snapshotAllViewports("PCollapsibleSection_multipleSections", viewport) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -86,7 +95,7 @@ class LayoutScreenshotTest {
 
     @Test
     fun twoPaneContainer() {
-        paparazzi.snapshotBothThemes("TwoPaneContainer") {
+        paparazzi.snapshotAllViewports("TwoPaneContainer", viewport) {
             TwoPaneContainer(
                 left = {
                     Text(

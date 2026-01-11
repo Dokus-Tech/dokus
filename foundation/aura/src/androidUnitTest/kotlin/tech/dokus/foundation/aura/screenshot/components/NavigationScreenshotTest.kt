@@ -14,8 +14,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
-import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
 /**
@@ -23,14 +25,21 @@ import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
  * Note: DokusNavigationBar requires HomeItem or MobileTabConfig with resources,
  * so we test the navigation pattern directly using Material3 NavigationBar.
  */
-class NavigationScreenshotTest {
+@RunWith(Parameterized::class)
+class NavigationScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
 
     @get:Rule
-    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(viewport)
 
     @Test
     fun navigationBar_threeItems() {
-        paparazzi.snapshotBothThemes("NavigationBar_threeItems") {
+        paparazzi.snapshotAllViewports("NavigationBar_threeItems", viewport) {
             NavigationBar(
                 containerColor = Color.Transparent,
                 tonalElevation = 0.dp
@@ -70,7 +79,7 @@ class NavigationScreenshotTest {
 
     @Test
     fun navigationBar_middleSelected() {
-        paparazzi.snapshotBothThemes("NavigationBar_middleSelected") {
+        paparazzi.snapshotAllViewports("NavigationBar_middleSelected", viewport) {
             NavigationBar(
                 containerColor = Color.Transparent,
                 tonalElevation = 0.dp
@@ -110,7 +119,7 @@ class NavigationScreenshotTest {
 
     @Test
     fun navigationBar_fourItems() {
-        paparazzi.snapshotBothThemes("NavigationBar_fourItems") {
+        paparazzi.snapshotAllViewports("NavigationBar_fourItems", viewport) {
             NavigationBar(
                 containerColor = Color.Transparent,
                 tonalElevation = 0.dp

@@ -22,15 +22,6 @@ object ScreenshotTestHelper {
     }
 
     /**
-     * Maps ScreenshotViewport to ScreenSize for LocalScreenSize provider.
-     */
-    fun ScreenshotViewport.toScreenSize(): ScreenSize = when (this) {
-        ScreenshotViewport.COMPACT -> ScreenSize.SMALL
-        ScreenshotViewport.MEDIUM -> ScreenSize.MEDIUM
-        ScreenshotViewport.EXPANDED -> ScreenSize.LARGE
-    }
-
-    /**
      * Captures a screenshot with the given name and theme.
      * Wraps content in ScreenshotTestWrapper for proper theming.
      */
@@ -60,7 +51,7 @@ object ScreenshotTestHelper {
     }
 
     /**
-     * Captures screenshots at all viewports (light theme only).
+     * Captures screenshots at all viewports (light and dark themes).
      * Use with parameterized tests where each test class handles one viewport.
      */
     fun Paparazzi.snapshotAllViewports(
@@ -68,8 +59,7 @@ object ScreenshotTestHelper {
         viewport: ScreenshotViewport,
         content: @Composable () -> Unit
     ) {
-        val screenSize = viewport.toScreenSize()
-        snapshot("${baseName}_${viewport.displayName}_light", isDarkMode = false, screenSize = screenSize, content = content)
-        snapshot("${baseName}_${viewport.displayName}_dark", isDarkMode = true, screenSize = screenSize, content = content)
+        snapshot("${baseName}_${viewport.displayName}_light", isDarkMode = false, screenSize = viewport.screenSize, content = content)
+        snapshot("${baseName}_${viewport.displayName}_dark", isDarkMode = true, screenSize = viewport.screenSize, content = content)
     }
 }

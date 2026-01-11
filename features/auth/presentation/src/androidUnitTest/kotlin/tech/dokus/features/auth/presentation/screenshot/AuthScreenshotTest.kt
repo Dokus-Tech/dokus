@@ -30,108 +30,76 @@ import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextField
 import tech.dokus.foundation.aura.components.text.AppNameText
-import tech.dokus.features.auth.presentation.screenshot.ScreenshotTestWrapper
+import tech.dokus.foundation.aura.local.ScreenSize
 
 /**
  * Screenshot tests for auth screens.
  * Tests simplified versions of screens to capture UI layouts.
  */
-class AuthScreenshotTest {
+@RunWith(Parameterized::class)
+class AuthScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
 
     @get:Rule
     val paparazzi = Paparazzi(
-        deviceConfig = DeviceConfig(
-            screenWidth = 600,
-            screenHeight = 960,
-            density = Density.XXHIGH,
-            softButtons = false
-        ),
+        deviceConfig = viewport.deviceConfig,
         showSystemUi = false,
         maxPercentDifference = 0.1
     )
 
     @Test
     fun loginScreen_empty() {
-        paparazzi.snapshot("LoginScreen_empty_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                LoginFormContent(
-                    email = "",
-                    password = "",
-                    isLoading = false
-                )
-            }
-        }
-        paparazzi.snapshot("LoginScreen_empty_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                LoginFormContent(
-                    email = "",
-                    password = "",
-                    isLoading = false
-                )
-            }
+        paparazzi.snapshotAllViewports("LoginScreen_empty", viewport) {
+            LoginFormContent(
+                email = "",
+                password = "",
+                isLoading = false
+            )
         }
     }
 
     @Test
     fun loginScreen_filled() {
-        paparazzi.snapshot("LoginScreen_filled_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                LoginFormContent(
-                    email = "user@example.com",
-                    password = "password123",
-                    isLoading = false
-                )
-            }
-        }
-        paparazzi.snapshot("LoginScreen_filled_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                LoginFormContent(
-                    email = "user@example.com",
-                    password = "password123",
-                    isLoading = false
-                )
-            }
+        paparazzi.snapshotAllViewports("LoginScreen_filled", viewport) {
+            LoginFormContent(
+                email = "user@example.com",
+                password = "password123",
+                isLoading = false
+            )
         }
     }
 
     @Test
     fun loginScreen_loading() {
-        paparazzi.snapshot("LoginScreen_loading_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                LoginFormContent(
-                    email = "user@example.com",
-                    password = "password123",
-                    isLoading = true
-                )
-            }
+        paparazzi.snapshotAllViewports("LoginScreen_loading", viewport) {
+            LoginFormContent(
+                email = "user@example.com",
+                password = "password123",
+                isLoading = true
+            )
         }
     }
 
     @Test
     fun registerScreen() {
-        paparazzi.snapshot("RegisterScreen_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                RegisterFormContent(
-                    name = "",
-                    email = "",
-                    password = "",
-                    isLoading = false
-                )
-            }
-        }
-        paparazzi.snapshot("RegisterScreen_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                RegisterFormContent(
-                    name = "",
-                    email = "",
-                    password = "",
-                    isLoading = false
-                )
-            }
+        paparazzi.snapshotAllViewports("RegisterScreen", viewport) {
+            RegisterFormContent(
+                name = "",
+                email = "",
+                password = "",
+                isLoading = false
+            )
         }
     }
 }
@@ -317,6 +285,23 @@ private fun RegisterFormContent(
                     textAlign = TextAlign.Center
                 )
             }
+        }
+    }
+}
+
+private fun Paparazzi.snapshotAllViewports(
+    baseName: String,
+    viewport: ScreenshotViewport,
+    content: @Composable () -> Unit
+) {
+    snapshot("${baseName}_${viewport.displayName}_light") {
+        ScreenshotTestWrapper(isDarkMode = false, screenSize = viewport.screenSize) {
+            content()
+        }
+    }
+    snapshot("${baseName}_${viewport.displayName}_dark") {
+        ScreenshotTestWrapper(isDarkMode = true, screenSize = viewport.screenSize) {
+            content()
         }
     }
 }

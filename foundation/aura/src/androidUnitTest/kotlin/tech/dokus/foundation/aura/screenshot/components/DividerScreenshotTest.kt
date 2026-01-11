@@ -8,26 +8,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.components.PDashedDivider
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
-import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class DividerScreenshotTest {
+@RunWith(Parameterized::class)
+class DividerScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
 
     @get:Rule
-    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(viewport)
 
     @Test
     fun pDashedDivider() {
-        paparazzi.snapshotBothThemes("PDashedDivider") {
+        paparazzi.snapshotAllViewports("PDashedDivider", viewport) {
             PDashedDivider(modifier = Modifier.fillMaxWidth())
         }
     }
 
     @Test
     fun pDashedDivider_inContext() {
-        paparazzi.snapshotBothThemes("PDashedDivider_inContext") {
+        paparazzi.snapshotAllViewports("PDashedDivider_inContext", viewport) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Content above")
                 PDashedDivider(

@@ -151,6 +151,26 @@ tasks.register("checkAll") {
 }
 
 // Screenshot Testing Tasks (Paparazzi)
+tasks.register("clearScreenshots") {
+    group = "verification"
+    description = "Delete all screenshot baseline images."
+    doLast {
+        val snapshotDirs = listOf(
+            "foundation/aura/src/test/snapshots/images",
+            "features/auth/presentation/src/test/snapshots/images",
+            "features/cashflow/presentation/src/test/snapshots/images",
+            "features/contacts/presentation/src/test/snapshots/images"
+        )
+        snapshotDirs.forEach { dir ->
+            val folder = file(dir)
+            if (folder.exists()) {
+                val deleted = folder.listFiles()?.filter { it.extension == "png" }?.count { it.delete() } ?: 0
+                println("Deleted $deleted screenshots from $dir")
+            }
+        }
+    }
+}
+
 tasks.register("recordScreenshots") {
     group = "verification"
     description = "Record new baseline screenshots for all modules."

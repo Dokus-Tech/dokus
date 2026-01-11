@@ -27,11 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
-import com.android.resources.Density
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.DokusCard
@@ -39,37 +39,31 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.features.contacts.presentation.screenshot.ScreenshotTestWrapper
 
 /**
  * Screenshot tests for contacts screens.
  * Tests simplified versions of screens to capture UI layouts.
  */
-class ContactsScreenshotTest {
+@RunWith(Parameterized::class)
+class ContactsScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
 
     @get:Rule
     val paparazzi = Paparazzi(
-        deviceConfig = DeviceConfig(
-            screenWidth = 600,
-            screenHeight = 960,
-            density = Density.XXHIGH,
-            softButtons = false
-        ),
+        deviceConfig = viewport.deviceConfig,
         showSystemUi = false,
         maxPercentDifference = 0.1
     )
 
     @Test
     fun contactsScreen_empty() {
-        paparazzi.snapshot("ContactsScreen_empty_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                ContactsListContent(contacts = emptyList())
-            }
-        }
-        paparazzi.snapshot("ContactsScreen_empty_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                ContactsListContent(contacts = emptyList())
-            }
+        paparazzi.snapshotAllViewports("ContactsScreen_empty", viewport) {
+            ContactsListContent(contacts = emptyList())
         }
     }
 
@@ -82,15 +76,8 @@ class ContactsScreenshotTest {
             Contact("Local Services", "admin@local.com", "Partner")
         )
 
-        paparazzi.snapshot("ContactsScreen_withContacts_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                ContactsListContent(contacts = sampleContacts)
-            }
-        }
-        paparazzi.snapshot("ContactsScreen_withContacts_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                ContactsListContent(contacts = sampleContacts)
-            }
+        paparazzi.snapshotAllViewports("ContactsScreen_withContacts", viewport) {
+            ContactsListContent(contacts = sampleContacts)
         }
     }
 
@@ -102,29 +89,15 @@ class ContactsScreenshotTest {
             type = "Client"
         )
 
-        paparazzi.snapshot("ContactDetailsScreen_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                ContactDetailsContent(contact = contact)
-            }
-        }
-        paparazzi.snapshot("ContactDetailsScreen_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                ContactDetailsContent(contact = contact)
-            }
+        paparazzi.snapshotAllViewports("ContactDetailsScreen", viewport) {
+            ContactDetailsContent(contact = contact)
         }
     }
 
     @Test
     fun contactFormScreen() {
-        paparazzi.snapshot("ContactFormScreen_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                ContactFormContent()
-            }
-        }
-        paparazzi.snapshot("ContactFormScreen_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                ContactFormContent()
-            }
+        paparazzi.snapshotAllViewports("ContactFormScreen", viewport) {
+            ContactFormContent()
         }
     }
 }
@@ -451,6 +424,23 @@ private fun FormField(label: String, placeholder: String) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
+        }
+    }
+}
+
+private fun Paparazzi.snapshotAllViewports(
+    baseName: String,
+    viewport: ScreenshotViewport,
+    content: @Composable () -> Unit
+) {
+    snapshot("${baseName}_${viewport.displayName}_light") {
+        ScreenshotTestWrapper(isDarkMode = false, screenSize = viewport.screenSize) {
+            content()
+        }
+    }
+    snapshot("${baseName}_${viewport.displayName}_dark") {
+        ScreenshotTestWrapper(isDarkMode = true, screenSize = viewport.screenSize) {
+            content()
         }
     }
 }

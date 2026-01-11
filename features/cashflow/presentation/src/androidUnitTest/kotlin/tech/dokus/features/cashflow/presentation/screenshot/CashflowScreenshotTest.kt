@@ -23,47 +23,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
-import com.android.resources.Density
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.StatusBadge
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.features.cashflow.presentation.screenshot.ScreenshotTestWrapper
 
 /**
  * Screenshot tests for cashflow screens.
  * Tests simplified versions of screens to capture UI layouts.
  */
-class CashflowScreenshotTest {
+@RunWith(Parameterized::class)
+class CashflowScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
 
     @get:Rule
     val paparazzi = Paparazzi(
-        deviceConfig = DeviceConfig(
-            screenWidth = 600,
-            screenHeight = 960,
-            density = Density.XXHIGH,
-            softButtons = false
-        ),
+        deviceConfig = viewport.deviceConfig,
         showSystemUi = false,
         maxPercentDifference = 0.1
     )
 
     @Test
     fun cashflowLedgerScreen_empty() {
-        paparazzi.snapshot("CashflowLedgerScreen_empty_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                CashflowLedgerContent(entries = emptyList())
-            }
-        }
-        paparazzi.snapshot("CashflowLedgerScreen_empty_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                CashflowLedgerContent(entries = emptyList())
-            }
+        paparazzi.snapshotAllViewports("CashflowLedgerScreen_empty", viewport) {
+            CashflowLedgerContent(entries = emptyList())
         }
     }
 
@@ -76,15 +70,8 @@ class CashflowScreenshotTest {
             CashflowEntry("Invoice #004", "Local Shop", "450.00", "Draft", Color(0xFF9E9E9E))
         )
 
-        paparazzi.snapshot("CashflowLedgerScreen_withEntries_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                CashflowLedgerContent(entries = sampleEntries)
-            }
-        }
-        paparazzi.snapshot("CashflowLedgerScreen_withEntries_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                CashflowLedgerContent(entries = sampleEntries)
-            }
+        paparazzi.snapshotAllViewports("CashflowLedgerScreen_withEntries", viewport) {
+            CashflowLedgerContent(entries = sampleEntries)
         }
     }
 
@@ -96,29 +83,15 @@ class CashflowScreenshotTest {
             DocumentEntry("Receipt_shop.jpg", "2024-01-05", "Pending")
         )
 
-        paparazzi.snapshot("DocumentsScreen_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                DocumentsContent(documents = sampleDocs)
-            }
-        }
-        paparazzi.snapshot("DocumentsScreen_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                DocumentsContent(documents = sampleDocs)
-            }
+        paparazzi.snapshotAllViewports("DocumentsScreen", viewport) {
+            DocumentsContent(documents = sampleDocs)
         }
     }
 
     @Test
     fun createInvoiceScreen() {
-        paparazzi.snapshot("CreateInvoiceScreen_light") {
-            ScreenshotTestWrapper(isDarkMode = false) {
-                CreateInvoiceContent()
-            }
-        }
-        paparazzi.snapshot("CreateInvoiceScreen_dark") {
-            ScreenshotTestWrapper(isDarkMode = true) {
-                CreateInvoiceContent()
-            }
+        paparazzi.snapshotAllViewports("CreateInvoiceScreen", viewport) {
+            CreateInvoiceContent()
         }
     }
 }
@@ -211,7 +184,7 @@ private fun CashflowLedgerContent(entries: List<CashflowEntry>) {
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = "€${entry.amount}",
+                                    text = "EUR ${entry.amount}",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -359,7 +332,7 @@ private fun CreateInvoiceContent() {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("Subtotal", style = MaterialTheme.typography.bodyMedium)
-                        Text("€0.00", style = MaterialTheme.typography.bodyMedium)
+                        Text("EUR 0.00", style = MaterialTheme.typography.bodyMedium)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
@@ -367,7 +340,7 @@ private fun CreateInvoiceContent() {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("VAT (21%)", style = MaterialTheme.typography.bodyMedium)
-                        Text("€0.00", style = MaterialTheme.typography.bodyMedium)
+                        Text("EUR 0.00", style = MaterialTheme.typography.bodyMedium)
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     Row(
@@ -380,13 +353,30 @@ private fun CreateInvoiceContent() {
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            "€0.00",
+                            "EUR 0.00",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
             }
+        }
+    }
+}
+
+private fun Paparazzi.snapshotAllViewports(
+    baseName: String,
+    viewport: ScreenshotViewport,
+    content: @Composable () -> Unit
+) {
+    snapshot("${baseName}_${viewport.displayName}_light") {
+        ScreenshotTestWrapper(isDarkMode = false, screenSize = viewport.screenSize) {
+            content()
+        }
+    }
+    snapshot("${baseName}_${viewport.displayName}_dark") {
+        ScreenshotTestWrapper(isDarkMode = true, screenSize = viewport.screenSize) {
+            content()
         }
     }
 }

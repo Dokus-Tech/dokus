@@ -19,8 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
-import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
 /**
@@ -28,14 +30,21 @@ import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
  * Note: PDateField uses PDatePickerDialog which creates a dialog window,
  * so we test the date field layout directly.
  */
-class DatePickerScreenshotTest {
+@RunWith(Parameterized::class)
+class DatePickerScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
 
     @get:Rule
-    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(viewport)
 
     @Test
     fun dateField_empty() {
-        paparazzi.snapshotBothThemes("DateField_empty") {
+        paparazzi.snapshotAllViewports("DateField_empty", viewport) {
             DateFieldVisual(
                 label = "Date",
                 displayValue = "Select date",
@@ -46,7 +55,7 @@ class DatePickerScreenshotTest {
 
     @Test
     fun dateField_withValue() {
-        paparazzi.snapshotBothThemes("DateField_withValue") {
+        paparazzi.snapshotAllViewports("DateField_withValue", viewport) {
             DateFieldVisual(
                 label = "Due Date",
                 displayValue = "2024-01-15",
@@ -57,7 +66,7 @@ class DatePickerScreenshotTest {
 
     @Test
     fun dateField_disabled() {
-        paparazzi.snapshotBothThemes("DateField_disabled") {
+        paparazzi.snapshotAllViewports("DateField_disabled", viewport) {
             DateFieldVisual(
                 label = "Invoice Date",
                 displayValue = "2024-01-01",
@@ -69,7 +78,7 @@ class DatePickerScreenshotTest {
 
     @Test
     fun dateFields_multiple() {
-        paparazzi.snapshotBothThemes("DateFields_multiple") {
+        paparazzi.snapshotAllViewports("DateFields_multiple", viewport) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

@@ -8,23 +8,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.components.chat.ChatMessageBubble
 import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.PAssistantMessageBubble
 import tech.dokus.foundation.aura.components.chat.PChatInputField
 import tech.dokus.foundation.aura.components.chat.PUserMessageBubble
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
-import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class ChatScreenshotTest {
+@RunWith(Parameterized::class)
+class ChatScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
 
     @get:Rule
-    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(viewport)
 
     @Test
     fun pChatInputField_empty() {
-        paparazzi.snapshotBothThemes("PChatInputField_empty") {
+        paparazzi.snapshotAllViewports("PChatInputField_empty", viewport) {
             PChatInputField(
                 value = "",
                 onValueChange = {},
@@ -37,7 +46,7 @@ class ChatScreenshotTest {
 
     @Test
     fun pChatInputField_withText() {
-        paparazzi.snapshotBothThemes("PChatInputField_withText") {
+        paparazzi.snapshotAllViewports("PChatInputField_withText", viewport) {
             PChatInputField(
                 value = "Hello, how can I help you?",
                 onValueChange = {},
@@ -49,7 +58,7 @@ class ChatScreenshotTest {
 
     @Test
     fun pChatInputField_disabled() {
-        paparazzi.snapshotBothThemes("PChatInputField_disabled") {
+        paparazzi.snapshotAllViewports("PChatInputField_disabled", viewport) {
             PChatInputField(
                 value = "Sending...",
                 onValueChange = {},
@@ -62,7 +71,7 @@ class ChatScreenshotTest {
 
     @Test
     fun chatMessageBubble_user() {
-        paparazzi.snapshotBothThemes("ChatMessageBubble_user") {
+        paparazzi.snapshotAllViewports("ChatMessageBubble_user", viewport) {
             ChatMessageBubble(
                 message = "Hello, I have a question about my invoice.",
                 role = ChatMessageRole.User,
@@ -73,7 +82,7 @@ class ChatScreenshotTest {
 
     @Test
     fun chatMessageBubble_assistant() {
-        paparazzi.snapshotBothThemes("ChatMessageBubble_assistant") {
+        paparazzi.snapshotAllViewports("ChatMessageBubble_assistant", viewport) {
             ChatMessageBubble(
                 message = "Of course! I'd be happy to help. What would you like to know?",
                 role = ChatMessageRole.Assistant,
@@ -84,7 +93,7 @@ class ChatScreenshotTest {
 
     @Test
     fun chatMessageBubble_withTimestamp() {
-        paparazzi.snapshotBothThemes("ChatMessageBubble_withTimestamp") {
+        paparazzi.snapshotAllViewports("ChatMessageBubble_withTimestamp", viewport) {
             ChatMessageBubble(
                 message = "This message has a timestamp",
                 role = ChatMessageRole.User,
@@ -96,7 +105,7 @@ class ChatScreenshotTest {
 
     @Test
     fun pUserMessageBubble() {
-        paparazzi.snapshotBothThemes("PUserMessageBubble") {
+        paparazzi.snapshotAllViewports("PUserMessageBubble", viewport) {
             PUserMessageBubble(
                 message = "User message bubble",
                 modifier = Modifier.padding(16.dp)
@@ -106,7 +115,7 @@ class ChatScreenshotTest {
 
     @Test
     fun pAssistantMessageBubble() {
-        paparazzi.snapshotBothThemes("PAssistantMessageBubble") {
+        paparazzi.snapshotAllViewports("PAssistantMessageBubble", viewport) {
             PAssistantMessageBubble(
                 message = "Assistant message bubble",
                 modifier = Modifier.padding(16.dp)
@@ -116,7 +125,7 @@ class ChatScreenshotTest {
 
     @Test
     fun chatConversation() {
-        paparazzi.snapshotBothThemes("ChatConversation") {
+        paparazzi.snapshotAllViewports("ChatConversation", viewport) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)

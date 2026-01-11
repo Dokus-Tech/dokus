@@ -1,4 +1,4 @@
-package tech.dokus.foundation.aura.screenshot
+package tech.dokus.features.auth.presentation.screenshot
 
 import app.cash.paparazzi.DeviceConfig
 import com.android.resources.Density
