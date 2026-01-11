@@ -82,7 +82,7 @@ workflows:
                 BUILD_NUMBER=$(git rev-list --count HEAD)
 
                 # Update BUILD in Versions.kt
-                VERSIONS_FILE="build-logic/convention/src/main/kotlin/ai/dokus/utils/Versions.kt"
+                VERSIONS_FILE="build-logic/convention/src/main/kotlin/tech/dokus/utils/Versions.kt"
                 sed -i '' "s/const val BUILD = [0-9]*/const val BUILD = $BUILD_NUMBER/" "$VERSIONS_FILE"
 
                 # Check if this is a tag-triggered build
@@ -186,7 +186,7 @@ workflows:
                 BUILD_NUMBER=$(git rev-list --count HEAD)
 
                 # Update BUILD in Versions.kt
-                VERSIONS_FILE="build-logic/convention/src/main/kotlin/ai/dokus/utils/Versions.kt"
+                VERSIONS_FILE="build-logic/convention/src/main/kotlin/tech/dokus/utils/Versions.kt"
                 sed -i '' "s/const val BUILD = [0-9]*/const val BUILD = $BUILD_NUMBER/" "$VERSIONS_FILE"
 
                 # Check if this is a tag-triggered build
@@ -310,7 +310,7 @@ workflows:
                 BUILD_NUMBER=$(git rev-list --count HEAD)
 
                 # Update BUILD in Versions.kt
-                VERSIONS_FILE="build-logic/convention/src/main/kotlin/ai/dokus/utils/Versions.kt"
+                VERSIONS_FILE="build-logic/convention/src/main/kotlin/tech/dokus/utils/Versions.kt"
                 sed -i '' "s/const val BUILD = [0-9]*/const val BUILD = $BUILD_NUMBER/" "$VERSIONS_FILE"
 
                 # Check if this is a tag-triggered build
@@ -423,7 +423,7 @@ workflows:
                 BUILD_NUMBER=$(git rev-list --count HEAD)
 
                 # Update BUILD in Versions.kt
-                VERSIONS_FILE="build-logic/convention/src/main/kotlin/ai/dokus/utils/Versions.kt"
+                VERSIONS_FILE="build-logic/convention/src/main/kotlin/tech/dokus/utils/Versions.kt"
                 sed -i '' "s/const val BUILD = [0-9]*/const val BUILD = $BUILD_NUMBER/" "$VERSIONS_FILE"
 
                 # Check if this is a tag-triggered build

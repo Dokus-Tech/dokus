@@ -29,10 +29,10 @@ create_dir_structure() {
     local feature=$1
     local base_dir="${PROJECT_ROOT}/features/${feature}/backend"
 
-    mkdir -p "${base_dir}/src/main/kotlin/ai/dokus/${feature}/backend"/{config,routes,services}
+    mkdir -p "${base_dir}/src/main/kotlin/tech/dokus/${feature}/backend"/{config,routes,services}
     mkdir -p "${base_dir}/src/main/resources/META-INF/resources"
     mkdir -p "${base_dir}/src/main/resources/openapi"
-    mkdir -p "${base_dir}/src/test/kotlin/ai/dokus/${feature}/backend"
+    mkdir -p "${base_dir}/src/test/kotlin/tech/dokus/${feature}/backend"
     mkdir -p "${base_dir}/src/test/resources"
 
     echo -e "${GREEN}✓${NC} Created directory structure for ${feature}"
