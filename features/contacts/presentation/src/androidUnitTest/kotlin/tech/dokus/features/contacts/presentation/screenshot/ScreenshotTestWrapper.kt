@@ -7,11 +7,12 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.ScreenSize
 import tech.dokus.foundation.aura.local.ThemeManagerProvided
+import tech.dokus.foundation.aura.style.FixedThemeManager
 import tech.dokus.foundation.aura.style.Themed
 
 /**
  * Test wrapper for Paparazzi screenshot tests.
- * Uses [FakeThemeManager] to provide theme without accessing persistence.
+ * Uses [FixedThemeManager] to provide theme without accessing persistence.
  */
 @Composable
 fun ScreenshotTestWrapper(
@@ -23,7 +24,7 @@ fun ScreenshotTestWrapper(
         LocalInspectionMode provides true,
         LocalScreenSize provides screenSize
     ) {
-        ThemeManagerProvided(themeManager = FakeThemeManager(isDarkMode)) {
+        ThemeManagerProvided(themeManager = FixedThemeManager(isDarkMode)) {
             Themed {
                 Surface {
                     content()
