@@ -107,10 +107,12 @@ class ContactMatchingServiceTest {
 
     @Test
     fun `name and country match when vat missing`() = runBlocking {
+        // Note: Country is no longer stored on ContactsTable (moved to address table).
+        // The matching service uses country from extracted data to boost confidence
+        // and set the match reason, but doesn't filter by it in the database.
         val contactId = insertContact(
             name = "Globex NV",
-            vatNumber = null,
-            country = "BE"
+            vatNumber = null
         )
 
         val suggestion = contactMatchingService.findMatch(
@@ -128,15 +130,13 @@ class ContactMatchingServiceTest {
 
     private fun insertContact(
         name: String,
-        vatNumber: String?,
-        country: String? = null
+        vatNumber: String?
     ): UUID {
         return transaction(database) {
             ContactsTable.insertAndGetId {
                 it[ContactsTable.tenantId] = tenantUuid
                 it[ContactsTable.name] = name
                 it[ContactsTable.vatNumber] = vatNumber
-                it[ContactsTable.country] = country
                 it[ContactsTable.isActive] = true
             }.value
         }
