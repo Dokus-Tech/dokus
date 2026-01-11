@@ -250,6 +250,7 @@ internal class DocumentReviewActions(
                     is FinancialDocumentDto.InvoiceDto -> entity.id.toString()
                     is FinancialDocumentDto.BillDto -> entity.id.toString()
                     is FinancialDocumentDto.ExpenseDto -> entity.id.toString()
+                    is FinancialDocumentDto.CreditNoteDto -> entity.id.toString()
                 }
             }
             if (confirmedEntityId != null) {

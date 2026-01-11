@@ -86,18 +86,21 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
         is FinancialDocumentDto.InvoiceDto -> CashflowType.CashIn
         is FinancialDocumentDto.ExpenseDto -> CashflowType.CashOut
         is FinancialDocumentDto.BillDto -> CashflowType.CashOut
+        is FinancialDocumentDto.CreditNoteDto -> CashflowType.CashOut // Neutral until refund, but show as out for UI
     }
 
     val contactName = when (this) {
         is FinancialDocumentDto.InvoiceDto -> ""
         is FinancialDocumentDto.ExpenseDto -> this.merchant
         is FinancialDocumentDto.BillDto -> this.supplierName
+        is FinancialDocumentDto.CreditNoteDto -> ""
     }
 
     val contactEmail = when (this) {
         is FinancialDocumentDto.InvoiceDto -> ""
         is FinancialDocumentDto.ExpenseDto -> ""
         is FinancialDocumentDto.BillDto -> ""
+        is FinancialDocumentDto.CreditNoteDto -> ""
     }
 
     val documentNumber = when (this) {
@@ -110,12 +113,14 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
             Res.string.cashflow_document_number_bill,
             id.value
         )
+        is FinancialDocumentDto.CreditNoteDto -> creditNoteNumber
     }
 
     val hasAlert = when (this) {
         is FinancialDocumentDto.InvoiceDto -> status == InvoiceStatus.Sent || status == InvoiceStatus.Overdue
         is FinancialDocumentDto.ExpenseDto -> false // Expenses don't have a status requiring confirmation
         is FinancialDocumentDto.BillDto -> false // Bills don't have a status requiring confirmation (yet)
+        is FinancialDocumentDto.CreditNoteDto -> false // Credit notes don't have alerts
     }
 
     // Format amount with comma separator (fallback to display string on parse failure)

@@ -408,11 +408,12 @@ class DocumentProcessingWorker(
         }
     }
 
+    @Suppress("CyclomaticComplexMethod")
     private suspend fun updateContactSuggestionIfApplicable(
         tenantId: TenantId,
         documentId: DocumentId,
         documentType: DocumentType,
-        extractedData: tech.dokus.domain.model.ExtractedDocumentData
+        extractedData: tech.dokus.domain.model.ExtractedDocumentData,
     ) {
         val draft = draftRepository.getByDocumentId(documentId, tenantId) ?: return
         if (draft.linkedContactId != null) return

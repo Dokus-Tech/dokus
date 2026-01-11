@@ -113,6 +113,39 @@ class CashflowEntriesService(
     }
 
     /**
+     * Create a cashflow entry for a refund payment (from credit note).
+     *
+     * Direction depends on credit note type:
+     * - Sales credit note refund → Cash-Out (paying customer)
+     * - Purchase credit note refund → Cash-In (receiving from supplier)
+     */
+    suspend fun createFromRefund(
+        tenantId: TenantId,
+        creditNoteId: UUID,
+        documentId: DocumentId?,
+        refundDate: LocalDate,
+        amountGross: Money,
+        amountVat: Money,
+        direction: CashflowDirection,
+        contactId: ContactId?
+    ): Result<CashflowEntry> {
+        logger.info("Creating cashflow entry for refund: creditNote=$creditNoteId, direction=$direction")
+        return cashflowEntriesRepository.createEntry(
+            tenantId = tenantId,
+            sourceType = CashflowSourceType.Refund,
+            sourceId = creditNoteId,
+            documentId = documentId,
+            direction = direction,
+            eventDate = refundDate,
+            amountGross = amountGross,
+            amountVat = amountVat,
+            contactId = contactId
+        )
+            .onSuccess { logger.info("Cashflow entry created: ${it.id} for refund: $creditNoteId") }
+            .onFailure { logger.error("Failed to create cashflow entry for refund: $creditNoteId", it) }
+    }
+
+    /**
      * Get cashflow entry by ID.
      */
     suspend fun getEntry(

@@ -37,6 +37,7 @@ import tech.dokus.aura.resources.cashflow_card_title
 import tech.dokus.aura.resources.cashflow_document_number_bill
 import tech.dokus.aura.resources.cashflow_document_number_expense
 import tech.dokus.aura.resources.document_type_bill
+import tech.dokus.aura.resources.document_type_credit_note
 import tech.dokus.aura.resources.document_type_expense
 import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.invoice_status_cancelled
@@ -166,6 +167,7 @@ private fun CashflowDocumentItem(
             Res.string.cashflow_document_number_bill,
             document.id.value
         )
+        is FinancialDocumentDto.CreditNoteDto -> document.creditNoteNumber
     }
 
     Row(
@@ -221,6 +223,10 @@ private fun DocumentStatusBadge(
         is FinancialDocumentDto.BillDto -> Pair(
             MaterialTheme.colorScheme.secondary,
             document.status.toDisplayText()
+        )
+        is FinancialDocumentDto.CreditNoteDto -> Pair(
+            MaterialTheme.colorScheme.tertiary,
+            stringResource(Res.string.document_type_credit_note)
         )
     }
 
@@ -289,6 +295,7 @@ private fun FinancialDocumentDto.typeIcon(): String = when (this) {
     is FinancialDocumentDto.InvoiceDto -> stringResource(Res.string.document_type_invoice)
     is FinancialDocumentDto.ExpenseDto -> stringResource(Res.string.document_type_expense)
     is FinancialDocumentDto.BillDto -> stringResource(Res.string.document_type_bill)
+    is FinancialDocumentDto.CreditNoteDto -> stringResource(Res.string.document_type_credit_note)
 }
 
 @Composable

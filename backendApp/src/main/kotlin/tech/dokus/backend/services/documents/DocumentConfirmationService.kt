@@ -100,6 +100,7 @@ class DocumentConfirmationService(
      * @param linkedContactId The linked contact (required for invoices)
      * @return The created financial entity
      */
+    @Suppress("CyclomaticComplexMethod")
     suspend fun confirmDocument(
         tenantId: TenantId,
         documentId: DocumentId,
@@ -111,7 +112,13 @@ class DocumentConfirmationService(
 
         val invoiceNumber: String? = when (documentType) {
             DocumentType.Invoice -> invoiceNumberGenerator.generateInvoiceNumber(tenantId).getOrThrow()
-            DocumentType.Bill, DocumentType.Expense, DocumentType.CreditNote, DocumentType.Receipt, DocumentType.ProForma, DocumentType.Unknown -> null
+            DocumentType.Bill,
+            DocumentType.Expense,
+            DocumentType.CreditNote,
+            DocumentType.Receipt,
+            DocumentType.ProForma,
+            DocumentType.Unknown,
+            -> null
         }
 
         val created = dbQuery {
@@ -156,7 +163,9 @@ class DocumentConfirmationService(
                     "CreditNote confirmation is handled via CreditNoteService"
                 )
 
-                DocumentType.Unknown -> throw DokusException.BadRequest("Cannot confirm document with type: $documentType")
+                DocumentType.Unknown -> throw DokusException.BadRequest(
+                    "Cannot confirm document with type: $documentType"
+                )
             }
         }
 
@@ -313,11 +322,12 @@ class DocumentConfirmationService(
         )
     }
 
+    @Suppress("ThrowsCount")
     private fun confirmBillTx(
         tenantId: TenantId,
         documentId: DocumentId,
         extractedData: ExtractedDocumentData,
-        linkedContactId: ContactId?
+        linkedContactId: ContactId?,
     ): CreatedConfirmation.Bill {
         val billData = extractedData.bill
             ?: throw DokusException.BadRequest("No bill data extracted from document")
@@ -367,11 +377,12 @@ class DocumentConfirmationService(
         )
     }
 
+    @Suppress("ThrowsCount")
     private fun confirmExpenseTx(
         tenantId: TenantId,
         documentId: DocumentId,
         extractedData: ExtractedDocumentData,
-        linkedContactId: ContactId?
+        linkedContactId: ContactId?,
     ): CreatedConfirmation.Expense {
         val expenseData = extractedData.expense
             ?: throw DokusException.BadRequest("No expense data extracted from document")
@@ -427,11 +438,12 @@ class DocumentConfirmationService(
      * Receipt confirms into an Expense entity + cashflow OUT entry.
      * Uses same logic as Expense confirmation with receipt data.
      */
+    @Suppress("ThrowsCount")
     private fun confirmReceiptTx(
         tenantId: TenantId,
         documentId: DocumentId,
         extractedData: ExtractedDocumentData,
-        linkedContactId: ContactId?
+        linkedContactId: ContactId?,
     ): CreatedConfirmation.Receipt {
         val receiptData = extractedData.receipt
             ?: throw DokusException.BadRequest("No receipt data extracted from document")

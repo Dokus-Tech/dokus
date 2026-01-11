@@ -496,3 +496,40 @@ data class InvoiceNumberPreviewResponse(
 
 // NOTE: CashflowOverview, CashflowPeriod, CashInSummary, CashOutSummary
 // are defined in Cashflow.kt
+
+// ============================================================================
+// CREDIT NOTE REQUEST/RESPONSE MODELS
+// ============================================================================
+
+/**
+ * Request DTO for creating a credit note.
+ */
+@Serializable
+data class CreateCreditNoteRequest(
+    val contactId: ContactId,
+    val creditNoteType: tech.dokus.domain.enums.CreditNoteType,
+    val creditNoteNumber: String,
+    val issueDate: LocalDate,
+    val subtotalAmount: Money,
+    val vatAmount: Money,
+    val totalAmount: Money,
+    val currency: Currency = Currency.Eur,
+    val settlementIntent: tech.dokus.domain.enums.SettlementIntent =
+        tech.dokus.domain.enums.SettlementIntent.Unknown,
+    val reason: String? = null,
+    val notes: String? = null,
+    val documentId: DocumentId? = null
+)
+
+/**
+ * Request DTO for recording a refund payment for a credit note.
+ * Creates a cashflow entry and settles the refund claim.
+ */
+@Serializable
+data class RecordRefundRequest(
+    val amount: Money,
+    val refundDate: LocalDate,
+    val paymentMethod: PaymentMethod,
+    val reference: String? = null,
+    val notes: String? = null
+)

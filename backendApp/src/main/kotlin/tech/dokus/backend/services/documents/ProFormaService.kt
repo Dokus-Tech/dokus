@@ -52,6 +52,7 @@ class ProFormaService(
      * @param dueDate Optional override for due date (defaults to 30 days from issue date)
      * @return The created Invoice
      */
+    @Suppress("CyclomaticComplexMethod", "MagicNumber")
     suspend fun convertToInvoice(
         tenantId: TenantId,
         proFormaDocumentId: DocumentId,
