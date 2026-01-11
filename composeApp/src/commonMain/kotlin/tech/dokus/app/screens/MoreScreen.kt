@@ -109,10 +109,11 @@ private fun MoreSectionHeader(section: NavSection) {
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
+@Suppress("MagicNumber")
 @Composable
 private fun MoreNavItem(
     item: NavItem,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val alpha = if (item.comingSoon) 0.5f else 1f
 
