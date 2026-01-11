@@ -1,0 +1,148 @@
+package tech.dokus.foundation.aura.screenshot.components
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
+import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
+
+/**
+ * Screenshot tests for navigation components.
+ * Note: DokusNavigationBar requires HomeItem or MobileTabConfig with resources,
+ * so we test the navigation pattern directly using Material3 NavigationBar.
+ */
+@RunWith(Parameterized::class)
+class NavigationScreenshotTest(private val viewport: ScreenshotViewport) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun viewports() = ScreenshotViewport.entries.toList()
+    }
+
+    @get:Rule
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(viewport)
+
+    @Test
+    fun navigationBar_threeItems() {
+        paparazzi.snapshotAllViewports("NavigationBar_threeItems", viewport) {
+            NavigationBar(
+                containerColor = Color.Transparent,
+                tonalElevation = 0.dp
+            ) {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Home, "Home") },
+                    label = { Text("Home") },
+                    selected = true,
+                    onClick = {},
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color.Transparent,
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Person, "Contacts") },
+                    label = { Text("Contacts") },
+                    selected = false,
+                    onClick = {},
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color.Transparent
+                    )
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Settings, "Settings") },
+                    label = { Text("Settings") },
+                    selected = false,
+                    onClick = {},
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color.Transparent
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun navigationBar_middleSelected() {
+        paparazzi.snapshotAllViewports("NavigationBar_middleSelected", viewport) {
+            NavigationBar(
+                containerColor = Color.Transparent,
+                tonalElevation = 0.dp
+            ) {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Home, "Home") },
+                    label = { Text("Home") },
+                    selected = false,
+                    onClick = {},
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color.Transparent
+                    )
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Person, "Contacts") },
+                    label = { Text("Contacts") },
+                    selected = true,
+                    onClick = {},
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color.Transparent,
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Settings, "Settings") },
+                    label = { Text("Settings") },
+                    selected = false,
+                    onClick = {},
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color.Transparent
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun navigationBar_fourItems() {
+        paparazzi.snapshotAllViewports("NavigationBar_fourItems", viewport) {
+            NavigationBar(
+                containerColor = Color.Transparent,
+                tonalElevation = 0.dp
+            ) {
+                listOf(
+                    Triple(Icons.Default.Home, "Home", true),
+                    Triple(Icons.Default.Person, "Contacts", false),
+                    Triple(Icons.Default.Settings, "Settings", false),
+                    Triple(Icons.Default.Person, "Profile", false)
+                ).forEach { (icon, label, selected) ->
+                    NavigationBarItem(
+                        icon = { Icon(icon, label) },
+                        label = { Text(label) },
+                        selected = selected,
+                        onClick = {},
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = Color.Transparent,
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                }
+            }
+        }
+    }
+}

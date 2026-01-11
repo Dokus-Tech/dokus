@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.paparazzi)
 }
 
 kotlin {
@@ -74,6 +75,10 @@ kotlin {
             api(compose.desktop.currentOs)
             api(libs.kotlinx.coroutines.swing)
         }
+        androidUnitTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlin.test.junit)
+        }
     }
 }
 
@@ -86,6 +91,9 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
