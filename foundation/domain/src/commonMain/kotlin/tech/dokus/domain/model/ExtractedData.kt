@@ -33,8 +33,17 @@ data class ExtractedDocumentData(
     /** Extracted bill fields (if documentType == Bill) */
     val bill: ExtractedBillFields? = null,
 
-    /** Extracted expense/receipt fields (if documentType == Expense) */
+    /** Extracted expense fields (if documentType == Expense) */
     val expense: ExtractedExpenseFields? = null,
+
+    /** Extracted receipt fields (if documentType == Receipt) - confirms into Expense */
+    val receipt: ExtractedReceiptFields? = null,
+
+    /** Extracted pro forma fields (if documentType == ProForma) */
+    val proForma: ExtractedProFormaFields? = null,
+
+    /** Extracted credit note fields (if documentType == CreditNote) */
+    val creditNote: ExtractedCreditNoteFields? = null,
 
     /** Overall extraction confidence (0.0 - 1.0) */
     val overallConfidence: Double? = null,
@@ -115,7 +124,7 @@ data class ExtractedBillFields(
 )
 
 /**
- * Extracted expense/receipt fields - mirrors CreateExpenseRequest structure.
+ * Extracted expense fields - mirrors CreateExpenseRequest structure.
  */
 @Serializable
 data class ExtractedExpenseFields(
@@ -150,7 +159,119 @@ data class ExtractedExpenseFields(
 )
 
 /**
- * Extracted line item for invoices/bills.
+ * Extracted receipt fields - mirrors Expense structure but for Receipt document type.
+ * Receipt confirms into an Expense entity + cashflow OUT entry.
+ * No line items (totals-first: merchant, date, total, VAT).
+ */
+@Serializable
+data class ExtractedReceiptFields(
+    // Merchant/vendor information
+    val merchant: String? = null,
+    val merchantAddress: String? = null,
+    val merchantVatNumber: String? = null,
+
+    // Date and amount
+    val date: LocalDate? = null,
+    val amount: Money? = null,
+    val vatAmount: Money? = null,
+    val vatRate: VatRate? = null,
+
+    // Currency
+    val currency: Currency? = null,
+
+    // Categorization
+    val category: ExpenseCategory? = null,
+    val description: String? = null,
+
+    // Deductibility
+    val isDeductible: Boolean? = null,
+    val deductiblePercentage: Percentage? = null,
+
+    // Payment info
+    val paymentMethod: PaymentMethod? = null,
+
+    // Additional info
+    val notes: String? = null,
+    val receiptNumber: String? = null
+)
+
+/**
+ * Extracted pro forma invoice fields.
+ * ProForma is informational only - no cashflow/VAT impact on confirmation.
+ * Can be converted to Invoice via explicit "Convert to Invoice" action.
+ */
+@Serializable
+data class ExtractedProFormaFields(
+    // Client information
+    val clientName: String? = null,
+    val clientVatNumber: String? = null,
+    val clientEmail: String? = null,
+    val clientAddress: String? = null,
+
+    // ProForma identification
+    val proFormaNumber: String? = null,
+
+    // Dates
+    val issueDate: LocalDate? = null,
+    val validUntil: LocalDate? = null,
+
+    // Line items
+    val items: List<ExtractedLineItem>? = null,
+
+    // Totals
+    val subtotalAmount: Money? = null,
+    val vatAmount: Money? = null,
+    val totalAmount: Money? = null,
+
+    // Currency
+    val currency: Currency? = null,
+
+    // Additional info
+    val notes: String? = null,
+    val termsAndConditions: String? = null
+)
+
+/**
+ * Extracted credit note fields.
+ * CreditNote adjusts accounting totals but creates NO cashflow entry on confirmation.
+ * Cashflow is created only when refund payment is recorded:
+ * - Sales CN refund → cashflow OUT
+ * - Purchase CN refund → cashflow IN
+ */
+@Serializable
+data class ExtractedCreditNoteFields(
+    // Counterparty information (customer or supplier)
+    val counterpartyName: String? = null,
+    val counterpartyVatNumber: String? = null,
+    val counterpartyAddress: String? = null,
+
+    // Credit note identification
+    val creditNoteNumber: String? = null,
+
+    // Reference to original document (if known)
+    val originalInvoiceNumber: String? = null,
+
+    // Dates
+    val issueDate: LocalDate? = null,
+
+    // Line items
+    val items: List<ExtractedLineItem>? = null,
+
+    // Amounts (positive values - sign determined by credit note type)
+    val subtotalAmount: Money? = null,
+    val vatAmount: Money? = null,
+    val totalAmount: Money? = null,
+
+    // Currency
+    val currency: Currency? = null,
+
+    // Credit note reason/description
+    val reason: String? = null,
+    val notes: String? = null
+)
+
+/**
+ * Extracted line item for invoices/bills/proForma/creditNote.
  */
 @Serializable
 data class ExtractedLineItem(

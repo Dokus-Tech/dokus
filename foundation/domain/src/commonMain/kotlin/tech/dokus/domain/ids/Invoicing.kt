@@ -56,3 +56,51 @@ value class BillId(val value: Uuid) {
         fun parse(value: String): BillId = BillId(Uuid.parse(value))
     }
 }
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class CreditNoteId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): CreditNoteId = CreditNoteId(Uuid.random())
+        fun parse(value: String): CreditNoteId = CreditNoteId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class RefundClaimId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): RefundClaimId = RefundClaimId(Uuid.random())
+        fun parse(value: String): RefundClaimId = RefundClaimId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class DocumentLineItemId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): DocumentLineItemId = DocumentLineItemId(Uuid.random())
+        fun parse(value: String): DocumentLineItemId = DocumentLineItemId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class DocumentLinkId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): DocumentLinkId = DocumentLinkId(Uuid.random())
+        fun parse(value: String): DocumentLinkId = DocumentLinkId(Uuid.parse(value))
+    }
+}

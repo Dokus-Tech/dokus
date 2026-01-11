@@ -156,3 +156,32 @@ enum class IndexingStatus(override val dbValue: String) : DbEnum {
         fun fromDbValue(value: String): IndexingStatus = entries.find { it.dbValue == value }!!
     }
 }
+
+/**
+ * Type of link between documents.
+ *
+ * Used in DocumentLinksTable to track document-to-document relationships:
+ * - ConvertedTo: ProForma converted to Invoice
+ * - OriginalDocument: CreditNote referencing original Invoice/Bill
+ * - RelatedTo: Generic document relationship
+ *
+ * No source/target type enums needed - they are derivable from the linked documents.
+ */
+@Serializable
+enum class DocumentLinkType(override val dbValue: String) : DbEnum {
+    /** ProForma → Invoice conversion */
+    @SerialName("CONVERTED_TO")
+    ConvertedTo("CONVERTED_TO"),
+
+    /** CreditNote → Original Invoice/Bill reference */
+    @SerialName("ORIGINAL_DOC")
+    OriginalDocument("ORIGINAL_DOC"),
+
+    /** Generic document relationship */
+    @SerialName("RELATED_TO")
+    RelatedTo("RELATED_TO");
+
+    companion object {
+        fun fromDbValue(value: String): DocumentLinkType = entries.find { it.dbValue == value }!!
+    }
+}
