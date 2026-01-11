@@ -58,6 +58,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.ledger.mvi.PaymentFormState
+import tech.dokus.foundation.aura.components.CashflowStatusBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.layout.DokusExpandableAction
 
@@ -322,50 +323,20 @@ private fun CashflowStatusBanner(
     val isPartiallyPaid = entry.status == CashflowEntryStatus.Open &&
         entry.remainingAmount < entry.amountGross
 
-    val (backgroundColor, textColor, statusText) = when {
-        entry.status == CashflowEntryStatus.Paid -> Triple(
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer,
-            "Paid"
-        )
-        entry.status == CashflowEntryStatus.Cancelled -> Triple(
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant,
-            "Cancelled"
-        )
-        entry.status == CashflowEntryStatus.Overdue -> Triple(
-            MaterialTheme.colorScheme.errorContainer,
-            MaterialTheme.colorScheme.onErrorContainer,
-            "Overdue - ${-daysUntilDue} days overdue"
-        )
-        isPartiallyPaid -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
-            "Partially paid - ${entry.currency.displaySign}${entry.remainingAmount.toDisplayString()} remaining"
-        )
-        else -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
-            if (daysUntilDue >= 0) "Open - Due in $daysUntilDue days" else "Open - Due"
-        )
+    val detail: String? = when {
+        entry.status == CashflowEntryStatus.Paid -> null
+        entry.status == CashflowEntryStatus.Cancelled -> null
+        entry.status == CashflowEntryStatus.Overdue -> "${-daysUntilDue} days overdue"
+        isPartiallyPaid -> "${entry.currency.displaySign}${entry.remainingAmount.toDisplayString()} remaining"
+        daysUntilDue >= 0 -> "Due in $daysUntilDue days"
+        else -> null
     }
 
-    Box(
+    CashflowStatusBadge(
+        status = entry.status,
+        detail = detail,
         modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = backgroundColor,
-                shape = MaterialTheme.shapes.small
-            )
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = statusText,
-            style = MaterialTheme.typography.labelMedium,
-            color = textColor,
-            fontWeight = FontWeight.Medium
-        )
-    }
+    )
 }
 
 @Composable
