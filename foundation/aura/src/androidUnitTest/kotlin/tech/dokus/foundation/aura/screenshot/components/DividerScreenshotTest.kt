@@ -9,24 +9,25 @@ import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 import tech.dokus.foundation.aura.components.PDashedDivider
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class DividerScreenshotTest : BaseScreenshotTest() {
+class DividerScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun pDashedDivider() {
-        snapshotBothThemes("PDashedDivider") {
+        paparazzi.snapshotBothThemes("PDashedDivider") {
             PDashedDivider(modifier = Modifier.fillMaxWidth())
         }
     }
 
     @Test
     fun pDashedDivider_inContext() {
-        snapshotBothThemes("PDashedDivider_inContext") {
+        paparazzi.snapshotBothThemes("PDashedDivider_inContext") {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Content above")
                 PDashedDivider(

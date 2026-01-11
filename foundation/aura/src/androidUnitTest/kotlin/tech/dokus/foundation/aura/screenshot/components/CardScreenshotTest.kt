@@ -20,17 +20,18 @@ import tech.dokus.foundation.aura.components.DokusGlassSurface
 import tech.dokus.foundation.aura.components.PCard
 import tech.dokus.foundation.aura.components.PCardPlusIcon
 import tech.dokus.foundation.aura.components.POutlinedCard
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class CardScreenshotTest : BaseScreenshotTest() {
+class CardScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun dokusCardSurface_default() {
-        snapshotBothThemes("DokusCardSurface_default") {
+        paparazzi.snapshotBothThemes("DokusCardSurface_default") {
             DokusCardSurface(
                 modifier = Modifier.size(200.dp, 100.dp)
             ) {
@@ -44,7 +45,7 @@ class CardScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dokusCardSurface_soft() {
-        snapshotBothThemes("DokusCardSurface_soft") {
+        paparazzi.snapshotBothThemes("DokusCardSurface_soft") {
             DokusCardSurface(
                 modifier = Modifier.size(200.dp, 100.dp),
                 variant = DokusCardVariant.Soft
@@ -59,7 +60,7 @@ class CardScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dokusCardSurface_clickable() {
-        snapshotBothThemes("DokusCardSurface_clickable") {
+        paparazzi.snapshotBothThemes("DokusCardSurface_clickable") {
             DokusCardSurface(
                 modifier = Modifier.size(200.dp, 100.dp),
                 onClick = {}
@@ -74,7 +75,7 @@ class CardScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dokusCard_simple() {
-        snapshotBothThemes("DokusCard_simple") {
+        paparazzi.snapshotBothThemes("DokusCard_simple") {
             DokusCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -85,7 +86,7 @@ class CardScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dokusCard_withHeaderAndFooter() {
-        snapshotBothThemes("DokusCard_withHeaderAndFooter") {
+        paparazzi.snapshotBothThemes("DokusCard_withHeaderAndFooter") {
             DokusCard(
                 modifier = Modifier.fillMaxWidth(),
                 header = { Text("Card Header") },
@@ -98,7 +99,7 @@ class CardScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dokusCard_densePadding() {
-        snapshotBothThemes("DokusCard_densePadding") {
+        paparazzi.snapshotBothThemes("DokusCard_densePadding") {
             DokusCard(
                 modifier = Modifier.fillMaxWidth(),
                 padding = DokusCardPadding.Dense
@@ -110,7 +111,7 @@ class CardScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dokusGlassSurface() {
-        snapshotBothThemes("DokusGlassSurface") {
+        paparazzi.snapshotBothThemes("DokusGlassSurface") {
             DokusGlassSurface(
                 modifier = Modifier.size(200.dp, 100.dp)
             ) {
@@ -124,7 +125,7 @@ class CardScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pCard() {
-        snapshotBothThemes("PCard") {
+        paparazzi.snapshotBothThemes("PCard") {
             PCard(modifier = Modifier.size(200.dp, 100.dp)) {
                 Text(
                     "PCard Content",
@@ -136,7 +137,7 @@ class CardScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pOutlinedCard() {
-        snapshotBothThemes("POutlinedCard") {
+        paparazzi.snapshotBothThemes("POutlinedCard") {
             POutlinedCard(modifier = Modifier.size(200.dp, 100.dp)) {
                 Text(
                     "Outlined Card",
@@ -148,14 +149,14 @@ class CardScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pCardPlusIcon() {
-        snapshotBothThemes("PCardPlusIcon") {
+        paparazzi.snapshotBothThemes("PCardPlusIcon") {
             PCardPlusIcon(modifier = Modifier.size(80.dp))
         }
     }
 
     @Test
     fun cardVariantsComparison() {
-        snapshotBothThemes("Card_variants_comparison") {
+        paparazzi.snapshotBothThemes("Card_variants_comparison") {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

@@ -19,7 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
 /**
@@ -27,14 +28,14 @@ import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
  * Note: PDateField uses PDatePickerDialog which creates a dialog window,
  * so we test the date field layout directly.
  */
-class DatePickerScreenshotTest : BaseScreenshotTest() {
+class DatePickerScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun dateField_empty() {
-        snapshotBothThemes("DateField_empty") {
+        paparazzi.snapshotBothThemes("DateField_empty") {
             DateFieldVisual(
                 label = "Date",
                 displayValue = "Select date",
@@ -45,7 +46,7 @@ class DatePickerScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dateField_withValue() {
-        snapshotBothThemes("DateField_withValue") {
+        paparazzi.snapshotBothThemes("DateField_withValue") {
             DateFieldVisual(
                 label = "Due Date",
                 displayValue = "2024-01-15",
@@ -56,7 +57,7 @@ class DatePickerScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dateField_disabled() {
-        snapshotBothThemes("DateField_disabled") {
+        paparazzi.snapshotBothThemes("DateField_disabled") {
             DateFieldVisual(
                 label = "Invoice Date",
                 displayValue = "2024-01-01",
@@ -68,7 +69,7 @@ class DatePickerScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dateFields_multiple() {
-        snapshotBothThemes("DateFields_multiple") {
+        paparazzi.snapshotBothThemes("DateFields_multiple") {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

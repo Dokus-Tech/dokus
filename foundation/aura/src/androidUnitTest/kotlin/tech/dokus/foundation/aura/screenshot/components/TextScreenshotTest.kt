@@ -11,45 +11,46 @@ import tech.dokus.foundation.aura.components.PTitle
 import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.components.text.CopyRightText
 import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class TextScreenshotTest : BaseScreenshotTest() {
+class TextScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun pTitle() {
-        snapshotBothThemes("PTitle") {
+        paparazzi.snapshotBothThemes("PTitle") {
             PTitle(text = "Page Title")
         }
     }
 
     @Test
     fun appNameText() {
-        snapshotBothThemes("AppNameText") {
+        paparazzi.snapshotBothThemes("AppNameText") {
             AppNameText()
         }
     }
 
     @Test
     fun copyRightText() {
-        snapshotBothThemes("CopyRightText") {
+        paparazzi.snapshotBothThemes("CopyRightText") {
             CopyRightText()
         }
     }
 
     @Test
     fun sectionTitle() {
-        snapshotBothThemes("SectionTitle") {
+        paparazzi.snapshotBothThemes("SectionTitle") {
             SectionTitle(text = "Section Header")
         }
     }
 
     @Test
     fun textComponents_allVariants() {
-        snapshotBothThemes("Text_allVariants") {
+        paparazzi.snapshotBothThemes("Text_allVariants") {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

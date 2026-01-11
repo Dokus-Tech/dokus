@@ -1,5 +1,7 @@
 package tech.dokus.foundation.aura.screenshot.components
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -7,13 +9,14 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 import tech.dokus.foundation.aura.components.DokusGlassSurface
-import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
 /**
@@ -21,26 +24,26 @@ import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
  * Note: DokusDialog uses Dialog() which creates a separate window,
  * so we test the dialog content layout directly using DokusGlassSurface.
  */
-class DialogScreenshotTest : BaseScreenshotTest() {
+class DialogScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun dialogContent_simple() {
-        snapshotBothThemes("DialogContent_simple") {
+        paparazzi.snapshotBothThemes("DialogContent_simple") {
             DokusGlassSurface(
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
-                androidx.compose.foundation.layout.Column(
+                Column(
                     modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "Dialog Title",
                         style = MaterialTheme.typography.headlineSmall
                     )
-                    androidx.compose.foundation.layout.Spacer(
+                    Spacer(
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                     Text(
@@ -54,13 +57,13 @@ class DialogScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dialogContent_withIcon() {
-        snapshotBothThemes("DialogContent_withIcon") {
+        paparazzi.snapshotBothThemes("DialogContent_withIcon") {
             DokusGlassSurface(
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
-                androidx.compose.foundation.layout.Column(
+                Column(
                     modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
                         imageVector = Icons.Default.Warning,
@@ -72,7 +75,7 @@ class DialogScreenshotTest : BaseScreenshotTest() {
                         text = "Warning",
                         style = MaterialTheme.typography.headlineSmall
                     )
-                    androidx.compose.foundation.layout.Spacer(
+                    Spacer(
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                     Text(
@@ -86,20 +89,20 @@ class DialogScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dialogContent_confirmStyle() {
-        snapshotBothThemes("DialogContent_confirmStyle") {
+        paparazzi.snapshotBothThemes("DialogContent_confirmStyle") {
             DokusGlassSurface(
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
-                androidx.compose.foundation.layout.Column(
+                Column(
                     modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "Delete Item",
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.error
                     )
-                    androidx.compose.foundation.layout.Spacer(
+                    Spacer(
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                     Text(

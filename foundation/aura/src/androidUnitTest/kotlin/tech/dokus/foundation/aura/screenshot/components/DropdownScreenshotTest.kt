@@ -11,21 +11,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
 /**
  * Screenshot tests for dropdown and chip components.
  * Tests filter chips and choice chip patterns used throughout the app.
  */
-class DropdownScreenshotTest : BaseScreenshotTest() {
+class DropdownScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun filterChip_selected() {
-        snapshotBothThemes("FilterChip_selected") {
+        paparazzi.snapshotBothThemes("FilterChip_selected") {
             FilterChip(
                 selected = true,
                 onClick = {},
@@ -37,7 +38,7 @@ class DropdownScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun filterChip_unselected() {
-        snapshotBothThemes("FilterChip_unselected") {
+        paparazzi.snapshotBothThemes("FilterChip_unselected") {
             FilterChip(
                 selected = false,
                 onClick = {},
@@ -49,7 +50,7 @@ class DropdownScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun filterChips_group() {
-        snapshotBothThemes("FilterChips_group") {
+        paparazzi.snapshotBothThemes("FilterChips_group") {
             Row(
                 modifier = Modifier.padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -80,7 +81,7 @@ class DropdownScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun filterChips_multiSelect() {
-        snapshotBothThemes("FilterChips_multiSelect") {
+        paparazzi.snapshotBothThemes("FilterChips_multiSelect") {
             Row(
                 modifier = Modifier.padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -106,7 +107,7 @@ class DropdownScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun filterChips_wrapping() {
-        snapshotBothThemes("FilterChips_wrapping") {
+        paparazzi.snapshotBothThemes("FilterChips_wrapping") {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

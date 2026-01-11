@@ -13,17 +13,18 @@ import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.PAssistantMessageBubble
 import tech.dokus.foundation.aura.components.chat.PChatInputField
 import tech.dokus.foundation.aura.components.chat.PUserMessageBubble
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class ChatScreenshotTest : BaseScreenshotTest() {
+class ChatScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun pChatInputField_empty() {
-        snapshotBothThemes("PChatInputField_empty") {
+        paparazzi.snapshotBothThemes("PChatInputField_empty") {
             PChatInputField(
                 value = "",
                 onValueChange = {},
@@ -36,7 +37,7 @@ class ChatScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pChatInputField_withText() {
-        snapshotBothThemes("PChatInputField_withText") {
+        paparazzi.snapshotBothThemes("PChatInputField_withText") {
             PChatInputField(
                 value = "Hello, how can I help you?",
                 onValueChange = {},
@@ -48,7 +49,7 @@ class ChatScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pChatInputField_disabled() {
-        snapshotBothThemes("PChatInputField_disabled") {
+        paparazzi.snapshotBothThemes("PChatInputField_disabled") {
             PChatInputField(
                 value = "Sending...",
                 onValueChange = {},
@@ -61,7 +62,7 @@ class ChatScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun chatMessageBubble_user() {
-        snapshotBothThemes("ChatMessageBubble_user") {
+        paparazzi.snapshotBothThemes("ChatMessageBubble_user") {
             ChatMessageBubble(
                 message = "Hello, I have a question about my invoice.",
                 role = ChatMessageRole.User,
@@ -72,7 +73,7 @@ class ChatScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun chatMessageBubble_assistant() {
-        snapshotBothThemes("ChatMessageBubble_assistant") {
+        paparazzi.snapshotBothThemes("ChatMessageBubble_assistant") {
             ChatMessageBubble(
                 message = "Of course! I'd be happy to help. What would you like to know?",
                 role = ChatMessageRole.Assistant,
@@ -83,7 +84,7 @@ class ChatScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun chatMessageBubble_withTimestamp() {
-        snapshotBothThemes("ChatMessageBubble_withTimestamp") {
+        paparazzi.snapshotBothThemes("ChatMessageBubble_withTimestamp") {
             ChatMessageBubble(
                 message = "This message has a timestamp",
                 role = ChatMessageRole.User,
@@ -95,7 +96,7 @@ class ChatScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pUserMessageBubble() {
-        snapshotBothThemes("PUserMessageBubble") {
+        paparazzi.snapshotBothThemes("PUserMessageBubble") {
             PUserMessageBubble(
                 message = "User message bubble",
                 modifier = Modifier.padding(16.dp)
@@ -105,7 +106,7 @@ class ChatScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pAssistantMessageBubble() {
-        snapshotBothThemes("PAssistantMessageBubble") {
+        paparazzi.snapshotBothThemes("PAssistantMessageBubble") {
             PAssistantMessageBubble(
                 message = "Assistant message bubble",
                 modifier = Modifier.padding(16.dp)
@@ -115,7 +116,7 @@ class ChatScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun chatConversation() {
-        snapshotBothThemes("ChatConversation") {
+        paparazzi.snapshotBothThemes("ChatConversation") {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)

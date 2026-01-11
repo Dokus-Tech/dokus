@@ -1,6 +1,5 @@
 package tech.dokus.foundation.aura.screenshot.components
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -11,12 +10,12 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
 /**
@@ -24,14 +23,14 @@ import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
  * Note: DokusNavigationBar requires HomeItem or MobileTabConfig with resources,
  * so we test the navigation pattern directly using Material3 NavigationBar.
  */
-class NavigationScreenshotTest : BaseScreenshotTest() {
+class NavigationScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun navigationBar_threeItems() {
-        snapshotBothThemes("NavigationBar_threeItems") {
+        paparazzi.snapshotBothThemes("NavigationBar_threeItems") {
             NavigationBar(
                 containerColor = Color.Transparent,
                 tonalElevation = 0.dp
@@ -71,7 +70,7 @@ class NavigationScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun navigationBar_middleSelected() {
-        snapshotBothThemes("NavigationBar_middleSelected") {
+        paparazzi.snapshotBothThemes("NavigationBar_middleSelected") {
             NavigationBar(
                 containerColor = Color.Transparent,
                 tonalElevation = 0.dp
@@ -111,7 +110,7 @@ class NavigationScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun navigationBar_fourItems() {
-        snapshotBothThemes("NavigationBar_fourItems") {
+        paparazzi.snapshotBothThemes("NavigationBar_fourItems") {
             NavigationBar(
                 containerColor = Color.Transparent,
                 tonalElevation = 0.dp

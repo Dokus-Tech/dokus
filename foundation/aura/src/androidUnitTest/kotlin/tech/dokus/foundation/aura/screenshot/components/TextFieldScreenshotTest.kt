@@ -16,17 +16,18 @@ import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 import tech.dokus.foundation.aura.components.fields.PTextField
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class TextFieldScreenshotTest : BaseScreenshotTest() {
+class TextFieldScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun pTextField_empty() {
-        snapshotBothThemes("PTextField_empty") {
+        paparazzi.snapshotBothThemes("PTextField_empty") {
             PTextField(
                 fieldName = "Email",
                 value = "",
@@ -48,7 +49,7 @@ class TextFieldScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pTextField_withValue() {
-        snapshotBothThemes("PTextField_withValue") {
+        paparazzi.snapshotBothThemes("PTextField_withValue") {
             PTextField(
                 fieldName = "Email",
                 value = "user@example.com",
@@ -70,7 +71,7 @@ class TextFieldScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pTextField_withoutIcon() {
-        snapshotBothThemes("PTextField_withoutIcon") {
+        paparazzi.snapshotBothThemes("PTextField_withoutIcon") {
             PTextField(
                 fieldName = "Name",
                 value = "John Doe",
@@ -89,7 +90,7 @@ class TextFieldScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pTextField_disabled() {
-        snapshotBothThemes("PTextField_disabled") {
+        paparazzi.snapshotBothThemes("PTextField_disabled") {
             PTextField(
                 fieldName = "Email",
                 value = "disabled@example.com",
@@ -109,7 +110,7 @@ class TextFieldScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pTextField_multiline() {
-        snapshotBothThemes("PTextField_multiline") {
+        paparazzi.snapshotBothThemes("PTextField_multiline") {
             PTextField(
                 fieldName = "Description",
                 value = "This is a longer text that spans multiple lines to demonstrate multiline input capability.",
@@ -128,7 +129,7 @@ class TextFieldScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pTextField_noClearButton() {
-        snapshotBothThemes("PTextField_noClearButton") {
+        paparazzi.snapshotBothThemes("PTextField_noClearButton") {
             PTextField(
                 fieldName = "Read Only",
                 value = "Cannot clear this",
@@ -148,7 +149,7 @@ class TextFieldScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pTextField_allVariants() {
-        snapshotBothThemes("PTextField_allVariants") {
+        paparazzi.snapshotBothThemes("PTextField_allVariants") {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

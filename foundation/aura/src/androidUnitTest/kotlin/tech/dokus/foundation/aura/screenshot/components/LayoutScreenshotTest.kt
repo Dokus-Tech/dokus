@@ -11,17 +11,18 @@ import org.junit.Rule
 import org.junit.Test
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class LayoutScreenshotTest : BaseScreenshotTest() {
+class LayoutScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun pCollapsibleSection_expanded() {
-        snapshotBothThemes("PCollapsibleSection_expanded") {
+        paparazzi.snapshotBothThemes("PCollapsibleSection_expanded") {
             PCollapsibleSection(
                 title = "Section Title",
                 isExpanded = true,
@@ -39,7 +40,7 @@ class LayoutScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pCollapsibleSection_collapsed() {
-        snapshotBothThemes("PCollapsibleSection_collapsed") {
+        paparazzi.snapshotBothThemes("PCollapsibleSection_collapsed") {
             PCollapsibleSection(
                 title = "Collapsed Section",
                 isExpanded = false,
@@ -53,7 +54,7 @@ class LayoutScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pCollapsibleSection_multipleSections() {
-        snapshotBothThemes("PCollapsibleSection_multipleSections") {
+        paparazzi.snapshotBothThemes("PCollapsibleSection_multipleSections") {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -85,7 +86,7 @@ class LayoutScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun twoPaneContainer() {
-        snapshotBothThemes("TwoPaneContainer") {
+        paparazzi.snapshotBothThemes("TwoPaneContainer") {
             TwoPaneContainer(
                 left = {
                     Text(

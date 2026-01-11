@@ -18,17 +18,18 @@ import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerCircle
 import tech.dokus.foundation.aura.components.common.ShimmerLine
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class CommonScreenshotTest : BaseScreenshotTest() {
+class CommonScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun pTopAppBar_withTitle() {
-        snapshotBothThemes("PTopAppBar_withTitle") {
+        paparazzi.snapshotBothThemes("PTopAppBar_withTitle") {
             PTopAppBar(
                 title = "Page Title",
                 navController = null,
@@ -39,7 +40,7 @@ class CommonScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun pTopAppBar_longTitle() {
-        snapshotBothThemes("PTopAppBar_longTitle") {
+        paparazzi.snapshotBothThemes("PTopAppBar_longTitle") {
             PTopAppBar(
                 title = "This is a very long page title that should be truncated",
                 navController = null,
@@ -50,14 +51,14 @@ class CommonScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dokusErrorText() {
-        snapshotBothThemes("DokusErrorText") {
+        paparazzi.snapshotBothThemes("DokusErrorText") {
             DokusErrorText(text = "Something went wrong. Please try again.")
         }
     }
 
     @Test
     fun dokusErrorContent_withRetry() {
-        snapshotBothThemes("DokusErrorContent_withRetry") {
+        paparazzi.snapshotBothThemes("DokusErrorContent_withRetry") {
             DokusErrorContent(
                 title = "Connection Error",
                 text = "Unable to connect to the server. Please check your internet connection.",
@@ -68,7 +69,7 @@ class CommonScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dokusErrorContent_withoutRetry() {
-        snapshotBothThemes("DokusErrorContent_withoutRetry") {
+        paparazzi.snapshotBothThemes("DokusErrorContent_withoutRetry") {
             DokusErrorContent(
                 text = "This operation cannot be completed.",
                 retryHandler = null
@@ -78,7 +79,7 @@ class CommonScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun dokusErrorContent_compact() {
-        snapshotBothThemes("DokusErrorContent_compact") {
+        paparazzi.snapshotBothThemes("DokusErrorContent_compact") {
             DokusErrorContent(
                 text = "Failed to load data",
                 retryHandler = tech.dokus.domain.asbtractions.RetryHandler { },
@@ -89,28 +90,28 @@ class CommonScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun shimmerBox() {
-        snapshotBothThemes("ShimmerBox") {
+        paparazzi.snapshotBothThemes("ShimmerBox") {
             ShimmerBox(modifier = Modifier.size(200.dp, 100.dp))
         }
     }
 
     @Test
     fun shimmerCircle() {
-        snapshotBothThemes("ShimmerCircle") {
+        paparazzi.snapshotBothThemes("ShimmerCircle") {
             ShimmerCircle(size = 48.dp)
         }
     }
 
     @Test
     fun shimmerLine() {
-        snapshotBothThemes("ShimmerLine") {
+        paparazzi.snapshotBothThemes("ShimmerLine") {
             ShimmerLine(modifier = Modifier.width(200.dp))
         }
     }
 
     @Test
     fun shimmer_cardPlaceholder() {
-        snapshotBothThemes("Shimmer_cardPlaceholder") {
+        paparazzi.snapshotBothThemes("Shimmer_cardPlaceholder") {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)

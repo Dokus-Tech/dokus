@@ -9,17 +9,18 @@ import org.junit.Rule
 import org.junit.Test
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
-import tech.dokus.foundation.aura.screenshot.BaseScreenshotTest
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
+import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotBothThemes
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 
-class TileScreenshotTest : BaseScreenshotTest() {
+class TileScreenshotTest {
 
     @get:Rule
-    override val paparazzi = createPaparazzi(ScreenshotViewport.MEDIUM)
+    val paparazzi = ScreenshotTestHelper.createPaparazzi(ScreenshotViewport.MEDIUM)
 
     @Test
     fun companyAvatarImage_withFallback() {
-        snapshotBothThemes("CompanyAvatarImage_withFallback") {
+        paparazzi.snapshotBothThemes("CompanyAvatarImage_withFallback") {
             CompanyAvatarImage(
                 avatarUrl = null,
                 initial = "A",
@@ -30,7 +31,7 @@ class TileScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun companyAvatarImage_differentInitials() {
-        snapshotBothThemes("CompanyAvatarImage_differentInitials") {
+        paparazzi.snapshotBothThemes("CompanyAvatarImage_differentInitials") {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -45,7 +46,7 @@ class TileScreenshotTest : BaseScreenshotTest() {
 
     @Test
     fun companyAvatarImage_sizes() {
-        snapshotBothThemes("CompanyAvatarImage_sizes") {
+        paparazzi.snapshotBothThemes("CompanyAvatarImage_sizes") {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
