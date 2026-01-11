@@ -107,7 +107,7 @@ class DocumentConfirmationService(
 
         val invoiceNumber: String? = when (documentType) {
             DocumentType.Invoice -> invoiceNumberGenerator.generateInvoiceNumber(tenantId).getOrThrow()
-            DocumentType.Bill, DocumentType.Expense, DocumentType.Unknown -> null
+            DocumentType.Bill, DocumentType.Expense, DocumentType.CreditNote, DocumentType.Receipt, DocumentType.ProForma, DocumentType.Unknown -> null
         }
 
         val created = dbQuery {
@@ -136,7 +136,10 @@ class DocumentConfirmationService(
                     linkedContactId = linkedContactId
                 )
 
-                DocumentType.Unknown -> throw DokusException.BadRequest("Cannot confirm document with unknown type")
+                DocumentType.CreditNote,
+                DocumentType.Receipt,
+                DocumentType.ProForma,
+                DocumentType.Unknown -> throw DokusException.BadRequest("Cannot confirm document with type: $documentType")
             }
         }
 

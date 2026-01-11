@@ -132,6 +132,10 @@ internal class DocumentReviewFieldEditor {
                     bill = null,
                     expense = EditableExpenseFields(),
                 )
+                // CreditNote, Receipt, ProForma not yet supported in UI
+                DocumentType.CreditNote,
+                DocumentType.Receipt,
+                DocumentType.ProForma,
                 DocumentType.Unknown -> return@withState
             }
 

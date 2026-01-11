@@ -147,7 +147,7 @@ fun RoutingContext.hasPermission(permission: Permission): Boolean =
  */
 fun RoutingContext.requirePermission(permission: Permission) {
     if (!hasPermission(permission)) {
-        throw DokusException.Forbidden(
+        throw DokusException.NotAuthorized(
             "Permission denied: ${permission.dbValue} is required"
         )
     }
@@ -167,7 +167,7 @@ fun RoutingContext.requireAllPermissions(vararg permissions: Permission) {
  */
 fun RoutingContext.requireAnyPermission(vararg permissions: Permission) {
     if (permissions.none { hasPermission(it) }) {
-        throw DokusException.Forbidden(
+        throw DokusException.NotAuthorized(
             "Permission denied: one of [${permissions.joinToString { it.dbValue }}] is required"
         )
     }

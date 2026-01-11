@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_type_bill
+import tech.dokus.aura.resources.document_type_document
 import tech.dokus.aura.resources.document_type_expense
 import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.document_type_unknown
@@ -63,6 +64,9 @@ val DocumentType.localized: String
         DocumentType.Invoice -> stringResource(Res.string.document_type_invoice)
         DocumentType.Expense -> stringResource(Res.string.document_type_expense)
         DocumentType.Bill -> stringResource(Res.string.document_type_bill)
+        DocumentType.CreditNote -> stringResource(Res.string.document_type_document) // TODO: Add specific string resource
+        DocumentType.Receipt -> stringResource(Res.string.document_type_document) // TODO: Add specific string resource
+        DocumentType.ProForma -> stringResource(Res.string.document_type_document) // TODO: Add specific string resource
         DocumentType.Unknown -> stringResource(Res.string.document_type_unknown)
     }
 

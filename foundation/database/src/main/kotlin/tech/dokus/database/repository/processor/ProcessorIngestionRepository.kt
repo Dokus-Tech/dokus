@@ -82,6 +82,10 @@ class ProcessorIngestionRepository {
                     DraftStatus.NeedsReview
                 }
             }
+            // CreditNote, Receipt, ProForma not yet implemented - need review
+            DocumentType.CreditNote,
+            DocumentType.Receipt,
+            DocumentType.ProForma,
             DocumentType.Unknown -> DraftStatus.NeedsReview
         }
     }

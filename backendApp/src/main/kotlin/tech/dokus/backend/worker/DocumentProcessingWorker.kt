@@ -442,6 +442,9 @@ class DocumentProcessingWorker(
                     address = exp.merchantAddress
                 )
             }
+            DocumentType.CreditNote,
+            DocumentType.Receipt,
+            DocumentType.ProForma,
             DocumentType.Unknown -> null
         } ?: return
 
