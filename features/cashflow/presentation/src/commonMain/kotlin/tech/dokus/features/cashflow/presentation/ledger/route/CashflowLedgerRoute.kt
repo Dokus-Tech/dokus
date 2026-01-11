@@ -33,6 +33,7 @@ internal fun CashflowLedgerRoute(
     val navController = LocalNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
+    var pendingSuccessMessage by remember { mutableStateOf<String?>(null) }
 
     val errorMessage = pendingError?.localized
 
@@ -40,6 +41,13 @@ internal fun CashflowLedgerRoute(
         if (errorMessage != null) {
             snackbarHostState.showSnackbar(errorMessage)
             pendingError = null
+        }
+    }
+
+    LaunchedEffect(pendingSuccessMessage) {
+        if (pendingSuccessMessage != null) {
+            snackbarHostState.showSnackbar(pendingSuccessMessage!!)
+            pendingSuccessMessage = null
         }
     }
 
@@ -53,6 +61,12 @@ internal fun CashflowLedgerRoute(
                 // For now, no-op or show toast
             }
             is CashflowLedgerAction.ShowError -> {
+                pendingError = action.error
+            }
+            is CashflowLedgerAction.ShowPaymentSuccess -> {
+                pendingSuccessMessage = "Payment recorded"
+            }
+            is CashflowLedgerAction.ShowPaymentError -> {
                 pendingError = action.error
             }
         }

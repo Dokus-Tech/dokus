@@ -1,15 +1,21 @@
 package tech.dokus.features.cashflow.presentation.ledger.mvi
 
 import androidx.compose.runtime.Immutable
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.domain.Money
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
@@ -36,6 +42,30 @@ data class CashflowFilters(
 )
 
 /**
+ * Payment form state for recording payments against cashflow entries.
+ *
+ * Uses amountText + amount pattern: TextField always updates amountText,
+ * parsing updates amount when valid. Validate only on submit.
+ */
+@Immutable
+data class PaymentFormState(
+    val paidAt: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+    val amountText: String = "",
+    val amount: Money? = null,
+    val note: String = "",
+    val isSubmitting: Boolean = false,
+    val amountError: String? = null,
+    val isOptionsExpanded: Boolean = false
+) {
+    companion object {
+        fun withAmount(amount: Money): PaymentFormState = PaymentFormState(
+            amountText = amount.toDisplayString(),
+            amount = amount
+        )
+    }
+}
+
+/**
  * State for CashflowLedgerScreen.
  */
 @Immutable
@@ -47,7 +77,9 @@ sealed interface CashflowLedgerState : MVIState, DokusState<Nothing> {
         val entries: PaginationState<CashflowEntry>,
         val filters: CashflowFilters = CashflowFilters(),
         val highlightedEntryId: CashflowEntryId? = null,
-        val isRefreshing: Boolean = false
+        val isRefreshing: Boolean = false,
+        val selectedEntryId: CashflowEntryId? = null,
+        val paymentFormState: PaymentFormState = PaymentFormState()
     ) : CashflowLedgerState
 
     data class Error(
@@ -69,6 +101,20 @@ sealed interface CashflowLedgerIntent : MVIIntent {
     data class UpdateStatusFilter(val status: CashflowEntryStatus?) : CashflowLedgerIntent
     data class HighlightEntry(val entryId: CashflowEntryId?) : CashflowLedgerIntent
     data class OpenEntry(val entry: CashflowEntry) : CashflowLedgerIntent
+
+    // Detail pane intents
+    data class SelectEntry(val entryId: CashflowEntryId) : CashflowLedgerIntent
+    data object CloseDetailPane : CashflowLedgerIntent
+    data class UpdatePaymentDate(val date: LocalDate) : CashflowLedgerIntent
+    data class UpdatePaymentAmountText(val text: String) : CashflowLedgerIntent
+    data class UpdatePaymentNote(val note: String) : CashflowLedgerIntent
+    data object SubmitPayment : CashflowLedgerIntent
+    data class OpenDocument(val documentId: DocumentId) : CashflowLedgerIntent
+
+    // Payment options intents
+    data object TogglePaymentOptions : CashflowLedgerIntent
+    data object QuickMarkAsPaid : CashflowLedgerIntent
+    data object CancelPaymentOptions : CashflowLedgerIntent
 }
 
 /**
@@ -79,4 +125,6 @@ sealed interface CashflowLedgerAction : MVIAction {
     data class NavigateToDocumentReview(val documentId: String) : CashflowLedgerAction
     data class NavigateToEntity(val sourceType: CashflowSourceType, val sourceId: String) : CashflowLedgerAction
     data class ShowError(val error: DokusException) : CashflowLedgerAction
+    data class ShowPaymentSuccess(val entry: CashflowEntry) : CashflowLedgerAction
+    data class ShowPaymentError(val error: DokusException) : CashflowLedgerAction
 }

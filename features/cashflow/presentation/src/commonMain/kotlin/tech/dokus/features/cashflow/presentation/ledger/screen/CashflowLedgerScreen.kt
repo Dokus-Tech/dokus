@@ -39,6 +39,7 @@ import tech.dokus.features.cashflow.presentation.common.components.filters.Dokus
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
+import tech.dokus.features.cashflow.presentation.ledger.components.CashflowDetailPane
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerHeaderRow
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerMobileRow
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerOverview
@@ -109,89 +110,111 @@ private fun CashflowLedgerContent(
         }
     }
 
-    // Single unified surface for all content
-    DokusTableSurface(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-        header = null // We handle sections inside
-    ) {
-        // Overview section (status bar only)
-        CashflowLedgerOverview(
-            entries = state.entries.data,
-            modifier = Modifier.padding(16.dp)
-        )
+    // Resolve selected entry from list
+    val selectedEntry = state.entries.data.find { it.id == state.selectedEntryId }
 
-        DokusTableDivider()
-
-        // Filters section
-        CashflowFiltersBar(
-            filters = state.filters,
-            onDateRangeChange = { onIntent(CashflowLedgerIntent.UpdateDateRangeFilter(it)) },
-            onDirectionChange = { onIntent(CashflowLedgerIntent.UpdateDirectionFilter(it)) },
-            onStatusChange = { onIntent(CashflowLedgerIntent.UpdateStatusFilter(it)) },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-        )
-
-        DokusTableDivider()
-
-        // Table header (desktop only)
-        if (isLargeScreen) {
-            CashflowLedgerHeaderRow()
-            DokusTableDivider()
-        }
-
-        // Table body OR empty state - both inside the surface
-        if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
-            DokusEmptyState(
-                title = stringResource(Res.string.cashflow_ledger_empty_title),
-                subtitle = stringResource(Res.string.cashflow_ledger_empty_hint),
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(32.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Single unified surface for all content
+        DokusTableSurface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+            header = null // We handle sections inside
+        ) {
+            // Overview section (status bar only)
+            CashflowLedgerOverview(
+                entries = state.entries.data,
+                modifier = Modifier.padding(16.dp)
             )
-        } else {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f)
-            ) {
-                itemsIndexed(
-                    items = state.entries.data,
-                    key = { _, entry -> entry.id.toString() }
-                ) { index, entry ->
-                    if (isLargeScreen) {
-                        CashflowLedgerTableRow(
-                            entry = entry,
-                            isHighlighted = entry.id == state.highlightedEntryId,
-                            onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) }
-                        )
-                    } else {
-                        CashflowLedgerMobileRow(
-                            entry = entry,
-                            onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) }
-                        )
+
+            DokusTableDivider()
+
+            // Filters section
+            CashflowFiltersBar(
+                filters = state.filters,
+                onDateRangeChange = { onIntent(CashflowLedgerIntent.UpdateDateRangeFilter(it)) },
+                onDirectionChange = { onIntent(CashflowLedgerIntent.UpdateDirectionFilter(it)) },
+                onStatusChange = { onIntent(CashflowLedgerIntent.UpdateStatusFilter(it)) },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+
+            DokusTableDivider()
+
+            // Table header (desktop only)
+            if (isLargeScreen) {
+                CashflowLedgerHeaderRow()
+                DokusTableDivider()
+            }
+
+            // Table body OR empty state - both inside the surface
+            if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
+                DokusEmptyState(
+                    title = stringResource(Res.string.cashflow_ledger_empty_title),
+                    subtitle = stringResource(Res.string.cashflow_ledger_empty_hint),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(32.dp)
+                )
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    itemsIndexed(
+                        items = state.entries.data,
+                        key = { _, entry -> entry.id.toString() }
+                    ) { index, entry ->
+                        if (isLargeScreen) {
+                            CashflowLedgerTableRow(
+                                entry = entry,
+                                isHighlighted = entry.id == state.highlightedEntryId,
+                                onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) }
+                            )
+                        } else {
+                            CashflowLedgerMobileRow(
+                                entry = entry,
+                                onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) }
+                            )
+                        }
+
+                        if (index < state.entries.data.size - 1) {
+                            DokusTableDivider()
+                        }
                     }
 
-                    if (index < state.entries.data.size - 1) {
-                        DokusTableDivider()
-                    }
-                }
-
-                if (state.entries.isLoadingMore) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    if (state.entries.isLoadingMore) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            }
                         }
                     }
                 }
             }
         }
+
+        // Detail pane overlay
+        CashflowDetailPane(
+            isVisible = selectedEntry != null,
+            entry = selectedEntry,
+            paymentFormState = state.paymentFormState,
+            isFullScreen = !isLargeScreen,
+            onDismiss = { onIntent(CashflowLedgerIntent.CloseDetailPane) },
+            onPaymentDateChange = { onIntent(CashflowLedgerIntent.UpdatePaymentDate(it)) },
+            onPaymentAmountTextChange = { onIntent(CashflowLedgerIntent.UpdatePaymentAmountText(it)) },
+            onPaymentNoteChange = { onIntent(CashflowLedgerIntent.UpdatePaymentNote(it)) },
+            onSubmitPayment = { onIntent(CashflowLedgerIntent.SubmitPayment) },
+            onTogglePaymentOptions = { onIntent(CashflowLedgerIntent.TogglePaymentOptions) },
+            onQuickMarkAsPaid = { onIntent(CashflowLedgerIntent.QuickMarkAsPaid) },
+            onCancelPaymentOptions = { onIntent(CashflowLedgerIntent.CancelPaymentOptions) },
+            onOpenDocument = { onIntent(CashflowLedgerIntent.OpenDocument(it)) }
+        )
     }
 }
 

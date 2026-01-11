@@ -4,7 +4,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import pro.respawn.flowmvi.api.Container
@@ -14,13 +16,17 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.CashflowEntryId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
+import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias CashflowLedgerCtx = PipelineContext<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction>
@@ -38,6 +44,7 @@ private const val PAGE_SIZE = 50
  */
 internal class CashflowLedgerContainer(
     private val loadCashflowEntries: LoadCashflowEntriesUseCase,
+    private val recordPayment: RecordCashflowPaymentUseCase,
     private val highlightEntryId: CashflowEntryId? = null
 ) : Container<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> {
 
@@ -63,6 +70,18 @@ internal class CashflowLedgerContainer(
                     is CashflowLedgerIntent.UpdateStatusFilter -> handleUpdateStatus(intent.status)
                     is CashflowLedgerIntent.HighlightEntry -> handleHighlightEntry(intent.entryId)
                     is CashflowLedgerIntent.OpenEntry -> handleOpenEntry(intent.entry)
+                    // Detail pane intents
+                    is CashflowLedgerIntent.SelectEntry -> handleSelectEntry(intent.entryId)
+                    is CashflowLedgerIntent.CloseDetailPane -> handleCloseDetailPane()
+                    is CashflowLedgerIntent.UpdatePaymentDate -> handleUpdatePaymentDate(intent.date)
+                    is CashflowLedgerIntent.UpdatePaymentAmountText -> handleUpdatePaymentAmountText(intent.text)
+                    is CashflowLedgerIntent.UpdatePaymentNote -> handleUpdatePaymentNote(intent.note)
+                    is CashflowLedgerIntent.SubmitPayment -> handleSubmitPayment()
+                    is CashflowLedgerIntent.OpenDocument -> handleOpenDocument(intent.documentId)
+                    // Payment options intents
+                    is CashflowLedgerIntent.TogglePaymentOptions -> handleTogglePaymentOptions()
+                    is CashflowLedgerIntent.QuickMarkAsPaid -> handleQuickMarkAsPaid()
+                    is CashflowLedgerIntent.CancelPaymentOptions -> handleCancelPaymentOptions()
                 }
             }
         }
@@ -183,11 +202,163 @@ internal class CashflowLedgerContainer(
     }
 
     private suspend fun CashflowLedgerCtx.handleOpenEntry(entry: CashflowEntry) {
-        val documentId = entry.documentId
-        if (documentId != null) {
-            action(CashflowLedgerAction.NavigateToDocumentReview(documentId.toString()))
-        } else {
-            action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId))
+        // Open detail pane instead of navigating
+        handleSelectEntry(entry.id)
+    }
+
+    private suspend fun CashflowLedgerCtx.handleSelectEntry(entryId: CashflowEntryId) {
+        withState<CashflowLedgerState.Content, _> {
+            val entry = entries.data.find { it.id == entryId } ?: return@withState
+            updateState {
+                copy(
+                    selectedEntryId = entryId,
+                    paymentFormState = PaymentFormState.withAmount(entry.remainingAmount)
+                )
+            }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleCloseDetailPane() {
+        withState<CashflowLedgerState.Content, _> {
+            updateState {
+                copy(
+                    selectedEntryId = null,
+                    paymentFormState = PaymentFormState()
+                )
+            }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleUpdatePaymentDate(date: LocalDate) {
+        withState<CashflowLedgerState.Content, _> {
+            updateState {
+                copy(paymentFormState = paymentFormState.copy(paidAt = date))
+            }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleUpdatePaymentAmountText(text: String) {
+        withState<CashflowLedgerState.Content, _> {
+            val parsed = Money.parse(text)
+            updateState {
+                copy(paymentFormState = paymentFormState.copy(
+                    amountText = text,
+                    amount = parsed,
+                    amountError = null
+                ))
+            }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleUpdatePaymentNote(note: String) {
+        withState<CashflowLedgerState.Content, _> {
+            updateState {
+                copy(paymentFormState = paymentFormState.copy(note = note))
+            }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleSubmitPayment() {
+        withState<CashflowLedgerState.Content, _> {
+            val entry = entries.data.find { it.id == selectedEntryId } ?: return@withState
+            val form = paymentFormState
+
+            // Validate: amount must be valid
+            val amount = form.amount
+            if (amount == null || amount.minor <= 0) {
+                updateState { copy(paymentFormState = form.copy(amountError = "Amount must be positive")) }
+                return@withState
+            }
+
+            // Validate: amount <= remainingAmount
+            if (amount > entry.remainingAmount) {
+                updateState { copy(paymentFormState = form.copy(amountError = "Amount exceeds remaining")) }
+                return@withState
+            }
+
+            updateState { copy(paymentFormState = form.copy(isSubmitting = true)) }
+
+            recordPayment(
+                entryId = entry.id,
+                request = CashflowPaymentRequest(
+                    amount = amount,
+                    paidAt = form.paidAt.atTime(0, 0),
+                    note = form.note.ifBlank { null }
+                )
+            ).fold(
+                onSuccess = { updatedEntry ->
+                    // Update entry in-place (preserves scroll, filters, pagination)
+                    val updatedList = entries.data.map {
+                        if (it.id == updatedEntry.id) updatedEntry else it
+                    }
+                    loadedEntries = loadedEntries.map {
+                        if (it.id == updatedEntry.id) updatedEntry else it
+                    }
+
+                    // If fully paid (remaining == 0), close pane. Otherwise keep open with new remaining.
+                    val fullyPaid = updatedEntry.remainingAmount.isZero
+                    updateState {
+                        copy(
+                            entries = entries.copy(data = updatedList),
+                            selectedEntryId = if (fullyPaid) null else selectedEntryId,
+                            paymentFormState = if (fullyPaid) {
+                                PaymentFormState()
+                            } else {
+                                PaymentFormState.withAmount(updatedEntry.remainingAmount)
+                            }
+                        )
+                    }
+                    action(CashflowLedgerAction.ShowPaymentSuccess(updatedEntry))
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to record payment" }
+                    updateState { copy(paymentFormState = form.copy(isSubmitting = false)) }
+                    action(CashflowLedgerAction.ShowPaymentError(error.asDokusException))
+                }
+            )
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleOpenDocument(documentId: DocumentId) {
+        action(CashflowLedgerAction.NavigateToDocumentReview(documentId.toString()))
+    }
+
+    private suspend fun CashflowLedgerCtx.handleTogglePaymentOptions() {
+        withState<CashflowLedgerState.Content, _> {
+            updateState {
+                copy(paymentFormState = paymentFormState.copy(
+                    isOptionsExpanded = !paymentFormState.isOptionsExpanded,
+                    amountError = null
+                ))
+            }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleQuickMarkAsPaid() {
+        withState<CashflowLedgerState.Content, _> {
+            val entry = entries.data.find { it.id == selectedEntryId } ?: return@withState
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+
+            // Set defaults
+            updateState {
+                copy(paymentFormState = PaymentFormState.withAmount(entry.remainingAmount).copy(
+                    paidAt = today,
+                    note = ""
+                ))
+            }
+        }
+        // Dispatch SubmitPayment intent (same validation path)
+        intent(CashflowLedgerIntent.SubmitPayment)
+    }
+
+    private suspend fun CashflowLedgerCtx.handleCancelPaymentOptions() {
+        withState<CashflowLedgerState.Content, _> {
+            val entry = entries.data.find { it.id == selectedEntryId } ?: return@withState
+            updateState {
+                copy(paymentFormState = PaymentFormState.withAmount(entry.remainingAmount).copy(
+                    isOptionsExpanded = false
+                ))
+            }
         }
     }
 
