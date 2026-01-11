@@ -61,6 +61,15 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleUpdateExpenseField(field: ExpenseField, value: Any?) =
         with(editor) { handleUpdateExpenseField(field, value) }
 
+    suspend fun DocumentReviewCtx.handleUpdateReceiptField(field: ReceiptField, value: Any?) =
+        with(editor) { handleUpdateReceiptField(field, value) }
+
+    suspend fun DocumentReviewCtx.handleUpdateProFormaField(field: ProFormaField, value: Any?) =
+        with(editor) { handleUpdateProFormaField(field, value) }
+
+    suspend fun DocumentReviewCtx.handleUpdateCreditNoteField(field: CreditNoteField, value: Any?) =
+        with(editor) { handleUpdateCreditNoteField(field, value) }
+
     suspend fun DocumentReviewCtx.handleSelectDocumentType(type: DocumentType) =
         with(editor) { handleSelectDocumentType(type) }
 

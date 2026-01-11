@@ -104,6 +104,114 @@ internal class DocumentReviewFieldEditor {
     }
 
     /**
+     * Handle Receipt field updates.
+     * Receipt mirrors Expense structure since it confirms into Expense.
+     */
+    suspend fun DocumentReviewCtx.handleUpdateReceiptField(field: ReceiptField, value: Any?) {
+        withState<DocumentReviewState.Content, _> {
+            val currentReceipt = editableData.receipt ?: return@withState
+
+            val updatedReceipt = when (field) {
+                ReceiptField.MERCHANT -> currentReceipt.copy(merchant = value as? String ?: "")
+                ReceiptField.MERCHANT_ADDRESS -> currentReceipt.copy(merchantAddress = value as? String ?: "")
+                ReceiptField.MERCHANT_VAT_NUMBER -> currentReceipt.copy(merchantVatNumber = value as? String ?: "")
+                ReceiptField.DATE -> currentReceipt.copy(date = value as? LocalDate)
+                ReceiptField.AMOUNT -> currentReceipt.copy(amount = value as? String ?: "")
+                ReceiptField.VAT_AMOUNT -> currentReceipt.copy(vatAmount = value as? String ?: "")
+                ReceiptField.VAT_RATE -> currentReceipt.copy(vatRate = value as? String ?: "")
+                ReceiptField.CURRENCY -> currentReceipt.copy(currency = value as? String ?: "EUR")
+                ReceiptField.CATEGORY -> currentReceipt.copy(category = value as? ExpenseCategory)
+                ReceiptField.DESCRIPTION -> currentReceipt.copy(description = value as? String ?: "")
+                ReceiptField.IS_DEDUCTIBLE -> currentReceipt.copy(isDeductible = value as? Boolean ?: true)
+                ReceiptField.DEDUCTIBLE_PERCENTAGE -> currentReceipt.copy(
+                    deductiblePercentage = value as? String ?: "100"
+                )
+                ReceiptField.PAYMENT_METHOD -> currentReceipt.copy(paymentMethod = value as? PaymentMethod)
+                ReceiptField.NOTES -> currentReceipt.copy(notes = value as? String ?: "")
+                ReceiptField.RECEIPT_NUMBER -> currentReceipt.copy(receiptNumber = value as? String ?: "")
+            }
+
+            updateState {
+                copy(
+                    editableData = editableData.copy(receipt = updatedReceipt),
+                    hasUnsavedChanges = true
+                )
+            }
+        }
+    }
+
+    /**
+     * Handle ProForma field updates.
+     * ProForma is informational only - no cashflow impact.
+     */
+    suspend fun DocumentReviewCtx.handleUpdateProFormaField(field: ProFormaField, value: Any?) {
+        withState<DocumentReviewState.Content, _> {
+            val currentProForma = editableData.proForma ?: return@withState
+
+            val updatedProForma = when (field) {
+                ProFormaField.CLIENT_NAME -> currentProForma.copy(clientName = value as? String ?: "")
+                ProFormaField.CLIENT_VAT_NUMBER -> currentProForma.copy(clientVatNumber = value as? String ?: "")
+                ProFormaField.CLIENT_EMAIL -> currentProForma.copy(clientEmail = value as? String ?: "")
+                ProFormaField.CLIENT_ADDRESS -> currentProForma.copy(clientAddress = value as? String ?: "")
+                ProFormaField.PRO_FORMA_NUMBER -> currentProForma.copy(proFormaNumber = value as? String ?: "")
+                ProFormaField.ISSUE_DATE -> currentProForma.copy(issueDate = value as? LocalDate)
+                ProFormaField.VALID_UNTIL -> currentProForma.copy(validUntil = value as? LocalDate)
+                ProFormaField.SUBTOTAL_AMOUNT -> currentProForma.copy(subtotalAmount = value as? String ?: "")
+                ProFormaField.VAT_AMOUNT -> currentProForma.copy(vatAmount = value as? String ?: "")
+                ProFormaField.TOTAL_AMOUNT -> currentProForma.copy(totalAmount = value as? String ?: "")
+                ProFormaField.CURRENCY -> currentProForma.copy(currency = value as? String ?: "EUR")
+                ProFormaField.NOTES -> currentProForma.copy(notes = value as? String ?: "")
+                ProFormaField.TERMS_AND_CONDITIONS -> currentProForma.copy(termsAndConditions = value as? String ?: "")
+            }
+
+            updateState {
+                copy(
+                    editableData = editableData.copy(proForma = updatedProForma),
+                    hasUnsavedChanges = true
+                )
+            }
+        }
+    }
+
+    /**
+     * Handle CreditNote field updates.
+     * CreditNote creates no cashflow on confirm - only on refund recording.
+     */
+    suspend fun DocumentReviewCtx.handleUpdateCreditNoteField(field: CreditNoteField, value: Any?) {
+        withState<DocumentReviewState.Content, _> {
+            val currentCreditNote = editableData.creditNote ?: return@withState
+
+            val updatedCreditNote = when (field) {
+                CreditNoteField.COUNTERPARTY_NAME -> currentCreditNote.copy(counterpartyName = value as? String ?: "")
+                CreditNoteField.COUNTERPARTY_VAT_NUMBER -> currentCreditNote.copy(
+                    counterpartyVatNumber = value as? String ?: ""
+                )
+                CreditNoteField.COUNTERPARTY_ADDRESS -> currentCreditNote.copy(
+                    counterpartyAddress = value as? String ?: ""
+                )
+                CreditNoteField.CREDIT_NOTE_NUMBER -> currentCreditNote.copy(creditNoteNumber = value as? String ?: "")
+                CreditNoteField.ORIGINAL_INVOICE_NUMBER -> currentCreditNote.copy(
+                    originalInvoiceNumber = value as? String ?: ""
+                )
+                CreditNoteField.ISSUE_DATE -> currentCreditNote.copy(issueDate = value as? LocalDate)
+                CreditNoteField.SUBTOTAL_AMOUNT -> currentCreditNote.copy(subtotalAmount = value as? String ?: "")
+                CreditNoteField.VAT_AMOUNT -> currentCreditNote.copy(vatAmount = value as? String ?: "")
+                CreditNoteField.TOTAL_AMOUNT -> currentCreditNote.copy(totalAmount = value as? String ?: "")
+                CreditNoteField.CURRENCY -> currentCreditNote.copy(currency = value as? String ?: "EUR")
+                CreditNoteField.REASON -> currentCreditNote.copy(reason = value as? String ?: "")
+                CreditNoteField.NOTES -> currentCreditNote.copy(notes = value as? String ?: "")
+            }
+
+            updateState {
+                copy(
+                    editableData = editableData.copy(creditNote = updatedCreditNote),
+                    hasUnsavedChanges = true
+                )
+            }
+        }
+    }
+
+    /**
      * Handle manual document type selection.
      * This is used when the AI fails to classify the document or the type is Unknown.
      * Initializes empty fields for the selected type.
@@ -117,25 +225,27 @@ internal class DocumentReviewFieldEditor {
                 DocumentType.Invoice -> EditableExtractedData(
                     documentType = type,
                     invoice = EditableInvoiceFields(),
-                    bill = null,
-                    expense = null,
                 )
                 DocumentType.Bill -> EditableExtractedData(
                     documentType = type,
-                    invoice = null,
                     bill = EditableBillFields(),
-                    expense = null,
                 )
                 DocumentType.Expense -> EditableExtractedData(
                     documentType = type,
-                    invoice = null,
-                    bill = null,
                     expense = EditableExpenseFields(),
                 )
-                // CreditNote, Receipt, ProForma not yet supported in UI
-                DocumentType.CreditNote,
-                DocumentType.Receipt,
-                DocumentType.ProForma,
+                DocumentType.Receipt -> EditableExtractedData(
+                    documentType = type,
+                    receipt = EditableReceiptFields(),
+                )
+                DocumentType.ProForma -> EditableExtractedData(
+                    documentType = type,
+                    proForma = EditableProFormaFields(),
+                )
+                DocumentType.CreditNote -> EditableExtractedData(
+                    documentType = type,
+                    creditNote = EditableCreditNoteFields(),
+                )
                 DocumentType.Unknown -> return@withState
             }
 

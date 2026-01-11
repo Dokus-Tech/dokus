@@ -91,6 +91,18 @@ internal class DocumentReviewContainer(
                             intent.field,
                             intent.value
                         )
+                        is DocumentReviewIntent.UpdateReceiptField -> handleUpdateReceiptField(
+                            intent.field,
+                            intent.value
+                        )
+                        is DocumentReviewIntent.UpdateProFormaField -> handleUpdateProFormaField(
+                            intent.field,
+                            intent.value
+                        )
+                        is DocumentReviewIntent.UpdateCreditNoteField -> handleUpdateCreditNoteField(
+                            intent.field,
+                            intent.value
+                        )
 
                         // === Contact Selection (with backend persist) ===
                         is DocumentReviewIntent.SelectContact -> handleSelectContact(intent.contactId)
