@@ -28,14 +28,12 @@ import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
 import org.junit.Rule
 import org.junit.Test
-import tech.dokus.domain.enums.Language
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.StatusBadge
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.features.cashflow.presentation.screenshot.ScreenshotTestWrapper
 
 /**
  * Screenshot tests for cashflow screens.
@@ -55,25 +53,15 @@ class CashflowScreenshotTest {
         maxPercentDifference = 0.1
     )
 
-    private val lightTheme = PreviewParameters(
-        isDarkMode = false,
-        language = Language.En
-    )
-
-    private val darkTheme = PreviewParameters(
-        isDarkMode = true,
-        language = Language.En
-    )
-
     @Test
     fun cashflowLedgerScreen_empty() {
         paparazzi.snapshot("CashflowLedgerScreen_empty_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 CashflowLedgerContent(entries = emptyList())
             }
         }
         paparazzi.snapshot("CashflowLedgerScreen_empty_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 CashflowLedgerContent(entries = emptyList())
             }
         }
@@ -89,12 +77,12 @@ class CashflowScreenshotTest {
         )
 
         paparazzi.snapshot("CashflowLedgerScreen_withEntries_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 CashflowLedgerContent(entries = sampleEntries)
             }
         }
         paparazzi.snapshot("CashflowLedgerScreen_withEntries_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 CashflowLedgerContent(entries = sampleEntries)
             }
         }
@@ -109,12 +97,12 @@ class CashflowScreenshotTest {
         )
 
         paparazzi.snapshot("DocumentsScreen_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 DocumentsContent(documents = sampleDocs)
             }
         }
         paparazzi.snapshot("DocumentsScreen_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 DocumentsContent(documents = sampleDocs)
             }
         }
@@ -123,12 +111,12 @@ class CashflowScreenshotTest {
     @Test
     fun createInvoiceScreen() {
         paparazzi.snapshot("CreateInvoiceScreen_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 CreateInvoiceContent()
             }
         }
         paparazzi.snapshot("CreateInvoiceScreen_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 CreateInvoiceContent()
             }
         }

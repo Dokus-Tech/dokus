@@ -36,6 +36,7 @@ import tech.dokus.domain.flags.FeatureFlagService
 import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.style.ThemeManager
+import tech.dokus.foundation.aura.style.ThemeManagerImpl
 
 internal val diModuleApp = module {
     // Server configuration management (bridges platform settings with domain types)
@@ -48,7 +49,7 @@ internal val diModuleApp = module {
     // and wired into HTTP clients for event-driven connection tracking
 
     // Theme management (singleton)
-    singleOf(::ThemeManager)
+    singleOf(::ThemeManagerImpl) bind ThemeManager::class
 
     // FlowMVI Containers
     container<BootstrapContainer, BootstrapState, BootstrapIntent, BootstrapAction> {

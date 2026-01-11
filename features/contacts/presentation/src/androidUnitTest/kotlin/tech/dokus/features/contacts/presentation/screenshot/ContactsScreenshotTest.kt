@@ -32,7 +32,6 @@ import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
 import org.junit.Rule
 import org.junit.Test
-import tech.dokus.domain.enums.Language
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.DokusCard
@@ -40,8 +39,7 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.features.contacts.presentation.screenshot.ScreenshotTestWrapper
 
 /**
  * Screenshot tests for contacts screens.
@@ -61,25 +59,15 @@ class ContactsScreenshotTest {
         maxPercentDifference = 0.1
     )
 
-    private val lightTheme = PreviewParameters(
-        isDarkMode = false,
-        language = Language.En
-    )
-
-    private val darkTheme = PreviewParameters(
-        isDarkMode = true,
-        language = Language.En
-    )
-
     @Test
     fun contactsScreen_empty() {
         paparazzi.snapshot("ContactsScreen_empty_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 ContactsListContent(contacts = emptyList())
             }
         }
         paparazzi.snapshot("ContactsScreen_empty_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 ContactsListContent(contacts = emptyList())
             }
         }
@@ -95,12 +83,12 @@ class ContactsScreenshotTest {
         )
 
         paparazzi.snapshot("ContactsScreen_withContacts_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 ContactsListContent(contacts = sampleContacts)
             }
         }
         paparazzi.snapshot("ContactsScreen_withContacts_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 ContactsListContent(contacts = sampleContacts)
             }
         }
@@ -115,12 +103,12 @@ class ContactsScreenshotTest {
         )
 
         paparazzi.snapshot("ContactDetailsScreen_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 ContactDetailsContent(contact = contact)
             }
         }
         paparazzi.snapshot("ContactDetailsScreen_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 ContactDetailsContent(contact = contact)
             }
         }
@@ -129,12 +117,12 @@ class ContactsScreenshotTest {
     @Test
     fun contactFormScreen() {
         paparazzi.snapshot("ContactFormScreen_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 ContactFormContent()
             }
         }
         paparazzi.snapshot("ContactFormScreen_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 ContactFormContent()
             }
         }

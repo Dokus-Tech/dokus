@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -18,6 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
@@ -25,18 +30,11 @@ import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
 import org.junit.Rule
 import org.junit.Test
-import tech.dokus.domain.enums.Language
-import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextField
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.TestWrapper
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.features.auth.presentation.screenshot.ScreenshotTestWrapper
 
 /**
  * Screenshot tests for auth screens.
@@ -56,20 +54,10 @@ class AuthScreenshotTest {
         maxPercentDifference = 0.1
     )
 
-    private val lightTheme = PreviewParameters(
-        isDarkMode = false,
-        language = Language.En
-    )
-
-    private val darkTheme = PreviewParameters(
-        isDarkMode = true,
-        language = Language.En
-    )
-
     @Test
     fun loginScreen_empty() {
         paparazzi.snapshot("LoginScreen_empty_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 LoginFormContent(
                     email = "",
                     password = "",
@@ -78,7 +66,7 @@ class AuthScreenshotTest {
             }
         }
         paparazzi.snapshot("LoginScreen_empty_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 LoginFormContent(
                     email = "",
                     password = "",
@@ -91,7 +79,7 @@ class AuthScreenshotTest {
     @Test
     fun loginScreen_filled() {
         paparazzi.snapshot("LoginScreen_filled_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 LoginFormContent(
                     email = "user@example.com",
                     password = "password123",
@@ -100,7 +88,7 @@ class AuthScreenshotTest {
             }
         }
         paparazzi.snapshot("LoginScreen_filled_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 LoginFormContent(
                     email = "user@example.com",
                     password = "password123",
@@ -113,7 +101,7 @@ class AuthScreenshotTest {
     @Test
     fun loginScreen_loading() {
         paparazzi.snapshot("LoginScreen_loading_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 LoginFormContent(
                     email = "user@example.com",
                     password = "password123",
@@ -126,7 +114,7 @@ class AuthScreenshotTest {
     @Test
     fun registerScreen() {
         paparazzi.snapshot("RegisterScreen_light") {
-            TestWrapper(parameters = lightTheme) {
+            ScreenshotTestWrapper(isDarkMode = false) {
                 RegisterFormContent(
                     name = "",
                     email = "",
@@ -136,7 +124,7 @@ class AuthScreenshotTest {
             }
         }
         paparazzi.snapshot("RegisterScreen_dark") {
-            TestWrapper(parameters = darkTheme) {
+            ScreenshotTestWrapper(isDarkMode = true) {
                 RegisterFormContent(
                     name = "",
                     email = "",
