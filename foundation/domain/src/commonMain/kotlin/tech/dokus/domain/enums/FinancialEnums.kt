@@ -699,7 +699,11 @@ enum class CashflowDirection(override val dbValue: String) : DbEnum {
     In("IN"),
 
     @SerialName("OUT")
-    Out("OUT")
+    Out("OUT"),
+
+    /** Neutral direction - no cashflow impact (e.g., ProForma, adjustments) */
+    @SerialName("NEUTRAL")
+    Neutral("NEUTRAL")
 }
 
 @Serializable

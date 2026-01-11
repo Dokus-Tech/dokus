@@ -6,6 +6,9 @@ import tech.dokus.domain.database.DbEnum
 
 /**
  * Type of document detected during AI extraction.
+ *
+ * Note: This represents legal document types per the 4-axis classification system.
+ * See CLASSIFICATION.md for full documentation.
  */
 @Serializable
 enum class DocumentType(override val dbValue: String) : DbEnum {
@@ -17,6 +20,15 @@ enum class DocumentType(override val dbValue: String) : DbEnum {
 
     @SerialName("EXPENSE")
     Expense("EXPENSE"),
+
+    @SerialName("CREDIT_NOTE")
+    CreditNote("CREDIT_NOTE"),
+
+    @SerialName("RECEIPT")
+    Receipt("RECEIPT"),
+
+    @SerialName("PRO_FORMA")
+    ProForma("PRO_FORMA"),
 
     @SerialName("UNKNOWN")
     Unknown("UNKNOWN")
