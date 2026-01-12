@@ -8,18 +8,25 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.CreditNoteStatus
+import tech.dokus.domain.enums.CreditNoteType
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.RefundClaimStatus
+import tech.dokus.domain.enums.SettlementIntent
 import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.CreditNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.PeppolId
+import tech.dokus.domain.ids.RefundClaimId
 import tech.dokus.domain.ids.TenantId
 
 /**
@@ -139,7 +146,56 @@ sealed interface FinancialDocumentDto {
     ) : FinancialDocumentDto {
         override val date: LocalDate get() = issueDate
     }
+
+    /**
+     * CreditNote DTO - represents a credit note (sales or purchase).
+     * Sales credit notes reduce receivables, purchase credit notes reduce payables.
+     * No direct cashflow impact - cashflow only when refund is recorded.
+     */
+    @Serializable
+    @SerialName("CreditNote")
+    data class CreditNoteDto(
+        val id: CreditNoteId,
+        override val tenantId: TenantId,
+        val contactId: ContactId,
+        val creditNoteType: CreditNoteType,
+        val creditNoteNumber: String,
+        val issueDate: LocalDate,
+        val subtotalAmount: Money,
+        val vatAmount: Money,
+        val totalAmount: Money,
+        val status: CreditNoteStatus,
+        val settlementIntent: SettlementIntent,
+        override val documentId: DocumentId? = null,
+        val reason: String? = null,
+        override val currency: Currency = Currency.Eur,
+        override val notes: String? = null,
+        override val createdAt: LocalDateTime,
+        override val updatedAt: LocalDateTime
+    ) : FinancialDocumentDto {
+        override val date: LocalDate get() = issueDate
+        override val amount: Money get() = totalAmount
+    }
 }
+
+/**
+ * RefundClaim DTO - represents an expected refund from a credit note.
+ */
+@Serializable
+data class RefundClaimDto(
+    val id: RefundClaimId,
+    val tenantId: TenantId,
+    val creditNoteId: CreditNoteId,
+    val counterpartyId: ContactId,
+    val amount: Money,
+    val currency: Currency,
+    val expectedDate: LocalDate? = null,
+    val status: RefundClaimStatus,
+    val settledAt: LocalDateTime? = null,
+    val cashflowEntryId: CashflowEntryId? = null,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
+)
 
 /**
  * Invoice line item DTO
@@ -173,12 +229,19 @@ fun FinancialDocumentDto.isExpense(): Boolean = this is FinancialDocumentDto.Exp
 fun FinancialDocumentDto.isBill(): Boolean = this is FinancialDocumentDto.BillDto
 
 /**
+ * Extension function to check if document is a credit note.
+ */
+fun FinancialDocumentDto.isCreditNote(): Boolean = this is FinancialDocumentDto.CreditNoteDto
+
+/**
  * Extension function to check if document is cash-in (money coming in).
+ * Note: CreditNotes are NOT cash-in/out until refund is recorded.
  */
 fun FinancialDocumentDto.isCashIn(): Boolean = this is FinancialDocumentDto.InvoiceDto
 
 /**
  * Extension function to check if document is cash-out (money going out).
+ * Note: CreditNotes are NOT cash-in/out until refund is recorded.
  */
 fun FinancialDocumentDto.isCashOut(): Boolean =
     this is FinancialDocumentDto.ExpenseDto || this is FinancialDocumentDto.BillDto

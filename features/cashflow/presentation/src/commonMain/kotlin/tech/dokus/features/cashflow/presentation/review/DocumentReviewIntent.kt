@@ -34,6 +34,21 @@ sealed interface DocumentReviewIntent : MVIIntent {
         val value: Any?,
     ) : DocumentReviewIntent
 
+    data class UpdateReceiptField(
+        val field: ReceiptField,
+        val value: Any?,
+    ) : DocumentReviewIntent
+
+    data class UpdateProFormaField(
+        val field: ProFormaField,
+        val value: Any?,
+    ) : DocumentReviewIntent
+
+    data class UpdateCreditNoteField(
+        val field: CreditNoteField,
+        val value: Any?,
+    ) : DocumentReviewIntent
+
     data class SelectContact(val contactId: ContactId) : DocumentReviewIntent
     data object AcceptSuggestedContact : DocumentReviewIntent
     data object ClearSelectedContact : DocumentReviewIntent
@@ -123,4 +138,62 @@ enum class ExpenseField {
     PAYMENT_METHOD,
     NOTES,
     RECEIPT_NUMBER,
+}
+
+/**
+ * Receipt fields - mirrors Expense since Receipt confirms into Expense.
+ */
+enum class ReceiptField {
+    MERCHANT,
+    MERCHANT_ADDRESS,
+    MERCHANT_VAT_NUMBER,
+    DATE,
+    AMOUNT,
+    VAT_AMOUNT,
+    VAT_RATE,
+    CURRENCY,
+    CATEGORY,
+    DESCRIPTION,
+    IS_DEDUCTIBLE,
+    DEDUCTIBLE_PERCENTAGE,
+    PAYMENT_METHOD,
+    NOTES,
+    RECEIPT_NUMBER,
+}
+
+/**
+ * ProForma fields - informational only, can be converted to Invoice.
+ */
+enum class ProFormaField {
+    CLIENT_NAME,
+    CLIENT_VAT_NUMBER,
+    CLIENT_EMAIL,
+    CLIENT_ADDRESS,
+    PRO_FORMA_NUMBER,
+    ISSUE_DATE,
+    VALID_UNTIL,
+    SUBTOTAL_AMOUNT,
+    VAT_AMOUNT,
+    TOTAL_AMOUNT,
+    CURRENCY,
+    NOTES,
+    TERMS_AND_CONDITIONS,
+}
+
+/**
+ * CreditNote fields - no cashflow on confirm, only on refund recording.
+ */
+enum class CreditNoteField {
+    COUNTERPARTY_NAME,
+    COUNTERPARTY_VAT_NUMBER,
+    COUNTERPARTY_ADDRESS,
+    CREDIT_NOTE_NUMBER,
+    ORIGINAL_INVOICE_NUMBER,
+    ISSUE_DATE,
+    SUBTOTAL_AMOUNT,
+    VAT_AMOUNT,
+    TOTAL_AMOUNT,
+    CURRENCY,
+    REASON,
+    NOTES,
 }

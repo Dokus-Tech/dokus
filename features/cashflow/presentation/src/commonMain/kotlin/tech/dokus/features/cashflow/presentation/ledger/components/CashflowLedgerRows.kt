@@ -267,4 +267,5 @@ private fun CashflowStatusIcon(
 private fun directionColor(direction: CashflowDirection) = when (direction) {
     CashflowDirection.In -> MaterialTheme.colorScheme.tertiary
     CashflowDirection.Out -> MaterialTheme.colorScheme.error
+    CashflowDirection.Neutral -> MaterialTheme.colorScheme.outline
 }

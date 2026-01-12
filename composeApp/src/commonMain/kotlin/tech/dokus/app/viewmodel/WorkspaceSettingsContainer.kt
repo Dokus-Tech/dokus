@@ -358,13 +358,14 @@ internal class WorkspaceSettingsContainer(
     }
 }
 
+@Suppress("NoMultipleSpaces")
 private fun Address.toDisplayString(): String {
     val parts = buildList {
         streetLine1?.let { add(it) }
         streetLine2?.takeIf { it.isNotBlank() }?.let { add(it) }
         val cityLine = listOfNotNull(postalCode, city).filter { it.isNotBlank() }.joinToString(" ")
         if (cityLine.isNotBlank()) add(cityLine)
-        country?.let { add(it) }  // country is now ISO-2 string directly
+        country?.let { add(it) } // country is now ISO-2 string directly
     }
     return parts.joinToString(", ")
 }

@@ -74,6 +74,63 @@ internal class DocumentReviewExtractedDataMapper {
                     receiptNumber = expense.receiptNumber.takeIf { it.isNotBlank() }
                 )
             },
+            receipt = editable.receipt?.let { receipt ->
+                val base = original?.receipt ?: tech.dokus.domain.model.ExtractedReceiptFields()
+                base.copy(
+                    merchant = receipt.merchant.takeIf { it.isNotBlank() },
+                    merchantAddress = receipt.merchantAddress.takeIf { it.isNotBlank() },
+                    merchantVatNumber = receipt.merchantVatNumber.takeIf { it.isNotBlank() },
+                    date = receipt.date,
+                    amount = Money.parse(receipt.amount),
+                    vatAmount = Money.parse(receipt.vatAmount),
+                    vatRate = VatRate.parse(receipt.vatRate),
+                    currency = parseCurrency(receipt.currency, original?.receipt?.currency),
+                    category = receipt.category,
+                    description = receipt.description.takeIf { it.isNotBlank() },
+                    isDeductible = receipt.isDeductible,
+                    deductiblePercentage = Percentage.parse(receipt.deductiblePercentage),
+                    paymentMethod = receipt.paymentMethod,
+                    notes = receipt.notes.takeIf { it.isNotBlank() },
+                    receiptNumber = receipt.receiptNumber.takeIf { it.isNotBlank() }
+                )
+            },
+            proForma = editable.proForma?.let { proForma ->
+                val base = original?.proForma ?: tech.dokus.domain.model.ExtractedProFormaFields()
+                base.copy(
+                    clientName = proForma.clientName.takeIf { it.isNotBlank() },
+                    clientVatNumber = proForma.clientVatNumber.takeIf { it.isNotBlank() },
+                    clientEmail = proForma.clientEmail.takeIf { it.isNotBlank() },
+                    clientAddress = proForma.clientAddress.takeIf { it.isNotBlank() },
+                    proFormaNumber = proForma.proFormaNumber.takeIf { it.isNotBlank() },
+                    issueDate = proForma.issueDate,
+                    validUntil = proForma.validUntil,
+                    items = proForma.items,
+                    subtotalAmount = Money.parse(proForma.subtotalAmount),
+                    vatAmount = Money.parse(proForma.vatAmount),
+                    totalAmount = Money.parse(proForma.totalAmount),
+                    currency = parseCurrency(proForma.currency, original?.proForma?.currency),
+                    notes = proForma.notes.takeIf { it.isNotBlank() },
+                    termsAndConditions = proForma.termsAndConditions.takeIf { it.isNotBlank() }
+                )
+            },
+            creditNote = editable.creditNote?.let { creditNote ->
+                val base = original?.creditNote ?: tech.dokus.domain.model.ExtractedCreditNoteFields()
+                base.copy(
+                    counterpartyName = creditNote.counterpartyName.takeIf { it.isNotBlank() },
+                    counterpartyVatNumber = creditNote.counterpartyVatNumber.takeIf { it.isNotBlank() },
+                    counterpartyAddress = creditNote.counterpartyAddress.takeIf { it.isNotBlank() },
+                    creditNoteNumber = creditNote.creditNoteNumber.takeIf { it.isNotBlank() },
+                    originalInvoiceNumber = creditNote.originalInvoiceNumber.takeIf { it.isNotBlank() },
+                    issueDate = creditNote.issueDate,
+                    items = creditNote.items,
+                    subtotalAmount = Money.parse(creditNote.subtotalAmount),
+                    vatAmount = Money.parse(creditNote.vatAmount),
+                    totalAmount = Money.parse(creditNote.totalAmount),
+                    currency = parseCurrency(creditNote.currency, original?.creditNote?.currency),
+                    reason = creditNote.reason.takeIf { it.isNotBlank() },
+                    notes = creditNote.notes.takeIf { it.isNotBlank() }
+                )
+            },
             overallConfidence = original?.overallConfidence,
             fieldConfidences = original?.fieldConfidences ?: emptyMap()
         )

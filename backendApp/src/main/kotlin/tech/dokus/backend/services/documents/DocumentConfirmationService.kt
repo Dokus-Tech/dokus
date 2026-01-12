@@ -49,11 +49,15 @@ import java.math.BigDecimal
 import java.util.UUID
 
 /**
- * Result of document confirmation containing both the financial entity and cashflow entry ID.
+ * Result of document confirmation containing the financial entity and cashflow entry ID.
+ *
+ * Note: For ProForma confirmation, both entity and cashflowEntryId will be null
+ * since ProForma creates no financial entity and no cashflow entry.
  */
 data class ConfirmationResult(
-    val entity: FinancialDocumentDto,
-    val cashflowEntryId: CashflowEntryId
+    val entity: FinancialDocumentDto?,
+    val cashflowEntryId: CashflowEntryId?,
+    val documentId: DocumentId
 )
 
 /**
@@ -96,6 +100,7 @@ class DocumentConfirmationService(
      * @param linkedContactId The linked contact (required for invoices)
      * @return The created financial entity
      */
+    @Suppress("CyclomaticComplexMethod")
     suspend fun confirmDocument(
         tenantId: TenantId,
         documentId: DocumentId,
@@ -107,7 +112,13 @@ class DocumentConfirmationService(
 
         val invoiceNumber: String? = when (documentType) {
             DocumentType.Invoice -> invoiceNumberGenerator.generateInvoiceNumber(tenantId).getOrThrow()
-            DocumentType.Bill, DocumentType.Expense, DocumentType.Unknown -> null
+            DocumentType.Bill,
+            DocumentType.Expense,
+            DocumentType.CreditNote,
+            DocumentType.Receipt,
+            DocumentType.ProForma,
+            DocumentType.Unknown,
+            -> null
         }
 
         val created = dbQuery {
@@ -136,7 +147,25 @@ class DocumentConfirmationService(
                     linkedContactId = linkedContactId
                 )
 
-                DocumentType.Unknown -> throw DokusException.BadRequest("Cannot confirm document with unknown type")
+                DocumentType.Receipt -> confirmReceiptTx(
+                    tenantId = tenantId,
+                    documentId = documentId,
+                    extractedData = extractedData,
+                    linkedContactId = linkedContactId
+                )
+
+                DocumentType.ProForma -> confirmProFormaTx(
+                    tenantId = tenantId,
+                    documentId = documentId
+                )
+
+                DocumentType.CreditNote -> throw DokusException.BadRequest(
+                    "CreditNote confirmation is handled via CreditNoteService"
+                )
+
+                DocumentType.Unknown -> throw DokusException.BadRequest(
+                    "Cannot confirm document with type: $documentType"
+                )
             }
         }
 
@@ -164,10 +193,25 @@ class DocumentConfirmationService(
                 ).getOrThrow() ?: throw DokusException.InternalError("Expense not found after confirmation")
                 expense to created.cashflowEntryId
             }
+
+            is CreatedConfirmation.Receipt -> {
+                // Receipt creates an Expense entity, so retrieve it as Expense
+                val expense = expenseRepository.getExpense(
+                    expenseId = ExpenseId.parse(created.expenseId.toString()),
+                    tenantId = tenantId
+                ).getOrThrow() ?: throw DokusException.InternalError("Expense not found after receipt confirmation")
+                expense to created.cashflowEntryId
+            }
+
+            is CreatedConfirmation.ProForma -> {
+                // ProForma has no financial entity and no cashflow entry
+                null to null
+            }
         }
 
-        logger.info("Document confirmed: $documentId -> ${entity.javaClass.simpleName}, entryId: $cashflowEntryId")
-        ConfirmationResult(entity = entity, cashflowEntryId = cashflowEntryId)
+        val entityName = entity?.javaClass?.simpleName ?: "ProForma (no entity)"
+        logger.info("Document confirmed: $documentId -> $entityName, entryId: $cashflowEntryId")
+        ConfirmationResult(entity = entity, cashflowEntryId = cashflowEntryId, documentId = documentId)
     }
 
     private fun ensureDraftConfirmable(tenantId: TenantId, documentId: DocumentId) {
@@ -278,11 +322,12 @@ class DocumentConfirmationService(
         )
     }
 
+    @Suppress("ThrowsCount")
     private fun confirmBillTx(
         tenantId: TenantId,
         documentId: DocumentId,
         extractedData: ExtractedDocumentData,
-        linkedContactId: ContactId?
+        linkedContactId: ContactId?,
     ): CreatedConfirmation.Bill {
         val billData = extractedData.bill
             ?: throw DokusException.BadRequest("No bill data extracted from document")
@@ -332,11 +377,12 @@ class DocumentConfirmationService(
         )
     }
 
+    @Suppress("ThrowsCount")
     private fun confirmExpenseTx(
         tenantId: TenantId,
         documentId: DocumentId,
         extractedData: ExtractedDocumentData,
-        linkedContactId: ContactId?
+        linkedContactId: ContactId?,
     ): CreatedConfirmation.Expense {
         val expenseData = extractedData.expense
             ?: throw DokusException.BadRequest("No expense data extracted from document")
@@ -387,6 +433,86 @@ class DocumentConfirmationService(
         )
     }
 
+    /**
+     * Confirm a Receipt document.
+     * Receipt confirms into an Expense entity + cashflow OUT entry.
+     * Uses same logic as Expense confirmation with receipt data.
+     */
+    @Suppress("ThrowsCount")
+    private fun confirmReceiptTx(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        extractedData: ExtractedDocumentData,
+        linkedContactId: ContactId?,
+    ): CreatedConfirmation.Receipt {
+        val receiptData = extractedData.receipt
+            ?: throw DokusException.BadRequest("No receipt data extracted from document")
+
+        val date = receiptData.date ?: throw DokusException.BadRequest("Date is required")
+        val merchant = receiptData.merchant ?: throw DokusException.BadRequest("Merchant is required")
+        val amount = receiptData.amount ?: throw DokusException.BadRequest("Amount is required")
+        val category = receiptData.category ?: throw DokusException.BadRequest("Category is required")
+
+        // Receipt creates an Expense entity (same structure)
+        val expenseId = ExpensesTable.insertAndGetId {
+            it[ExpensesTable.tenantId] = UUID.fromString(tenantId.toString())
+            it[ExpensesTable.date] = date
+            it[ExpensesTable.merchant] = merchant
+            it[ExpensesTable.amount] = amount.toDbDecimal()
+            it[ExpensesTable.vatAmount] = receiptData.vatAmount?.toDbDecimal()
+            it[ExpensesTable.vatRate] = receiptData.vatRate?.toDbDecimal()
+            it[ExpensesTable.category] = category
+            it[ExpensesTable.description] = receiptData.description
+            it[ExpensesTable.documentId] = UUID.fromString(documentId.toString())
+            it[ExpensesTable.contactId] = linkedContactId?.let { id -> UUID.fromString(id.toString()) }
+            it[ExpensesTable.isDeductible] = receiptData.isDeductible ?: true
+            it[ExpensesTable.deductiblePercentage] =
+                (receiptData.deductiblePercentage ?: Percentage.FULL).toDbDecimal()
+            it[ExpensesTable.paymentMethod] = receiptData.paymentMethod
+            it[ExpensesTable.isRecurring] = false
+            it[ExpensesTable.notes] = receiptData.notes
+        }.value
+
+        // Create cashflow OUT entry
+        val entryId = CashflowEntriesTable.insertAndGetId {
+            it[CashflowEntriesTable.tenantId] = UUID.fromString(tenantId.toString())
+            it[CashflowEntriesTable.sourceType] = CashflowSourceType.Expense
+            it[CashflowEntriesTable.sourceId] = expenseId
+            it[CashflowEntriesTable.documentId] = UUID.fromString(documentId.toString())
+            it[CashflowEntriesTable.direction] = CashflowDirection.Out
+            it[CashflowEntriesTable.eventDate] = date
+            it[CashflowEntriesTable.amountGross] = amount.toDbDecimal()
+            it[CashflowEntriesTable.amountVat] = (receiptData.vatAmount ?: Money.ZERO).toDbDecimal()
+            it[CashflowEntriesTable.remainingAmount] = amount.toDbDecimal()
+            it[CashflowEntriesTable.status] = CashflowEntryStatus.Open
+            it[CashflowEntriesTable.counterpartyId] = linkedContactId?.let { id -> UUID.fromString(id.toString()) }
+        }.value
+
+        markDraftConfirmed(tenantId = tenantId, documentId = documentId)
+
+        return CreatedConfirmation.Receipt(
+            expenseId = expenseId,
+            cashflowEntryId = CashflowEntryId.parse(entryId.toString())
+        )
+    }
+
+    /**
+     * Confirm a ProForma document.
+     * ProForma is informational only - marks draft as Confirmed but creates NO cashflow/VAT impact.
+     * Conversion to Invoice is handled separately via ProFormaService.convertToInvoice().
+     */
+    private fun confirmProFormaTx(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): CreatedConfirmation.ProForma {
+        // ProForma creates no financial entity and no cashflow entry
+        // Just mark the draft as confirmed
+        markDraftConfirmed(tenantId = tenantId, documentId = documentId)
+
+        // ProForma is document-only - no financial entity, no cashflow entry
+        return CreatedConfirmation.ProForma(documentId = documentId)
+    }
+
     private fun markDraftConfirmed(tenantId: TenantId, documentId: DocumentId) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val updated = DocumentDraftsTable.update({
@@ -417,5 +543,14 @@ private sealed interface CreatedConfirmation {
     data class Expense(
         val expenseId: UUID,
         val cashflowEntryId: CashflowEntryId
+    ) : CreatedConfirmation
+
+    data class Receipt(
+        val expenseId: UUID, // Receipt creates an Expense entity
+        val cashflowEntryId: CashflowEntryId
+    ) : CreatedConfirmation
+
+    data class ProForma(
+        val documentId: DocumentId
     ) : CreatedConfirmation
 }

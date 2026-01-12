@@ -690,7 +690,11 @@ enum class CashflowSourceType(override val dbValue: String) : DbEnum {
     Expense("EXPENSE"),
 
     @SerialName("MANUAL")
-    Manual("MANUAL")
+    Manual("MANUAL"),
+
+    /** Refund payment from a credit note */
+    @SerialName("REFUND")
+    Refund("REFUND")
 }
 
 @Serializable
@@ -699,7 +703,11 @@ enum class CashflowDirection(override val dbValue: String) : DbEnum {
     In("IN"),
 
     @SerialName("OUT")
-    Out("OUT")
+    Out("OUT"),
+
+    /** Neutral direction - no cashflow impact (e.g., ProForma, adjustments) */
+    @SerialName("NEUTRAL")
+    Neutral("NEUTRAL")
 }
 
 @Serializable
@@ -1033,4 +1041,73 @@ enum class EntityType(override val dbValue: String) : DbEnum {
 
     @SerialName("MEDIA")
     Media("MEDIA")
+}
+
+// ============================================================================
+// CREDIT NOTE ENUMS
+// ============================================================================
+
+/**
+ * Credit note type - determines the accounting direction.
+ * - Sales: Customer credit note (reduces receivables)
+ * - Purchase: Supplier credit note (reduces payables)
+ */
+@Serializable
+enum class CreditNoteType(override val dbValue: String) : DbEnum {
+    @SerialName("SALES")
+    Sales("SALES"),
+
+    @SerialName("PURCHASE")
+    Purchase("PURCHASE")
+}
+
+/**
+ * Credit note lifecycle status.
+ */
+@Serializable
+enum class CreditNoteStatus(override val dbValue: String) : DbEnum {
+    @SerialName("DRAFT")
+    Draft("DRAFT"),
+
+    @SerialName("CONFIRMED")
+    Confirmed("CONFIRMED"),
+
+    @SerialName("SETTLED")
+    Settled("SETTLED"),
+
+    @SerialName("CANCELLED")
+    Cancelled("CANCELLED")
+}
+
+/**
+ * How the credit note is expected to be settled.
+ * - RefundExpected: Money will be returned (cashflow entry created on payment)
+ * - OffsetExpected: Will be offset against future invoice/bill
+ * - Unknown: User hasn't decided yet
+ */
+@Serializable
+enum class SettlementIntent(override val dbValue: String) : DbEnum {
+    @SerialName("REFUND_EXPECTED")
+    RefundExpected("REFUND_EXPECTED"),
+
+    @SerialName("OFFSET_EXPECTED")
+    OffsetExpected("OFFSET_EXPECTED"),
+
+    @SerialName("UNKNOWN")
+    Unknown("UNKNOWN")
+}
+
+/**
+ * Refund claim status - tracks expected refund payments from credit notes.
+ */
+@Serializable
+enum class RefundClaimStatus(override val dbValue: String) : DbEnum {
+    @SerialName("OPEN")
+    Open("OPEN"),
+
+    @SerialName("SETTLED")
+    Settled("SETTLED"),
+
+    @SerialName("CANCELLED")
+    Cancelled("CANCELLED")
 }

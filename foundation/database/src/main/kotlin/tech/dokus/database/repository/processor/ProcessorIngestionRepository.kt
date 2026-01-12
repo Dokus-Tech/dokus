@@ -82,6 +82,39 @@ class ProcessorIngestionRepository {
                     DraftStatus.NeedsReview
                 }
             }
+            DocumentType.Receipt -> {
+                // Receipt uses same required fields as Expense (confirms into Expense)
+                val receipt = data.receipt ?: return DraftStatus.NeedsReview
+                if (receipt.amount != null && receipt.merchant != null &&
+                    receipt.date != null && receipt.category != null
+                ) {
+                    DraftStatus.Ready
+                } else {
+                    DraftStatus.NeedsReview
+                }
+            }
+            DocumentType.ProForma -> {
+                // ProForma is informational - client/totals needed for conversion
+                val proForma = data.proForma ?: return DraftStatus.NeedsReview
+                if (proForma.totalAmount != null && proForma.clientName != null &&
+                    proForma.issueDate != null
+                ) {
+                    DraftStatus.Ready
+                } else {
+                    DraftStatus.NeedsReview
+                }
+            }
+            DocumentType.CreditNote -> {
+                // CreditNote needs counterparty, amount, and issue date
+                val creditNote = data.creditNote ?: return DraftStatus.NeedsReview
+                if (creditNote.totalAmount != null && creditNote.counterpartyName != null &&
+                    creditNote.issueDate != null
+                ) {
+                    DraftStatus.Ready
+                } else {
+                    DraftStatus.NeedsReview
+                }
+            }
             DocumentType.Unknown -> DraftStatus.NeedsReview
         }
     }

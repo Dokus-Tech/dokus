@@ -56,6 +56,7 @@ class ContactMatchingService(
      * @param extracted The extracted counterparty data from AI
      * @return ContactSuggestion with match result
      */
+    @Suppress("MagicNumber")
     suspend fun findMatch(
         tenantId: TenantId,
         extracted: ExtractedCounterparty
