@@ -1,5 +1,6 @@
 package tech.dokus.foundation.aura.screenshot.components
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -11,7 +12,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -22,10 +22,24 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow
+import tech.dokus.aura.resources.cashflow_title
+import tech.dokus.aura.resources.chart_bar_trend_up
+import tech.dokus.aura.resources.file_text
+import tech.dokus.aura.resources.home_settings
+import tech.dokus.aura.resources.home_today
+import tech.dokus.aura.resources.more_horizontal
+import tech.dokus.aura.resources.nav_contacts
+import tech.dokus.aura.resources.nav_documents
+import tech.dokus.aura.resources.nav_more
+import tech.dokus.aura.resources.nav_section_accounting
+import tech.dokus.aura.resources.nav_section_company
+import tech.dokus.aura.resources.nav_team
+import tech.dokus.aura.resources.settings
+import tech.dokus.aura.resources.users
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRail
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
-import tech.dokus.foundation.aura.components.navigation.NavigationBar as LegacyNavigationBar
 import tech.dokus.foundation.aura.components.navigation.SelectableCard
 import tech.dokus.foundation.aura.components.navigation.TabNavItem
 import tech.dokus.foundation.aura.components.navigation.navItems
@@ -37,6 +51,7 @@ import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
 import tech.dokus.navigation.local.NavControllerProvided
+import tech.dokus.foundation.aura.components.navigation.NavigationBar as LegacyNavigationBar
 
 /**
  * Screenshot tests for navigation components.

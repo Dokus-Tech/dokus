@@ -15,6 +15,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.nav_contacts
+import tech.dokus.aura.resources.nav_documents
+import tech.dokus.aura.resources.nav_team
 import tech.dokus.foundation.aura.components.chips.PChoiceChips
 import tech.dokus.foundation.aura.components.dropdown.FilterOption
 import tech.dokus.foundation.aura.components.dropdown.PFilterDropdown

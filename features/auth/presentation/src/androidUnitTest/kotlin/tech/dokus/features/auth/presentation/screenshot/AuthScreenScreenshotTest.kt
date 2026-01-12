@@ -24,6 +24,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.app_slogan
+import tech.dokus.aura.resources.brand_motto
+import tech.dokus.aura.resources.copyright
+import tech.dokus.aura.resources.slogan_line_2
+import tech.dokus.aura.resources.slogan_line_3
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.Language
