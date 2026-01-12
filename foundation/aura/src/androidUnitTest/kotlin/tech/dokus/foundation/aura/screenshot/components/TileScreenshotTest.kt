@@ -11,6 +11,8 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
+import tech.dokus.foundation.aura.components.tiles.CompanyTile
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
@@ -63,6 +65,24 @@ class TileScreenshotTest(private val viewport: ScreenshotViewport) {
                 CompanyAvatarImage(avatarUrl = null, initial = "S", size = AvatarSize.Small)
                 CompanyAvatarImage(avatarUrl = null, initial = "M", size = AvatarSize.Medium)
                 CompanyAvatarImage(avatarUrl = null, initial = "L", size = AvatarSize.Large)
+            }
+        }
+    }
+
+    @Test
+    fun companyTiles() {
+        paparazzi.snapshotAllViewports("CompanyTiles", viewport) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                CompanyTile(
+                    initial = "A",
+                    label = "Acme Corp",
+                    avatarUrl = null,
+                    onClick = {}
+                )
+                AddCompanyTile(onClick = {})
             }
         }
     }

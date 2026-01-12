@@ -10,6 +10,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import tech.dokus.foundation.aura.components.chat.ChatSourceCitation
+import tech.dokus.foundation.aura.components.chat.CitationDisplayData
 import tech.dokus.foundation.aura.components.chat.ChatMessageBubble
 import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.PAssistantMessageBubble
@@ -149,4 +151,33 @@ class ChatScreenshotTest(private val viewport: ScreenshotViewport) {
             }
         }
     }
+
+    @Test
+    fun chatSourceCitation_collapsed() {
+        paparazzi.snapshotAllViewports("ChatSourceCitation_collapsed", viewport) {
+            ChatSourceCitation(
+                citation = sampleCitation(),
+                initiallyExpanded = false
+            )
+        }
+    }
+
+    @Test
+    fun chatSourceCitation_expanded() {
+        paparazzi.snapshotAllViewports("ChatSourceCitation_expanded", viewport) {
+            ChatSourceCitation(
+                citation = sampleCitation(),
+                initiallyExpanded = true
+            )
+        }
+    }
 }
+
+private fun sampleCitation() = CitationDisplayData(
+    chunkId = "chunk-001",
+    documentId = "doc-001",
+    documentName = "Invoice_2024_01.pdf",
+    pageNumber = 2,
+    excerpt = "Total amount: EUR 1,230.00",
+    relevanceScore = 0.82f
+)
