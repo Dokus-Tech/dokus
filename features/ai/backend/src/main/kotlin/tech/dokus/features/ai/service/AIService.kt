@@ -1,10 +1,8 @@
 package tech.dokus.features.ai.service
 
-import tech.dokus.features.ai.agents.BillExtractionAgent
 import tech.dokus.features.ai.agents.CategorySuggestionAgent
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
-import tech.dokus.features.ai.agents.InvoiceExtractionAgent
-import tech.dokus.features.ai.agents.ReceiptExtractionAgent
+import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.models.CategorySuggestion
@@ -76,28 +74,37 @@ class AIService(
 
     // Step 2a: Invoice extraction agent
     private val invoiceAgent by lazy {
-        InvoiceExtractionAgent(
+        ExtractionAgent<ExtractedInvoiceData>(
             executor = executor,
             model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
-            prompt = AgentPrompt.Extraction.Invoice
+            prompt = AgentPrompt.Extraction.Invoice,
+            userPromptPrefix = "Extract invoice data from this",
+            promptId = "invoice-extractor",
+            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
         )
     }
 
     // Step 2b: Bill extraction agent
     private val billAgent by lazy {
-        BillExtractionAgent(
+        ExtractionAgent<ExtractedBillData>(
             executor = executor,
             model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
-            prompt = AgentPrompt.Extraction.Bill
+            prompt = AgentPrompt.Extraction.Bill,
+            userPromptPrefix = "Extract bill/supplier invoice data from this",
+            promptId = "bill-extractor",
+            emptyResult = { ExtractedBillData(confidence = 0.0) }
         )
     }
 
     // Step 2c: Receipt extraction agent
     private val receiptAgent by lazy {
-        ReceiptExtractionAgent(
+        ExtractionAgent<ExtractedReceiptData>(
             executor = executor,
             model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
-            prompt = AgentPrompt.Extraction.Receipt
+            prompt = AgentPrompt.Extraction.Receipt,
+            userPromptPrefix = "Extract receipt data from this",
+            promptId = "receipt-extractor",
+            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
         )
     }
 
