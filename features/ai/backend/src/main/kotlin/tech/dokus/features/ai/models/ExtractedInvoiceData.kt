@@ -111,7 +111,10 @@ data class ExtractedInvoiceData(
     val extractedText: String? = null,
 
     // Provenance - links extracted values to source locations
-    val provenance: InvoiceProvenance? = null
+    val provenance: InvoiceProvenance? = null,
+
+    // Credit note metadata (only populated for credit notes)
+    val creditNoteMeta: CreditNoteMeta? = null
 )
 
 /**
@@ -135,3 +138,44 @@ data class VatBreakdown(
     val base: String? = null,
     val amount: String? = null
 )
+
+// =============================================================================
+// Credit Note Metadata
+// =============================================================================
+
+/**
+ * Metadata specific to credit notes.
+ * Links the credit note to the original document it corrects.
+ */
+@Serializable
+data class CreditNoteMeta(
+    /** Reference to the original invoice being credited (invoice number or ID) */
+    val originalDocumentReference: String? = null,
+
+    /** Reason for the credit note */
+    val creditReason: String? = null,
+
+    /** Type of credit being issued */
+    val creditType: CreditType? = null
+)
+
+/**
+ * Type of credit note adjustment.
+ */
+@Serializable
+enum class CreditType {
+    /** Full credit/refund of the original invoice */
+    FULL,
+
+    /** Partial credit for specific items or amounts */
+    PARTIAL,
+
+    /** Price adjustment after original invoice */
+    PRICE_ADJUSTMENT,
+
+    /** Credit for returned goods */
+    RETURN,
+
+    /** Complete cancellation of original invoice */
+    CANCELLATION
+}
