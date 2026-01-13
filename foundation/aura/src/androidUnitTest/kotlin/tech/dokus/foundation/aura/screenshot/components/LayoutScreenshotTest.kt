@@ -5,12 +5,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.layout.DokusExpandableAction
+import tech.dokus.foundation.aura.components.layout.DokusPanelListItem
+import tech.dokus.foundation.aura.components.layout.DokusTabbedPanel
+import tech.dokus.foundation.aura.components.layout.DokusTableCell
+import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
+import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
@@ -110,6 +118,83 @@ class LayoutScreenshotTest(private val viewport: ScreenshotViewport) {
                     )
                 }
             )
+        }
+    }
+
+    @Test
+    fun dokusTabbedPanel_basic() {
+        val tabs = listOf("Overview", "Details", "History")
+        paparazzi.snapshotAllViewports("DokusTabbedPanel_basic", viewport) {
+            DokusTabbedPanel(
+                title = "Activity",
+                tabs = tabs,
+                selectedTab = "Overview",
+                onTabSelected = {},
+                tabLabel = { it }
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DokusPanelListItem(
+                        title = "Payment received",
+                        supportingText = "Invoice #001"
+                    )
+                    DokusPanelListItem(
+                        title = "Reminder sent",
+                        supportingText = "Invoice #002"
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun dokusTableLayout_basic() {
+        val columns = listOf(
+            DokusTableColumnSpec(weight = 2f),
+            DokusTableColumnSpec(weight = 1f),
+            DokusTableColumnSpec(weight = 1f, horizontalAlignment = Alignment.End)
+        )
+        paparazzi.snapshotAllViewports("DokusTableLayout_basic", viewport) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                DokusTableRow {
+                    DokusTableCell(column = columns[0]) { Text("Invoice #001") }
+                    DokusTableCell(column = columns[1]) { Text("Due Jan 20") }
+                    DokusTableCell(column = columns[2]) { Text("EUR 1,230.00") }
+                }
+                DokusTableRow {
+                    DokusTableCell(column = columns[0]) { Text("Invoice #002") }
+                    DokusTableCell(column = columns[1]) { Text("Due Feb 04") }
+                    DokusTableCell(column = columns[2]) { Text("EUR 850.00") }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun dokusExpandableAction_states() {
+        paparazzi.snapshotAllViewports("DokusExpandableAction_states", viewport) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                DokusExpandableAction(
+                    isExpanded = false,
+                    onToggleExpand = {},
+                    subtext = { Text("Additional options") },
+                    primaryAction = {
+                        PPrimaryButton(text = "Submit", onClick = {})
+                    },
+                    expandedContent = {
+                        Text("Expanded content goes here")
+                    }
+                )
+                DokusExpandableAction(
+                    isExpanded = true,
+                    onToggleExpand = {},
+                    primaryAction = {
+                        PPrimaryButton(text = "Submit", onClick = {})
+                    },
+                    expandedContent = {
+                        Text("Expanded content goes here")
+                    }
+                )
+            }
         }
     }
 }

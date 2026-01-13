@@ -9,10 +9,18 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.StringResource
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.nav_contacts
+import tech.dokus.aura.resources.nav_documents
+import tech.dokus.aura.resources.nav_team
+import tech.dokus.foundation.aura.components.chips.PChoiceChips
+import tech.dokus.foundation.aura.components.dropdown.FilterOption
+import tech.dokus.foundation.aura.components.dropdown.PFilterDropdown
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
@@ -135,4 +143,36 @@ class DropdownScreenshotTest(private val viewport: ScreenshotViewport) {
             }
         }
     }
+
+    @Test
+    fun pFilterDropdown_collapsed() {
+        paparazzi.snapshotAllViewports("PFilterDropdown_collapsed", viewport) {
+            PFilterDropdown(
+                label = "Filter:",
+                selectedOption = SortOption.Documents,
+                options = SortOption.entries.toList(),
+                onOptionSelected = {}
+            )
+        }
+    }
+
+    @Test
+    fun pChoiceChips_group() {
+        val options = listOf("All", "Open", "Paid", "Overdue")
+        paparazzi.snapshotAllViewports("PChoiceChips_group", viewport) {
+            PChoiceChips(
+                options = options,
+                selected = "Paid",
+                onSelect = {},
+                optionLabel = { it },
+                label = "Status"
+            )
+        }
+    }
+}
+
+private enum class SortOption(override val labelRes: StringResource) : FilterOption {
+    Documents(Res.string.nav_documents),
+    Contacts(Res.string.nav_contacts),
+    Team(Res.string.nav_team)
 }

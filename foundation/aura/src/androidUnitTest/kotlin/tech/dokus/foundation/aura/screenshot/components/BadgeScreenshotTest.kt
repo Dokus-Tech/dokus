@@ -10,7 +10,15 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.foundation.aura.components.CashflowStatusBadge
+import tech.dokus.foundation.aura.components.CashflowType
+import tech.dokus.foundation.aura.components.CashflowTypeBadge
+import tech.dokus.foundation.aura.components.DocumentStatusBadge
+import tech.dokus.foundation.aura.components.DraftStatusBadge
 import tech.dokus.foundation.aura.components.StatusBadge
+import tech.dokus.foundation.aura.model.DocumentUiStatus
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
 import tech.dokus.foundation.aura.screenshot.ScreenshotViewport
@@ -80,6 +88,55 @@ class BadgeScreenshotTest(private val viewport: ScreenshotViewport) {
                 StatusBadge(text = "Paid", color = Color(0xFF4CAF50))
                 StatusBadge(text = "Overdue", color = Color(0xFFF44336))
                 StatusBadge(text = "Cancelled", color = Color(0xFF757575))
+            }
+        }
+    }
+
+    @Test
+    fun documentStatusBadge_variants() {
+        paparazzi.snapshotAllViewports("DocumentStatusBadge_variants", viewport) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                DocumentStatusBadge(status = DocumentUiStatus.Queued)
+                DocumentStatusBadge(status = DocumentUiStatus.Processing)
+                DocumentStatusBadge(status = DocumentUiStatus.Review)
+                DocumentStatusBadge(status = DocumentUiStatus.Ready)
+                DocumentStatusBadge(status = DocumentUiStatus.Failed)
+            }
+        }
+    }
+
+    @Test
+    fun draftStatusBadge_variants() {
+        paparazzi.snapshotAllViewports("DraftStatusBadge_variants", viewport) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                DraftStatusBadge(status = DraftStatus.NeedsReview)
+                DraftStatusBadge(status = DraftStatus.Ready)
+                DraftStatusBadge(status = DraftStatus.Confirmed)
+                DraftStatusBadge(status = DraftStatus.Rejected)
+            }
+        }
+    }
+
+    @Test
+    fun cashflowBadges_variants() {
+        paparazzi.snapshotAllViewports("CashflowBadges_variants", viewport) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                CashflowStatusBadge(status = CashflowEntryStatus.Open, detail = "Due in 5 days")
+                CashflowStatusBadge(status = CashflowEntryStatus.Paid)
+                CashflowStatusBadge(status = CashflowEntryStatus.Overdue, detail = "3 days")
+                CashflowStatusBadge(status = CashflowEntryStatus.Cancelled)
+
+                CashflowTypeBadge(type = CashflowType.CashIn)
+                CashflowTypeBadge(type = CashflowType.CashOut)
             }
         }
     }

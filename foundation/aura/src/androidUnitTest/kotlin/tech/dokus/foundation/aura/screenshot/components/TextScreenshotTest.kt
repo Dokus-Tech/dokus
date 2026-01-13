@@ -9,6 +9,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import tech.dokus.foundation.aura.components.PErrorText
 import tech.dokus.foundation.aura.components.PTitle
 import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.components.text.CopyRightText
@@ -58,6 +59,13 @@ class TextScreenshotTest(private val viewport: ScreenshotViewport) {
     }
 
     @Test
+    fun pErrorText() {
+        paparazzi.snapshotAllViewports("PErrorText", viewport) {
+            PErrorText(text = "Something went wrong. Please try again.")
+        }
+    }
+
+    @Test
     fun textComponents_allVariants() {
         paparazzi.snapshotAllViewports("Text_allVariants", viewport) {
             Column(
@@ -68,6 +76,7 @@ class TextScreenshotTest(private val viewport: ScreenshotViewport) {
                 SectionTitle(text = "Section Title")
                 AppNameText()
                 CopyRightText()
+                PErrorText(text = "Error text sample")
             }
         }
     }
