@@ -7,6 +7,7 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import tech.dokus.domain.utils.parseSafe
 import tech.dokus.features.ai.models.CategorySuggestion
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -16,45 +17,10 @@ import tech.dokus.foundation.backend.utils.loggerFor
  */
 class CategorySuggestionAgent(
     private val executor: PromptExecutor,
-    private val model: LLModel
+    private val model: LLModel,
+    private val prompt: AgentPrompt.CategorySuggestion
 ) {
     private val logger = loggerFor()
-
-    private val systemPrompt = """
-        You are an expense categorization specialist for Belgian IT freelancers.
-        Suggest the most appropriate expense category based on the description.
-
-        Available categories (Belgian tax-relevant):
-        - OFFICE_SUPPLIES: Office equipment, stationery, desk accessories
-        - HARDWARE: Computers, monitors, peripherals, electronic devices
-        - SOFTWARE: Software licenses, SaaS subscriptions, cloud services
-        - TRAVEL: Business travel, accommodation, flights, trains
-        - TRANSPORTATION: Local transport, fuel, parking, car expenses
-        - MEALS: Business meals, client entertainment
-        - PROFESSIONAL_SERVICES: Legal, accounting, consulting fees
-        - UTILITIES: Internet, phone, electricity (home office portion)
-        - TRAINING: Courses, conferences, certifications, books
-        - MARKETING: Advertising, website hosting, domain names
-        - INSURANCE: Professional liability, health insurance
-        - RENT: Office space, coworking memberships
-        - OTHER: Miscellaneous business expenses
-
-        Guidelines for Belgian IT freelancers:
-        - Hardware > 500 EUR may need depreciation
-        - Meals are typically 69% deductible
-        - Home office utilities are partially deductible based on usage
-        - Professional training is fully deductible
-
-        Respond with a JSON object:
-        {
-            "suggestedCategory": "CATEGORY_NAME",
-            "confidence": 0.0 to 1.0,
-            "reasoning": "Brief explanation",
-            "alternativeCategories": [
-                {"category": "ALTERNATIVE", "confidence": 0.0 to 1.0}
-            ]
-        }
-    """.trimIndent()
 
     /**
      * Suggest a category for an expense description.
@@ -82,7 +48,7 @@ class CategorySuggestionAgent(
                 strategy = singleRunStrategy(),
                 toolRegistry = ToolRegistry.EMPTY,
                 id = "category-suggester",
-                systemPrompt = systemPrompt
+                systemPrompt = prompt.systemPrompt
             )
 
             val response: String = agent.run(userPrompt)

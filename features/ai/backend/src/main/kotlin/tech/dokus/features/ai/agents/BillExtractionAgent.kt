@@ -10,6 +10,7 @@ import ai.koog.prompt.message.RequestMetaInfo
 import kotlinx.datetime.Clock
 import tech.dokus.domain.utils.parseSafe
 import tech.dokus.features.ai.models.ExtractedBillData
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -25,64 +26,10 @@ import tech.dokus.foundation.backend.utils.loggerFor
  */
 class BillExtractionAgent(
     private val executor: PromptExecutor,
-    private val model: LLModel
+    private val model: LLModel,
+    private val prompt: AgentPrompt.Extraction
 ) {
     private val logger = loggerFor()
-
-    private val systemPrompt = """
-        You are a bill/supplier invoice extraction specialist with vision capabilities.
-        Analyze the bill image(s) and extract structured data.
-        Always respond with ONLY valid JSON (no markdown, no explanation).
-
-        A "bill" is an invoice you RECEIVE from a supplier (you owe them money).
-
-        Extract these fields:
-        - Supplier: name, VAT number, address
-        - Bill: invoice number, issue date, due date
-        - Amount: total amount, VAT amount, VAT rate, currency
-        - Line items (if visible): description, quantity, unit price, VAT rate, total
-        - Category: suggested expense category
-        - Payment: bank account (IBAN), payment terms
-
-        For each field, include provenance:
-        - pageNumber: Which page (1-indexed) the value appears on
-        - sourceText: The exact text you read from the document
-        - fieldConfidence: Confidence in this field (0.0 to 1.0)
-
-        Expense categories for Belgian freelancers:
-        OFFICE_SUPPLIES, HARDWARE, SOFTWARE, TRAVEL, TRANSPORTATION,
-        MEALS, PROFESSIONAL_SERVICES, UTILITIES, TRAINING, MARKETING,
-        INSURANCE, RENT, OTHER
-
-        ALSO provide extractedText: A clean transcription of all visible text for indexing.
-
-        JSON Schema:
-        {
-            "supplierName": "string or null",
-            "supplierVatNumber": "string or null",
-            "supplierAddress": "string or null",
-            "invoiceNumber": "string or null",
-            "issueDate": "YYYY-MM-DD or null",
-            "dueDate": "YYYY-MM-DD or null",
-            "currency": "EUR",
-            "amount": "string or null",
-            "vatAmount": "string or null",
-            "vatRate": "21%",
-            "totalAmount": "string or null",
-            "lineItems": [{"description": "...", "quantity": 1, "unitPrice": "...", "vatRate": "21%", "total": "..."}],
-            "category": "EXPENSE_CATEGORY or null",
-            "description": "brief description or null",
-            "paymentTerms": "string or null",
-            "bankAccount": "IBAN or null",
-            "notes": "string or null",
-            "confidence": 0.85,
-            "extractedText": "Full text transcription for indexing",
-            "provenance": {
-                "supplierName": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.9},
-                "invoiceNumber": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.95}
-            }
-        }
-    """.trimIndent()
 
     /**
      * Extract bill data from document images using vision model.
@@ -100,7 +47,7 @@ class BillExtractionAgent(
         return try {
             // Build vision prompt with image attachments (direct construction for compatibility)
             val systemMessage = Message.System(
-                parts = listOf(ContentPart.Text(systemPrompt)),
+                parts = listOf(ContentPart.Text(prompt.systemPrompt)),
                 metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
             )
 

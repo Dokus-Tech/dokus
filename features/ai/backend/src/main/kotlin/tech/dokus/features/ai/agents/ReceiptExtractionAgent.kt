@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.ExtractedReceiptData
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -23,63 +24,10 @@ import tech.dokus.foundation.backend.utils.loggerFor
  */
 class ReceiptExtractionAgent(
     private val executor: PromptExecutor,
-    private val model: LLModel
+    private val model: LLModel,
+    private val prompt: AgentPrompt.Extraction
 ) {
     private val logger = loggerFor()
-
-    private val systemPrompt = """
-        You are a receipt data extraction specialist with vision capabilities.
-        Analyze the receipt image(s) and extract structured data.
-        Always respond with ONLY valid JSON (no markdown, no explanation).
-
-        Extract these fields:
-        - Merchant: name, address, VAT number (if visible)
-        - Transaction: date, time, receipt number
-        - Items: description, quantity, price (group similar items)
-        - Totals: subtotal, VAT amount, total, payment method
-        - Category: suggested expense category based on merchant/items
-
-        For each field, include provenance:
-        - pageNumber: Which page (1-indexed) the value appears on
-        - sourceText: The exact text you read from the receipt
-        - fieldConfidence: Confidence in this field (0.0 to 1.0)
-
-        Guidelines:
-        - Dates: ISO format (YYYY-MM-DD)
-        - Times: HH:mm format (24-hour)
-        - Currency: 3-letter ISO code (EUR, USD, GBP)
-        - Amounts: Strings to preserve precision (e.g., "12.50")
-        - Payment method: "Cash", "Card", "Contactless", "Mobile"
-        - For card payments, extract last 4 digits if visible
-
-        Categories: Office Supplies, Travel, Meals, Transportation, Software, Hardware, Utilities, Professional Services, Other
-
-        ALSO provide extractedText: A clean transcription of all visible text for indexing.
-
-        JSON Schema:
-        {
-            "merchantName": "string or null",
-            "merchantAddress": "string or null",
-            "merchantVatNumber": "string or null",
-            "receiptNumber": "string or null",
-            "transactionDate": "YYYY-MM-DD or null",
-            "transactionTime": "HH:mm or null",
-            "items": [{"description": "...", "quantity": 1, "price": "..."}],
-            "currency": "EUR",
-            "subtotal": "string or null",
-            "vatAmount": "string or null",
-            "totalAmount": "string or null",
-            "paymentMethod": "Cash or Card or null",
-            "cardLastFour": "1234 or null",
-            "suggestedCategory": "string or null",
-            "confidence": 0.85,
-            "extractedText": "Full text transcription for indexing",
-            "provenance": {
-                "merchantName": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.9},
-                "totalAmount": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.95}
-            }
-        }
-    """.trimIndent()
 
     /**
      * Extract receipt data from document images using vision model.
@@ -97,7 +45,7 @@ class ReceiptExtractionAgent(
         return try {
             // Build vision prompt with image attachments (direct construction for compatibility)
             val systemMessage = Message.System(
-                parts = listOf(ContentPart.Text(systemPrompt)),
+                parts = listOf(ContentPart.Text(prompt.systemPrompt)),
                 metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
             )
 

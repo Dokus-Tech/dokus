@@ -11,6 +11,7 @@ import kotlinx.datetime.Clock
 import tech.dokus.domain.utils.parseSafe
 import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.DocumentClassification
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -24,27 +25,10 @@ import tech.dokus.foundation.backend.utils.loggerFor
  */
 class DocumentClassificationAgent(
     private val executor: PromptExecutor,
-    private val model: LLModel
+    private val model: LLModel,
+    private val prompt: AgentPrompt.DocumentClassification
 ) {
     private val logger = loggerFor()
-    private val systemPrompt = """
-        You are a document classification specialist with vision capabilities.
-        Analyze the document image(s) and determine the document type.
-
-        Document types:
-        - INVOICE: A formal request for payment from a supplier/vendor with invoice number, line items, VAT
-        - RECEIPT: A proof of payment/purchase from a store, usually simpler format without detailed line items
-        - BILL: A utility or service bill (electricity, phone, internet, subscription services)
-        - UNKNOWN: Cannot determine the type
-
-        Key visual indicators:
-        - INVOICE: Formal letterhead, invoice number, payment terms, due date, detailed line items, often B2B
-        - RECEIPT: Point-of-sale format, receipt number, store name/logo, immediate payment confirmation
-        - BILL: Utility company branding, account numbers, service periods, recurring charges
-
-        Respond with ONLY a JSON object (no markdown, no explanation):
-        {"documentType": "INVOICE", "confidence": 0.85, "reasoning": "Brief explanation"}
-    """.trimIndent()
 
     /**
      * Classify the document type from document images using vision model.
@@ -66,7 +50,7 @@ class DocumentClassificationAgent(
         return try {
             // Build vision prompt with image attachments (direct construction for compatibility)
             val systemMessage = Message.System(
-                parts = listOf(ContentPart.Text(systemPrompt)),
+                parts = listOf(ContentPart.Text(prompt.systemPrompt)),
                 metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
             )
 

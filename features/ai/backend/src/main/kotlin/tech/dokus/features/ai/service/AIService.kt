@@ -14,6 +14,7 @@ import tech.dokus.features.ai.models.DocumentClassification
 import tech.dokus.features.ai.models.ExtractedBillData
 import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.models.ExtractedReceiptData
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AIMode
@@ -68,7 +69,8 @@ class AIService(
     private val classificationAgent by lazy {
         DocumentClassificationAgent(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.CLASSIFICATION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.CLASSIFICATION),
+            prompt = AgentPrompt.DocumentClassification
         )
     }
 
@@ -76,7 +78,8 @@ class AIService(
     private val invoiceAgent by lazy {
         InvoiceExtractionAgent(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.Invoice
         )
     }
 
@@ -84,7 +87,8 @@ class AIService(
     private val billAgent by lazy {
         BillExtractionAgent(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.Bill
         )
     }
 
@@ -92,7 +96,8 @@ class AIService(
     private val receiptAgent by lazy {
         ReceiptExtractionAgent(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.Receipt
         )
     }
 
@@ -100,7 +105,8 @@ class AIService(
     private val categoryAgent by lazy {
         CategorySuggestionAgent(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.CATEGORIZATION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.CATEGORIZATION),
+            prompt = AgentPrompt.CategorySuggestion
         )
     }
 
