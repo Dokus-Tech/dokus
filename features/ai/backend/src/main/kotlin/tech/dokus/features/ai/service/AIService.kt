@@ -10,6 +10,7 @@ import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.DocumentAIResult
 import tech.dokus.features.ai.models.DocumentClassification
 import tech.dokus.features.ai.models.ExtractedBillData
+import tech.dokus.features.ai.models.ExtractedExpenseData
 import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.models.ExtractedReceiptData
 import tech.dokus.features.ai.prompts.AgentPrompt
@@ -108,6 +109,42 @@ class AIService(
         )
     }
 
+    // Step 2d: Credit note extraction agent (reuses invoice schema)
+    private val creditNoteAgent by lazy {
+        ExtractionAgent<ExtractedInvoiceData>(
+            executor = executor,
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.CreditNote,
+            userPromptPrefix = "Extract credit note data from this",
+            promptId = "credit-note-extractor",
+            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
+        )
+    }
+
+    // Step 2e: Pro forma invoice extraction agent (reuses invoice schema)
+    private val proFormaAgent by lazy {
+        ExtractionAgent<ExtractedInvoiceData>(
+            executor = executor,
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.ProForma,
+            userPromptPrefix = "Extract pro forma invoice data from this",
+            promptId = "pro-forma-extractor",
+            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
+        )
+    }
+
+    // Step 2f: Expense extraction agent
+    private val expenseAgent by lazy {
+        ExtractionAgent<ExtractedExpenseData>(
+            executor = executor,
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.Expense,
+            userPromptPrefix = "Extract expense data from this",
+            promptId = "expense-extractor",
+            emptyResult = { ExtractedExpenseData(confidence = 0.0) }
+        )
+    }
+
     // Category suggestion agent
     private val categoryAgent by lazy {
         CategorySuggestionAgent(
@@ -185,6 +222,42 @@ class AIService(
                 )
             }
 
+            ClassifiedDocumentType.CREDIT_NOTE -> {
+                logger.debug("Extracting as credit note")
+                val data = creditNoteAgent.extract(images)
+                DocumentAIResult.CreditNote(
+                    classification = classification,
+                    extractedData = data,
+                    confidence = data.confidence,
+                    warnings = warnings,
+                    rawText = data.extractedText ?: ""
+                )
+            }
+
+            ClassifiedDocumentType.PRO_FORMA -> {
+                logger.debug("Extracting as pro forma invoice")
+                val data = proFormaAgent.extract(images)
+                DocumentAIResult.ProForma(
+                    classification = classification,
+                    extractedData = data,
+                    confidence = data.confidence,
+                    warnings = warnings,
+                    rawText = data.extractedText ?: ""
+                )
+            }
+
+            ClassifiedDocumentType.EXPENSE -> {
+                logger.debug("Extracting as expense")
+                val data = expenseAgent.extract(images)
+                DocumentAIResult.Expense(
+                    classification = classification,
+                    extractedData = data,
+                    confidence = data.confidence,
+                    warnings = warnings,
+                    rawText = data.extractedText ?: ""
+                )
+            }
+
             ClassifiedDocumentType.UNKNOWN -> {
                 logger.warn("Could not classify document type")
                 warnings.add("Document type could not be determined")
@@ -240,6 +313,39 @@ class AIService(
      */
     suspend fun extractBill(images: List<DocumentImage>): Result<ExtractedBillData> = runCatching {
         billAgent.extract(images)
+    }
+
+    /**
+     * Direct credit note extraction (skip classification).
+     * Use when you know the document is a credit note.
+     *
+     * @param images List of document page images
+     * @return Extracted invoice data with credit note metadata
+     */
+    suspend fun extractCreditNote(images: List<DocumentImage>): Result<ExtractedInvoiceData> = runCatching {
+        creditNoteAgent.extract(images)
+    }
+
+    /**
+     * Direct pro forma invoice extraction (skip classification).
+     * Use when you know the document is a pro forma/quote.
+     *
+     * @param images List of document page images
+     * @return Extracted invoice data
+     */
+    suspend fun extractProForma(images: List<DocumentImage>): Result<ExtractedInvoiceData> = runCatching {
+        proFormaAgent.extract(images)
+    }
+
+    /**
+     * Direct expense extraction (skip classification).
+     * Use when you know the document is a simple expense (parking, transport, etc.).
+     *
+     * @param images List of document page images
+     * @return Extracted expense data
+     */
+    suspend fun extractExpense(images: List<DocumentImage>): Result<ExtractedExpenseData> = runCatching {
+        expenseAgent.extract(images)
     }
 
     /**

@@ -21,6 +21,18 @@ fun DocumentAIResult.getProvenanceJson(): String? {
             Json.encodeToString(ReceiptProvenance.serializer(), it)
         }
 
+        is DocumentAIResult.CreditNote -> extractedData.provenance?.let {
+            Json.encodeToString(InvoiceProvenance.serializer(), it)
+        }
+
+        is DocumentAIResult.ProForma -> extractedData.provenance?.let {
+            Json.encodeToString(InvoiceProvenance.serializer(), it)
+        }
+
+        is DocumentAIResult.Expense -> extractedData.provenance?.let {
+            Json.encodeToString(ExpenseProvenance.serializer(), it)
+        }
+
         is DocumentAIResult.Unknown -> null
     }
 }
@@ -33,6 +45,9 @@ fun DocumentAIResult.getFieldConfidencesJson(): String? {
         is DocumentAIResult.Invoice -> extractedData.provenance?.toFieldConfidences()
         is DocumentAIResult.Bill -> extractedData.provenance?.toFieldConfidences()
         is DocumentAIResult.Receipt -> extractedData.provenance?.toFieldConfidences()
+        is DocumentAIResult.CreditNote -> extractedData.provenance?.toFieldConfidences()
+        is DocumentAIResult.ProForma -> extractedData.provenance?.toFieldConfidences()
+        is DocumentAIResult.Expense -> extractedData.provenance?.toFieldConfidences()
         is DocumentAIResult.Unknown -> null
     }
     return confidences?.let {
@@ -87,6 +102,18 @@ internal fun ReceiptProvenance.toFieldConfidences(): Map<String, Double> {
         putIfConfidence("vatAmount", vatAmount?.fieldConfidence)
         putIfConfidence("paymentMethod", paymentMethod?.fieldConfidence)
         putIfConfidence("category", category?.fieldConfidence)
+    }
+}
+
+internal fun ExpenseProvenance.toFieldConfidences(): Map<String, Double> {
+    return buildMap {
+        putIfConfidence("merchantName", merchantName?.fieldConfidence)
+        putIfConfidence("description", description?.fieldConfidence)
+        putIfConfidence("date", date?.fieldConfidence)
+        putIfConfidence("totalAmount", totalAmount?.fieldConfidence)
+        putIfConfidence("currency", currency?.fieldConfidence)
+        putIfConfidence("category", category?.fieldConfidence)
+        putIfConfidence("paymentMethod", paymentMethod?.fieldConfidence)
     }
 }
 
