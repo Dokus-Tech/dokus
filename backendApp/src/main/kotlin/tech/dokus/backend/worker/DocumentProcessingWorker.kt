@@ -409,6 +409,194 @@ class DocumentProcessingWorker(
         return hashBytes.joinToString("") { "%02x".format(it) }
     }
 
+    // =========================================================================
+    // Processing Methods
+    // =========================================================================
+
+    /**
+     * Result from document processing (from either pipeline).
+     */
+    private data class ProcessingResult(
+        val extractedData: tech.dokus.domain.model.ExtractedDocumentData,
+        val documentType: DocumentType,
+        val meetsThreshold: Boolean,
+        val rawText: String,
+        val confidence: Double,
+        val judgmentInfo: JudgmentInfo? = null
+    )
+
+    /**
+     * Judgment information from 5-Layer pipeline.
+     */
+    private data class JudgmentInfo(
+        val outcome: JudgmentOutcome,
+        val wasCorrected: Boolean,
+        val issues: List<String>
+    )
+
+    /**
+     * Process document using the 5-Layer Autonomous Processing Coordinator.
+     */
+    private suspend fun processWithCoordinator(
+        images: List<DocumentImageService.DocumentImage>,
+        tenantContext: AgentPrompt.TenantContext,
+        runId: String,
+        documentId: String
+    ): ProcessingResult? {
+        logger.info("Processing document $documentId with 5-Layer Autonomous Pipeline")
+
+        val result = coordinator!!.process(images, tenantContext)
+
+        return when (result) {
+            is AutonomousResult.Success<*> -> {
+                // Map the autonomous result to our legacy format
+                val aiResult = mapAutonomousResultToDocumentAIResult(result)
+                    ?: run {
+                        logger.error("Failed to map autonomous result for $documentId")
+                        ingestionRepository.markAsFailed(runId, "Failed to map extraction result")
+                        return null
+                    }
+
+                val extractedData = aiResult.toExtractedDocumentData()
+                val documentType = aiResult.toDomainType()
+                val meetsThreshold = aiResult.meetsMinimalThreshold()
+                val rawText = aiResult.rawText
+
+                // Determine if threshold is met based on judgment
+                val finalMeetsThreshold = when (result.judgment.outcome) {
+                    JudgmentOutcome.AUTO_APPROVE -> true
+                    JudgmentOutcome.NEEDS_REVIEW -> meetsThreshold // Use extraction confidence
+                    JudgmentOutcome.REJECT -> false
+                }
+
+                ProcessingResult(
+                    extractedData = extractedData,
+                    documentType = documentType,
+                    meetsThreshold = finalMeetsThreshold,
+                    rawText = rawText,
+                    confidence = result.confidence,
+                    judgmentInfo = JudgmentInfo(
+                        outcome = result.judgment.outcome,
+                        wasCorrected = result.wasCorrected,
+                        issues = result.judgment.issuesForUser
+                    )
+                )
+            }
+
+            is AutonomousResult.Rejected -> {
+                logger.warn(
+                    "5-Layer Pipeline rejected document $documentId at stage ${result.stage}: ${result.reason}"
+                )
+                ingestionRepository.markAsFailed(runId, "Rejected: ${result.reason}")
+                null
+            }
+        }
+    }
+
+    /**
+     * Process document using legacy AIService.
+     */
+    private suspend fun processWithAIService(
+        images: List<DocumentImageService.DocumentImage>,
+        tenantContext: AgentPrompt.TenantContext,
+        runId: String,
+        documentId: String
+    ): ProcessingResult? {
+        logger.info("Processing document $documentId with legacy AIService")
+
+        val aiResult = aiService.processDocument(images, tenantContext)
+
+        val result = aiResult.getOrElse { e ->
+            logger.error("AI processing failed for document $documentId: ${e.message}", e)
+            ingestionRepository.markAsFailed(runId, "AI processing failed: ${e.message}")
+            return null
+        }
+
+        val extractedData = result.toExtractedDocumentData()
+        val documentType = result.toDomainType()
+        val meetsThreshold = result.meetsMinimalThreshold()
+        val rawText = result.rawText
+
+        return ProcessingResult(
+            extractedData = extractedData,
+            documentType = documentType,
+            meetsThreshold = meetsThreshold,
+            rawText = rawText,
+            confidence = result.confidence,
+            judgmentInfo = null
+        )
+    }
+
+    /**
+     * Map AutonomousResult.Success to DocumentAIResult for backward compatibility.
+     */
+    private fun mapAutonomousResultToDocumentAIResult(
+        result: AutonomousResult.Success<*>
+    ): tech.dokus.features.ai.models.DocumentAIResult? {
+        val extraction = result.extraction
+        val classification = result.classification
+
+        return when (extraction) {
+            is tech.dokus.features.ai.models.ExtractedInvoiceData -> {
+                // Determine the specific type based on classification
+                when (result.documentType) {
+                    tech.dokus.features.ai.models.ClassifiedDocumentType.CREDIT_NOTE ->
+                        tech.dokus.features.ai.models.DocumentAIResult.CreditNote(
+                            classification = classification,
+                            extractedData = extraction,
+                            confidence = result.confidence,
+                            warnings = result.judgment.issuesForUser,
+                            rawText = extraction.extractedText ?: ""
+                        )
+                    tech.dokus.features.ai.models.ClassifiedDocumentType.PRO_FORMA ->
+                        tech.dokus.features.ai.models.DocumentAIResult.ProForma(
+                            classification = classification,
+                            extractedData = extraction,
+                            confidence = result.confidence,
+                            warnings = result.judgment.issuesForUser,
+                            rawText = extraction.extractedText ?: ""
+                        )
+                    else ->
+                        tech.dokus.features.ai.models.DocumentAIResult.Invoice(
+                            classification = classification,
+                            extractedData = extraction,
+                            confidence = result.confidence,
+                            warnings = result.judgment.issuesForUser,
+                            rawText = extraction.extractedText ?: ""
+                        )
+                }
+            }
+            is tech.dokus.features.ai.models.ExtractedBillData ->
+                tech.dokus.features.ai.models.DocumentAIResult.Bill(
+                    classification = classification,
+                    extractedData = extraction,
+                    confidence = result.confidence,
+                    warnings = result.judgment.issuesForUser,
+                    rawText = extraction.extractedText ?: ""
+                )
+            is tech.dokus.features.ai.models.ExtractedReceiptData ->
+                tech.dokus.features.ai.models.DocumentAIResult.Receipt(
+                    classification = classification,
+                    extractedData = extraction,
+                    confidence = result.confidence,
+                    warnings = result.judgment.issuesForUser,
+                    rawText = extraction.extractedText ?: ""
+                )
+            is tech.dokus.features.ai.models.ExtractedExpenseData ->
+                tech.dokus.features.ai.models.DocumentAIResult.Expense(
+                    classification = classification,
+                    extractedData = extraction,
+                    confidence = result.confidence,
+                    warnings = result.judgment.issuesForUser,
+                    rawText = extraction.extractedText ?: ""
+                )
+            else -> {
+                logger.warn("Unknown extraction type: ${extraction?.javaClass?.name}")
+                null
+            }
+        }
+    }
+
     /**
      * Download document from object storage.
      */
