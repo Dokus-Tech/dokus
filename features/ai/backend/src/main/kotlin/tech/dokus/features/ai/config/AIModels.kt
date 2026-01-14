@@ -53,6 +53,34 @@ object AIModels {
     )
 
     // ==========================================================================
+    // Ensemble Models (for Perception Ensemble - Layer 1)
+    // ==========================================================================
+
+    /**
+     * Fast vision model for ensemble extraction (quick pass).
+     * Smaller model that provides baseline extraction with lower latency.
+     */
+    val VISION_FAST = LLModel(
+        provider = LLMProvider.Ollama,
+        id = "qwen3-vl:8b",
+        capabilities = listOf(LLMCapability.Vision.Image),
+        contextLength = CONTEXT_32K,
+        maxOutputTokens = null
+    )
+
+    /**
+     * Expert vision model for ensemble extraction (deep pass).
+     * Larger model for highest accuracy, catches subtle details.
+     */
+    val VISION_EXPERT = LLModel(
+        provider = LLMProvider.Ollama,
+        id = "qwen3-vl:72b",
+        capabilities = listOf(LLMCapability.Vision.Image),
+        contextLength = CONTEXT_128K,
+        maxOutputTokens = null
+    )
+
+    // ==========================================================================
     // Chat/Text Models (for RAG, categorization, suggestions)
     // ==========================================================================
 
