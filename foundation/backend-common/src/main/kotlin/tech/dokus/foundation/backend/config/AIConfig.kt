@@ -22,26 +22,3 @@ data class AIConfig(
         }
     }
 }
-
-/**
- * Purpose of the AI model usage, used to select the appropriate model.
- */
-enum class ModelPurpose {
-    /** Document type classification (invoice, receipt, etc.) */
-    CLASSIFICATION,
-
-    /** Structured data extraction from documents */
-    DOCUMENT_EXTRACTION,
-
-    /** Transaction/expense categorization */
-    CATEGORIZATION,
-
-    /** Smart suggestions and recommendations */
-    SUGGESTIONS,
-
-    /** RAG-powered chat/Q&A with documents */
-    CHAT,
-
-    /** Text embedding generation for vector search */
-    EMBEDDING
-}
