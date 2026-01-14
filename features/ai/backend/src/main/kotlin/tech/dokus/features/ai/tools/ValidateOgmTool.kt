@@ -3,8 +3,8 @@ package tech.dokus.features.ai.tools
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
-import tech.dokus.features.ai.validation.OgmValidationResult
-import tech.dokus.features.ai.validation.ValidateOgmUseCase
+import tech.dokus.domain.validators.OgmValidationResult
+import tech.dokus.domain.validators.ValidateOgmUseCase
 
 /**
  * Layer 3 Tool: OGM (Belgian Structured Communication) validation.

@@ -44,15 +44,28 @@ class LookupCompanyTool(
     )
 
     override suspend fun execute(args: Args): String {
-        // Parse the VAT number
-        val vatNumber = VatNumber.parse(args.vatNumber)
-            ?: return "ERROR: Could not parse VAT number '${args.vatNumber}'. " +
-                "Expected Belgian format like 'BE0123456789' or '0123.456.789'."
+        // Create and normalize the VAT number
+        var vatNumber = VatNumber(args.vatNumber)
 
-        // Check it's a Belgian VAT number (CBE only has Belgian companies)
-        if (!vatNumber.normalized.startsWith("BE")) {
-            return "NOT FOUND: CBE only contains Belgian companies. " +
-                "'${args.vatNumber}' appears to be from ${vatNumber.normalized.take(2)}."
+        // Check if input looks valid enough to process
+        if (vatNumber.normalized.isBlank()) {
+            return "ERROR: Could not parse VAT number '${args.vatNumber}'. " +
+                "Expected Belgian format like 'BE0123456789' or '0123.456.789'."
+        }
+
+        // Check country code
+        val countryCode = vatNumber.countryCode
+        when {
+            // Explicit non-Belgian country code
+            countryCode != null && countryCode != "BE" -> {
+                return "NOT FOUND: CBE only contains Belgian companies. " +
+                    "'${args.vatNumber}' appears to be from $countryCode."
+            }
+            // No country code - assume Belgian and add BE prefix
+            countryCode == null -> {
+                vatNumber = VatNumber.fromCountryAndCompanyNumber("BE", vatNumber.normalized)
+            }
+            // Already has BE prefix - good to go
         }
 
         // Look up in CBE
