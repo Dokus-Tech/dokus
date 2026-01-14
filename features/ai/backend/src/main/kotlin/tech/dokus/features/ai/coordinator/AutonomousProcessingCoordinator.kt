@@ -19,9 +19,11 @@ import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.retry.FeedbackDrivenRetryAgent
 import tech.dokus.features.ai.retry.RetryResult
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
+import tech.dokus.features.ai.utils.AmountParser
 import tech.dokus.features.ai.validation.AuditReport
 import tech.dokus.features.ai.validation.AuditStatus
 import tech.dokus.features.ai.validation.ExtractionAuditService
+import tech.dokus.foundation.backend.config.AutonomyLevel
 import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -113,7 +115,7 @@ class AutonomousProcessingCoordinator(
     // Configuration defaults (can be overridden via builder)
     private var minClassificationConfidence: Double = 0.3
     private var failFastOnUnknownType: Boolean = true
-    private var useLlmForJudgment: Boolean = false
+    // NOTE: LLM judgment is now gated by mode.autonomyLevel (see makeJudgment)
 
     // =========================================================================
     // Builder Methods for Setting Up Agents
@@ -121,6 +123,7 @@ class AutonomousProcessingCoordinator(
 
     /**
      * Configure invoice extraction agents.
+     * Always creates ensemble - runtime behavior controlled by mode.enableEnsemble.
      */
     fun withInvoiceAgents(
         fastAgent: ExtractionAgent<ExtractedInvoiceData>,
@@ -128,14 +131,19 @@ class AutonomousProcessingCoordinator(
     ): AutonomousProcessingCoordinator {
         invoiceFastAgent = fastAgent
         invoiceExpertAgent = expertAgent
-        if (mode.enableEnsemble) {
-            invoiceEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent, mode.parallelExtraction)
-        }
+        // Always create ensemble - runtime decides whether to use it
+        invoiceEnsemble = PerceptionEnsemble.of(
+            fastAgent,
+            expertAgent,
+            runParallel = mode.parallelExtraction,
+            maxParallelAgents = mode.maxParallelAgentsPerDocument
+        )
         return this
     }
 
     /**
      * Configure bill extraction agents.
+     * Always creates ensemble - runtime behavior controlled by mode.enableEnsemble.
      */
     fun withBillAgents(
         fastAgent: ExtractionAgent<ExtractedBillData>,
@@ -143,14 +151,19 @@ class AutonomousProcessingCoordinator(
     ): AutonomousProcessingCoordinator {
         billFastAgent = fastAgent
         billExpertAgent = expertAgent
-        if (mode.enableEnsemble) {
-            billEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent, mode.parallelExtraction)
-        }
+        // Always create ensemble - runtime decides whether to use it
+        billEnsemble = PerceptionEnsemble.of(
+            fastAgent,
+            expertAgent,
+            runParallel = mode.parallelExtraction,
+            maxParallelAgents = mode.maxParallelAgentsPerDocument
+        )
         return this
     }
 
     /**
      * Configure receipt extraction agents.
+     * Always creates ensemble - runtime behavior controlled by mode.enableEnsemble.
      */
     fun withReceiptAgents(
         fastAgent: ExtractionAgent<ExtractedReceiptData>,
@@ -158,14 +171,19 @@ class AutonomousProcessingCoordinator(
     ): AutonomousProcessingCoordinator {
         receiptFastAgent = fastAgent
         receiptExpertAgent = expertAgent
-        if (mode.enableEnsemble) {
-            receiptEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent, mode.parallelExtraction)
-        }
+        // Always create ensemble - runtime decides whether to use it
+        receiptEnsemble = PerceptionEnsemble.of(
+            fastAgent,
+            expertAgent,
+            runParallel = mode.parallelExtraction,
+            maxParallelAgents = mode.maxParallelAgentsPerDocument
+        )
         return this
     }
 
     /**
      * Configure expense extraction agents.
+     * Always creates ensemble - runtime behavior controlled by mode.enableEnsemble.
      */
     fun withExpenseAgents(
         fastAgent: ExtractionAgent<ExtractedExpenseData>,
@@ -173,9 +191,13 @@ class AutonomousProcessingCoordinator(
     ): AutonomousProcessingCoordinator {
         expenseFastAgent = fastAgent
         expenseExpertAgent = expertAgent
-        if (mode.enableEnsemble) {
-            expenseEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent, mode.parallelExtraction)
-        }
+        // Always create ensemble - runtime decides whether to use it
+        expenseEnsemble = PerceptionEnsemble.of(
+            fastAgent,
+            expertAgent,
+            runParallel = mode.parallelExtraction,
+            maxParallelAgents = mode.maxParallelAgentsPerDocument
+        )
         return this
     }
 
@@ -218,6 +240,20 @@ class AutonomousProcessingCoordinator(
         images: List<DocumentImage>,
         tenantContext: AgentPrompt.TenantContext
     ): AutonomousResult {
+        // Log mode configuration for debugging/verification
+        logger.info(
+            "Processing document: mode={}, enableEnsemble={}, parallelExtraction={}, " +
+                "enableSelfCorrection={}, maxRetries={}, maxConcurrentRequests={}, " +
+                "maxParallelAgentsPerDocument={}",
+            mode.configValue,
+            mode.enableEnsemble,
+            mode.parallelExtraction,
+            mode.enableSelfCorrection,
+            mode.maxRetries,
+            mode.maxConcurrentRequests,
+            mode.maxParallelAgentsPerDocument
+        )
+
         logger.info("Starting autonomous processing pipeline (${images.size} pages)")
         val startTime = System.currentTimeMillis()
 
@@ -285,9 +321,11 @@ class AutonomousProcessingCoordinator(
         logger.info("Processing as INVOICE type")
 
         // Layer 1: Perception Ensemble
-        val (extraction, conflictReport) = if (mode.enableEnsemble && invoiceEnsemble != null) {
+        val (extraction, conflictReport) = if (mode.enableEnsemble) {
             logger.info("Layer 1: Running perception ensemble")
-            val ensembleResult = invoiceEnsemble!!.extract(images)
+            val ensembleResult = requireNotNull(invoiceEnsemble) {
+                "Invoice ensemble not configured - call withInvoiceAgents() first"
+            }.extract(images)
 
             if (!ensembleResult.hasAnyCandidate) {
                 return AutonomousResult.Rejected.extractionFailed(
@@ -367,9 +405,11 @@ class AutonomousProcessingCoordinator(
         logger.info("Processing as BILL type")
 
         // Layer 1: Perception Ensemble
-        val (extraction, conflictReport) = if (mode.enableEnsemble && billEnsemble != null) {
+        val (extraction, conflictReport) = if (mode.enableEnsemble) {
             logger.info("Layer 1: Running perception ensemble")
-            val ensembleResult = billEnsemble!!.extract(images)
+            val ensembleResult = requireNotNull(billEnsemble) {
+                "Bill ensemble not configured - call withBillAgents() first"
+            }.extract(images)
 
             if (!ensembleResult.hasAnyCandidate) {
                 return AutonomousResult.Rejected.extractionFailed(
@@ -447,9 +487,11 @@ class AutonomousProcessingCoordinator(
         logger.info("Processing as RECEIPT type")
 
         // Layer 1: Perception Ensemble
-        val (extraction, conflictReport) = if (mode.enableEnsemble && receiptEnsemble != null) {
+        val (extraction, conflictReport) = if (mode.enableEnsemble) {
             logger.info("Layer 1: Running perception ensemble")
-            val ensembleResult = receiptEnsemble!!.extract(images)
+            val ensembleResult = requireNotNull(receiptEnsemble) {
+                "Receipt ensemble not configured - call withReceiptAgents() first"
+            }.extract(images)
 
             if (!ensembleResult.hasAnyCandidate) {
                 return AutonomousResult.Rejected.extractionFailed(
@@ -527,9 +569,11 @@ class AutonomousProcessingCoordinator(
         logger.info("Processing as EXPENSE type")
 
         // Layer 1: Perception Ensemble
-        val (extraction, conflictReport) = if (mode.enableEnsemble && expenseEnsemble != null) {
+        val (extraction, conflictReport) = if (mode.enableEnsemble) {
             logger.info("Layer 1: Running perception ensemble")
-            val ensembleResult = expenseEnsemble!!.extract(images)
+            val ensembleResult = requireNotNull(expenseEnsemble) {
+                "Expense ensemble not configured - call withExpenseAgents() first"
+            }.extract(images)
 
             if (!ensembleResult.hasAnyCandidate) {
                 return AutonomousResult.Rejected.extractionFailed(
@@ -695,6 +739,10 @@ class AutonomousProcessingCoordinator(
 
     /**
      * Make final judgment decision.
+     *
+     * LLM judgment is gated by autonomy level:
+     * - Assisted (LOW autonomy): NEVER use LLM judgment
+     * - Autonomous/Sovereign (MEDIUM/HIGH): Allowed
      */
     private suspend fun <T : Any> makeJudgment(
         extraction: T,
@@ -716,7 +764,10 @@ class AutonomousProcessingCoordinator(
             missingEssentialFields = essentialFieldsCheck.missingFields
         )
 
-        val decision = judgmentAgent.judge(context, useLlm = useLlmForJudgment)
+        // Safe gating: LLM judgment only when autonomy level permits
+        // Assisted (LOW) = NEVER use LLM judgment - safety boundary
+        val allowLlmJudgment = mode.autonomyLevel != AutonomyLevel.LOW
+        val decision = judgmentAgent.judge(context, useLlm = allowLlmJudgment)
         logger.info(
             "Judgment: ${decision.outcome} (confidence: ${formatPercent(decision.confidence)})"
         )
@@ -743,30 +794,104 @@ class AutonomousProcessingCoordinator(
         val missingFields: List<String>
     )
 
+    /**
+     * Check essential invoice fields:
+     * - totalAmount: must be present AND parseable as a number
+     * - issueDate: required
+     * - vendorIdentity: vendorName OR vendorVatNumber
+     */
     private fun checkEssentialInvoiceFields(invoice: ExtractedInvoiceData): EssentialFieldsCheck {
         val missing = mutableListOf<String>()
-        if (invoice.totalAmount.isNullOrBlank()) missing.add("totalAmount")
-        if (invoice.vendorName.isNullOrBlank()) missing.add("vendorName")
+
+        // Amount: must be present AND parseable
+        if (!AmountParser.isParseable(invoice.totalAmount)) {
+            missing.add("totalAmount")
+        }
+
+        // Date: required
+        if (invoice.issueDate.isNullOrBlank()) {
+            missing.add("issueDate")
+        }
+
+        // Vendor identity: name OR VAT number
+        val hasVendorIdentity = !invoice.vendorName.isNullOrBlank() ||
+            !invoice.vendorVatNumber.isNullOrBlank()
+        if (!hasVendorIdentity) {
+            missing.add("vendorIdentity (vendorName or vendorVatNumber)")
+        }
+
         return EssentialFieldsCheck(missing.isEmpty(), missing)
     }
 
+    /**
+     * Check essential bill fields:
+     * - totalAmount: must be present AND parseable
+     * - issueDate: required
+     * - supplierIdentity: supplierName OR supplierVatNumber
+     */
     private fun checkEssentialBillFields(bill: ExtractedBillData): EssentialFieldsCheck {
         val missing = mutableListOf<String>()
-        if (bill.totalAmount.isNullOrBlank()) missing.add("totalAmount")
-        if (bill.supplierName.isNullOrBlank()) missing.add("supplierName")
+
+        if (!AmountParser.isParseable(bill.totalAmount)) {
+            missing.add("totalAmount")
+        }
+
+        if (bill.issueDate.isNullOrBlank()) {
+            missing.add("issueDate")
+        }
+
+        val hasSupplierIdentity = !bill.supplierName.isNullOrBlank() ||
+            !bill.supplierVatNumber.isNullOrBlank()
+        if (!hasSupplierIdentity) {
+            missing.add("supplierIdentity (supplierName or supplierVatNumber)")
+        }
+
         return EssentialFieldsCheck(missing.isEmpty(), missing)
     }
 
+    /**
+     * Check essential receipt fields:
+     * - totalAmount: must be present AND parseable
+     * - transactionDate: required
+     * - merchantIdentity: merchantName OR merchantVatNumber
+     */
     private fun checkEssentialReceiptFields(receipt: ExtractedReceiptData): EssentialFieldsCheck {
         val missing = mutableListOf<String>()
-        if (receipt.totalAmount.isNullOrBlank()) missing.add("totalAmount")
-        if (receipt.merchantName.isNullOrBlank()) missing.add("merchantName")
+
+        if (!AmountParser.isParseable(receipt.totalAmount)) {
+            missing.add("totalAmount")
+        }
+
+        if (receipt.transactionDate.isNullOrBlank()) {
+            missing.add("transactionDate")
+        }
+
+        val hasMerchantIdentity = !receipt.merchantName.isNullOrBlank() ||
+            !receipt.merchantVatNumber.isNullOrBlank()
+        if (!hasMerchantIdentity) {
+            missing.add("merchantIdentity (merchantName or merchantVatNumber)")
+        }
+
         return EssentialFieldsCheck(missing.isEmpty(), missing)
     }
 
+    /**
+     * Check essential expense fields:
+     * - totalAmount: must be present AND parseable
+     * - date: required
+     * (merchant is optional for expenses)
+     */
     private fun checkEssentialExpenseFields(expense: ExtractedExpenseData): EssentialFieldsCheck {
         val missing = mutableListOf<String>()
-        if (expense.totalAmount.isNullOrBlank()) missing.add("totalAmount")
+
+        if (!AmountParser.isParseable(expense.totalAmount)) {
+            missing.add("totalAmount")
+        }
+
+        if (expense.date.isNullOrBlank()) {
+            missing.add("date")
+        }
+
         return EssentialFieldsCheck(missing.isEmpty(), missing)
     }
 
