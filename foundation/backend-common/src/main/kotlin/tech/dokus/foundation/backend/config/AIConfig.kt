@@ -5,14 +5,16 @@ import com.typesafe.config.Config
 /**
  * AI Mode determines model selection and feature availability.
  *
- * - LIGHT: Resource-constrained (Raspberry Pi). Uses smaller models.
- * - NORMAL: Self-hosted/local dev. Fast models for chat, quality models for extraction.
- * - CLOUD: Dokus-managed. Same as normal + provenance tracking via Claude API.
+ * - LIGHT: Resource-constrained (<16GB RAM). Uses smallest models.
+ * - MEDIUM: Mid-range (32-48GB RAM). Sequential ensemble with medium models.
+ * - NORMAL: Full power (64GB+ RAM). Parallel ensemble with largest models.
+ * - CLOUD: Dokus-managed. Same as NORMAL + provenance tracking via Claude API.
  *
  * Document processing uses vision models (qwen3-vl) for direct image analysis.
  */
 enum class AIMode(val configValue: String) {
     LIGHT("light"),
+    MEDIUM("medium"),
     NORMAL("normal"),
     CLOUD("cloud");
 
@@ -20,7 +22,7 @@ enum class AIMode(val configValue: String) {
         fun fromValue(value: String): AIMode =
             entries.find { it.configValue == value.lowercase() }
                 ?: throw IllegalArgumentException(
-                    "Unknown AI mode: '$value'. Valid modes: light, normal, cloud"
+                    "Unknown AI mode: '$value'. Valid modes: light, medium, normal, cloud"
                 )
     }
 }

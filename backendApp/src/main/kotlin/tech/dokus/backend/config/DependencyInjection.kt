@@ -49,7 +49,6 @@ import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
 import tech.dokus.features.ai.agents.ExtractionAgent
-import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.coordinator.AutonomousProcessingCoordinator
 import tech.dokus.features.ai.coordinator.ProcessingConfig
@@ -336,11 +335,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Invoice extraction agents (fast + expert)
+    // Invoice extraction agents (fast + expert) - model selection based on AIMode
     single(qualifier = org.koin.core.qualifier.named("invoiceFast")) {
         ExtractionAgent<ExtractedInvoiceData>(
             executor = get(),
-            model = AIModels.VISION_FAST,
+            model = AIProviderFactory.getEnsembleFastModel(appConfig.ai),
             prompt = AgentPrompt.Extraction.Invoice,
             userPromptPrefix = "Extract invoice data from this",
             promptId = "invoice-extractor-fast",
@@ -350,7 +349,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single(qualifier = org.koin.core.qualifier.named("invoiceExpert")) {
         ExtractionAgent<ExtractedInvoiceData>(
             executor = get(),
-            model = AIModels.VISION_EXPERT,
+            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
             prompt = AgentPrompt.Extraction.Invoice,
             userPromptPrefix = "Extract invoice data from this",
             promptId = "invoice-extractor-expert",
@@ -358,11 +357,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Bill extraction agents (fast + expert)
+    // Bill extraction agents (fast + expert) - model selection based on AIMode
     single(qualifier = org.koin.core.qualifier.named("billFast")) {
         ExtractionAgent<ExtractedBillData>(
             executor = get(),
-            model = AIModels.VISION_FAST,
+            model = AIProviderFactory.getEnsembleFastModel(appConfig.ai),
             prompt = AgentPrompt.Extraction.Bill,
             userPromptPrefix = "Extract bill/supplier invoice data from this",
             promptId = "bill-extractor-fast",
@@ -372,7 +371,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single(qualifier = org.koin.core.qualifier.named("billExpert")) {
         ExtractionAgent<ExtractedBillData>(
             executor = get(),
-            model = AIModels.VISION_EXPERT,
+            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
             prompt = AgentPrompt.Extraction.Bill,
             userPromptPrefix = "Extract bill/supplier invoice data from this",
             promptId = "bill-extractor-expert",
@@ -380,11 +379,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Receipt extraction agents (fast + expert)
+    // Receipt extraction agents (fast + expert) - model selection based on AIMode
     single(qualifier = org.koin.core.qualifier.named("receiptFast")) {
         ExtractionAgent<ExtractedReceiptData>(
             executor = get(),
-            model = AIModels.VISION_FAST,
+            model = AIProviderFactory.getEnsembleFastModel(appConfig.ai),
             prompt = AgentPrompt.Extraction.Receipt,
             userPromptPrefix = "Extract receipt data from this",
             promptId = "receipt-extractor-fast",
@@ -394,7 +393,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single(qualifier = org.koin.core.qualifier.named("receiptExpert")) {
         ExtractionAgent<ExtractedReceiptData>(
             executor = get(),
-            model = AIModels.VISION_EXPERT,
+            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
             prompt = AgentPrompt.Extraction.Receipt,
             userPromptPrefix = "Extract receipt data from this",
             promptId = "receipt-extractor-expert",
@@ -402,11 +401,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Expense extraction agents (fast + expert)
+    // Expense extraction agents (fast + expert) - model selection based on AIMode
     single(qualifier = org.koin.core.qualifier.named("expenseFast")) {
         ExtractionAgent<ExtractedExpenseData>(
             executor = get(),
-            model = AIModels.VISION_FAST,
+            model = AIProviderFactory.getEnsembleFastModel(appConfig.ai),
             prompt = AgentPrompt.Extraction.Expense,
             userPromptPrefix = "Extract expense data from this",
             promptId = "expense-extractor-fast",
@@ -416,7 +415,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single(qualifier = org.koin.core.qualifier.named("expenseExpert")) {
         ExtractionAgent<ExtractedExpenseData>(
             executor = get(),
-            model = AIModels.VISION_EXPERT,
+            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
             prompt = AgentPrompt.Extraction.Expense,
             userPromptPrefix = "Extract expense data from this",
             promptId = "expense-extractor-expert",
@@ -424,12 +423,12 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Retry agents (Layer 4) - using expert model for retries
+    // Retry agents (Layer 4) - using expert model for retries (based on AIMode)
     single(qualifier = org.koin.core.qualifier.named("invoiceRetry")) {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedInvoiceData>(
             executor = get(),
-            model = AIModels.VISION_EXPERT,
+            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
             basePrompt = AgentPrompt.Extraction.Invoice,
             promptId = "invoice-retry",
             serializer = ExtractedInvoiceData.serializer(),
@@ -441,7 +440,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedBillData>(
             executor = get(),
-            model = AIModels.VISION_EXPERT,
+            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
             basePrompt = AgentPrompt.Extraction.Bill,
             promptId = "bill-retry",
             serializer = ExtractedBillData.serializer(),
@@ -453,7 +452,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedReceiptData>(
             executor = get(),
-            model = AIModels.VISION_EXPERT,
+            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
             basePrompt = AgentPrompt.Extraction.Receipt,
             promptId = "receipt-retry",
             serializer = ExtractedReceiptData.serializer(),
@@ -465,7 +464,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedExpenseData>(
             executor = get(),
-            model = AIModels.VISION_EXPERT,
+            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
             basePrompt = AgentPrompt.Extraction.Expense,
             promptId = "expense-retry",
             serializer = ExtractedExpenseData.serializer(),
@@ -474,11 +473,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Autonomous Processing Coordinator (5-Layer Pipeline)
+    // Autonomous Processing Coordinator (5-Layer Pipeline) - config based on AIMode
     single {
         AutonomousProcessingCoordinator(
             classificationAgent = get(),
-            config = ProcessingConfig.DEFAULT
+            config = ProcessingConfig.forMode(appConfig.ai.mode)
         )
             .withInvoiceAgents(
                 fastAgent = get(qualifier = org.koin.core.qualifier.named("invoiceFast")),

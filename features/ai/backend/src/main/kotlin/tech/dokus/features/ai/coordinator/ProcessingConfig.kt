@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.judgment.JudgmentConfig
 import tech.dokus.features.ai.retry.RetryConfig
 import tech.dokus.features.ai.validation.CheckType
+import tech.dokus.foundation.backend.config.AIMode
 
 /**
  * Configuration for the Autonomous Processing Pipeline.
@@ -157,6 +158,34 @@ data class ProcessingConfig(
             judgmentConfig = JudgmentConfig.LENIENT,
             includeProvenance = true
         )
+
+        /**
+         * Create ProcessingConfig based on AIMode.
+         *
+         * This ensures parallel/sequential execution matches system memory capability:
+         * - LIGHT/MEDIUM: Sequential execution to fit in limited memory
+         * - NORMAL/CLOUD: Parallel execution for maximum speed
+         *
+         * Use this factory when you want AIMode to be the single source of truth
+         * for both model selection and execution strategy.
+         */
+        fun forMode(mode: AIMode): ProcessingConfig = when (mode) {
+            AIMode.LIGHT -> ProcessingConfig(
+                enableEnsemble = true,
+                parallelExtraction = false,  // Sequential for <16GB
+                enableSelfCorrection = true
+            )
+            AIMode.MEDIUM -> ProcessingConfig(
+                enableEnsemble = true,
+                parallelExtraction = false,  // Sequential for 32-48GB
+                enableSelfCorrection = true
+            )
+            AIMode.NORMAL, AIMode.CLOUD -> ProcessingConfig(
+                enableEnsemble = true,
+                parallelExtraction = true,   // Parallel for 64GB+
+                enableSelfCorrection = true
+            )
+        }
     }
 
     /**

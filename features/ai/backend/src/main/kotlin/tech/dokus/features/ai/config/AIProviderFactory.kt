@@ -51,6 +51,38 @@ object AIProviderFactory {
     fun getChatModel(config: AIConfig): LLModel {
         return AIModels.chatModel(config.mode)
     }
+
+    // ==========================================================================
+    // Ensemble Model Selection (for 5-Layer Pipeline)
+    // ==========================================================================
+
+    /**
+     * Get the fast model for perception ensemble (Layer 1).
+     * Model selection is based on AIMode for memory-appropriate sizing.
+     */
+    fun getEnsembleFastModel(config: AIConfig): LLModel {
+        val model = AIModels.ensembleFastModel(config.mode)
+        logger.debug("Ensemble fast model: {} (mode={})", model.id, config.mode)
+        return model
+    }
+
+    /**
+     * Get the expert model for perception ensemble (Layer 1).
+     * Model selection is based on AIMode for memory-appropriate sizing.
+     */
+    fun getEnsembleExpertModel(config: AIConfig): LLModel {
+        val model = AIModels.ensembleExpertModel(config.mode)
+        logger.debug("Ensemble expert model: {} (mode={})", model.id, config.mode)
+        return model
+    }
+
+    /**
+     * Whether to run ensemble models in parallel based on AIMode.
+     * LIGHT and MEDIUM modes run sequentially to conserve memory.
+     */
+    fun shouldRunParallel(config: AIConfig): Boolean {
+        return AIModels.shouldRunParallel(config.mode)
+    }
 }
 
 /**

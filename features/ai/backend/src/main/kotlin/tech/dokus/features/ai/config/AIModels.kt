@@ -69,8 +69,21 @@ object AIModels {
     )
 
     /**
+     * Medium vision model for 32-48GB systems (e.g., M4 Max 36GB).
+     * Balances quality and memory usage for mid-range hardware.
+     */
+    val VISION_MEDIUM = LLModel(
+        provider = LLMProvider.Ollama,
+        id = "qwen3-vl:32b",
+        capabilities = listOf(LLMCapability.Vision.Image),
+        contextLength = CONTEXT_128K,
+        maxOutputTokens = null
+    )
+
+    /**
      * Expert vision model for ensemble extraction (deep pass).
      * Larger model for highest accuracy, catches subtle details.
+     * Requires 64GB+ RAM for parallel execution with fast model.
      */
     val VISION_EXPERT = LLModel(
         provider = LLMProvider.Ollama,
@@ -139,7 +152,7 @@ object AIModels {
      */
     fun visionModel(mode: AIMode): LLModel = when (mode) {
         AIMode.LIGHT -> VISION_LIGHT
-        AIMode.NORMAL, AIMode.CLOUD -> VISION_QUALITY
+        AIMode.MEDIUM, AIMode.NORMAL, AIMode.CLOUD -> VISION_QUALITY
     }
 
     /**
@@ -147,6 +160,45 @@ object AIModels {
      */
     fun chatModel(mode: AIMode): LLModel = when (mode) {
         AIMode.LIGHT -> CHAT_LIGHT
-        AIMode.NORMAL, AIMode.CLOUD -> CHAT_QUALITY
+        AIMode.MEDIUM, AIMode.NORMAL, AIMode.CLOUD -> CHAT_QUALITY
+    }
+
+    // ==========================================================================
+    // Ensemble Model Selection (for 5-Layer Pipeline)
+    // ==========================================================================
+
+    /**
+     * Get the fast model for ensemble extraction based on AIMode.
+     *
+     * This model runs first in the perception ensemble (Layer 1) and provides
+     * a quick baseline extraction.
+     */
+    fun ensembleFastModel(mode: AIMode): LLModel = when (mode) {
+        AIMode.LIGHT -> VISION_LIGHT       // qwen3-vl:2b
+        AIMode.MEDIUM -> VISION_FAST       // qwen3-vl:8b
+        AIMode.NORMAL, AIMode.CLOUD -> VISION_FAST  // qwen3-vl:8b
+    }
+
+    /**
+     * Get the expert model for ensemble extraction based on AIMode.
+     *
+     * This model provides the highest accuracy extraction and is used
+     * to validate/enhance the fast model's output.
+     */
+    fun ensembleExpertModel(mode: AIMode): LLModel = when (mode) {
+        AIMode.LIGHT -> VISION_FAST        // qwen3-vl:8b (largest for light)
+        AIMode.MEDIUM -> VISION_MEDIUM     // qwen3-vl:32b (fits in 36GB)
+        AIMode.NORMAL, AIMode.CLOUD -> VISION_EXPERT  // qwen3-vl:72b
+    }
+
+    /**
+     * Whether to run ensemble models in parallel.
+     *
+     * Parallel execution is faster but requires more RAM (both models loaded).
+     * Sequential execution uses less memory but takes longer.
+     */
+    fun shouldRunParallel(mode: AIMode): Boolean = when (mode) {
+        AIMode.LIGHT, AIMode.MEDIUM -> false  // Sequential to fit in memory
+        AIMode.NORMAL, AIMode.CLOUD -> true   // Parallel for speed
     }
 }
