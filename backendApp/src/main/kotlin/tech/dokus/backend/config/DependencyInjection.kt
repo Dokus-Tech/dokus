@@ -321,6 +321,194 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     // single { ChunkingService() }
     // single { EmbeddingService(appConfig.ai) }
 
+    // =========================================================================
+    // 5-Layer Autonomous Processing Coordinator
+    // =========================================================================
+
+    // Create shared executor for all agents
+    single { AIProviderFactory.createExecutor(appConfig.ai) }
+
+    // Audit service for validation (Layer 3)
+    single { ExtractionAuditService() }
+
+    // Classification agent (Layer 0)
+    single {
+        DocumentClassificationAgent(
+            executor = get(),
+            model = AIProviderFactory.getModel(appConfig.ai, ModelPurpose.CLASSIFICATION),
+            prompt = AgentPrompt.DocumentClassification
+        )
+    }
+
+    // Invoice extraction agents (fast + expert)
+    single(qualifier = org.koin.core.qualifier.named("invoiceFast")) {
+        ExtractionAgent<ExtractedInvoiceData>(
+            executor = get(),
+            model = AIModels.VISION_FAST,
+            prompt = AgentPrompt.Extraction.Invoice,
+            userPromptPrefix = "Extract invoice data from this",
+            promptId = "invoice-extractor-fast",
+            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
+        )
+    }
+    single(qualifier = org.koin.core.qualifier.named("invoiceExpert")) {
+        ExtractionAgent<ExtractedInvoiceData>(
+            executor = get(),
+            model = AIModels.VISION_EXPERT,
+            prompt = AgentPrompt.Extraction.Invoice,
+            userPromptPrefix = "Extract invoice data from this",
+            promptId = "invoice-extractor-expert",
+            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
+        )
+    }
+
+    // Bill extraction agents (fast + expert)
+    single(qualifier = org.koin.core.qualifier.named("billFast")) {
+        ExtractionAgent<ExtractedBillData>(
+            executor = get(),
+            model = AIModels.VISION_FAST,
+            prompt = AgentPrompt.Extraction.Bill,
+            userPromptPrefix = "Extract bill/supplier invoice data from this",
+            promptId = "bill-extractor-fast",
+            emptyResult = { ExtractedBillData(confidence = 0.0) }
+        )
+    }
+    single(qualifier = org.koin.core.qualifier.named("billExpert")) {
+        ExtractionAgent<ExtractedBillData>(
+            executor = get(),
+            model = AIModels.VISION_EXPERT,
+            prompt = AgentPrompt.Extraction.Bill,
+            userPromptPrefix = "Extract bill/supplier invoice data from this",
+            promptId = "bill-extractor-expert",
+            emptyResult = { ExtractedBillData(confidence = 0.0) }
+        )
+    }
+
+    // Receipt extraction agents (fast + expert)
+    single(qualifier = org.koin.core.qualifier.named("receiptFast")) {
+        ExtractionAgent<ExtractedReceiptData>(
+            executor = get(),
+            model = AIModels.VISION_FAST,
+            prompt = AgentPrompt.Extraction.Receipt,
+            userPromptPrefix = "Extract receipt data from this",
+            promptId = "receipt-extractor-fast",
+            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
+        )
+    }
+    single(qualifier = org.koin.core.qualifier.named("receiptExpert")) {
+        ExtractionAgent<ExtractedReceiptData>(
+            executor = get(),
+            model = AIModels.VISION_EXPERT,
+            prompt = AgentPrompt.Extraction.Receipt,
+            userPromptPrefix = "Extract receipt data from this",
+            promptId = "receipt-extractor-expert",
+            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
+        )
+    }
+
+    // Expense extraction agents (fast + expert)
+    single(qualifier = org.koin.core.qualifier.named("expenseFast")) {
+        ExtractionAgent<ExtractedExpenseData>(
+            executor = get(),
+            model = AIModels.VISION_FAST,
+            prompt = AgentPrompt.Extraction.Expense,
+            userPromptPrefix = "Extract expense data from this",
+            promptId = "expense-extractor-fast",
+            emptyResult = { ExtractedExpenseData(confidence = 0.0) }
+        )
+    }
+    single(qualifier = org.koin.core.qualifier.named("expenseExpert")) {
+        ExtractionAgent<ExtractedExpenseData>(
+            executor = get(),
+            model = AIModels.VISION_EXPERT,
+            prompt = AgentPrompt.Extraction.Expense,
+            userPromptPrefix = "Extract expense data from this",
+            promptId = "expense-extractor-expert",
+            emptyResult = { ExtractedExpenseData(confidence = 0.0) }
+        )
+    }
+
+    // Retry agents (Layer 4) - using expert model for retries
+    single(qualifier = org.koin.core.qualifier.named("invoiceRetry")) {
+        val auditService = get<ExtractionAuditService>()
+        FeedbackDrivenRetryAgent.create<ExtractedInvoiceData>(
+            executor = get(),
+            model = AIModels.VISION_EXPERT,
+            basePrompt = AgentPrompt.Extraction.Invoice,
+            promptId = "invoice-retry",
+            serializer = ExtractedInvoiceData.serializer(),
+            config = RetryConfig.DEFAULT,
+            validator = { auditService.auditInvoice(it) }
+        )
+    }
+    single(qualifier = org.koin.core.qualifier.named("billRetry")) {
+        val auditService = get<ExtractionAuditService>()
+        FeedbackDrivenRetryAgent.create<ExtractedBillData>(
+            executor = get(),
+            model = AIModels.VISION_EXPERT,
+            basePrompt = AgentPrompt.Extraction.Bill,
+            promptId = "bill-retry",
+            serializer = ExtractedBillData.serializer(),
+            config = RetryConfig.DEFAULT,
+            validator = { auditService.auditBill(it) }
+        )
+    }
+    single(qualifier = org.koin.core.qualifier.named("receiptRetry")) {
+        val auditService = get<ExtractionAuditService>()
+        FeedbackDrivenRetryAgent.create<ExtractedReceiptData>(
+            executor = get(),
+            model = AIModels.VISION_EXPERT,
+            basePrompt = AgentPrompt.Extraction.Receipt,
+            promptId = "receipt-retry",
+            serializer = ExtractedReceiptData.serializer(),
+            config = RetryConfig.DEFAULT,
+            validator = { auditService.auditReceipt(it) }
+        )
+    }
+    single(qualifier = org.koin.core.qualifier.named("expenseRetry")) {
+        val auditService = get<ExtractionAuditService>()
+        FeedbackDrivenRetryAgent.create<ExtractedExpenseData>(
+            executor = get(),
+            model = AIModels.VISION_EXPERT,
+            basePrompt = AgentPrompt.Extraction.Expense,
+            promptId = "expense-retry",
+            serializer = ExtractedExpenseData.serializer(),
+            config = RetryConfig.DEFAULT,
+            validator = { auditService.auditExpense(it) }
+        )
+    }
+
+    // Autonomous Processing Coordinator (5-Layer Pipeline)
+    single {
+        AutonomousProcessingCoordinator(
+            classificationAgent = get(),
+            config = ProcessingConfig.DEFAULT
+        )
+            .withInvoiceAgents(
+                fastAgent = get(qualifier = org.koin.core.qualifier.named("invoiceFast")),
+                expertAgent = get(qualifier = org.koin.core.qualifier.named("invoiceExpert"))
+            )
+            .withBillAgents(
+                fastAgent = get(qualifier = org.koin.core.qualifier.named("billFast")),
+                expertAgent = get(qualifier = org.koin.core.qualifier.named("billExpert"))
+            )
+            .withReceiptAgents(
+                fastAgent = get(qualifier = org.koin.core.qualifier.named("receiptFast")),
+                expertAgent = get(qualifier = org.koin.core.qualifier.named("receiptExpert"))
+            )
+            .withExpenseAgents(
+                fastAgent = get(qualifier = org.koin.core.qualifier.named("expenseFast")),
+                expertAgent = get(qualifier = org.koin.core.qualifier.named("expenseExpert"))
+            )
+            .withRetryAgents(
+                invoiceRetry = get(qualifier = org.koin.core.qualifier.named("invoiceRetry")),
+                billRetry = get(qualifier = org.koin.core.qualifier.named("billRetry")),
+                receiptRetry = get(qualifier = org.koin.core.qualifier.named("receiptRetry")),
+                expenseRetry = get(qualifier = org.koin.core.qualifier.named("expenseRetry"))
+            )
+            .withJudgmentAgent(JudgmentAgent.deterministic())
+    }
+
     single {
         DocumentProcessingWorker(
             ingestionRepository = get(),
@@ -335,6 +523,8 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             chunkingService = getOrNull<ChunkingService>(),
             embeddingService = getOrNull<EmbeddingService>(),
             chunkRepository = getOrNull<ChunkRepository>(),
+            // 5-Layer Autonomous Processing Coordinator
+            coordinator = get()
         )
     }
 }

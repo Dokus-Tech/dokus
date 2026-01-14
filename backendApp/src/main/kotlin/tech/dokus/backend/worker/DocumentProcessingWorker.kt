@@ -22,6 +22,9 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ChunkWithEmbedding
 import tech.dokus.domain.utils.json
+import tech.dokus.features.ai.coordinator.AutonomousProcessingCoordinator
+import tech.dokus.features.ai.coordinator.AutonomousResult
+import tech.dokus.features.ai.judgment.JudgmentOutcome
 import tech.dokus.features.ai.models.meetsMinimalThreshold
 import tech.dokus.features.ai.models.toDomainType
 import tech.dokus.features.ai.models.toExtractedDocumentData
@@ -66,7 +69,9 @@ class DocumentProcessingWorker(
     // Optional RAG dependencies - if provided, chunking and embedding will be performed
     private val chunkingService: ChunkingService? = null,
     private val embeddingService: EmbeddingService? = null,
-    private val chunkRepository: ChunkRepository? = null
+    private val chunkRepository: ChunkRepository? = null,
+    // Optional 5-Layer Autonomous Processing Coordinator
+    private val coordinator: AutonomousProcessingCoordinator? = null
 ) {
     private val logger = LoggerFactory.getLogger(DocumentProcessingWorker::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -205,24 +210,17 @@ class DocumentProcessingWorker(
                 companyName = tenant?.displayName?.value ?: tenant?.legalName?.value
             )
 
-            // Step 3: Send images to AIService for vision-based classification and extraction
-            val aiResult = aiService.processDocument(documentImages.images, tenantContext)
-
-            val result = aiResult.getOrElse { e ->
-                logger.error("AI processing failed for document $documentId: ${e.message}", e)
-                ingestionRepository.markAsFailed(runId, "AI processing failed: ${e.message}")
-                return
-            }
-
-            // Step 4: Convert to domain model and persist
-            val extractedData = result.toExtractedDocumentData()
-            val documentType = result.toDomainType()
-
-            // Check threshold using AI-layer check (SINGLE source of truth)
-            val meetsThreshold = result.meetsMinimalThreshold()
-
-            // Get the extracted text for RAG (from vision model's transcription)
-            val rawText = result.rawText
+            // Step 3: Process document through appropriate pipeline
+            val (extractedData, documentType, meetsThreshold, rawText, confidence, judgmentInfo) =
+                if (coordinator != null) {
+                    // Use 5-Layer Autonomous Processing Pipeline
+                    processWithCoordinator(documentImages.images, tenantContext, runId, documentId)
+                        ?: return // Already marked as failed inside processWithCoordinator
+                } else {
+                    // Fallback to legacy AIService
+                    processWithAIService(documentImages.images, tenantContext, runId, documentId)
+                        ?: return // Already marked as failed inside processWithAIService
+                }
 
             // Create draft (always for classifiable types, with appropriate status)
             ingestionRepository.markAsSucceeded(
@@ -231,11 +229,19 @@ class DocumentProcessingWorker(
                 documentId = documentId,
                 documentType = documentType,
                 extractedData = extractedData,
-                confidence = result.confidence,
+                confidence = confidence,
                 rawText = rawText,
                 meetsThreshold = meetsThreshold,
                 force = false // Don't overwrite user edits
             )
+
+            // Log judgment info if using coordinator
+            if (judgmentInfo != null) {
+                logger.info(
+                    "5-Layer Pipeline: judgment=${judgmentInfo.outcome}, " +
+                        "corrected=${judgmentInfo.wasCorrected}, issues=${judgmentInfo.issues.size}"
+                )
+            }
 
             // Best-effort: suggest a contact match for the counterparty (if not user-edited/linked).
             runCatching {
@@ -254,7 +260,7 @@ class DocumentProcessingWorker(
 
             logger.info(
                 "Processed doc $documentId: type=$documentType, " +
-                    "conf=${result.confidence}, threshold=$meetsThreshold"
+                    "conf=$confidence, threshold=$meetsThreshold"
             )
 
             // RAG preparation: chunk and embed the extracted text
