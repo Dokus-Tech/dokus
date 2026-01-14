@@ -30,7 +30,7 @@ object AIProviderFactory {
             config.mode.name
         )
 
-        return ThrottledPromptExecutor(baseExecutor, maxConcurrent)
+        return wrapWithThrottling(baseExecutor, maxConcurrent)
     }
 
     /**

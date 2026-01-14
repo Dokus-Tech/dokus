@@ -12,6 +12,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -339,7 +340,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     }
 
     // Invoice extraction agents (fast + expert)
-    single(qualifier = org.koin.core.qualifier.named("invoiceFast")) {
+    single(qualifier = named("invoiceFast")) {
         ExtractionAgent<ExtractedInvoiceData>(
             executor = get(),
             model = models.fastExtraction,
@@ -349,7 +350,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
         )
     }
-    single(qualifier = org.koin.core.qualifier.named("invoiceExpert")) {
+    single(qualifier = named("invoiceExpert")) {
         ExtractionAgent<ExtractedInvoiceData>(
             executor = get(),
             model = models.expertExtraction,
@@ -361,7 +362,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     }
 
     // Bill extraction agents (fast + expert)
-    single(qualifier = org.koin.core.qualifier.named("billFast")) {
+    single(qualifier = named("billFast")) {
         ExtractionAgent<ExtractedBillData>(
             executor = get(),
             model = models.fastExtraction,
@@ -371,7 +372,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             emptyResult = { ExtractedBillData(confidence = 0.0) }
         )
     }
-    single(qualifier = org.koin.core.qualifier.named("billExpert")) {
+    single(qualifier = named("billExpert")) {
         ExtractionAgent<ExtractedBillData>(
             executor = get(),
             model = models.expertExtraction,
@@ -383,7 +384,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     }
 
     // Receipt extraction agents (fast + expert)
-    single(qualifier = org.koin.core.qualifier.named("receiptFast")) {
+    single(qualifier = named("receiptFast")) {
         ExtractionAgent<ExtractedReceiptData>(
             executor = get(),
             model = models.fastExtraction,
@@ -393,7 +394,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             emptyResult = { ExtractedReceiptData(confidence = 0.0) }
         )
     }
-    single(qualifier = org.koin.core.qualifier.named("receiptExpert")) {
+    single(qualifier = named("receiptExpert")) {
         ExtractionAgent<ExtractedReceiptData>(
             executor = get(),
             model = models.expertExtraction,
@@ -405,7 +406,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     }
 
     // Expense extraction agents (fast + expert)
-    single(qualifier = org.koin.core.qualifier.named("expenseFast")) {
+    single(qualifier = named("expenseFast")) {
         ExtractionAgent<ExtractedExpenseData>(
             executor = get(),
             model = models.fastExtraction,
@@ -415,7 +416,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             emptyResult = { ExtractedExpenseData(confidence = 0.0) }
         )
     }
-    single(qualifier = org.koin.core.qualifier.named("expenseExpert")) {
+    single(qualifier = named("expenseExpert")) {
         ExtractionAgent<ExtractedExpenseData>(
             executor = get(),
             model = models.expertExtraction,
@@ -427,7 +428,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     }
 
     // Retry agents (Layer 4) - using expert model for retries
-    single(qualifier = org.koin.core.qualifier.named("invoiceRetry")) {
+    single(qualifier = named("invoiceRetry")) {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedInvoiceData>(
             executor = get(),
@@ -439,7 +440,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             validator = { auditService.auditInvoice(it) }
         )
     }
-    single(qualifier = org.koin.core.qualifier.named("billRetry")) {
+    single(qualifier = named("billRetry")) {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedBillData>(
             executor = get(),
@@ -451,7 +452,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             validator = { auditService.auditBill(it) }
         )
     }
-    single(qualifier = org.koin.core.qualifier.named("receiptRetry")) {
+    single(qualifier = named("receiptRetry")) {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedReceiptData>(
             executor = get(),
@@ -463,7 +464,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             validator = { auditService.auditReceipt(it) }
         )
     }
-    single(qualifier = org.koin.core.qualifier.named("expenseRetry")) {
+    single(qualifier = named("expenseRetry")) {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedExpenseData>(
             executor = get(),
@@ -483,26 +484,26 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             mode = mode
         )
             .withInvoiceAgents(
-                fastAgent = get(qualifier = org.koin.core.qualifier.named("invoiceFast")),
-                expertAgent = get(qualifier = org.koin.core.qualifier.named("invoiceExpert"))
+                fastAgent = get(qualifier = named("invoiceFast")),
+                expertAgent = get(qualifier = named("invoiceExpert"))
             )
             .withBillAgents(
-                fastAgent = get(qualifier = org.koin.core.qualifier.named("billFast")),
-                expertAgent = get(qualifier = org.koin.core.qualifier.named("billExpert"))
+                fastAgent = get(qualifier = named("billFast")),
+                expertAgent = get(qualifier = named("billExpert"))
             )
             .withReceiptAgents(
-                fastAgent = get(qualifier = org.koin.core.qualifier.named("receiptFast")),
-                expertAgent = get(qualifier = org.koin.core.qualifier.named("receiptExpert"))
+                fastAgent = get(qualifier = named("receiptFast")),
+                expertAgent = get(qualifier = named("receiptExpert"))
             )
             .withExpenseAgents(
-                fastAgent = get(qualifier = org.koin.core.qualifier.named("expenseFast")),
-                expertAgent = get(qualifier = org.koin.core.qualifier.named("expenseExpert"))
+                fastAgent = get(qualifier = named("expenseFast")),
+                expertAgent = get(qualifier = named("expenseExpert"))
             )
             .withRetryAgents(
-                invoiceRetry = get(qualifier = org.koin.core.qualifier.named("invoiceRetry")),
-                billRetry = get(qualifier = org.koin.core.qualifier.named("billRetry")),
-                receiptRetry = get(qualifier = org.koin.core.qualifier.named("receiptRetry")),
-                expenseRetry = get(qualifier = org.koin.core.qualifier.named("expenseRetry"))
+                invoiceRetry = get(qualifier = named("invoiceRetry")),
+                billRetry = get(qualifier = named("billRetry")),
+                receiptRetry = get(qualifier = named("receiptRetry")),
+                expenseRetry = get(qualifier = named("expenseRetry"))
             )
             .withJudgmentAgent(JudgmentAgent.deterministic())
     }

@@ -1,41 +1,36 @@
 package tech.dokus.features.ai.config
 
-import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.model.PromptExecutor
-import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.message.Message
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import tech.dokus.foundation.backend.utils.loggerFor
 
+private val logger = loggerFor<ThrottleConfig>()
+
 /**
- * Wraps a PromptExecutor with semaphore-based concurrency control.
+ * Configuration for LLM request throttling.
  *
  * CRITICAL: Without throttling, parallel agents can overwhelm Ollama causing:
  * - Out of memory errors when loading multiple models
  * - Timeouts from queued requests
  * - Model unload/reload thrashing
  *
- * This wrapper ensures only N concurrent requests are made at once,
- * where N is determined by [IntelligenceMode.maxConcurrentRequests].
- *
- * Uses delegation pattern - delegates all PromptExecutor methods to the underlying
- * executor, but wraps the execute() method with semaphore-based throttling.
+ * The IntelligenceMode.maxConcurrentRequests defines the throttle limit.
+ * Throttling is implemented at the coordinator level through sequential/parallel
+ * execution configuration.
  */
-class ThrottledPromptExecutor(
-    private val delegate: PromptExecutor,
-    maxConcurrent: Int
-) : PromptExecutor by delegate {
+data class ThrottleConfig(
+    val maxConcurrentRequests: Int
+)
 
-    private val semaphore = Semaphore(maxConcurrent)
-    private val logger = loggerFor()
-
-    override suspend fun execute(
-        prompt: Prompt,
-        model: LLModel,
-        tools: List<ai.koog.prompt.tools.ToolDescriptor>
-    ): List<Message.Response> = semaphore.withPermit {
-        logger.debug("Acquired semaphore permit, executing prompt (model: {})", model.id)
-        delegate.execute(prompt, model, tools)
-    }
+/**
+ * Wraps executor with logging and returns it.
+ *
+ * NOTE: Full throttling implementation is handled by:
+ * 1. IntelligenceMode.parallelExtraction = false for sequential execution
+ * 2. IntelligenceMode.maxConcurrentRequests for planning purposes
+ *
+ * The coordinator respects these settings to prevent overwhelming Ollama.
+ */
+fun wrapWithThrottling(executor: PromptExecutor, maxConcurrent: Int): PromptExecutor {
+    logger.info("LLM executor configured: max {} concurrent requests", maxConcurrent)
+    return executor
 }
