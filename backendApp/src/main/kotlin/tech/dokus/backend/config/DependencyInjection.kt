@@ -70,7 +70,6 @@ import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
-import tech.dokus.foundation.backend.config.DeploymentConfig
 import tech.dokus.foundation.backend.config.MinioConfig
 import tech.dokus.foundation.backend.crypto.AesGcmCredentialCryptoService
 import tech.dokus.foundation.backend.crypto.CredentialCryptoService
@@ -263,9 +262,6 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     // PDF Preview
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
 
-    // Deployment config (hosting mode)
-    single { DeploymentConfig.fromConfig(appConfig.config) }
-
     // Peppol
     single { PeppolModuleConfig.fromConfig(appConfig.config) }
     single { PeppolProviderFactory(get()) }
@@ -274,7 +270,7 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { PeppolMapper() }
     single { PeppolValidator() }
     // Centralized credential resolver - ALL Peppol operations use this
-    single<PeppolCredentialResolver> { PeppolCredentialResolverImpl(get(), get(), get()) }
+    single<PeppolCredentialResolver> { PeppolCredentialResolverImpl(get(), get()) }
     single { PeppolConnectionService(get(), get(), get()) }
     single { PeppolService(get(), get(), get(), get(), get(), get()) }
 

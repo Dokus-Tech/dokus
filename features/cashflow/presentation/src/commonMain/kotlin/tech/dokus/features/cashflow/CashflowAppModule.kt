@@ -1,14 +1,10 @@
 package tech.dokus.features.cashflow
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow
 import tech.dokus.aura.resources.cashflow_title
 import tech.dokus.aura.resources.chat_title
 import tech.dokus.aura.resources.ml
-import tech.dokus.aura.resources.settings_group_workspace
-import tech.dokus.aura.resources.settings_peppol
 import tech.dokus.features.cashflow.di.cashflowPresentationModule
 import tech.dokus.features.cashflow.di.cashflowViewModelModule
 import tech.dokus.features.cashflow.navigation.CashflowHomeNavigationProvider
@@ -19,13 +15,10 @@ import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.AppPresentationModuleDi
 import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleSettingsGroup
-import tech.dokus.foundation.app.ModuleSettingsSection
-import tech.dokus.foundation.app.SettingsPriority
 import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.foundation.aura.model.HomeItemPriority
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.HomeDestination
-import tech.dokus.navigation.destinations.SettingsDestination
 
 /**
  * Cashflow module registration for dependency injection.
@@ -52,19 +45,7 @@ object CashflowAppModule : AppModule {
             showTopBar = false
         )
     )
-    override val settingsGroups: List<ModuleSettingsGroup> = listOf(
-        ModuleSettingsGroup(
-            title = Res.string.settings_group_workspace,
-            priority = SettingsPriority.Medium,
-            sections = listOf(
-                ModuleSettingsSection(
-                    title = Res.string.settings_peppol,
-                    icon = Icons.Default.Email,
-                    destination = SettingsDestination.PeppolSettings
-                )
-            )
-        )
-    )
+    override val settingsGroups: List<ModuleSettingsGroup> = emptyList()
     override val dashboardWidgets: List<DashboardWidget> = emptyList()
 
     override val presentationDi: AppPresentationModuleDi = object : AppPresentationModuleDi {

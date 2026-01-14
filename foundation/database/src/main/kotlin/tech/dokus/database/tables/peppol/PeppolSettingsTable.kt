@@ -7,10 +7,9 @@ import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 
 /**
- * Peppol settings per tenant - stores provider credentials.
- * CRITICAL: API credentials are encrypted at rest.
- *
- * Supports multiple providers (Recommand, Storecove, etc.)
+ * Peppol settings per tenant.
+ * Credentials are managed via environment variables (PEPPOL_MASTER_API_KEY/SECRET),
+ * not stored in the database.
  */
 object PeppolSettingsTable : UUIDTable("peppol_settings") {
     // Multi-tenancy (CRITICAL) - one settings record per tenant
@@ -19,18 +18,14 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
         onDelete = ReferenceOption.CASCADE
     )
 
-    // Provider identification - supports multiple providers
+    // Provider identification - currently only "recommand" supported
     val providerId = varchar("provider_id", 50).default("recommand").index()
 
     // Provider-specific configuration (JSON) for future extensibility
     val providerConfig = text("provider_config").nullable()
 
-    // Common API configuration (used by Recommand and similar providers)
+    // Company ID at the Peppol provider (e.g., Recommand company ID)
     val companyId = varchar("company_id", 255)
-
-    // API credentials - NULL for cloud tenants (master creds from env), encrypted for self-hosted
-    val apiKey = varchar("api_key", 512).nullable()
-    val apiSecret = varchar("api_secret", 512).nullable()
 
     // Tenant's Peppol participant ID (format: scheme:identifier)
     val peppolId = varchar("peppol_id", 255)

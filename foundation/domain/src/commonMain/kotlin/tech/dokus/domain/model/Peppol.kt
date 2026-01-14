@@ -41,9 +41,7 @@ enum class PeppolProvider(val displayName: String) {
 
 /**
  * Peppol settings for a tenant.
- *
- * For cloud deployments: credentials are managed by Dokus (not stored per-tenant)
- * For self-hosted: credentials are stored encrypted per-tenant
+ * Credentials are managed via environment variables, not stored per-tenant.
  */
 @Serializable
 data class PeppolSettingsDto(
@@ -61,51 +59,13 @@ data class PeppolSettingsDto(
     val webhookToken: String? = null,
     /** Last time a full sync was performed (used for first connection and weekly sync) */
     val lastFullSyncAt: LocalDateTime? = null,
-    /**
-     * Whether credentials are managed by Dokus (cloud deployment).
-     * If true: user cannot configure credentials, Peppol is automatic.
-     * If false: user must provide API credentials (self-hosted deployment).
-     */
-    val isManagedCredentials: Boolean = false,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
 
-/**
- * Request to create or update Peppol settings.
- * API key and secret are stored securely and never returned in responses.
- */
-@Serializable
-data class SavePeppolSettingsRequest(
-    val companyId: String,
-    val apiKey: String,
-    val apiSecret: String,
-    val peppolId: String,
-    val isEnabled: Boolean = false,
-    val testMode: Boolean = true
-)
-
 // ============================================================================
-// PEPPOL CONNECTION (RECOMMAND DISCOVERY)
+// PEPPOL CONNECTION
 // ============================================================================
-
-@Serializable
-data class PeppolConnectRequest(
-    val apiKey: String,
-    val apiSecret: String,
-    val isEnabled: Boolean = false,
-    val testMode: Boolean = true,
-    /**
-     * Optional company ID to select when multiple matches exist.
-     * If omitted and multiple matches are found, the backend returns candidates without saving credentials.
-     */
-    val companyId: String? = null,
-    /**
-     * When true and no matching company is found, create a new company on Recommand.
-     * When false and no matching company is found, return NoCompanyFound status for user confirmation.
-     */
-    val createCompanyIfMissing: Boolean = false,
-)
 
 @Serializable
 enum class PeppolConnectStatus {

@@ -22,10 +22,8 @@ class Peppol {
     class Providers(val parent: Peppol = Peppol())
 
     /**
-     * GET/PUT/DELETE /api/v1/peppol/settings
-     * GET - Get Peppol settings
-     * PUT - Update Peppol settings
-     * DELETE - Remove Peppol settings
+     * GET /api/v1/peppol/settings
+     * Get Peppol settings for current tenant
      */
     @Serializable
     @Resource("settings")
