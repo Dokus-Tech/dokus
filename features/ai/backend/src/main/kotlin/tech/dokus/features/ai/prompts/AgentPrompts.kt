@@ -17,10 +17,10 @@ sealed class AgentPrompt {
     open val lightModePrompt: String? = null
 
     /**
-     * Build prompt with optional tenant context.
+     * Build prompt with tenant context.
      * Override in prompts that benefit from knowing user's company info.
      */
-    open fun build(context: TenantContext? = null): String = systemPrompt
+    open fun build(context: TenantContext): String = systemPrompt
 
     /**
      * Tenant context for prompt customization.
@@ -138,8 +138,8 @@ sealed class AgentPrompt {
             - If neither matches clearly, use other context clues
         """.trimIndent()
 
-        override fun build(context: TenantContext?): String {
-            return if (context?.vatNumber != null || context?.companyName != null) {
+        override fun build(context: TenantContext): String {
+            return if (context.vatNumber != null || context.companyName != null) {
                 systemPrompt + TENANT_CONTEXT_TEMPLATE.format(
                     context.vatNumber ?: "Unknown",
                     context.companyName ?: "Unknown"

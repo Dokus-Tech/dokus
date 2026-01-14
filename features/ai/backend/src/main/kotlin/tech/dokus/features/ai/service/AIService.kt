@@ -163,7 +163,7 @@ class AIService(
      * Vision models analyze images without requiring OCR preprocessing.
      *
      * @param images List of document page images
-     * @param tenantContext Optional tenant context for improved INVOICE vs BILL classification
+     * @param tenantContext Tenant context for improved INVOICE vs BILL classification
      * @return Result containing DocumentAIResult sealed class with:
      *         - classification
      *         - type-specific extracted payload with provenance
@@ -172,7 +172,7 @@ class AIService(
      */
     suspend fun processDocument(
         images: List<DocumentImage>,
-        tenantContext: AgentPrompt.TenantContext? = null
+        tenantContext: AgentPrompt.TenantContext
     ): Result<DocumentAIResult> = runCatching {
         logger.info("Processing document (${images.size} pages)")
         val warnings = mutableListOf<String>()
@@ -280,12 +280,12 @@ class AIService(
      * Useful for quick categorization or when extraction is not needed.
      *
      * @param images List of document page images
-     * @param tenantContext Optional tenant context for improved INVOICE vs BILL classification
+     * @param tenantContext Tenant context for improved INVOICE vs BILL classification
      * @return Document classification result
      */
     suspend fun classifyDocument(
         images: List<DocumentImage>,
-        tenantContext: AgentPrompt.TenantContext? = null
+        tenantContext: AgentPrompt.TenantContext
     ): Result<DocumentClassification> = runCatching {
         classificationAgent.classify(images, tenantContext)
     }

@@ -34,12 +34,12 @@ class DocumentClassificationAgent(
      * Classify the document type from document images using vision model.
      *
      * @param images List of document page images (usually just the first page for classification)
-     * @param tenantContext Optional tenant context for improved INVOICE vs BILL classification
+     * @param tenantContext Tenant context for improved INVOICE vs BILL classification
      * @return DocumentClassification with type, confidence, and reasoning
      */
     suspend fun classify(
         images: List<DocumentImage>,
-        tenantContext: AgentPrompt.TenantContext? = null
+        tenantContext: AgentPrompt.TenantContext
     ): DocumentClassification {
         logger.debug("Classifying document (${images.size} pages)")
 
