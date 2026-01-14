@@ -49,9 +49,9 @@ import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
 import tech.dokus.features.ai.agents.ExtractionAgent
+import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.coordinator.AutonomousProcessingCoordinator
-import tech.dokus.features.ai.coordinator.ProcessingConfig
 import tech.dokus.features.ai.judgment.JudgmentAgent
 import tech.dokus.features.ai.models.ExtractedBillData
 import tech.dokus.features.ai.models.ExtractedExpenseData
@@ -64,7 +64,6 @@ import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.validation.ExtractionAuditService
-import tech.dokus.foundation.backend.config.ModelPurpose
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
@@ -320,7 +319,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     // 5-Layer Autonomous Processing Coordinator
     // =========================================================================
 
-    // Create shared executor for all agents
+    // Get intelligence mode and models once (single source of truth)
+    val mode = appConfig.ai.mode
+    val models = AIModels.forMode(mode)
+
+    // Create shared executor for all agents (with throttling based on mode)
     single { AIProviderFactory.createExecutor(appConfig.ai) }
 
     // Audit service for validation (Layer 3)
@@ -330,16 +333,16 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single {
         DocumentClassificationAgent(
             executor = get(),
-            model = AIProviderFactory.getModel(appConfig.ai, ModelPurpose.CLASSIFICATION),
+            model = models.classification,
             prompt = AgentPrompt.DocumentClassification
         )
     }
 
-    // Invoice extraction agents (fast + expert) - model selection based on AIMode
+    // Invoice extraction agents (fast + expert)
     single(qualifier = org.koin.core.qualifier.named("invoiceFast")) {
         ExtractionAgent<ExtractedInvoiceData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleFastModel(appConfig.ai),
+            model = models.fastExtraction,
             prompt = AgentPrompt.Extraction.Invoice,
             userPromptPrefix = "Extract invoice data from this",
             promptId = "invoice-extractor-fast",
@@ -349,7 +352,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single(qualifier = org.koin.core.qualifier.named("invoiceExpert")) {
         ExtractionAgent<ExtractedInvoiceData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
+            model = models.expertExtraction,
             prompt = AgentPrompt.Extraction.Invoice,
             userPromptPrefix = "Extract invoice data from this",
             promptId = "invoice-extractor-expert",
@@ -357,11 +360,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Bill extraction agents (fast + expert) - model selection based on AIMode
+    // Bill extraction agents (fast + expert)
     single(qualifier = org.koin.core.qualifier.named("billFast")) {
         ExtractionAgent<ExtractedBillData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleFastModel(appConfig.ai),
+            model = models.fastExtraction,
             prompt = AgentPrompt.Extraction.Bill,
             userPromptPrefix = "Extract bill/supplier invoice data from this",
             promptId = "bill-extractor-fast",
@@ -371,7 +374,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single(qualifier = org.koin.core.qualifier.named("billExpert")) {
         ExtractionAgent<ExtractedBillData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
+            model = models.expertExtraction,
             prompt = AgentPrompt.Extraction.Bill,
             userPromptPrefix = "Extract bill/supplier invoice data from this",
             promptId = "bill-extractor-expert",
@@ -379,11 +382,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Receipt extraction agents (fast + expert) - model selection based on AIMode
+    // Receipt extraction agents (fast + expert)
     single(qualifier = org.koin.core.qualifier.named("receiptFast")) {
         ExtractionAgent<ExtractedReceiptData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleFastModel(appConfig.ai),
+            model = models.fastExtraction,
             prompt = AgentPrompt.Extraction.Receipt,
             userPromptPrefix = "Extract receipt data from this",
             promptId = "receipt-extractor-fast",
@@ -393,7 +396,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single(qualifier = org.koin.core.qualifier.named("receiptExpert")) {
         ExtractionAgent<ExtractedReceiptData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
+            model = models.expertExtraction,
             prompt = AgentPrompt.Extraction.Receipt,
             userPromptPrefix = "Extract receipt data from this",
             promptId = "receipt-extractor-expert",
@@ -401,11 +404,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Expense extraction agents (fast + expert) - model selection based on AIMode
+    // Expense extraction agents (fast + expert)
     single(qualifier = org.koin.core.qualifier.named("expenseFast")) {
         ExtractionAgent<ExtractedExpenseData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleFastModel(appConfig.ai),
+            model = models.fastExtraction,
             prompt = AgentPrompt.Extraction.Expense,
             userPromptPrefix = "Extract expense data from this",
             promptId = "expense-extractor-fast",
@@ -415,7 +418,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single(qualifier = org.koin.core.qualifier.named("expenseExpert")) {
         ExtractionAgent<ExtractedExpenseData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
+            model = models.expertExtraction,
             prompt = AgentPrompt.Extraction.Expense,
             userPromptPrefix = "Extract expense data from this",
             promptId = "expense-extractor-expert",
@@ -423,12 +426,12 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Retry agents (Layer 4) - using expert model for retries (based on AIMode)
+    // Retry agents (Layer 4) - using expert model for retries
     single(qualifier = org.koin.core.qualifier.named("invoiceRetry")) {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedInvoiceData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
+            model = models.expertExtraction,
             basePrompt = AgentPrompt.Extraction.Invoice,
             promptId = "invoice-retry",
             serializer = ExtractedInvoiceData.serializer(),
@@ -440,7 +443,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedBillData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
+            model = models.expertExtraction,
             basePrompt = AgentPrompt.Extraction.Bill,
             promptId = "bill-retry",
             serializer = ExtractedBillData.serializer(),
@@ -452,7 +455,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedReceiptData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
+            model = models.expertExtraction,
             basePrompt = AgentPrompt.Extraction.Receipt,
             promptId = "receipt-retry",
             serializer = ExtractedReceiptData.serializer(),
@@ -464,7 +467,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         val auditService = get<ExtractionAuditService>()
         FeedbackDrivenRetryAgent.create<ExtractedExpenseData>(
             executor = get(),
-            model = AIProviderFactory.getEnsembleExpertModel(appConfig.ai),
+            model = models.expertExtraction,
             basePrompt = AgentPrompt.Extraction.Expense,
             promptId = "expense-retry",
             serializer = ExtractedExpenseData.serializer(),
@@ -473,11 +476,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // Autonomous Processing Coordinator (5-Layer Pipeline) - config based on AIMode
+    // Autonomous Processing Coordinator (5-Layer Pipeline) - uses IntelligenceMode directly
     single {
         AutonomousProcessingCoordinator(
             classificationAgent = get(),
-            config = ProcessingConfig.forMode(appConfig.ai.mode)
+            mode = mode
         )
             .withInvoiceAgents(
                 fastAgent = get(qualifier = org.koin.core.qualifier.named("invoiceFast")),
