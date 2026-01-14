@@ -7,6 +7,7 @@ import tech.dokus.features.ai.ensemble.ConsensusEngine
 import tech.dokus.features.ai.ensemble.ConsensusResult
 import tech.dokus.features.ai.ensemble.PerceptionEnsemble
 import tech.dokus.features.ai.judgment.JudgmentAgent
+import tech.dokus.features.ai.judgment.JudgmentConfig
 import tech.dokus.features.ai.judgment.JudgmentContext
 import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.DocumentClassification
@@ -21,6 +22,7 @@ import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.features.ai.validation.AuditReport
 import tech.dokus.features.ai.validation.AuditStatus
 import tech.dokus.features.ai.validation.ExtractionAuditService
+import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
@@ -75,12 +77,12 @@ import tech.dokus.foundation.backend.utils.loggerFor
  * 4. **Configurable Layers**: Each layer can be enabled/disabled via config.
  *    For example, `enableEnsemble = false` runs only the expert model.
  *
- * @see ProcessingConfig for configuration options
+ * @see IntelligenceMode for configuration (single source of truth)
  * @see AutonomousResult for result types
  */
 class AutonomousProcessingCoordinator(
     private val classificationAgent: DocumentClassificationAgent,
-    private val config: ProcessingConfig = ProcessingConfig.DEFAULT
+    private val mode: IntelligenceMode
 ) {
     private val logger = loggerFor()
 
@@ -106,7 +108,12 @@ class AutonomousProcessingCoordinator(
 
     private val consensusEngine = ConsensusEngine()
     private val auditService = ExtractionAuditService()
-    private var judgmentAgent: JudgmentAgent = JudgmentAgent.deterministic(config.judgmentConfig)
+    private var judgmentAgent: JudgmentAgent = JudgmentAgent.deterministic(JudgmentConfig.DEFAULT)
+
+    // Configuration defaults (can be overridden via builder)
+    private var minClassificationConfidence: Double = 0.3
+    private var failFastOnUnknownType: Boolean = true
+    private var useLlmForJudgment: Boolean = false
 
     // =========================================================================
     // Builder Methods for Setting Up Agents
@@ -121,8 +128,8 @@ class AutonomousProcessingCoordinator(
     ): AutonomousProcessingCoordinator {
         invoiceFastAgent = fastAgent
         invoiceExpertAgent = expertAgent
-        if (config.enableEnsemble) {
-            invoiceEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent)
+        if (mode.enableEnsemble) {
+            invoiceEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent, mode.parallelExtraction)
         }
         return this
     }
@@ -136,8 +143,8 @@ class AutonomousProcessingCoordinator(
     ): AutonomousProcessingCoordinator {
         billFastAgent = fastAgent
         billExpertAgent = expertAgent
-        if (config.enableEnsemble) {
-            billEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent)
+        if (mode.enableEnsemble) {
+            billEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent, mode.parallelExtraction)
         }
         return this
     }
@@ -151,8 +158,8 @@ class AutonomousProcessingCoordinator(
     ): AutonomousProcessingCoordinator {
         receiptFastAgent = fastAgent
         receiptExpertAgent = expertAgent
-        if (config.enableEnsemble) {
-            receiptEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent)
+        if (mode.enableEnsemble) {
+            receiptEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent, mode.parallelExtraction)
         }
         return this
     }
@@ -166,8 +173,8 @@ class AutonomousProcessingCoordinator(
     ): AutonomousProcessingCoordinator {
         expenseFastAgent = fastAgent
         expenseExpertAgent = expertAgent
-        if (config.enableEnsemble) {
-            expenseEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent)
+        if (mode.enableEnsemble) {
+            expenseEnsemble = PerceptionEnsemble.of(fastAgent, expertAgent, mode.parallelExtraction)
         }
         return this
     }
@@ -225,20 +232,20 @@ class AutonomousProcessingCoordinator(
         )
 
         // Check classification confidence threshold
-        if (classification.confidence < config.minClassificationConfidence) {
+        if (classification.confidence < minClassificationConfidence) {
             logger.warn(
                 "Classification confidence ${formatPercent(classification.confidence)} " +
-                    "below threshold ${formatPercent(config.minClassificationConfidence)}"
+                    "below threshold ${formatPercent(minClassificationConfidence)}"
             )
             return AutonomousResult.Rejected.lowConfidence(
                 classification,
-                config.minClassificationConfidence
+                minClassificationConfidence
             )
         }
 
         // Check for unknown document type
         if (classification.documentType == ClassifiedDocumentType.UNKNOWN) {
-            if (config.failFastOnUnknownType) {
+            if (failFastOnUnknownType) {
                 logger.warn("Document type UNKNOWN, rejecting early")
                 return AutonomousResult.Rejected.unknownDocumentType(classification)
             }
@@ -278,7 +285,7 @@ class AutonomousProcessingCoordinator(
         logger.info("Processing as INVOICE type")
 
         // Layer 1: Perception Ensemble
-        val (extraction, conflictReport) = if (config.enableEnsemble && invoiceEnsemble != null) {
+        val (extraction, conflictReport) = if (mode.enableEnsemble && invoiceEnsemble != null) {
             logger.info("Layer 1: Running perception ensemble")
             val ensembleResult = invoiceEnsemble!!.extract(images)
 
@@ -360,7 +367,7 @@ class AutonomousProcessingCoordinator(
         logger.info("Processing as BILL type")
 
         // Layer 1: Perception Ensemble
-        val (extraction, conflictReport) = if (config.enableEnsemble && billEnsemble != null) {
+        val (extraction, conflictReport) = if (mode.enableEnsemble && billEnsemble != null) {
             logger.info("Layer 1: Running perception ensemble")
             val ensembleResult = billEnsemble!!.extract(images)
 
@@ -440,7 +447,7 @@ class AutonomousProcessingCoordinator(
         logger.info("Processing as RECEIPT type")
 
         // Layer 1: Perception Ensemble
-        val (extraction, conflictReport) = if (config.enableEnsemble && receiptEnsemble != null) {
+        val (extraction, conflictReport) = if (mode.enableEnsemble && receiptEnsemble != null) {
             logger.info("Layer 1: Running perception ensemble")
             val ensembleResult = receiptEnsemble!!.extract(images)
 
@@ -520,7 +527,7 @@ class AutonomousProcessingCoordinator(
         logger.info("Processing as EXPENSE type")
 
         // Layer 1: Perception Ensemble
-        val (extraction, conflictReport) = if (config.enableEnsemble && expenseEnsemble != null) {
+        val (extraction, conflictReport) = if (mode.enableEnsemble && expenseEnsemble != null) {
             logger.info("Layer 1: Running perception ensemble")
             val ensembleResult = expenseEnsemble!!.extract(images)
 
@@ -635,7 +642,7 @@ class AutonomousProcessingCoordinator(
         retryAgent: FeedbackDrivenRetryAgent<T>?
     ): Pair<T, RetryResult<T>?> {
         // Check if self-correction is needed and enabled
-        if (!config.enableSelfCorrection) {
+        if (!mode.enableSelfCorrection) {
             logger.debug("Self-correction disabled")
             return extraction to null
         }
@@ -709,7 +716,7 @@ class AutonomousProcessingCoordinator(
             missingEssentialFields = essentialFieldsCheck.missingFields
         )
 
-        val decision = judgmentAgent.judge(context, useLlm = config.useLlmForJudgment)
+        val decision = judgmentAgent.judge(context, useLlm = useLlmForJudgment)
         logger.info(
             "Judgment: ${decision.outcome} (confidence: ${formatPercent(decision.confidence)})"
         )
@@ -780,13 +787,16 @@ class AutonomousProcessingCoordinator(
 
     companion object {
         /**
-         * Create a coordinator with default configuration.
+         * Create a coordinator with the specified intelligence mode.
+         *
+         * @param classificationAgent The classification agent
+         * @param mode The intelligence mode (single source of truth for processing strategy)
          */
         fun create(
             classificationAgent: DocumentClassificationAgent,
-            config: ProcessingConfig = ProcessingConfig.DEFAULT
+            mode: IntelligenceMode
         ): AutonomousProcessingCoordinator {
-            return AutonomousProcessingCoordinator(classificationAgent, config)
+            return AutonomousProcessingCoordinator(classificationAgent, mode)
         }
     }
 }
