@@ -61,7 +61,6 @@ import tech.dokus.features.ai.models.ExtractedReceiptData
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.retry.FeedbackDrivenRetryAgent
 import tech.dokus.features.ai.retry.RetryConfig
-import tech.dokus.features.ai.service.AIService
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
@@ -311,9 +310,6 @@ private val contactsModule = module {
 }
 
 private fun processorModule(appConfig: AppBaseConfig) = module {
-    // AI Service (uses Koog agents for vision-based extraction)
-    single { AIService(appConfig.ai) }
-
     // Document Image Service (converts PDFs/images to PNG for vision processing)
     single { DocumentImageService() }
 
