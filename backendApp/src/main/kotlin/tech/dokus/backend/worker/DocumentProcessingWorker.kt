@@ -29,7 +29,6 @@ import tech.dokus.features.ai.models.meetsMinimalThreshold
 import tech.dokus.features.ai.models.toDomainType
 import tech.dokus.features.ai.models.toExtractedDocumentData
 import tech.dokus.features.ai.prompts.AgentPrompt
-import tech.dokus.features.ai.service.AIService
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingException
@@ -60,7 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val documentStorage: DocumentStorageService,
-    private val aiService: AIService,
+    private val coordinator: AutonomousProcessingCoordinator,
     private val documentImageService: DocumentImageService,
     private val config: ProcessorConfig,
     private val draftRepository: DocumentDraftRepository,
@@ -69,9 +68,7 @@ class DocumentProcessingWorker(
     // Optional RAG dependencies - if provided, chunking and embedding will be performed
     private val chunkingService: ChunkingService? = null,
     private val embeddingService: EmbeddingService? = null,
-    private val chunkRepository: ChunkRepository? = null,
-    // Optional 5-Layer Autonomous Processing Coordinator
-    private val coordinator: AutonomousProcessingCoordinator? = null
+    private val chunkRepository: ChunkRepository? = null
 ) {
     private val logger = LoggerFactory.getLogger(DocumentProcessingWorker::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -171,9 +168,8 @@ class DocumentProcessingWorker(
 
         logger.info("Processing ingestion run: $runId for document: $documentId")
 
-        // Mark as processing with AI provider name
-        val providerName = aiService.getConfigSummary().substringBefore(",")
-        ingestionRepository.markAsProcessing(runId, providerName)
+        // Mark as processing
+        ingestionRepository.markAsProcessing(runId, "5-Layer Autonomous Pipeline")
 
         try {
             // Step 1: Download document from storage
@@ -210,17 +206,10 @@ class DocumentProcessingWorker(
                 companyName = tenant?.displayName?.value ?: tenant?.legalName?.value
             )
 
-            // Step 3: Process document through appropriate pipeline
+            // Step 3: Process document through 5-Layer Autonomous Pipeline
             val (extractedData, documentType, meetsThreshold, rawText, confidence, judgmentInfo) =
-                if (coordinator != null) {
-                    // Use 5-Layer Autonomous Processing Pipeline
-                    processWithCoordinator(documentImages.images, tenantContext, runId, documentId)
-                        ?: return // Already marked as failed inside processWithCoordinator
-                } else {
-                    // Fallback to legacy AIService
-                    processWithAIService(documentImages.images, tenantContext, runId, documentId)
-                        ?: return // Already marked as failed inside processWithAIService
-                }
+                processDocument(documentImages.images, tenantContext, runId, documentId)
+                    ?: return // Already marked as failed inside processDocument
 
             // Create draft (always for classifiable types, with appropriate status)
             ingestionRepository.markAsSucceeded(
@@ -437,7 +426,7 @@ class DocumentProcessingWorker(
     /**
      * Process document using the 5-Layer Autonomous Processing Coordinator.
      */
-    private suspend fun processWithCoordinator(
+    private suspend fun processDocument(
         images: List<DocumentImageService.DocumentImage>,
         tenantContext: AgentPrompt.TenantContext,
         runId: String,
@@ -445,7 +434,7 @@ class DocumentProcessingWorker(
     ): ProcessingResult? {
         logger.info("Processing document $documentId with 5-Layer Autonomous Pipeline")
 
-        val result = coordinator!!.process(images, tenantContext)
+        val result = coordinator.process(images, tenantContext)
 
         return when (result) {
             is AutonomousResult.Success<*> -> {
@@ -491,40 +480,6 @@ class DocumentProcessingWorker(
                 null
             }
         }
-    }
-
-    /**
-     * Process document using legacy AIService.
-     */
-    private suspend fun processWithAIService(
-        images: List<DocumentImageService.DocumentImage>,
-        tenantContext: AgentPrompt.TenantContext,
-        runId: String,
-        documentId: String
-    ): ProcessingResult? {
-        logger.info("Processing document $documentId with legacy AIService")
-
-        val aiResult = aiService.processDocument(images, tenantContext)
-
-        val result = aiResult.getOrElse { e ->
-            logger.error("AI processing failed for document $documentId: ${e.message}", e)
-            ingestionRepository.markAsFailed(runId, "AI processing failed: ${e.message}")
-            return null
-        }
-
-        val extractedData = result.toExtractedDocumentData()
-        val documentType = result.toDomainType()
-        val meetsThreshold = result.meetsMinimalThreshold()
-        val rawText = result.rawText
-
-        return ProcessingResult(
-            extractedData = extractedData,
-            documentType = documentType,
-            meetsThreshold = meetsThreshold,
-            rawText = rawText,
-            confidence = result.confidence,
-            judgmentInfo = null
-        )
     }
 
     /**

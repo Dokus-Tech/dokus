@@ -513,7 +513,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         DocumentProcessingWorker(
             ingestionRepository = get(),
             documentStorage = get<DocumentStorageService>(),
-            aiService = get(),
+            coordinator = get(),
             documentImageService = get(),
             config = appConfig.processor,
             draftRepository = get(),
@@ -522,9 +522,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             // RAG chunking/embedding - use repositories from foundation:database
             chunkingService = getOrNull<ChunkingService>(),
             embeddingService = getOrNull<EmbeddingService>(),
-            chunkRepository = getOrNull<ChunkRepository>(),
-            // 5-Layer Autonomous Processing Coordinator
-            coordinator = get()
+            chunkRepository = getOrNull<ChunkRepository>()
         )
     }
 }
