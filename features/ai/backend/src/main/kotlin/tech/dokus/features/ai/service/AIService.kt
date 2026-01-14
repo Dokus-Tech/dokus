@@ -163,13 +163,17 @@ class AIService(
      * Vision models analyze images without requiring OCR preprocessing.
      *
      * @param images List of document page images
+     * @param tenantContext Optional tenant context for improved INVOICE vs BILL classification
      * @return Result containing DocumentAIResult sealed class with:
      *         - classification
      *         - type-specific extracted payload with provenance
      *         - extractedText for RAG indexing
      *         - confidence and warnings
      */
-    suspend fun processDocument(images: List<DocumentImage>): Result<DocumentAIResult> = runCatching {
+    suspend fun processDocument(
+        images: List<DocumentImage>,
+        tenantContext: AgentPrompt.TenantContext? = null
+    ): Result<DocumentAIResult> = runCatching {
         logger.info("Processing document (${images.size} pages)")
         val warnings = mutableListOf<String>()
 
@@ -177,7 +181,7 @@ class AIService(
 
         // Step 1: Classify document type (use first page for classification)
         val classificationImages = images.take(1) // Usually first page is enough for classification
-        val classification = classificationAgent.classify(classificationImages)
+        val classification = classificationAgent.classify(classificationImages, tenantContext)
         logger.info("Document classified as ${classification.documentType} (confidence: ${classification.confidence})")
 
         if (classification.confidence < 0.5) {
@@ -276,10 +280,14 @@ class AIService(
      * Useful for quick categorization or when extraction is not needed.
      *
      * @param images List of document page images
+     * @param tenantContext Optional tenant context for improved INVOICE vs BILL classification
      * @return Document classification result
      */
-    suspend fun classifyDocument(images: List<DocumentImage>): Result<DocumentClassification> = runCatching {
-        classificationAgent.classify(images)
+    suspend fun classifyDocument(
+        images: List<DocumentImage>,
+        tenantContext: AgentPrompt.TenantContext? = null
+    ): Result<DocumentClassification> = runCatching {
+        classificationAgent.classify(images, tenantContext)
     }
 
     /**

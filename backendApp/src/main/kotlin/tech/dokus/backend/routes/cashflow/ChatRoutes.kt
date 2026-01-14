@@ -33,6 +33,7 @@ import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.ConversationMessage
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.services.EmbeddingService
@@ -70,7 +71,7 @@ internal fun Route.chatRoutes() {
     val ragService = RAGService(embeddingService, chunksRepository)
     val executor = AIProviderFactory.createExecutor(aiConfig)
     val model = AIProviderFactory.getModel(aiConfig, ModelPurpose.CHAT)
-    val chatAgent = ChatAgent(executor, model, ragService)
+    val chatAgent = ChatAgent(executor, model, ragService, AgentPrompt.Chat)
 
     authenticateJwt {
         // =========================================================================
