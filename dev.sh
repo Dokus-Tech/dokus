@@ -102,7 +102,7 @@ SYMBOL_SMALL="⋄"
 
 # Configuration
 PROJECT_NAME="dokus"
-COMPOSE_FILE="deployment/docker-compose.lite.yml -f deployment/docker-compose.local.yml"
+COMPOSE_FILE="deployment/docker-compose.pro.yml -f deployment/docker-compose.local.yml"
 SERVER_SERVICE_DIR="backendApp"
 
 # Database configuration - consolidated single database
