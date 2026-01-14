@@ -1,6 +1,5 @@
 package tech.dokus.features.ai.coordinator
 
-import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.ensemble.ConflictReport
 import tech.dokus.features.ai.judgment.JudgmentDecision
 import tech.dokus.features.ai.judgment.JudgmentOutcome
@@ -40,8 +39,11 @@ import tech.dokus.features.ai.validation.AuditReport
  *     }
  * }
  * ```
+ *
+ * Note: This class is intentionally not serializable because it contains
+ * generic types and is primarily a runtime model. If serialization is needed,
+ * convert to a DTO first.
  */
-@Serializable
 sealed class AutonomousResult {
 
     /**
@@ -49,7 +51,6 @@ sealed class AutonomousResult {
      *
      * @param T The type of extracted data
      */
-    @Serializable
     data class Success<T>(
         // =========================================================================
         // Layer 0: Classification
@@ -147,7 +148,6 @@ sealed class AutonomousResult {
      * - Both models failed to extract data
      * - Essential structural requirements not met
      */
-    @Serializable
     data class Rejected(
         /** Human-readable reason for rejection */
         val reason: String,
@@ -224,7 +224,6 @@ sealed class AutonomousResult {
 /**
  * Stage at which processing was rejected.
  */
-@Serializable
 enum class RejectionStage {
     /** Rejected during document classification */
     CLASSIFICATION,
