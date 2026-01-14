@@ -22,7 +22,6 @@ import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.ProcessedPeppolDocument
-import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
@@ -65,41 +64,10 @@ class PeppolService(
 
     /**
      * Get Peppol settings for a tenant.
-     * Enriches with isManagedCredentials based on deployment configuration.
      */
     suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> {
         logger.debug("Getting Peppol settings for tenant: {}", tenantId)
-        return settingsRepository.getSettings(tenantId).map { settings ->
-            settings?.copy(isManagedCredentials = credentialResolver.isManagedCredentials())
-        }
-    }
-
-    /**
-     * Save Peppol settings for a tenant.
-     */
-    suspend fun saveSettings(
-        tenantId: TenantId,
-        request: SavePeppolSettingsRequest
-    ): Result<PeppolSettingsDto> {
-        logger.info("Saving Peppol settings for tenant: $tenantId")
-        return settingsRepository.saveSettings(tenantId, request)
-            .onSuccess { logger.info("Peppol settings saved for tenant: $tenantId") }
-            .onFailure { logger.error("Failed to save Peppol settings for tenant: $tenantId", it) }
-    }
-
-    /**
-     * Delete Peppol settings for a tenant.
-     */
-    suspend fun deleteSettings(tenantId: TenantId): Result<Boolean> {
-        logger.info("Deleting Peppol settings for tenant: $tenantId")
-        return settingsRepository.deleteSettings(tenantId)
-            .onSuccess { logger.info("Peppol settings deleted for tenant: $tenantId") }
-            .onFailure {
-                logger.error(
-                    "Failed to delete Peppol settings for tenant: $tenantId",
-                    it
-                )
-            }
+        return settingsRepository.getSettings(tenantId)
     }
 
     /**

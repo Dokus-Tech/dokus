@@ -33,9 +33,9 @@ import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.ConversationMessage
-import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.RAGService
 import tech.dokus.foundation.backend.config.AIConfig

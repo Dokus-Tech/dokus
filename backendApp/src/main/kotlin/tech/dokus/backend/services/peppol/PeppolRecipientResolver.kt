@@ -10,8 +10,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolResolution
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.foundation.backend.utils.loggerFor
-import tech.dokus.peppol.provider.client.RecommandCredentials
 import tech.dokus.peppol.provider.client.RecommandProvider
+import tech.dokus.peppol.service.PeppolCredentialResolver
 
 private const val ERROR_MESSAGE_MAX_LENGTH = 500
 
@@ -33,6 +33,7 @@ class PeppolRecipientResolver(
     private val cacheRepository: PeppolDirectoryCacheRepository,
     private val contactRepository: ContactRepository,
     private val settingsRepository: PeppolSettingsRepository,
+    private val credentialResolver: PeppolCredentialResolver,
     private val recommandProvider: RecommandProvider
 ) {
     private val logger = loggerFor()
@@ -101,22 +102,14 @@ class PeppolRecipientResolver(
             return cacheNotFoundNoIdentifier(tenantId, contactId, currentVat, currentCompanyNumber)
         }
 
-        // Configure provider with tenant credentials
-        val settingsWithCreds = settingsRepository.getSettingsWithCredentials(tenantId).getOrNull()
-        if (settingsWithCreds == null) {
+        // Configure provider with credentials from credential resolver
+        val credentials = runCatching { credentialResolver.resolve(tenantId) }.getOrNull()
+        if (credentials == null) {
             return cacheErrorNoSettings(tenantId, contactId, currentVat, currentCompanyNumber)
         }
 
         // Configure provider
-        recommandProvider.configure(
-            RecommandCredentials(
-                companyId = settingsWithCreds.settings.companyId,
-                apiKey = settingsWithCreds.apiKey ?: "",
-                apiSecret = settingsWithCreds.apiSecret ?: "",
-                peppolId = settingsWithCreds.settings.peppolId.value,
-                testMode = settingsWithCreds.settings.testMode
-            )
-        )
+        recommandProvider.configure(credentials)
 
         // Search directory and cache result
         return searchAndCacheResult(tenantId, contactId, query, currentVat, currentCompanyNumber)

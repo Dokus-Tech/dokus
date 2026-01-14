@@ -848,9 +848,9 @@ initial_setup() {
         ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "contact@dokus.tech" "ACME_EMAIL")
 
         echo ""
-        print_status task "Peppol Configuration (Dokus-managed e-invoicing)"
-        echo_e "  ${DIM_WHITE}Cloud deployments use Dokus master credentials for Peppol.${NC}"
-        echo_e "  ${DIM_WHITE}Users won't need to configure their own API keys.${NC}"
+        print_status task "Peppol E-Invoicing Configuration (Recommand)"
+        echo_e "  ${DIM_WHITE}Peppol credentials are required for e-invoicing.${NC}"
+        echo_e "  ${DIM_WHITE}Get your API credentials from https://app.recommand.eu/api-keys${NC}"
         echo ""
 
         PEPPOL_MASTER_API_KEY=$(prompt_with_default "Peppol (Recommand) API Key:" "" "PEPPOL_MASTER_API_KEY")
@@ -860,12 +860,6 @@ initial_setup() {
 # Dokus Cloud Environment Configuration
 # Generated on $(date)
 # Profile: Cloud (HTTPS with Let's Encrypt)
-
-# ============================================================================
-# DEPLOYMENT MODE
-# ============================================================================
-# Cloud: Dokus manages credentials (Peppol, etc.) on behalf of users
-DOKUS_HOSTING_MODE=cloud
 
 # ============================================================================
 # REQUIRED - Core Credentials
@@ -882,8 +876,8 @@ DOMAIN=$DOMAIN
 ACME_EMAIL=$ACME_EMAIL
 
 # ============================================================================
-# PEPPOL (E-Invoicing via Recommand)
-# Cloud mode: Dokus master credentials used for all tenants
+# PEPPOL (E-Invoicing via Recommand) - Required
+# Get API credentials from https://app.recommand.eu/api-keys
 # ============================================================================
 PEPPOL_MASTER_API_KEY=$PEPPOL_MASTER_API_KEY
 PEPPOL_MASTER_API_SECRET=$PEPPOL_MASTER_API_SECRET
@@ -896,6 +890,15 @@ EOF
 
     else
         # Self-hosting profile (Pro/Lite) - simpler config
+        echo ""
+        print_status task "Peppol E-Invoicing Configuration (Recommand)"
+        echo_e "  ${DIM_WHITE}Peppol credentials are required for e-invoicing.${NC}"
+        echo_e "  ${DIM_WHITE}Get your API credentials from https://app.recommand.eu/api-keys${NC}"
+        echo ""
+
+        PEPPOL_MASTER_API_KEY=$(prompt_with_default "Peppol (Recommand) API Key:" "" "PEPPOL_MASTER_API_KEY")
+        PEPPOL_MASTER_API_SECRET=$(prompt_with_default "Peppol (Recommand) API Secret:" "" "PEPPOL_MASTER_API_SECRET")
+
         local SERVER_IP=$(get_server_ip)
         if [ "$SERVER_IP" = "localhost" ]; then
             SERVER_IP="127.0.0.1"
@@ -907,18 +910,19 @@ EOF
 # Profile: ${DOKUS_PROFILE:-lite}
 
 # ============================================================================
-# DEPLOYMENT MODE
-# ============================================================================
-# Self-hosted: Users configure their own credentials (Peppol, etc.)
-DOKUS_HOSTING_MODE=self-hosted
-
-# ============================================================================
 # REQUIRED - Core Credentials
 # ============================================================================
 DB_PASSWORD=$DB_PASSWORD
 REDIS_PASSWORD=$REDIS_PASSWORD
 MINIO_PASSWORD=$MINIO_PASSWORD
 JWT_SECRET=$JWT_SECRET_VAL
+
+# ============================================================================
+# PEPPOL (E-Invoicing via Recommand) - Required
+# Get API credentials from https://app.recommand.eu/api-keys
+# ============================================================================
+PEPPOL_MASTER_API_KEY=$PEPPOL_MASTER_API_KEY
+PEPPOL_MASTER_API_SECRET=$PEPPOL_MASTER_API_SECRET
 
 # ============================================================================
 # STORAGE - Public URL for presigned URLs (MinIO via Traefik)

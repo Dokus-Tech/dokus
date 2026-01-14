@@ -7,17 +7,13 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.features.cashflow.presentation.cashflow.route.AddDocumentRoute
 import tech.dokus.features.cashflow.presentation.cashflow.route.CreateInvoiceRoute
 import tech.dokus.features.cashflow.presentation.chat.route.ChatRoute
 import tech.dokus.features.cashflow.presentation.ledger.route.CashflowLedgerRoute
 import tech.dokus.features.cashflow.presentation.review.route.DocumentReviewRoute
-import tech.dokus.features.cashflow.presentation.settings.route.PeppolConnectRoute
-import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.CashFlowDestination
-import tech.dokus.navigation.destinations.SettingsDestination
 
 internal object CashflowNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {
@@ -42,14 +38,6 @@ internal object CashflowNavigationProvider : NavigationProvider {
             @OptIn(ExperimentalUuidApi::class)
             val entryId = route.highlightEntryId?.let { CashflowEntryId(Uuid.parse(it)) }
             CashflowLedgerRoute(highlightEntryId = entryId)
-        }
-        composable<SettingsDestination.PeppolSettings> {
-            PeppolSettingsRoute()
-        }
-        composable<SettingsDestination.PeppolConfiguration.Connect> { backStackEntry ->
-            val route = backStackEntry.toRoute<SettingsDestination.PeppolConfiguration.Connect>()
-            val provider = PeppolProvider.fromName(route.providerName) ?: PeppolProvider.Recommand
-            PeppolConnectRoute(provider = provider)
         }
     }
 }
