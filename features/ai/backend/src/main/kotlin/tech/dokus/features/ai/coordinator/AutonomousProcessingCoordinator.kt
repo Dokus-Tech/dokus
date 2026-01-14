@@ -5,7 +5,6 @@ import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.ensemble.ConflictReport
 import tech.dokus.features.ai.ensemble.ConsensusEngine
 import tech.dokus.features.ai.ensemble.ConsensusResult
-import tech.dokus.features.ai.ensemble.EnsembleResult
 import tech.dokus.features.ai.ensemble.PerceptionEnsemble
 import tech.dokus.features.ai.judgment.JudgmentAgent
 import tech.dokus.features.ai.judgment.JudgmentContext
@@ -256,7 +255,7 @@ class AutonomousProcessingCoordinator(
             ClassifiedDocumentType.BILL -> processBill(images, classification)
             ClassifiedDocumentType.RECEIPT -> processReceipt(images, classification)
             ClassifiedDocumentType.EXPENSE -> processExpense(images, classification)
-            ClassifiedDocumentType.UNKNOWN -> processUnknown(images, classification)
+            ClassifiedDocumentType.UNKNOWN -> processUnknown(classification)
         }
 
         val elapsed = System.currentTimeMillis() - startTime
@@ -297,7 +296,7 @@ class AutonomousProcessingCoordinator(
                 ensembleResult.fastCandidate,
                 ensembleResult.expertCandidate
             )
-            extractConsensusData(consensus, classification)
+            extractConsensusData(consensus)
                 ?: return AutonomousResult.Rejected.noDataExtracted(classification)
         } else {
             // Single model mode - use expert agent
@@ -331,7 +330,7 @@ class AutonomousProcessingCoordinator(
             auditReport,
             images,
             invoiceRetryAgent
-        ) { auditService.auditInvoice(it) }
+        )
 
         // Re-audit if correction was attempted
         val finalAuditReport = if (retryResult is RetryResult.CorrectedOnRetry) {
@@ -379,7 +378,7 @@ class AutonomousProcessingCoordinator(
                 ensembleResult.fastCandidate,
                 ensembleResult.expertCandidate
             )
-            extractConsensusData(consensus, classification)
+            extractConsensusData(consensus)
                 ?: return AutonomousResult.Rejected.noDataExtracted(classification)
         } else {
             // Single model mode
@@ -412,7 +411,7 @@ class AutonomousProcessingCoordinator(
             auditReport,
             images,
             billRetryAgent
-        ) { auditService.auditBill(it) }
+        )
 
         val finalAuditReport = if (retryResult is RetryResult.CorrectedOnRetry) {
             auditService.auditBill(finalExtraction)
@@ -459,7 +458,7 @@ class AutonomousProcessingCoordinator(
                 ensembleResult.fastCandidate,
                 ensembleResult.expertCandidate
             )
-            extractConsensusData(consensus, classification)
+            extractConsensusData(consensus)
                 ?: return AutonomousResult.Rejected.noDataExtracted(classification)
         } else {
             // Single model mode
@@ -492,7 +491,7 @@ class AutonomousProcessingCoordinator(
             auditReport,
             images,
             receiptRetryAgent
-        ) { auditService.auditReceipt(it) }
+        )
 
         val finalAuditReport = if (retryResult is RetryResult.CorrectedOnRetry) {
             auditService.auditReceipt(finalExtraction)
@@ -539,7 +538,7 @@ class AutonomousProcessingCoordinator(
                 ensembleResult.fastCandidate,
                 ensembleResult.expertCandidate
             )
-            extractConsensusData(consensus, classification)
+            extractConsensusData(consensus)
                 ?: return AutonomousResult.Rejected.noDataExtracted(classification)
         } else {
             // Single model mode
@@ -572,7 +571,7 @@ class AutonomousProcessingCoordinator(
             auditReport,
             images,
             expenseRetryAgent
-        ) { auditService.auditExpense(it) }
+        )
 
         val finalAuditReport = if (retryResult is RetryResult.CorrectedOnRetry) {
             auditService.auditExpense(finalExtraction)
@@ -594,8 +593,7 @@ class AutonomousProcessingCoordinator(
     /**
      * Handle unknown document type (fallback processing).
      */
-    private suspend fun processUnknown(
-        images: List<DocumentImage>,
+    private fun processUnknown(
         classification: DocumentClassification
     ): AutonomousResult {
         logger.warn("Processing UNKNOWN document type - limited processing available")
@@ -617,8 +615,7 @@ class AutonomousProcessingCoordinator(
      * Extract data from consensus result, handling all cases.
      */
     private fun <T> extractConsensusData(
-        consensus: ConsensusResult<T>,
-        classification: DocumentClassification
+        consensus: ConsensusResult<T>
     ): Pair<T, ConflictReport?>? {
         return when (consensus) {
             is ConsensusResult.NoData -> null
@@ -635,8 +632,7 @@ class AutonomousProcessingCoordinator(
         extraction: T,
         auditReport: AuditReport,
         images: List<DocumentImage>,
-        retryAgent: FeedbackDrivenRetryAgent<T>?,
-        validator: suspend (T) -> AuditReport
+        retryAgent: FeedbackDrivenRetryAgent<T>?
     ): Pair<T, RetryResult<T>?> {
         // Check if self-correction is needed and enabled
         if (!config.enableSelfCorrection) {
@@ -699,8 +695,7 @@ class AutonomousProcessingCoordinator(
         conflictReport: ConflictReport?,
         auditReport: AuditReport,
         retryResult: RetryResult<T>?,
-        hasEssentialFields: Boolean,
-        missingFields: List<String> = emptyList()
+        hasEssentialFields: Boolean
     ): AutonomousResult {
         logger.info("Layer 5: Making final judgment")
 
@@ -711,7 +706,7 @@ class AutonomousProcessingCoordinator(
             retryResult = retryResult,
             documentType = classification.documentType.name,
             hasEssentialFields = hasEssentialFields,
-            missingEssentialFields = missingFields
+            missingEssentialFields = emptyList()
         )
 
         val decision = judgmentAgent.judge(context, useLlm = config.useLlmForJudgment)
