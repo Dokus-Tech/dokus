@@ -37,13 +37,7 @@ data class AppBaseConfig(
                 } else {
                     StorageConfig.empty()
                 },
-                ai = if (config.hasPath("ai")) {
-                    AIConfig.fromConfig(config.getConfig("ai"))
-                } else {
-                    throw IllegalStateException(
-                        "AI configuration is required. Add 'ai { ... }' section to application.conf"
-                    )
-                },
+                ai = AIConfig.fromConfig(config.getConfig("ai")),
                 processor = ProcessorConfig.fromConfig(config.getConfig("processor")),
                 config = config,
             )

@@ -39,7 +39,6 @@ import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.RAGService
 import tech.dokus.foundation.backend.config.AIConfig
-import tech.dokus.foundation.backend.config.ModelPurpose
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.features.ai.agents.MessageRole as AgentMessageRole
@@ -70,8 +69,8 @@ internal fun Route.chatRoutes() {
     val embeddingService = EmbeddingService(httpClient, aiConfig)
     val ragService = RAGService(embeddingService, chunksRepository)
     val executor = AIProviderFactory.createExecutor(aiConfig)
-    val model = AIProviderFactory.getModel(aiConfig, ModelPurpose.CHAT)
-    val chatAgent = ChatAgent(executor, model, ragService, AgentPrompt.Chat)
+    val models = AIModels.forMode(aiConfig.mode)
+    val chatAgent = ChatAgent(executor, models.chat, ragService, AgentPrompt.Chat)
 
     authenticateJwt {
         // =========================================================================
@@ -313,7 +312,7 @@ internal fun Route.chatRoutes() {
          * Response: ChatConfiguration
          */
         get("/api/v1/chat/config") {
-            val chatModelName = AIModels.chatModel(aiConfig.mode).id
+            val chatModelName = models.chat.id
             val configuration = ChatConfiguration(
                 maxMessageLength = 4000,
                 maxChunksPerQuery = 10,
@@ -350,6 +349,7 @@ private suspend fun processChat(
     aiConfig: AIConfig,
     logger: org.slf4j.Logger
 ): ChatResponse {
+    val chatModelId = AIModels.forMode(aiConfig.mode).chat.id
     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
     // Determine session
@@ -471,7 +471,7 @@ private suspend fun processChat(
         documentId = documentId,
         citations = citations,
         chunksRetrieved = chatResult.chunksRetrieved,
-        aiModel = AIModels.chatModel(aiConfig.mode).id,
+        aiModel = chatModelId,
         aiProvider = "ollama",
         generationTimeMs = generationTimeMs,
         promptTokens = null, // TODO: Track from LLM response
@@ -492,7 +492,7 @@ private suspend fun processChat(
         chunksUsed = chatResult.citations.size,
         contextTokens = null,
         generationTimeMs = generationTimeMs,
-        model = AIModels.chatModel(aiConfig.mode).id,
+        model = chatModelId,
         provider = "ollama",
         promptTokens = null,
         completionTokens = null,

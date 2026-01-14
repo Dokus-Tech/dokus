@@ -2,9 +2,7 @@ package tech.dokus.features.ai.config
 
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
 import ai.koog.prompt.executor.model.PromptExecutor
-import ai.koog.prompt.llm.LLModel
 import tech.dokus.foundation.backend.config.AIConfig
-import tech.dokus.foundation.backend.config.ModelPurpose
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
@@ -16,21 +14,30 @@ object AIProviderFactory {
     private val logger = loggerFor()
 
     /**
-     * Create a prompt executor for the configured Ollama instance.
+     * Create a throttled executor that respects concurrency limits.
+     *
+     * CRITICAL: Without throttling, parallel agents can overwhelm Ollama
+     * causing OOM, timeouts, or model unload/reload thrashing.
      */
     fun createExecutor(config: AIConfig): PromptExecutor {
-        logger.info("Creating Ollama executor: ${config.ollamaHost}")
-        return simpleOllamaAIExecutor(config.ollamaHost)
+        val baseExecutor = simpleOllamaAIExecutor(config.ollamaHost)
+        val maxConcurrent = config.mode.maxConcurrentRequests
+
+        logger.info(
+            "Creating Ollama executor: {} (max concurrent: {}, mode: {})",
+            config.ollamaHost,
+            maxConcurrent,
+            config.mode.name
+        )
+
+        return wrapWithThrottling(baseExecutor, maxConcurrent)
     }
 
     /**
-     * Get the model for a specific purpose based on mode.
-     * Delegates to [AIModels] for type-safe model selection.
+     * Get all models for a given config.
      */
-    fun getModel(config: AIConfig, purpose: ModelPurpose): LLModel {
-        val model = AIModels.forPurpose(config.mode, purpose)
-        logger.debug("Selected model for {}: {} (mode={})", purpose, model.id, config.mode)
-        return model
+    fun getModels(config: AIConfig): ModelSet {
+        return AIModels.forMode(config.mode)
     }
 
     /**
@@ -43,13 +50,6 @@ object AIProviderFactory {
             dimensions = AIModels.EMBEDDING_DIMENSIONS,
             baseUrl = config.ollamaHost
         )
-    }
-
-    /**
-     * Get the chat model for RAG-powered Q&A.
-     */
-    fun getChatModel(config: AIConfig): LLModel {
-        return AIModels.chatModel(config.mode)
     }
 }
 
