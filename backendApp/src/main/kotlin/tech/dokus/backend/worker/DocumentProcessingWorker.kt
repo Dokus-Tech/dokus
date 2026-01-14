@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * VISION-FIRST Architecture:
  * 1. Download document bytes from storage
  * 2. Convert to images using DocumentImageService
- * 3. Send images to AIService for classification and extraction (vision models)
+ * 3. Process images through 5-Layer Autonomous Pipeline (vision models)
  * 4. Persist results
  * 5. RAG: Use extractedText from vision model for chunking/embedding
  *
