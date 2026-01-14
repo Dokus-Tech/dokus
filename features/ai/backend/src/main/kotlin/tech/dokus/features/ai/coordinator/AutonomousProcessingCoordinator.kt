@@ -346,7 +346,7 @@ class AutonomousProcessingCoordinator(
             conflictReport = conflictReport,
             auditReport = finalAuditReport,
             retryResult = retryResult,
-            hasEssentialFields = hasEssentialInvoiceFields(finalExtraction)
+            essentialFieldsCheck = checkEssentialInvoiceFields(finalExtraction)
         )
     }
 
@@ -426,7 +426,7 @@ class AutonomousProcessingCoordinator(
             conflictReport = conflictReport,
             auditReport = finalAuditReport,
             retryResult = retryResult,
-            hasEssentialFields = hasEssentialBillFields(finalExtraction)
+            essentialFieldsCheck = checkEssentialBillFields(finalExtraction)
         )
     }
 
@@ -506,7 +506,7 @@ class AutonomousProcessingCoordinator(
             conflictReport = conflictReport,
             auditReport = finalAuditReport,
             retryResult = retryResult,
-            hasEssentialFields = hasEssentialReceiptFields(finalExtraction)
+            essentialFieldsCheck = checkEssentialReceiptFields(finalExtraction)
         )
     }
 
@@ -586,7 +586,7 @@ class AutonomousProcessingCoordinator(
             conflictReport = conflictReport,
             auditReport = finalAuditReport,
             retryResult = retryResult,
-            hasEssentialFields = hasEssentialExpenseFields(finalExtraction)
+            essentialFieldsCheck = checkEssentialExpenseFields(finalExtraction)
         )
     }
 
@@ -695,7 +695,7 @@ class AutonomousProcessingCoordinator(
         conflictReport: ConflictReport?,
         auditReport: AuditReport,
         retryResult: RetryResult<T>?,
-        hasEssentialFields: Boolean
+        essentialFieldsCheck: EssentialFieldsCheck
     ): AutonomousResult {
         logger.info("Layer 5: Making final judgment")
 
@@ -705,8 +705,8 @@ class AutonomousProcessingCoordinator(
             auditReport = auditReport,
             retryResult = retryResult,
             documentType = classification.documentType.name,
-            hasEssentialFields = hasEssentialFields,
-            missingEssentialFields = emptyList()
+            hasEssentialFields = essentialFieldsCheck.hasAllFields,
+            missingEssentialFields = essentialFieldsCheck.missingFields
         )
 
         val decision = judgmentAgent.judge(context, useLlm = config.useLlmForJudgment)
@@ -728,23 +728,39 @@ class AutonomousProcessingCoordinator(
     // Essential Fields Checks
     // =========================================================================
 
-    private fun hasEssentialInvoiceFields(invoice: ExtractedInvoiceData): Boolean {
-        return !invoice.totalAmount.isNullOrBlank() &&
-            !invoice.vendorName.isNullOrBlank()
+    /**
+     * Result of checking essential fields.
+     */
+    private data class EssentialFieldsCheck(
+        val hasAllFields: Boolean,
+        val missingFields: List<String>
+    )
+
+    private fun checkEssentialInvoiceFields(invoice: ExtractedInvoiceData): EssentialFieldsCheck {
+        val missing = mutableListOf<String>()
+        if (invoice.totalAmount.isNullOrBlank()) missing.add("totalAmount")
+        if (invoice.vendorName.isNullOrBlank()) missing.add("vendorName")
+        return EssentialFieldsCheck(missing.isEmpty(), missing)
     }
 
-    private fun hasEssentialBillFields(bill: ExtractedBillData): Boolean {
-        return !bill.totalAmount.isNullOrBlank() &&
-            !bill.supplierName.isNullOrBlank()
+    private fun checkEssentialBillFields(bill: ExtractedBillData): EssentialFieldsCheck {
+        val missing = mutableListOf<String>()
+        if (bill.totalAmount.isNullOrBlank()) missing.add("totalAmount")
+        if (bill.supplierName.isNullOrBlank()) missing.add("supplierName")
+        return EssentialFieldsCheck(missing.isEmpty(), missing)
     }
 
-    private fun hasEssentialReceiptFields(receipt: ExtractedReceiptData): Boolean {
-        return !receipt.totalAmount.isNullOrBlank() &&
-            !receipt.merchantName.isNullOrBlank()
+    private fun checkEssentialReceiptFields(receipt: ExtractedReceiptData): EssentialFieldsCheck {
+        val missing = mutableListOf<String>()
+        if (receipt.totalAmount.isNullOrBlank()) missing.add("totalAmount")
+        if (receipt.merchantName.isNullOrBlank()) missing.add("merchantName")
+        return EssentialFieldsCheck(missing.isEmpty(), missing)
     }
 
-    private fun hasEssentialExpenseFields(expense: ExtractedExpenseData): Boolean {
-        return !expense.totalAmount.isNullOrBlank()
+    private fun checkEssentialExpenseFields(expense: ExtractedExpenseData): EssentialFieldsCheck {
+        val missing = mutableListOf<String>()
+        if (expense.totalAmount.isNullOrBlank()) missing.add("totalAmount")
+        return EssentialFieldsCheck(missing.isEmpty(), missing)
     }
 
     /**
