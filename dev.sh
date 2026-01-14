@@ -123,7 +123,8 @@ touch deployment/.env 2>/dev/null || true
 
 # AI/Ollama configuration
 OLLAMA_PORT="11434"
-OLLAMA_DEFAULT_MODELS=("mistral:7b" "llama3.1:8b")
+# Models used by IntelligenceMode (Assisted mode as default for dev)
+OLLAMA_DEFAULT_MODELS=("qwen3-vl:2b" "qwen3-vl:8b" "qwen3:8b" "nomic-embed-text")
 
 # Gateway configuration
 GATEWAY_PORT="8000"
@@ -752,28 +753,54 @@ ollama_pull() {
         return 1
     fi
 
-    echo_e "  ${SOFT_CYAN}${BOLD}Available models to pull:${NC}\n"
-    echo_e "    ${SOFT_CYAN}①${NC}  mistral:7b      ${DIM_WHITE}(Recommended - 4.1GB, fast)${NC}"
-    echo_e "    ${SOFT_CYAN}②${NC}  llama3.1:8b     ${DIM_WHITE}(Alternative - 4.7GB)${NC}"
-    echo_e "    ${SOFT_CYAN}③${NC}  llama3.2:3b     ${DIM_WHITE}(Lightweight - 2.0GB)${NC}"
-    echo_e "    ${SOFT_CYAN}④${NC}  gemma2:9b       ${DIM_WHITE}(Quality - 5.4GB)${NC}"
-    echo_e "    ${SOFT_CYAN}⑤${NC}  All recommended  ${DIM_WHITE}(mistral:7b + llama3.1:8b)${NC}"
+    echo_e "  ${SOFT_CYAN}${BOLD}Models by IntelligenceMode:${NC}\n"
+    echo_e "    ${SOFT_CYAN}${BOLD}Assisted${NC} ${DIM_WHITE}(≤16GB RAM, edge devices)${NC}"
+    echo_e "    ${SOFT_CYAN}①${NC}  qwen3-vl:2b     ${DIM_WHITE}(Vision, fast - ~1.5GB)${NC}"
+    echo_e "    ${SOFT_CYAN}②${NC}  qwen3-vl:8b     ${DIM_WHITE}(Vision, expert - ~5GB)${NC}"
+    echo_e "    ${SOFT_CYAN}③${NC}  qwen3:8b        ${DIM_WHITE}(Chat - ~5GB)${NC}"
+    echo ""
+    echo_e "    ${SOFT_CYAN}${BOLD}Autonomous${NC} ${DIM_WHITE}(32-48GB RAM, MacBook Pro)${NC}"
+    echo_e "    ${SOFT_CYAN}④${NC}  qwen3-vl:32b    ${DIM_WHITE}(Vision, expert - ~20GB)${NC}"
+    echo_e "    ${SOFT_CYAN}⑤${NC}  qwen3:32b       ${DIM_WHITE}(Chat - ~20GB)${NC}"
+    echo ""
+    echo_e "    ${SOFT_CYAN}${BOLD}Sovereign${NC} ${DIM_WHITE}(≥64GB RAM, Mac Studio)${NC}"
+    echo_e "    ${SOFT_CYAN}⑥${NC}  qwen3-vl:72b    ${DIM_WHITE}(Vision, expert - ~45GB)${NC}"
+    echo ""
+    echo_e "    ${SOFT_CYAN}${BOLD}Required for all modes${NC}"
+    echo_e "    ${SOFT_CYAN}⑦${NC}  nomic-embed-text ${DIM_WHITE}(Embeddings - ~275MB)${NC}"
+    echo ""
+    echo_e "    ${SOFT_CYAN}${BOLD}Bundles${NC}"
+    echo_e "    ${SOFT_CYAN}⑧${NC}  Assisted bundle  ${DIM_WHITE}(qwen3-vl:2b + qwen3-vl:8b + qwen3:8b + nomic)${NC}"
+    echo_e "    ${SOFT_CYAN}⑨${NC}  Autonomous bundle ${DIM_WHITE}(Assisted + qwen3-vl:32b + qwen3:32b)${NC}"
     echo_e "    ${SOFT_CYAN}⓪${NC}  Cancel"
     echo ""
 
-    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-5]:${NC} "
+    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-9]:${NC} "
     read choice
 
     echo ""
 
     case $choice in
-        1) pull_model "mistral:7b" ;;
-        2) pull_model "llama3.1:8b" ;;
-        3) pull_model "llama3.2:3b" ;;
-        4) pull_model "gemma2:9b" ;;
-        5)
-            pull_model "mistral:7b"
-            pull_model "llama3.1:8b"
+        1) pull_model "qwen3-vl:2b" ;;
+        2) pull_model "qwen3-vl:8b" ;;
+        3) pull_model "qwen3:8b" ;;
+        4) pull_model "qwen3-vl:32b" ;;
+        5) pull_model "qwen3:32b" ;;
+        6) pull_model "qwen3-vl:72b" ;;
+        7) pull_model "nomic-embed-text" ;;
+        8)
+            pull_model "qwen3-vl:2b"
+            pull_model "qwen3-vl:8b"
+            pull_model "qwen3:8b"
+            pull_model "nomic-embed-text"
+            ;;
+        9)
+            pull_model "qwen3-vl:2b"
+            pull_model "qwen3-vl:8b"
+            pull_model "qwen3:8b"
+            pull_model "qwen3-vl:32b"
+            pull_model "qwen3:32b"
+            pull_model "nomic-embed-text"
             ;;
         0) print_status info "Cancelled" && return ;;
         *) print_status error "Invalid choice" ;;
@@ -822,7 +849,7 @@ ollama_test() {
     echo ""
 
     local response=$(curl -s http://localhost:${OLLAMA_PORT}/api/generate -d '{
-        "model": "mistral:7b",
+        "model": "qwen3:8b",
         "prompt": "Say hello in one sentence.",
         "stream": false
     }' 2>/dev/null)
