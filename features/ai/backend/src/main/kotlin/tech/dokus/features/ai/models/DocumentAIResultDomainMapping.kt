@@ -3,10 +3,12 @@ package tech.dokus.features.ai.models
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.model.ExtractedBillFields
+import tech.dokus.domain.model.ExtractedCreditNoteFields
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedExpenseFields
 import tech.dokus.domain.model.ExtractedInvoiceFields
 import tech.dokus.domain.model.ExtractedLineItem
+import tech.dokus.domain.model.ExtractedProFormaFields
 
 /**
  * Convert DocumentAIResult to domain ExtractedDocumentData.
@@ -33,9 +35,33 @@ fun DocumentAIResult.toExtractedDocumentData(): ExtractedDocumentData {
         )
 
         is DocumentAIResult.Receipt -> ExtractedDocumentData(
-            documentType = DocumentType.Expense,
+            documentType = DocumentType.Receipt,
             rawText = rawText,
             expense = extractedData.toExpenseFields(),
+            overallConfidence = confidence,
+            fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
+        )
+
+        is DocumentAIResult.CreditNote -> ExtractedDocumentData(
+            documentType = DocumentType.CreditNote,
+            rawText = rawText,
+            creditNote = extractedData.toCreditNoteFields(),
+            overallConfidence = confidence,
+            fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
+        )
+
+        is DocumentAIResult.ProForma -> ExtractedDocumentData(
+            documentType = DocumentType.ProForma,
+            rawText = rawText,
+            proForma = extractedData.toProFormaFields(),
+            overallConfidence = confidence,
+            fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
+        )
+
+        is DocumentAIResult.Expense -> ExtractedDocumentData(
+            documentType = DocumentType.Expense,
+            rawText = rawText,
+            expense = extractedData.toExpenseFieldsFromExpense(),
             overallConfidence = confidence,
             fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
         )
@@ -55,7 +81,10 @@ fun DocumentAIResult.toDomainType(): DocumentType {
     return when (this) {
         is DocumentAIResult.Invoice -> DocumentType.Invoice
         is DocumentAIResult.Bill -> DocumentType.Bill
-        is DocumentAIResult.Receipt -> DocumentType.Expense
+        is DocumentAIResult.Receipt -> DocumentType.Receipt
+        is DocumentAIResult.CreditNote -> DocumentType.CreditNote
+        is DocumentAIResult.ProForma -> DocumentType.ProForma
+        is DocumentAIResult.Expense -> DocumentType.Expense
         is DocumentAIResult.Unknown -> DocumentType.Unknown
     }
 }
@@ -118,5 +147,52 @@ private fun InvoiceLineItem.toExtractedLineItem(): ExtractedLineItem {
         unitPrice = unitPrice?.parseMoney(),
         vatRate = vatRate?.parseVatRate(),
         lineTotal = total?.parseMoney()
+    )
+}
+
+private fun ExtractedInvoiceData.toCreditNoteFields(): ExtractedCreditNoteFields {
+    return ExtractedCreditNoteFields(
+        counterpartyName = vendorName,
+        counterpartyVatNumber = vendorVatNumber,
+        counterpartyAddress = vendorAddress,
+        creditNoteNumber = invoiceNumber, // Credit notes use same number field
+        originalInvoiceNumber = creditNoteMeta?.originalDocumentReference,
+        issueDate = issueDate?.parseLocalDate(),
+        items = lineItems.map { it.toExtractedLineItem() },
+        subtotalAmount = subtotal?.parseMoney(),
+        vatAmount = totalVatAmount?.parseMoney(),
+        totalAmount = totalAmount?.parseMoney(),
+        currency = Currency.fromDisplay(currency),
+        reason = creditNoteMeta?.creditReason
+    )
+}
+
+private fun ExtractedInvoiceData.toProFormaFields(): ExtractedProFormaFields {
+    return ExtractedProFormaFields(
+        clientName = vendorName,
+        clientVatNumber = vendorVatNumber,
+        clientAddress = vendorAddress,
+        proFormaNumber = invoiceNumber,
+        issueDate = issueDate?.parseLocalDate(),
+        validUntil = dueDate?.parseLocalDate(),
+        items = lineItems.map { it.toExtractedLineItem() },
+        subtotalAmount = subtotal?.parseMoney(),
+        vatAmount = totalVatAmount?.parseMoney(),
+        totalAmount = totalAmount?.parseMoney(),
+        currency = Currency.fromDisplay(currency),
+        termsAndConditions = paymentTerms
+    )
+}
+
+private fun ExtractedExpenseData.toExpenseFieldsFromExpense(): ExtractedExpenseFields {
+    return ExtractedExpenseFields(
+        merchant = merchantName,
+        date = date?.parseLocalDate(),
+        amount = totalAmount?.parseMoney(),
+        vatAmount = vatAmount?.parseMoney(),
+        vatRate = vatRate?.parseVatRate(),
+        currency = Currency.fromDisplay(currency),
+        category = category?.parseExpenseCategory(),
+        description = description
     )
 }

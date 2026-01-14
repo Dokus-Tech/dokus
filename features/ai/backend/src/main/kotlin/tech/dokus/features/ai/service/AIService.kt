@@ -1,10 +1,8 @@
 package tech.dokus.features.ai.service
 
-import tech.dokus.features.ai.agents.BillExtractionAgent
 import tech.dokus.features.ai.agents.CategorySuggestionAgent
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
-import tech.dokus.features.ai.agents.InvoiceExtractionAgent
-import tech.dokus.features.ai.agents.ReceiptExtractionAgent
+import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.models.CategorySuggestion
@@ -12,8 +10,10 @@ import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.DocumentAIResult
 import tech.dokus.features.ai.models.DocumentClassification
 import tech.dokus.features.ai.models.ExtractedBillData
+import tech.dokus.features.ai.models.ExtractedExpenseData
 import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.models.ExtractedReceiptData
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AIMode
@@ -68,31 +68,80 @@ class AIService(
     private val classificationAgent by lazy {
         DocumentClassificationAgent(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.CLASSIFICATION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.CLASSIFICATION),
+            prompt = AgentPrompt.DocumentClassification
         )
     }
 
     // Step 2a: Invoice extraction agent
     private val invoiceAgent by lazy {
-        InvoiceExtractionAgent(
+        ExtractionAgent<ExtractedInvoiceData>(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.Invoice,
+            userPromptPrefix = "Extract invoice data from this",
+            promptId = "invoice-extractor",
+            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
         )
     }
 
     // Step 2b: Bill extraction agent
     private val billAgent by lazy {
-        BillExtractionAgent(
+        ExtractionAgent<ExtractedBillData>(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.Bill,
+            userPromptPrefix = "Extract bill/supplier invoice data from this",
+            promptId = "bill-extractor",
+            emptyResult = { ExtractedBillData(confidence = 0.0) }
         )
     }
 
     // Step 2c: Receipt extraction agent
     private val receiptAgent by lazy {
-        ReceiptExtractionAgent(
+        ExtractionAgent<ExtractedReceiptData>(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.Receipt,
+            userPromptPrefix = "Extract receipt data from this",
+            promptId = "receipt-extractor",
+            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
+        )
+    }
+
+    // Step 2d: Credit note extraction agent (reuses invoice schema)
+    private val creditNoteAgent by lazy {
+        ExtractionAgent<ExtractedInvoiceData>(
+            executor = executor,
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.CreditNote,
+            userPromptPrefix = "Extract credit note data from this",
+            promptId = "credit-note-extractor",
+            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
+        )
+    }
+
+    // Step 2e: Pro forma invoice extraction agent (reuses invoice schema)
+    private val proFormaAgent by lazy {
+        ExtractionAgent<ExtractedInvoiceData>(
+            executor = executor,
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.ProForma,
+            userPromptPrefix = "Extract pro forma invoice data from this",
+            promptId = "pro-forma-extractor",
+            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
+        )
+    }
+
+    // Step 2f: Expense extraction agent
+    private val expenseAgent by lazy {
+        ExtractionAgent<ExtractedExpenseData>(
+            executor = executor,
+            model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
+            prompt = AgentPrompt.Extraction.Expense,
+            userPromptPrefix = "Extract expense data from this",
+            promptId = "expense-extractor",
+            emptyResult = { ExtractedExpenseData(confidence = 0.0) }
         )
     }
 
@@ -100,7 +149,8 @@ class AIService(
     private val categoryAgent by lazy {
         CategorySuggestionAgent(
             executor = executor,
-            model = AIProviderFactory.getModel(config, ModelPurpose.CATEGORIZATION)
+            model = AIProviderFactory.getModel(config, ModelPurpose.CATEGORIZATION),
+            prompt = AgentPrompt.CategorySuggestion
         )
     }
 
@@ -113,13 +163,17 @@ class AIService(
      * Vision models analyze images without requiring OCR preprocessing.
      *
      * @param images List of document page images
+     * @param tenantContext Tenant context for improved INVOICE vs BILL classification
      * @return Result containing DocumentAIResult sealed class with:
      *         - classification
      *         - type-specific extracted payload with provenance
      *         - extractedText for RAG indexing
      *         - confidence and warnings
      */
-    suspend fun processDocument(images: List<DocumentImage>): Result<DocumentAIResult> = runCatching {
+    suspend fun processDocument(
+        images: List<DocumentImage>,
+        tenantContext: AgentPrompt.TenantContext
+    ): Result<DocumentAIResult> = runCatching {
         logger.info("Processing document (${images.size} pages)")
         val warnings = mutableListOf<String>()
 
@@ -127,7 +181,7 @@ class AIService(
 
         // Step 1: Classify document type (use first page for classification)
         val classificationImages = images.take(1) // Usually first page is enough for classification
-        val classification = classificationAgent.classify(classificationImages)
+        val classification = classificationAgent.classify(classificationImages, tenantContext)
         logger.info("Document classified as ${classification.documentType} (confidence: ${classification.confidence})")
 
         if (classification.confidence < 0.5) {
@@ -172,6 +226,42 @@ class AIService(
                 )
             }
 
+            ClassifiedDocumentType.CREDIT_NOTE -> {
+                logger.debug("Extracting as credit note")
+                val data = creditNoteAgent.extract(images)
+                DocumentAIResult.CreditNote(
+                    classification = classification,
+                    extractedData = data,
+                    confidence = data.confidence,
+                    warnings = warnings,
+                    rawText = data.extractedText ?: ""
+                )
+            }
+
+            ClassifiedDocumentType.PRO_FORMA -> {
+                logger.debug("Extracting as pro forma invoice")
+                val data = proFormaAgent.extract(images)
+                DocumentAIResult.ProForma(
+                    classification = classification,
+                    extractedData = data,
+                    confidence = data.confidence,
+                    warnings = warnings,
+                    rawText = data.extractedText ?: ""
+                )
+            }
+
+            ClassifiedDocumentType.EXPENSE -> {
+                logger.debug("Extracting as expense")
+                val data = expenseAgent.extract(images)
+                DocumentAIResult.Expense(
+                    classification = classification,
+                    extractedData = data,
+                    confidence = data.confidence,
+                    warnings = warnings,
+                    rawText = data.extractedText ?: ""
+                )
+            }
+
             ClassifiedDocumentType.UNKNOWN -> {
                 logger.warn("Could not classify document type")
                 warnings.add("Document type could not be determined")
@@ -190,10 +280,14 @@ class AIService(
      * Useful for quick categorization or when extraction is not needed.
      *
      * @param images List of document page images
+     * @param tenantContext Tenant context for improved INVOICE vs BILL classification
      * @return Document classification result
      */
-    suspend fun classifyDocument(images: List<DocumentImage>): Result<DocumentClassification> = runCatching {
-        classificationAgent.classify(images)
+    suspend fun classifyDocument(
+        images: List<DocumentImage>,
+        tenantContext: AgentPrompt.TenantContext
+    ): Result<DocumentClassification> = runCatching {
+        classificationAgent.classify(images, tenantContext)
     }
 
     /**
@@ -227,6 +321,39 @@ class AIService(
      */
     suspend fun extractBill(images: List<DocumentImage>): Result<ExtractedBillData> = runCatching {
         billAgent.extract(images)
+    }
+
+    /**
+     * Direct credit note extraction (skip classification).
+     * Use when you know the document is a credit note.
+     *
+     * @param images List of document page images
+     * @return Extracted invoice data with credit note metadata
+     */
+    suspend fun extractCreditNote(images: List<DocumentImage>): Result<ExtractedInvoiceData> = runCatching {
+        creditNoteAgent.extract(images)
+    }
+
+    /**
+     * Direct pro forma invoice extraction (skip classification).
+     * Use when you know the document is a pro forma/quote.
+     *
+     * @param images List of document page images
+     * @return Extracted invoice data
+     */
+    suspend fun extractProForma(images: List<DocumentImage>): Result<ExtractedInvoiceData> = runCatching {
+        proFormaAgent.extract(images)
+    }
+
+    /**
+     * Direct expense extraction (skip classification).
+     * Use when you know the document is a simple expense (parking, transport, etc.).
+     *
+     * @param images List of document page images
+     * @return Extracted expense data
+     */
+    suspend fun extractExpense(images: List<DocumentImage>): Result<ExtractedExpenseData> = runCatching {
+        expenseAgent.extract(images)
     }
 
     /**

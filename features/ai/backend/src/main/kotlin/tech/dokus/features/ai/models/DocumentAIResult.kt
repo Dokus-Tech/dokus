@@ -46,6 +46,36 @@ sealed class DocumentAIResult {
     ) : DocumentAIResult()
 
     /**
+     * Credit note extraction result.
+     * A document that reduces/refunds a previous invoice.
+     * Uses same ExtractedInvoiceData with creditNoteMeta populated.
+     */
+    @Serializable
+    @SerialName("CreditNote")
+    data class CreditNote(
+        override val classification: DocumentClassification,
+        val extractedData: ExtractedInvoiceData,
+        override val confidence: Double,
+        override val warnings: List<String> = emptyList(),
+        override val rawText: String
+    ) : DocumentAIResult()
+
+    /**
+     * Proforma invoice extraction result.
+     * A quote/estimate that is not a legal tax invoice.
+     * Uses same ExtractedInvoiceData structure.
+     */
+    @Serializable
+    @SerialName("ProForma")
+    data class ProForma(
+        override val classification: DocumentClassification,
+        val extractedData: ExtractedInvoiceData,
+        override val confidence: Double,
+        override val warnings: List<String> = emptyList(),
+        override val rawText: String
+    ) : DocumentAIResult()
+
+    /**
      * Bill document extraction result.
      * Incoming invoices from suppliers.
      */
@@ -60,14 +90,28 @@ sealed class DocumentAIResult {
     ) : DocumentAIResult()
 
     /**
-     * Receipt/Expense document extraction result.
-     * Point-of-sale receipts and expense documents.
+     * Receipt document extraction result.
+     * Point-of-sale receipts with itemized purchases.
      */
     @Serializable
     @SerialName("Receipt")
     data class Receipt(
         override val classification: DocumentClassification,
         val extractedData: ExtractedReceiptData,
+        override val confidence: Double,
+        override val warnings: List<String> = emptyList(),
+        override val rawText: String
+    ) : DocumentAIResult()
+
+    /**
+     * Expense document extraction result.
+     * Simple cost documents without itemization (parking, transport, etc).
+     */
+    @Serializable
+    @SerialName("Expense")
+    data class Expense(
+        override val classification: DocumentClassification,
+        val extractedData: ExtractedExpenseData,
         override val confidence: Double,
         override val warnings: List<String> = emptyList(),
         override val rawText: String

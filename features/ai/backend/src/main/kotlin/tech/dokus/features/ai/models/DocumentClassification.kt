@@ -21,11 +21,20 @@ enum class ClassifiedDocumentType {
     @SerialName("INVOICE")
     INVOICE,
 
-    @SerialName("RECEIPT")
-    RECEIPT,
+    @SerialName("CREDIT_NOTE")
+    CREDIT_NOTE,
+
+    @SerialName("PRO_FORMA")
+    PRO_FORMA,
 
     @SerialName("BILL")
     BILL,
+
+    @SerialName("RECEIPT")
+    RECEIPT,
+
+    @SerialName("EXPENSE")
+    EXPENSE,
 
     @SerialName("UNKNOWN")
     UNKNOWN

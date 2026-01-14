@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.RetrievedChunk
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.RAGService
 
 /**
@@ -29,7 +30,7 @@ import tech.dokus.features.ai.services.RAGService
  *
  * Usage:
  * ```kotlin
- * val chatAgent = ChatAgent(executor, model, ragService)
+ * val chatAgent = ChatAgent(executor, model, ragService, AgentPrompt.Chat)
  *
  * // Single document chat
  * val response = chatAgent.chat(
@@ -48,7 +49,8 @@ import tech.dokus.features.ai.services.RAGService
 class ChatAgent(
     private val executor: PromptExecutor,
     private val model: LLModel,
-    private val ragService: RAGService
+    private val ragService: RAGService,
+    private val prompt: AgentPrompt
 ) {
     private val logger = LoggerFactory.getLogger(ChatAgent::class.java)
 
@@ -127,25 +129,6 @@ class ChatAgent(
         /** Similarity score of this chunk to the query */
         val similarityScore: Float
     )
-
-    private val baseSystemPrompt = """
-        You are a helpful document assistant that answers questions based on provided context.
-
-        Guidelines:
-        - Answer questions accurately based ONLY on the provided context
-        - If the answer is not in the context, clearly state that you cannot find the information
-        - Be concise and direct in your responses
-        - When referencing information, cite the source using [Source N] format
-        - If multiple sources support an answer, cite all relevant sources
-        - Do not make up information that is not in the context
-        - For financial/numerical data, quote exact values from the source documents
-        - If you're uncertain, express that uncertainty clearly
-
-        Response format:
-        - Start with a direct answer to the question
-        - Include [Source N] citations inline where information is used
-        - Keep responses focused and relevant to the question
-    """.trimIndent()
 
     /**
      * Process a chat question with RAG-backed context retrieval.
@@ -251,7 +234,7 @@ class ChatAgent(
 
         // Step 3: Construct the system prompt with RAG context
         val systemPrompt = ragService.formatRAGPrompt(
-            basePrompt = baseSystemPrompt,
+            basePrompt = prompt.systemPrompt,
             context = context
         )
 

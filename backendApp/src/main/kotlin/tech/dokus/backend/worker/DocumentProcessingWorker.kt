@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.database.entity.IngestionItemEntity
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.CounterpartyIntent
@@ -24,6 +25,7 @@ import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.meetsMinimalThreshold
 import tech.dokus.features.ai.models.toDomainType
 import tech.dokus.features.ai.models.toExtractedDocumentData
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.service.AIService
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
@@ -60,6 +62,7 @@ class DocumentProcessingWorker(
     private val config: ProcessorConfig,
     private val draftRepository: DocumentDraftRepository,
     private val contactMatchingService: ContactMatchingService,
+    private val tenantRepository: TenantRepository,
     // Optional RAG dependencies - if provided, chunking and embedding will be performed
     private val chunkingService: ChunkingService? = null,
     private val embeddingService: EmbeddingService? = null,
@@ -195,8 +198,15 @@ class DocumentProcessingWorker(
                 "Rendered ${documentImages.processedPages}/${documentImages.totalPages} pages for document $documentId"
             )
 
+            // Fetch tenant context for improved INVOICE vs BILL classification
+            val tenant = tenantRepository.findById(TenantId.parse(tenantId))
+            val tenantContext = AgentPrompt.TenantContext(
+                vatNumber = tenant?.vatNumber?.value,
+                companyName = tenant?.displayName?.value ?: tenant?.legalName?.value
+            )
+
             // Step 3: Send images to AIService for vision-based classification and extraction
-            val aiResult = aiService.processDocument(documentImages.images)
+            val aiResult = aiService.processDocument(documentImages.images, tenantContext)
 
             val result = aiResult.getOrElse { e ->
                 logger.error("AI processing failed for document $documentId: ${e.message}", e)

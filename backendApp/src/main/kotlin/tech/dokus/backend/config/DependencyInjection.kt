@@ -314,6 +314,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             config = appConfig.processor,
             draftRepository = get(),
             contactMatchingService = get(),
+            tenantRepository = get(),
             // RAG chunking/embedding - use repositories from foundation:database
             chunkingService = getOrNull<ChunkingService>(),
             embeddingService = getOrNull<EmbeddingService>(),
