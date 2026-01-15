@@ -9,6 +9,7 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.features.cashflow.usecases.OptOutPeppolUseCase
@@ -134,7 +135,8 @@ internal class PeppolRegistrationContainer(
             logger.d { "Enabling PEPPOL for enterprise: $enterpriseNumber" }
             updateState { copy(isEnabling = true) }
 
-            enablePeppol(enterpriseNumber).fold(
+            val vatNumber = VatNumber("BE$enterpriseNumber")
+            enablePeppol(vatNumber).fold(
                 onSuccess = { response ->
                     logger.d { "PEPPOL enabled: ${response.registration.status}" }
                     updateState { response.registration.toUiState() }

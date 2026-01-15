@@ -378,13 +378,10 @@ internal fun Route.peppolRoutes() {
 
             val tenant = tenantRepository.findById(tenantId)
                 ?: throw DokusException.NotFound("Tenant not found")
-            val vatNumber = tenant.vatNumber
-                ?: throw DokusException.BadRequest("Tenant does not have a VAT number configured")
 
             val result = peppolRegistrationService.enablePeppol(
                 tenantId = tenantId,
                 request = request,
-                vatNumber = vatNumber,
                 companyName = tenant.legalName.value
             ).getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
 

@@ -37,7 +37,7 @@ class PeppolRegistrationService(
      * Enable PEPPOL for a tenant.
      *
      * Flow:
-     * 1. Convert enterprise number to PEPPOL ID
+     * 1. Convert VAT number to PEPPOL ID
      * 2. Verify if ID is blocked
      * 3. If blocked: return blocked result (user chooses wait or opt-out)
      * 4. If available: register with Recommand -> ACTIVE
@@ -45,12 +45,12 @@ class PeppolRegistrationService(
     suspend fun enablePeppol(
         tenantId: TenantId,
         request: EnablePeppolRequest,
-        vatNumber: VatNumber,
         companyName: String
     ): Result<PeppolRegistrationResponse> = runCatching {
-        logger.info("Enabling PEPPOL for tenant $tenantId with enterprise number: ${request.enterpriseNumber}")
+        val vatNumber = request.vatNumber
+        logger.info("Enabling PEPPOL for tenant $tenantId with VAT number: ${vatNumber.normalized}")
 
-        // Convert enterprise number to PEPPOL ID format
+        // Convert VAT number to PEPPOL ID format (0208 = Belgian scheme)
         val peppolId = "0208:${vatNumber.normalized}"
 
         // Check existing registration
@@ -205,8 +205,7 @@ class PeppolRegistrationService(
 
         enablePeppol(
             tenantId,
-            EnablePeppolRequest(vatNumber.companyNumber),
-            vatNumber,
+            EnablePeppolRequest(vatNumber),
             companyName
         ).getOrThrow()
     }

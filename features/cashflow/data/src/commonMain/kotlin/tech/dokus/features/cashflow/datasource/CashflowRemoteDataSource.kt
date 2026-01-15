@@ -28,6 +28,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
@@ -659,7 +660,7 @@ interface CashflowRemoteDataSource {
      * Enable PEPPOL for the tenant (start registration)
      * POST /api/v1/peppol/enable
      */
-    suspend fun enablePeppol(enterpriseNumber: String): Result<PeppolRegistrationResponse>
+    suspend fun enablePeppol(vatNumber: VatNumber): Result<PeppolRegistrationResponse>
 
     /**
      * Opt to wait for PEPPOL ID transfer from another provider

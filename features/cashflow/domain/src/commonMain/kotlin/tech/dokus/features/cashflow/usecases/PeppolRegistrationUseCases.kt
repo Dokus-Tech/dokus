@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.usecases
 
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.PeppolRegistrationResponse
@@ -22,7 +23,7 @@ interface VerifyPeppolIdUseCase {
  * Use case to enable PEPPOL for the tenant.
  */
 interface EnablePeppolUseCase {
-    suspend operator fun invoke(enterpriseNumber: String): Result<PeppolRegistrationResponse>
+    suspend operator fun invoke(vatNumber: VatNumber): Result<PeppolRegistrationResponse>
 }
 
 /**

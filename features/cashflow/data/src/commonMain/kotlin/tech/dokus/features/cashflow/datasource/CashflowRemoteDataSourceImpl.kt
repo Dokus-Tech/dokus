@@ -41,6 +41,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
@@ -840,7 +841,7 @@ internal class CashflowRemoteDataSourceImpl(
             if (response.status.value == HttpNotFound) {
                 null
             } else {
-                response.body<tech.dokus.domain.model.PeppolRegistrationDto>()
+                response.body<PeppolRegistrationDto>()
             }
         }
     }
@@ -854,11 +855,11 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun enablePeppol(enterpriseNumber: String): Result<PeppolRegistrationResponse> {
+    override suspend fun enablePeppol(vatNumber: VatNumber): Result<PeppolRegistrationResponse> {
         return runCatching {
             httpClient.post(Peppol.Enable()) {
                 contentType(ContentType.Application.Json)
-                setBody(tech.dokus.domain.model.EnablePeppolRequest(enterpriseNumber = enterpriseNumber))
+                setBody(tech.dokus.domain.model.EnablePeppolRequest(vatNumber = vatNumber))
             }.body()
         }
     }

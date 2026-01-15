@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.usecase
 
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.PeppolRegistrationResponse
@@ -40,9 +41,9 @@ internal class VerifyPeppolIdUseCaseImpl(
 internal class EnablePeppolUseCaseImpl(
     private val remoteDataSource: CashflowRemoteDataSource
 ) : EnablePeppolUseCase {
-    override suspend fun invoke(enterpriseNumber: String): Result<PeppolRegistrationResponse> {
-        require(enterpriseNumber.isNotBlank()) { "Enterprise number must not be blank" }
-        return remoteDataSource.enablePeppol(enterpriseNumber)
+    override suspend fun invoke(vatNumber: VatNumber): Result<PeppolRegistrationResponse> {
+        require(vatNumber.isValid) { "Invalid VAT number" }
+        return remoteDataSource.enablePeppol(vatNumber)
     }
 }
 

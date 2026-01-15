@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.PeppolRegistrationStatus
 import tech.dokus.domain.ids.PeppolRegistrationId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
 
 /**
  * PEPPOL registration state for a tenant.
@@ -43,8 +44,8 @@ data class PeppolRegistrationDto(
  */
 @Serializable
 data class EnablePeppolRequest(
-    /** Belgian enterprise number (will be converted to PEPPOL ID format "0208:...") */
-    val enterpriseNumber: String
+    /** Belgian VAT number (will be converted to PEPPOL ID format "0208:BE...") */
+    val vatNumber: VatNumber
 )
 
 /**
