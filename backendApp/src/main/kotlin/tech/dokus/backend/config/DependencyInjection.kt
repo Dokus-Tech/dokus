@@ -96,8 +96,12 @@ import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolCredentialResolver
 import tech.dokus.peppol.service.PeppolCredentialResolverImpl
+import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.service.PeppolTransferPollingService
+import tech.dokus.peppol.service.PeppolVerificationService
 import tech.dokus.peppol.validator.PeppolValidator
+import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 
 /**
  * Koin setup for the modular monolith server.
@@ -277,6 +281,12 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     // PEPPOL Directory Cache - resolves recipients via cache-first lookup
     single { PeppolRecipientResolver(get(), get(), get(), get(), get()) }
     single<DocumentConfirmationPolicy> { DefaultDocumentConfirmationPolicy() }
+
+    // PEPPOL Registration State Machine (Phase B)
+    single { PeppolRegistrationRepository() }
+    single { PeppolVerificationService(get(), get()) }
+    single { PeppolRegistrationService(get(), get(), get(), get()) }
+    single { PeppolTransferPollingService(get(), get()) }
 
     // Peppol Polling Worker
     single {

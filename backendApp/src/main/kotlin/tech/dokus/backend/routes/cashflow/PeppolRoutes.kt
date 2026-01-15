@@ -21,7 +21,9 @@ import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.peppol.service.PeppolConnectionService
+import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.service.PeppolVerificationService
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -328,6 +330,102 @@ internal fun Route.peppolRoutes() {
             } else {
                 call.respond(HttpStatusCode.OK, transmission)
             }
+        }
+
+        // ================================================================
+        // PEPPOL REGISTRATION (Phase B State Machine)
+        // ================================================================
+
+        /**
+         * GET /api/v1/peppol/registration
+         * Get current PEPPOL registration status.
+         */
+        get<Peppol.Registration> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            val result = peppolRegistrationService.getRegistration(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to get registration: ${it.message}") }
+
+            if (result == null) {
+                call.respond(HttpStatusCode.NotFound, mapOf("message" to "No PEPPOL registration found"))
+            } else {
+                call.respond(HttpStatusCode.OK, result)
+            }
+        }
+
+        /**
+         * POST /api/v1/peppol/verify
+         * Verify if a PEPPOL ID is available for registration.
+         */
+        post<Peppol.Verify> {
+            val request = call.receive<VerifyPeppolIdRequest>()
+
+            val result = peppolVerificationService.verify(request.peppolId)
+                .getOrElse { throw DokusException.InternalError("Failed to verify PEPPOL ID: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
+        }
+
+        /**
+         * POST /api/v1/peppol/enable
+         * Enable PEPPOL for the tenant.
+         */
+        post<Peppol.Enable> {
+            val tenantId = dokusPrincipal.requireTenantId()
+            val request = call.receive<tech.dokus.domain.model.EnablePeppolRequest>()
+
+            val tenant = tenantRepository.findById(tenantId)
+                ?: throw DokusException.NotFound("Tenant not found")
+            val vatNumber = tenant.vatNumber
+                ?: throw DokusException.BadRequest("Tenant does not have a VAT number configured")
+
+            val result = peppolRegistrationService.enablePeppol(
+                tenantId = tenantId,
+                request = request,
+                vatNumber = vatNumber,
+                companyName = tenant.legalName.value
+            ).getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
+        }
+
+        /**
+         * POST /api/v1/peppol/wait-for-transfer
+         * Opt to wait for PEPPOL ID transfer.
+         */
+        post<Peppol.WaitForTransfer> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            val result = peppolRegistrationService.waitForTransfer(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to set wait for transfer: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
+        }
+
+        /**
+         * POST /api/v1/peppol/opt-out
+         * Opt out of PEPPOL via Dokus.
+         */
+        post<Peppol.OptOut> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            peppolRegistrationService.optOut(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to opt out: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, mapOf("success" to true))
+        }
+
+        /**
+         * POST /api/v1/peppol/poll
+         * Manual poll for transfer status.
+         */
+        post<Peppol.Poll> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            val result = peppolRegistrationService.pollTransferStatus(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to poll transfer status: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
         }
     }
 }
