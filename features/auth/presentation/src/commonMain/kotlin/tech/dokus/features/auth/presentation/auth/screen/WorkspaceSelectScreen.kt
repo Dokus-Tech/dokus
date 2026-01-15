@@ -86,7 +86,7 @@ internal fun WorkspaceSelectScreen(
                 exit = fadeOut(animationSpec = tween(BackgroundFadeOutDurationMs))
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    EnhancedFloatingBubbles()
+                    CalmParticleField()
                 }
             }
 
