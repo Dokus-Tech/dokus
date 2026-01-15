@@ -46,7 +46,10 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
+import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.domain.model.PeppolInboxPollResponse
+import tech.dokus.domain.model.PeppolRegistrationDto
+import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult

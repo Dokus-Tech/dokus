@@ -9,7 +9,6 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.validators.ValidateOgmUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.features.cashflow.usecases.OptOutPeppolUseCase
@@ -32,8 +31,7 @@ internal class PeppolRegistrationContainer(
     private val enablePeppol: EnablePeppolUseCase,
     private val waitForTransfer: WaitForPeppolTransferUseCase,
     private val optOut: OptOutPeppolUseCase,
-    private val pollTransfer: PollPeppolTransferUseCase,
-    private val validateOgm: ValidateOgmUseCase
+    private val pollTransfer: PollPeppolTransferUseCase
 ) : Container<PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction> {
 
     private val logger = Logger.forClass<PeppolRegistrationContainer>()
@@ -88,19 +86,20 @@ internal class PeppolRegistrationContainer(
 
     private suspend fun PeppolRegistrationCtx.handleVerifyPeppolId() {
         withState<PeppolRegistrationState.Welcome, _> {
-            val trimmed = enterpriseNumber.trim()
+            val trimmed = enterpriseNumber.trim().replace(" ", "").replace(".", "")
 
-            // Validate OGM format
-            if (!validateOgm(trimmed)) {
-                updateState { copy(verificationError = "Invalid enterprise number format") }
+            // Validate enterprise number format (Belgian enterprise number is 10 digits)
+            if (!trimmed.all { it.isDigit() } || trimmed.length < 9 || trimmed.length > 10) {
+                updateState { copy(verificationError = "Invalid enterprise number format (9-10 digits expected)") }
                 return@withState
             }
 
             logger.d { "Verifying PEPPOL ID for enterprise: $trimmed" }
             updateState { copy(isVerifying = true, verificationError = null) }
 
-            // Convert to PEPPOL ID format (0208:BE + number)
-            val peppolId = "0208:BE$trimmed"
+            // Convert to PEPPOL ID format (0208:BE + number padded to 10 digits)
+            val paddedNumber = trimmed.padStart(10, '0')
+            val peppolId = "0208:BE$paddedNumber"
 
             verifyPeppolId(peppolId).fold(
                 onSuccess = { result ->

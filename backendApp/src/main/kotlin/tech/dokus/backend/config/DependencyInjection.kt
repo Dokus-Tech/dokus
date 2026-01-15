@@ -46,6 +46,7 @@ import tech.dokus.database.di.repositoryModules
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
@@ -101,7 +102,6 @@ import tech.dokus.peppol.service.PeppolService
 import tech.dokus.peppol.service.PeppolTransferPollingService
 import tech.dokus.peppol.service.PeppolVerificationService
 import tech.dokus.peppol.validator.PeppolValidator
-import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 
 /**
  * Koin setup for the modular monolith server.
@@ -279,7 +279,7 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { PeppolService(get(), get(), get(), get(), get(), get()) }
 
     // PEPPOL Directory Cache - resolves recipients via cache-first lookup
-    single { PeppolRecipientResolver(get(), get(), get(), get(), get()) }
+    single { PeppolRecipientResolver(get(), get(), get(), get()) }
     single<DocumentConfirmationPolicy> { DefaultDocumentConfirmationPolicy() }
 
     // PEPPOL Registration State Machine (Phase B)

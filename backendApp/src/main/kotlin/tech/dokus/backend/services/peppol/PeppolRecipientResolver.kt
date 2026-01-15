@@ -2,7 +2,6 @@ package tech.dokus.backend.services.peppol
 
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
-import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.enums.PeppolLookupSource
 import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.ids.ContactId
@@ -32,7 +31,6 @@ private const val ERROR_MESSAGE_MAX_LENGTH = 500
 class PeppolRecipientResolver(
     private val cacheRepository: PeppolDirectoryCacheRepository,
     private val contactRepository: ContactRepository,
-    private val settingsRepository: PeppolSettingsRepository,
     private val credentialResolver: PeppolCredentialResolver,
     private val recommandProvider: RecommandProvider
 ) {
