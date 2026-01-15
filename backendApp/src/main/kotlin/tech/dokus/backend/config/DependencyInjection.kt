@@ -275,7 +275,7 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { PeppolService(get(), get(), get(), get(), get(), get()) }
 
     // PEPPOL Directory Cache - resolves recipients via cache-first lookup
-    single { PeppolRecipientResolver(get(), get(), get(), get()) }
+    single { PeppolRecipientResolver(get(), get(), get(), get(), get()) }
     single<DocumentConfirmationPolicy> { DefaultDocumentConfirmationPolicy() }
 
     // Peppol Polling Worker

@@ -43,8 +43,8 @@ import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.MarkBillPaidRequest
-import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -55,7 +55,6 @@ import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
-import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
@@ -572,20 +571,8 @@ interface CashflowRemoteDataSource {
     suspend fun getPeppolSettings(): Result<PeppolSettingsDto?>
 
     /**
-     * Save Peppol settings
-     * PUT /api/v1/peppol/settings
-     */
-    suspend fun savePeppolSettings(request: SavePeppolSettingsRequest): Result<PeppolSettingsDto>
-
-    /**
-     * Delete Peppol settings
-     * DELETE /api/v1/peppol/settings
-     */
-    suspend fun deletePeppolSettings(): Result<Unit>
-
-    /**
      * Test Peppol connection with current credentials
-     * POST /api/v1/peppol/settings/test
+     * POST /api/v1/peppol/settings/connection-tests
      */
     suspend fun testPeppolConnection(): Result<Boolean>
 
@@ -594,11 +581,11 @@ interface CashflowRemoteDataSource {
      * POST /api/v1/peppol/settings/connect
      *
      * This endpoint:
-     * 1. Validates credentials with Recommand
+     * 1. Uses master Peppol credentials from environment
      * 2. Searches for companies matching tenant VAT
-     * 3. Returns status indicating next steps (Connected, MultipleMatches, NoCompanyFound, etc.)
+     * 3. Returns status indicating next steps (Connected, NoCompanyFound, etc.)
      */
-    suspend fun connectPeppol(request: PeppolConnectRequest): Result<PeppolConnectResponse>
+    suspend fun connectPeppol(companyAddress: Address): Result<PeppolConnectResponse>
 
     // ----- Verification & Validation -----
 

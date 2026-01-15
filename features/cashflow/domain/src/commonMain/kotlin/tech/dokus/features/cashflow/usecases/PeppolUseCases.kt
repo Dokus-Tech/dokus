@@ -3,7 +3,7 @@ package tech.dokus.features.cashflow.usecases
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.model.PeppolConnectRequest
+import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -16,7 +16,7 @@ import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
  * Use case for initiating a Peppol provider connection.
  */
 interface ConnectPeppolUseCase {
-    suspend operator fun invoke(request: PeppolConnectRequest): Result<PeppolConnectResponse>
+    suspend operator fun invoke(companyAddress: Address): Result<PeppolConnectResponse>
 }
 
 /**
@@ -24,13 +24,6 @@ interface ConnectPeppolUseCase {
  */
 interface GetPeppolSettingsUseCase {
     suspend operator fun invoke(): Result<PeppolSettingsDto?>
-}
-
-/**
- * Use case for deleting Peppol settings.
- */
-interface DeletePeppolSettingsUseCase {
-    suspend operator fun invoke(): Result<Unit>
 }
 
 /**
