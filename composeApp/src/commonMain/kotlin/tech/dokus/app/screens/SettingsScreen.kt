@@ -59,7 +59,6 @@ import tech.dokus.aura.resources.settings_select_workspace
 import tech.dokus.aura.resources.settings_unknown_section
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.presentation.auth.route.ProfileSettingsRoute
-import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.local.LocalAppModules
@@ -362,10 +361,6 @@ private fun SettingsContentPane(
 
                 is SettingsDestination.AppearanceSettings -> {
                     AppearanceSettingsRoute()
-                }
-
-                is SettingsDestination.PeppolSettings -> {
-                    PeppolSettingsRoute()
                 }
 
                 else -> {
