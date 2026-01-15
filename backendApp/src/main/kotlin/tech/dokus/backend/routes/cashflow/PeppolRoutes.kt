@@ -43,6 +43,8 @@ internal fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
     val peppolConnectionService by inject<PeppolConnectionService>()
     val peppolRecipientResolver by inject<PeppolRecipientResolver>()
+    val peppolRegistrationService by inject<PeppolRegistrationService>()
+    val peppolVerificationService by inject<PeppolVerificationService>()
     val invoiceService by inject<InvoiceService>()
     val contactRepository by inject<ContactRepository>()
     val tenantRepository by inject<TenantRepository>()
