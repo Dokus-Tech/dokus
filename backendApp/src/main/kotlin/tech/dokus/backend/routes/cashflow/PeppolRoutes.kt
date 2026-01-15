@@ -441,6 +441,9 @@ private data class ProvidersResponse(val providers: List<String>)
 private data class VerifyRecipientRequest(val peppolId: String)
 
 @Serializable
+private data class VerifyPeppolIdRequest(val peppolId: String)
+
+@Serializable
 private data class TestConnectionResponse(val success: Boolean)
 
 @Serializable
