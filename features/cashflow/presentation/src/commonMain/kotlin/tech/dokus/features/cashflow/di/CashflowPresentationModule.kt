@@ -23,6 +23,10 @@ import tech.dokus.features.cashflow.presentation.chat.ChatAction
 import tech.dokus.features.cashflow.presentation.chat.ChatContainer
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
 import tech.dokus.features.cashflow.presentation.chat.ChatState
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationAction
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationContainer
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -81,6 +85,17 @@ val cashflowViewModelModule = module {
             loadCashflowEntries = get(),
             recordPayment = get(),
             highlightEntryId = highlightEntryId
+        )
+    }
+    container<PeppolRegistrationContainer, PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction> {
+        PeppolRegistrationContainer(
+            getRegistration = get(),
+            verifyPeppolId = get(),
+            enablePeppol = get(),
+            waitForTransfer = get(),
+            optOut = get(),
+            pollTransfer = get(),
+            validateOgm = get()
         )
     }
 }

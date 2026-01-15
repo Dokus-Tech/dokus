@@ -19,4 +19,8 @@ sealed interface SettingsDestination : NavigationDestination {
     @Serializable
     @SerialName("settings/appearance")
     data object AppearanceSettings : SettingsDestination
+
+    @Serializable
+    @SerialName("settings/peppol")
+    data object PeppolRegistration : SettingsDestination
 }

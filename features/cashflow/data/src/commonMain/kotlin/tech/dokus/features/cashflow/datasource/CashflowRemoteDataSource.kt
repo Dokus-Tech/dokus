@@ -638,6 +638,44 @@ interface CashflowRemoteDataSource {
      */
     suspend fun getPeppolTransmissionForInvoice(invoiceId: InvoiceId): Result<PeppolTransmissionDto?>
 
+    // ----- PEPPOL Registration (Phase B) -----
+
+    /**
+     * Get current PEPPOL registration status for tenant
+     * GET /api/v1/peppol/registration
+     */
+    suspend fun getPeppolRegistration(): Result<PeppolRegistrationDto?>
+
+    /**
+     * Verify if a PEPPOL ID is available for registration
+     * POST /api/v1/peppol/verify
+     */
+    suspend fun verifyPeppolId(peppolId: String): Result<PeppolIdVerificationResult>
+
+    /**
+     * Enable PEPPOL for the tenant (start registration)
+     * POST /api/v1/peppol/enable
+     */
+    suspend fun enablePeppol(enterpriseNumber: String): Result<PeppolRegistrationResponse>
+
+    /**
+     * Opt to wait for PEPPOL ID transfer from another provider
+     * POST /api/v1/peppol/wait-for-transfer
+     */
+    suspend fun waitForPeppolTransfer(): Result<PeppolRegistrationResponse>
+
+    /**
+     * Opt out of PEPPOL via Dokus (manage externally)
+     * POST /api/v1/peppol/opt-out
+     */
+    suspend fun optOutPeppol(): Result<Unit>
+
+    /**
+     * Manual poll for PEPPOL transfer status
+     * POST /api/v1/peppol/poll
+     */
+    suspend fun pollPeppolTransfer(): Result<PeppolRegistrationResponse>
+
     companion object {
         internal fun create(
             httpClient: HttpClient,

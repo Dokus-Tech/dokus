@@ -11,9 +11,11 @@ import tech.dokus.features.cashflow.presentation.cashflow.route.AddDocumentRoute
 import tech.dokus.features.cashflow.presentation.cashflow.route.CreateInvoiceRoute
 import tech.dokus.features.cashflow.presentation.chat.route.ChatRoute
 import tech.dokus.features.cashflow.presentation.ledger.route.CashflowLedgerRoute
+import tech.dokus.features.cashflow.presentation.peppol.route.PeppolRegistrationRoute
 import tech.dokus.features.cashflow.presentation.review.route.DocumentReviewRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.CashFlowDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 
 internal object CashflowNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {
@@ -38,6 +40,9 @@ internal object CashflowNavigationProvider : NavigationProvider {
             @OptIn(ExperimentalUuidApi::class)
             val entryId = route.highlightEntryId?.let { CashflowEntryId(Uuid.parse(it)) }
             CashflowLedgerRoute(highlightEntryId = entryId)
+        }
+        composable<SettingsDestination.PeppolRegistration> {
+            PeppolRegistrationRoute()
         }
     }
 }

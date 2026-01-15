@@ -20,6 +20,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.CashflowDirection
@@ -58,7 +59,10 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
+import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.domain.model.PeppolInboxPollResponse
+import tech.dokus.domain.model.PeppolRegistrationDto
+import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
@@ -827,11 +831,64 @@ internal class CashflowRemoteDataSourceImpl(
             transmissions.firstOrNull()
         }
     }
+
+    // ----- PEPPOL Registration (Phase B) -----
+
+    override suspend fun getPeppolRegistration(): Result<PeppolRegistrationDto?> {
+        return runCatching {
+            val response = httpClient.get(Peppol.Registration())
+            if (response.status.value == HttpNotFound) {
+                null
+            } else {
+                response.body<tech.dokus.domain.model.PeppolRegistrationDto>()
+            }
+        }
+    }
+
+    override suspend fun verifyPeppolId(peppolId: String): Result<PeppolIdVerificationResult> {
+        return runCatching {
+            httpClient.post(Peppol.Verify()) {
+                contentType(ContentType.Application.Json)
+                setBody(VerifyPeppolIdRequest(peppolId = peppolId))
+            }.body()
+        }
+    }
+
+    override suspend fun enablePeppol(enterpriseNumber: String): Result<PeppolRegistrationResponse> {
+        return runCatching {
+            httpClient.post(Peppol.Enable()) {
+                contentType(ContentType.Application.Json)
+                setBody(tech.dokus.domain.model.EnablePeppolRequest(enterpriseNumber = enterpriseNumber))
+            }.body()
+        }
+    }
+
+    override suspend fun waitForPeppolTransfer(): Result<PeppolRegistrationResponse> {
+        return runCatching {
+            httpClient.post(Peppol.WaitForTransfer()).body()
+        }
+    }
+
+    override suspend fun optOutPeppol(): Result<Unit> {
+        return runCatching {
+            httpClient.post(Peppol.OptOut())
+            Unit
+        }
+    }
+
+    override suspend fun pollPeppolTransfer(): Result<PeppolRegistrationResponse> {
+        return runCatching {
+            httpClient.post(Peppol.Poll()).body()
+        }
+    }
 }
 
 // Internal response DTOs for Peppol endpoints
-@kotlinx.serialization.Serializable
+@Serializable
 private data class ProvidersResponse(val providers: List<String>)
 
-@kotlinx.serialization.Serializable
+@Serializable
 private data class TestConnectionResponse(val success: Boolean)
+
+@Serializable
+private data class VerifyPeppolIdRequest(val peppolId: String)
