@@ -67,6 +67,15 @@ data class PeppolSettingsDto(
 // PEPPOL CONNECTION
 // ============================================================================
 
+/**
+ * Request to connect to Peppol by auto-discovering company via Recommand.
+ * The company is matched by tenant VAT number using the provided address.
+ */
+@Serializable
+data class PeppolConnectRequest(
+    val companyAddress: Address
+)
+
 @Serializable
 enum class PeppolConnectStatus {
     /** Settings saved and tenant is connected to a Recommand company. */

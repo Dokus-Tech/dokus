@@ -43,8 +43,8 @@ import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.MarkBillPaidRequest
+import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -585,7 +585,7 @@ interface CashflowRemoteDataSource {
      * 2. Searches for companies matching tenant VAT
      * 3. Returns status indicating next steps (Connected, NoCompanyFound, etc.)
      */
-    suspend fun connectPeppol(companyAddress: Address): Result<PeppolConnectResponse>
+    suspend fun connectPeppol(request: PeppolConnectRequest): Result<PeppolConnectResponse>
 
     // ----- Verification & Validation -----
 

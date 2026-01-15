@@ -54,9 +54,9 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
+import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -759,12 +759,12 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun connectPeppol(companyAddress: Address): Result<PeppolConnectResponse> {
+    override suspend fun connectPeppol(request: PeppolConnectRequest): Result<PeppolConnectResponse> {
         return runCatching {
             val settingsRoute = Peppol.Settings()
             httpClient.post(Peppol.Settings.Connect(parent = settingsRoute)) {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf("companyAddress" to companyAddress))
+                setBody(request)
             }.body()
         }
     }

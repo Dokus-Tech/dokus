@@ -29,7 +29,6 @@ import tech.dokus.features.cashflow.usecase.LoadCashflowEntriesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.RecordCashflowPaymentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConnectPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.DeleteDocumentUseCaseImpl
-import tech.dokus.features.cashflow.usecase.DeletePeppolSettingsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetChatConfigurationUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetChatSessionHistoryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentPagesUseCaseImpl
@@ -58,7 +57,6 @@ import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
 import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
-import tech.dokus.features.cashflow.usecases.DeletePeppolSettingsUseCase
 import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
 import tech.dokus.features.cashflow.usecases.GetChatSessionHistoryUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
@@ -148,7 +146,6 @@ val cashflowNetworkModule = module {
     // Peppol
     singleOf(::ConnectPeppolUseCaseImpl) bind ConnectPeppolUseCase::class
     singleOf(::GetPeppolSettingsUseCaseImpl) bind GetPeppolSettingsUseCase::class
-    singleOf(::DeletePeppolSettingsUseCaseImpl) bind DeletePeppolSettingsUseCase::class
     singleOf(::ListPeppolTransmissionsUseCaseImpl) bind ListPeppolTransmissionsUseCase::class
     singleOf(::VerifyPeppolRecipientUseCaseImpl) bind VerifyPeppolRecipientUseCase::class
     singleOf(::ValidateInvoiceForPeppolUseCaseImpl) bind ValidateInvoiceForPeppolUseCase::class

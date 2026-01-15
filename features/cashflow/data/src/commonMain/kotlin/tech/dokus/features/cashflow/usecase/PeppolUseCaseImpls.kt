@@ -3,7 +3,7 @@ package tech.dokus.features.cashflow.usecase
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -28,8 +28,8 @@ import tech.dokus.features.cashflow.usecases.VerifyPeppolRecipientUseCase
 internal class ConnectPeppolUseCaseImpl(
     private val peppolConnectionGateway: PeppolConnectionGateway
 ) : ConnectPeppolUseCase {
-    override suspend fun invoke(companyAddress: Address): Result<PeppolConnectResponse> {
-        return peppolConnectionGateway.connectPeppol(companyAddress)
+    override suspend fun invoke(request: PeppolConnectRequest): Result<PeppolConnectResponse> {
+        return peppolConnectionGateway.connectPeppol(request)
     }
 }
 
