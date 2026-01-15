@@ -44,8 +44,7 @@ import tech.dokus.aura.resources.bootstrap_state_authenticating
 import tech.dokus.aura.resources.bootstrap_state_checking_account_status
 import tech.dokus.aura.resources.bootstrap_state_initializing
 import tech.dokus.foundation.app.mvi.container
-import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
-import tech.dokus.foundation.aura.components.background.SpotlightEffect
+import tech.dokus.foundation.aura.components.background.CalmParticleField
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
@@ -93,11 +92,8 @@ internal fun SplashScreen(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Beautiful floating particles/bubbles background
-            EnhancedFloatingBubbles()
-
-            // Spotlight effect from top
-            SpotlightEffect()
+            // Calm ambient particle field background
+            CalmParticleField()
 
             // Main content
             Column(
