@@ -54,9 +54,9 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
-import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -67,7 +67,6 @@ import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
-import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
@@ -751,21 +750,6 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun savePeppolSettings(request: SavePeppolSettingsRequest): Result<PeppolSettingsDto> {
-        return runCatching {
-            httpClient.put(Peppol.Settings()) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body()
-        }
-    }
-
-    override suspend fun deletePeppolSettings(): Result<Unit> {
-        return runCatching {
-            httpClient.delete(Peppol.Settings()).body()
-        }
-    }
-
     override suspend fun testPeppolConnection(): Result<Boolean> {
         return runCatching {
             val settingsRoute = Peppol.Settings()
@@ -775,12 +759,12 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun connectPeppol(request: PeppolConnectRequest): Result<PeppolConnectResponse> {
+    override suspend fun connectPeppol(companyAddress: Address): Result<PeppolConnectResponse> {
         return runCatching {
             val settingsRoute = Peppol.Settings()
             httpClient.post(Peppol.Settings.Connect(parent = settingsRoute)) {
                 contentType(ContentType.Application.Json)
-                setBody(request)
+                setBody(mapOf("companyAddress" to companyAddress))
             }.body()
         }
     }
