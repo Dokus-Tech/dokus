@@ -846,11 +846,11 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun verifyPeppolId(peppolId: String): Result<PeppolIdVerificationResult> {
+    override suspend fun verifyPeppolId(vatNumber: tech.dokus.domain.ids.VatNumber): Result<PeppolIdVerificationResult> {
         return runCatching {
             httpClient.post(Peppol.Verify()) {
                 contentType(ContentType.Application.Json)
-                setBody(VerifyPeppolIdRequest(peppolId = peppolId))
+                setBody(VerifyPeppolIdRequest(vatNumber = vatNumber))
             }.body()
         }
     }
@@ -892,4 +892,4 @@ private data class ProvidersResponse(val providers: List<String>)
 private data class TestConnectionResponse(val success: Boolean)
 
 @Serializable
-private data class VerifyPeppolIdRequest(val peppolId: String)
+private data class VerifyPeppolIdRequest(val vatNumber: tech.dokus.domain.ids.VatNumber)

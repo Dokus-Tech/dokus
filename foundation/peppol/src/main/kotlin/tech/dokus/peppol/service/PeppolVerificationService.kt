@@ -1,5 +1,6 @@
 package tech.dokus.peppol.service
 
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolModuleConfig
@@ -20,10 +21,12 @@ class PeppolVerificationService(
     /**
      * Verify if a PEPPOL ID is available for registration.
      *
-     * @param peppolId The PEPPOL participant ID to verify (format: "0208:BE0123456789")
+     * @param vatNumber The VAT number to verify (will be converted to PEPPOL ID format)
      * @return Verification result indicating if the ID is blocked
      */
-    suspend fun verify(peppolId: String): Result<PeppolIdVerificationResult> = runCatching {
+    suspend fun verify(vatNumber: VatNumber): Result<PeppolIdVerificationResult> = runCatching {
+        // Convert VAT number to PEPPOL ID format (0208 = Belgian scheme)
+        val peppolId = "0208:${vatNumber.normalized}"
         logger.info("Verifying PEPPOL ID availability: $peppolId")
 
         // Configure provider with master credentials
@@ -66,6 +69,6 @@ class PeppolVerificationService(
             )
         }
     }.onFailure { e ->
-        logger.error("Failed to verify PEPPOL ID: $peppolId", e)
+        logger.error("Failed to verify PEPPOL ID for VAT number: ${vatNumber.normalized}", e)
     }
 }

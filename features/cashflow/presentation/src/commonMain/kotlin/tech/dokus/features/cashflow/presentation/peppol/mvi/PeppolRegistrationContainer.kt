@@ -98,11 +98,10 @@ internal class PeppolRegistrationContainer(
             logger.d { "Verifying PEPPOL ID for enterprise: $trimmed" }
             updateState { copy(isVerifying = true, verificationError = null) }
 
-            // Convert to PEPPOL ID format (0208:BE + number padded to 10 digits)
-            val paddedNumber = trimmed.padStart(10, '0')
-            val peppolId = "0208:BE$paddedNumber"
+            // Pass VatNumber - backend handles PEPPOL ID construction
+            val vatNumber = VatNumber("BE$trimmed")
 
-            verifyPeppolId(peppolId).fold(
+            verifyPeppolId(vatNumber).fold(
                 onSuccess = { result ->
                     logger.d { "Verification result: blocked=${result.isBlocked}" }
                     updateState {

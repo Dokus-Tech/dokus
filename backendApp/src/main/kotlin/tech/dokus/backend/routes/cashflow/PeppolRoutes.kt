@@ -16,6 +16,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -358,11 +359,12 @@ internal fun Route.peppolRoutes() {
         /**
          * POST /api/v1/peppol/verify
          * Verify if a PEPPOL ID is available for registration.
+         * Accepts a VAT number - the backend converts it to PEPPOL ID format.
          */
         post<Peppol.Verify> {
             val request = call.receive<VerifyPeppolIdRequest>()
 
-            val result = peppolVerificationService.verify(request.peppolId)
+            val result = peppolVerificationService.verify(request.vatNumber)
                 .getOrElse { throw DokusException.InternalError("Failed to verify PEPPOL ID: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, result)
@@ -438,7 +440,7 @@ private data class ProvidersResponse(val providers: List<String>)
 private data class VerifyRecipientRequest(val peppolId: String)
 
 @Serializable
-private data class VerifyPeppolIdRequest(val peppolId: String)
+private data class VerifyPeppolIdRequest(val vatNumber: VatNumber)
 
 @Serializable
 private data class TestConnectionResponse(val success: Boolean)

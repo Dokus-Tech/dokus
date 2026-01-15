@@ -14,9 +14,10 @@ interface GetPeppolRegistrationUseCase {
 
 /**
  * Use case to verify if a PEPPOL ID is available for registration.
+ * Accepts a VAT number - the backend converts it to PEPPOL ID format.
  */
 interface VerifyPeppolIdUseCase {
-    suspend operator fun invoke(peppolId: String): Result<PeppolIdVerificationResult>
+    suspend operator fun invoke(vatNumber: VatNumber): Result<PeppolIdVerificationResult>
 }
 
 /**

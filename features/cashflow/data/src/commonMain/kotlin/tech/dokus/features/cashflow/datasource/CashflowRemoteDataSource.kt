@@ -651,10 +651,11 @@ interface CashflowRemoteDataSource {
     suspend fun getPeppolRegistration(): Result<PeppolRegistrationDto?>
 
     /**
-     * Verify if a PEPPOL ID is available for registration
+     * Verify if a PEPPOL ID is available for registration.
+     * Accepts a VAT number - the backend converts it to PEPPOL ID format.
      * POST /api/v1/peppol/verify
      */
-    suspend fun verifyPeppolId(peppolId: String): Result<PeppolIdVerificationResult>
+    suspend fun verifyPeppolId(vatNumber: VatNumber): Result<PeppolIdVerificationResult>
 
     /**
      * Enable PEPPOL for the tenant (start registration)

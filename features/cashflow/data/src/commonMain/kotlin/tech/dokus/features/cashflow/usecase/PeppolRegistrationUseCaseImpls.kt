@@ -29,9 +29,9 @@ internal class GetPeppolRegistrationUseCaseImpl(
 internal class VerifyPeppolIdUseCaseImpl(
     private val remoteDataSource: CashflowRemoteDataSource
 ) : VerifyPeppolIdUseCase {
-    override suspend fun invoke(peppolId: String): Result<PeppolIdVerificationResult> {
-        require(peppolId.isNotBlank()) { "PEPPOL ID must not be blank" }
-        return remoteDataSource.verifyPeppolId(peppolId)
+    override suspend fun invoke(vatNumber: VatNumber): Result<PeppolIdVerificationResult> {
+        require(vatNumber.isValid) { "Invalid VAT number" }
+        return remoteDataSource.verifyPeppolId(vatNumber)
     }
 }
 

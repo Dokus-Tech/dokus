@@ -77,7 +77,7 @@ class PeppolRegistrationService(
         }
 
         // Verify if PEPPOL ID is available
-        val verifyResult = verificationService.verify(peppolId).getOrThrow()
+        val verifyResult = verificationService.verify(vatNumber).getOrThrow()
 
         if (verifyResult.isBlocked) {
             // ID is blocked - user needs to choose what to do
@@ -230,8 +230,11 @@ class PeppolRegistrationService(
         // Record the poll
         registrationRepository.recordPoll(tenantId).getOrThrow()
 
-        // Check if ID is now available
-        val verifyResult = verificationService.verify(existing.peppolId).getOrThrow()
+        // Check if ID is now available (extract VAT number from PEPPOL ID)
+        // PEPPOL ID format: "0208:BE<number>" -> extract "BE<number>"
+        val vatNumberFromPeppolId = existing.peppolId.removePrefix("0208:")
+        val vatNumber = VatNumber(vatNumberFromPeppolId)
+        val verifyResult = verificationService.verify(vatNumber).getOrThrow()
 
         if (!verifyResult.isBlocked) {
             // ID is now available! Try to register
