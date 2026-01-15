@@ -195,8 +195,7 @@ object NavDefinition {
             items = listOf(
                 Items.companyDetails,
                 Items.contacts,
-                Items.team,
-                Items.peppol
+                Items.team
             ),
             defaultExpanded = false
         ),

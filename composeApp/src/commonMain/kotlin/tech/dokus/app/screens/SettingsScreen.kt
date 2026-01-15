@@ -501,7 +501,6 @@ private val SettingsSectionSaver = Saver<ModuleSettingsSection?, String>(
                 is SettingsDestination.WorkspaceSettings -> "workspace"
                 is SettingsDestination.TeamSettings -> "team"
                 is SettingsDestination.AppearanceSettings -> "appearance"
-                is SettingsDestination.PeppolSettings -> "peppol"
                 else -> null
             }
         }
