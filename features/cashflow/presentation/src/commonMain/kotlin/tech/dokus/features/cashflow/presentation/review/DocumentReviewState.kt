@@ -19,6 +19,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -66,6 +67,10 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val showPreviewSheet: Boolean = false,
         val rejectDialogState: RejectDialogState? = null,
         val failureBannerDismissed: Boolean = false,
+        // Contact sheet state
+        val showContactSheet: Boolean = false,
+        val contactSheetSearchQuery: String = "",
+        val contactSheetContacts: DokusState<List<ContactDto>> = DokusState.Idle,
     ) : DocumentReviewState {
 
         /** True when AI extraction is still in progress (Queued or Processing). */

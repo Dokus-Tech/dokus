@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
@@ -23,14 +24,18 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
+import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
+import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.extensions.localized
@@ -48,6 +53,7 @@ private const val CONTACT_RESULT_KEY = "documentReview_contactId"
 internal fun DocumentReviewRoute(
     documentId: DocumentId,
     container: DocumentReviewContainer = container(),
+    listContacts: ListContactsUseCase = koinInject(),
 ) {
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -66,6 +72,7 @@ internal fun DocumentReviewRoute(
     var pendingSuccess by remember { mutableStateOf<DocumentReviewSuccess?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
+    var contactsState by remember { mutableStateOf<DokusState<List<ContactDto>>>(DokusState.Idle) }
 
     val successMessage = pendingSuccess?.let { success ->
         when (success) {
@@ -116,27 +123,73 @@ internal fun DocumentReviewRoute(
     }
 
     val isLargeScreen = LocalScreenSize.isLarge
+    val contentState = state as? DocumentReviewState.Content
+
+    // Load contacts when contact sheet opens
+    LaunchedEffect(contentState?.showContactSheet) {
+        if (contentState?.showContactSheet == true && contactsState !is DokusState.Success) {
+            contactsState = DokusState.Loading
+            listContacts(limit = 100).fold(
+                onSuccess = { contacts ->
+                    contactsState = DokusState.Success(contacts)
+                },
+                onFailure = { error ->
+                    contactsState = DokusState.Error(
+                        exception = tech.dokus.domain.exceptions.DokusException.Unknown(error),
+                        retryHandler = { /* no retry */ }
+                    )
+                }
+            )
+        }
+    }
+
     DocumentReviewScreen(
         state = state,
         isLargeScreen = isLargeScreen,
         onIntent = { container.store.intent(it) },
         onBackClick = { navController.popBackStack() },
         onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
-        onCorrectContact = { counterparty ->
-            container.store.intent(
-                DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending)
-            )
-            navController.navigateTo(
-                ContactsDestination.CreateContact(
-                    prefillCompanyName = counterparty.name,
-                    prefillVat = counterparty.vatNumber,
-                    prefillAddress = counterparty.address,
-                    origin = ContactCreateOrigin.DocumentReview.name
-                )
-            )
+        onCorrectContact = { _ ->
+            // Open the contact sheet instead of navigating away
+            container.store.intent(DocumentReviewIntent.OpenContactSheet)
         },
         snackbarHostState = snackbarHostState,
     )
+
+    // Contact Edit Sheet
+    contentState?.let { content ->
+        ContactEditSheet(
+            isVisible = content.showContactSheet,
+            onDismiss = { container.store.intent(DocumentReviewIntent.CloseContactSheet) },
+            suggestions = content.contactSuggestions,
+            contactsState = contactsState,
+            selectedContactId = content.selectedContactId,
+            searchQuery = content.contactSheetSearchQuery,
+            onSearchQueryChange = { query ->
+                container.store.intent(DocumentReviewIntent.UpdateContactSheetSearch(query))
+            },
+            onSelectContact = { contactId ->
+                container.store.intent(DocumentReviewIntent.SelectContact(contactId))
+                container.store.intent(DocumentReviewIntent.CloseContactSheet)
+            },
+            onCreateNewContact = {
+                // Close sheet and navigate to contact creation
+                container.store.intent(DocumentReviewIntent.CloseContactSheet)
+                container.store.intent(
+                    DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending)
+                )
+                val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(content)
+                navController.navigateTo(
+                    ContactsDestination.CreateContact(
+                        prefillCompanyName = counterparty.name,
+                        prefillVat = counterparty.vatNumber,
+                        prefillAddress = counterparty.address,
+                        origin = ContactCreateOrigin.DocumentReview.name
+                    )
+                )
+            },
+        )
+    }
 
     // Discard changes confirmation dialog
     if (showDiscardDialog) {

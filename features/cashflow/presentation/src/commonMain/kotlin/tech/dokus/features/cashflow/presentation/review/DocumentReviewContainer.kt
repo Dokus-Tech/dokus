@@ -81,6 +81,11 @@ internal class DocumentReviewContainer(
                         is DocumentReviewIntent.OpenPreviewSheet -> handleOpenPreviewSheet()
                         is DocumentReviewIntent.ClosePreviewSheet -> handleClosePreviewSheet()
 
+                        // === Contact Sheet ===
+                        is DocumentReviewIntent.OpenContactSheet -> handleOpenContactSheet()
+                        is DocumentReviewIntent.CloseContactSheet -> handleCloseContactSheet()
+                        is DocumentReviewIntent.UpdateContactSheetSearch -> handleUpdateContactSheetSearch(intent.query)
+
                         // === Field Editing ===
                         is DocumentReviewIntent.UpdateInvoiceField -> handleUpdateInvoiceField(
                             intent.field,

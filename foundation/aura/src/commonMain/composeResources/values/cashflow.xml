@@ -305,6 +305,10 @@
 
     <!-- Contact Selection -->
     <string name="cashflow_contact_label">Contact</string>
+    <string name="cashflow_contact_create_new">Create new contact</string>
+    <string name="cashflow_contact_no_matches">No contacts match your search</string>
+    <string name="cashflow_contact_search_hint">Search contacts</string>
+    <string name="cashflow_contact_suggestions">Suggestions</string>
     <string name="cashflow_saving_contact">Saving contact...</string>
     <string name="cashflow_no_contact_selected">No contact selected</string>
     <string name="cashflow_select_contact">Select contact</string>

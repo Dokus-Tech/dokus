@@ -94,6 +94,16 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleClosePreviewSheet() =
         with(preview) { handleClosePreviewSheet() }
 
+    // Contact sheet handlers
+    suspend fun DocumentReviewCtx.handleOpenContactSheet() =
+        with(contactBinder) { handleOpenContactSheet() }
+
+    suspend fun DocumentReviewCtx.handleCloseContactSheet() =
+        with(contactBinder) { handleCloseContactSheet() }
+
+    suspend fun DocumentReviewCtx.handleUpdateContactSheetSearch(query: String) =
+        with(contactBinder) { handleUpdateContactSheetSearch(query) }
+
     suspend fun DocumentReviewCtx.handleLoadPreviewPages() =
         with(preview) { handleLoadPreviewPages() }
 
