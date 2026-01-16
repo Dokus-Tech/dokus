@@ -38,10 +38,11 @@ import tech.dokus.aura.resources.documents_empty_upload_cta
 import tech.dokus.aura.resources.documents_filter_no_match
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.aura.resources.search_placeholder
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentFilterButtons
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentMobileRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableHeaderRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableRow
-import tech.dokus.features.cashflow.presentation.documents.components.DocumentStatusFilterChips
+import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
@@ -153,10 +154,11 @@ private fun DocumentsContent(
             }
         }
 
-        // Status filter chips
-        DocumentStatusFilterChips(
-            selectedStatus = state.statusFilter,
-            onStatusSelected = { onIntent(DocumentsIntent.UpdateStatusFilter(it)) },
+        // Filter buttons
+        DocumentFilterButtons(
+            currentFilter = state.filter,
+            needsAttentionCount = state.needsAttentionCount,
+            onFilterSelected = { onIntent(DocumentsIntent.UpdateFilter(it)) },
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
@@ -164,7 +166,7 @@ private fun DocumentsContent(
 
         // Documents list or empty state
         when {
-            documents.isEmpty() && state.searchQuery.isEmpty() && state.statusFilter == null -> {
+            documents.isEmpty() && state.searchQuery.isEmpty() && state.filter == DocumentFilter.All -> {
                 // No documents at all
                 DokusEmptyState(
                     title = stringResource(Res.string.documents_empty_title),
