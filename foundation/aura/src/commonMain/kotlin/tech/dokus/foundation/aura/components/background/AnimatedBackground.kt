@@ -193,7 +193,7 @@ private fun generateCalmParticles(random: Random): List<CalmParticle> {
  */
 @Composable
 fun CalmParticleField() {
-    val random = remember { Random(System.currentTimeMillis()) }
+    val random = remember { Random }
     val particles = remember { generateCalmParticles(random) }
 
     val infiniteTransition = rememberInfiniteTransition(label = "calmParticles")
