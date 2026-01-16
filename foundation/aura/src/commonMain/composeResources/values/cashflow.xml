@@ -260,6 +260,7 @@
     <string name="cashflow_needs_input">needs input</string>
     <string name="cashflow_who_issued_document">Who issued this document?</string>
     <string name="cashflow_tap_to_identify">Tap to identify</string>
+    <string name="cashflow_needed_to_complete">Needed to complete this document</string>
     <string name="cashflow_contact_information">Contact Information</string>
     <string name="cashflow_contact_name">Contact Name</string>
     <string name="cashflow_invoice_details_section">Invoice Details</string>

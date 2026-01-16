@@ -351,7 +351,7 @@ fun FactField(
                 }
             )
             .then(if (isClickable) Modifier.hoverable(interactionSource) else Modifier)
-            .then(if (isClickable && onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(vertical = Constrains.Spacing.xSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

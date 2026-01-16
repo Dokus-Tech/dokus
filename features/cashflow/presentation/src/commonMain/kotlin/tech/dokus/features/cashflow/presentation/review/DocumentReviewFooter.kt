@@ -29,23 +29,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.AlertTriangle
 import compose.icons.feathericons.Check
 import compose.icons.feathericons.CheckCircle
 import compose.icons.feathericons.MessageSquare
 import compose.icons.feathericons.Save
-import compose.icons.feathericons.X
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
-import tech.dokus.aura.resources.action_reject
 import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.cashflow_chat_with_document
 import tech.dokus.aura.resources.cashflow_document_confirmed
 import tech.dokus.aura.resources.cashflow_document_rejected
+import tech.dokus.aura.resources.cashflow_needed_to_complete
+import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.style.textMuted
 
 /**
  * Redesigned approval footer for Document Review screen.
@@ -153,39 +153,18 @@ private fun PendingFooter(
             .fillMaxWidth()
             .padding(Constrains.Spacing.medium),
     ) {
-        // Error banner when confirm is blocked
+        // Narrative hint when confirm is blocked (no alarm icon, subtle text)
         AnimatedVisibility(
             visible = confirmBlockedReason != null && !isLoading,
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically(),
         ) {
-            Surface(
-                color = MaterialTheme.colorScheme.errorContainer,
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = Constrains.Spacing.small),
-            ) {
-                Row(
-                    modifier = Modifier.padding(Constrains.Spacing.small),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = FeatherIcons.AlertTriangle,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onErrorContainer,
-                    )
-                    Spacer(modifier = Modifier.width(Constrains.Spacing.small))
-                    confirmBlockedReason?.let { reason ->
-                        Text(
-                            text = stringResource(reason),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                    }
-                }
-            }
+            Text(
+                text = stringResource(Res.string.cashflow_needed_to_complete),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.textMuted,
+                modifier = Modifier.padding(bottom = Constrains.Spacing.small),
+            )
         }
 
         // Action buttons row
@@ -194,21 +173,16 @@ private fun PendingFooter(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Reject button (left side)
+            // "Something's wrong" text link (left side)
             TextButton(
                 onClick = onReject,
                 enabled = !isLoading,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error,
-                ),
             ) {
-                PIcon(
-                    icon = FeatherIcons.X,
-                    description = null,
-                    modifier = Modifier.size(18.dp),
+                Text(
+                    text = stringResource(Res.string.cashflow_somethings_wrong),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.textMuted,
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(Res.string.action_reject))
             }
 
             // Save + Confirm buttons (right side)

@@ -18,46 +18,39 @@ import tech.dokus.aura.resources.cashflow_action_correct_contact
 import tech.dokus.aura.resources.cashflow_action_ignore
 import tech.dokus.aura.resources.cashflow_bill_details_section
 import tech.dokus.aura.resources.cashflow_bound_to
-import tech.dokus.aura.resources.cashflow_contact_name
 import tech.dokus.aura.resources.cashflow_confidence_high
 import tech.dokus.aura.resources.cashflow_confidence_label
 import tech.dokus.aura.resources.cashflow_confidence_low
 import tech.dokus.aura.resources.cashflow_confidence_medium
-import tech.dokus.aura.resources.cashflow_contact_label
 import tech.dokus.aura.resources.cashflow_contact_ai_extracted
+import tech.dokus.aura.resources.cashflow_contact_name
 import tech.dokus.aura.resources.cashflow_expense_details_section
 import tech.dokus.aura.resources.cashflow_invoice_details_section
 import tech.dokus.aura.resources.cashflow_invoice_number
-import tech.dokus.aura.resources.cashflow_receipt_number
 import tech.dokus.aura.resources.cashflow_processing_identifying_type
+import tech.dokus.aura.resources.cashflow_receipt_number
 import tech.dokus.aura.resources.cashflow_select_document_type
-import tech.dokus.aura.resources.cashflow_unknown_document_type
-import tech.dokus.aura.resources.document_type_bill
-import tech.dokus.aura.resources.document_type_expense
-import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_vat_number
+import tech.dokus.aura.resources.document_type_bill
+import tech.dokus.aura.resources.document_type_expense
+import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.invoice_status_draft
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.features.cashflow.presentation.review.BillField
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.EditableBillFields
 import tech.dokus.features.cashflow.presentation.review.EditableExpenseFields
 import tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields
-import tech.dokus.features.cashflow.presentation.review.ExpenseField
-import tech.dokus.features.cashflow.presentation.review.InvoiceField
 import tech.dokus.features.cashflow.presentation.review.components.forms.DetailBlock
 import tech.dokus.features.cashflow.presentation.review.components.forms.DetailRow
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.StatusBadge
-import tech.dokus.foundation.aura.components.fields.PDateField
-import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains
 
 // Confidence thresholds for AI extraction
@@ -204,6 +197,10 @@ internal fun CounterpartyCard(
     }
 }
 
+/**
+ * Document details section - shows document info as facts.
+ * Fact validation pattern: display-by-default.
+ */
 @Composable
 internal fun InvoiceDetailsCard(
     state: DocumentReviewState.Content,
@@ -217,124 +214,134 @@ internal fun InvoiceDetailsCard(
         else -> Res.string.cashflow_invoice_details_section
     }
 
-    DokusCardSurface(modifier = modifier) {
-        Column(
-            modifier = Modifier.padding(Constrains.Spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
-        ) {
-            Text(
-                text = stringResource(titleRes),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
+    Column(modifier = modifier.fillMaxWidth()) {
+        // Subtle micro-label
+        MicroLabel(text = stringResource(titleRes))
 
-            when (state.editableData.documentType) {
-                DocumentType.Invoice -> {
-                    val fields = state.editableData.invoice ?: EditableInvoiceFields()
-                    PTextFieldStandard(
-                        fieldName = stringResource(Res.string.cashflow_invoice_number),
-                        value = fields.invoiceNumber,
-                        onValueChange = {
-                            onIntent(DocumentReviewIntent.UpdateInvoiceField(InvoiceField.INVOICE_NUMBER, it))
-                        },
+        when (state.editableData.documentType) {
+            DocumentType.Invoice -> {
+                val fields = state.editableData.invoice ?: EditableInvoiceFields()
+                InvoiceDetailsFactDisplay(
+                    invoiceNumber = fields.invoiceNumber.takeIf { it.isNotBlank() },
+                    issueDate = fields.issueDate?.toString(),
+                    dueDate = fields.dueDate?.toString()
+                )
+            }
+            DocumentType.Bill -> {
+                val fields = state.editableData.bill ?: EditableBillFields()
+                BillDetailsFactDisplay(
+                    invoiceNumber = fields.invoiceNumber.takeIf { it.isNotBlank() },
+                    issueDate = fields.issueDate?.toString(),
+                    dueDate = fields.dueDate?.toString()
+                )
+            }
+            DocumentType.Expense -> {
+                val fields = state.editableData.expense ?: EditableExpenseFields()
+                ExpenseDetailsFactDisplay(
+                    receiptNumber = fields.receiptNumber.takeIf { it.isNotBlank() },
+                    date = fields.date?.toString()
+                )
+            }
+            else -> {
+                // Document type selector - only show when type is unknown and not processing
+                if (state.isProcessing) {
+                    Text(
+                        text = stringResource(Res.string.cashflow_processing_identifying_type),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    Text(
+                        text = stringResource(Res.string.cashflow_select_document_type),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                    )
-                    PDateField(
-                        label = stringResource(Res.string.invoice_issue_date),
-                        value = fields.issueDate,
-                        onValueChange = {
-                            onIntent(DocumentReviewIntent.UpdateInvoiceField(InvoiceField.ISSUE_DATE, it))
-                        },
-                    )
-                    PDateField(
-                        label = stringResource(Res.string.invoice_due_date),
-                        value = fields.dueDate,
-                        onValueChange = {
-                            onIntent(DocumentReviewIntent.UpdateInvoiceField(InvoiceField.DUE_DATE, it))
-                        },
-                    )
-                }
-                DocumentType.Bill -> {
-                    val fields = state.editableData.bill ?: EditableBillFields()
-                    PTextFieldStandard(
-                        fieldName = stringResource(Res.string.cashflow_invoice_number),
-                        value = fields.invoiceNumber,
-                        onValueChange = {
-                            onIntent(DocumentReviewIntent.UpdateBillField(BillField.INVOICE_NUMBER, it))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    PDateField(
-                        label = stringResource(Res.string.invoice_issue_date),
-                        value = fields.issueDate,
-                        onValueChange = {
-                            onIntent(DocumentReviewIntent.UpdateBillField(BillField.ISSUE_DATE, it))
-                        },
-                    )
-                    PDateField(
-                        label = stringResource(Res.string.invoice_due_date),
-                        value = fields.dueDate,
-                        onValueChange = {
-                            onIntent(DocumentReviewIntent.UpdateBillField(BillField.DUE_DATE, it))
-                        },
-                    )
-                }
-                DocumentType.Expense -> {
-                    val fields = state.editableData.expense ?: EditableExpenseFields()
-                    PTextFieldStandard(
-                        fieldName = stringResource(Res.string.cashflow_receipt_number),
-                        value = fields.receiptNumber,
-                        onValueChange = {
-                            onIntent(DocumentReviewIntent.UpdateExpenseField(ExpenseField.RECEIPT_NUMBER, it))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    PDateField(
-                        label = stringResource(Res.string.common_date),
-                        value = fields.date,
-                        onValueChange = {
-                            onIntent(DocumentReviewIntent.UpdateExpenseField(ExpenseField.DATE, it))
-                        },
-                    )
-                }
-                else -> {
-                    if (state.isProcessing) {
-                        // Show neutral placeholder during processing
-                        Text(
-                            text = stringResource(Res.string.cashflow_processing_identifying_type),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                    ) {
+                        POutlinedButton(
+                            text = stringResource(Res.string.document_type_invoice),
+                            modifier = Modifier.weight(1f),
+                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Invoice)) },
                         )
-                    } else {
-                        // Show document type selector when AI failed or type is unknown
-                        Text(
-                            text = stringResource(Res.string.cashflow_select_document_type),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        POutlinedButton(
+                            text = stringResource(Res.string.document_type_bill),
+                            modifier = Modifier.weight(1f),
+                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Bill)) },
                         )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
-                        ) {
-                            POutlinedButton(
-                                text = stringResource(Res.string.document_type_invoice),
-                                modifier = Modifier.weight(1f),
-                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Invoice)) },
-                            )
-                            POutlinedButton(
-                                text = stringResource(Res.string.document_type_bill),
-                                modifier = Modifier.weight(1f),
-                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Bill)) },
-                            )
-                            POutlinedButton(
-                                text = stringResource(Res.string.document_type_expense),
-                                modifier = Modifier.weight(1f),
-                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Expense)) },
-                            )
-                        }
+                        POutlinedButton(
+                            text = stringResource(Res.string.document_type_expense),
+                            modifier = Modifier.weight(1f),
+                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Expense)) },
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun InvoiceDetailsFactDisplay(
+    invoiceNumber: String?,
+    issueDate: String?,
+    dueDate: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        FactField(
+            label = stringResource(Res.string.cashflow_invoice_number),
+            value = invoiceNumber
+        )
+        FactField(
+            label = stringResource(Res.string.invoice_issue_date),
+            value = issueDate
+        )
+        FactField(
+            label = stringResource(Res.string.invoice_due_date),
+            value = dueDate
+        )
+    }
+}
+
+@Composable
+private fun BillDetailsFactDisplay(
+    invoiceNumber: String?,
+    issueDate: String?,
+    dueDate: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        FactField(
+            label = stringResource(Res.string.cashflow_invoice_number),
+            value = invoiceNumber
+        )
+        FactField(
+            label = stringResource(Res.string.invoice_issue_date),
+            value = issueDate
+        )
+        FactField(
+            label = stringResource(Res.string.invoice_due_date),
+            value = dueDate
+        )
+    }
+}
+
+@Composable
+private fun ExpenseDetailsFactDisplay(
+    receiptNumber: String?,
+    date: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        FactField(
+            label = stringResource(Res.string.cashflow_receipt_number),
+            value = receiptNumber
+        )
+        FactField(
+            label = stringResource(Res.string.common_date),
+            value = date
+        )
     }
 }
