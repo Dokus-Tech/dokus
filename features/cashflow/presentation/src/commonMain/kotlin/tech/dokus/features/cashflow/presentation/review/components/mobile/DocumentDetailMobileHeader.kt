@@ -24,6 +24,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_back
 import tech.dokus.aura.resources.cashflow_needs_attention
 import tech.dokus.aura.resources.cashflow_needs_input
 import tech.dokus.aura.resources.currency_symbol_eur
@@ -65,7 +66,7 @@ internal fun DocumentDetailMobileHeader(
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = FeatherIcons.ArrowLeft,
-                    contentDescription = "Back"
+                    contentDescription = stringResource(Res.string.action_back)
                 )
             }
 

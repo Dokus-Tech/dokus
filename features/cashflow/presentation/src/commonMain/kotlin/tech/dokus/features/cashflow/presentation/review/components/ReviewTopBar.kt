@@ -32,6 +32,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_chat_with_document
 import tech.dokus.aura.resources.cashflow_document_review_title
+import tech.dokus.aura.resources.cashflow_needs_attention
 import tech.dokus.aura.resources.cashflow_needs_input
 import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.aura.resources.state_confirming
@@ -205,7 +206,7 @@ private fun UnderstandingLine(
                 )
                 Spacer(Modifier.width(Constrains.Spacing.xSmall))
                 Text(
-                    text = stringResource(Res.string.cashflow_needs_input),
+                    text = stringResource(Res.string.cashflow_needs_attention),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

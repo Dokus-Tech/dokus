@@ -103,7 +103,7 @@ internal fun PreviewTabContent(
                         contentPadding = PaddingValues(Constrains.Spacing.small),
                         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
                     ) {
-                        itemsIndexed(pages, key = { index, _ -> "page_$index" }) { index, page ->
+                        itemsIndexed(pages, key = { _, page -> "page_${page.page}" }) { index, page ->
                             MobilePdfPageImage(
                                 page = page,
                                 imageLoader = imageLoader,
