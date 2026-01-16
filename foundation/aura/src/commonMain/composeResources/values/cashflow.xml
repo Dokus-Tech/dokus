@@ -256,6 +256,8 @@
     <string name="cashflow_analysis_retry">Retry Analysis</string>
     <string name="cashflow_analysis_continue_manually">Continue Manually</string>
     <string name="cashflow_document_rejected">Document rejected</string>
+    <string name="cashflow_somethings_wrong">Something\'s wrong</string>
+    <string name="cashflow_needs_input">needs input</string>
     <string name="cashflow_contact_information">Contact Information</string>
     <string name="cashflow_contact_name">Contact Name</string>
     <string name="cashflow_invoice_details_section">Invoice Details</string>

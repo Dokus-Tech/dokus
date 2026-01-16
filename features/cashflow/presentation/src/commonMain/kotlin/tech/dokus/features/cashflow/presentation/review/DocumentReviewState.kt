@@ -121,6 +121,54 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 
         val confidencePercent: Int
             get() = ((document.latestIngestion?.confidence ?: MinConfidenceThreshold) * PercentageMultiplier).toInt()
+
+        /**
+         * Hard gate - Confirm button is disabled when this is true.
+         * True when: missing required fields (type, total, issue date).
+         */
+        val isBlocking: Boolean
+            get() = confirmBlockedReason != null
+
+        /**
+         * Soft attention signal - shows amber indicator but doesn't block confirm.
+         * True when: contact uncertain, due date missing, etc.
+         */
+        val hasAttention: Boolean
+            get() = isBlocking ||
+                selectedContactSnapshot == null ||
+                editableData.dueDate == null
+
+        /**
+         * Resolved description for the header understanding line.
+         * Priority: context (notes/description) + counterparty, or fallback to filename.
+         */
+        val description: String
+            get() {
+                val counterparty = editableData.counterpartyName
+                val context = editableData.contextDescription
+
+                return when {
+                    counterparty != null && context != null -> "$counterparty — $context"
+                    context != null -> context
+                    counterparty != null -> counterparty
+                    isProcessing -> "Processing document…"
+                    else -> document.document.filename ?: "Document"
+                }
+            }
+
+        /**
+         * Total amount for the understanding line (currency-formatted).
+         */
+        val totalAmount: Money?
+            get() = when (editableData.documentType) {
+                DocumentType.Invoice -> Money.parse(editableData.invoice?.totalAmount ?: "")
+                DocumentType.Bill -> Money.parse(editableData.bill?.amount ?: "")
+                DocumentType.Expense -> Money.parse(editableData.expense?.amount ?: "")
+                DocumentType.Receipt -> Money.parse(editableData.receipt?.amount ?: "")
+                DocumentType.ProForma -> Money.parse(editableData.proForma?.totalAmount ?: "")
+                DocumentType.CreditNote -> Money.parse(editableData.creditNote?.totalAmount ?: "")
+                else -> null
+            }
     }
 
     data class Error(
@@ -163,4 +211,37 @@ private val EditableExtractedData.hasCoherentAmounts: Boolean
             }
             else -> false
         }
+    }
+
+/** Counterparty name for description resolution. */
+private val EditableExtractedData.counterpartyName: String?
+    get() = when (documentType) {
+        DocumentType.Invoice -> invoice?.clientName?.takeIf { it.isNotBlank() }
+        DocumentType.Bill -> bill?.supplierName?.takeIf { it.isNotBlank() }
+        DocumentType.Expense -> expense?.merchant?.takeIf { it.isNotBlank() }
+        DocumentType.Receipt -> receipt?.merchant?.takeIf { it.isNotBlank() }
+        DocumentType.ProForma -> proForma?.clientName?.takeIf { it.isNotBlank() }
+        DocumentType.CreditNote -> creditNote?.counterpartyName?.takeIf { it.isNotBlank() }
+        else -> null
+    }
+
+/** Context/description text for understanding line. */
+private val EditableExtractedData.contextDescription: String?
+    get() = when (documentType) {
+        DocumentType.Invoice -> invoice?.notes?.takeIf { it.isNotBlank() }
+        DocumentType.Bill -> bill?.description?.takeIf { it.isNotBlank() }
+        DocumentType.Expense -> expense?.description?.takeIf { it.isNotBlank() }
+        DocumentType.Receipt -> receipt?.description?.takeIf { it.isNotBlank() }
+        DocumentType.ProForma -> proForma?.notes?.takeIf { it.isNotBlank() }
+        DocumentType.CreditNote -> creditNote?.reason?.takeIf { it.isNotBlank() }
+        else -> null
+    }
+
+/** Due date for attention signal. */
+private val EditableExtractedData.dueDate: kotlinx.datetime.LocalDate?
+    get() = when (documentType) {
+        DocumentType.Invoice -> invoice?.dueDate
+        DocumentType.Bill -> bill?.dueDate
+        DocumentType.ProForma -> proForma?.validUntil
+        else -> null
     }
