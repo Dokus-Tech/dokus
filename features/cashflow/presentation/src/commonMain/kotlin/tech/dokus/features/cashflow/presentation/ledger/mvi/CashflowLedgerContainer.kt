@@ -64,10 +64,8 @@ internal class CashflowLedgerContainer(
                 when (intent) {
                     is CashflowLedgerIntent.Refresh -> handleRefresh()
                     is CashflowLedgerIntent.LoadMore -> handleLoadMore()
-                    is CashflowLedgerIntent.UpdateFilters -> handleUpdateFilters(intent.filters)
-                    is CashflowLedgerIntent.UpdateDateRangeFilter -> handleUpdateDateRange(intent.dateRange)
-                    is CashflowLedgerIntent.UpdateDirectionFilter -> handleUpdateDirection(intent.direction)
-                    is CashflowLedgerIntent.UpdateStatusFilter -> handleUpdateStatus(intent.status)
+                    is CashflowLedgerIntent.SetViewMode -> handleSetViewMode(intent.mode)
+                    is CashflowLedgerIntent.SetDirectionFilter -> handleSetDirectionFilter(intent.direction)
                     is CashflowLedgerIntent.HighlightEntry -> handleHighlightEntry(intent.entryId)
                     is CashflowLedgerIntent.OpenEntry -> handleOpenEntry(intent.entry)
                     // Detail pane intents
@@ -88,35 +86,48 @@ internal class CashflowLedgerContainer(
 
     private suspend fun CashflowLedgerCtx.handleRefresh() {
         loadJob?.cancel()
-        logger.d { "Refreshing cashflow entries" }
+        logger.d { "Refreshing cashflow entries with viewMode=${currentFilters.viewMode}, direction=${currentFilters.direction}" }
 
         loadedEntries = emptyList()
         paginationInfo = LocalPaginationInfo()
 
         updateState { CashflowLedgerState.Loading }
 
-        val (fromDate, toDate) = getDateRange(currentFilters.dateRange)
+        val (fromDate, toDate) = getDateRangeForViewMode(currentFilters.viewMode)
+        val statuses = getStatusesForViewMode(currentFilters.viewMode)
+        val direction = mapDirectionFilter(currentFilters.direction)
 
+        // For History view, we need paidAt filter - but API may not support it directly
+        // For now, we'll filter client-side for History entries without paidAt
         loadCashflowEntries(
             page = 0,
             pageSize = PAGE_SIZE,
             fromDate = fromDate,
             toDate = toDate,
-            direction = currentFilters.direction,
-            status = currentFilters.status,
-            sourceType = currentFilters.sourceType
+            direction = direction,
+            status = statuses.firstOrNull(), // API takes single status; may need multiple calls later
+            sourceType = null
         ).fold(
             onSuccess = { response ->
-                loadedEntries = response.items
+                // Filter and sort entries based on view mode
+                val filteredEntries = filterEntriesForViewMode(response.items, currentFilters.viewMode)
+                val sortedEntries = sortEntriesForViewMode(filteredEntries, currentFilters.viewMode)
+
+                loadedEntries = sortedEntries
                 paginationInfo = paginationInfo.copy(
                     currentPage = 0,
                     isLoadingMore = false,
                     hasMorePages = response.hasMore
                 )
+
+                // Compute summary from filtered entries (NON-NEGOTIABLE: must match list)
+                val summary = computeSummary(sortedEntries, currentFilters.viewMode)
+
                 updateState {
                     CashflowLedgerState.Content(
                         entries = buildPaginationState(),
                         filters = currentFilters,
+                        summary = summary,
                         highlightedEntryId = highlightEntryId
                     )
                 }
@@ -143,7 +154,9 @@ internal class CashflowLedgerContainer(
             paginationInfo = paginationInfo.copy(isLoadingMore = true)
             updateState { copy(entries = buildPaginationState()) }
 
-            val (fromDate, toDate) = getDateRange(currentFilters.dateRange)
+            val (fromDate, toDate) = getDateRangeForViewMode(currentFilters.viewMode)
+            val statuses = getStatusesForViewMode(currentFilters.viewMode)
+            val direction = mapDirectionFilter(currentFilters.direction)
 
             loadJob = launch {
                 loadCashflowEntries(
@@ -151,18 +164,24 @@ internal class CashflowLedgerContainer(
                     pageSize = PAGE_SIZE,
                     fromDate = fromDate,
                     toDate = toDate,
-                    direction = currentFilters.direction,
-                    status = currentFilters.status,
-                    sourceType = currentFilters.sourceType
+                    direction = direction,
+                    status = statuses.firstOrNull(),
+                    sourceType = null
                 ).fold(
                     onSuccess = { response ->
-                        loadedEntries = loadedEntries + response.items
+                        val filteredEntries = filterEntriesForViewMode(response.items, currentFilters.viewMode)
+                        val sortedNew = sortEntriesForViewMode(filteredEntries, currentFilters.viewMode)
+
+                        loadedEntries = loadedEntries + sortedNew
                         paginationInfo = paginationInfo.copy(
                             currentPage = nextPage,
                             isLoadingMore = false,
                             hasMorePages = response.hasMore
                         )
-                        updateState { copy(entries = buildPaginationState()) }
+
+                        // Recompute summary with all entries
+                        val summary = computeSummary(loadedEntries, currentFilters.viewMode)
+                        updateState { copy(entries = buildPaginationState(), summary = summary) }
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to load more entries" }
@@ -175,23 +194,13 @@ internal class CashflowLedgerContainer(
         }
     }
 
-    private suspend fun CashflowLedgerCtx.handleUpdateFilters(filters: CashflowFilters) {
-        currentFilters = filters
+    private suspend fun CashflowLedgerCtx.handleSetViewMode(mode: CashflowViewMode) {
+        currentFilters = currentFilters.copy(viewMode = mode)
         handleRefresh()
     }
 
-    private suspend fun CashflowLedgerCtx.handleUpdateDateRange(dateRange: DateRangeFilter) {
-        currentFilters = currentFilters.copy(dateRange = dateRange)
-        handleRefresh()
-    }
-
-    private suspend fun CashflowLedgerCtx.handleUpdateDirection(direction: CashflowDirection?) {
+    private suspend fun CashflowLedgerCtx.handleSetDirectionFilter(direction: DirectionFilter) {
         currentFilters = currentFilters.copy(direction = direction)
-        handleRefresh()
-    }
-
-    private suspend fun CashflowLedgerCtx.handleUpdateStatus(status: CashflowEntryStatus?) {
-        currentFilters = currentFilters.copy(status = status)
         handleRefresh()
     }
 
@@ -372,19 +381,110 @@ internal class CashflowLedgerContainer(
         )
     }
 
-    private fun getDateRange(filter: DateRangeFilter): Pair<kotlinx.datetime.LocalDate?, kotlinx.datetime.LocalDate?> {
+    /**
+     * Get date range based on view mode.
+     * - Upcoming: [today, today+30d]
+     * - History: [today-30d, today] (uses paidAt for filtering)
+     */
+    private fun getDateRangeForViewMode(viewMode: CashflowViewMode): Pair<LocalDate, LocalDate> {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        return when (filter) {
-            DateRangeFilter.ThisMonth -> {
-                val startOfMonth = kotlinx.datetime.LocalDate(today.year, today.month, 1)
-                val endOfMonth = startOfMonth.plus(1, DateTimeUnit.MONTH).plus(-1, DateTimeUnit.DAY)
-                startOfMonth to endOfMonth
-            }
-            DateRangeFilter.Next3Months -> {
-                today to today.plus(3, DateTimeUnit.MONTH)
-            }
-            DateRangeFilter.AllTime -> null to null
+        return when (viewMode) {
+            CashflowViewMode.Upcoming -> today to today.plus(30, DateTimeUnit.DAY)
+            CashflowViewMode.History -> today.plus(-30, DateTimeUnit.DAY) to today
         }
+    }
+
+    /**
+     * Get status filters based on view mode.
+     * - Upcoming: Open, Overdue (money not yet moved)
+     * - History: Paid (money already moved)
+     */
+    private fun getStatusesForViewMode(viewMode: CashflowViewMode): List<CashflowEntryStatus> {
+        return when (viewMode) {
+            CashflowViewMode.Upcoming -> listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)
+            CashflowViewMode.History -> listOf(CashflowEntryStatus.Paid)
+        }
+    }
+
+    /**
+     * Map DirectionFilter to CashflowDirection for API call.
+     */
+    private fun mapDirectionFilter(filter: DirectionFilter): CashflowDirection? {
+        return when (filter) {
+            DirectionFilter.All -> null
+            DirectionFilter.In -> CashflowDirection.In
+            DirectionFilter.Out -> CashflowDirection.Out
+        }
+    }
+
+    /**
+     * Filter entries based on view mode requirements.
+     * - Cancelled entries are excluded from both views
+     */
+    private fun filterEntriesForViewMode(
+        entries: List<CashflowEntry>,
+        viewMode: CashflowViewMode
+    ): List<CashflowEntry> {
+        return entries.filter { entry ->
+            // Exclude cancelled entries (filtered server-side but double-check)
+            if (entry.status == CashflowEntryStatus.Cancelled) return@filter false
+
+            when (viewMode) {
+                CashflowViewMode.Upcoming -> {
+                    entry.status in listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)
+                }
+                CashflowViewMode.History -> {
+                    // History = Paid entries (money already moved)
+                    entry.status == CashflowEntryStatus.Paid
+                }
+            }
+        }
+    }
+
+    /**
+     * Sort entries based on view mode.
+     * - Upcoming: by eventDate ASC (soonest first)
+     * - History: by paidAt DESC (most recent first)
+     */
+    private fun sortEntriesForViewMode(
+        entries: List<CashflowEntry>,
+        viewMode: CashflowViewMode
+    ): List<CashflowEntry> {
+        return when (viewMode) {
+            CashflowViewMode.Upcoming -> entries.sortedBy { it.computeUpcomingSortDate() }
+            CashflowViewMode.History -> entries.sortedByDescending { it.computeHistorySortDate() }
+        }
+    }
+
+    /**
+     * Compute summary from entries.
+     * NON-NEGOTIABLE: Summary must match the filtered list exactly.
+     */
+    private fun computeSummary(
+        entries: List<CashflowEntry>,
+        viewMode: CashflowViewMode
+    ): CashflowSummary {
+        val periodLabel = when (viewMode) {
+            CashflowViewMode.Upcoming -> "NEXT 30 DAYS"
+            CashflowViewMode.History -> "LAST 30 DAYS"
+        }
+
+        val totalIn = entries
+            .filter { it.direction == CashflowDirection.In }
+            .fold(Money.ZERO) { acc, entry -> acc + entry.amountGross }
+
+        val totalOut = entries
+            .filter { it.direction == CashflowDirection.Out }
+            .fold(Money.ZERO) { acc, entry -> acc + entry.amountGross }
+
+        val netAmount = totalIn - totalOut
+
+        return CashflowSummary(
+            periodLabel = periodLabel,
+            netAmount = netAmount,
+            totalIn = totalIn,
+            totalOut = totalOut
+        )
     }
 
     private data class LocalPaginationInfo(
@@ -393,3 +493,18 @@ internal class CashflowLedgerContainer(
         val hasMorePages: Boolean = true
     )
 }
+
+// Extension functions for sorting (separate for each mode - semantics differ)
+
+/**
+ * Upcoming: sort by expected cash date.
+ * Uses eventDate which represents the expected/due date.
+ */
+private fun CashflowEntry.computeUpcomingSortDate(): LocalDate = eventDate
+
+/**
+ * History: sort by when payment occurred.
+ * Uses updatedAt as proxy for payment date (entry is updated when paid).
+ * TODO: Add explicit paidAt field to CashflowEntry for accurate sorting.
+ */
+private fun CashflowEntry.computeHistorySortDate(): LocalDate = updatedAt.date

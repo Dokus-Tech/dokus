@@ -36,6 +36,23 @@
     <string name="cashflow_ledger_empty_hint">Try adjusting your filters</string>
     <string name="cashflow_ledger_items">%1$d items</string>
 
+    <!-- Cashflow Summary (Phase A) -->
+    <string name="cashflow_summary_next_30_days">Next 30 days</string>
+    <string name="cashflow_summary_last_30_days">Last 30 days</string>
+    <string name="cashflow_summary_expected_in">Expected in</string>
+    <string name="cashflow_summary_expected_out">Expected out</string>
+    <string name="cashflow_summary_received">Received</string>
+    <string name="cashflow_summary_paid_out">Paid out</string>
+
+    <!-- View Modes -->
+    <string name="cashflow_view_upcoming">Upcoming</string>
+    <string name="cashflow_view_history">History</string>
+
+    <!-- Direction Filters -->
+    <string name="cashflow_direction_all">All</string>
+    <string name="cashflow_direction_in">In</string>
+    <string name="cashflow_direction_out">Out</string>
+
     <!-- Document Types -->
     <string name="document_type_invoice">Invoice</string>
     <string name="document_type_expense">Expense</string>
