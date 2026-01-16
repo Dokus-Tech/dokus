@@ -43,6 +43,8 @@ import tech.dokus.aura.resources.cashflow_document_confirmed
 import tech.dokus.aura.resources.cashflow_document_rejected
 import tech.dokus.aura.resources.cashflow_needed_to_complete
 import tech.dokus.aura.resources.cashflow_somethings_wrong
+import tech.dokus.aura.resources.cashflow_view_cashflow
+import tech.dokus.aura.resources.cashflow_view_document
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.style.textMuted
@@ -287,14 +289,14 @@ private fun ConfirmedFooter(
                     onClick = onViewEntity,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("View Document")
+                    Text(stringResource(Res.string.cashflow_view_document))
                 }
                 if (hasCashflowEntry) {
                     OutlinedButton(
                         onClick = onViewCashflowEntry,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("View Cashflow")
+                        Text(stringResource(Res.string.cashflow_view_cashflow))
                     }
                 }
             }

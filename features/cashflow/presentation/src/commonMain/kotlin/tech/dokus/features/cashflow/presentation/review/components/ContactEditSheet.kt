@@ -65,6 +65,7 @@ import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.cashflow_contact_create_new
 import tech.dokus.aura.resources.cashflow_contact_no_matches
 import tech.dokus.aura.resources.cashflow_contact_search_hint
+import tech.dokus.aura.resources.cashflow_contact_search_to_begin
 import tech.dokus.aura.resources.cashflow_contact_suggestions
 import tech.dokus.aura.resources.cashflow_who_issued_document
 import tech.dokus.aura.resources.contacts_selected
@@ -605,14 +606,18 @@ private fun ContactList(
         }
 
         else -> {
-            // Idle state
+            // Idle state - show empty state prompt
             Box(
                 modifier = modifier
                     .fillMaxWidth()
                     .height(ContentMinHeight),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                Text(
+                    text = stringResource(Res.string.cashflow_contact_search_to_begin),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

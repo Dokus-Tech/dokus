@@ -309,6 +309,10 @@
     <string name="cashflow_contact_no_matches">No contacts match your search</string>
     <string name="cashflow_contact_search_hint">Search contacts</string>
     <string name="cashflow_contact_suggestions">Suggestions</string>
+    <string name="cashflow_extracted_name">Extracted name</string>
+    <string name="cashflow_view_document">View Document</string>
+    <string name="cashflow_view_cashflow">View Cashflow</string>
+    <string name="cashflow_contact_search_to_begin">Search for a contact above</string>
     <string name="cashflow_saving_contact">Saving contact...</string>
     <string name="cashflow_no_contact_selected">No contact selected</string>
     <string name="cashflow_select_contact">Select contact</string>

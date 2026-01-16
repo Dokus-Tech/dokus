@@ -12,6 +12,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_bill_details_section
 import tech.dokus.aura.resources.cashflow_contact_label
+import tech.dokus.aura.resources.cashflow_extracted_name
 import tech.dokus.aura.resources.cashflow_expense_details_section
 import tech.dokus.aura.resources.cashflow_invoice_details_section
 import tech.dokus.aura.resources.cashflow_invoice_number
@@ -79,7 +80,7 @@ internal fun CounterpartyCard(
                 counterparty.name?.let { name ->
                     if (name != boundName) {
                         FactField(
-                            label = "Extracted name",
+                            label = stringResource(Res.string.cashflow_extracted_name),
                             value = name
                         )
                     }
