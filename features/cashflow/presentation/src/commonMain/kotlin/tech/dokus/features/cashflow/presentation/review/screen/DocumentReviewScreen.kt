@@ -43,6 +43,7 @@ internal fun DocumentReviewScreen(
             contentPadding = contentPadding,
             onIntent = onIntent,
             onCorrectContact = onCorrectContact,
+            onBackClick = onBackClick,
         )
     }
 }

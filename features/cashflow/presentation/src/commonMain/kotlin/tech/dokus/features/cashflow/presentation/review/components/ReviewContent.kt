@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -23,7 +25,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -38,13 +45,17 @@ import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewFooter
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.review.PdfPreviewBottomSheet
 import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
-import tech.dokus.features.cashflow.presentation.review.PdfPreviewRow
 import tech.dokus.features.cashflow.presentation.review.components.details.AmountsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
 import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
-import tech.dokus.features.cashflow.presentation.review.components.forms.UnsavedChangesBar
+import tech.dokus.features.cashflow.presentation.review.components.mobile.DetailsTabContent
+import tech.dokus.features.cashflow.presentation.review.components.mobile.DocumentDetailMobileHeader
+import tech.dokus.features.cashflow.presentation.review.components.mobile.DocumentDetailTabBar
+import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileFooter
+import tech.dokus.features.cashflow.presentation.review.components.mobile.PreviewTabContent
+import tech.dokus.features.cashflow.presentation.review.components.mobile.TAB_DETAILS
+import tech.dokus.features.cashflow.presentation.review.components.mobile.TAB_PREVIEW
 import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
 import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -58,6 +69,7 @@ internal fun ReviewContent(
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: (CounterpartyInfo) -> Unit,
+    onBackClick: () -> Unit,
 ) {
     when (state) {
         is DocumentReviewState.Loading -> {
@@ -79,6 +91,7 @@ internal fun ReviewContent(
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                     onCorrectContact = { onCorrectContact(counterparty) },
+                    onBackClick = onBackClick,
                 )
             }
         }
@@ -267,104 +280,119 @@ private fun ReviewDetailsPane(
     }
 }
 
+/**
+ * Mobile tabbed layout for document review.
+ *
+ * Two tabs: Preview (document view) | Details (fact validation)
+ * - Default tab is Details if hasAttention (reactive-once, after state loads)
+ * - User's manual tab selection is respected (not overridden)
+ * - Footer has only "Something's wrong" + "Confirm" (no Save on mobile)
+ */
 @Composable
 private fun MobileReviewContent(
     state: DocumentReviewState.Content,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
+    onBackClick: () -> Unit,
 ) {
+    // Track if user has manually changed tab (respect their choice)
+    var userChangedTab by remember { mutableStateOf(false) }
+    var selectedTab by remember { mutableIntStateOf(TAB_PREVIEW) }
+
+    // Auto-switch to Details on first load if attention needed
+    // Only if user hasn't manually selected a tab yet
+    LaunchedEffect(state.hasAttention) {
+        if (!userChangedTab && state.hasAttention) {
+            selectedTab = TAB_DETAILS
+        }
+    }
+
+    // Show post-confirmation footer if document is confirmed or rejected
+    val showPostConfirmation = state.isDocumentConfirmed || state.isDocumentRejected
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(contentPadding),
+            .padding(contentPadding)
     ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(Constrains.Spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
-        ) {
-            AnimatedVisibility(
-                visible = state.hasUnsavedChanges && !state.isDocumentConfirmed,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                UnsavedChangesBar(
-                    isSaving = state.isSaving,
-                    onSave = { onIntent(DocumentReviewIntent.SaveDraft) },
-                    onDiscard = { onIntent(DocumentReviewIntent.DiscardChanges) }
-                )
-            }
+        // Header (fixed)
+        DocumentDetailMobileHeader(
+            description = state.description,
+            total = state.totalAmount,
+            hasAttention = state.hasAttention,
+            isBlocking = state.isBlocking,
+            onBackClick = onBackClick
+        )
 
-            DokusCardSurface(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                PdfPreviewRow(
-                    previewState = state.previewState,
-                    onClick = { onIntent(DocumentReviewIntent.OpenPreviewSheet) },
-                )
-            }
-
-            // Show failure banner when extraction failed
-            AnimatedVisibility(
-                visible = state.isFailed && !state.failureBannerDismissed,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                AnalysisFailedBanner(
-                    reason = state.failureReason,
-                    isRetrying = state.isProcessing,
-                    onRetry = { onIntent(DocumentReviewIntent.RetryAnalysis) },
-                    onContinueManually = { onIntent(DocumentReviewIntent.DismissFailureBanner) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            CounterpartyCard(
-                state = state,
-                onIntent = onIntent,
-                onCorrectContact = onCorrectContact,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            InvoiceDetailsCard(
-                state = state,
-                onIntent = onIntent,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            AmountsCard(
-                state = state,
-                onIntent = onIntent,
-                modifier = Modifier.fillMaxWidth(),
+        // Tab bar (fixed) - only show when not confirmed/rejected
+        if (!showPostConfirmation) {
+            DocumentDetailTabBar(
+                selectedTab = selectedTab,
+                onTabSelected = { tab ->
+                    userChangedTab = true // Mark that user took control
+                    selectedTab = tab
+                }
             )
         }
-        DocumentReviewFooter(
-            canConfirm = state.canConfirm,
-            isConfirming = state.isConfirming,
-            isSaving = state.isSaving,
-            isBindingContact = state.isBindingContact,
-            isRejecting = state.isRejecting,
-            hasUnsavedChanges = state.hasUnsavedChanges,
-            isDocumentConfirmed = state.isDocumentConfirmed,
-            isDocumentRejected = state.isDocumentRejected,
-            hasCashflowEntry = state.confirmedCashflowEntryId != null,
-            confirmBlockedReason = state.confirmBlockedReason,
-            onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
-            onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
-            onReject = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
-            onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
-            onViewEntity = { onIntent(DocumentReviewIntent.ViewEntity) },
-            onViewCashflowEntry = { onIntent(DocumentReviewIntent.ViewCashflowEntry) },
-        )
-    }
 
-    PdfPreviewBottomSheet(
-        isVisible = state.showPreviewSheet,
-        onDismiss = { onIntent(DocumentReviewIntent.ClosePreviewSheet) },
-        previewState = state.previewState,
-        onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
-    )
+        // Tab content (flexible, fills remaining space)
+        Box(modifier = Modifier.weight(1f)) {
+            if (showPostConfirmation) {
+                // After confirmation, show details only
+                DetailsTabContent(
+                    state = state,
+                    onIntent = onIntent,
+                    onCorrectContact = onCorrectContact
+                )
+            } else {
+                when (selectedTab) {
+                    TAB_PREVIEW -> PreviewTabContent(previewState = state.previewState)
+                    TAB_DETAILS -> DetailsTabContent(
+                        state = state,
+                        onIntent = onIntent,
+                        onCorrectContact = onCorrectContact
+                    )
+                }
+            }
+        }
+
+        // Footer (fixed, with keyboard/safe-area handling)
+        if (showPostConfirmation) {
+            // Use the existing post-confirmation footer
+            DocumentReviewFooter(
+                canConfirm = state.canConfirm,
+                isConfirming = state.isConfirming,
+                isSaving = state.isSaving,
+                isBindingContact = state.isBindingContact,
+                isRejecting = state.isRejecting,
+                hasUnsavedChanges = state.hasUnsavedChanges,
+                isDocumentConfirmed = state.isDocumentConfirmed,
+                isDocumentRejected = state.isDocumentRejected,
+                hasCashflowEntry = state.confirmedCashflowEntryId != null,
+                confirmBlockedReason = state.confirmBlockedReason,
+                onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
+                onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
+                onReject = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
+                onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
+                onViewEntity = { onIntent(DocumentReviewIntent.ViewEntity) },
+                onViewCashflowEntry = { onIntent(DocumentReviewIntent.ViewCashflowEntry) },
+                modifier = Modifier
+                    .imePadding()
+                    .navigationBarsPadding()
+            )
+        } else {
+            // Simplified mobile footer (no Save button)
+            MobileFooter(
+                canConfirm = state.canConfirm,
+                isConfirming = state.isConfirming,
+                isBindingContact = state.isBindingContact,
+                onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
+                onSomethingsWrong = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
+                modifier = Modifier
+                    .imePadding()
+                    .navigationBarsPadding()
+            )
+        }
+    }
 }
