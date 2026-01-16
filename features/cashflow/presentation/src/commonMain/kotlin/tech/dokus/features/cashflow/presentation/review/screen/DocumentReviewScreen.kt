@@ -24,14 +24,17 @@ internal fun DocumentReviewScreen(
 ) {
     Scaffold(
         topBar = {
-            ReviewTopBar(
-                state = state,
-                isLargeScreen = isLargeScreen,
-                onBackClick = onBackClick,
-                onChatClick = onOpenChat,
-                onConfirmClick = { onIntent(DocumentReviewIntent.Confirm) },
-                onRejectClick = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
-            )
+            // Only show ReviewTopBar on desktop; mobile uses DocumentDetailMobileHeader
+            if (isLargeScreen) {
+                ReviewTopBar(
+                    state = state,
+                    isLargeScreen = isLargeScreen,
+                    onBackClick = onBackClick,
+                    onChatClick = onOpenChat,
+                    onConfirmClick = { onIntent(DocumentReviewIntent.Confirm) },
+                    onRejectClick = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
