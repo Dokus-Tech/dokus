@@ -44,7 +44,7 @@ import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletion
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.constrains.padding
+import tech.dokus.foundation.aura.constrains.withContentPadding
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
 private val DesktopContentPadding = 32.dp
@@ -83,7 +83,7 @@ internal fun AddDocumentScreen(
     val isUploading = state is AddDocumentState.Uploading
 
     Scaffold { contentPadding ->
-        Box(Modifier.padding(contentPadding, layoutDirection)) {
+        Box(Modifier.withContentPadding(contentPadding, layoutDirection)) {
             if (isLarge) {
                 DesktopLayout(
                     onUploadFile = { onIntent(AddDocumentIntent.SelectFile) },

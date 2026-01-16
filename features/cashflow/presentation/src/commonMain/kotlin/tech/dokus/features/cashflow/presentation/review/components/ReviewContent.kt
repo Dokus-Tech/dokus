@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -61,6 +62,7 @@ import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.withContentPadding
 
 @Composable
 internal fun ReviewContent(
@@ -296,6 +298,7 @@ private fun MobileReviewContent(
     onCorrectContact: () -> Unit,
     onBackClick: () -> Unit,
 ) {
+    val layoutDirection = LocalLayoutDirection.current
     // Track if user has manually changed tab (respect their choice)
     var userChangedTab by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(TAB_PREVIEW) }
@@ -314,7 +317,7 @@ private fun MobileReviewContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(contentPadding)
+            .withContentPadding(contentPadding, layoutDirection)
     ) {
         // Header (fixed)
         DocumentDetailMobileHeader(
