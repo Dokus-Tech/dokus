@@ -258,6 +258,12 @@
     <string name="cashflow_document_rejected">Document rejected</string>
     <string name="cashflow_somethings_wrong">Something\'s wrong</string>
     <string name="cashflow_needs_input">needs input</string>
+    <string name="cashflow_needs_attention">needs attention</string>
+
+    <!-- Mobile Tabs -->
+    <string name="cashflow_tab_preview">Preview</string>
+    <string name="cashflow_tab_details">Details</string>
+    <string name="cashflow_preview_error">Could not load preview</string>
     <string name="cashflow_who_issued_document">Who issued this document?</string>
     <string name="cashflow_tap_to_identify">Tap to identify</string>
     <string name="cashflow_needed_to_complete">Needed to complete this document</string>

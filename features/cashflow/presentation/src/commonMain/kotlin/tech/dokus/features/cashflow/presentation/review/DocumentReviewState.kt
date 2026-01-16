@@ -135,13 +135,55 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
             get() = confirmBlockedReason != null
 
         /**
-         * Soft attention signal - shows amber indicator but doesn't block confirm.
-         * True when: contact uncertain, due date missing, etc.
+         * Contact match status - captures uncertainty, not just null.
+         * Used for policy-based attention signals.
+         */
+        val contactMatchStatus: ContactMatchStatus
+            get() = when {
+                // User explicitly selected or high-confidence suggestion
+                selectedContactSnapshot != null && contactSelectionState is ContactSelectionState.Selected ->
+                    ContactMatchStatus.Matched
+                // Suggested with high confidence (>=0.8)
+                selectedContactSnapshot != null &&
+                    contactSelectionState is ContactSelectionState.Suggested &&
+                    (contactSelectionState as ContactSelectionState.Suggested).confidence >= HIGH_CONFIDENCE_THRESHOLD ->
+                    ContactMatchStatus.Matched
+                // Contact exists but low confidence
+                selectedContactSnapshot != null ->
+                    ContactMatchStatus.Uncertain
+                // No contact, but required for this document type (Invoice/Bill)
+                editableData.documentType in CONTACT_REQUIRED_TYPES ->
+                    ContactMatchStatus.MissingButRequired
+                // No contact, but acceptable (Expense/Receipt)
+                else ->
+                    ContactMatchStatus.NotRequired
+            }
+
+        /**
+         * Soft attention signal - policy-based, not field-null checks.
+         * SEPARATE from confirmBlockedReason (hard block).
+         *
+         * Attention rules:
+         * 1. Always attention if confirmBlockedReason != null (hard issues are also soft)
+         * 2. Attention if contact is Uncertain or MissingButRequired
+         * 3. Attention if due date missing AND (Invoice OR Bill) AND not yet confirmed
          */
         val hasAttention: Boolean
-            get() = isBlocking ||
-                selectedContactSnapshot == null ||
-                editableData.dueDate == null
+            get() {
+                // Hard block implies attention
+                if (confirmBlockedReason != null) return true
+
+                // Contact uncertainty
+                if (contactMatchStatus == ContactMatchStatus.Uncertain ||
+                    contactMatchStatus == ContactMatchStatus.MissingButRequired) return true
+
+                // Due date missing for invoices/bills (only when not confirmed)
+                val needsDueDate = editableData.documentType in CONTACT_REQUIRED_TYPES &&
+                    !isDocumentConfirmed
+                if (needsDueDate && editableData.dueDate == null) return true
+
+                return false
+            }
 
         /**
          * Resolved description for the header understanding line.
@@ -250,3 +292,24 @@ private val EditableExtractedData.dueDate: kotlinx.datetime.LocalDate?
         DocumentType.ProForma -> proForma?.validUntil
         else -> null
     }
+
+/**
+ * Contact match status - captures uncertainty, not just null.
+ * Used for policy-based attention signals in the UI.
+ */
+enum class ContactMatchStatus {
+    /** Bound with high confidence or explicit user selection. */
+    Matched,
+    /** Bound but low confidence or multiple candidates - user should review. */
+    Uncertain,
+    /** No contact, and document type requires one (Invoice/Bill). */
+    MissingButRequired,
+    /** No contact, but acceptable for this document type (Expense/Receipt). */
+    NotRequired
+}
+
+/** Confidence threshold for considering a contact match as "high confidence". */
+private const val HIGH_CONFIDENCE_THRESHOLD = 0.8f
+
+/** Document types that require a contact (for VAT/accounting purposes). */
+private val CONTACT_REQUIRED_TYPES = listOf(DocumentType.Invoice, DocumentType.Bill)
