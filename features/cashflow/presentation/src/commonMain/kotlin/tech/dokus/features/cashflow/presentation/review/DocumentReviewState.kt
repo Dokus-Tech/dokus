@@ -70,7 +70,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         // Contact sheet state
         val showContactSheet: Boolean = false,
         val contactSheetSearchQuery: String = "",
-        val contactSheetContacts: DokusState<List<ContactDto>> = DokusState.Idle,
+        val contactSheetContacts: DokusState<List<ContactDto>> = DokusState.idle(),
     ) : DocumentReviewState {
 
         /** True when AI extraction is still in progress (Queued or Processing). */

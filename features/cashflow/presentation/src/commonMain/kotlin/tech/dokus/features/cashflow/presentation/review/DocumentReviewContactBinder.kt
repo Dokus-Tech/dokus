@@ -24,7 +24,7 @@ internal class DocumentReviewContactBinder(
                 copy(
                     showContactSheet = true,
                     contactSheetSearchQuery = "",
-                    contactSheetContacts = DokusState.Loading,
+                    contactSheetContacts = DokusState.loading(),
                 )
             }
         }

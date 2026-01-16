@@ -72,7 +72,7 @@ internal fun DocumentReviewRoute(
     var pendingSuccess by remember { mutableStateOf<DocumentReviewSuccess?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
-    var contactsState by remember { mutableStateOf<DokusState<List<ContactDto>>>(DokusState.Idle) }
+    var contactsState by remember { mutableStateOf<DokusState<List<ContactDto>>>(DokusState.idle()) }
 
     val successMessage = pendingSuccess?.let { success ->
         when (success) {
@@ -128,13 +128,13 @@ internal fun DocumentReviewRoute(
     // Load contacts when contact sheet opens
     LaunchedEffect(contentState?.showContactSheet) {
         if (contentState?.showContactSheet == true && contactsState !is DokusState.Success) {
-            contactsState = DokusState.Loading
+            contactsState = DokusState.loading()
             listContacts(limit = 100).fold(
                 onSuccess = { contacts ->
-                    contactsState = DokusState.Success(contacts)
+                    contactsState = DokusState.success(contacts)
                 },
                 onFailure = { error ->
-                    contactsState = DokusState.Error(
+                    contactsState = DokusState.error(
                         exception = tech.dokus.domain.exceptions.DokusException.Unknown(error),
                         retryHandler = { /* no retry */ }
                     )

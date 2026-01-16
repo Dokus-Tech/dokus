@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package tech.dokus.features.cashflow.presentation.review.components
 
 import androidx.compose.animation.AnimatedVisibility
