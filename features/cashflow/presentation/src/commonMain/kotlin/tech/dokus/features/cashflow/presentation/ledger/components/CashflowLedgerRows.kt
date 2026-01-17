@@ -58,7 +58,6 @@ import tech.dokus.aura.resources.cashflow_ledger_status
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableHeaderLabel
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
@@ -80,40 +79,58 @@ private object CashflowTableColumns {
     val Actions = DokusTableColumnSpec(width = 48.dp, horizontalAlignment = Alignment.CenterHorizontally)
 }
 
+private val HeaderRowHeight = 40.dp
+
 @Composable
 internal fun CashflowLedgerHeaderRow(
     modifier: Modifier = Modifier
 ) {
     DokusTableRow(
         modifier = modifier,
-        minHeight = TableRowHeight,
-        backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+        minHeight = HeaderRowHeight,
         contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
     ) {
         DokusTableCell(CashflowTableColumns.DueDate) {
-            DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_due_date))
+            SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_due_date))
         }
         DokusTableCell(CashflowTableColumns.Counterparty) {
-            DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_contact))
+            SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_contact))
         }
         DokusTableCell(CashflowTableColumns.Description) {
-            DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_description))
+            SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_description))
         }
         DokusTableCell(CashflowTableColumns.Status) {
-            DokusTableHeaderLabel(
+            SubtleHeaderLabel(
                 text = stringResource(Res.string.cashflow_ledger_status),
                 textAlign = TextAlign.Center
             )
         }
         DokusTableCell(CashflowTableColumns.Amount) {
-            DokusTableHeaderLabel(
+            SubtleHeaderLabel(
                 text = stringResource(Res.string.cashflow_ledger_amount),
                 textAlign = TextAlign.End
             )
         }
         // Empty cell for actions column in header
-        DokusTableCell(CashflowTableColumns.Actions) {}
+        DokusTableCell(CashflowTableColumns.Actions) {
+            Spacer(modifier = Modifier.width(1.dp))
+        }
     }
+}
+
+@Composable
+private fun SubtleHeaderLabel(
+    text: String,
+    textAlign: TextAlign = TextAlign.Start
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+        textAlign = textAlign,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Composable
