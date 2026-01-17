@@ -183,6 +183,7 @@ private fun DocumentsContent(
                     }
                 )
             }
+
             documents.isEmpty() && state.searchQuery.isNotEmpty() -> {
                 // Search returned no results
                 DokusEmptyState(
@@ -190,6 +191,7 @@ private fun DocumentsContent(
                     modifier = Modifier.fillMaxSize()
                 )
             }
+
             documents.isEmpty() -> {
                 // Filter returned no results
                 DokusEmptyState(
@@ -197,6 +199,7 @@ private fun DocumentsContent(
                     modifier = Modifier.fillMaxSize()
                 )
             }
+
             else -> {
                 // Documents list in a card surface
                 DokusTableSurface(

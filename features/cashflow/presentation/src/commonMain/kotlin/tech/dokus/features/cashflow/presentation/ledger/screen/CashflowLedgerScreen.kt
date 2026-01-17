@@ -23,10 +23,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -60,6 +64,7 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CashflowLedgerScreen(
     state: CashflowLedgerState,
@@ -67,40 +72,44 @@ internal fun CashflowLedgerScreen(
     modifier: Modifier = Modifier
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        when (state) {
-            is CashflowLedgerState.Loading -> {
-                // Use skeleton loader matching real content layout
-                DokusTableSurface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp),
-                    header = null
-                ) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        modifier = modifier
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when (state) {
+                is CashflowLedgerState.Loading -> {
                     CashflowLedgerSkeleton(
                         showHeader = isLargeScreen,
-                        rowCount = 5
+                        rowCount = 5,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
                     )
                 }
-            }
 
-            is CashflowLedgerState.Content -> {
-                CashflowLedgerContent(
-                    state = state,
-                    onIntent = onIntent
-                )
-            }
+                is CashflowLedgerState.Content -> {
+                    CashflowLedgerContent(
+                        state = state,
+                        onIntent = onIntent
+                    )
+                }
 
-            is CashflowLedgerState.Error -> {
-                DokusErrorContent(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                )
+                is CashflowLedgerState.Error -> {
+                    DokusErrorContent(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    )
+                }
             }
         }
     }
@@ -133,23 +142,18 @@ private fun CashflowLedgerContent(
     val selectedEntry = state.entries.data.find { it.id == state.selectedEntryId }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Single unified surface for all content
-        DokusTableSurface(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-            header = null
         ) {
-            // Summary section (replaces old status bar)
+            // Summary section (outside surface)
             CashflowSummarySection(
                 summary = state.summary,
                 viewMode = state.filters.viewMode
             )
 
-            DokusTableDivider()
-
-            // View mode and direction filters (replaces old 3-row filters)
+            // Filters (outside surface)
             CashflowViewModeFilter(
                 viewMode = state.filters.viewMode,
                 direction = state.filters.direction,
@@ -157,81 +161,87 @@ private fun CashflowLedgerContent(
                 onDirectionChange = { onIntent(CashflowLedgerIntent.SetDirectionFilter(it)) }
             )
 
-            DokusTableDivider()
+            Spacer(Modifier.height(8.dp))
 
-            // Table header (desktop only)
-            if (isLargeScreen) {
-                CashflowLedgerHeaderRow()
-                DokusTableDivider()
-            }
-
-            // Table body OR empty state
-            if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
-                // Context-aware empty state based on current filters
-                val emptyStateTitle = getEmptyStateTitle(
-                    viewMode = state.filters.viewMode,
-                    direction = state.filters.direction
-                )
-                // Hint only shown for Upcoming + All
-                val emptyStateHint = if (
-                    state.filters.viewMode == CashflowViewMode.Upcoming &&
-                    state.filters.direction == DirectionFilter.All
-                ) {
-                    stringResource(Res.string.cashflow_empty_upcoming_hint)
-                } else {
-                    null
-                }
-
-                DokusEmptyState(
-                    title = emptyStateTitle,
-                    subtitle = emptyStateHint,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(32.dp)
-                )
-            } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    itemsIndexed(
-                        items = state.entries.data,
-                        key = { _, entry -> entry.id.toString() }
-                    ) { index, entry ->
-                        if (isLargeScreen) {
-                            CashflowLedgerTableRow(
-                                entry = entry,
-                                isHighlighted = entry.id == state.highlightedEntryId,
-                                showActionsMenu = state.actionsEntryId == entry.id,
-                                onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
-                                onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) },
-                                onHideActions = { onIntent(CashflowLedgerIntent.HideRowActions) },
-                                onRecordPayment = { onIntent(CashflowLedgerIntent.RecordPaymentFor(entry.id)) },
-                                onMarkAsPaid = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(entry.id)) },
-                                onViewDocument = { onIntent(CashflowLedgerIntent.ViewDocumentFor(entry)) }
-                            )
-                        } else {
-                            CashflowLedgerMobileRow(
-                                entry = entry,
-                                onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
-                                onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) }
-                            )
-                        }
-
-                        if (index < state.entries.data.size - 1) {
-                            DokusTableDivider()
-                        }
+            // Table surface (data only)
+            DokusTableSurface(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                header = if (isLargeScreen) {
+                    { CashflowLedgerHeaderRow() }
+                } else null
+            ) {
+                // Table body OR empty state
+                if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
+                    // Context-aware empty state based on current filters
+                    val emptyStateTitle = getEmptyStateTitle(
+                        viewMode = state.filters.viewMode,
+                        direction = state.filters.direction
+                    )
+                    // Hint only shown for Upcoming + All
+                    val emptyStateHint = if (
+                        state.filters.viewMode == CashflowViewMode.Upcoming &&
+                        state.filters.direction == DirectionFilter.All
+                    ) {
+                        stringResource(Res.string.cashflow_empty_upcoming_hint)
+                    } else {
+                        null
                     }
 
-                    if (state.entries.isLoadingMore) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    DokusEmptyState(
+                        title = emptyStateTitle,
+                        subtitle = emptyStateHint,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(32.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        itemsIndexed(
+                            items = state.entries.data,
+                            key = { _, entry -> entry.id.toString() }
+                        ) { index, entry ->
+                            if (isLargeScreen) {
+                                CashflowLedgerTableRow(
+                                    entry = entry,
+                                    isHighlighted = entry.id == state.highlightedEntryId,
+                                    showActionsMenu = state.actionsEntryId == entry.id,
+                                    onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
+                                    onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) },
+                                    onHideActions = { onIntent(CashflowLedgerIntent.HideRowActions) },
+                                    onRecordPayment = { onIntent(CashflowLedgerIntent.RecordPaymentFor(entry.id)) },
+                                    onMarkAsPaid = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(entry.id)) },
+                                    onViewDocument = { onIntent(CashflowLedgerIntent.ViewDocumentFor(entry)) }
+                                )
+                            } else {
+                                CashflowLedgerMobileRow(
+                                    entry = entry,
+                                    onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
+                                    onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) }
+                                )
+                            }
+
+                            // Dividers only between rows
+                            if (index < state.entries.data.size - 1) {
+                                DokusTableDivider()
+                            }
+                        }
+
+                        if (state.entries.isLoadingMore) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                }
                             }
                         }
                     }
