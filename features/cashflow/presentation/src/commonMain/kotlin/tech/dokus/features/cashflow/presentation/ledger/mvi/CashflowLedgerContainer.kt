@@ -80,6 +80,12 @@ internal class CashflowLedgerContainer(
                     is CashflowLedgerIntent.TogglePaymentOptions -> handleTogglePaymentOptions()
                     is CashflowLedgerIntent.QuickMarkAsPaid -> handleQuickMarkAsPaid()
                     is CashflowLedgerIntent.CancelPaymentOptions -> handleCancelPaymentOptions()
+                    // Row actions menu intents
+                    is CashflowLedgerIntent.ShowRowActions -> handleShowRowActions(intent.entryId)
+                    is CashflowLedgerIntent.HideRowActions -> handleHideRowActions()
+                    is CashflowLedgerIntent.RecordPaymentFor -> handleRecordPaymentFor(intent.entryId)
+                    is CashflowLedgerIntent.MarkAsPaidQuick -> handleMarkAsPaidQuick(intent.entryId)
+                    is CashflowLedgerIntent.ViewDocumentFor -> handleViewDocumentFor(intent.entry)
                 }
             }
         }
@@ -97,15 +103,22 @@ internal class CashflowLedgerContainer(
         val statuses = getStatusesForViewMode(currentFilters.viewMode)
         val direction = mapDirectionFilter(currentFilters.direction)
 
-        // For History view, we need paidAt filter - but API may not support it directly
-        // For now, we'll filter client-side for History entries without paidAt
+        // For Upcoming view, we need both Open and Overdue statuses.
+        // API only supports single status, so:
+        // - Upcoming: pass null (get all), filter client-side for Open/Overdue
+        // - History: pass Paid (single status is fine)
+        val apiStatus = when (currentFilters.viewMode) {
+            CashflowViewMode.Upcoming -> null // Get all, filter client-side
+            CashflowViewMode.History -> CashflowEntryStatus.Paid
+        }
+
         loadCashflowEntries(
             page = 0,
             pageSize = PAGE_SIZE,
             fromDate = fromDate,
             toDate = toDate,
             direction = direction,
-            status = statuses.firstOrNull(), // API takes single status; may need multiple calls later
+            status = apiStatus,
             sourceType = null
         ).fold(
             onSuccess = { response ->
@@ -121,7 +134,7 @@ internal class CashflowLedgerContainer(
                 )
 
                 // Compute summary from filtered entries (NON-NEGOTIABLE: must match list)
-                val summary = computeSummary(sortedEntries, currentFilters.viewMode)
+                val summary = computeSummary(sortedEntries, currentFilters.viewMode, currentFilters.direction)
 
                 updateState {
                     CashflowLedgerState.Content(
@@ -155,8 +168,13 @@ internal class CashflowLedgerContainer(
             updateState { copy(entries = buildPaginationState()) }
 
             val (fromDate, toDate) = getDateRangeForViewMode(currentFilters.viewMode)
-            val statuses = getStatusesForViewMode(currentFilters.viewMode)
             val direction = mapDirectionFilter(currentFilters.direction)
+
+            // Same logic as handleRefresh: null for Upcoming, Paid for History
+            val apiStatus = when (currentFilters.viewMode) {
+                CashflowViewMode.Upcoming -> null
+                CashflowViewMode.History -> CashflowEntryStatus.Paid
+            }
 
             loadJob = launch {
                 loadCashflowEntries(
@@ -165,7 +183,7 @@ internal class CashflowLedgerContainer(
                     fromDate = fromDate,
                     toDate = toDate,
                     direction = direction,
-                    status = statuses.firstOrNull(),
+                    status = apiStatus,
                     sourceType = null
                 ).fold(
                     onSuccess = { response ->
@@ -180,7 +198,7 @@ internal class CashflowLedgerContainer(
                         )
 
                         // Recompute summary with all entries
-                        val summary = computeSummary(loadedEntries, currentFilters.viewMode)
+                        val summary = computeSummary(loadedEntries, currentFilters.viewMode, currentFilters.direction)
                         updateState { copy(entries = buildPaginationState(), summary = summary) }
                     },
                     onFailure = { error ->
@@ -211,8 +229,13 @@ internal class CashflowLedgerContainer(
     }
 
     private suspend fun CashflowLedgerCtx.handleOpenEntry(entry: CashflowEntry) {
-        // Open detail pane instead of navigating
-        handleSelectEntry(entry.id)
+        // Primary action: Navigate to document review
+        if (entry.documentId != null) {
+            action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
+        } else {
+            // For entries without a document (e.g., manual entries), navigate to entity
+            action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId.toString()))
+        }
     }
 
     private suspend fun CashflowLedgerCtx.handleSelectEntry(entryId: CashflowEntryId) {
@@ -371,6 +394,83 @@ internal class CashflowLedgerContainer(
         }
     }
 
+    // Row actions menu handlers
+
+    private suspend fun CashflowLedgerCtx.handleShowRowActions(entryId: CashflowEntryId) {
+        withState<CashflowLedgerState.Content, _> {
+            updateState { copy(actionsEntryId = entryId) }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleHideRowActions() {
+        withState<CashflowLedgerState.Content, _> {
+            updateState { copy(actionsEntryId = null) }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleRecordPaymentFor(entryId: CashflowEntryId) {
+        // Close actions menu and open payment pane for this entry
+        withState<CashflowLedgerState.Content, _> {
+            val entry = entries.data.find { it.id == entryId } ?: return@withState
+            updateState {
+                copy(
+                    actionsEntryId = null,
+                    selectedEntryId = entryId,
+                    paymentFormState = PaymentFormState.withAmount(entry.remainingAmount)
+                )
+            }
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleMarkAsPaidQuick(entryId: CashflowEntryId) {
+        // Close actions menu first
+        withState<CashflowLedgerState.Content, _> {
+            updateState { copy(actionsEntryId = null) }
+        }
+
+        // Then mark the entry as paid with full amount
+        withState<CashflowLedgerState.Content, _> {
+            val entry = entries.data.find { it.id == entryId } ?: return@withState
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+
+            recordPayment(
+                entryId = entryId,
+                request = CashflowPaymentRequest(
+                    amount = entry.remainingAmount,
+                    paidAt = today.atTime(0, 0),
+                    note = null
+                )
+            ).fold(
+                onSuccess = { updatedEntry ->
+                    val updatedList = entries.data.map {
+                        if (it.id == updatedEntry.id) updatedEntry else it
+                    }
+                    loadedEntries = loadedEntries.map {
+                        if (it.id == updatedEntry.id) updatedEntry else it
+                    }
+                    updateState { copy(entries = entries.copy(data = updatedList)) }
+                    action(CashflowLedgerAction.ShowPaymentSuccess(updatedEntry))
+                },
+                onFailure = { error ->
+                    action(CashflowLedgerAction.ShowPaymentError(error.asDokusException))
+                }
+            )
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleViewDocumentFor(entry: CashflowEntry) {
+        // Close actions menu and navigate to document
+        withState<CashflowLedgerState.Content, _> {
+            updateState { copy(actionsEntryId = null) }
+        }
+
+        if (entry.documentId != null) {
+            action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
+        } else {
+            action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId.toString()))
+        }
+    }
+
     private fun buildPaginationState(): PaginationState<CashflowEntry> {
         return PaginationState(
             data = loadedEntries,
@@ -459,23 +559,34 @@ internal class CashflowLedgerContainer(
     /**
      * Compute summary from entries.
      * NON-NEGOTIABLE: Summary must match the filtered list exactly.
+     *
+     * When direction filter is active, only show that direction's total.
+     * This ensures summary matches what's visible in the list.
      */
     private fun computeSummary(
         entries: List<CashflowEntry>,
-        viewMode: CashflowViewMode
+        viewMode: CashflowViewMode,
+        directionFilter: DirectionFilter
     ): CashflowSummary {
         val periodLabel = when (viewMode) {
             CashflowViewMode.Upcoming -> "NEXT 30 DAYS"
             CashflowViewMode.History -> "LAST 30 DAYS"
         }
 
-        val totalIn = entries
-            .filter { it.direction == CashflowDirection.In }
-            .fold(Money.ZERO) { acc, entry -> acc + entry.amountGross }
+        // Compute totals based on direction filter
+        val totalIn = when (directionFilter) {
+            DirectionFilter.Out -> Money.ZERO // Don't show In when filtering Out
+            else -> entries
+                .filter { it.direction == CashflowDirection.In }
+                .fold(Money.ZERO) { acc, entry -> acc + entry.amountGross }
+        }
 
-        val totalOut = entries
-            .filter { it.direction == CashflowDirection.Out }
-            .fold(Money.ZERO) { acc, entry -> acc + entry.amountGross }
+        val totalOut = when (directionFilter) {
+            DirectionFilter.In -> Money.ZERO // Don't show Out when filtering In
+            else -> entries
+                .filter { it.direction == CashflowDirection.Out }
+                .fold(Money.ZERO) { acc, entry -> acc + entry.amountGross }
+        }
 
         val netAmount = totalIn - totalOut
 

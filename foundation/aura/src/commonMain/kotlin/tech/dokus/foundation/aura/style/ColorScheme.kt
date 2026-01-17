@@ -193,3 +193,7 @@ val ColorScheme.textDisabled: Color
 val ColorScheme.positionPositive: Color get() = Color(0xFF059669) // emerald-600
 @Suppress("UnusedReceiverParameter")
 val ColorScheme.positionNegative: Color get() = Color(0xFF991B1B) // red-800 (calmer than error)
+
+// Interactive surface hover (for desktop row hover effects)
+val ColorScheme.surfaceHover: Color
+    get() = if (isDark) Color(0xFF0B1220) else Color(0xFFF1F5F9)

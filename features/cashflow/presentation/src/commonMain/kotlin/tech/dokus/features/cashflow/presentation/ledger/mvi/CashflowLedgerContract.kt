@@ -111,7 +111,8 @@ sealed interface CashflowLedgerState : MVIState, DokusState<Nothing> {
         val highlightedEntryId: CashflowEntryId? = null,
         val isRefreshing: Boolean = false,
         val selectedEntryId: CashflowEntryId? = null,
-        val paymentFormState: PaymentFormState = PaymentFormState()
+        val paymentFormState: PaymentFormState = PaymentFormState(),
+        val actionsEntryId: CashflowEntryId? = null // Which row's action menu is open
     ) : CashflowLedgerState
 
     data class Error(
@@ -148,6 +149,15 @@ sealed interface CashflowLedgerIntent : MVIIntent {
     data object TogglePaymentOptions : CashflowLedgerIntent
     data object QuickMarkAsPaid : CashflowLedgerIntent
     data object CancelPaymentOptions : CashflowLedgerIntent
+
+    // Row actions menu intents
+    data class ShowRowActions(val entryId: CashflowEntryId) : CashflowLedgerIntent
+    data object HideRowActions : CashflowLedgerIntent
+
+    // Actions from the row actions menu
+    data class RecordPaymentFor(val entryId: CashflowEntryId) : CashflowLedgerIntent
+    data class MarkAsPaidQuick(val entryId: CashflowEntryId) : CashflowLedgerIntent
+    data class ViewDocumentFor(val entry: CashflowEntry) : CashflowLedgerIntent
 }
 
 /**

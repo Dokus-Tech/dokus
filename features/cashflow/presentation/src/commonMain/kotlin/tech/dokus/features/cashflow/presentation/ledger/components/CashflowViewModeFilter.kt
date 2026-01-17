@@ -14,18 +14,20 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_direction_all
 import tech.dokus.aura.resources.cashflow_direction_in
+import tech.dokus.aura.resources.cashflow_direction_money_in
+import tech.dokus.aura.resources.cashflow_direction_money_out
 import tech.dokus.aura.resources.cashflow_direction_out
 import tech.dokus.aura.resources.cashflow_view_history
 import tech.dokus.aura.resources.cashflow_view_upcoming
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
  * View mode and direction filter for cashflow ledger.
  *
- * Two rows:
- * 1. Primary: Upcoming | History (view mode - mutually exclusive)
- * 2. Secondary: All | In | Out (direction filter)
+ * Desktop: Single row with view mode left, direction right.
+ * Mobile: Two rows - view mode on top, direction below with longer labels.
  */
 @Composable
 internal fun CashflowViewModeFilter(
@@ -35,47 +37,101 @@ internal fun CashflowViewModeFilter(
     onDirectionChange: (DirectionFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Primary: View mode (mutually exclusive)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FilterChip(
-                selected = viewMode == CashflowViewMode.Upcoming,
-                onClick = { onViewModeChange(CashflowViewMode.Upcoming) },
-                label = { Text(stringResource(Res.string.cashflow_view_upcoming)) }
-            )
-            FilterChip(
-                selected = viewMode == CashflowViewMode.History,
-                onClick = { onViewModeChange(CashflowViewMode.History) },
-                label = { Text(stringResource(Res.string.cashflow_view_history)) }
-            )
-        }
+    val isDesktop = LocalScreenSize.current.isLarge
 
-        // Secondary: Direction filter
+    // Direction labels: short on desktop, descriptive on mobile
+    val inLabel = if (isDesktop) {
+        stringResource(Res.string.cashflow_direction_in)
+    } else {
+        stringResource(Res.string.cashflow_direction_money_in)
+    }
+    val outLabel = if (isDesktop) {
+        stringResource(Res.string.cashflow_direction_out)
+    } else {
+        stringResource(Res.string.cashflow_direction_money_out)
+    }
+
+    if (isDesktop) {
+        // Desktop: Single row with space between
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            FilterChip(
-                selected = direction == DirectionFilter.All,
-                onClick = { onDirectionChange(DirectionFilter.All) },
-                label = { Text(stringResource(Res.string.cashflow_direction_all)) }
-            )
-            FilterChip(
-                selected = direction == DirectionFilter.In,
-                onClick = { onDirectionChange(DirectionFilter.In) },
-                label = { Text(stringResource(Res.string.cashflow_direction_in)) }
-            )
-            FilterChip(
-                selected = direction == DirectionFilter.Out,
-                onClick = { onDirectionChange(DirectionFilter.Out) },
-                label = { Text(stringResource(Res.string.cashflow_direction_out)) }
-            )
+            // Left: View mode chips
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = viewMode == CashflowViewMode.Upcoming,
+                    onClick = { onViewModeChange(CashflowViewMode.Upcoming) },
+                    label = { Text(stringResource(Res.string.cashflow_view_upcoming)) }
+                )
+                FilterChip(
+                    selected = viewMode == CashflowViewMode.History,
+                    onClick = { onViewModeChange(CashflowViewMode.History) },
+                    label = { Text(stringResource(Res.string.cashflow_view_history)) }
+                )
+            }
+
+            // Right: Direction chips
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = direction == DirectionFilter.All,
+                    onClick = { onDirectionChange(DirectionFilter.All) },
+                    label = { Text(stringResource(Res.string.cashflow_direction_all)) }
+                )
+                FilterChip(
+                    selected = direction == DirectionFilter.In,
+                    onClick = { onDirectionChange(DirectionFilter.In) },
+                    label = { Text(inLabel) }
+                )
+                FilterChip(
+                    selected = direction == DirectionFilter.Out,
+                    onClick = { onDirectionChange(DirectionFilter.Out) },
+                    label = { Text(outLabel) }
+                )
+            }
+        }
+    } else {
+        // Mobile: Two rows stacked
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Row 1: View mode
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = viewMode == CashflowViewMode.Upcoming,
+                    onClick = { onViewModeChange(CashflowViewMode.Upcoming) },
+                    label = { Text(stringResource(Res.string.cashflow_view_upcoming)) }
+                )
+                FilterChip(
+                    selected = viewMode == CashflowViewMode.History,
+                    onClick = { onViewModeChange(CashflowViewMode.History) },
+                    label = { Text(stringResource(Res.string.cashflow_view_history)) }
+                )
+            }
+
+            // Row 2: Direction filter with descriptive labels
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = direction == DirectionFilter.All,
+                    onClick = { onDirectionChange(DirectionFilter.All) },
+                    label = { Text(stringResource(Res.string.cashflow_direction_all)) }
+                )
+                FilterChip(
+                    selected = direction == DirectionFilter.In,
+                    onClick = { onDirectionChange(DirectionFilter.In) },
+                    label = { Text(inLabel) }
+                )
+                FilterChip(
+                    selected = direction == DirectionFilter.Out,
+                    onClick = { onDirectionChange(DirectionFilter.Out) },
+                    label = { Text(outLabel) }
+                )
+            }
         }
     }
 }
