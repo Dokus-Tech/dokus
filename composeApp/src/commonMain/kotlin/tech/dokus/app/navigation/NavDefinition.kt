@@ -9,7 +9,6 @@ import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.chat_title
 import tech.dokus.aura.resources.file_text
 import tech.dokus.aura.resources.home_today
-import tech.dokus.aura.resources.inbox
 import tech.dokus.aura.resources.ml
 import tech.dokus.aura.resources.more_horizontal
 import tech.dokus.aura.resources.nav_contacts
@@ -22,7 +21,6 @@ import tech.dokus.aura.resources.nav_section_company
 import tech.dokus.aura.resources.nav_team
 import tech.dokus.aura.resources.nav_tomorrow
 import tech.dokus.aura.resources.nav_vat
-import tech.dokus.aura.resources.settings_peppol
 import tech.dokus.aura.resources.settings_workspace_details
 import tech.dokus.aura.resources.trending_up
 import tech.dokus.aura.resources.user
@@ -92,7 +90,7 @@ object NavDefinition {
             iconRes = Res.drawable.file_text,
             route = Routes.DOCUMENTS,
             comingSoon = false,
-            showTopBar = true
+            showTopBar = false,
         )
 
         val cashflow = NavItem(

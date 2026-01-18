@@ -15,7 +15,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.features.cashflow.presentation.documents.components.DocumentDisplayStatus
+import tech.dokus.features.cashflow.presentation.documents.components.computeNeedsAttention
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -39,7 +39,7 @@ internal class DocumentsContainer(
 
     private var loadedDocuments: List<DocumentRecordDto> = emptyList()
     private var paginationInfo = PaginationInfo()
-    private var currentStatusFilter: DocumentDisplayStatus? = null
+    private var currentFilter: DocumentFilter = DocumentFilter.All
     private var currentSearchQuery: String = ""
 
     override val store: Store<DocumentsState, DocumentsIntent, DocumentsAction> =
@@ -49,7 +49,7 @@ internal class DocumentsContainer(
                     is DocumentsIntent.Refresh -> handleRefresh()
                     is DocumentsIntent.LoadMore -> handleLoadMore()
                     is DocumentsIntent.UpdateSearchQuery -> handleUpdateSearchQuery(intent.query)
-                    is DocumentsIntent.UpdateStatusFilter -> handleUpdateStatusFilter(intent.status)
+                    is DocumentsIntent.UpdateFilter -> handleUpdateFilter(intent.filter)
                     is DocumentsIntent.OpenDocument -> handleOpenDocument(intent.documentId)
                 }
             }
@@ -64,7 +64,7 @@ internal class DocumentsContainer(
 
         updateState { DocumentsState.Loading }
 
-        val (draftStatus, ingestionStatus) = currentStatusFilter.toApiFilters()
+        val (draftStatus, ingestionStatus) = currentFilter.toApiFilters()
         loadDocumentRecords(
             page = 0,
             pageSize = PAGE_SIZE,
@@ -82,8 +82,9 @@ internal class DocumentsContainer(
                 updateState {
                     DocumentsState.Content(
                         documents = buildPaginationState(),
-                        statusFilter = currentStatusFilter,
-                        searchQuery = currentSearchQuery
+                        filter = currentFilter,
+                        searchQuery = currentSearchQuery,
+                        needsAttentionCount = loadedDocuments.count { computeNeedsAttention(it) }
                     )
                 }
             },
@@ -107,7 +108,7 @@ internal class DocumentsContainer(
             updateState { copy(documents = buildPaginationState()) }
 
             val nextPage = paginationInfo.currentPage + 1
-            val (draftStatus, ingestionStatus) = statusFilter.toApiFilters()
+            val (draftStatus, ingestionStatus) = filter.toApiFilters()
             loadDocumentRecords(
                 page = nextPage,
                 pageSize = PAGE_SIZE,
@@ -122,7 +123,12 @@ internal class DocumentsContainer(
                         isLoadingMore = false,
                         hasMorePages = response.hasMore
                     )
-                    updateState { copy(documents = buildPaginationState()) }
+                    updateState {
+                        copy(
+                            documents = buildPaginationState(),
+                            needsAttentionCount = loadedDocuments.count { computeNeedsAttention(it) }
+                        )
+                    }
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to load more documents" }
@@ -154,7 +160,7 @@ internal class DocumentsContainer(
             }
 
             searchJob = launch {
-                val (draftStatus, ingestionStatus) = currentStatusFilter.toApiFilters()
+                val (draftStatus, ingestionStatus) = currentFilter.toApiFilters()
                 loadDocumentRecords(
                     page = 0,
                     pageSize = PAGE_SIZE,
@@ -173,7 +179,8 @@ internal class DocumentsContainer(
                             copy(
                                 documents = buildPaginationState(),
                                 searchQuery = trimmed,
-                                statusFilter = currentStatusFilter
+                                filter = currentFilter,
+                                needsAttentionCount = loadedDocuments.count { computeNeedsAttention(it) }
                             )
                         }
                     },
@@ -185,8 +192,8 @@ internal class DocumentsContainer(
         }
     }
 
-    private suspend fun DocumentsCtx.handleUpdateStatusFilter(status: DocumentDisplayStatus?) {
-        currentStatusFilter = status
+    private suspend fun DocumentsCtx.handleUpdateFilter(filter: DocumentFilter) {
+        currentFilter = filter
 
         withState<DocumentsState.Content, _> {
             searchJob?.cancel()
@@ -196,12 +203,12 @@ internal class DocumentsContainer(
 
             updateState {
                 copy(
-                    statusFilter = status,
+                    filter = filter,
                     documents = PaginationState(pageSize = PAGE_SIZE)
                 )
             }
 
-            val (draftStatus, ingestionStatus) = status.toApiFilters()
+            val (draftStatus, ingestionStatus) = filter.toApiFilters()
             loadDocumentRecords(
                 page = 0,
                 pageSize = PAGE_SIZE,
@@ -220,7 +227,8 @@ internal class DocumentsContainer(
                         copy(
                             documents = buildPaginationState(),
                             searchQuery = currentSearchQuery,
-                            statusFilter = status
+                            filter = filter,
+                            needsAttentionCount = loadedDocuments.count { computeNeedsAttention(it) }
                         )
                     }
                 },
@@ -252,18 +260,18 @@ internal class DocumentsContainer(
     )
 
     /**
-     * Maps DocumentDisplayStatus to API filter parameters.
+     * Maps DocumentFilter to API filter parameters.
      * Returns a pair of (draftStatus, ingestionStatus) to use in the API call.
+     *
+     * Note: NeedsAttention filter returns null/null because it's a composite filter
+     * that can't be expressed as a single API call. Client-side filtering is applied
+     * via computeNeedsAttention() on the returned documents.
      */
-    private fun DocumentDisplayStatus?.toApiFilters(): Pair<DraftStatus?, IngestionStatus?> {
+    private fun DocumentFilter.toApiFilters(): Pair<DraftStatus?, IngestionStatus?> {
         return when (this) {
-            null -> null to null
-            DocumentDisplayStatus.Processing -> null to IngestionStatus.Processing
-            DocumentDisplayStatus.NeedsReview -> DraftStatus.NeedsReview to null
-            DocumentDisplayStatus.Ready -> DraftStatus.Ready to null
-            DocumentDisplayStatus.Confirmed -> DraftStatus.Confirmed to null
-            DocumentDisplayStatus.Failed -> null to IngestionStatus.Failed
-            DocumentDisplayStatus.Rejected -> DraftStatus.Rejected to null
+            DocumentFilter.All -> null to null
+            DocumentFilter.NeedsAttention -> null to null // Client filters via computeNeedsAttention
+            DocumentFilter.Confirmed -> DraftStatus.Confirmed to null
         }
     }
 

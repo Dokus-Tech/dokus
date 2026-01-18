@@ -9,7 +9,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.features.cashflow.presentation.documents.components.DocumentDisplayStatus
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -20,6 +19,24 @@ import tech.dokus.foundation.app.state.DokusState
  * - Status derived from ingestion + draft state
  * - Row click navigates to Document Review for confirmation flow
  */
+
+// ============================================================================
+// FILTER
+// ============================================================================
+
+/**
+ * Simplified document filter options.
+ * Replaces the complex DocumentDisplayStatus for filtering.
+ */
+@Immutable
+enum class DocumentFilter {
+    /** Show all documents */
+    All,
+    /** Documents requiring user attention (processing, needs review, failed) */
+    NeedsAttention,
+    /** Confirmed documents only */
+    Confirmed
+}
 
 // ============================================================================
 // STATE
@@ -39,7 +56,8 @@ sealed interface DocumentsState : MVIState, DokusState<Nothing> {
     data class Content(
         val documents: PaginationState<DocumentRecordDto>,
         val searchQuery: String = "",
-        val statusFilter: DocumentDisplayStatus? = null,
+        val filter: DocumentFilter = DocumentFilter.All,
+        val needsAttentionCount: Int = 0,
     ) : DocumentsState
 
     /**
@@ -71,8 +89,8 @@ sealed interface DocumentsIntent : MVIIntent {
     /** Update search query */
     data class UpdateSearchQuery(val query: String) : DocumentsIntent
 
-    /** Update status filter */
-    data class UpdateStatusFilter(val status: DocumentDisplayStatus?) : DocumentsIntent
+    /** Update document filter */
+    data class UpdateFilter(val filter: DocumentFilter) : DocumentsIntent
 
     /** Open a document for review */
     data class OpenDocument(val documentId: DocumentId) : DocumentsIntent
