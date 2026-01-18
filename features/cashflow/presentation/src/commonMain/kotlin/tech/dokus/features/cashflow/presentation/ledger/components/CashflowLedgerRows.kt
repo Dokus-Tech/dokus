@@ -58,6 +58,7 @@ import tech.dokus.aura.resources.cashflow_ledger_status
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
@@ -133,9 +134,17 @@ private fun SubtleHeaderLabel(
     )
 }
 
+/**
+ * Desktop table row for cashflow entries.
+ *
+ * @param viewMode Current view mode - determines which actions are available:
+ *                 - Upcoming: Record payment, Mark as paid, View document
+ *                 - History: View document only
+ */
 @Composable
 internal fun CashflowLedgerTableRow(
     entry: CashflowEntry,
+    viewMode: CashflowViewMode,
     isHighlighted: Boolean,
     showActionsMenu: Boolean,
     onClick: () -> Unit,
@@ -248,19 +257,23 @@ internal fun CashflowLedgerTableRow(
                         )
                     }
                 }
-                // Dropdown menu
+                // Dropdown menu - actions depend on view mode
                 DropdownMenu(
                     expanded = showActionsMenu,
                     onDismissRequest = onHideActions
                 ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.cashflow_action_record_payment)) },
-                        onClick = onRecordPayment
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.cashflow_action_mark_paid)) },
-                        onClick = onMarkAsPaid
-                    )
+                    // Upcoming mode: payment actions available
+                    if (viewMode == CashflowViewMode.Upcoming) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.cashflow_action_record_payment)) },
+                            onClick = onRecordPayment
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.cashflow_action_mark_paid)) },
+                            onClick = onMarkAsPaid
+                        )
+                    }
+                    // All modes: view document
                     DropdownMenuItem(
                         text = { Text(stringResource(Res.string.cashflow_action_view_document)) },
                         onClick = onViewDocument
@@ -271,9 +284,15 @@ internal fun CashflowLedgerTableRow(
     }
 }
 
+/**
+ * Mobile row for cashflow entries.
+ *
+ * @param viewMode Current view mode - passed for future use and consistency
+ */
 @Composable
 internal fun CashflowLedgerMobileRow(
     entry: CashflowEntry,
+    viewMode: CashflowViewMode,
     onClick: () -> Unit,
     onShowActions: () -> Unit,
     modifier: Modifier = Modifier

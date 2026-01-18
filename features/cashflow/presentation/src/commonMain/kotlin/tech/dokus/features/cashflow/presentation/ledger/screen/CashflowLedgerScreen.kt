@@ -30,6 +30,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -124,6 +126,14 @@ private fun CashflowLedgerContent(
     val listState = rememberLazyListState()
     val isLargeScreen = LocalScreenSize.current.isLarge
 
+    // Derive compression state from scroll offset (mobile only)
+    // Stable threshold: compress when scrolled beyond first item or offset > 48dp
+    val isCompressed by remember {
+        derivedStateOf {
+            !isLargeScreen && (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 48)
+        }
+    }
+
     // Trigger load more when near bottom
     val shouldLoadMore = rememberLoadMoreTrigger(
         listState = listState,
@@ -150,7 +160,9 @@ private fun CashflowLedgerContent(
             // Summary section (outside surface)
             CashflowSummarySection(
                 summary = state.summary,
-                viewMode = state.filters.viewMode
+                balance = state.balance,
+                viewMode = state.filters.viewMode,
+                isCompressed = isCompressed
             )
 
             // Filters (outside surface)
@@ -158,7 +170,8 @@ private fun CashflowLedgerContent(
                 viewMode = state.filters.viewMode,
                 direction = state.filters.direction,
                 onViewModeChange = { onIntent(CashflowLedgerIntent.SetViewMode(it)) },
-                onDirectionChange = { onIntent(CashflowLedgerIntent.SetDirectionFilter(it)) }
+                onDirectionChange = { onIntent(CashflowLedgerIntent.SetDirectionFilter(it)) },
+                isCompact = isCompressed
             )
 
             Spacer(Modifier.height(8.dp))
@@ -209,6 +222,7 @@ private fun CashflowLedgerContent(
                             if (isLargeScreen) {
                                 CashflowLedgerTableRow(
                                     entry = entry,
+                                    viewMode = state.filters.viewMode,
                                     isHighlighted = entry.id == state.highlightedEntryId,
                                     showActionsMenu = state.actionsEntryId == entry.id,
                                     onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
@@ -221,6 +235,7 @@ private fun CashflowLedgerContent(
                             } else {
                                 CashflowLedgerMobileRow(
                                     entry = entry,
+                                    viewMode = state.filters.viewMode,
                                     onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
                                     onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) }
                                 )
@@ -279,19 +294,22 @@ private fun CashflowLedgerContent(
                         .fillMaxWidth()
                         .padding(bottom = 24.dp)
                 ) {
-                    // Record payment
-                    MobileActionItem(
-                        icon = Icons.Default.Payment,
-                        label = stringResource(Res.string.cashflow_action_record_payment),
-                        onClick = { onIntent(CashflowLedgerIntent.RecordPaymentFor(actionsEntry.id)) }
-                    )
-                    // Mark as paid
-                    MobileActionItem(
-                        icon = Icons.Default.CheckCircle,
-                        label = stringResource(Res.string.cashflow_action_mark_paid),
-                        onClick = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(actionsEntry.id)) }
-                    )
-                    // View document
+                    // Payment actions only in Upcoming mode
+                    if (state.filters.viewMode == CashflowViewMode.Upcoming) {
+                        // Record payment
+                        MobileActionItem(
+                            icon = Icons.Default.Payment,
+                            label = stringResource(Res.string.cashflow_action_record_payment),
+                            onClick = { onIntent(CashflowLedgerIntent.RecordPaymentFor(actionsEntry.id)) }
+                        )
+                        // Mark as paid
+                        MobileActionItem(
+                            icon = Icons.Default.CheckCircle,
+                            label = stringResource(Res.string.cashflow_action_mark_paid),
+                            onClick = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(actionsEntry.id)) }
+                        )
+                    }
+                    // View document (all modes)
                     MobileActionItem(
                         icon = Icons.Default.Description,
                         label = stringResource(Res.string.cashflow_action_view_document),
