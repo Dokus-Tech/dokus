@@ -215,7 +215,17 @@ internal class PeppolRegistrationContainer(
 
     private suspend fun PeppolRegistrationCtx.handleSkipSetup() {
         logger.d { "User skipped PEPPOL setup" }
-        // Navigate to home - user can set up PEPPOL later from settings
-        action(PeppolRegistrationAction.NavigateToHome)
+        // Record the skip decision to backend (sets status to External)
+        optOut().fold(
+            onSuccess = {
+                logger.d { "Skip recorded, navigating to home" }
+                action(PeppolRegistrationAction.NavigateToHome)
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to record skip, navigating anyway" }
+                // Still navigate - don't block user if optOut fails
+                action(PeppolRegistrationAction.NavigateToHome)
+            }
+        )
     }
 }

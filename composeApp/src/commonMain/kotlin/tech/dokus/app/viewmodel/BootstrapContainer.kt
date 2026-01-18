@@ -7,7 +7,9 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.config.ServerConfigManager
+import tech.dokus.domain.enums.PeppolRegistrationStatus
 import tech.dokus.features.auth.AuthInitializer
+import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias BootstrapCtx = PipelineContext<BootstrapState, BootstrapIntent, BootstrapAction>
@@ -28,6 +30,7 @@ internal class BootstrapContainer(
     private val authInitializer: AuthInitializer,
     private val tokenManager: TokenManager,
     private val serverConfigManager: ServerConfigManager,
+    private val getPeppolRegistration: GetPeppolRegistrationUseCase,
 ) : Container<BootstrapState, BootstrapIntent, BootstrapAction> {
 
     private val logger = Logger.forClass<BootstrapContainer>()
@@ -77,6 +80,13 @@ internal class BootstrapContainer(
             return
         }
 
+        // Step 6: Check Peppol onboarding
+        updateStep(BootstrapStepType.CheckingPeppol)
+        if (needsPeppolOnboarding()) {
+            action(BootstrapAction.NavigateToPeppolOnboarding)
+            return
+        }
+
         // All checks passed, navigate to main
         logger.i { "Bootstrap complete, navigating to main" }
         action(BootstrapAction.NavigateToMain)
@@ -109,5 +119,10 @@ internal class BootstrapContainer(
     private suspend fun needsTenantSelection(): Boolean {
         val claims = tokenManager.getCurrentClaims()
         return claims?.tenant == null
+    }
+
+    private suspend fun needsPeppolOnboarding(): Boolean {
+        val registration = getPeppolRegistration().getOrNull()
+        return registration == null || registration.status == PeppolRegistrationStatus.NotConfigured
     }
 }

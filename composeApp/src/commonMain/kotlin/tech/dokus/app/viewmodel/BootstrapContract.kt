@@ -52,6 +52,7 @@ data class BootstrapStep(
             BootstrapStep(BootstrapStepType.CheckUpdate, isActive = false, isCurrent = false),
             BootstrapStep(BootstrapStepType.CheckingLogin, isActive = false, isCurrent = false),
             BootstrapStep(BootstrapStepType.CheckingAccountStatus, isActive = false, isCurrent = false),
+            BootstrapStep(BootstrapStepType.CheckingPeppol, isActive = false, isCurrent = false),
         )
     }
 }
@@ -65,6 +66,7 @@ enum class BootstrapStepType {
     CheckUpdate,
     CheckingLogin,
     CheckingAccountStatus,
+    CheckingPeppol,
 }
 
 // ============================================================================
@@ -94,6 +96,9 @@ sealed interface BootstrapAction : MVIAction {
 
     /** User needs to select a tenant */
     data object NavigateToTenantSelection : BootstrapAction
+
+    /** User needs to complete Peppol onboarding */
+    data object NavigateToPeppolOnboarding : BootstrapAction
 
     /** Bootstrap complete, navigate to main app */
     data object NavigateToMain : BootstrapAction

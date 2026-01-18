@@ -47,6 +47,7 @@ import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.background.CalmParticleField
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CoreDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
 
@@ -59,6 +60,7 @@ private val BootstrapStepType.localized: String
         BootstrapStepType.CheckingLogin -> stringResource(Res.string.bootstrap_state_authenticating)
         BootstrapStepType.CheckUpdate -> stringResource(Res.string.bootstrap_state_app_version_check)
         BootstrapStepType.CheckingAccountStatus -> stringResource(Res.string.bootstrap_state_checking_account_status)
+        BootstrapStepType.CheckingPeppol -> "Setting up Peppol"
     }
 
 /**
@@ -79,6 +81,7 @@ internal fun SplashScreen(
                 AuthDestination.PendingConfirmAccount
             )
             BootstrapAction.NavigateToTenantSelection -> navController.replace(AuthDestination.WorkspaceSelect)
+            BootstrapAction.NavigateToPeppolOnboarding -> navController.replace(SettingsDestination.PeppolRegistration)
             BootstrapAction.NavigateToMain -> navController.replace(CoreDestination.Home)
         }
     }
