@@ -83,15 +83,18 @@ val cashflowViewModelModule = module {
             (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
         CashflowLedgerContainer(
             loadCashflowEntries = get(),
+            getCashflowOverview = get(),
             recordPayment = get(),
             highlightEntryId = highlightEntryId
         )
     }
     container<PeppolRegistrationContainer, PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction> {
         PeppolRegistrationContainer(
+            getCurrentTenant = get(),
             getRegistration = get(),
             verifyPeppolId = get(),
             enablePeppol = get(),
+            enableSendingOnly = get(),
             waitForTransfer = get(),
             optOut = get(),
             pollTransfer = get()

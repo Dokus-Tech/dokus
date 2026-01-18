@@ -5,22 +5,16 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.enums.PeppolRegistrationStatus
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.PeppolIdVerificationResult
-import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.foundation.app.state.DokusState
 
 /**
- * Contract for the PEPPOL Registration screen.
+ * Contract for the Peppol registration/settings flow.
  *
- * Manages the PEPPOL registration lifecycle with states for:
- * - Initial setup (welcome/OGM input)
- * - Verification result (blocked or can proceed)
- * - Active/Connected status
- * - Waiting for transfer
- * - External management
- * - Error states
+ * UX goals:
+ * - No VAT input (workspace already has VAT).
+ * - Minimal user effort; show the right next step automatically.
+ * - Provider names are never shown to users.
  */
 
 // ============================================================================
@@ -28,77 +22,54 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
+data class PeppolSetupContext(
+    val companyName: String,
+    /** Participant ID in `0208:BE...` format. */
+    val peppolId: String,
+    /** UX hint: surface that Peppol is a premium feature. */
+)
+
+@Immutable
 sealed interface PeppolRegistrationState : MVIState, DokusState<Nothing> {
 
-    /**
-     * Loading state - fetching current registration status.
-     */
     data object Loading : PeppolRegistrationState
 
-    /**
-     * Welcome state - no registration exists, show OGM input.
-     */
-    data class Welcome(
-        val enterpriseNumber: String = "",
-        val isVerifying: Boolean = false,
-        val verificationError: String? = null
+    data class Fresh(
+        val context: PeppolSetupContext,
+        val isEnabling: Boolean = false,
     ) : PeppolRegistrationState
 
-    /**
-     * Verification result - shows whether ID is available or blocked.
-     */
-    data class VerificationResult(
-        val result: PeppolIdVerificationResult,
-        val enterpriseNumber: String,
-        val isEnabling: Boolean = false
+    data class Activating(
+        val context: PeppolSetupContext,
     ) : PeppolRegistrationState
 
-    /**
-     * Active state - PEPPOL is connected and working.
-     */
     data class Active(
-        val registration: PeppolRegistrationDto
+        val context: PeppolSetupContext,
     ) : PeppolRegistrationState
 
-    /**
-     * Waiting for transfer from another provider.
-     */
+    data class Blocked(
+        val context: PeppolSetupContext,
+        val isWorking: Boolean = false,
+    ) : PeppolRegistrationState
+
     data class WaitingTransfer(
-        val registration: PeppolRegistrationDto,
-        val isPolling: Boolean = false
+        val context: PeppolSetupContext,
     ) : PeppolRegistrationState
 
-    /**
-     * Sending only - can send but cannot receive (blocked by another).
-     */
     data class SendingOnly(
-        val registration: PeppolRegistrationDto
+        val context: PeppolSetupContext,
     ) : PeppolRegistrationState
 
-    /**
-     * External - user opted to manage PEPPOL elsewhere.
-     */
     data class External(
-        val registration: PeppolRegistrationDto
+        val context: PeppolSetupContext,
     ) : PeppolRegistrationState
 
-    /**
-     * Pending - registration submitted, awaiting activation.
-     */
-    data class Pending(
-        val registration: PeppolRegistrationDto
-    ) : PeppolRegistrationState
-
-    /**
-     * Failed state - registration failed with error.
-     */
     data class Failed(
-        val registration: PeppolRegistrationDto
+        val context: PeppolSetupContext,
+        val message: String? = null,
+        val isRetrying: Boolean = false,
     ) : PeppolRegistrationState
 
-    /**
-     * Error state - failed to load initial data.
-     */
     data class Error(
         override val exception: DokusException,
         override val retryHandler: RetryHandler
@@ -111,30 +82,18 @@ sealed interface PeppolRegistrationState : MVIState, DokusState<Nothing> {
 
 @Immutable
 sealed interface PeppolRegistrationIntent : MVIIntent {
-
-    /** Refresh registration status */
     data object Refresh : PeppolRegistrationIntent
 
-    /** Update enterprise number input */
-    data class UpdateEnterpriseNumber(val value: String) : PeppolRegistrationIntent
-
-    /** Verify PEPPOL ID availability */
-    data object VerifyPeppolId : PeppolRegistrationIntent
-
-    /** Enable PEPPOL (start registration) */
     data object EnablePeppol : PeppolRegistrationIntent
-
-    /** Opt to wait for transfer */
+    data object EnableSendingOnly : PeppolRegistrationIntent
     data object WaitForTransfer : PeppolRegistrationIntent
 
-    /** Opt out of PEPPOL via Dokus */
-    data object OptOut : PeppolRegistrationIntent
-
-    /** Poll for transfer status */
     data object PollTransfer : PeppolRegistrationIntent
 
-    /** Go back to welcome screen */
-    data object BackToWelcome : PeppolRegistrationIntent
+    data object NotNow : PeppolRegistrationIntent
+    data object Continue : PeppolRegistrationIntent
+
+    data object Retry : PeppolRegistrationIntent
 }
 
 // ============================================================================
@@ -143,32 +102,7 @@ sealed interface PeppolRegistrationIntent : MVIIntent {
 
 @Immutable
 sealed interface PeppolRegistrationAction : MVIAction {
-
-    /** Show success message */
-    data class ShowSuccess(val message: String) : PeppolRegistrationAction
-
-    /** Show error message */
     data class ShowError(val error: DokusException) : PeppolRegistrationAction
-
-    /** Navigate back */
-    data object NavigateBack : PeppolRegistrationAction
+    data object NavigateToHome : PeppolRegistrationAction
 }
 
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-/**
- * Maps registration status to appropriate UI state.
- */
-internal fun PeppolRegistrationDto.toUiState(): PeppolRegistrationState {
-    return when (status) {
-        PeppolRegistrationStatus.NotConfigured -> PeppolRegistrationState.Welcome()
-        PeppolRegistrationStatus.Pending -> PeppolRegistrationState.Pending(this)
-        PeppolRegistrationStatus.Active -> PeppolRegistrationState.Active(this)
-        PeppolRegistrationStatus.WaitingTransfer -> PeppolRegistrationState.WaitingTransfer(this)
-        PeppolRegistrationStatus.SendingOnly -> PeppolRegistrationState.SendingOnly(this)
-        PeppolRegistrationStatus.External -> PeppolRegistrationState.External(this)
-        PeppolRegistrationStatus.Failed -> PeppolRegistrationState.Failed(this)
-    }
-}

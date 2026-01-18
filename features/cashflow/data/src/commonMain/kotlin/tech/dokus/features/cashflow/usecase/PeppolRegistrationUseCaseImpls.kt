@@ -5,6 +5,7 @@ import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.usecases.EnablePeppolSendingOnlyUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.features.cashflow.usecases.OptOutPeppolUseCase
@@ -41,9 +42,19 @@ internal class VerifyPeppolIdUseCaseImpl(
 internal class EnablePeppolUseCaseImpl(
     private val remoteDataSource: CashflowRemoteDataSource
 ) : EnablePeppolUseCase {
-    override suspend fun invoke(vatNumber: VatNumber): Result<PeppolRegistrationResponse> {
-        require(vatNumber.isValid) { "Invalid VAT number" }
-        return remoteDataSource.enablePeppol(vatNumber)
+    override suspend fun invoke(): Result<PeppolRegistrationResponse> {
+        return remoteDataSource.enablePeppol()
+    }
+}
+
+/**
+ * Implementation of [EnablePeppolSendingOnlyUseCase].
+ */
+internal class EnablePeppolSendingOnlyUseCaseImpl(
+    private val remoteDataSource: CashflowRemoteDataSource
+) : EnablePeppolSendingOnlyUseCase {
+    override suspend fun invoke(): Result<PeppolRegistrationResponse> {
+        return remoteDataSource.enablePeppolSendingOnly()
     }
 }
 

@@ -7,6 +7,7 @@ package tech.dokus.features.cashflow.datasource
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
+import tech.dokus.domain.exceptions.DokusException
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
 import io.ktor.client.plugins.resources.patch
@@ -26,6 +27,7 @@ import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
@@ -83,9 +85,6 @@ import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.domain.routes.Peppol
-
-/** HTTP status code indicating the resource was not found */
-private const val HttpNotFound = 404
 
 /** Limit for fetching a single Peppol transmission for an invoice */
 private const val SingleTransmissionLimit = 1
@@ -515,14 +514,20 @@ internal class CashflowRemoteDataSourceImpl(
     // ============================================================================
 
     override suspend fun getCashflowOverview(
+        viewMode: CashflowViewMode,
         fromDate: LocalDate,
-        toDate: LocalDate
+        toDate: LocalDate,
+        direction: CashflowDirection?,
+        statuses: List<CashflowEntryStatus>?
     ): Result<CashflowOverview> {
         return runCatching {
             httpClient.get(
                 Cashflow.Overview(
+                    viewMode = viewMode,
                     fromDate = fromDate,
-                    toDate = toDate
+                    toDate = toDate,
+                    direction = direction,
+                    statuses = statuses
                 )
             ).body()
         }
@@ -533,10 +538,11 @@ internal class CashflowRemoteDataSourceImpl(
     // ============================================================================
 
     override suspend fun listCashflowEntries(
+        viewMode: CashflowViewMode?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
         direction: CashflowDirection?,
-        status: CashflowEntryStatus?,
+        statuses: List<CashflowEntryStatus>?,
         sourceType: CashflowSourceType?,
         entryId: CashflowEntryId?,
         limit: Int,
@@ -545,12 +551,13 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             httpClient.get(
                 Cashflow.Entries(
+                    viewMode = viewMode,
                     fromDate = fromDate,
                     toDate = toDate,
-                    direction = direction?.name,
-                    status = status?.name,
-                    sourceType = sourceType?.name,
-                    entryId = entryId?.toString(),
+                    direction = direction,
+                    statuses = statuses,
+                    sourceType = sourceType,
+                    entryId = entryId,
                     limit = limit,
                     offset = offset
                 )
@@ -745,13 +752,13 @@ internal class CashflowRemoteDataSourceImpl(
     }
 
     override suspend fun getPeppolSettings(): Result<PeppolSettingsDto?> {
-        return runCatching {
-            val response = httpClient.get(Peppol.Settings())
-            if (response.status.value == HttpNotFound) {
-                null
-            } else {
-                response.body<PeppolSettingsDto>()
-            }
+        return try {
+            Result.success(httpClient.get(Peppol.Settings()).body<PeppolSettingsDto>())
+        } catch (e: DokusException.NotFound) {
+            // 404 means no settings exist yet
+            Result.success(null)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -836,13 +843,14 @@ internal class CashflowRemoteDataSourceImpl(
     // ----- PEPPOL Registration (Phase B) -----
 
     override suspend fun getPeppolRegistration(): Result<PeppolRegistrationDto?> {
-        return runCatching {
-            val response = httpClient.get(Peppol.Registration())
-            if (response.status.value == HttpNotFound) {
-                null
-            } else {
-                response.body<PeppolRegistrationDto>()
-            }
+        return try {
+            val response = httpClient.get(Peppol.Registration()).body<PeppolRegistrationResponse>()
+            Result.success(response.registration)
+        } catch (e: DokusException.NotFound) {
+            // 404 means no registration exists - this is expected for new users
+            Result.success(null)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -855,12 +863,15 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun enablePeppol(vatNumber: VatNumber): Result<PeppolRegistrationResponse> {
+    override suspend fun enablePeppol(): Result<PeppolRegistrationResponse> {
         return runCatching {
-            httpClient.post(Peppol.Enable()) {
-                contentType(ContentType.Application.Json)
-                setBody(tech.dokus.domain.model.EnablePeppolRequest(vatNumber = vatNumber))
-            }.body()
+            httpClient.post(Peppol.Enable()).body()
+        }
+    }
+
+    override suspend fun enablePeppolSendingOnly(): Result<PeppolRegistrationResponse> {
+        return runCatching {
+            httpClient.post(Peppol.EnableSendingOnly()).body()
         }
     }
 

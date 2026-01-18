@@ -134,6 +134,14 @@ class Peppol {
     class Enable(val parent: Peppol = Peppol())
 
     /**
+     * POST /api/v1/peppol/enable-sending-only
+     * Enable PEPPOL sending only (receiving remains with another provider)
+     */
+    @Serializable
+    @Resource("enable-sending-only")
+    class EnableSendingOnly(val parent: Peppol = Peppol())
+
+    /**
      * POST /api/v1/peppol/wait-for-transfer
      * Opt to wait for PEPPOL ID transfer from another provider
      */

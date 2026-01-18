@@ -1,11 +1,15 @@
 package tech.dokus.backend.services.cashflow
 
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -172,23 +176,30 @@ class CashflowEntriesService(
 
     /**
      * List cashflow entries with optional filters.
+     *
+     * @param viewMode Determines date field filtering:
+     *                 - Upcoming: filter by eventDate, sort ASC
+     *                 - History: filter by paidAt, sort DESC
+     * @param statuses Multi-status filter (e.g., [Open, Overdue])
      */
     suspend fun listEntries(
         tenantId: TenantId,
+        viewMode: CashflowViewMode? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         direction: CashflowDirection? = null,
-        status: CashflowEntryStatus? = null
+        statuses: List<CashflowEntryStatus>? = null
     ): Result<List<CashflowEntry>> {
         logger.debug(
-            "Listing cashflow entries for tenant: {} (from={}, to={}, direction={}, status={})",
+            "Listing cashflow entries for tenant: {} (viewMode={}, from={}, to={}, direction={}, statuses={})",
             tenantId,
+            viewMode,
             fromDate,
             toDate,
             direction,
-            status
+            statuses
         )
-        return cashflowEntriesRepository.listEntries(tenantId, fromDate, toDate, direction, status)
+        return cashflowEntriesRepository.listEntries(tenantId, viewMode, fromDate, toDate, direction, statuses)
             .onSuccess { logger.debug("Retrieved ${it.size} cashflow entries") }
             .onFailure { logger.error("Failed to list cashflow entries for tenant: $tenantId", it) }
     }
@@ -196,6 +207,8 @@ class CashflowEntriesService(
     /**
      * Record a payment against a cashflow entry.
      * Updates the remaining amount and status accordingly.
+     *
+     * INVARIANT: When transitioning to PAID, paidAt is set to current UTC time.
      */
     suspend fun recordPayment(
         entryId: CashflowEntryId,
@@ -209,16 +222,25 @@ class CashflowEntriesService(
             ?: return Result.failure(IllegalArgumentException("Cashflow entry not found: $entryId"))
 
         val newRemaining = entry.remainingAmount - paymentAmount
+        val isNowFullyPaid = newRemaining.minor <= 0
         val newStatus = when {
-            newRemaining.minor <= 0 -> CashflowEntryStatus.Paid
+            isNowFullyPaid -> CashflowEntryStatus.Paid
             else -> entry.status // Keep current status (Open/Overdue)
+        }
+
+        // Set paidAt ONLY when transitioning to fully paid
+        val paidAt = if (isNowFullyPaid && entry.status != CashflowEntryStatus.Paid) {
+            Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        } else {
+            entry.paidAt
         }
 
         return cashflowEntriesRepository.updateRemainingAmountAndStatus(
             entryId = entryId,
             tenantId = tenantId,
             newRemainingAmount = if (newRemaining.isNegative) Money.ZERO else newRemaining,
-            newStatus = newStatus
+            newStatus = newStatus,
+            paidAt = paidAt
         )
             .onSuccess { logger.info("Payment recorded for cashflow entry: $entryId, new status: $newStatus") }
             .onFailure { logger.error("Failed to record payment for cashflow entry: $entryId", it) }

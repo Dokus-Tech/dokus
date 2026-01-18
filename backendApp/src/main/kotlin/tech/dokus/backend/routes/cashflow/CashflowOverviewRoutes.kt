@@ -25,10 +25,14 @@ internal fun Route.cashflowOverviewRoutes() {
         get<Cashflow.Overview> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
 
+            // Enums are used directly from route - no parsing needed
             val overview = cashflowOverviewService.getCashflowOverview(
                 tenantId = tenantId,
+                viewMode = route.viewMode,
                 fromDate = route.fromDate,
-                toDate = route.toDate
+                toDate = route.toDate,
+                direction = route.direction,
+                statuses = route.statuses
             ).getOrElse { throw DokusException.InternalError("Failed to calculate overview: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, overview)

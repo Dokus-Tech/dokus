@@ -1,48 +1,41 @@
 package tech.dokus.features.cashflow.presentation.peppol.screen
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.common.AnimatedCheck
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.PCopyRow
+import tech.dokus.foundation.aura.components.common.WaitingIndicator
+import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
+import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
 internal fun PeppolRegistrationScreen(
@@ -59,21 +52,27 @@ internal fun PeppolRegistrationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .limitWidthCenteredContent(),
+            contentAlignment = Alignment.Center,
         ) {
             when (state) {
-                is PeppolRegistrationState.Loading -> LoadingContent()
-                is PeppolRegistrationState.Welcome -> WelcomeContent(state, onIntent)
-                is PeppolRegistrationState.VerificationResult -> VerificationResultContent(state, onIntent)
-                is PeppolRegistrationState.Active -> ActiveContent(state.registration)
-                is PeppolRegistrationState.WaitingTransfer -> WaitingTransferContent(state, onIntent)
-                is PeppolRegistrationState.SendingOnly -> SendingOnlyContent(state.registration)
-                is PeppolRegistrationState.External -> ExternalContent(state.registration)
-                is PeppolRegistrationState.Pending -> PendingContent(state.registration)
-                is PeppolRegistrationState.Failed -> FailedContent(state.registration, onIntent)
+                PeppolRegistrationState.Loading -> LoadingContent()
+                is PeppolRegistrationState.Fresh -> FreshContent(state, onIntent)
+                is PeppolRegistrationState.Activating -> ActivatingContent(onIntent)
+                is PeppolRegistrationState.Active -> ActiveContent(state, onIntent)
+                is PeppolRegistrationState.Blocked -> BlockedContent(state, onIntent)
+                is PeppolRegistrationState.WaitingTransfer -> WaitingTransferContent(
+                    state,
+                    onIntent
+                )
+
+                is PeppolRegistrationState.SendingOnly -> SendingOnlyContent(state, onIntent)
+                is PeppolRegistrationState.External -> ExternalContent(onIntent)
+                is PeppolRegistrationState.Failed -> FailedContent(state, onIntent)
                 is PeppolRegistrationState.Error -> DokusErrorContent(
                     exception = state.exception,
                     retryHandler = state.retryHandler,
-                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                    modifier = Modifier.fillMaxWidth().padding(Constrains.Spacing.large)
                 )
             }
         }
@@ -82,514 +81,286 @@ internal fun PeppolRegistrationScreen(
 
 @Composable
 private fun LoadingContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
+    CircularProgressIndicator()
 }
 
 @Composable
-private fun WelcomeContent(
-    state: PeppolRegistrationState.Welcome,
-    onIntent: (PeppolRegistrationIntent) -> Unit
+private fun FreshContent(
+    state: PeppolRegistrationState.Fresh,
+    onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(48.dp))
-
-        Text(
-            text = "Enable PEPPOL E-Invoicing",
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Connect your business to the PEPPOL network to send and receive e-invoices automatically.",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+    PeppolCenteredFlow(
+        icon = { PeppolCircle() },
+        title = "Enable Peppol",
+        subtitle = "Receive invoices automatically in Dokus.",
+        primary = {
+            POutlinedButton(
+                text = if (state.isEnabling) "Enabling…" else "Enable",
+                enabled = !state.isEnabling,
+                isLoading = state.isEnabling,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onIntent(PeppolRegistrationIntent.EnablePeppol) }
             )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
+        },
+        secondary = {
+            TextButton(onClick = { onIntent(PeppolRegistrationIntent.NotNow) }) {
+                Text(
+                    text = "Not now",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                )
+            }
+        },
+        footnote = "You can enable this later in Settings.",
+    )
+}
+
+@Composable
+private fun ActivatingContent(
+    onIntent: (PeppolRegistrationIntent) -> Unit,
+) {
+    PeppolCenteredFlow(
+        icon = { PeppolSpinner() },
+        title = "Enabling Peppol",
+        subtitle = "Connecting your inbox.",
+        primary = {
+            POutlinedButton(
+                text = "Continue",
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onIntent(PeppolRegistrationIntent.Continue) }
+            )
+        },
+        body = {
+            Text(
+                text = "This can take a moment.\nYou can continue working.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.textMuted,
+                textAlign = TextAlign.Center,
+            )
+        }
+    )
+}
+
+@Composable
+private fun ActiveContent(
+    state: PeppolRegistrationState.Active,
+    onIntent: (PeppolRegistrationIntent) -> Unit,
+) {
+    var detailsExpanded by remember { mutableStateOf(false) }
+
+    PeppolCenteredFlow(
+        icon = { AnimatedCheck(play = true) },
+        title = "Peppol active",
+        subtitle = "Inbox connected. Sending enabled.",
+        primary = {
+            POutlinedButton(
+                text = "Continue",
+                onClick = { onIntent(PeppolRegistrationIntent.Continue) }
+            )
+        },
+        details = {
+            PCollapsibleSection(
+                title = "Details",
+                isExpanded = detailsExpanded,
+                onToggle = { detailsExpanded = !detailsExpanded }
+            ) {
+                PCopyRow(label = "Peppol ID", value = state.context.peppolId)
+            }
+        }
+    )
+}
+
+@Composable
+private fun BlockedContent(
+    state: PeppolRegistrationState.Blocked,
+    onIntent: (PeppolRegistrationIntent) -> Unit,
+) {
+    var transferExpanded by remember { mutableStateOf(false) }
+
+    PeppolCenteredFlow(
+        icon = { PeppolCircle() },
+        title = "Peppol already connected",
+        subtitle = "Your inbox is connected to another service.",
+        body = {
+            Text(
+                text = "To receive invoices in Dokus, request a transfer from your current provider.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.textMuted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = Constrains.Spacing.medium)
+            )
+        },
+        primary = {
+            POutlinedButton(
+                text = "Transfer inbox to Dokus",
+                enabled = !state.isWorking,
+                isLoading = state.isWorking,
+                onClick = { onIntent(PeppolRegistrationIntent.WaitForTransfer) }
+            )
+        },
+        secondary = {
+            TextButton(
+                onClick = { onIntent(PeppolRegistrationIntent.EnableSendingOnly) },
+                enabled = !state.isWorking
             ) {
                 Text(
-                    text = "Enter your enterprise number",
-                    style = MaterialTheme.typography.titleMedium
+                    text = "Enable sending only",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = state.enterpriseNumber,
-                    onValueChange = { onIntent(PeppolRegistrationIntent.UpdateEnterpriseNumber(it)) },
-                    label = { Text("Enterprise Number (OGM)") },
-                    placeholder = { Text("0123456789") },
-                    isError = state.verificationError != null,
-                    supportingText = state.verificationError?.let { { Text(it) } },
-                    enabled = !state.isVerifying,
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = { onIntent(PeppolRegistrationIntent.VerifyPeppolId) },
-                    enabled = state.enterpriseNumber.isNotBlank() && !state.isVerifying,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (state.isVerifying) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text(if (state.isVerifying) "Verifying..." else "Check Availability")
-                }
             }
-        }
-    }
-}
-
-@Composable
-private fun VerificationResultContent(
-    state: PeppolRegistrationState.VerificationResult,
-    onIntent: (PeppolRegistrationIntent) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(48.dp))
-
-        if (state.result.canProceed) {
-            // ID is available
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(64.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "PEPPOL ID Available",
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Your PEPPOL ID (${state.result.peppolId}) is available for registration.",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = { onIntent(PeppolRegistrationIntent.EnablePeppol) },
-                enabled = !state.isEnabling,
-                modifier = Modifier.fillMaxWidth()
+        },
+        details = {
+            PCollapsibleSection(
+                title = "Transfer request",
+                isExpanded = transferExpanded,
+                onToggle = { transferExpanded = !transferExpanded }
             ) {
-                if (state.isEnabling) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Text(if (state.isEnabling) "Enabling..." else "Enable PEPPOL")
-            }
-        } else {
-            // ID is blocked
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(64.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "PEPPOL ID Already Registered",
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Your PEPPOL ID (${state.result.peppolId}) is currently registered with ${state.result.blockedBy ?: "another provider"}.",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                TransferEmailCard(
+                    companyName = state.context.companyName,
+                    peppolId = state.context.peppolId,
                 )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "What would you like to do?",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = { onIntent(PeppolRegistrationIntent.WaitForTransfer) },
-                        enabled = !state.isEnabling,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Wait for Transfer")
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Choose this if you plan to transfer your PEPPOL registration from your current provider.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedButton(
-                        onClick = { onIntent(PeppolRegistrationIntent.OptOut) },
-                        enabled = !state.isEnabling,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Manage Externally")
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Choose this if you prefer to keep your current PEPPOL provider.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextButton(
-            onClick = { onIntent(PeppolRegistrationIntent.BackToWelcome) },
-            enabled = !state.isEnabling
-        ) {
-            Text("Back")
-        }
-    }
-}
-
-@Composable
-private fun ActiveContent(registration: PeppolRegistrationDto) {
-    StatusContent(
-        icon = Icons.Default.CheckCircle,
-        iconTint = MaterialTheme.colorScheme.primary,
-        title = "PEPPOL Connected",
-        subtitle = "Your business is connected to the PEPPOL network.",
-        registration = registration,
-        capabilities = listOf(
-            "Can receive invoices" to registration.canReceive,
-            "Can send invoices" to registration.canSend
-        )
     )
 }
 
 @Composable
 private fun WaitingTransferContent(
     state: PeppolRegistrationState.WaitingTransfer,
-    onIntent: (PeppolRegistrationIntent) -> Unit
+    onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(48.dp))
+    var transferExpanded by remember { mutableStateOf(false) }
 
-        Icon(
-            imageVector = Icons.Default.HourglassEmpty,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(64.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Waiting for Transfer",
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "We're waiting for your PEPPOL registration to be transferred from your current provider.",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        RegistrationInfoCard(state.registration)
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = { onIntent(PeppolRegistrationIntent.PollTransfer) },
-            enabled = !state.isPolling,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isPolling) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+    PeppolCenteredFlow(
+        icon = { WaitingIndicator() },
+        title = "Waiting for transfer",
+        subtitle = "We'll connect automatically once your inbox is released.",
+        body = {
+            Text(
+                text = "This can take up to 48 hours.\nYou can close this screen.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.textMuted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = Constrains.Spacing.large)
+            )
+        },
+        primary = {
+            POutlinedButton(
+                text = "Continue",
+                onClick = { onIntent(PeppolRegistrationIntent.Continue) }
+            )
+        },
+        details = {
+            PCollapsibleSection(
+                title = "Transfer request",
+                isExpanded = transferExpanded,
+                onToggle = { transferExpanded = !transferExpanded }
+            ) {
+                TransferEmailCard(
+                    companyName = state.context.companyName,
+                    peppolId = state.context.peppolId,
                 )
-                Spacer(modifier = Modifier.width(8.dp))
             }
-            Text(if (state.isPolling) "Checking..." else "Check Status")
         }
-    }
-}
-
-@Composable
-private fun SendingOnlyContent(registration: PeppolRegistrationDto) {
-    StatusContent(
-        icon = Icons.Default.Send,
-        iconTint = MaterialTheme.colorScheme.tertiary,
-        title = "Sending Only",
-        subtitle = "You can send invoices via PEPPOL, but receiving is managed by another provider.",
-        registration = registration,
-        capabilities = listOf(
-            "Can receive invoices" to registration.canReceive,
-            "Can send invoices" to registration.canSend
-        )
     )
 }
 
 @Composable
-private fun ExternalContent(registration: PeppolRegistrationDto) {
-    StatusContent(
-        icon = Icons.Default.Info,
-        iconTint = MaterialTheme.colorScheme.secondary,
-        title = "Managed Externally",
-        subtitle = "Your PEPPOL registration is managed by another provider.",
-        registration = registration
+private fun SendingOnlyContent(
+    state: PeppolRegistrationState.SendingOnly,
+    onIntent: (PeppolRegistrationIntent) -> Unit,
+) {
+    var detailsExpanded by remember { mutableStateOf(false) }
+
+    PeppolCenteredFlow(
+        icon = { AnimatedCheck(play = true) },
+        title = "Peppol sending enabled",
+        subtitle = "You can send invoices via Peppol.\nIncoming invoices go to your other service.",
+        primary = {
+            POutlinedButton(
+                text = "Continue",
+                onClick = { onIntent(PeppolRegistrationIntent.Continue) }
+            )
+        },
+        details = {
+            PCollapsibleSection(
+                title = "Details",
+                isExpanded = detailsExpanded,
+                onToggle = { detailsExpanded = !detailsExpanded }
+            ) {
+                PCopyRow(label = "Peppol ID", value = state.context.peppolId)
+            }
+        }
     )
 }
 
 @Composable
-private fun PendingContent(registration: PeppolRegistrationDto) {
-    StatusContent(
-        icon = Icons.Default.HourglassEmpty,
-        iconTint = MaterialTheme.colorScheme.primary,
-        title = "Registration Pending",
-        subtitle = "Your PEPPOL registration is being processed. This usually takes a few minutes.",
-        registration = registration
+private fun ExternalContent(
+    onIntent: (PeppolRegistrationIntent) -> Unit,
+) {
+    PeppolCenteredFlow(
+        icon = {
+            PeppolCircle {
+                Box(
+                    modifier = Modifier
+                        .width(20.dp)
+                        .height(1.5.dp)
+                        .clip(RoundedCornerShape(1.dp))
+                        .background(MaterialTheme.colorScheme.textMuted)
+                )
+            }
+        },
+        title = "Peppol not enabled",
+        subtitle = "Dokus won't send or receive Peppol invoices.",
+        primary = {
+            POutlinedButton(
+                text = "Continue",
+                onClick = { onIntent(PeppolRegistrationIntent.Continue) }
+            )
+        },
+        secondary = {
+            TextButton(onClick = { onIntent(PeppolRegistrationIntent.EnablePeppol) }) {
+                Text(
+                    text = "Enable Peppol",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                )
+            }
+        }
     )
 }
 
 @Composable
 private fun FailedContent(
-    registration: PeppolRegistrationDto,
-    onIntent: (PeppolRegistrationIntent) -> Unit
+    state: PeppolRegistrationState.Failed,
+    onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(48.dp))
-
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(64.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Registration Failed",
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = registration.errorMessage ?: "An error occurred during PEPPOL registration.",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = { onIntent(PeppolRegistrationIntent.BackToWelcome) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Try Again")
-        }
-    }
-}
-
-@Composable
-private fun StatusContent(
-    icon: ImageVector,
-    iconTint: androidx.compose.ui.graphics.Color,
-    title: String,
-    subtitle: String,
-    registration: PeppolRegistrationDto,
-    capabilities: List<Pair<String, Boolean>> = emptyList()
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(48.dp))
-
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = iconTint,
-            modifier = Modifier.size(64.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        RegistrationInfoCard(registration)
-
-        if (capabilities.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Capabilities",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    capabilities.forEach { (label, enabled) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(label)
-                            Icon(
-                                imageVector = if (enabled) Icons.Default.CheckCircle else Icons.Default.Error,
-                                contentDescription = null,
-                                tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
+    PeppolCenteredFlow(
+        icon = {
+            PeppolCircle {
+                PeppolCloseIcon()
             }
-        }
-    }
-}
-
-@Composable
-private fun RegistrationInfoCard(registration: PeppolRegistrationDto) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "PEPPOL ID",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        title = "Couldn't enable Peppol",
+        subtitle = "Something went wrong while connecting.",
+        primary = {
+            POutlinedButton(
+                text = "Try again",
+                isLoading = state.isRetrying,
+                enabled = !state.isRetrying,
+                onClick = { onIntent(PeppolRegistrationIntent.Retry) }
             )
-            Text(
-                text = registration.peppolId,
-                style = MaterialTheme.typography.bodyLarge
-            )
-
-            if (registration.testMode) {
-                Spacer(modifier = Modifier.height(8.dp))
+        },
+        secondary = {
+            TextButton(onClick = { onIntent(PeppolRegistrationIntent.NotNow) }) {
                 Text(
-                    text = "Test Mode",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.tertiary
+                    text = "Skip for now",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
                 )
             }
-        }
-    }
+        },
+        footnote = "If this keeps happening, contact support.",
+    )
 }

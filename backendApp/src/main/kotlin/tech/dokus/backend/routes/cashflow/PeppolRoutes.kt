@@ -376,16 +376,21 @@ internal fun Route.peppolRoutes() {
          */
         post<Peppol.Enable> {
             val tenantId = dokusPrincipal.requireTenantId()
-            val request = call.receive<tech.dokus.domain.model.EnablePeppolRequest>()
+            val result = peppolRegistrationService.enablePeppol(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
 
-            val tenant = tenantRepository.findById(tenantId)
-                ?: throw DokusException.NotFound("Tenant not found")
+            call.respond(HttpStatusCode.OK, result)
+        }
 
-            val result = peppolRegistrationService.enablePeppol(
-                tenantId = tenantId,
-                request = request,
-                companyName = tenant.legalName.value
-            ).getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
+        /**
+         * POST /api/v1/peppol/enable-sending-only
+         * Enable PEPPOL sending only (when receiving is blocked elsewhere).
+         */
+        post<Peppol.EnableSendingOnly> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            val result = peppolRegistrationService.enableSendingOnly(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL sending-only: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, result)
         }

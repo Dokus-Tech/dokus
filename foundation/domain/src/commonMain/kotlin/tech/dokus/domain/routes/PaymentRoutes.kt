@@ -3,6 +3,7 @@ package tech.dokus.domain.routes
 import io.ktor.resources.*
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.PaymentStatus
 
 /**
  * Type-safe route definitions for Payment API.
@@ -13,7 +14,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Resource("/api/v1/payments")
 class Payments(
-    val status: String? = null,
+    val status: PaymentStatus? = null,
     val fromDate: LocalDate? = null,
     val toDate: LocalDate? = null,
     val limit: Int = 50,

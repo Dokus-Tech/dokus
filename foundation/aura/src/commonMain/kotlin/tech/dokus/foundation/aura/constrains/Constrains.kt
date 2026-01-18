@@ -18,7 +18,7 @@ object Constrains {
     val largeScreenWidth = 980.dp
     val largeScreenDefaultWidth = 1280.dp
     val largeScreenHeight = 840.dp
-    val centeredContentMaxWidth = 360.dp
+    val centeredContentMaxWidth = 420.dp
 
     /**
      * Breakpoint values for responsive layouts.

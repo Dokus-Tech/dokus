@@ -59,6 +59,10 @@ object CashflowEntriesTable : UUIDTable("cashflow_entries") {
     // Status
     val status = dbEnumeration<CashflowEntryStatus>("status").default(CashflowEntryStatus.Open).index()
 
+    // Paid timestamp (UTC) - set when entry becomes fully PAID
+    // INVARIANT: If status == PAID, paidAt MUST be non-null
+    val paidAt = datetime("paid_at").nullable().index()
+
     // Counterparty (customer for invoices, vendor for bills/expenses)
     val counterpartyId = uuid("counterparty_id")
         .references(ContactsTable.id, onDelete = ReferenceOption.SET_NULL)
@@ -76,5 +80,7 @@ object CashflowEntriesTable : UUIDTable("cashflow_entries") {
         index(false, tenantId, status)
         index(false, tenantId, direction)
         index(false, tenantId, direction, status)
+        // History queries filter by paidAt
+        index(false, tenantId, paidAt)
     }
 }

@@ -7,17 +7,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationAction
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationContainer
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
 import tech.dokus.features.cashflow.presentation.peppol.screen.PeppolRegistrationScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.replace
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun PeppolRegistrationRoute(
@@ -26,7 +31,6 @@ internal fun PeppolRegistrationRoute(
     val navController = LocalNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
-    var pendingSuccess by remember { mutableStateOf<String?>(null) }
 
     // Show error messages
     val errorMessage = pendingError?.localized
@@ -37,19 +41,10 @@ internal fun PeppolRegistrationRoute(
         }
     }
 
-    // Show success messages
-    LaunchedEffect(pendingSuccess) {
-        pendingSuccess?.let {
-            snackbarHostState.showSnackbar(it)
-            pendingSuccess = null
-        }
-    }
-
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is PeppolRegistrationAction.ShowError -> pendingError = action.error
-            is PeppolRegistrationAction.ShowSuccess -> pendingSuccess = action.message
-            is PeppolRegistrationAction.NavigateBack -> navController.popBackStack()
+            is PeppolRegistrationAction.NavigateToHome -> navController.replace(CoreDestination.Home)
         }
     }
 
@@ -58,6 +53,15 @@ internal fun PeppolRegistrationRoute(
     // Load registration status on first composition
     LaunchedEffect(Unit) {
         container.store.intent(PeppolRegistrationIntent.Refresh)
+    }
+
+    // Poll for transfer completion while the user is on the waiting screen.
+    LaunchedEffect(state) {
+        if (state !is PeppolRegistrationState.WaitingTransfer) return@LaunchedEffect
+        while (true) {
+            delay(30.seconds)
+            container.store.intent(PeppolRegistrationIntent.PollTransfer)
+        }
     }
 
     PeppolRegistrationScreen(
