@@ -1,93 +1,121 @@
 package tech.dokus.features.cashflow.presentation.ledger.screen
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_ledger_empty_hint
-import tech.dokus.aura.resources.cashflow_ledger_empty_title
-import tech.dokus.aura.resources.cashflow_ledger_filter_custom
-import tech.dokus.aura.resources.cashflow_ledger_filter_next_3_months
-import tech.dokus.aura.resources.cashflow_ledger_filter_this_month
-import tech.dokus.aura.resources.cashflow_ledger_filter_in
-import tech.dokus.aura.resources.cashflow_ledger_filter_out
-import tech.dokus.aura.resources.cashflow_ledger_filter_open
-import tech.dokus.aura.resources.cashflow_ledger_filter_paid
-import tech.dokus.aura.resources.cashflow_ledger_filter_overdue
-import tech.dokus.aura.resources.cashflow_ledger_filter_cancelled
-import tech.dokus.aura.resources.documents_filter_all
-import tech.dokus.domain.enums.CashflowDirection
-import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.aura.resources.cashflow_action_mark_paid
+import tech.dokus.aura.resources.cashflow_action_record_payment
+import tech.dokus.aura.resources.cashflow_action_view_document
+import tech.dokus.aura.resources.cashflow_empty_history
+import tech.dokus.aura.resources.cashflow_empty_history_in
+import tech.dokus.aura.resources.cashflow_empty_history_out
+import tech.dokus.aura.resources.cashflow_empty_upcoming
+import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
+import tech.dokus.aura.resources.cashflow_empty_upcoming_in
+import tech.dokus.aura.resources.cashflow_empty_upcoming_out
 import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
-import tech.dokus.features.cashflow.presentation.common.components.filters.DokusFilterChipRow
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowDetailPane
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerHeaderRow
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerMobileRow
-import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerOverview
+import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerSkeleton
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerTableRow
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowFilters
+import tech.dokus.features.cashflow.presentation.ledger.components.CashflowSummarySection
+import tech.dokus.features.cashflow.presentation.ledger.components.CashflowViewModeFilter
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
-import tech.dokus.features.cashflow.presentation.ledger.mvi.DateRangeFilter
+import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
+import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CashflowLedgerScreen(
     state: CashflowLedgerState,
     onIntent: (CashflowLedgerIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        when (state) {
-            is CashflowLedgerState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+    val isLargeScreen = LocalScreenSize.current.isLarge
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        modifier = modifier
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when (state) {
+                is CashflowLedgerState.Loading -> {
+                    CashflowLedgerSkeleton(
+                        showHeader = isLargeScreen,
+                        rowCount = 5,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                    )
                 }
-            }
 
-            is CashflowLedgerState.Content -> {
-                CashflowLedgerContent(
-                    state = state,
-                    onIntent = onIntent
-                )
-            }
+                is CashflowLedgerState.Content -> {
+                    CashflowLedgerContent(
+                        state = state,
+                        onIntent = onIntent
+                    )
+                }
 
-            is CashflowLedgerState.Error -> {
-                DokusErrorContent(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                )
+                is CashflowLedgerState.Error -> {
+                    DokusErrorContent(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    )
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CashflowLedgerContent(
     state: CashflowLedgerState.Content,
@@ -114,84 +142,106 @@ private fun CashflowLedgerContent(
     val selectedEntry = state.entries.data.find { it.id == state.selectedEntryId }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Single unified surface for all content
-        DokusTableSurface(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-            header = null // We handle sections inside
         ) {
-            // Overview section (status bar only)
-            CashflowLedgerOverview(
-                entries = state.entries.data,
-                modifier = Modifier.padding(16.dp)
+            // Summary section (outside surface)
+            CashflowSummarySection(
+                summary = state.summary,
+                viewMode = state.filters.viewMode
             )
 
-            DokusTableDivider()
-
-            // Filters section
-            CashflowFiltersBar(
-                filters = state.filters,
-                onDateRangeChange = { onIntent(CashflowLedgerIntent.UpdateDateRangeFilter(it)) },
-                onDirectionChange = { onIntent(CashflowLedgerIntent.UpdateDirectionFilter(it)) },
-                onStatusChange = { onIntent(CashflowLedgerIntent.UpdateStatusFilter(it)) },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            // Filters (outside surface)
+            CashflowViewModeFilter(
+                viewMode = state.filters.viewMode,
+                direction = state.filters.direction,
+                onViewModeChange = { onIntent(CashflowLedgerIntent.SetViewMode(it)) },
+                onDirectionChange = { onIntent(CashflowLedgerIntent.SetDirectionFilter(it)) }
             )
 
-            DokusTableDivider()
+            Spacer(Modifier.height(8.dp))
 
-            // Table header (desktop only)
-            if (isLargeScreen) {
-                CashflowLedgerHeaderRow()
-                DokusTableDivider()
-            }
-
-            // Table body OR empty state - both inside the surface
-            if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
-                DokusEmptyState(
-                    title = stringResource(Res.string.cashflow_ledger_empty_title),
-                    subtitle = stringResource(Res.string.cashflow_ledger_empty_hint),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(32.dp)
-                )
-            } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    itemsIndexed(
-                        items = state.entries.data,
-                        key = { _, entry -> entry.id.toString() }
-                    ) { index, entry ->
-                        if (isLargeScreen) {
-                            CashflowLedgerTableRow(
-                                entry = entry,
-                                isHighlighted = entry.id == state.highlightedEntryId,
-                                onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) }
-                            )
-                        } else {
-                            CashflowLedgerMobileRow(
-                                entry = entry,
-                                onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) }
-                            )
-                        }
-
-                        if (index < state.entries.data.size - 1) {
-                            DokusTableDivider()
-                        }
+            // Table surface (data only)
+            DokusTableSurface(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                header = if (isLargeScreen) {
+                    { CashflowLedgerHeaderRow() }
+                } else null
+            ) {
+                // Table body OR empty state
+                if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
+                    // Context-aware empty state based on current filters
+                    val emptyStateTitle = getEmptyStateTitle(
+                        viewMode = state.filters.viewMode,
+                        direction = state.filters.direction
+                    )
+                    // Hint only shown for Upcoming + All
+                    val emptyStateHint = if (
+                        state.filters.viewMode == CashflowViewMode.Upcoming &&
+                        state.filters.direction == DirectionFilter.All
+                    ) {
+                        stringResource(Res.string.cashflow_empty_upcoming_hint)
+                    } else {
+                        null
                     }
 
-                    if (state.entries.isLoadingMore) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    DokusEmptyState(
+                        title = emptyStateTitle,
+                        subtitle = emptyStateHint,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(32.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        itemsIndexed(
+                            items = state.entries.data,
+                            key = { _, entry -> entry.id.toString() }
+                        ) { index, entry ->
+                            if (isLargeScreen) {
+                                CashflowLedgerTableRow(
+                                    entry = entry,
+                                    isHighlighted = entry.id == state.highlightedEntryId,
+                                    showActionsMenu = state.actionsEntryId == entry.id,
+                                    onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
+                                    onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) },
+                                    onHideActions = { onIntent(CashflowLedgerIntent.HideRowActions) },
+                                    onRecordPayment = { onIntent(CashflowLedgerIntent.RecordPaymentFor(entry.id)) },
+                                    onMarkAsPaid = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(entry.id)) },
+                                    onViewDocument = { onIntent(CashflowLedgerIntent.ViewDocumentFor(entry)) }
+                                )
+                            } else {
+                                CashflowLedgerMobileRow(
+                                    entry = entry,
+                                    onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
+                                    onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) }
+                                )
+                            }
+
+                            // Dividers only between rows
+                            if (index < state.entries.data.size - 1) {
+                                DokusTableDivider()
+                            }
+                        }
+
+                        if (state.entries.isLoadingMore) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                }
                             }
                         }
                     }
@@ -215,110 +265,88 @@ private fun CashflowLedgerContent(
             onCancelPaymentOptions = { onIntent(CashflowLedgerIntent.CancelPaymentOptions) },
             onOpenDocument = { onIntent(CashflowLedgerIntent.OpenDocument(it)) }
         )
+
+        // Mobile actions bottom sheet
+        val actionsEntry = state.entries.data.find { it.id == state.actionsEntryId }
+        if (!isLargeScreen && actionsEntry != null) {
+            val sheetState = rememberModalBottomSheetState()
+            ModalBottomSheet(
+                onDismissRequest = { onIntent(CashflowLedgerIntent.HideRowActions) },
+                sheetState = sheetState
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp)
+                ) {
+                    // Record payment
+                    MobileActionItem(
+                        icon = Icons.Default.Payment,
+                        label = stringResource(Res.string.cashflow_action_record_payment),
+                        onClick = { onIntent(CashflowLedgerIntent.RecordPaymentFor(actionsEntry.id)) }
+                    )
+                    // Mark as paid
+                    MobileActionItem(
+                        icon = Icons.Default.CheckCircle,
+                        label = stringResource(Res.string.cashflow_action_mark_paid),
+                        onClick = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(actionsEntry.id)) }
+                    )
+                    // View document
+                    MobileActionItem(
+                        icon = Icons.Default.Description,
+                        label = stringResource(Res.string.cashflow_action_view_document),
+                        onClick = { onIntent(CashflowLedgerIntent.ViewDocumentFor(actionsEntry)) }
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun CashflowFiltersBar(
-    filters: CashflowFilters,
-    onDateRangeChange: (DateRangeFilter) -> Unit,
-    onDirectionChange: (CashflowDirection?) -> Unit,
-    onStatusChange: (CashflowEntryStatus?) -> Unit,
-    modifier: Modifier = Modifier
+private fun MobileActionItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Date range filters
-        DokusFilterChipRow {
-            FilterChip(
-                selected = filters.dateRange == DateRangeFilter.ThisMonth,
-                onClick = { onDateRangeChange(DateRangeFilter.ThisMonth) },
-                label = { Text(stringResource(Res.string.cashflow_ledger_filter_this_month)) }
-            )
-            FilterChip(
-                selected = filters.dateRange == DateRangeFilter.Next3Months,
-                onClick = { onDateRangeChange(DateRangeFilter.Next3Months) },
-                label = { Text(stringResource(Res.string.cashflow_ledger_filter_next_3_months)) }
-            )
-            FilterChip(
-                selected = filters.dateRange == DateRangeFilter.AllTime,
-                onClick = { },
-                enabled = false,
-                label = { Text(stringResource(Res.string.cashflow_ledger_filter_custom)) }
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(Modifier.width(16.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
 
-        // Direction and status filters
-        DokusFilterChipRow {
-            FilterChip(
-                selected = filters.direction == null,
-                onClick = { onDirectionChange(null) },
-                label = { Text(stringResource(Res.string.documents_filter_all)) }
-            )
-            FilterChip(
-                selected = filters.direction == CashflowDirection.In,
-                onClick = {
-                    onDirectionChange(
-                        if (filters.direction == CashflowDirection.In) null else CashflowDirection.In
-                    )
-                },
-                label = { Text(stringResource(Res.string.cashflow_ledger_filter_in)) }
-            )
-            FilterChip(
-                selected = filters.direction == CashflowDirection.Out,
-                onClick = {
-                    onDirectionChange(
-                        if (filters.direction == CashflowDirection.Out) null else CashflowDirection.Out
-                    )
-                },
-                label = { Text(stringResource(Res.string.cashflow_ledger_filter_out)) }
-            )
-        }
-
-        DokusFilterChipRow {
-            FilterChip(
-                selected = filters.status == null,
-                onClick = { onStatusChange(null) },
-                label = { Text(stringResource(Res.string.documents_filter_all)) }
-            )
-            FilterChip(
-                selected = filters.status == CashflowEntryStatus.Open,
-                onClick = {
-                    onStatusChange(
-                        if (filters.status == CashflowEntryStatus.Open) null else CashflowEntryStatus.Open
-                    )
-                },
-                label = { Text(stringResource(Res.string.cashflow_ledger_filter_open)) }
-            )
-            FilterChip(
-                selected = filters.status == CashflowEntryStatus.Paid,
-                onClick = {
-                    onStatusChange(
-                        if (filters.status == CashflowEntryStatus.Paid) null else CashflowEntryStatus.Paid
-                    )
-                },
-                label = { Text(stringResource(Res.string.cashflow_ledger_filter_paid)) }
-            )
-            FilterChip(
-                selected = filters.status == CashflowEntryStatus.Overdue,
-                onClick = {
-                    onStatusChange(
-                        if (filters.status == CashflowEntryStatus.Overdue) null else CashflowEntryStatus.Overdue
-                    )
-                },
-                label = { Text(stringResource(Res.string.cashflow_ledger_filter_overdue)) }
-            )
-            FilterChip(
-                selected = filters.status == CashflowEntryStatus.Cancelled,
-                onClick = {
-                    onStatusChange(
-                        if (filters.status == CashflowEntryStatus.Cancelled) null else CashflowEntryStatus.Cancelled
-                    )
-                },
-                label = { Text(stringResource(Res.string.cashflow_ledger_filter_cancelled)) }
-            )
-        }
+/**
+ * Returns the context-aware empty state message based on current filters.
+ */
+@Composable
+private fun getEmptyStateTitle(
+    viewMode: CashflowViewMode,
+    direction: DirectionFilter
+): String = when (viewMode) {
+    CashflowViewMode.Upcoming -> when (direction) {
+        DirectionFilter.All -> stringResource(Res.string.cashflow_empty_upcoming)
+        DirectionFilter.In -> stringResource(Res.string.cashflow_empty_upcoming_in)
+        DirectionFilter.Out -> stringResource(Res.string.cashflow_empty_upcoming_out)
+    }
+    CashflowViewMode.History -> when (direction) {
+        DirectionFilter.All -> stringResource(Res.string.cashflow_empty_history)
+        DirectionFilter.In -> stringResource(Res.string.cashflow_empty_history_in)
+        DirectionFilter.Out -> stringResource(Res.string.cashflow_empty_history_out)
     }
 }

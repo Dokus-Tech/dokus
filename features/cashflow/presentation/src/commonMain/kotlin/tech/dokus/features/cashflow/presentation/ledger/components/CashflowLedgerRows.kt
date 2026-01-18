@@ -1,9 +1,15 @@
 package tech.dokus.features.cashflow.presentation.ledger.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,26 +19,37 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_action_mark_paid
+import tech.dokus.aura.resources.cashflow_action_record_payment
+import tech.dokus.aura.resources.cashflow_action_view_document
 import tech.dokus.aura.resources.cashflow_ledger_amount
 import tech.dokus.aura.resources.cashflow_ledger_contact
 import tech.dokus.aura.resources.cashflow_ledger_description
@@ -41,12 +58,12 @@ import tech.dokus.aura.resources.cashflow_ledger_status
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableHeaderLabel
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.style.surfaceHover
 
 private val TableRowHeight = 56.dp
 private val DirectionIconSize = 16.dp
@@ -59,7 +76,10 @@ private object CashflowTableColumns {
     val Description = DokusTableColumnSpec(weight = 1.5f)
     val Status = DokusTableColumnSpec(width = 48.dp, horizontalAlignment = Alignment.CenterHorizontally)
     val Amount = DokusTableColumnSpec(weight = 1f, horizontalAlignment = Alignment.End)
+    val Actions = DokusTableColumnSpec(width = 48.dp, horizontalAlignment = Alignment.CenterHorizontally)
 }
+
+private val HeaderRowHeight = 40.dp
 
 @Composable
 internal fun CashflowLedgerHeaderRow(
@@ -67,54 +87,86 @@ internal fun CashflowLedgerHeaderRow(
 ) {
     DokusTableRow(
         modifier = modifier,
-        minHeight = TableRowHeight,
-        backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+        minHeight = HeaderRowHeight,
         contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
     ) {
         DokusTableCell(CashflowTableColumns.DueDate) {
-            DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_due_date))
+            SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_due_date))
         }
         DokusTableCell(CashflowTableColumns.Counterparty) {
-            DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_contact))
+            SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_contact))
         }
         DokusTableCell(CashflowTableColumns.Description) {
-            DokusTableHeaderLabel(text = stringResource(Res.string.cashflow_ledger_description))
+            SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_description))
         }
         DokusTableCell(CashflowTableColumns.Status) {
-            DokusTableHeaderLabel(
+            SubtleHeaderLabel(
                 text = stringResource(Res.string.cashflow_ledger_status),
                 textAlign = TextAlign.Center
             )
         }
         DokusTableCell(CashflowTableColumns.Amount) {
-            DokusTableHeaderLabel(
+            SubtleHeaderLabel(
                 text = stringResource(Res.string.cashflow_ledger_amount),
                 textAlign = TextAlign.End
             )
         }
+        // Empty cell for actions column in header
+        DokusTableCell(CashflowTableColumns.Actions) {
+            Spacer(modifier = Modifier.width(1.dp))
+        }
     }
+}
+
+@Composable
+private fun SubtleHeaderLabel(
+    text: String,
+    textAlign: TextAlign = TextAlign.Start
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+        textAlign = textAlign,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Composable
 internal fun CashflowLedgerTableRow(
     entry: CashflowEntry,
     isHighlighted: Boolean,
+    showActionsMenu: Boolean,
     onClick: () -> Unit,
+    onShowActions: () -> Unit,
+    onHideActions: () -> Unit,
+    onRecordPayment: () -> Unit,
+    onMarkAsPaid: () -> Unit,
+    onViewDocument: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val highlightColor by animateColorAsState(
-        targetValue = if (isHighlighted) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-        } else {
-            MaterialTheme.colorScheme.surface
+    // Hover state tracking
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    // Determine background color based on highlight and hover state
+    val backgroundColor by animateColorAsState(
+        targetValue = when {
+            isHighlighted -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            isHovered -> MaterialTheme.colorScheme.surfaceHover
+            else -> MaterialTheme.colorScheme.surface
         },
-        label = "cashflow-ledger-highlight"
+        animationSpec = tween(durationMillis = 100),
+        label = "cashflow-ledger-row-bg"
     )
 
     DokusTableRow(
-        modifier = modifier,
+        modifier = modifier
+            .hoverable(interactionSource = interactionSource)
+            .pointerHoverIcon(PointerIcon.Hand),
         minHeight = TableRowHeight,
-        backgroundColor = highlightColor,
+        backgroundColor = backgroundColor,
         onClick = onClick,
         contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
     ) {
@@ -171,6 +223,51 @@ internal fun CashflowLedgerTableRow(
                 overflow = TextOverflow.Ellipsis
             )
         }
+        // Actions column - visible on hover only
+        DokusTableCell(CashflowTableColumns.Actions) {
+            // Animate alpha for smooth fade in/out
+            val actionsAlpha by animateFloatAsState(
+                targetValue = if (isHovered || showActionsMenu) 1f else 0f,
+                animationSpec = tween(durationMillis = 100),
+                label = "actions-alpha"
+            )
+
+            Box {
+                if (actionsAlpha > 0f) {
+                    IconButton(
+                        onClick = { onShowActions() },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .alpha(actionsAlpha)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Actions",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                // Dropdown menu
+                DropdownMenu(
+                    expanded = showActionsMenu,
+                    onDismissRequest = onHideActions
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.cashflow_action_record_payment)) },
+                        onClick = onRecordPayment
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.cashflow_action_mark_paid)) },
+                        onClick = onMarkAsPaid
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.cashflow_action_view_document)) },
+                        onClick = onViewDocument
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -178,6 +275,7 @@ internal fun CashflowLedgerTableRow(
 internal fun CashflowLedgerMobileRow(
     entry: CashflowEntry,
     onClick: () -> Unit,
+    onShowActions: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -185,7 +283,7 @@ internal fun CashflowLedgerMobileRow(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.medium),
+            .padding(start = Constrains.Spacing.large, top = Constrains.Spacing.medium, bottom = Constrains.Spacing.medium, end = Constrains.Spacing.small),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
@@ -236,6 +334,19 @@ internal fun CashflowLedgerMobileRow(
         }
 
         CashflowStatusIcon(status = entry.status)
+
+        // Always visible action button for mobile
+        IconButton(
+            onClick = onShowActions,
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "Actions",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 

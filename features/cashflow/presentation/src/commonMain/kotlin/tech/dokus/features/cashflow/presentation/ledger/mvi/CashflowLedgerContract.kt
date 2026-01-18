@@ -21,25 +21,56 @@ import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 
 /**
- * Date range filter options for cashflow ledger.
+ * View mode for cashflow ledger.
+ * - Upcoming: Money not yet moved (Open + Overdue entries)
+ * - History: Money already moved (Paid entries with paidAt)
  */
 @Immutable
-enum class DateRangeFilter {
-    ThisMonth,
-    Next3Months,
-    AllTime
+enum class CashflowViewMode {
+    Upcoming, // Open + Overdue (money not yet moved)
+    History   // Paid (money already moved, requires paidAt != null)
+}
+
+/**
+ * Direction filter for cashflow entries.
+ */
+@Immutable
+enum class DirectionFilter {
+    All, // Show both in and out
+    In,  // Only incoming (invoices, refunds)
+    Out  // Only outgoing (bills, expenses)
 }
 
 /**
  * Filter state for cashflow ledger.
+ * Simplified from old complex filters to view mode + direction.
  */
 @Immutable
 data class CashflowFilters(
-    val dateRange: DateRangeFilter = DateRangeFilter.ThisMonth,
-    val direction: CashflowDirection? = null,
-    val status: CashflowEntryStatus? = null,
-    val sourceType: CashflowSourceType? = null
+    val viewMode: CashflowViewMode = CashflowViewMode.Upcoming,
+    val direction: DirectionFilter = DirectionFilter.All
 )
+
+/**
+ * Summary data for the cashflow view.
+ * Computed from the same filters as the entry list (NON-NEGOTIABLE: must match).
+ */
+@Immutable
+data class CashflowSummary(
+    val periodLabel: String,  // "NEXT 30 DAYS" or "LAST 30 DAYS"
+    val netAmount: Money,     // The answer: totalIn - totalOut
+    val totalIn: Money,       // Sum of IN entries
+    val totalOut: Money       // Sum of OUT entries
+) {
+    companion object {
+        val EMPTY = CashflowSummary(
+            periodLabel = "",
+            netAmount = Money.ZERO,
+            totalIn = Money.ZERO,
+            totalOut = Money.ZERO
+        )
+    }
+}
 
 /**
  * Payment form state for recording payments against cashflow entries.
@@ -76,10 +107,12 @@ sealed interface CashflowLedgerState : MVIState, DokusState<Nothing> {
     data class Content(
         val entries: PaginationState<CashflowEntry>,
         val filters: CashflowFilters = CashflowFilters(),
+        val summary: CashflowSummary = CashflowSummary.EMPTY,
         val highlightedEntryId: CashflowEntryId? = null,
         val isRefreshing: Boolean = false,
         val selectedEntryId: CashflowEntryId? = null,
-        val paymentFormState: PaymentFormState = PaymentFormState()
+        val paymentFormState: PaymentFormState = PaymentFormState(),
+        val actionsEntryId: CashflowEntryId? = null // Which row's action menu is open
     ) : CashflowLedgerState
 
     data class Error(
@@ -95,10 +128,11 @@ sealed interface CashflowLedgerState : MVIState, DokusState<Nothing> {
 sealed interface CashflowLedgerIntent : MVIIntent {
     data object Refresh : CashflowLedgerIntent
     data object LoadMore : CashflowLedgerIntent
-    data class UpdateFilters(val filters: CashflowFilters) : CashflowLedgerIntent
-    data class UpdateDateRangeFilter(val dateRange: DateRangeFilter) : CashflowLedgerIntent
-    data class UpdateDirectionFilter(val direction: CashflowDirection?) : CashflowLedgerIntent
-    data class UpdateStatusFilter(val status: CashflowEntryStatus?) : CashflowLedgerIntent
+
+    // View mode and direction filter intents
+    data class SetViewMode(val mode: CashflowViewMode) : CashflowLedgerIntent
+    data class SetDirectionFilter(val direction: DirectionFilter) : CashflowLedgerIntent
+
     data class HighlightEntry(val entryId: CashflowEntryId?) : CashflowLedgerIntent
     data class OpenEntry(val entry: CashflowEntry) : CashflowLedgerIntent
 
@@ -115,6 +149,15 @@ sealed interface CashflowLedgerIntent : MVIIntent {
     data object TogglePaymentOptions : CashflowLedgerIntent
     data object QuickMarkAsPaid : CashflowLedgerIntent
     data object CancelPaymentOptions : CashflowLedgerIntent
+
+    // Row actions menu intents
+    data class ShowRowActions(val entryId: CashflowEntryId) : CashflowLedgerIntent
+    data object HideRowActions : CashflowLedgerIntent
+
+    // Actions from the row actions menu
+    data class RecordPaymentFor(val entryId: CashflowEntryId) : CashflowLedgerIntent
+    data class MarkAsPaidQuick(val entryId: CashflowEntryId) : CashflowLedgerIntent
+    data class ViewDocumentFor(val entry: CashflowEntry) : CashflowLedgerIntent
 }
 
 /**

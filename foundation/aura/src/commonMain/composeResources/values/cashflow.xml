@@ -34,7 +34,38 @@
     <string name="cashflow_ledger_filter_cancelled">Cancelled</string>
     <string name="cashflow_ledger_empty_title">No entries found</string>
     <string name="cashflow_ledger_empty_hint">Try adjusting your filters</string>
+    <!-- Context-aware empty states -->
+    <string name="cashflow_empty_upcoming">No upcoming cash movements in the next 30 days.</string>
+    <string name="cashflow_empty_upcoming_hint">Cashflow entries appear when documents are confirmed.</string>
+    <string name="cashflow_empty_upcoming_in">No incoming upcoming movements.</string>
+    <string name="cashflow_empty_upcoming_out">No outgoing upcoming movements.</string>
+    <string name="cashflow_empty_history">No recorded cash movements yet.</string>
+    <string name="cashflow_empty_history_in">No incoming recorded movements.</string>
+    <string name="cashflow_empty_history_out">No outgoing recorded movements.</string>
+    <!-- Row actions -->
+    <string name="cashflow_action_record_payment">Record payment</string>
+    <string name="cashflow_action_mark_paid">Mark as paid</string>
+    <string name="cashflow_action_view_document">View document</string>
     <string name="cashflow_ledger_items">%1$d items</string>
+
+    <!-- Cashflow Summary (Phase A) -->
+    <string name="cashflow_summary_next_30_days">Next 30 days</string>
+    <string name="cashflow_summary_last_30_days">Last 30 days</string>
+    <string name="cashflow_summary_expected_in">Expected in</string>
+    <string name="cashflow_summary_expected_out">Expected out</string>
+    <string name="cashflow_summary_received">Received</string>
+    <string name="cashflow_summary_paid_out">Paid out</string>
+
+    <!-- View Modes -->
+    <string name="cashflow_view_upcoming">Upcoming</string>
+    <string name="cashflow_view_history">History</string>
+
+    <!-- Direction Filters -->
+    <string name="cashflow_direction_all">All</string>
+    <string name="cashflow_direction_in">In</string>
+    <string name="cashflow_direction_out">Out</string>
+    <string name="cashflow_direction_money_in">Money in</string>
+    <string name="cashflow_direction_money_out">Money out</string>
 
     <!-- Document Types -->
     <string name="document_type_invoice">Invoice</string>

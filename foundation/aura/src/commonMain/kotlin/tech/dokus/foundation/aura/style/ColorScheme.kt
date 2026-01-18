@@ -184,3 +184,16 @@ val ColorScheme.textMuted: Color
     get() = if (isDark) Color(0xFF6B7280) else Color(0xFF94A3B8)
 val ColorScheme.textDisabled: Color
     get() = if (isDark) Color(0xFF4B5563) else Color(0xFFCBD5E1)
+
+// Position colors (financial reality, NOT error/success semantics)
+// These are separate from statusError/statusConfirmed intentionally:
+// - positionNegative = "you'll spend more than receive" (neutral financial fact)
+// - statusError = "something is broken" (requires action)
+@Suppress("UnusedReceiverParameter")
+val ColorScheme.positionPositive: Color get() = Color(0xFF059669) // emerald-600
+@Suppress("UnusedReceiverParameter")
+val ColorScheme.positionNegative: Color get() = Color(0xFF991B1B) // red-800 (calmer than error)
+
+// Interactive surface hover (for desktop row hover effects)
+val ColorScheme.surfaceHover: Color
+    get() = if (isDark) Color(0xFF0B1220) else Color(0xFFF1F5F9)
