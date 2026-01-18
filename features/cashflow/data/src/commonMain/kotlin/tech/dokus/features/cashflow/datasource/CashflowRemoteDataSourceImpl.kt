@@ -26,6 +26,7 @@ import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
@@ -515,14 +516,20 @@ internal class CashflowRemoteDataSourceImpl(
     // ============================================================================
 
     override suspend fun getCashflowOverview(
+        viewMode: CashflowViewMode,
         fromDate: LocalDate,
-        toDate: LocalDate
+        toDate: LocalDate,
+        direction: CashflowDirection?,
+        statuses: List<CashflowEntryStatus>?
     ): Result<CashflowOverview> {
         return runCatching {
             httpClient.get(
                 Cashflow.Overview(
+                    viewMode = viewMode.name.lowercase(),
                     fromDate = fromDate,
-                    toDate = toDate
+                    toDate = toDate,
+                    direction = direction?.name,
+                    status = statuses?.joinToString(",") { it.name }
                 )
             ).body()
         }
@@ -533,10 +540,11 @@ internal class CashflowRemoteDataSourceImpl(
     // ============================================================================
 
     override suspend fun listCashflowEntries(
+        viewMode: CashflowViewMode?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
         direction: CashflowDirection?,
-        status: CashflowEntryStatus?,
+        statuses: List<CashflowEntryStatus>?,
         sourceType: CashflowSourceType?,
         entryId: CashflowEntryId?,
         limit: Int,
@@ -545,10 +553,11 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             httpClient.get(
                 Cashflow.Entries(
+                    viewMode = viewMode?.name?.lowercase(),
                     fromDate = fromDate,
                     toDate = toDate,
                     direction = direction?.name,
-                    status = status?.name,
+                    status = statuses?.joinToString(",") { it.name },
                     sourceType = sourceType?.name,
                     entryId = entryId?.toString(),
                     limit = limit,

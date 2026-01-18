@@ -9,7 +9,11 @@ import kotlinx.datetime.todayIn
 import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.CashflowDirection
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.TenantId
@@ -31,7 +35,8 @@ import tech.dokus.foundation.backend.utils.loggerFor
 class CashflowOverviewService(
     private val invoiceRepository: InvoiceRepository,
     private val expenseRepository: ExpenseRepository,
-    private val billRepository: BillRepository
+    private val billRepository: BillRepository,
+    private val cashflowEntriesRepository: CashflowEntriesRepository
 ) {
     private val logger = loggerFor()
 
@@ -39,21 +44,44 @@ class CashflowOverviewService(
      * Get cashflow overview for a period.
      *
      * @param tenantId The tenant ID
+     * @param viewMode Determines date field filtering:
+     *                 - Upcoming: filter by eventDate
+     *                 - History: filter by paidAt
      * @param fromDate Start date (defaults to first day of current month)
      * @param toDate End date (defaults to today)
+     * @param direction Optional filter: IN or OUT
+     * @param statuses Multi-status filter (e.g., [Open, Overdue])
      */
     suspend fun getCashflowOverview(
         tenantId: TenantId,
+        viewMode: CashflowViewMode? = null,
         fromDate: LocalDate? = null,
-        toDate: LocalDate? = null
+        toDate: LocalDate? = null,
+        direction: CashflowDirection? = null,
+        statuses: List<CashflowEntryStatus>? = null
     ): Result<CashflowOverview> = runCatching {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val effectiveFromDate = fromDate ?: today.minus(DatePeriod(days = today.dayOfMonth - 1))
         val effectiveToDate = toDate ?: today
 
         logger.info(
-            "Calculating cashflow overview for tenant: $tenantId (from=$effectiveFromDate, to=$effectiveToDate)"
+            "Calculating cashflow overview for tenant: $tenantId (viewMode=$viewMode, from=$effectiveFromDate, to=$effectiveToDate, direction=$direction, statuses=$statuses)"
         )
+
+        // If viewMode is specified, use cashflow entries for summary calculation
+        if (viewMode != null) {
+            return@runCatching calculateFromCashflowEntries(
+                tenantId = tenantId,
+                viewMode = viewMode,
+                fromDate = effectiveFromDate,
+                toDate = effectiveToDate,
+                direction = direction,
+                statuses = statuses
+            )
+        }
+
+        // Legacy path: aggregate from invoices, expenses, bills directly
+        // (used when viewMode is not specified for backward compatibility)
 
         // Fetch invoices for period
         val invoicesResult = invoiceRepository.listInvoices(
@@ -136,5 +164,89 @@ class CashflowOverviewService(
         )
     }.onFailure {
         logger.error("Failed to calculate cashflow overview for tenant: $tenantId", it)
+    }
+
+    /**
+     * Calculate overview from cashflow entries table.
+     * Used when viewMode is specified (modern path).
+     */
+    private suspend fun calculateFromCashflowEntries(
+        tenantId: TenantId,
+        viewMode: CashflowViewMode,
+        fromDate: LocalDate,
+        toDate: LocalDate,
+        direction: CashflowDirection?,
+        statuses: List<CashflowEntryStatus>?
+    ): CashflowOverview {
+        // Fetch entries matching the filters
+        val entries = cashflowEntriesRepository.listEntries(
+            tenantId = tenantId,
+            viewMode = viewMode,
+            fromDate = fromDate,
+            toDate = toDate,
+            direction = direction,
+            statuses = statuses
+        ).getOrThrow()
+
+        // Separate by direction
+        val cashInEntries = if (direction == null || direction == CashflowDirection.In) {
+            entries.filter { it.direction == CashflowDirection.In }
+        } else {
+            emptyList()
+        }
+
+        val cashOutEntries = if (direction == null || direction == CashflowDirection.Out) {
+            entries.filter { it.direction == CashflowDirection.Out }
+        } else {
+            emptyList()
+        }
+
+        // Calculate Cash-In
+        val cashInTotal = cashInEntries.sumOf { it.amountGross.minor }
+        val cashInPaid = cashInEntries
+            .filter { it.status == CashflowEntryStatus.Paid }
+            .sumOf { it.amountGross.minor }
+        val cashInPending = cashInEntries
+            .filter { it.status == CashflowEntryStatus.Open }
+            .sumOf { it.amountGross.minor }
+        val cashInOverdue = cashInEntries
+            .filter { it.status == CashflowEntryStatus.Overdue }
+            .sumOf { it.amountGross.minor }
+
+        val cashIn = CashInSummary(
+            total = Money(cashInTotal),
+            paid = Money(cashInPaid),
+            pending = Money(cashInPending),
+            overdue = Money(cashInOverdue),
+            invoiceCount = cashInEntries.size
+        )
+
+        // Calculate Cash-Out
+        val cashOutTotal = cashOutEntries.sumOf { it.amountGross.minor }
+        val cashOutPaid = cashOutEntries
+            .filter { it.status == CashflowEntryStatus.Paid }
+            .sumOf { it.amountGross.minor }
+        val cashOutPending = cashOutEntries
+            .filter { it.status in listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue) }
+            .sumOf { it.amountGross.minor }
+
+        val cashOut = CashOutSummary(
+            total = Money(cashOutTotal),
+            paid = Money(cashOutPaid),
+            pending = Money(cashOutPending),
+            expenseCount = cashOutEntries.count { it.sourceType == tech.dokus.domain.enums.CashflowSourceType.Expense },
+            billCount = cashOutEntries.count { it.sourceType == tech.dokus.domain.enums.CashflowSourceType.Bill }
+        )
+
+        // Net cashflow = Cash-In total - Cash-Out total
+        val netCashflow = cashInTotal - cashOutTotal
+
+        return CashflowOverview(
+            period = CashflowPeriod(from = fromDate, to = toDate),
+            cashIn = cashIn,
+            cashOut = cashOut,
+            netCashflow = Money(netCashflow),
+            currency = Currency.Eur
+        )
     }
 }

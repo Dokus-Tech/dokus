@@ -15,29 +15,46 @@ import kotlinx.serialization.Serializable
 class Cashflow {
     /**
      * GET /api/v1/cashflow/overview - Get cashflow overview with projections
+     *
+     * @param viewMode Required. "upcoming" uses eventDate range, "history" uses paidAt range.
+     * @param fromDate Start of date range (interpreted based on viewMode)
+     * @param toDate End of date range (interpreted based on viewMode)
+     * @param direction Optional filter: IN, OUT
+     * @param status Optional filter: comma-separated statuses (e.g., "Open,Overdue")
      */
     @Serializable
     @Resource("overview")
     class Overview(
         val parent: Cashflow = Cashflow(),
+        val viewMode: String? = null,
         val fromDate: LocalDate? = null,
-        val toDate: LocalDate? = null
+        val toDate: LocalDate? = null,
+        val direction: String? = null,
+        val status: String? = null
     )
 
     /**
      * GET /api/v1/cashflow/entries - List cashflow entries (projection ledger)
      *
      * Supports filtering by:
-     * - Date range (fromDate, toDate)
+     * - View mode (viewMode): "upcoming" uses eventDate, "history" uses paidAt
+     * - Date range (fromDate, toDate): interpreted based on viewMode
      * - Direction (IN/OUT)
-     * - Status (OPEN/PAID/OVERDUE/CANCELLED)
+     * - Status: comma-separated (e.g., "Open,Overdue")
      * - Source type (INVOICE/BILL/EXPENSE)
      * - Exact entry ID (entryId) for deep linking
+     *
+     * Sorting:
+     * - viewMode=upcoming: eventDate ASC (soonest first)
+     * - viewMode=history: paidAt DESC (most recent first)
+     *
+     * Cancelled entries are excluded by default.
      */
     @Serializable
     @Resource("entries")
     class Entries(
         val parent: Cashflow = Cashflow(),
+        val viewMode: String? = null,
         val fromDate: LocalDate? = null,
         val toDate: LocalDate? = null,
         val direction: String? = null,

@@ -725,6 +725,21 @@ enum class CashflowEntryStatus(override val dbValue: String) : DbEnum {
     Cancelled("CANCELLED")
 }
 
+/**
+ * View mode for cashflow ledger - determines which date field is used for filtering.
+ *
+ * - Upcoming: Filters by eventDate (due date), shows OPEN/OVERDUE entries
+ * - History: Filters by paidAt (payment date), shows PAID entries
+ */
+@Serializable
+enum class CashflowViewMode {
+    @SerialName("UPCOMING")
+    Upcoming,
+
+    @SerialName("HISTORY")
+    History
+}
+
 // ============================================================================
 // EXPENSE ENUMS
 // ============================================================================

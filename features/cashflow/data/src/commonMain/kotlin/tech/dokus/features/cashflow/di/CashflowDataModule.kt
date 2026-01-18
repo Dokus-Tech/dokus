@@ -25,6 +25,7 @@ import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGatewayImpl
 import tech.dokus.features.cashflow.usecase.CancelCashflowEntryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConfirmDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetCashflowEntryUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetCashflowOverviewUseCaseImpl
 import tech.dokus.features.cashflow.usecase.LoadCashflowEntriesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.RecordCashflowPaymentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConnectPeppolUseCaseImpl
@@ -59,6 +60,7 @@ import tech.dokus.features.cashflow.usecase.WaitForPeppolTransferUseCaseImpl
 import tech.dokus.features.cashflow.usecases.CancelCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
@@ -181,6 +183,7 @@ val cashflowNetworkModule = module {
     factory<LoadDocumentRecordsUseCase> { LoadDocumentRecordsUseCaseImpl(get()) }
 
     // Cashflow entries (for CashflowLedgerScreen)
+    factory<GetCashflowOverviewUseCase> { GetCashflowOverviewUseCaseImpl(get()) }
     factory<LoadCashflowEntriesUseCase> { LoadCashflowEntriesUseCaseImpl(get()) }
     factory<GetCashflowEntryUseCase> { GetCashflowEntryUseCaseImpl(get()) }
     factory<RecordCashflowPaymentUseCase> { RecordCashflowPaymentUseCaseImpl(get()) }
