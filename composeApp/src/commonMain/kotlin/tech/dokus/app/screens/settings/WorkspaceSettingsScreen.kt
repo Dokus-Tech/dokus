@@ -248,6 +248,22 @@ private fun WorkspaceSettingsContentScreen(
             modifier = Modifier.widthIn(max = MaxContentWidth),
             verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
         ) {
+            // Page Header with company info
+            Column {
+                Text(
+                    text = "Company Settings",
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+                Spacer(Modifier.height(Constrains.Spacing.xSmall))
+                Text(
+                    text = "${formState.legalName} · ${formState.vatNumber}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.textMuted,
+                )
+            }
+
+            Spacer(Modifier.height(Constrains.Spacing.large))
+
             // 1. PEPPOL Connection Section (always first, primary visual weight)
             PeppolConnectionSection(
                 peppolRegistration = peppolRegistration,
@@ -381,9 +397,12 @@ private fun PeppolConnectionSection(
         PeppolRegistrationStatus.NotConfigured, null -> DataRowStatus("Not Configured", StatusDotType.Empty)
     }
 
+    // Show PEPPOL ID when collapsed, descriptive text when expanded
     val subtitle = if (!expanded) {
         peppolRegistration?.peppolId ?: "Not configured"
-    } else null
+    } else {
+        "Electronic invoicing network status"
+    }
 
     SettingsSection(
         title = "PEPPOL Connection",
@@ -491,14 +510,10 @@ private fun LegalIdentitySection(
     avatarPicker: FilePickerLauncher,
 ) {
     val subtitle = if (!expanded) formState.legalName else null
-    val sectionStatus = if (isLocked) {
-        DataRowStatus("Verified", StatusDotType.Confirmed)
-    } else null
 
     SettingsSection(
         title = "Legal Identity",
         subtitle = subtitle,
-        status = sectionStatus,
         expanded = expanded,
         onToggle = onToggle,
         editMode = editMode,
