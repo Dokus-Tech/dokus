@@ -50,9 +50,7 @@ fun TestWrapper(parameters: PreviewParameters, content: @Composable () -> Unit) 
         }
     }
 
-    CompositionLocalProvider(
-        LocalInspectionMode provides true,
-    ) {
+    PreviewWrapper {
         ThemeManagerProvided(themeManager) {
             Themed {
                 ScreenSizeProvided {
@@ -64,3 +62,7 @@ fun TestWrapper(parameters: PreviewParameters, content: @Composable () -> Unit) 
         }
     }
 }
+
+@Composable
+fun PreviewWrapper(content: @Composable () -> Unit) =
+    CompositionLocalProvider(LocalInspectionMode provides true, content = content)

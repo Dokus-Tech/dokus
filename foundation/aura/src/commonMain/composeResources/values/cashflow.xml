@@ -51,10 +51,17 @@
     <!-- Cashflow Summary (Phase A) -->
     <string name="cashflow_summary_next_30_days">Next 30 days</string>
     <string name="cashflow_summary_last_30_days">Last 30 days</string>
+    <string name="cashflow_summary_next_30d">Next 30d</string>
+    <string name="cashflow_summary_last_30d">Last 30d</string>
     <string name="cashflow_summary_expected_in">Expected in</string>
     <string name="cashflow_summary_expected_out">Expected out</string>
     <string name="cashflow_summary_received">Received</string>
     <string name="cashflow_summary_paid_out">Paid out</string>
+    <string name="cashflow_summary_in">In</string>
+    <string name="cashflow_summary_out">Out</string>
+    <string name="cashflow_summary_paid">Paid</string>
+    <string name="cashflow_balance_label">Balance</string>
+    <string name="cashflow_balance_unavailable">Balance unavailable</string>
 
     <!-- View Modes -->
     <string name="cashflow_view_upcoming">Upcoming</string>

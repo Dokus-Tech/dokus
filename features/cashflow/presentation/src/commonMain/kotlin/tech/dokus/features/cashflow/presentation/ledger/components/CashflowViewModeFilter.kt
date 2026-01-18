@@ -17,8 +17,8 @@ import tech.dokus.aura.resources.cashflow_direction_money_out
 import tech.dokus.aura.resources.cashflow_direction_out
 import tech.dokus.aura.resources.cashflow_view_history
 import tech.dokus.aura.resources.cashflow_view_upcoming
-import tech.dokus.features.cashflow.presentation.common.components.filter.DokusFilterToggle
-import tech.dokus.features.cashflow.presentation.common.components.filter.DokusFilterToggleRow
+import tech.dokus.foundation.aura.components.filter.DokusFilterToggle
+import tech.dokus.foundation.aura.components.filter.DokusFilterToggleRow
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -27,7 +27,10 @@ import tech.dokus.foundation.aura.local.LocalScreenSize
  * View mode and direction filter for cashflow ledger.
  *
  * Desktop: Single row with view mode left, direction right.
- * Mobile: Two rows - view mode on top, direction below with longer labels.
+ * Mobile: Two rows - view mode on top, direction below.
+ *         When isCompact=true, reduces outer padding and uses shorter labels.
+ *
+ * Note: Touch targets (button height) stay ≥44dp regardless of compact state.
  */
 @Composable
 internal fun CashflowViewModeFilter(
@@ -35,24 +38,25 @@ internal fun CashflowViewModeFilter(
     direction: DirectionFilter,
     onViewModeChange: (CashflowViewMode) -> Unit,
     onDirectionChange: (DirectionFilter) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isCompact: Boolean = false
 ) {
     val isDesktop = LocalScreenSize.current.isLarge
 
-    // Direction labels: short on desktop, descriptive on mobile
-    val inLabel = if (isDesktop) {
+    // Direction labels: short when desktop OR compact mode, descriptive on mobile expanded
+    val inLabel = if (isDesktop || isCompact) {
         stringResource(Res.string.cashflow_direction_in)
     } else {
         stringResource(Res.string.cashflow_direction_money_in)
     }
-    val outLabel = if (isDesktop) {
+    val outLabel = if (isDesktop || isCompact) {
         stringResource(Res.string.cashflow_direction_out)
     } else {
         stringResource(Res.string.cashflow_direction_money_out)
     }
 
     if (isDesktop) {
-        // Desktop: Single row with space between
+        // Desktop: Single row with space between (no compact mode)
         Row(
             modifier = modifier
                 .fillMaxWidth()
@@ -94,11 +98,15 @@ internal fun CashflowViewModeFilter(
         }
     } else {
         // Mobile: Two rows stacked
+        // Compact mode: reduced outer padding (12dp → 8dp), tighter row spacing (8dp → 4dp)
+        val verticalPadding = if (isCompact) 8.dp else 12.dp
+        val rowSpacing = if (isCompact) 4.dp else 8.dp
+
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 16.dp, vertical = verticalPadding),
+            verticalArrangement = Arrangement.spacedBy(rowSpacing)
         ) {
             // Row 1: View mode
             DokusFilterToggleRow {
@@ -114,7 +122,7 @@ internal fun CashflowViewModeFilter(
                 )
             }
 
-            // Row 2: Direction filter with descriptive labels
+            // Row 2: Direction filter (shorter labels in compact mode)
             DokusFilterToggleRow {
                 DokusFilterToggle(
                     selected = direction == DirectionFilter.All,

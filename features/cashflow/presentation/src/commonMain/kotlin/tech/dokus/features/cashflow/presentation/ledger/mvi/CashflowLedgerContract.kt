@@ -52,6 +52,17 @@ data class CashflowFilters(
 )
 
 /**
+ * Bank balance state for the cashflow header.
+ * Nullable when no banking integration is available.
+ */
+@Immutable
+data class BalanceState(
+    val amount: Money,
+    val asOf: LocalDate,
+    val accountName: String
+)
+
+/**
  * Summary data for the cashflow view.
  * Computed from the same filters as the entry list (NON-NEGOTIABLE: must match).
  */
@@ -108,6 +119,7 @@ sealed interface CashflowLedgerState : MVIState, DokusState<Nothing> {
         val entries: PaginationState<CashflowEntry>,
         val filters: CashflowFilters = CashflowFilters(),
         val summary: CashflowSummary = CashflowSummary.EMPTY,
+        val balance: BalanceState? = null,  // null when no banking integration
         val highlightedEntryId: CashflowEntryId? = null,
         val isRefreshing: Boolean = false,
         val selectedEntryId: CashflowEntryId? = null,

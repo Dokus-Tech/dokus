@@ -23,13 +23,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.PeppolId
-import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.PeppolProvider
-import tech.dokus.domain.model.PeppolSettingsDto
-import tech.dokus.domain.model.RecommandCompanySummary
 import tech.dokus.domain.model.ai.ChatCitation
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatMessageId
@@ -37,14 +32,10 @@ import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.features.cashflow.mvi.AddDocumentState
-import tech.dokus.features.cashflow.mvi.PeppolConnectState
-import tech.dokus.features.cashflow.mvi.PeppolSettingsState
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import tech.dokus.features.cashflow.presentation.cashflow.screen.AddDocumentScreen
 import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.features.cashflow.presentation.chat.screen.ChatScreen
-import tech.dokus.features.cashflow.presentation.settings.screen.PeppolConnectScreen
-import tech.dokus.features.cashflow.presentation.settings.screen.PeppolSettingsScreen
 import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UploadDocumentUseCase
 import tech.dokus.foundation.aura.components.DokusCard
@@ -100,48 +91,6 @@ class CashflowAdditionalScreenshotTest(private val viewport: ScreenshotViewport)
                 snackbarHostState = snackbarHostState,
                 onIntent = {},
                 onBackClick = {}
-            )
-        }
-    }
-
-    @Test
-    fun peppolSettingsScreen() {
-        val state = PeppolSettingsState.Connected(
-            settings = samplePeppolSettings(),
-            connectedCompany = RecommandCompanySummary(
-                id = "recommand-001",
-                name = "Acme Corporation",
-                vatNumber = "BE0123456789",
-                enterpriseNumber = "0123.456.789"
-            ),
-            isManagedPeppol = false
-        )
-        paparazzi.snapshotAllViewports("PeppolSettingsScreen", viewport) {
-            val snackbarHostState = remember { SnackbarHostState() }
-            PeppolSettingsScreen(
-                state = state,
-                snackbarHostState = snackbarHostState,
-                showDeleteConfirmation = false,
-                onIntent = {},
-                onDeleteDismiss = {},
-                onDeleteConfirm = {}
-            )
-        }
-    }
-
-    @Test
-    fun peppolConnectScreen() {
-        val provider = PeppolProvider.Recommand
-        val state = PeppolConnectState.EnteringCredentials(
-            provider = provider,
-            apiKey = "api-key",
-            apiSecret = "api-secret"
-        )
-        paparazzi.snapshotAllViewports("PeppolConnectScreen", viewport) {
-            PeppolConnectScreen(
-                provider = provider,
-                state = state,
-                onIntent = {}
             )
         }
     }
@@ -282,20 +231,6 @@ private fun sampleChatMessages(): List<ChatMessageDto> {
             sequenceNumber = 2,
             createdAt = LocalDateTime(2024, 1, 12, 10, 16)
         )
-    )
-}
-
-private fun samplePeppolSettings(): PeppolSettingsDto {
-    val now = LocalDateTime(2024, 1, 10, 8, 30)
-    return PeppolSettingsDto(
-        id = PeppolSettingsId.parse("00000000-0000-0000-0000-000000000301"),
-        tenantId = TenantId("00000000-0000-0000-0000-000000000302"),
-        companyId = "recommand-001",
-        peppolId = PeppolId("0208:BE0123456789"),
-        isEnabled = true,
-        testMode = false,
-        createdAt = now,
-        updatedAt = now
     )
 }
 

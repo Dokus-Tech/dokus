@@ -1,3 +1,4 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.INT
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -70,14 +71,19 @@ android {
 
 buildkonfig {
     packageName = "tech.dokus.domain.config"
+    exposeObjectWithName = "BuildKonfig"  // Make public (default is internal)
     defaultConfigs {
         // Version info - name comes from git tag during releases (e.g., "1.2.3")
         buildConfigField(STRING, "appVersionName", appVersion.name)
         buildConfigField(INT, "appVersionCode", appVersion.code.toString())
 
         buildConfigField(STRING, "env", "cloud")
+
+        // Feature flags
+        buildConfigField(BOOLEAN, "SHOW_BALANCE_MOCK", "false")  // Production: no mock balance
     }
     defaultConfigs("local") {
         buildConfigField(STRING, "env", "local")
+        buildConfigField(BOOLEAN, "SHOW_BALANCE_MOCK", "true")   // Local dev: show mock balance
     }
 }

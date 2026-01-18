@@ -25,6 +25,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.config.BuildKonfig
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.foundation.platform.Logger
@@ -141,6 +142,7 @@ internal class CashflowLedgerContainer(
                         entries = buildPaginationState(),
                         filters = currentFilters,
                         summary = summary,
+                        balance = getMockBalanceIfEnabled(),
                         highlightedEntryId = highlightEntryId
                     )
                 }
@@ -619,3 +621,19 @@ private fun CashflowEntry.computeUpcomingSortDate(): LocalDate = eventDate
  * TODO: Add explicit paidAt field to CashflowEntry for accurate sorting.
  */
 private fun CashflowEntry.computeHistorySortDate(): LocalDate = updatedAt.date
+
+/**
+ * Returns mock balance state when SHOW_BALANCE_MOCK is enabled (local dev).
+ * Returns null in production (no banking integration yet).
+ */
+private fun getMockBalanceIfEnabled(): BalanceState? {
+    return if (BuildKonfig.SHOW_BALANCE_MOCK) {
+        BalanceState(
+            amount = Money(1248234), // €12,482.34 (minor units = cents)
+            asOf = LocalDate(2026, 1, 15),
+            accountName = "KBC"
+        )
+    } else {
+        null
+    }
+}
