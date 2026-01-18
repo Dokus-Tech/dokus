@@ -525,11 +525,11 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             httpClient.get(
                 Cashflow.Overview(
-                    viewMode = viewMode.name.lowercase(),
+                    viewMode = viewMode,
                     fromDate = fromDate,
                     toDate = toDate,
-                    direction = direction?.name,
-                    status = statuses?.joinToString(",") { it.name }
+                    direction = direction,
+                    statuses = statuses
                 )
             ).body()
         }
@@ -553,13 +553,13 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             httpClient.get(
                 Cashflow.Entries(
-                    viewMode = viewMode?.name?.lowercase(),
+                    viewMode = viewMode,
                     fromDate = fromDate,
                     toDate = toDate,
-                    direction = direction?.name,
-                    status = statuses?.joinToString(",") { it.name },
-                    sourceType = sourceType?.name,
-                    entryId = entryId?.toString(),
+                    direction = direction,
+                    statuses = statuses,
+                    sourceType = sourceType,
+                    entryId = entryId,
                     limit = limit,
                     offset = offset
                 )

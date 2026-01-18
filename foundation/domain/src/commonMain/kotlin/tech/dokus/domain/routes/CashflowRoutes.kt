@@ -3,6 +3,11 @@ package tech.dokus.domain.routes
 import io.ktor.resources.*
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.CashflowDirection
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.CashflowViewMode
+import tech.dokus.domain.ids.CashflowEntryId
 
 /**
  * Type-safe route definitions for Cashflow API.
@@ -16,37 +21,37 @@ class Cashflow {
     /**
      * GET /api/v1/cashflow/overview - Get cashflow overview with projections
      *
-     * @param viewMode Required. "upcoming" uses eventDate range, "history" uses paidAt range.
+     * @param viewMode Required. Upcoming uses eventDate range, History uses paidAt range.
      * @param fromDate Start of date range (interpreted based on viewMode)
      * @param toDate End of date range (interpreted based on viewMode)
-     * @param direction Optional filter: IN, OUT
-     * @param status Optional filter: comma-separated statuses (e.g., "Open,Overdue")
+     * @param direction Optional filter: In, Out
+     * @param statuses Optional filter: list of statuses (e.g., [Open, Overdue])
      */
     @Serializable
     @Resource("overview")
     class Overview(
         val parent: Cashflow = Cashflow(),
-        val viewMode: String? = null,
+        val viewMode: CashflowViewMode? = null,
         val fromDate: LocalDate? = null,
         val toDate: LocalDate? = null,
-        val direction: String? = null,
-        val status: String? = null
+        val direction: CashflowDirection? = null,
+        val statuses: List<CashflowEntryStatus>? = null
     )
 
     /**
      * GET /api/v1/cashflow/entries - List cashflow entries (projection ledger)
      *
      * Supports filtering by:
-     * - View mode (viewMode): "upcoming" uses eventDate, "history" uses paidAt
+     * - View mode (viewMode): Upcoming uses eventDate, History uses paidAt
      * - Date range (fromDate, toDate): interpreted based on viewMode
-     * - Direction (IN/OUT)
-     * - Status: comma-separated (e.g., "Open,Overdue")
-     * - Source type (INVOICE/BILL/EXPENSE)
+     * - Direction (In/Out)
+     * - Statuses: list of statuses (e.g., [Open, Overdue])
+     * - Source type (Invoice/Bill/Expense)
      * - Exact entry ID (entryId) for deep linking
      *
      * Sorting:
-     * - viewMode=upcoming: eventDate ASC (soonest first)
-     * - viewMode=history: paidAt DESC (most recent first)
+     * - viewMode=Upcoming: eventDate ASC (soonest first)
+     * - viewMode=History: paidAt DESC (most recent first)
      *
      * Cancelled entries are excluded by default.
      */
@@ -54,13 +59,13 @@ class Cashflow {
     @Resource("entries")
     class Entries(
         val parent: Cashflow = Cashflow(),
-        val viewMode: String? = null,
+        val viewMode: CashflowViewMode? = null,
         val fromDate: LocalDate? = null,
         val toDate: LocalDate? = null,
-        val direction: String? = null,
-        val status: String? = null,
-        val sourceType: String? = null,
-        val entryId: String? = null,
+        val direction: CashflowDirection? = null,
+        val statuses: List<CashflowEntryStatus>? = null,
+        val sourceType: CashflowSourceType? = null,
+        val entryId: CashflowEntryId? = null,
         val limit: Int = 50,
         val offset: Int = 0
     ) {
