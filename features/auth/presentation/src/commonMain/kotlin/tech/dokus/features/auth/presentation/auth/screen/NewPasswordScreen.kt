@@ -14,8 +14,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import tech.dokus.features.auth.mvi.NewPasswordIntent
 import tech.dokus.features.auth.mvi.NewPasswordState
 import tech.dokus.foundation.app.state.exceptionIfError
-import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
-import tech.dokus.foundation.aura.components.background.SpotlightEffect
+import tech.dokus.foundation.aura.components.background.CalmParticleField
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
 
 @Composable
@@ -26,8 +25,7 @@ internal fun NewPasswordScreen(
     Scaffold { contentPadding ->
         TwoPaneContainer(
             middleEffect = {
-                EnhancedFloatingBubbles()
-                SpotlightEffect()
+                CalmParticleField()
             },
             left = {
                 NewPasswordContent(

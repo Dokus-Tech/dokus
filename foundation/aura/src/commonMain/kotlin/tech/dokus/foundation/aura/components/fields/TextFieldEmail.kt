@@ -37,7 +37,7 @@ fun PTextFieldEmail(
     visualTransformation: VisualTransformation = PTextFieldEmailDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onClear: (() -> Unit)? = null,
-    showClearButton: Boolean = true,
+    showClearButton: Boolean = false,
     onValueChange: (Email) -> Unit,
 ) {
     PTextField(

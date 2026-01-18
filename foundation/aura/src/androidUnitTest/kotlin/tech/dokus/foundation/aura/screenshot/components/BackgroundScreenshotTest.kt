@@ -12,8 +12,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
-import tech.dokus.foundation.aura.components.background.SpotlightEffect
+import tech.dokus.foundation.aura.components.background.CalmParticleField
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
@@ -32,19 +31,10 @@ class BackgroundScreenshotTest(private val viewport: ScreenshotViewport) {
     val paparazzi = ScreenshotTestHelper.createPaparazzi(viewport)
 
     @Test
-    fun spotlightEffect() {
-        paparazzi.snapshotAllViewports("SpotlightEffect", viewport) {
+    fun calmParticleField() {
+        paparazzi.snapshotAllViewports("CalmParticleField", viewport) {
             BackgroundCanvas {
-                SpotlightEffect()
-            }
-        }
-    }
-
-    @Test
-    fun enhancedFloatingBubbles() {
-        paparazzi.snapshotAllViewports("EnhancedFloatingBubbles", viewport) {
-            BackgroundCanvas {
-                EnhancedFloatingBubbles()
+                CalmParticleField()
             }
         }
     }

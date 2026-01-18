@@ -16,7 +16,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,8 +45,7 @@ import tech.dokus.features.auth.mvi.LoginState
 import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
-import tech.dokus.foundation.aura.components.background.SpotlightEffect
+import tech.dokus.foundation.aura.components.background.CalmParticleField
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
@@ -68,8 +66,7 @@ internal fun LoginScreen(
     Scaffold { contentPadding ->
         TwoPaneContainer(
             middleEffect = {
-                EnhancedFloatingBubbles()
-                SpotlightEffect()
+                CalmParticleField()
             },
             left = {
                 LoginContent(

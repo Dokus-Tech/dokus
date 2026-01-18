@@ -38,7 +38,7 @@ fun PTextFieldPassword(
     visualTransformation: VisualTransformation = PTextFieldPasswordDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onClear: (() -> Unit)? = null,
-    showClearButton: Boolean = true,
+    showClearButton: Boolean = false,
     onValueChange: (Password) -> Unit,
 ) {
     PTextField(
