@@ -100,7 +100,7 @@ internal class ChatRemoteDataSourceImpl(
         return runCatching {
             httpClient.get(
                 Chat.Sessions.SessionId(
-                    sessionId = sessionId.toString(),
+                    sessionId = sessionId,
                     page = page,
                     limit = limit,
                     descending = descending
