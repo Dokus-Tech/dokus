@@ -13,6 +13,7 @@
     <string name="action_or">or</string>
     <string name="action_next">Next</string>
     <string name="action_change">Change</string>
+    <string name="action_edit">Edit</string>
     <string name="action_close">Close</string>
     <string name="action_upload">Upload</string>
     <string name="action_remove">Remove</string>

@@ -60,3 +60,13 @@ interface OptOutPeppolUseCase {
 interface PollPeppolTransferUseCase {
     suspend operator fun invoke(): Result<PeppolRegistrationResponse>
 }
+
+/**
+ * Use case to get PEPPOL activity timestamps.
+ *
+ * Returns the most recent inbound and outbound transmission timestamps
+ * for displaying activity status in workspace settings.
+ */
+interface GetPeppolActivityUseCase {
+    suspend operator fun invoke(): Result<tech.dokus.domain.model.PeppolActivityDto?>
+}

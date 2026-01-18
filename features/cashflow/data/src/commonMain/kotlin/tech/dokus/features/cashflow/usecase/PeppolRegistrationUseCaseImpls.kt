@@ -1,12 +1,16 @@
 package tech.dokus.features.cashflow.usecase
 
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.PeppolActivityDto
 import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.usecases.EnablePeppolSendingOnlyUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
+import tech.dokus.features.cashflow.usecases.GetPeppolActivityUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.features.cashflow.usecases.OptOutPeppolUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolTransferUseCase
@@ -88,5 +92,46 @@ internal class PollPeppolTransferUseCaseImpl(
 ) : PollPeppolTransferUseCase {
     override suspend fun invoke(): Result<PeppolRegistrationResponse> {
         return remoteDataSource.pollPeppolTransfer()
+    }
+}
+
+/**
+ * Implementation of [GetPeppolActivityUseCase].
+ *
+ * Fetches the most recent successful INBOUND and OUTBOUND transmissions
+ * and returns their timestamps.
+ */
+internal class GetPeppolActivityUseCaseImpl(
+    private val remoteDataSource: CashflowRemoteDataSource
+) : GetPeppolActivityUseCase {
+    override suspend fun invoke(): Result<PeppolActivityDto?> = runCatching {
+        // Get most recent inbound transmission (Delivered = successfully received)
+        val inboundResult = remoteDataSource.listPeppolTransmissions(
+            direction = PeppolTransmissionDirection.Inbound,
+            status = PeppolStatus.Delivered,
+            limit = 1,
+            offset = 0
+        )
+
+        // Get most recent outbound transmission (Delivered = successfully sent)
+        val outboundResult = remoteDataSource.listPeppolTransmissions(
+            direction = PeppolTransmissionDirection.Outbound,
+            status = PeppolStatus.Delivered,
+            limit = 1,
+            offset = 0
+        )
+
+        val lastInboundAt = inboundResult.getOrNull()?.firstOrNull()?.transmittedAt
+        val lastOutboundAt = outboundResult.getOrNull()?.firstOrNull()?.transmittedAt
+
+        // Return null if no activity at all
+        if (lastInboundAt == null && lastOutboundAt == null) {
+            null
+        } else {
+            PeppolActivityDto(
+                lastInboundAt = lastInboundAt,
+                lastOutboundAt = lastOutboundAt
+            )
+        }
     }
 }
