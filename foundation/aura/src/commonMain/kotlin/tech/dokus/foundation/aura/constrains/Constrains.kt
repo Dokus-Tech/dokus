@@ -157,10 +157,12 @@ object Constrains {
 fun Modifier.limitWidth(): Modifier = widthIn(max = Constrains.largeScreenWidth)
 
 @Stable
-fun Modifier.limitWidthCenteredContent(): Modifier = widthIn(max = Constrains.centeredContentMaxWidth)
+fun Modifier.limitWidthCenteredContent(): Modifier =
+    widthIn(max = Constrains.centeredContentMaxWidth)
 
 @Stable
-fun Modifier.withVerticalPadding(): Modifier = then(Modifier.padding(vertical = Constrains.Spacing.xxLarge))
+fun Modifier.withVerticalPadding(): Modifier =
+    then(Modifier.padding(vertical = Constrains.Spacing.xxLarge))
 
 @Composable
 fun Modifier.withContentPaddingForScrollable(): Modifier {
@@ -177,7 +179,12 @@ fun Modifier.withContentPaddingForScrollable(): Modifier {
 @Composable
 fun Modifier.withContentPadding(): Modifier {
     if (LocalScreenSize.isLarge) {
-        return then(Modifier.padding(vertical = Constrains.Spacing.large, horizontal = Constrains.Spacing.xxLarge))
+        return then(
+            Modifier.padding(
+                vertical = Constrains.Spacing.large,
+                horizontal = Constrains.Spacing.xxLarge
+            )
+        )
     }
     return then(Modifier.padding(horizontal = Constrains.Spacing.large))
 }
@@ -197,8 +204,12 @@ fun Modifier.withExtraTopPaddingMobile(): Modifier {
 }
 
 @Stable
-fun Modifier.padding(innerPadding: PaddingValues, layoutDirection: LayoutDirection): Modifier = padding(
-    bottom = innerPadding.calculateBottomPadding(),
+fun Modifier.withContentPadding(
+    innerPadding: PaddingValues,
+    layoutDirection: LayoutDirection,
+    withBottom: Boolean = false
+): Modifier = padding(
+    bottom = innerPadding.calculateBottomPadding().takeIf { withBottom } ?: 0.dp,
     start = innerPadding.calculateStartPadding(layoutDirection),
     end = innerPadding.calculateEndPadding(layoutDirection),
     top = innerPadding.calculateTopPadding(),

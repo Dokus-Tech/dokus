@@ -256,6 +256,17 @@
     <string name="cashflow_analysis_retry">Retry Analysis</string>
     <string name="cashflow_analysis_continue_manually">Continue Manually</string>
     <string name="cashflow_document_rejected">Document rejected</string>
+    <string name="cashflow_somethings_wrong">Something\'s wrong</string>
+    <string name="cashflow_needs_input">needs input</string>
+    <string name="cashflow_needs_attention">needs attention</string>
+
+    <!-- Mobile Tabs -->
+    <string name="cashflow_tab_preview">Preview</string>
+    <string name="cashflow_tab_details">Details</string>
+    <string name="cashflow_preview_error">Could not load preview</string>
+    <string name="cashflow_who_issued_document">Who issued this document?</string>
+    <string name="cashflow_tap_to_identify">Tap to identify</string>
+    <string name="cashflow_needed_to_complete">Needed to complete this document</string>
     <string name="cashflow_contact_information">Contact Information</string>
     <string name="cashflow_contact_name">Contact Name</string>
     <string name="cashflow_invoice_details_section">Invoice Details</string>
@@ -300,6 +311,14 @@
 
     <!-- Contact Selection -->
     <string name="cashflow_contact_label">Contact</string>
+    <string name="cashflow_contact_create_new">Create new contact</string>
+    <string name="cashflow_contact_no_matches">No contacts match your search</string>
+    <string name="cashflow_contact_search_hint">Search contacts</string>
+    <string name="cashflow_contact_suggestions">Suggestions</string>
+    <string name="cashflow_extracted_name">Extracted name</string>
+    <string name="cashflow_view_document">View Document</string>
+    <string name="cashflow_view_cashflow">View Cashflow</string>
+    <string name="cashflow_contact_search_to_begin">Search for a contact above</string>
     <string name="cashflow_saving_contact">Saving contact...</string>
     <string name="cashflow_no_contact_selected">No contact selected</string>
     <string name="cashflow_select_contact">Select contact</string>

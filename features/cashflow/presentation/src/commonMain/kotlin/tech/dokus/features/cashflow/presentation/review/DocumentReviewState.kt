@@ -19,6 +19,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -66,6 +67,10 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val showPreviewSheet: Boolean = false,
         val rejectDialogState: RejectDialogState? = null,
         val failureBannerDismissed: Boolean = false,
+        // Contact sheet state
+        val showContactSheet: Boolean = false,
+        val contactSheetSearchQuery: String = "",
+        val contactSheetContacts: DokusState<List<ContactDto>> = DokusState.idle(),
     ) : DocumentReviewState {
 
         /** True when AI extraction is still in progress (Queued or Processing). */
@@ -121,6 +126,96 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 
         val confidencePercent: Int
             get() = ((document.latestIngestion?.confidence ?: MinConfidenceThreshold) * PercentageMultiplier).toInt()
+
+        /**
+         * Hard gate - Confirm button is disabled when this is true.
+         * True when: missing required fields (type, total, issue date).
+         */
+        val isBlocking: Boolean
+            get() = confirmBlockedReason != null
+
+        /**
+         * Contact match status - captures uncertainty, not just null.
+         * Used for policy-based attention signals.
+         */
+        val contactMatchStatus: ContactMatchStatus
+            get() = when {
+                // User explicitly selected or high-confidence suggestion
+                selectedContactSnapshot != null && contactSelectionState is ContactSelectionState.Selected ->
+                    ContactMatchStatus.Matched
+                // Suggested with high confidence (>=0.8)
+                selectedContactSnapshot != null &&
+                    contactSelectionState is ContactSelectionState.Suggested &&
+                    (contactSelectionState as ContactSelectionState.Suggested).confidence >= HIGH_CONFIDENCE_THRESHOLD ->
+                    ContactMatchStatus.Matched
+                // Contact exists but low confidence
+                selectedContactSnapshot != null ->
+                    ContactMatchStatus.Uncertain
+                // No contact, but required for this document type (Invoice/Bill)
+                editableData.documentType in CONTACT_REQUIRED_TYPES ->
+                    ContactMatchStatus.MissingButRequired
+                // No contact, but acceptable (Expense/Receipt)
+                else ->
+                    ContactMatchStatus.NotRequired
+            }
+
+        /**
+         * Soft attention signal - policy-based, not field-null checks.
+         * SEPARATE from confirmBlockedReason (hard block).
+         *
+         * Attention rules:
+         * 1. Always attention if confirmBlockedReason != null (hard issues are also soft)
+         * 2. Attention if contact is Uncertain or MissingButRequired
+         * 3. Attention if due date missing AND (Invoice OR Bill) AND not yet confirmed
+         */
+        val hasAttention: Boolean
+            get() {
+                // Hard block implies attention
+                if (confirmBlockedReason != null) return true
+
+                // Contact uncertainty
+                if (contactMatchStatus == ContactMatchStatus.Uncertain ||
+                    contactMatchStatus == ContactMatchStatus.MissingButRequired) return true
+
+                // Due date missing for invoices/bills (only when not confirmed)
+                val needsDueDate = editableData.documentType in CONTACT_REQUIRED_TYPES &&
+                    !isDocumentConfirmed
+                if (needsDueDate && editableData.dueDate == null) return true
+
+                return false
+            }
+
+        /**
+         * Resolved description for the header understanding line.
+         * Priority: context (notes/description) + counterparty, or fallback to filename.
+         */
+        val description: String
+            get() {
+                val counterparty = editableData.counterpartyName
+                val context = editableData.contextDescription
+
+                return when {
+                    counterparty != null && context != null -> "$counterparty — $context"
+                    context != null -> context
+                    counterparty != null -> counterparty
+                    isProcessing -> "Processing document…"
+                    else -> document.document.filename ?: "Document"
+                }
+            }
+
+        /**
+         * Total amount for the understanding line (currency-formatted).
+         */
+        val totalAmount: Money?
+            get() = when (editableData.documentType) {
+                DocumentType.Invoice -> Money.parse(editableData.invoice?.totalAmount ?: "")
+                DocumentType.Bill -> Money.parse(editableData.bill?.amount ?: "")
+                DocumentType.Expense -> Money.parse(editableData.expense?.amount ?: "")
+                DocumentType.Receipt -> Money.parse(editableData.receipt?.amount ?: "")
+                DocumentType.ProForma -> Money.parse(editableData.proForma?.totalAmount ?: "")
+                DocumentType.CreditNote -> Money.parse(editableData.creditNote?.totalAmount ?: "")
+                else -> null
+            }
     }
 
     data class Error(
@@ -164,3 +259,57 @@ private val EditableExtractedData.hasCoherentAmounts: Boolean
             else -> false
         }
     }
+
+/** Counterparty name for description resolution. */
+private val EditableExtractedData.counterpartyName: String?
+    get() = when (documentType) {
+        DocumentType.Invoice -> invoice?.clientName?.takeIf { it.isNotBlank() }
+        DocumentType.Bill -> bill?.supplierName?.takeIf { it.isNotBlank() }
+        DocumentType.Expense -> expense?.merchant?.takeIf { it.isNotBlank() }
+        DocumentType.Receipt -> receipt?.merchant?.takeIf { it.isNotBlank() }
+        DocumentType.ProForma -> proForma?.clientName?.takeIf { it.isNotBlank() }
+        DocumentType.CreditNote -> creditNote?.counterpartyName?.takeIf { it.isNotBlank() }
+        else -> null
+    }
+
+/** Context/description text for understanding line. */
+private val EditableExtractedData.contextDescription: String?
+    get() = when (documentType) {
+        DocumentType.Invoice -> invoice?.notes?.takeIf { it.isNotBlank() }
+        DocumentType.Bill -> bill?.description?.takeIf { it.isNotBlank() }
+        DocumentType.Expense -> expense?.description?.takeIf { it.isNotBlank() }
+        DocumentType.Receipt -> receipt?.description?.takeIf { it.isNotBlank() }
+        DocumentType.ProForma -> proForma?.notes?.takeIf { it.isNotBlank() }
+        DocumentType.CreditNote -> creditNote?.reason?.takeIf { it.isNotBlank() }
+        else -> null
+    }
+
+/** Due date for attention signal. */
+private val EditableExtractedData.dueDate: kotlinx.datetime.LocalDate?
+    get() = when (documentType) {
+        DocumentType.Invoice -> invoice?.dueDate
+        DocumentType.Bill -> bill?.dueDate
+        DocumentType.ProForma -> proForma?.validUntil
+        else -> null
+    }
+
+/**
+ * Contact match status - captures uncertainty, not just null.
+ * Used for policy-based attention signals in the UI.
+ */
+enum class ContactMatchStatus {
+    /** Bound with high confidence or explicit user selection. */
+    Matched,
+    /** Bound but low confidence or multiple candidates - user should review. */
+    Uncertain,
+    /** No contact, and document type requires one (Invoice/Bill). */
+    MissingButRequired,
+    /** No contact, but acceptable for this document type (Expense/Receipt). */
+    NotRequired
+}
+
+/** Confidence threshold for considering a contact match as "high confidence". */
+private const val HIGH_CONFIDENCE_THRESHOLD = 0.8f
+
+/** Document types that require a contact (for VAT/accounting purposes). */
+private val CONTACT_REQUIRED_TYPES = listOf(DocumentType.Invoice, DocumentType.Bill)

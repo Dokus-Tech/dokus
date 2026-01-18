@@ -58,6 +58,11 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object OpenPreviewSheet : DocumentReviewIntent
     data object ClosePreviewSheet : DocumentReviewIntent
 
+    // Contact sheet intents
+    data object OpenContactSheet : DocumentReviewIntent
+    data object CloseContactSheet : DocumentReviewIntent
+    data class UpdateContactSheetSearch(val query: String) : DocumentReviewIntent
+
     data object AddLineItem : DocumentReviewIntent
     data class UpdateLineItem(val index: Int, val item: ExtractedLineItem) : DocumentReviewIntent
     data class RemoveLineItem(val index: Int) : DocumentReviewIntent

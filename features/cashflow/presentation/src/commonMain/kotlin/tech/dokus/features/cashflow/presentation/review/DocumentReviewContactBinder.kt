@@ -8,6 +8,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewContactBinder(
@@ -15,6 +16,39 @@ internal class DocumentReviewContactBinder(
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
+    // Contact sheet handlers
+
+    suspend fun DocumentReviewCtx.handleOpenContactSheet() {
+        withState<DocumentReviewState.Content, _> {
+            updateState {
+                copy(
+                    showContactSheet = true,
+                    contactSheetSearchQuery = "",
+                    contactSheetContacts = DokusState.loading(),
+                )
+            }
+        }
+        // Loading contacts is handled externally via ListContactsUseCase
+        // The UI will trigger loading when the sheet opens
+    }
+
+    suspend fun DocumentReviewCtx.handleCloseContactSheet() {
+        withState<DocumentReviewState.Content, _> {
+            updateState {
+                copy(
+                    showContactSheet = false,
+                    contactSheetSearchQuery = "",
+                )
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleUpdateContactSheetSearch(query: String) {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(contactSheetSearchQuery = query) }
+        }
+    }
+
     suspend fun DocumentReviewCtx.handleSelectContact(contactId: ContactId) {
         withState<DocumentReviewState.Content, _> {
             bindContact(documentId, contactId)

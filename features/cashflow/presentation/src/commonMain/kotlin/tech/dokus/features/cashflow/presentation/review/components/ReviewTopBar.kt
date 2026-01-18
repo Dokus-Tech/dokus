@@ -2,10 +2,14 @@ package tech.dokus.features.cashflow.presentation.review.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -14,38 +18,32 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
-import tech.dokus.aura.resources.action_reject
 import tech.dokus.aura.resources.cashflow_chat_with_document
-import tech.dokus.aura.resources.cashflow_confidence_badge
 import tech.dokus.aura.resources.cashflow_document_review_title
+import tech.dokus.aura.resources.cashflow_needs_attention
+import tech.dokus.aura.resources.cashflow_needs_input
+import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.aura.resources.state_confirming
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.foundation.aura.components.DraftStatusBadge
 import tech.dokus.foundation.aura.components.PBackButton
-import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.style.statusWarning
+import tech.dokus.foundation.aura.style.textMuted
 
-// Confidence thresholds
-private const val ConfidenceHighThreshold = 80
-private const val ConfidenceMediumThreshold = 50
-
-// Badge dimensions
-private val BadgeCornerRadius = 4.dp
-private val BadgeHorizontalPadding = 6.dp
-private val BadgeVerticalPadding = 2.dp
-private const val BadgeBackgroundAlpha = 0.1f
+private val StatusDotSize = 6.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,25 +61,22 @@ internal fun ReviewTopBar(
         TopAppBar(
             title = {
                 Column {
+                    // Primary: Description (counterparty + context)
                     Text(
-                        text = content?.document?.document?.filename
+                        text = content?.description
                             ?: stringResource(Res.string.cashflow_document_review_title),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    // Understanding line: amount + status
                     if (content != null) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            content.document.draft?.draftStatus?.let { draftStatus ->
-                                DraftStatusBadge(status = draftStatus)
-                            }
-                            if (content.showConfidence) {
-                                ConfidenceBadge(percent = content.confidencePercent)
-                            }
-                        }
+                        UnderstandingLine(
+                            totalAmount = content.totalAmount?.toDisplayString(),
+                            isBlocking = content.isBlocking,
+                            hasAttention = content.hasAttention,
+                            isProcessing = content.isProcessing
+                        )
                     }
                 }
             },
@@ -98,12 +93,21 @@ internal fun ReviewTopBar(
                         content.isSaving ||
                         content.isBindingContact ||
                         content.isRejecting
-                    Row(horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {
-                        POutlinedButton(
-                            text = stringResource(Res.string.action_reject),
-                            enabled = !isBusy,
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // "Something's wrong" text link (replaces Reject button)
+                        TextButton(
                             onClick = onRejectClick,
-                        )
+                            enabled = !isBusy
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.cashflow_somethings_wrong),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.textMuted
+                            )
+                        }
                         PPrimaryButton(
                             text = if (content.isConfirming) {
                                 stringResource(Res.string.state_confirming)
@@ -141,24 +145,80 @@ internal fun ReviewTopBar(
     }
 }
 
+/**
+ * Understanding line showing amount + status.
+ * Displays: "€1,234.56 · needs input" or "€1,234.56 · processing"
+ */
 @Composable
-private fun ConfidenceBadge(percent: Int) {
-    val color = when {
-        percent >= ConfidenceHighThreshold -> MaterialTheme.colorScheme.tertiary
-        percent >= ConfidenceMediumThreshold -> MaterialTheme.colorScheme.secondary
-        else -> MaterialTheme.colorScheme.error
-    }
-
-    androidx.compose.foundation.layout.Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(BadgeCornerRadius))
-            .background(color.copy(alpha = BadgeBackgroundAlpha))
-            .padding(horizontal = BadgeHorizontalPadding, vertical = BadgeVerticalPadding)
+private fun UnderstandingLine(
+    totalAmount: String?,
+    isBlocking: Boolean,
+    hasAttention: Boolean,
+    isProcessing: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
     ) {
+        // Amount
         Text(
-            text = stringResource(Res.string.cashflow_confidence_badge, percent),
-            style = MaterialTheme.typography.labelSmall,
-            color = color
+            text = totalAmount ?: "—",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        Text(
+            text = " · ",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.textMuted
+        )
+
+        when {
+            isProcessing -> {
+                Text(
+                    text = "Processing…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.textMuted
+                )
+            }
+            isBlocking -> {
+                // Amber dot + "needs input"
+                Box(
+                    modifier = Modifier
+                        .size(StatusDotSize)
+                        .background(MaterialTheme.colorScheme.statusWarning, CircleShape)
+                )
+                Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                Text(
+                    text = stringResource(Res.string.cashflow_needs_input),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.statusWarning
+                )
+            }
+            hasAttention -> {
+                // Softer amber dot (still needs attention but not blocking)
+                Box(
+                    modifier = Modifier
+                        .size(StatusDotSize)
+                        .background(MaterialTheme.colorScheme.statusWarning.copy(alpha = 0.6f), CircleShape)
+                )
+                Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                Text(
+                    text = stringResource(Res.string.cashflow_needs_attention),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            else -> {
+                // Ready / normal state
+                Text(
+                    text = "Ready",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.textMuted
+                )
+            }
+        }
     }
 }
