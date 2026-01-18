@@ -27,7 +27,6 @@ data class PeppolSetupContext(
     /** Participant ID in `0208:BE...` format. */
     val peppolId: String,
     /** UX hint: surface that Peppol is a premium feature. */
-    val showPremiumHint: Boolean = true,
 )
 
 @Immutable

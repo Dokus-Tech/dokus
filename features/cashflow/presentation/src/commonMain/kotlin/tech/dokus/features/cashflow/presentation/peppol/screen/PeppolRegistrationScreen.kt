@@ -1,10 +1,7 @@
-@file:Suppress("MagicNumber")
-
 package tech.dokus.features.cashflow.presentation.peppol.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,10 +29,12 @@ import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIn
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PCopyRow
 import tech.dokus.foundation.aura.components.common.WaitingIndicator
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
 import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
@@ -52,20 +51,25 @@ internal fun PeppolRegistrationScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .limitWidthCenteredContent(),
             contentAlignment = Alignment.Center,
         ) {
             when (state) {
                 PeppolRegistrationState.Loading -> LoadingContent()
                 is PeppolRegistrationState.Fresh -> FreshContent(state, onIntent)
-                is PeppolRegistrationState.Activating -> ActivatingContent(state, onIntent)
+                is PeppolRegistrationState.Activating -> ActivatingContent(onIntent)
                 is PeppolRegistrationState.Active -> ActiveContent(state, onIntent)
                 is PeppolRegistrationState.Blocked -> BlockedContent(state, onIntent)
-                is PeppolRegistrationState.WaitingTransfer -> WaitingTransferContent(state, onIntent)
+                is PeppolRegistrationState.WaitingTransfer -> WaitingTransferContent(
+                    state,
+                    onIntent
+                )
+
                 is PeppolRegistrationState.SendingOnly -> SendingOnlyContent(state, onIntent)
-                is PeppolRegistrationState.External -> ExternalContent(state, onIntent)
+                is PeppolRegistrationState.External -> ExternalContent(onIntent)
                 is PeppolRegistrationState.Failed -> FailedContent(state, onIntent)
-                is PeppolRegistrationState.Error -> tech.dokus.foundation.aura.components.common.DokusErrorContent(
+                is PeppolRegistrationState.Error -> DokusErrorContent(
                     exception = state.exception,
                     retryHandler = state.retryHandler,
                     modifier = Modifier.fillMaxWidth().padding(Constrains.Spacing.large)
@@ -89,7 +93,6 @@ private fun FreshContent(
         icon = { PeppolCircle() },
         title = "Enable Peppol",
         subtitle = "Receive invoices automatically in Dokus.",
-        premiumHint = state.context.showPremiumHint,
         primary = {
             POutlinedButton(
                 text = if (state.isEnabling) "Enabling…" else "Enable",
@@ -114,7 +117,6 @@ private fun FreshContent(
 
 @Composable
 private fun ActivatingContent(
-    state: PeppolRegistrationState.Activating,
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
     PeppolCenteredFlow(
@@ -153,7 +155,6 @@ private fun ActiveContent(
         primary = {
             POutlinedButton(
                 text = "Continue",
-                modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(PeppolRegistrationIntent.Continue) }
             )
         },
@@ -194,7 +195,6 @@ private fun BlockedContent(
                 text = "Transfer inbox to Dokus",
                 enabled = !state.isWorking,
                 isLoading = state.isWorking,
-                modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(PeppolRegistrationIntent.WaitForTransfer) }
             )
         },
@@ -248,7 +248,6 @@ private fun WaitingTransferContent(
         primary = {
             POutlinedButton(
                 text = "Continue",
-                modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(PeppolRegistrationIntent.Continue) }
             )
         },
@@ -281,7 +280,6 @@ private fun SendingOnlyContent(
         primary = {
             POutlinedButton(
                 text = "Continue",
-                modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(PeppolRegistrationIntent.Continue) }
             )
         },
@@ -299,7 +297,6 @@ private fun SendingOnlyContent(
 
 @Composable
 private fun ExternalContent(
-    state: PeppolRegistrationState.External,
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
     PeppolCenteredFlow(
@@ -319,7 +316,6 @@ private fun ExternalContent(
         primary = {
             POutlinedButton(
                 text = "Continue",
-                modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(PeppolRegistrationIntent.Continue) }
             )
         },
@@ -353,7 +349,6 @@ private fun FailedContent(
                 text = "Try again",
                 isLoading = state.isRetrying,
                 enabled = !state.isRetrying,
-                modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(PeppolRegistrationIntent.Retry) }
             )
         },

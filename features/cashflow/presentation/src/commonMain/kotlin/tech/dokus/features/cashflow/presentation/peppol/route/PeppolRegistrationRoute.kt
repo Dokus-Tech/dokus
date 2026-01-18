@@ -22,6 +22,7 @@ import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun PeppolRegistrationRoute(
@@ -58,7 +59,7 @@ internal fun PeppolRegistrationRoute(
     LaunchedEffect(state) {
         if (state !is PeppolRegistrationState.WaitingTransfer) return@LaunchedEffect
         while (true) {
-            delay(30_000)
+            delay(30.seconds)
             container.store.intent(PeppolRegistrationIntent.PollTransfer)
         }
     }

@@ -1,5 +1,3 @@
-@file:Suppress("TooManyFunctions")
-
 package tech.dokus.features.cashflow.presentation.peppol.mvi
 
 import pro.respawn.flowmvi.api.Container
@@ -21,8 +19,7 @@ import tech.dokus.features.cashflow.usecases.VerifyPeppolIdUseCase
 import tech.dokus.features.cashflow.usecases.WaitForPeppolTransferUseCase
 import tech.dokus.foundation.platform.Logger
 
-internal typealias PeppolRegistrationCtx =
-    PipelineContext<PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction>
+internal typealias PeppolRegistrationCtx = PipelineContext<PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction>
 
 /**
  * Container for the Peppol registration/settings screen.
@@ -106,18 +103,41 @@ internal class PeppolRegistrationContainer(
         val context = PeppolSetupContext(
             companyName = tenant.legalName.value,
             peppolId = registration?.peppolId ?: computedPeppolId,
-            showPremiumHint = true,
         )
 
         when (registration?.status) {
             PeppolRegistrationStatus.Active -> updateState { PeppolRegistrationState.Active(context) }
-            PeppolRegistrationStatus.Pending -> updateState { PeppolRegistrationState.Activating(context) }
-            PeppolRegistrationStatus.WaitingTransfer -> updateState { PeppolRegistrationState.WaitingTransfer(context) }
-            PeppolRegistrationStatus.SendingOnly -> updateState { PeppolRegistrationState.SendingOnly(context) }
-            PeppolRegistrationStatus.External -> updateState { PeppolRegistrationState.External(context) }
-            PeppolRegistrationStatus.Failed -> updateState {
-                PeppolRegistrationState.Failed(context = context, message = registration.errorMessage)
+            PeppolRegistrationStatus.Pending -> updateState {
+                PeppolRegistrationState.Activating(
+                    context
+                )
             }
+
+            PeppolRegistrationStatus.WaitingTransfer -> updateState {
+                PeppolRegistrationState.WaitingTransfer(
+                    context
+                )
+            }
+
+            PeppolRegistrationStatus.SendingOnly -> updateState {
+                PeppolRegistrationState.SendingOnly(
+                    context
+                )
+            }
+
+            PeppolRegistrationStatus.External -> updateState {
+                PeppolRegistrationState.External(
+                    context
+                )
+            }
+
+            PeppolRegistrationStatus.Failed -> updateState {
+                PeppolRegistrationState.Failed(
+                    context = context,
+                    message = registration.errorMessage
+                )
+            }
+
             PeppolRegistrationStatus.NotConfigured, null -> {
                 // Determine whether we should show Fresh or Blocked without asking the user for VAT input.
                 verifyPeppolId(vatNumber).fold(
@@ -175,7 +195,12 @@ internal class PeppolRegistrationContainer(
                         updateState { PeppolRegistrationState.External(newContext) }
 
                     response.registration.status == PeppolRegistrationStatus.Failed ->
-                        updateState { PeppolRegistrationState.Failed(newContext, response.registration.errorMessage) }
+                        updateState {
+                            PeppolRegistrationState.Failed(
+                                newContext,
+                                response.registration.errorMessage
+                            )
+                        }
 
                     else ->
                         updateState { PeppolRegistrationState.Fresh(newContext) }
@@ -183,7 +208,12 @@ internal class PeppolRegistrationContainer(
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to enable PEPPOL" }
-                updateState { PeppolRegistrationState.Failed(context = context, message = error.message) }
+                updateState {
+                    PeppolRegistrationState.Failed(
+                        context = context,
+                        message = error.message
+                    )
+                }
             }
         )
     }
@@ -230,15 +260,48 @@ internal class PeppolRegistrationContainer(
                 onSuccess = { response ->
                     val newContext = context.copy(peppolId = response.registration.peppolId)
                     when (response.registration.status) {
-                        PeppolRegistrationStatus.Active -> updateState { PeppolRegistrationState.Active(newContext) }
-                        PeppolRegistrationStatus.Failed -> updateState {
-                            PeppolRegistrationState.Failed(newContext, response.registration.errorMessage)
+                        PeppolRegistrationStatus.Active -> updateState {
+                            PeppolRegistrationState.Active(
+                                newContext
+                            )
                         }
-                        PeppolRegistrationStatus.SendingOnly -> updateState { PeppolRegistrationState.SendingOnly(newContext) }
-                        PeppolRegistrationStatus.External -> updateState { PeppolRegistrationState.External(newContext) }
-                        PeppolRegistrationStatus.Pending -> updateState { PeppolRegistrationState.Activating(newContext) }
-                        PeppolRegistrationStatus.WaitingTransfer -> updateState { PeppolRegistrationState.WaitingTransfer(newContext) }
-                        PeppolRegistrationStatus.NotConfigured -> updateState { PeppolRegistrationState.Blocked(newContext) }
+
+                        PeppolRegistrationStatus.Failed -> updateState {
+                            PeppolRegistrationState.Failed(
+                                newContext,
+                                response.registration.errorMessage
+                            )
+                        }
+
+                        PeppolRegistrationStatus.SendingOnly -> updateState {
+                            PeppolRegistrationState.SendingOnly(
+                                newContext
+                            )
+                        }
+
+                        PeppolRegistrationStatus.External -> updateState {
+                            PeppolRegistrationState.External(
+                                newContext
+                            )
+                        }
+
+                        PeppolRegistrationStatus.Pending -> updateState {
+                            PeppolRegistrationState.Activating(
+                                newContext
+                            )
+                        }
+
+                        PeppolRegistrationStatus.WaitingTransfer -> updateState {
+                            PeppolRegistrationState.WaitingTransfer(
+                                newContext
+                            )
+                        }
+
+                        PeppolRegistrationStatus.NotConfigured -> updateState {
+                            PeppolRegistrationState.Blocked(
+                                newContext
+                            )
+                        }
                     }
                 },
                 onFailure = { error ->
@@ -266,7 +329,13 @@ internal class PeppolRegistrationContainer(
             handleRefresh()
             return
         }
-        updateState { PeppolRegistrationState.Failed(context = context, message = null, isRetrying = true) }
+        updateState {
+            PeppolRegistrationState.Failed(
+                context = context,
+                message = null,
+                isRetrying = true
+            )
+        }
         handleEnablePeppol()
     }
 

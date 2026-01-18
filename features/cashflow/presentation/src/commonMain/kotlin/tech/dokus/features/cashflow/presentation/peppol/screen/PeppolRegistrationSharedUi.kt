@@ -1,7 +1,6 @@
-@file:Suppress("MagicNumber")
-
 package tech.dokus.features.cashflow.presentation.peppol.screen
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -37,12 +37,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import tech.dokus.foundation.aura.components.StatusBadge
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
-import tech.dokus.foundation.aura.style.brandGold
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.textMuted
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun PeppolCenteredFlow(
@@ -50,7 +49,6 @@ internal fun PeppolCenteredFlow(
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
-    premiumHint: Boolean = false,
     body: (@Composable () -> Unit)? = null,
     primary: @Composable () -> Unit,
     secondary: (@Composable () -> Unit)? = null,
@@ -59,10 +57,9 @@ internal fun PeppolCenteredFlow(
 ) {
     Column(
         modifier = modifier
-            .fillMaxWidth()
+            .limitWidthCenteredContent()
             .verticalScroll(rememberScrollState())
-            .padding(Constrains.Spacing.xxLarge)
-            .limitWidthCenteredContent(),
+            .padding(Constrains.Spacing.xxLarge),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         icon()
@@ -84,15 +81,6 @@ internal fun PeppolCenteredFlow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-
-        if (premiumHint) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
-            StatusBadge(
-                text = "Premium",
-                color = MaterialTheme.colorScheme.brandGold,
-            )
-        }
-
         if (body != null) {
             Spacer(modifier = Modifier.height(Constrains.Spacing.large))
             body()
@@ -132,7 +120,11 @@ internal fun PeppolCircle(
     Box(
         modifier = modifier
             .size(72.dp)
-            .border(width = 1.5.dp, color = MaterialTheme.colorScheme.outlineVariant, shape = CircleShape),
+            .border(
+                width = 1.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = CircleShape
+            ),
         contentAlignment = Alignment.Center
     ) {
         content?.invoke()
@@ -155,19 +147,19 @@ internal fun PeppolCloseIcon(
     modifier: Modifier = Modifier,
 ) {
     val color = MaterialTheme.colorScheme.textMuted
-    androidx.compose.foundation.Canvas(modifier = modifier.size(20.dp)) {
+    Canvas(modifier = modifier.size(20.dp)) {
         val stroke = 1.5.dp.toPx()
         drawLine(
             color = color,
-            start = androidx.compose.ui.geometry.Offset(0f, 0f),
-            end = androidx.compose.ui.geometry.Offset(size.width, size.height),
+            start = Offset(0f, 0f),
+            end = Offset(size.width, size.height),
             strokeWidth = stroke,
             cap = StrokeCap.Round,
         )
         drawLine(
             color = color,
-            start = androidx.compose.ui.geometry.Offset(size.width, 0f),
-            end = androidx.compose.ui.geometry.Offset(0f, size.height),
+            start = Offset(size.width, 0f),
+            end = Offset(0f, size.height),
             strokeWidth = stroke,
             cap = StrokeCap.Round,
         )
@@ -202,7 +194,7 @@ internal fun TransferEmailCard(
 
     LaunchedEffect(copied) {
         if (!copied) return@LaunchedEffect
-        delay(2000)
+        delay(2.seconds)
         copied = false
     }
 
@@ -228,7 +220,11 @@ internal fun TransferEmailCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant,
+                        MaterialTheme.shapes.small
+                    )
                     .padding(horizontal = Constrains.Spacing.medium),
                 horizontalArrangement = Arrangement.End,
             ) {
