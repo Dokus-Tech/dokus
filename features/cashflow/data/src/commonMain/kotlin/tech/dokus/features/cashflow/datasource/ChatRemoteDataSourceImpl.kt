@@ -82,8 +82,8 @@ internal class ChatRemoteDataSourceImpl(
         return runCatching {
             httpClient.get(
                 Chat.Sessions(
-                    scope = scope?.dbValue,
-                    documentId = documentId?.toString(),
+                    scope = scope,
+                    documentId = documentId,
                     page = page,
                     limit = limit
                 )
