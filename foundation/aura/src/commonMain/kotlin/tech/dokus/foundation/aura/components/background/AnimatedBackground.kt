@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalInspectionMode
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -133,7 +134,14 @@ private fun generateCalmParticles(random: Random): List<CalmParticle> {
     val cellHeight = 1f / CalmGridRows
     var particleIndex = 0
 
-    fun addParticle(layer: Int, sizeMin: Float, sizeMax: Float, alphaMin: Float, alphaMax: Float, speed: Float) {
+    fun addParticle(
+        layer: Int,
+        sizeMin: Float,
+        sizeMax: Float,
+        alphaMin: Float,
+        alphaMax: Float,
+        speed: Float
+    ) {
         // Calculate grid position with jitter
         val gridX = particleIndex % CalmGridCols
         val gridY = (particleIndex / CalmGridCols) % CalmGridRows
@@ -166,13 +174,34 @@ private fun generateCalmParticles(random: Random): List<CalmParticle> {
 
     // Generate particles for each layer
     repeat(backgroundCount) {
-        addParticle(0, CalmBackgroundSizeMin, CalmBackgroundSizeMax, CalmBackgroundAlphaMin, CalmBackgroundAlphaMax, CalmBackgroundSpeed)
+        addParticle(
+            0,
+            CalmBackgroundSizeMin,
+            CalmBackgroundSizeMax,
+            CalmBackgroundAlphaMin,
+            CalmBackgroundAlphaMax,
+            CalmBackgroundSpeed
+        )
     }
     repeat(middleCount) {
-        addParticle(1, CalmMiddleSizeMin, CalmMiddleSizeMax, CalmMiddleAlphaMin, CalmMiddleAlphaMax, CalmMiddleSpeed)
+        addParticle(
+            1,
+            CalmMiddleSizeMin,
+            CalmMiddleSizeMax,
+            CalmMiddleAlphaMin,
+            CalmMiddleAlphaMax,
+            CalmMiddleSpeed
+        )
     }
     repeat(foregroundCount) {
-        addParticle(2, CalmForegroundSizeMin, CalmForegroundSizeMax, CalmForegroundAlphaMin, CalmForegroundAlphaMax, CalmForegroundSpeed)
+        addParticle(
+            2,
+            CalmForegroundSizeMin,
+            CalmForegroundSizeMax,
+            CalmForegroundAlphaMin,
+            CalmForegroundAlphaMax,
+            CalmForegroundSpeed
+        )
     }
 
     return particles.sortedBy { it.layer } // Draw background first
@@ -193,6 +222,7 @@ private fun generateCalmParticles(random: Random): List<CalmParticle> {
  */
 @Composable
 fun CalmParticleField() {
+    if (LocalInspectionMode.current) return
     val random = remember { Random }
     val particles = remember { generateCalmParticles(random) }
 
@@ -320,7 +350,6 @@ private const val WarpFlashAlpha = 0.9f
 private const val WarpFadeAlpha = 0.8f
 
 
-
 /**
  * Space warp jump animation effect for transitioning between screens.
  * Creates a hyperspace-like effect with star streaks, warp tunnel, and energy burst.
@@ -383,7 +412,12 @@ fun WarpJumpEffect(
                 distance = Random.nextFloat(),
                 size = Random.nextFloat() * WarpStarSizeMax + WarpStarSizeMin,
                 speed = Random.nextFloat() * WarpStarSpeedRange + WarpStarSpeedMin,
-                color = listOf(Color.White, ColorLightSilver, ColorGainsboro, ColorLightGray).random()
+                color = listOf(
+                    Color.White,
+                    ColorLightSilver,
+                    ColorGainsboro,
+                    ColorLightGray
+                ).random()
             )
         }
     }
@@ -470,7 +504,8 @@ fun WarpJumpEffect(
                 val ringProgress = (tunnelPhase - ring * WarpTunnelRingStep).coerceIn(0f, 1f)
                 if (ringProgress > 0f) {
                     val ringRadius = size.minDimension * WarpTunnelRingStep * ring * tunnelPulse
-                    val ringAlpha = ringProgress * (1f - ring * WarpTunnelRingAlphaFade) * WarpTunnelRingAlphaMax
+                    val ringAlpha =
+                        ringProgress * (1f - ring * WarpTunnelRingAlphaFade) * WarpTunnelRingAlphaMax
 
                     drawCircle(
                         color = ColorGray.copy(alpha = ringAlpha),
@@ -502,7 +537,8 @@ fun WarpJumpEffect(
 
             // Hyperspace flash at the end
             if (tunnelPhase > WarpFlashThreshold) {
-                val flashAlpha = ((tunnelPhase - WarpFlashThreshold) / WarpFlashRange) * WarpFlashAlpha
+                val flashAlpha =
+                    ((tunnelPhase - WarpFlashThreshold) / WarpFlashRange) * WarpFlashAlpha
                 drawRect(
                     color = Color.White.copy(alpha = flashAlpha),
                     size = size
