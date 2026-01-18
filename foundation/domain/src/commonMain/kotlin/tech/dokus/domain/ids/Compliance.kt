@@ -138,3 +138,15 @@ value class PeppolSettingsId(val value: Uuid) {
         fun parse(value: String): PeppolSettingsId = PeppolSettingsId(Uuid.parse(value))
     }
 }
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class PeppolRegistrationId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): PeppolRegistrationId = PeppolRegistrationId(Uuid.random())
+        fun parse(value: String): PeppolRegistrationId = PeppolRegistrationId(Uuid.parse(value))
+    }
+}

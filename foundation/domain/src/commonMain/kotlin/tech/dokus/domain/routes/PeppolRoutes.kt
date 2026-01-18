@@ -22,10 +22,8 @@ class Peppol {
     class Providers(val parent: Peppol = Peppol())
 
     /**
-     * GET/PUT/DELETE /api/v1/peppol/settings
-     * GET - Get Peppol settings
-     * PUT - Update Peppol settings
-     * DELETE - Remove Peppol settings
+     * GET /api/v1/peppol/settings
+     * Get Peppol settings for current tenant
      */
     @Serializable
     @Resource("settings")
@@ -106,4 +104,56 @@ class Peppol {
         @Resource("syncs")
         class Syncs(val parent: Inbox)
     }
+
+    // ================================================================
+    // PEPPOL REGISTRATION (Phase B State Machine)
+    // ================================================================
+
+    /**
+     * GET /api/v1/peppol/registration
+     * Get current PEPPOL registration status for tenant
+     */
+    @Serializable
+    @Resource("registration")
+    class Registration(val parent: Peppol = Peppol())
+
+    /**
+     * POST /api/v1/peppol/verify
+     * Verify if a PEPPOL ID is available for registration
+     */
+    @Serializable
+    @Resource("verify")
+    class Verify(val parent: Peppol = Peppol())
+
+    /**
+     * POST /api/v1/peppol/enable
+     * Enable PEPPOL for the tenant (start registration)
+     */
+    @Serializable
+    @Resource("enable")
+    class Enable(val parent: Peppol = Peppol())
+
+    /**
+     * POST /api/v1/peppol/wait-for-transfer
+     * Opt to wait for PEPPOL ID transfer from another provider
+     */
+    @Serializable
+    @Resource("wait-for-transfer")
+    class WaitForTransfer(val parent: Peppol = Peppol())
+
+    /**
+     * POST /api/v1/peppol/opt-out
+     * Opt out of PEPPOL via Dokus (manage externally)
+     */
+    @Serializable
+    @Resource("opt-out")
+    class OptOut(val parent: Peppol = Peppol())
+
+    /**
+     * POST /api/v1/peppol/poll
+     * Manual poll for PEPPOL transfer status
+     */
+    @Serializable
+    @Resource("poll")
+    class Poll(val parent: Peppol = Peppol())
 }

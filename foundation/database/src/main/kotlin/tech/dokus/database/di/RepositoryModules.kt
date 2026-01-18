@@ -31,7 +31,6 @@ import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
-import tech.dokus.foundation.backend.crypto.CredentialCryptoService
 
 /**
  * Auth repositories module.
@@ -66,12 +65,9 @@ val repositoryModuleCashflow = module {
 /**
  * Peppol repositories module.
  * Provides repositories for Peppol settings and transmissions.
- *
- * NOTE: Requires CredentialCryptoService to be registered in the application.
- * The calling service must register CredentialCryptoService before including this module.
  */
 val repositoryModulePeppol = module {
-    single { PeppolSettingsRepository(get<CredentialCryptoService>()) }
+    single { PeppolSettingsRepository() }
     single { PeppolTransmissionRepository() }
     single { PeppolDirectoryCacheRepository() }
 }
@@ -140,9 +136,6 @@ val repositoryModuleAI = module {
  *     )
  * }
  * ```
- *
- * NOTE: When using repositoryModules, ensure CredentialCryptoService is registered
- * before this module (required by PeppolSettingsRepository).
  */
 val repositoryModules = module {
     includes(

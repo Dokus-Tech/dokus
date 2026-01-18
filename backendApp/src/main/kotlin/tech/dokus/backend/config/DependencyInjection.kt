@@ -46,6 +46,7 @@ import tech.dokus.database.di.repositoryModules
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
@@ -70,7 +71,6 @@ import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
-import tech.dokus.foundation.backend.config.DeploymentConfig
 import tech.dokus.foundation.backend.config.MinioConfig
 import tech.dokus.foundation.backend.crypto.AesGcmCredentialCryptoService
 import tech.dokus.foundation.backend.crypto.CredentialCryptoService
@@ -97,7 +97,10 @@ import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolCredentialResolver
 import tech.dokus.peppol.service.PeppolCredentialResolverImpl
+import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.service.PeppolTransferPollingService
+import tech.dokus.peppol.service.PeppolVerificationService
 import tech.dokus.peppol.validator.PeppolValidator
 
 /**
@@ -263,9 +266,6 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     // PDF Preview
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
 
-    // Deployment config (hosting mode)
-    single { DeploymentConfig.fromConfig(appConfig.config) }
-
     // Peppol
     single { PeppolModuleConfig.fromConfig(appConfig.config) }
     single { PeppolProviderFactory(get()) }
@@ -274,13 +274,19 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { PeppolMapper() }
     single { PeppolValidator() }
     // Centralized credential resolver - ALL Peppol operations use this
-    single<PeppolCredentialResolver> { PeppolCredentialResolverImpl(get(), get(), get()) }
+    single<PeppolCredentialResolver> { PeppolCredentialResolverImpl(get(), get()) }
     single { PeppolConnectionService(get(), get(), get()) }
     single { PeppolService(get(), get(), get(), get(), get(), get()) }
 
     // PEPPOL Directory Cache - resolves recipients via cache-first lookup
     single { PeppolRecipientResolver(get(), get(), get(), get()) }
     single<DocumentConfirmationPolicy> { DefaultDocumentConfirmationPolicy() }
+
+    // PEPPOL Registration State Machine (Phase B)
+    single { PeppolRegistrationRepository() }
+    single { PeppolVerificationService(get(), get()) }
+    single { PeppolRegistrationService(get(), get(), get(), get()) }
+    single { PeppolTransferPollingService(get(), get()) }
 
     // Peppol Polling Worker
     single {

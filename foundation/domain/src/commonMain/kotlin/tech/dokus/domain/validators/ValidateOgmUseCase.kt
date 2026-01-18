@@ -202,8 +202,9 @@ object ValidateOgmUseCase {
             "Base must be 10 digits (0 to 9,999,999,999)"
         }
         val checkDigits = calculateCheckDigits(base10Digits)
-        val full = "%010d%02d".format(base10Digits, checkDigits)
-        return formatOgm(full)
+        val basePadded = base10Digits.toString().padStart(10, '0')
+        val checkPadded = checkDigits.toString().padStart(2, '0')
+        return formatOgm(basePadded + checkPadded)
     }
 
     /**

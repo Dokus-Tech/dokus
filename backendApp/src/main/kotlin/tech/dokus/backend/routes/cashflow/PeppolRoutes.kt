@@ -2,10 +2,8 @@ package tech.dokus.backend.routes.cashflow
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
-import io.ktor.server.resources.delete
 import io.ktor.server.resources.get
 import io.ktor.server.resources.post
-import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import kotlinx.serialization.Serializable
@@ -18,15 +16,15 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.model.PeppolConnectRequest
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolConnectStatus
-import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.peppol.service.PeppolConnectionService
-import tech.dokus.peppol.service.PeppolCredentialResolver
+import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.service.PeppolVerificationService
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -45,8 +43,9 @@ import kotlin.uuid.Uuid
 internal fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
     val peppolConnectionService by inject<PeppolConnectionService>()
-    val peppolCredentialResolver by inject<PeppolCredentialResolver>()
     val peppolRecipientResolver by inject<PeppolRecipientResolver>()
+    val peppolRegistrationService by inject<PeppolRegistrationService>()
+    val peppolVerificationService by inject<PeppolVerificationService>()
     val invoiceService by inject<InvoiceService>()
     val contactRepository by inject<ContactRepository>()
     val tenantRepository by inject<TenantRepository>()
@@ -89,46 +88,6 @@ internal fun Route.peppolRoutes() {
         }
 
         /**
-         * PUT /api/v1/peppol/settings
-         * Save Peppol settings for current tenant.
-         */
-        put<Peppol.Settings> {
-            val tenantId = dokusPrincipal.requireTenantId()
-            val request = call.receive<SavePeppolSettingsRequest>()
-
-            val settings = peppolService.saveSettings(tenantId, request)
-                .getOrElse { throw DokusException.InternalError("Failed to save Peppol settings: ${it.message}") }
-
-            call.respond(HttpStatusCode.OK, settings)
-        }
-
-        /**
-         * DELETE /api/v1/peppol/settings
-         * Delete Peppol settings for current tenant.
-         *
-         * For cloud deployments: Returns 403 Forbidden.
-         * Disconnecting from Peppol is a support-only operation for cloud users
-         * to avoid generating support debt from users accidentally disconnecting.
-         *
-         * For self-hosted deployments: Deletes settings (current behavior).
-         */
-        delete<Peppol.Settings> {
-            val tenantId = dokusPrincipal.requireTenantId()
-
-            // Cloud deployments: users cannot disconnect themselves
-            if (peppolCredentialResolver.isManagedCredentials()) {
-                throw DokusException.NotAuthorized(
-                    "Disconnecting from Peppol requires support assistance for cloud-hosted accounts."
-                )
-            }
-
-            peppolService.deleteSettings(tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to delete Peppol settings: ${it.message}") }
-
-            call.respond(HttpStatusCode.NoContent)
-        }
-
-        /**
          * POST /api/v1/peppol/settings/connection-tests
          * Test connection with current credentials.
          */
@@ -143,37 +102,17 @@ internal fun Route.peppolRoutes() {
 
         /**
          * POST /api/v1/peppol/settings/connect
-         *
-         * For cloud deployments:
-         * - Credentials must NOT be provided (400 Bad Request if present)
-         * - Uses Dokus master credentials automatically
-         *
-         * For self-hosted deployments:
-         * - Credentials are REQUIRED (current behavior)
-         * - Matches/creates Recommand company by VAT and saves encrypted credentials
+         * Connect tenant to Peppol using master credentials from environment.
+         * Auto-detects or creates Recommand company based on tenant VAT.
          */
         post<Peppol.Settings.Connect> {
             val tenantId = dokusPrincipal.requireTenantId()
             val tenant = tenantRepository.findById(tenantId)
                 ?: throw DokusException.NotFound("Tenant not found")
             val companyAddress = addressRepository.getCompanyAddress(tenantId)
-            val request = call.receive<PeppolConnectRequest>()
 
-            val result = if (peppolCredentialResolver.isManagedCredentials()) {
-                // Cloud deployment: Reject if credentials are provided
-                if (request.apiKey.isNotBlank() || request.apiSecret.isNotBlank()) {
-                    throw DokusException.BadRequest(
-                        "Cloud deployments cannot provide API credentials. " +
-                            "Peppol is managed automatically by Dokus."
-                    )
-                }
-                peppolConnectionService.connectCloud(tenant, companyAddress)
-                    .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
-            } else {
-                // Self-hosted deployment: Use provided credentials
-                peppolConnectionService.connectRecommand(tenant, companyAddress, request)
-                    .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
-            }
+            val result = peppolConnectionService.connect(tenant, companyAddress)
+                .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
 
             // Trigger immediate poll after successful connection
             if (result.status == PeppolConnectStatus.Connected) {
@@ -395,6 +334,100 @@ internal fun Route.peppolRoutes() {
                 call.respond(HttpStatusCode.OK, transmission)
             }
         }
+
+        // ================================================================
+        // PEPPOL REGISTRATION (Phase B State Machine)
+        // ================================================================
+
+        /**
+         * GET /api/v1/peppol/registration
+         * Get current PEPPOL registration status.
+         */
+        get<Peppol.Registration> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            val result = peppolRegistrationService.getRegistration(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to get registration: ${it.message}") }
+
+            if (result == null) {
+                call.respond(HttpStatusCode.NotFound, mapOf("message" to "No PEPPOL registration found"))
+            } else {
+                call.respond(HttpStatusCode.OK, result)
+            }
+        }
+
+        /**
+         * POST /api/v1/peppol/verify
+         * Verify if a PEPPOL ID is available for registration.
+         * Accepts a VAT number - the backend converts it to PEPPOL ID format.
+         */
+        post<Peppol.Verify> {
+            val request = call.receive<VerifyPeppolIdRequest>()
+
+            val result = peppolVerificationService.verify(request.vatNumber)
+                .getOrElse { throw DokusException.InternalError("Failed to verify PEPPOL ID: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
+        }
+
+        /**
+         * POST /api/v1/peppol/enable
+         * Enable PEPPOL for the tenant.
+         */
+        post<Peppol.Enable> {
+            val tenantId = dokusPrincipal.requireTenantId()
+            val request = call.receive<tech.dokus.domain.model.EnablePeppolRequest>()
+
+            val tenant = tenantRepository.findById(tenantId)
+                ?: throw DokusException.NotFound("Tenant not found")
+
+            val result = peppolRegistrationService.enablePeppol(
+                tenantId = tenantId,
+                request = request,
+                companyName = tenant.legalName.value
+            ).getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
+        }
+
+        /**
+         * POST /api/v1/peppol/wait-for-transfer
+         * Opt to wait for PEPPOL ID transfer.
+         */
+        post<Peppol.WaitForTransfer> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            val result = peppolRegistrationService.waitForTransfer(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to set wait for transfer: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
+        }
+
+        /**
+         * POST /api/v1/peppol/opt-out
+         * Opt out of PEPPOL via Dokus.
+         */
+        post<Peppol.OptOut> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            peppolRegistrationService.optOut(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to opt out: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, mapOf("success" to true))
+        }
+
+        /**
+         * POST /api/v1/peppol/poll
+         * Manual poll for transfer status.
+         */
+        post<Peppol.Poll> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            val result = peppolRegistrationService.pollTransferStatus(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to poll transfer status: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
+        }
     }
 }
 
@@ -405,6 +438,9 @@ private data class ProvidersResponse(val providers: List<String>)
 
 @Serializable
 private data class VerifyRecipientRequest(val peppolId: String)
+
+@Serializable
+private data class VerifyPeppolIdRequest(val vatNumber: VatNumber)
 
 @Serializable
 private data class TestConnectionResponse(val success: Boolean)

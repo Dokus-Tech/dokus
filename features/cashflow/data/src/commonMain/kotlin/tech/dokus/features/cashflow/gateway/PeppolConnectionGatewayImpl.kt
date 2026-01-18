@@ -11,6 +11,4 @@ internal class PeppolConnectionGatewayImpl(
     ) = cashflowRemoteDataSource.connectPeppol(request)
 
     override suspend fun getPeppolSettings() = cashflowRemoteDataSource.getPeppolSettings()
-
-    override suspend fun deletePeppolSettings() = cashflowRemoteDataSource.deletePeppolSettings()
 }

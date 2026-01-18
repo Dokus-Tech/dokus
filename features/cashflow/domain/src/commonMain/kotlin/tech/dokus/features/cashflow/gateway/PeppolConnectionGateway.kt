@@ -11,6 +11,4 @@ interface PeppolConnectionGateway {
     suspend fun connectPeppol(request: PeppolConnectRequest): Result<PeppolConnectResponse>
 
     suspend fun getPeppolSettings(): Result<PeppolSettingsDto?>
-
-    suspend fun deletePeppolSettings(): Result<Unit>
 }

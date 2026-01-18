@@ -29,7 +29,6 @@ import tech.dokus.features.cashflow.usecase.LoadCashflowEntriesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.RecordCashflowPaymentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConnectPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.DeleteDocumentUseCaseImpl
-import tech.dokus.features.cashflow.usecase.DeletePeppolSettingsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetChatConfigurationUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetChatSessionHistoryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentPagesUseCaseImpl
@@ -51,6 +50,12 @@ import tech.dokus.features.cashflow.usecase.UploadDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ValidateInvoiceForPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.VerifyPeppolRecipientUseCaseImpl
 import tech.dokus.features.cashflow.usecase.WatchPendingDocumentsUseCaseImpl
+import tech.dokus.features.cashflow.usecase.EnablePeppolUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetPeppolRegistrationUseCaseImpl
+import tech.dokus.features.cashflow.usecase.OptOutPeppolUseCaseImpl
+import tech.dokus.features.cashflow.usecase.PollPeppolTransferUseCaseImpl
+import tech.dokus.features.cashflow.usecase.VerifyPeppolIdUseCaseImpl
+import tech.dokus.features.cashflow.usecase.WaitForPeppolTransferUseCaseImpl
 import tech.dokus.features.cashflow.usecases.CancelCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
@@ -58,7 +63,6 @@ import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
 import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
-import tech.dokus.features.cashflow.usecases.DeletePeppolSettingsUseCase
 import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
 import tech.dokus.features.cashflow.usecases.GetChatSessionHistoryUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
@@ -80,6 +84,12 @@ import tech.dokus.features.cashflow.usecases.UploadDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ValidateInvoiceForPeppolUseCase
 import tech.dokus.features.cashflow.usecases.VerifyPeppolRecipientUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
+import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
+import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
+import tech.dokus.features.cashflow.usecases.OptOutPeppolUseCase
+import tech.dokus.features.cashflow.usecases.PollPeppolTransferUseCase
+import tech.dokus.features.cashflow.usecases.VerifyPeppolIdUseCase
+import tech.dokus.features.cashflow.usecases.WaitForPeppolTransferUseCase
 
 /**
  * Koin DI module for Cashflow feature network configuration.
@@ -148,13 +158,20 @@ val cashflowNetworkModule = module {
     // Peppol
     singleOf(::ConnectPeppolUseCaseImpl) bind ConnectPeppolUseCase::class
     singleOf(::GetPeppolSettingsUseCaseImpl) bind GetPeppolSettingsUseCase::class
-    singleOf(::DeletePeppolSettingsUseCaseImpl) bind DeletePeppolSettingsUseCase::class
     singleOf(::ListPeppolTransmissionsUseCaseImpl) bind ListPeppolTransmissionsUseCase::class
     singleOf(::VerifyPeppolRecipientUseCaseImpl) bind VerifyPeppolRecipientUseCase::class
     singleOf(::ValidateInvoiceForPeppolUseCaseImpl) bind ValidateInvoiceForPeppolUseCase::class
     singleOf(::SendInvoiceViaPeppolUseCaseImpl) bind SendInvoiceViaPeppolUseCase::class
     singleOf(::PollPeppolInboxUseCaseImpl) bind PollPeppolInboxUseCase::class
     singleOf(::GetPeppolTransmissionForInvoiceUseCaseImpl) bind GetPeppolTransmissionForInvoiceUseCase::class
+
+    // Peppol Registration (Phase B)
+    singleOf(::GetPeppolRegistrationUseCaseImpl) bind GetPeppolRegistrationUseCase::class
+    singleOf(::VerifyPeppolIdUseCaseImpl) bind VerifyPeppolIdUseCase::class
+    singleOf(::EnablePeppolUseCaseImpl) bind EnablePeppolUseCase::class
+    singleOf(::WaitForPeppolTransferUseCaseImpl) bind WaitForPeppolTransferUseCase::class
+    singleOf(::OptOutPeppolUseCaseImpl) bind OptOutPeppolUseCase::class
+    singleOf(::PollPeppolTransferUseCaseImpl) bind PollPeppolTransferUseCase::class
 
     // Cashflow documents
     factory<WatchPendingDocumentsUseCase> { WatchPendingDocumentsUseCaseImpl(get()) }

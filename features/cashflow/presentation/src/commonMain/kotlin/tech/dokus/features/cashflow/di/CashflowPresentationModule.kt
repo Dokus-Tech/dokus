@@ -17,24 +17,16 @@ import tech.dokus.features.cashflow.mvi.CreateInvoiceAction
 import tech.dokus.features.cashflow.mvi.CreateInvoiceContainer
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
-import tech.dokus.features.cashflow.mvi.PeppolConnectAction
-import tech.dokus.features.cashflow.mvi.PeppolConnectContainer
-import tech.dokus.features.cashflow.mvi.PeppolConnectIntent
-import tech.dokus.features.cashflow.mvi.PeppolConnectState
-import tech.dokus.features.cashflow.mvi.PeppolSendAction
-import tech.dokus.features.cashflow.mvi.PeppolSendContainer
-import tech.dokus.features.cashflow.mvi.PeppolSendIntent
-import tech.dokus.features.cashflow.mvi.PeppolSendState
-import tech.dokus.features.cashflow.mvi.PeppolSettingsAction
-import tech.dokus.features.cashflow.mvi.PeppolSettingsContainer
-import tech.dokus.features.cashflow.mvi.PeppolSettingsIntent
-import tech.dokus.features.cashflow.mvi.PeppolSettingsState
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
 import tech.dokus.features.cashflow.presentation.chat.ChatAction
 import tech.dokus.features.cashflow.presentation.chat.ChatContainer
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
 import tech.dokus.features.cashflow.presentation.chat.ChatState
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationAction
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationContainer
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -54,29 +46,6 @@ val cashflowViewModelModule = module {
     // FlowMVI Containers
     container<AddDocumentContainer, AddDocumentState, AddDocumentIntent, AddDocumentAction> {
         AddDocumentContainer(uploadManager = get())
-    }
-    container<PeppolSettingsContainer, PeppolSettingsState, PeppolSettingsIntent, PeppolSettingsAction> {
-        PeppolSettingsContainer(
-            getPeppolSettings = get(),
-            deletePeppolSettings = get()
-        )
-    }
-    container<PeppolSendContainer, PeppolSendState, PeppolSendIntent, PeppolSendAction> {
-        PeppolSendContainer(
-            listPeppolTransmissions = get(),
-            verifyPeppolRecipient = get(),
-            validateInvoiceForPeppol = get(),
-            sendInvoiceViaPeppol = get(),
-            pollPeppolInbox = get(),
-            getPeppolTransmissionForInvoice = get()
-        )
-    }
-    container<PeppolConnectContainer, PeppolConnectState, PeppolConnectIntent, PeppolConnectAction> {
-            (params: PeppolConnectContainer.Companion.Params) ->
-        PeppolConnectContainer(
-            provider = params.provider,
-            connectPeppol = get()
-        )
     }
     container<CreateInvoiceContainer, CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> {
         CreateInvoiceContainer(
@@ -116,6 +85,16 @@ val cashflowViewModelModule = module {
             loadCashflowEntries = get(),
             recordPayment = get(),
             highlightEntryId = highlightEntryId
+        )
+    }
+    container<PeppolRegistrationContainer, PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction> {
+        PeppolRegistrationContainer(
+            getRegistration = get(),
+            verifyPeppolId = get(),
+            enablePeppol = get(),
+            waitForTransfer = get(),
+            optOut = get(),
+            pollTransfer = get()
         )
     }
 }

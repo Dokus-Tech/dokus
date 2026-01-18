@@ -28,6 +28,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
@@ -46,7 +47,10 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
+import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.domain.model.PeppolInboxPollResponse
+import tech.dokus.domain.model.PeppolRegistrationDto
+import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
@@ -55,7 +59,6 @@ import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
-import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
@@ -572,20 +575,8 @@ interface CashflowRemoteDataSource {
     suspend fun getPeppolSettings(): Result<PeppolSettingsDto?>
 
     /**
-     * Save Peppol settings
-     * PUT /api/v1/peppol/settings
-     */
-    suspend fun savePeppolSettings(request: SavePeppolSettingsRequest): Result<PeppolSettingsDto>
-
-    /**
-     * Delete Peppol settings
-     * DELETE /api/v1/peppol/settings
-     */
-    suspend fun deletePeppolSettings(): Result<Unit>
-
-    /**
      * Test Peppol connection with current credentials
-     * POST /api/v1/peppol/settings/test
+     * POST /api/v1/peppol/settings/connection-tests
      */
     suspend fun testPeppolConnection(): Result<Boolean>
 
@@ -594,9 +585,9 @@ interface CashflowRemoteDataSource {
      * POST /api/v1/peppol/settings/connect
      *
      * This endpoint:
-     * 1. Validates credentials with Recommand
+     * 1. Uses master Peppol credentials from environment
      * 2. Searches for companies matching tenant VAT
-     * 3. Returns status indicating next steps (Connected, MultipleMatches, NoCompanyFound, etc.)
+     * 3. Returns status indicating next steps (Connected, NoCompanyFound, etc.)
      */
     suspend fun connectPeppol(request: PeppolConnectRequest): Result<PeppolConnectResponse>
 
@@ -650,6 +641,45 @@ interface CashflowRemoteDataSource {
      * GET /api/v1/peppol/transmissions/invoice/{invoiceId}
      */
     suspend fun getPeppolTransmissionForInvoice(invoiceId: InvoiceId): Result<PeppolTransmissionDto?>
+
+    // ----- PEPPOL Registration (Phase B) -----
+
+    /**
+     * Get current PEPPOL registration status for tenant
+     * GET /api/v1/peppol/registration
+     */
+    suspend fun getPeppolRegistration(): Result<PeppolRegistrationDto?>
+
+    /**
+     * Verify if a PEPPOL ID is available for registration.
+     * Accepts a VAT number - the backend converts it to PEPPOL ID format.
+     * POST /api/v1/peppol/verify
+     */
+    suspend fun verifyPeppolId(vatNumber: VatNumber): Result<PeppolIdVerificationResult>
+
+    /**
+     * Enable PEPPOL for the tenant (start registration)
+     * POST /api/v1/peppol/enable
+     */
+    suspend fun enablePeppol(vatNumber: VatNumber): Result<PeppolRegistrationResponse>
+
+    /**
+     * Opt to wait for PEPPOL ID transfer from another provider
+     * POST /api/v1/peppol/wait-for-transfer
+     */
+    suspend fun waitForPeppolTransfer(): Result<PeppolRegistrationResponse>
+
+    /**
+     * Opt out of PEPPOL via Dokus (manage externally)
+     * POST /api/v1/peppol/opt-out
+     */
+    suspend fun optOutPeppol(): Result<Unit>
+
+    /**
+     * Manual poll for PEPPOL transfer status
+     * POST /api/v1/peppol/poll
+     */
+    suspend fun pollPeppolTransfer(): Result<PeppolRegistrationResponse>
 
     companion object {
         internal fun create(

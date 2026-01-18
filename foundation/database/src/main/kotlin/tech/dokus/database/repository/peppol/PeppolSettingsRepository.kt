@@ -14,24 +14,17 @@ import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolSettingsDto
-import tech.dokus.domain.model.SavePeppolSettingsRequest
-import tech.dokus.foundation.backend.crypto.CredentialCryptoService
 import tech.dokus.foundation.backend.database.dbQuery
-import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 
 /**
  * Repository for Peppol settings.
- * API credentials are encrypted at rest using AES-256-GCM.
+ * Credentials are managed via environment variables, not stored in the database.
  */
-class PeppolSettingsRepository(
-    private val cryptoService: CredentialCryptoService
-) {
-    private val logger = loggerFor()
+class PeppolSettingsRepository {
 
     /**
      * Get Peppol settings for a tenant.
-     * Note: This does NOT return API credentials.
      */
     suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> = runCatching {
         dbQuery {
@@ -43,32 +36,17 @@ class PeppolSettingsRepository(
     }
 
     /**
-     * Get settings with credentials (for internal use only).
-     * Credentials are decrypted before being returned.
-     */
-    suspend fun getSettingsWithCredentials(tenantId: TenantId): Result<PeppolSettingsWithCredentials?> = runCatching {
-        dbQuery {
-            PeppolSettingsTable.selectAll()
-                .where { PeppolSettingsTable.tenantId eq UUID.fromString(tenantId.toString()) }
-                .map { it.toDtoWithCredentials() }
-                .singleOrNull()
-        }
-    }
-
-    /**
      * Save (create or update) Peppol settings for a tenant.
-     * Credentials are encrypted before storage.
      */
     suspend fun saveSettings(
         tenantId: TenantId,
-        request: SavePeppolSettingsRequest
+        companyId: String,
+        peppolId: String,
+        isEnabled: Boolean = true,
+        testMode: Boolean = false
     ): Result<PeppolSettingsDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = UUID.fromString(tenantId.toString())
-
-        // Encrypt credentials before storage
-        val encryptedApiKey = cryptoService.encrypt(request.apiKey)
-        val encryptedApiSecret = cryptoService.encrypt(request.apiSecret)
 
         dbQuery {
             val existing = PeppolSettingsTable.selectAll()
@@ -78,12 +56,10 @@ class PeppolSettingsRepository(
             if (existing != null) {
                 // Update existing
                 PeppolSettingsTable.update({ PeppolSettingsTable.tenantId eq tenantUuid }) {
-                    it[companyId] = request.companyId
-                    it[apiKey] = encryptedApiKey
-                    it[apiSecret] = encryptedApiSecret
-                    it[peppolId] = request.peppolId
-                    it[isEnabled] = request.isEnabled
-                    it[testMode] = request.testMode
+                    it[PeppolSettingsTable.companyId] = companyId
+                    it[PeppolSettingsTable.peppolId] = peppolId
+                    it[PeppolSettingsTable.isEnabled] = isEnabled
+                    it[PeppolSettingsTable.testMode] = testMode
                     it[updatedAt] = now
                 }
 
@@ -98,12 +74,10 @@ class PeppolSettingsRepository(
                 PeppolSettingsTable.insert {
                     it[id] = newId
                     it[PeppolSettingsTable.tenantId] = tenantUuid
-                    it[companyId] = request.companyId
-                    it[apiKey] = encryptedApiKey
-                    it[apiSecret] = encryptedApiSecret
-                    it[peppolId] = request.peppolId
-                    it[isEnabled] = request.isEnabled
-                    it[testMode] = request.testMode
+                    it[PeppolSettingsTable.companyId] = companyId
+                    it[PeppolSettingsTable.peppolId] = peppolId
+                    it[PeppolSettingsTable.isEnabled] = isEnabled
+                    it[PeppolSettingsTable.testMode] = testMode
                     it[webhookToken] = newWebhookToken
                     it[createdAt] = now
                     it[updatedAt] = now
@@ -180,88 +154,4 @@ class PeppolSettingsRepository(
         createdAt = this[PeppolSettingsTable.createdAt],
         updatedAt = this[PeppolSettingsTable.updatedAt]
     )
-
-    private fun ResultRow.toDtoWithCredentials(): PeppolSettingsWithCredentials {
-        val encryptedApiKey = this[PeppolSettingsTable.apiKey]
-        val encryptedApiSecret = this[PeppolSettingsTable.apiSecret]
-
-        // Cloud tenants have null credentials - decrypt only if present
-        return PeppolSettingsWithCredentials(
-            settings = toDto(),
-            apiKey = encryptedApiKey?.let { cryptoService.decrypt(it) },
-            apiSecret = encryptedApiSecret?.let { cryptoService.decrypt(it) }
-        )
-    }
-
-    /**
-     * Save Peppol settings for a cloud tenant (no credentials stored).
-     * Used when Dokus manages credentials via master env vars.
-     */
-    suspend fun saveCloudSettings(
-        tenantId: TenantId,
-        companyId: String,
-        peppolId: String,
-        isEnabled: Boolean = true,
-        testMode: Boolean = false
-    ): Result<PeppolSettingsDto> = runCatching {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = UUID.fromString(tenantId.toString())
-
-        dbQuery {
-            val existing = PeppolSettingsTable.selectAll()
-                .where { PeppolSettingsTable.tenantId eq tenantUuid }
-                .singleOrNull()
-
-            if (existing != null) {
-                // Update existing
-                PeppolSettingsTable.update({ PeppolSettingsTable.tenantId eq tenantUuid }) {
-                    it[PeppolSettingsTable.companyId] = companyId
-                    it[PeppolSettingsTable.peppolId] = peppolId
-                    it[PeppolSettingsTable.isEnabled] = isEnabled
-                    it[PeppolSettingsTable.testMode] = testMode
-                    // DO NOT set apiKey/apiSecret - they remain NULL for cloud
-                    it[updatedAt] = now
-                }
-
-                PeppolSettingsTable.selectAll()
-                    .where { PeppolSettingsTable.tenantId eq tenantUuid }
-                    .map { it.toDto() }
-                    .single()
-            } else {
-                // Create new with generated webhook token
-                val newId = UUID.randomUUID()
-                val newWebhookToken = UUID.randomUUID().toString().replace("-", "")
-                PeppolSettingsTable.insert {
-                    it[id] = newId
-                    it[PeppolSettingsTable.tenantId] = tenantUuid
-                    it[PeppolSettingsTable.companyId] = companyId
-                    // apiKey and apiSecret remain NULL for cloud tenants
-                    it[PeppolSettingsTable.peppolId] = peppolId
-                    it[PeppolSettingsTable.isEnabled] = isEnabled
-                    it[PeppolSettingsTable.testMode] = testMode
-                    it[webhookToken] = newWebhookToken
-                    it[createdAt] = now
-                    it[updatedAt] = now
-                }
-
-                PeppolSettingsTable.selectAll()
-                    .where { PeppolSettingsTable.id eq newId }
-                    .map { it.toDto() }
-                    .single()
-            }
-        }
-    }
-}
-
-/**
- * Internal class that includes credentials - never exposed via API.
- * For cloud tenants, apiKey and apiSecret will be null.
- */
-data class PeppolSettingsWithCredentials(
-    val settings: PeppolSettingsDto,
-    val apiKey: String?,
-    val apiSecret: String?
-) {
-    /** Returns true if this tenant has stored credentials (self-hosted) */
-    fun hasStoredCredentials(): Boolean = apiKey != null && apiSecret != null
 }

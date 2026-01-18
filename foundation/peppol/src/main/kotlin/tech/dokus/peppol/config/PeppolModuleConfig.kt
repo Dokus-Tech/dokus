@@ -8,7 +8,6 @@ import com.typesafe.config.Config
  * Loaded from HOCON configuration files following application patterns.
  * Expected configuration path: peppol.*
  *
- * Note: Hosting mode is determined by DeploymentConfig, not this config.
  * Provider URLs are defined in [PeppolProviderConfig] sealed class,
  * not in configuration files (URLs are fixed, only API keys vary).
  */
@@ -22,24 +21,28 @@ data class PeppolModuleConfig(
     /** Global test mode override (if true, all tenants use test mode) */
     val globalTestMode: Boolean,
 
-    /** Master credentials for cloud-hosted deployments (null if self-hosted) */
-    val masterCredentials: MasterCredentialsConfig?
+    /** Master credentials (required for all deployments) */
+    val masterCredentials: MasterCredentialsConfig
 ) {
     companion object {
         /**
          * Create config from HOCON configuration.
+         * Fails fast if master credentials are not configured.
          */
         fun fromConfig(config: Config): PeppolModuleConfig {
             val peppolConfig = config.getConfig("peppol")
+
+            if (!peppolConfig.hasPath("master.apiKey") || !peppolConfig.hasPath("master.apiSecret")) {
+                throw IllegalStateException(
+                    "Peppol credentials required. Set PEPPOL_MASTER_API_KEY and PEPPOL_MASTER_API_SECRET environment variables."
+                )
+            }
+
             return PeppolModuleConfig(
                 defaultProvider = peppolConfig.getString("defaultProvider"),
                 inbox = InboxConfig.fromConfig(peppolConfig.getConfig("inbox")),
                 globalTestMode = peppolConfig.getBoolean("globalTestMode"),
-                masterCredentials = if (peppolConfig.hasPath("master")) {
-                    MasterCredentialsConfig.fromConfig(peppolConfig.getConfig("master"))
-                } else {
-                    null
-                }
+                masterCredentials = MasterCredentialsConfig.fromConfig(peppolConfig.getConfig("master"))
             )
         }
     }

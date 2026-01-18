@@ -27,13 +27,6 @@ interface GetPeppolSettingsUseCase {
 }
 
 /**
- * Use case for deleting Peppol settings.
- */
-interface DeletePeppolSettingsUseCase {
-    suspend operator fun invoke(): Result<Unit>
-}
-
-/**
  * Use case for listing Peppol transmissions.
  */
 interface ListPeppolTransmissionsUseCase {

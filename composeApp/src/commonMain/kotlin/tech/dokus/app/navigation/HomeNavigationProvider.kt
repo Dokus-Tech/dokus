@@ -7,7 +7,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
 import org.koin.compose.koinInject
 import tech.dokus.app.screens.MoreScreen
 import tech.dokus.app.screens.TodayScreen
@@ -17,10 +16,7 @@ import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
-import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.features.auth.presentation.auth.route.ProfileSettingsRoute
-import tech.dokus.features.cashflow.presentation.settings.route.PeppolConnectRoute
-import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.HomeDestination
@@ -40,14 +36,6 @@ internal object HomeNavigationProvider : NavigationProvider {
         }
         composable<SettingsDestination.WorkspaceSettings> {
             WorkspaceSettingsRoute()
-        }
-        composable<SettingsDestination.PeppolSettings> {
-            PeppolSettingsRoute()
-        }
-        composable<SettingsDestination.PeppolConfiguration.Connect> { backStackEntry ->
-            val route = backStackEntry.toRoute<SettingsDestination.PeppolConfiguration.Connect>()
-            val provider = PeppolProvider.fromName(route.providerName) ?: PeppolProvider.Recommand
-            PeppolConnectRoute(provider = provider)
         }
         composable<SettingsDestination.AppearanceSettings> {
             AppearanceSettingsRoute()

@@ -58,7 +58,6 @@ object NavDefinition {
         const val AI_CHAT = "ai-chat"
         const val SETTINGS = "settings"
         const val WORKSPACE_SETTINGS = "settings/workspace"
-        const val PEPPOL_SETTINGS = "settings/peppol"
         const val MORE = "more"
         const val UNDER_DEVELOPMENT = "home/under_development"
     }
@@ -150,15 +149,6 @@ object NavDefinition {
             showTopBar = true
         )
 
-        val peppol = NavItem(
-            id = "peppol",
-            titleRes = Res.string.settings_peppol,
-            iconRes = Res.drawable.inbox,
-            route = Routes.PEPPOL_SETTINGS,
-            comingSoon = false,
-            showTopBar = true
-        )
-
         val aiChat = NavItem(
             id = "ai_chat",
             titleRes = Res.string.chat_title,
@@ -205,8 +195,7 @@ object NavDefinition {
             items = listOf(
                 Items.companyDetails,
                 Items.contacts,
-                Items.team,
-                Items.peppol
+                Items.team
             ),
             defaultExpanded = false
         ),
@@ -282,7 +271,6 @@ object NavDefinition {
         Routes.AI_CHAT -> HomeDestination.AiChat
         Routes.SETTINGS -> HomeDestination.Settings
         Routes.WORKSPACE_SETTINGS -> SettingsDestination.WorkspaceSettings
-        Routes.PEPPOL_SETTINGS -> SettingsDestination.PeppolSettings
         Routes.MORE -> HomeDestination.More
         Routes.UNDER_DEVELOPMENT -> HomeDestination.UnderDevelopment
         else -> null
