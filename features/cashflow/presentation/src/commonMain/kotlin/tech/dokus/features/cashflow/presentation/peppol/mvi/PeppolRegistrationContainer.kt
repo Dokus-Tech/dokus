@@ -10,6 +10,7 @@ import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.features.cashflow.usecases.OptOutPeppolUseCase
@@ -27,6 +28,7 @@ internal typealias PeppolRegistrationCtx =
  * Manages the registration state machine and API interactions.
  */
 internal class PeppolRegistrationContainer(
+    private val getCurrentTenant: GetCurrentTenantUseCase,
     private val getRegistration: GetPeppolRegistrationUseCase,
     private val verifyPeppolId: VerifyPeppolIdUseCase,
     private val enablePeppol: EnablePeppolUseCase,
@@ -61,13 +63,37 @@ internal class PeppolRegistrationContainer(
 
         getRegistration().fold(
             onSuccess = { registration ->
-                if (registration == null) {
-                    logger.d { "No registration found, showing welcome" }
-                    updateState { PeppolRegistrationState.Welcome() }
-                } else {
+                if (registration != null) {
                     logger.d { "Registration found: ${registration.status}" }
                     updateState { registration.toUiState() }
+                    return@fold
                 }
+
+                // No registration - auto-verify using tenant's VAT
+                logger.d { "No registration, auto-verifying with tenant VAT" }
+                val tenant = getCurrentTenant().getOrThrow()
+                val vatNumber = tenant!!.vatNumber!!
+
+                verifyPeppolId(vatNumber).fold(
+                    onSuccess = { result ->
+                        val enterpriseNumber = vatNumber.value.removePrefix("BE")
+                        updateState {
+                            PeppolRegistrationState.VerificationResult(
+                                result = result,
+                                enterpriseNumber = enterpriseNumber
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Auto-verify failed" }
+                        updateState {
+                            PeppolRegistrationState.Error(
+                                exception = error.asDokusException,
+                                retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
+                            )
+                        }
+                    }
+                )
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load registration" }
@@ -215,17 +241,6 @@ internal class PeppolRegistrationContainer(
 
     private suspend fun PeppolRegistrationCtx.handleSkipSetup() {
         logger.d { "User skipped PEPPOL setup" }
-        // Record the skip decision to backend (sets status to External)
-        optOut().fold(
-            onSuccess = {
-                logger.d { "Skip recorded, navigating to home" }
-                action(PeppolRegistrationAction.NavigateToHome)
-            },
-            onFailure = { error ->
-                logger.e(error) { "Failed to record skip, navigating anyway" }
-                // Still navigate - don't block user if optOut fails
-                action(PeppolRegistrationAction.NavigateToHome)
-            }
-        )
+        action(PeppolRegistrationAction.NavigateToHome)
     }
 }

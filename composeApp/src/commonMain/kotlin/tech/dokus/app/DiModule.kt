@@ -57,7 +57,6 @@ internal val diModuleApp = module {
             authInitializer = get(),
             tokenManager = get(),
             serverConfigManager = get(),
-            getPeppolRegistration = get(),
         )
     }
     container<TodayContainer, TodayState, TodayIntent, TodayAction> {

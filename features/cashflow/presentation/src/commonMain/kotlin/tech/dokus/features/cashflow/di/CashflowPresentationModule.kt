@@ -90,6 +90,7 @@ val cashflowViewModelModule = module {
     }
     container<PeppolRegistrationContainer, PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction> {
         PeppolRegistrationContainer(
+            getCurrentTenant = get(),
             getRegistration = get(),
             verifyPeppolId = get(),
             enablePeppol = get(),
