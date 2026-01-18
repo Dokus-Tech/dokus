@@ -25,6 +25,7 @@ import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.payment.PaymentsTable
+import tech.dokus.database.tables.peppol.PeppolRegistrationTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
 import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
 import tech.dokus.foundation.backend.database.dbQuery
@@ -91,6 +92,7 @@ object DokusSchema {
                 // ----------------------------
                 // Peppol (depends on invoices/bills)
                 // ----------------------------
+                PeppolRegistrationTable,
                 PeppolSettingsTable,
                 PeppolTransmissionsTable,
 

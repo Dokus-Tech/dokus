@@ -27,6 +27,7 @@ This document tracks the work to bring the Peppol **Settings / Enablement** flow
 - [x] “Waiting transfer” polling now also supports `SENDING_ONLY` → `ACTIVE` auto-completion when the Peppol ID becomes available.
 - [x] Suppress provider name leakage: verification results no longer return `blockedBy` for UI.
 - [x] Improve Recommand company sync: ensure company data is updated (address, enterprise number, SMP recipient flag).
+- [x] Ensure local schema bootstrap creates `peppol_registrations` (Flyway is disabled by default).
 
 ### Files (key)
 
@@ -35,6 +36,7 @@ This document tracks the work to bring the Peppol **Settings / Enablement** flow
 - `foundation/peppol/src/main/kotlin/tech/dokus/peppol/service/PeppolRegistrationService.kt`
 - `foundation/peppol/src/main/kotlin/tech/dokus/peppol/provider/client/RecommandCompaniesClient.kt`
 - `foundation/peppol/src/main/kotlin/tech/dokus/peppol/service/PeppolVerificationService.kt`
+- `foundation/database/src/main/kotlin/tech/dokus/database/DokusSchema.kt`
 
 ---
 
