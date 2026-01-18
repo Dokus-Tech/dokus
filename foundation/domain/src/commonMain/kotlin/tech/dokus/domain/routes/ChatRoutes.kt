@@ -4,6 +4,7 @@ import io.ktor.resources.*
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
 
 /**
  * Type-safe route definitions for Chat API.
@@ -54,7 +55,7 @@ class Chat {
         @Resource("{sessionId}")
         class SessionId(
             val parent: Sessions = Sessions(),
-            val sessionId: String,
+            val sessionId: ChatSessionId,
             val page: Int = 0,
             val limit: Int = 50,
             val descending: Boolean = false
