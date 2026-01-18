@@ -49,6 +49,8 @@ internal class PeppolRegistrationContainer(
                     is PeppolRegistrationIntent.OptOut -> handleOptOut()
                     is PeppolRegistrationIntent.PollTransfer -> handlePollTransfer()
                     is PeppolRegistrationIntent.BackToWelcome -> handleBackToWelcome()
+                    is PeppolRegistrationIntent.SkipSetup -> handleSkipSetup()
+                    is PeppolRegistrationIntent.GoToApp -> action(PeppolRegistrationAction.NavigateToHome)
                 }
             }
         }
@@ -209,5 +211,11 @@ internal class PeppolRegistrationContainer(
 
     private suspend fun PeppolRegistrationCtx.handleBackToWelcome() {
         updateState { PeppolRegistrationState.Welcome() }
+    }
+
+    private suspend fun PeppolRegistrationCtx.handleSkipSetup() {
+        logger.d { "User skipped PEPPOL setup" }
+        // Navigate to home - user can set up PEPPOL later from settings
+        action(PeppolRegistrationAction.NavigateToHome)
     }
 }

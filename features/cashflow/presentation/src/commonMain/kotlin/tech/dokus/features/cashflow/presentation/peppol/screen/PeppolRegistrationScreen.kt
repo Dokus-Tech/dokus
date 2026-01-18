@@ -64,11 +64,11 @@ internal fun PeppolRegistrationScreen(
                 is PeppolRegistrationState.Loading -> LoadingContent()
                 is PeppolRegistrationState.Welcome -> WelcomeContent(state, onIntent)
                 is PeppolRegistrationState.VerificationResult -> VerificationResultContent(state, onIntent)
-                is PeppolRegistrationState.Active -> ActiveContent(state.registration)
+                is PeppolRegistrationState.Active -> ActiveContent(state.registration, onIntent)
                 is PeppolRegistrationState.WaitingTransfer -> WaitingTransferContent(state, onIntent)
-                is PeppolRegistrationState.SendingOnly -> SendingOnlyContent(state.registration)
-                is PeppolRegistrationState.External -> ExternalContent(state.registration)
-                is PeppolRegistrationState.Pending -> PendingContent(state.registration)
+                is PeppolRegistrationState.SendingOnly -> SendingOnlyContent(state.registration, onIntent)
+                is PeppolRegistrationState.External -> ExternalContent(state.registration, onIntent)
+                is PeppolRegistrationState.Pending -> PendingContent(state.registration, onIntent)
                 is PeppolRegistrationState.Failed -> FailedContent(state.registration, onIntent)
                 is PeppolRegistrationState.Error -> DokusErrorContent(
                     exception = state.exception,
@@ -166,6 +166,15 @@ private fun WelcomeContent(
                     Text(if (state.isVerifying) "Verifying..." else "Check Availability")
                 }
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextButton(
+            onClick = { onIntent(PeppolRegistrationIntent.SkipSetup) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("I'll do this later")
         }
     }
 }
@@ -317,18 +326,38 @@ private fun VerificationResultContent(
 }
 
 @Composable
-private fun ActiveContent(registration: PeppolRegistrationDto) {
-    StatusContent(
-        icon = Icons.Default.CheckCircle,
-        iconTint = MaterialTheme.colorScheme.primary,
-        title = "PEPPOL Connected",
-        subtitle = "Your business is connected to the PEPPOL network.",
-        registration = registration,
-        capabilities = listOf(
-            "Can receive invoices" to registration.canReceive,
-            "Can send invoices" to registration.canSend
+private fun ActiveContent(
+    registration: PeppolRegistrationDto,
+    onIntent: (PeppolRegistrationIntent) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        StatusContentInner(
+            icon = Icons.Default.CheckCircle,
+            iconTint = MaterialTheme.colorScheme.primary,
+            title = "PEPPOL Connected",
+            subtitle = "Your business is connected to the PEPPOL network.",
+            registration = registration,
+            capabilities = listOf(
+                "Can receive invoices" to registration.canReceive,
+                "Can send invoices" to registration.canSend
+            )
         )
-    )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = { onIntent(PeppolRegistrationIntent.GoToApp) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Go to App")
+        }
+    }
 }
 
 @Composable
@@ -389,44 +418,122 @@ private fun WaitingTransferContent(
             }
             Text(if (state.isPolling) "Checking..." else "Check Status")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedButton(
+            onClick = { onIntent(PeppolRegistrationIntent.GoToApp) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("I'll check back later")
+        }
     }
 }
 
 @Composable
-private fun SendingOnlyContent(registration: PeppolRegistrationDto) {
-    StatusContent(
-        icon = Icons.Default.Send,
-        iconTint = MaterialTheme.colorScheme.tertiary,
-        title = "Sending Only",
-        subtitle = "You can send invoices via PEPPOL, but receiving is managed by another provider.",
-        registration = registration,
-        capabilities = listOf(
-            "Can receive invoices" to registration.canReceive,
-            "Can send invoices" to registration.canSend
+private fun SendingOnlyContent(
+    registration: PeppolRegistrationDto,
+    onIntent: (PeppolRegistrationIntent) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        StatusContentInner(
+            icon = Icons.Default.Send,
+            iconTint = MaterialTheme.colorScheme.tertiary,
+            title = "Sending Only",
+            subtitle = "You can send invoices via PEPPOL, but receiving is managed by another provider.",
+            registration = registration,
+            capabilities = listOf(
+                "Can receive invoices" to registration.canReceive,
+                "Can send invoices" to registration.canSend
+            )
         )
-    )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = { onIntent(PeppolRegistrationIntent.GoToApp) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Go to App")
+        }
+    }
 }
 
 @Composable
-private fun ExternalContent(registration: PeppolRegistrationDto) {
-    StatusContent(
-        icon = Icons.Default.Info,
-        iconTint = MaterialTheme.colorScheme.secondary,
-        title = "Managed Externally",
-        subtitle = "Your PEPPOL registration is managed by another provider.",
-        registration = registration
-    )
+private fun ExternalContent(
+    registration: PeppolRegistrationDto,
+    onIntent: (PeppolRegistrationIntent) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        StatusContentInner(
+            icon = Icons.Default.Info,
+            iconTint = MaterialTheme.colorScheme.secondary,
+            title = "Managed Externally",
+            subtitle = "Your PEPPOL registration is managed by another provider.",
+            registration = registration
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = { onIntent(PeppolRegistrationIntent.GoToApp) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Go to App")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = { onIntent(PeppolRegistrationIntent.BackToWelcome) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Set up Peppol")
+        }
+    }
 }
 
 @Composable
-private fun PendingContent(registration: PeppolRegistrationDto) {
-    StatusContent(
-        icon = Icons.Default.HourglassEmpty,
-        iconTint = MaterialTheme.colorScheme.primary,
-        title = "Registration Pending",
-        subtitle = "Your PEPPOL registration is being processed. This usually takes a few minutes.",
-        registration = registration
-    )
+private fun PendingContent(
+    registration: PeppolRegistrationDto,
+    onIntent: (PeppolRegistrationIntent) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        StatusContentInner(
+            icon = Icons.Default.HourglassEmpty,
+            iconTint = MaterialTheme.colorScheme.primary,
+            title = "Registration Pending",
+            subtitle = "Your PEPPOL registration is being processed. This usually takes a few minutes.",
+            registration = registration
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = { onIntent(PeppolRegistrationIntent.GoToApp) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("I'll check back later")
+        }
+    }
 }
 
 @Composable
@@ -475,11 +582,20 @@ private fun FailedContent(
         ) {
             Text("Try Again")
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(
+            onClick = { onIntent(PeppolRegistrationIntent.SkipSetup) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Skip for now")
+        }
     }
 }
 
 @Composable
-private fun StatusContent(
+private fun StatusContentInner(
     icon: ImageVector,
     iconTint: androidx.compose.ui.graphics.Color,
     title: String,
@@ -487,75 +603,67 @@ private fun StatusContent(
     registration: PeppolRegistrationDto,
     capabilities: List<Pair<String, Boolean>> = emptyList()
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(48.dp))
+    Spacer(modifier = Modifier.height(48.dp))
 
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = iconTint,
-            modifier = Modifier.size(64.dp)
-        )
+    Icon(
+        imageVector = icon,
+        contentDescription = null,
+        tint = iconTint,
+        modifier = Modifier.size(64.dp)
+    )
 
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(
+        text = title,
+        style = MaterialTheme.typography.headlineMedium,
+        textAlign = TextAlign.Center
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Text(
+        text = subtitle,
+        style = MaterialTheme.typography.bodyLarge,
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    RegistrationInfoCard(registration)
+
+    if (capabilities.isNotEmpty()) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        RegistrationInfoCard(registration)
-
-        if (capabilities.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Capabilities",
+                    style = MaterialTheme.typography.titleMedium
                 )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Capabilities",
-                        style = MaterialTheme.typography.titleMedium
-                    )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    capabilities.forEach { (label, enabled) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(label)
-                            Icon(
-                                imageVector = if (enabled) Icons.Default.CheckCircle else Icons.Default.Error,
-                                contentDescription = null,
-                                tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                capabilities.forEach { (label, enabled) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(label)
+                        Icon(
+                            imageVector = if (enabled) Icons.Default.CheckCircle else Icons.Default.Error,
+                            contentDescription = null,
+                            tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }

@@ -6,6 +6,7 @@ package tech.dokus.features.cashflow.datasource
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.onUpload
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
@@ -754,13 +755,16 @@ internal class CashflowRemoteDataSourceImpl(
     }
 
     override suspend fun getPeppolSettings(): Result<PeppolSettingsDto?> {
-        return runCatching {
-            val response = httpClient.get(Peppol.Settings())
-            if (response.status.value == HttpNotFound) {
-                null
+        return try {
+            Result.success(httpClient.get(Peppol.Settings()).body<PeppolSettingsDto>())
+        } catch (e: ResponseException) {
+            if (e.response.status.value == HttpNotFound) {
+                Result.success(null)
             } else {
-                response.body<PeppolSettingsDto>()
+                Result.failure(e)
             }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -845,13 +849,16 @@ internal class CashflowRemoteDataSourceImpl(
     // ----- PEPPOL Registration (Phase B) -----
 
     override suspend fun getPeppolRegistration(): Result<PeppolRegistrationDto?> {
-        return runCatching {
-            val response = httpClient.get(Peppol.Registration())
-            if (response.status.value == HttpNotFound) {
-                null
+        return try {
+            Result.success(httpClient.get(Peppol.Registration()).body<PeppolRegistrationDto>())
+        } catch (e: ResponseException) {
+            if (e.response.status.value == HttpNotFound) {
+                Result.success(null)
             } else {
-                response.body<PeppolRegistrationDto>()
+                Result.failure(e)
             }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

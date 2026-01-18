@@ -135,6 +135,12 @@ sealed interface PeppolRegistrationIntent : MVIIntent {
 
     /** Go back to welcome screen */
     data object BackToWelcome : PeppolRegistrationIntent
+
+    /** Skip PEPPOL setup (records decision and navigates to home) */
+    data object SkipSetup : PeppolRegistrationIntent
+
+    /** Go to app (pure navigation, no domain action) */
+    data object GoToApp : PeppolRegistrationIntent
 }
 
 // ============================================================================
@@ -152,6 +158,9 @@ sealed interface PeppolRegistrationAction : MVIAction {
 
     /** Navigate back */
     data object NavigateBack : PeppolRegistrationAction
+
+    /** Navigate to home/dashboard */
+    data object NavigateToHome : PeppolRegistrationAction
 }
 
 // ============================================================================

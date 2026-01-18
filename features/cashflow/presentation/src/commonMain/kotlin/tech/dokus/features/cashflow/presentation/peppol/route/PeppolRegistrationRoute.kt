@@ -17,7 +17,9 @@ import tech.dokus.features.cashflow.presentation.peppol.screen.PeppolRegistratio
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.replace
 
 @Composable
 internal fun PeppolRegistrationRoute(
@@ -50,6 +52,7 @@ internal fun PeppolRegistrationRoute(
             is PeppolRegistrationAction.ShowError -> pendingError = action.error
             is PeppolRegistrationAction.ShowSuccess -> pendingSuccess = action.message
             is PeppolRegistrationAction.NavigateBack -> navController.popBackStack()
+            is PeppolRegistrationAction.NavigateToHome -> navController.replace(CoreDestination.Home)
         }
     }
 
