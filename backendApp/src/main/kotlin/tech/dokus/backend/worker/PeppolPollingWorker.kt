@@ -179,7 +179,9 @@ class PeppolPollingWorker(
                 val elapsed = Clock.System.now() - lastPoll
                 if (elapsed < minTimeBetweenPolls) {
                     logger.debug(
-                        "Skipping tenant $tenantId - polled ${elapsed.inWholeMinutes}min ago"
+                        "Skipping tenant {} - polled {}min ago",
+                        tenantId,
+                        elapsed.inWholeMinutes
                     )
                     continue
                 }

@@ -285,7 +285,7 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     // PEPPOL Registration State Machine (Phase B)
     single { PeppolRegistrationRepository() }
     single { PeppolVerificationService(get(), get()) }
-    single { PeppolRegistrationService(get(), get(), get(), get(), get(), get()) }
+    single { PeppolRegistrationService(get(), get(), get(), get(), get(), get(), get()) }
     single { PeppolTransferPollingService(get(), get()) }
 
     // Peppol Polling Worker

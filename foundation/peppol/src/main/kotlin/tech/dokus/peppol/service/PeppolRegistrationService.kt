@@ -3,6 +3,7 @@ package tech.dokus.peppol.service
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
+import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.enums.PeppolRegistrationStatus
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.TenantId
@@ -31,6 +32,7 @@ import tech.dokus.peppol.provider.client.recommand.model.RecommandUpdateCompanyR
  */
 class PeppolRegistrationService(
     private val registrationRepository: PeppolRegistrationRepository,
+    private val settingsRepository: PeppolSettingsRepository,
     private val verificationService: PeppolVerificationService,
     private val recommandCompaniesClient: RecommandCompaniesClient,
     private val tenantRepository: TenantRepository,
@@ -206,6 +208,15 @@ class PeppolRegistrationService(
             registrationRepository.updateRecommandCompanyId(tenantId, companyId).getOrThrow()
             registrationRepository.updateStatus(tenantId, PeppolRegistrationStatus.Active).getOrThrow()
             registrationRepository.updateCapabilities(tenantId, canReceive = true, canSend = true).getOrThrow()
+
+            // Create peppol_settings row so polling worker can find this tenant
+            settingsRepository.saveSettings(
+                tenantId = tenantId,
+                companyId = companyId,
+                peppolId = peppolId,
+                isEnabled = true,
+                testMode = moduleConfig.globalTestMode
+            ).getOrThrow()
 
             val finalReg = registrationRepository.getRegistration(tenantId).getOrThrow()!!
             logger.info("PEPPOL registration successful for tenant $tenantId")

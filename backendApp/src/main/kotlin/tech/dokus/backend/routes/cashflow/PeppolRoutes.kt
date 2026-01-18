@@ -379,6 +379,11 @@ internal fun Route.peppolRoutes() {
             val result = peppolRegistrationService.enablePeppol(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
 
+            // Trigger immediate poll for initial sync if receiving is enabled
+            if (result.registration.canReceive) {
+                peppolPollingWorker.pollNow(tenantId)
+            }
+
             call.respond(HttpStatusCode.OK, result)
         }
 
@@ -430,6 +435,11 @@ internal fun Route.peppolRoutes() {
 
             val result = peppolRegistrationService.pollTransferStatus(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to poll transfer status: ${it.message}") }
+
+            // If transfer completed and receiving is now enabled, trigger initial sync
+            if (result.registration.canReceive) {
+                peppolPollingWorker.pollNow(tenantId)
+            }
 
             call.respond(HttpStatusCode.OK, result)
         }
