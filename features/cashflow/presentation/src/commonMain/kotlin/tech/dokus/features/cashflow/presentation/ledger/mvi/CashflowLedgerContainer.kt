@@ -49,6 +49,7 @@ private const val PAGE_SIZE = 50
  */
 internal class CashflowLedgerContainer(
     private val loadCashflowEntries: LoadCashflowEntriesUseCase,
+    private val getCashflowOverview: GetCashflowOverviewUseCase,
     private val recordPayment: RecordCashflowPaymentUseCase,
     private val highlightEntryId: CashflowEntryId? = null
 ) : Container<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> {
@@ -105,41 +106,61 @@ internal class CashflowLedgerContainer(
         updateState { CashflowLedgerState.Loading }
 
         val (fromDate, toDate) = getDateRangeForViewMode(currentFilters.viewMode)
-        val statuses = getStatusesForViewMode(currentFilters.viewMode)
         val direction = mapDirectionFilter(currentFilters.direction)
+        val domainViewMode = mapViewModeToDomain(currentFilters.viewMode)
 
-        // For Upcoming view, we need both Open and Overdue statuses.
-        // API only supports single status, so:
-        // - Upcoming: pass null (get all), filter client-side for Open/Overdue
-        // - History: pass Paid (single status is fine)
-        val apiStatus = when (currentFilters.viewMode) {
-            CashflowViewMode.Upcoming -> null // Get all, filter client-side
-            CashflowViewMode.History -> CashflowEntryStatus.Paid
-        }
+        // Get statuses for API call - server now supports multi-status filtering
+        val apiStatuses = getStatusesForViewMode(currentFilters.viewMode)
 
-        loadCashflowEntries(
-            page = 0,
-            pageSize = PAGE_SIZE,
-            fromDate = fromDate,
-            toDate = toDate,
-            direction = direction,
-            status = apiStatus,
-            sourceType = null
-        ).fold(
-            onSuccess = { response ->
-                // Filter and sort entries based on view mode
-                val filteredEntries = filterEntriesForViewMode(response.items, currentFilters.viewMode)
-                val sortedEntries = sortEntriesForViewMode(filteredEntries, currentFilters.viewMode)
+        // Parallel fetch: overview + entries
+        coroutineScope {
+            val overviewDeferred = async {
+                getCashflowOverview(
+                    viewMode = domainViewMode,
+                    fromDate = fromDate,
+                    toDate = toDate,
+                    direction = direction,
+                    statuses = apiStatuses
+                )
+            }
+            val entriesDeferred = async {
+                loadCashflowEntries(
+                    page = 0,
+                    pageSize = PAGE_SIZE,
+                    viewMode = domainViewMode,
+                    fromDate = fromDate,
+                    toDate = toDate,
+                    direction = direction,
+                    statuses = apiStatuses,
+                    sourceType = null
+                )
+            }
 
-                loadedEntries = sortedEntries
+            val overviewResult = overviewDeferred.await()
+            val entriesResult = entriesDeferred.await()
+
+            if (overviewResult.isSuccess && entriesResult.isSuccess) {
+                val overview = overviewResult.getOrThrow()
+                val response = entriesResult.getOrThrow()
+
+                // Server returns entries already filtered and sorted
+                loadedEntries = response.items
                 paginationInfo = paginationInfo.copy(
                     currentPage = 0,
                     isLoadingMore = false,
                     hasMorePages = response.hasMore
                 )
 
-                // Compute summary from filtered entries (NON-NEGOTIABLE: must match list)
-                val summary = computeSummary(sortedEntries, currentFilters.viewMode, currentFilters.direction)
+                // Summary comes from server - display directly
+                val summary = CashflowSummary(
+                    periodLabel = when (currentFilters.viewMode) {
+                        CashflowViewMode.Upcoming -> "NEXT 30 DAYS"
+                        CashflowViewMode.History -> "LAST 30 DAYS"
+                    },
+                    netAmount = overview.netCashflow,
+                    totalIn = overview.cashIn.total,
+                    totalOut = overview.cashOut.total
+                )
 
                 updateState {
                     CashflowLedgerState.Content(
@@ -150,9 +171,10 @@ internal class CashflowLedgerContainer(
                         highlightedEntryId = highlightEntryId
                     )
                 }
-            },
-            onFailure = { error ->
-                logger.e(error) { "Failed to load cashflow entries" }
+            } else {
+                // Handle error - prefer entries error if both failed
+                val error = entriesResult.exceptionOrNull() ?: overviewResult.exceptionOrNull()!!
+                logger.e(error) { "Failed to load cashflow entries or overview" }
                 updateState {
                     CashflowLedgerState.Error(
                         exception = error.asDokusException,
@@ -160,7 +182,7 @@ internal class CashflowLedgerContainer(
                     )
                 }
             }
-        )
+        }
     }
 
     private suspend fun CashflowLedgerCtx.handleLoadMore() {
@@ -175,37 +197,31 @@ internal class CashflowLedgerContainer(
 
             val (fromDate, toDate) = getDateRangeForViewMode(currentFilters.viewMode)
             val direction = mapDirectionFilter(currentFilters.direction)
-
-            // Same logic as handleRefresh: null for Upcoming, Paid for History
-            val apiStatus = when (currentFilters.viewMode) {
-                CashflowViewMode.Upcoming -> null
-                CashflowViewMode.History -> CashflowEntryStatus.Paid
-            }
+            val domainViewMode = mapViewModeToDomain(currentFilters.viewMode)
+            val apiStatuses = getStatusesForViewMode(currentFilters.viewMode)
 
             loadJob = launch {
                 loadCashflowEntries(
                     page = nextPage,
                     pageSize = PAGE_SIZE,
+                    viewMode = domainViewMode,
                     fromDate = fromDate,
                     toDate = toDate,
                     direction = direction,
-                    status = apiStatus,
+                    statuses = apiStatuses,
                     sourceType = null
                 ).fold(
                     onSuccess = { response ->
-                        val filteredEntries = filterEntriesForViewMode(response.items, currentFilters.viewMode)
-                        val sortedNew = sortEntriesForViewMode(filteredEntries, currentFilters.viewMode)
-
-                        loadedEntries = loadedEntries + sortedNew
+                        // Server returns entries already sorted
+                        loadedEntries = loadedEntries + response.items
                         paginationInfo = paginationInfo.copy(
                             currentPage = nextPage,
                             isLoadingMore = false,
                             hasMorePages = response.hasMore
                         )
 
-                        // Recompute summary with all entries
-                        val summary = computeSummary(loadedEntries, currentFilters.viewMode, currentFilters.direction)
-                        updateState { copy(entries = buildPaginationState(), summary = summary) }
+                        // Summary stays the same (from overview endpoint), just update entries
+                        updateState { copy(entries = buildPaginationState()) }
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to load more entries" }
@@ -524,84 +540,13 @@ internal class CashflowLedgerContainer(
     }
 
     /**
-     * Filter entries based on view mode requirements.
-     * - Cancelled entries are excluded from both views
+     * Map local CashflowViewMode to domain CashflowViewMode for API call.
      */
-    private fun filterEntriesForViewMode(
-        entries: List<CashflowEntry>,
-        viewMode: CashflowViewMode
-    ): List<CashflowEntry> {
-        return entries.filter { entry ->
-            // Exclude cancelled entries (filtered server-side but double-check)
-            if (entry.status == CashflowEntryStatus.Cancelled) return@filter false
-
-            when (viewMode) {
-                CashflowViewMode.Upcoming -> {
-                    entry.status in listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)
-                }
-                CashflowViewMode.History -> {
-                    // History = Paid entries (money already moved)
-                    entry.status == CashflowEntryStatus.Paid
-                }
-            }
-        }
-    }
-
-    /**
-     * Sort entries based on view mode.
-     * - Upcoming: by eventDate ASC (soonest first)
-     * - History: by paidAt DESC (most recent first)
-     */
-    private fun sortEntriesForViewMode(
-        entries: List<CashflowEntry>,
-        viewMode: CashflowViewMode
-    ): List<CashflowEntry> {
+    private fun mapViewModeToDomain(viewMode: CashflowViewMode): DomainViewMode {
         return when (viewMode) {
-            CashflowViewMode.Upcoming -> entries.sortedBy { it.computeUpcomingSortDate() }
-            CashflowViewMode.History -> entries.sortedByDescending { it.computeHistorySortDate() }
+            CashflowViewMode.Upcoming -> DomainViewMode.Upcoming
+            CashflowViewMode.History -> DomainViewMode.History
         }
-    }
-
-    /**
-     * Compute summary from entries.
-     * NON-NEGOTIABLE: Summary must match the filtered list exactly.
-     *
-     * When direction filter is active, only show that direction's total.
-     * This ensures summary matches what's visible in the list.
-     */
-    private fun computeSummary(
-        entries: List<CashflowEntry>,
-        viewMode: CashflowViewMode,
-        directionFilter: DirectionFilter
-    ): CashflowSummary {
-        val periodLabel = when (viewMode) {
-            CashflowViewMode.Upcoming -> "NEXT 30 DAYS"
-            CashflowViewMode.History -> "LAST 30 DAYS"
-        }
-
-        // Compute totals based on direction filter
-        val totalIn = when (directionFilter) {
-            DirectionFilter.Out -> Money.ZERO // Don't show In when filtering Out
-            else -> entries
-                .filter { it.direction == CashflowDirection.In }
-                .fold(Money.ZERO) { acc, entry -> acc + entry.amountGross }
-        }
-
-        val totalOut = when (directionFilter) {
-            DirectionFilter.In -> Money.ZERO // Don't show Out when filtering In
-            else -> entries
-                .filter { it.direction == CashflowDirection.Out }
-                .fold(Money.ZERO) { acc, entry -> acc + entry.amountGross }
-        }
-
-        val netAmount = totalIn - totalOut
-
-        return CashflowSummary(
-            periodLabel = periodLabel,
-            netAmount = netAmount,
-            totalIn = totalIn,
-            totalOut = totalOut
-        )
     }
 
     private data class LocalPaginationInfo(
@@ -610,21 +555,6 @@ internal class CashflowLedgerContainer(
         val hasMorePages: Boolean = true
     )
 }
-
-// Extension functions for sorting (separate for each mode - semantics differ)
-
-/**
- * Upcoming: sort by expected cash date.
- * Uses eventDate which represents the expected/due date.
- */
-private fun CashflowEntry.computeUpcomingSortDate(): LocalDate = eventDate
-
-/**
- * History: sort by when payment occurred.
- * Uses updatedAt as proxy for payment date (entry is updated when paid).
- * TODO: Add explicit paidAt field to CashflowEntry for accurate sorting.
- */
-private fun CashflowEntry.computeHistorySortDate(): LocalDate = updatedAt.date
 
 /**
  * Returns mock balance state when SHOW_BALANCE_MOCK is enabled (local dev).

@@ -83,6 +83,7 @@ val cashflowViewModelModule = module {
             (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
         CashflowLedgerContainer(
             loadCashflowEntries = get(),
+            getCashflowOverview = get(),
             recordPayment = get(),
             highlightEntryId = highlightEntryId
         )
