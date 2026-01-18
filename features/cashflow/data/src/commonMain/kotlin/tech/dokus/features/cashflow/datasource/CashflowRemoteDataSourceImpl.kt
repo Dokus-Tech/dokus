@@ -844,7 +844,8 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getPeppolRegistration(): Result<PeppolRegistrationDto?> {
         return try {
-            Result.success(httpClient.get(Peppol.Registration()).body<PeppolRegistrationDto>())
+            val response = httpClient.get(Peppol.Registration()).body<PeppolRegistrationResponse>()
+            Result.success(response.registration)
         } catch (e: DokusException.NotFound) {
             // 404 means no registration exists - this is expected for new users
             Result.success(null)

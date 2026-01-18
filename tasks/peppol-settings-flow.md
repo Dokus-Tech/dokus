@@ -94,6 +94,7 @@ Files (key):
 - [x] Update cashflow remote datasource:
   - `enablePeppol()` calls `POST /api/v1/peppol/enable` with no body
   - `enablePeppolSendingOnly()` calls `POST /api/v1/peppol/enable-sending-only`
+- [x] Fix `GET /api/v1/peppol/registration` decoding: backend returns `PeppolRegistrationResponse`, client maps it to `.registration`.
 - [x] Update Koin wiring (data + presentation).
 
 Files (key):
