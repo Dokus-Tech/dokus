@@ -224,12 +224,12 @@ class PeppolPollingWorker(
 
         // Skip if already polling this tenant
         if (!mutex.tryLock()) {
-            logger.debug("Already polling tenant $tenantId, skipping")
+            logger.debug("Already polling tenant {}, skipping", tenantId)
             return
         }
 
         try {
-            logger.debug("Polling Peppol inbox for tenant: $tenantId")
+            logger.debug("Polling Peppol inbox for tenant: {}", tenantId)
 
             val result = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid, documentDetail ->
                 runCatching {
