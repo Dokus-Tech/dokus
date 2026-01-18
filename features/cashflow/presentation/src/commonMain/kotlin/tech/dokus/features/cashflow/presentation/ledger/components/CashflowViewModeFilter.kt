@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -19,6 +17,8 @@ import tech.dokus.aura.resources.cashflow_direction_money_out
 import tech.dokus.aura.resources.cashflow_direction_out
 import tech.dokus.aura.resources.cashflow_view_history
 import tech.dokus.aura.resources.cashflow_view_upcoming
+import tech.dokus.features.cashflow.presentation.common.components.filter.DokusFilterToggle
+import tech.dokus.features.cashflow.presentation.common.components.filter.DokusFilterToggleRow
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -59,36 +59,36 @@ internal fun CashflowViewModeFilter(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Left: View mode chips
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
+            // Left: View mode toggles
+            DokusFilterToggleRow {
+                DokusFilterToggle(
                     selected = viewMode == CashflowViewMode.Upcoming,
                     onClick = { onViewModeChange(CashflowViewMode.Upcoming) },
-                    label = { Text(stringResource(Res.string.cashflow_view_upcoming)) }
+                    label = stringResource(Res.string.cashflow_view_upcoming)
                 )
-                FilterChip(
+                DokusFilterToggle(
                     selected = viewMode == CashflowViewMode.History,
                     onClick = { onViewModeChange(CashflowViewMode.History) },
-                    label = { Text(stringResource(Res.string.cashflow_view_history)) }
+                    label = stringResource(Res.string.cashflow_view_history)
                 )
             }
 
-            // Right: Direction chips
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
+            // Right: Direction toggles
+            DokusFilterToggleRow {
+                DokusFilterToggle(
                     selected = direction == DirectionFilter.All,
                     onClick = { onDirectionChange(DirectionFilter.All) },
-                    label = { Text(stringResource(Res.string.cashflow_direction_all)) }
+                    label = stringResource(Res.string.cashflow_direction_all)
                 )
-                FilterChip(
+                DokusFilterToggle(
                     selected = direction == DirectionFilter.In,
                     onClick = { onDirectionChange(DirectionFilter.In) },
-                    label = { Text(inLabel) }
+                    label = inLabel
                 )
-                FilterChip(
+                DokusFilterToggle(
                     selected = direction == DirectionFilter.Out,
                     onClick = { onDirectionChange(DirectionFilter.Out) },
-                    label = { Text(outLabel) }
+                    label = outLabel
                 )
             }
         }
@@ -101,35 +101,35 @@ internal fun CashflowViewModeFilter(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Row 1: View mode
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
+            DokusFilterToggleRow {
+                DokusFilterToggle(
                     selected = viewMode == CashflowViewMode.Upcoming,
                     onClick = { onViewModeChange(CashflowViewMode.Upcoming) },
-                    label = { Text(stringResource(Res.string.cashflow_view_upcoming)) }
+                    label = stringResource(Res.string.cashflow_view_upcoming)
                 )
-                FilterChip(
+                DokusFilterToggle(
                     selected = viewMode == CashflowViewMode.History,
                     onClick = { onViewModeChange(CashflowViewMode.History) },
-                    label = { Text(stringResource(Res.string.cashflow_view_history)) }
+                    label = stringResource(Res.string.cashflow_view_history)
                 )
             }
 
             // Row 2: Direction filter with descriptive labels
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
+            DokusFilterToggleRow {
+                DokusFilterToggle(
                     selected = direction == DirectionFilter.All,
                     onClick = { onDirectionChange(DirectionFilter.All) },
-                    label = { Text(stringResource(Res.string.cashflow_direction_all)) }
+                    label = stringResource(Res.string.cashflow_direction_all)
                 )
-                FilterChip(
+                DokusFilterToggle(
                     selected = direction == DirectionFilter.In,
                     onClick = { onDirectionChange(DirectionFilter.In) },
-                    label = { Text(inLabel) }
+                    label = inLabel
                 )
-                FilterChip(
+                DokusFilterToggle(
                     selected = direction == DirectionFilter.Out,
                     onClick = { onDirectionChange(DirectionFilter.Out) },
-                    label = { Text(outLabel) }
+                    label = outLabel
                 )
             }
         }
