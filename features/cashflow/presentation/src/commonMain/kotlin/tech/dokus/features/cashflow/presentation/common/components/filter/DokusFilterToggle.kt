@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.style.statusWarning
 
 /**
  * A subtle filter toggle button with minimal styling.
@@ -53,7 +54,7 @@ fun DokusFilterToggle(
                 MaterialTheme.colorScheme.onSurfaceVariant
             }
         ),
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(6.dp),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(
@@ -65,7 +66,7 @@ fun DokusFilterToggle(
             Text(
                 text = badge.toString(),
                 style = MaterialTheme.typography.labelMedium,
-                color = Color(0xFFD97706) // Amber for attention count
+                color = MaterialTheme.colorScheme.statusWarning
             )
         }
     }
