@@ -6,8 +6,8 @@ package tech.dokus.features.cashflow.datasource
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.onUpload
+import tech.dokus.domain.exceptions.DokusException
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
 import io.ktor.client.plugins.resources.patch
@@ -85,9 +85,6 @@ import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.domain.routes.Peppol
-
-/** HTTP status code indicating the resource was not found */
-private const val HttpNotFound = 404
 
 /** Limit for fetching a single Peppol transmission for an invoice */
 private const val SingleTransmissionLimit = 1
@@ -757,12 +754,9 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun getPeppolSettings(): Result<PeppolSettingsDto?> {
         return try {
             Result.success(httpClient.get(Peppol.Settings()).body<PeppolSettingsDto>())
-        } catch (e: ResponseException) {
-            if (e.response.status.value == HttpNotFound) {
-                Result.success(null)
-            } else {
-                Result.failure(e)
-            }
+        } catch (e: DokusException.NotFound) {
+            // 404 means no settings exist yet
+            Result.success(null)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -851,12 +845,9 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun getPeppolRegistration(): Result<PeppolRegistrationDto?> {
         return try {
             Result.success(httpClient.get(Peppol.Registration()).body<PeppolRegistrationDto>())
-        } catch (e: ResponseException) {
-            if (e.response.status.value == HttpNotFound) {
-                Result.success(null)
-            } else {
-                Result.failure(e)
-            }
+        } catch (e: DokusException.NotFound) {
+            // 404 means no registration exists - this is expected for new users
+            Result.success(null)
         } catch (e: Exception) {
             Result.failure(e)
         }
