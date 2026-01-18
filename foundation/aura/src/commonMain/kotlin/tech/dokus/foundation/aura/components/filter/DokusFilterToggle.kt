@@ -1,4 +1,4 @@
-package tech.dokus.features.cashflow.presentation.common.components.filter
+package tech.dokus.foundation.aura.components.filter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,7 +29,7 @@ import tech.dokus.foundation.aura.style.statusWarning
  * @param onClick Callback when the toggle is clicked
  * @param label The text label to display
  * @param modifier Optional modifier
- * @param badge Optional count badge (displayed in amber)
+ * @param badge Optional count badge (only displayed when > 0, shown in statusWarning color)
  */
 @Composable
 fun DokusFilterToggle(

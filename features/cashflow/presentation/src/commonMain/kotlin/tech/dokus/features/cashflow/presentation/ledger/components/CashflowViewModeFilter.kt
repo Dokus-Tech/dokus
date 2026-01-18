@@ -17,8 +17,8 @@ import tech.dokus.aura.resources.cashflow_direction_money_out
 import tech.dokus.aura.resources.cashflow_direction_out
 import tech.dokus.aura.resources.cashflow_view_history
 import tech.dokus.aura.resources.cashflow_view_upcoming
-import tech.dokus.features.cashflow.presentation.common.components.filter.DokusFilterToggle
-import tech.dokus.features.cashflow.presentation.common.components.filter.DokusFilterToggleRow
+import tech.dokus.foundation.aura.components.filter.DokusFilterToggle
+import tech.dokus.foundation.aura.components.filter.DokusFilterToggleRow
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
 import tech.dokus.foundation.aura.local.LocalScreenSize
