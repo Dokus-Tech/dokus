@@ -364,6 +364,7 @@ fun WarpJumpEffect(
     selectedItemPosition: Offset? = null,
     onAnimationComplete: () -> Unit = {}
 ) {
+    if (LocalInspectionMode.current) return
     val infiniteTransition = rememberInfiniteTransition(label = "warpStars")
 
     // Animation values for the warp effect
