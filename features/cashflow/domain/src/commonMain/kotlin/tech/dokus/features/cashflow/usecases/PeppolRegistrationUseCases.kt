@@ -24,7 +24,20 @@ interface VerifyPeppolIdUseCase {
  * Use case to enable PEPPOL for the tenant.
  */
 interface EnablePeppolUseCase {
-    suspend operator fun invoke(vatNumber: VatNumber): Result<PeppolRegistrationResponse>
+    /**
+     * Backend derives everything from the current workspace (VAT, company details).
+     * The client must not ask the user for VAT input here.
+     */
+    suspend operator fun invoke(): Result<PeppolRegistrationResponse>
+}
+
+/**
+ * Use case to enable PEPPOL in "sending only" mode.
+ *
+ * Used when receiving is blocked because the PEPPOL inbox is connected elsewhere.
+ */
+interface EnablePeppolSendingOnlyUseCase {
+    suspend operator fun invoke(): Result<PeppolRegistrationResponse>
 }
 
 /**

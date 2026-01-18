@@ -52,6 +52,7 @@ import tech.dokus.features.cashflow.usecase.ValidateInvoiceForPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.VerifyPeppolRecipientUseCaseImpl
 import tech.dokus.features.cashflow.usecase.WatchPendingDocumentsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.EnablePeppolUseCaseImpl
+import tech.dokus.features.cashflow.usecase.EnablePeppolSendingOnlyUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetPeppolRegistrationUseCaseImpl
 import tech.dokus.features.cashflow.usecase.OptOutPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.PollPeppolTransferUseCaseImpl
@@ -87,6 +88,7 @@ import tech.dokus.features.cashflow.usecases.ValidateInvoiceForPeppolUseCase
 import tech.dokus.features.cashflow.usecases.VerifyPeppolRecipientUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
+import tech.dokus.features.cashflow.usecases.EnablePeppolSendingOnlyUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.features.cashflow.usecases.OptOutPeppolUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolTransferUseCase
@@ -171,6 +173,7 @@ val cashflowNetworkModule = module {
     singleOf(::GetPeppolRegistrationUseCaseImpl) bind GetPeppolRegistrationUseCase::class
     singleOf(::VerifyPeppolIdUseCaseImpl) bind VerifyPeppolIdUseCase::class
     singleOf(::EnablePeppolUseCaseImpl) bind EnablePeppolUseCase::class
+    singleOf(::EnablePeppolSendingOnlyUseCaseImpl) bind EnablePeppolSendingOnlyUseCase::class
     singleOf(::WaitForPeppolTransferUseCaseImpl) bind WaitForPeppolTransferUseCase::class
     singleOf(::OptOutPeppolUseCaseImpl) bind OptOutPeppolUseCase::class
     singleOf(::PollPeppolTransferUseCaseImpl) bind PollPeppolTransferUseCase::class

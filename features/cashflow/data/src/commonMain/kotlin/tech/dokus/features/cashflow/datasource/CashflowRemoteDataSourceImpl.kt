@@ -862,12 +862,15 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun enablePeppol(vatNumber: VatNumber): Result<PeppolRegistrationResponse> {
+    override suspend fun enablePeppol(): Result<PeppolRegistrationResponse> {
         return runCatching {
-            httpClient.post(Peppol.Enable()) {
-                contentType(ContentType.Application.Json)
-                setBody(tech.dokus.domain.model.EnablePeppolRequest(vatNumber = vatNumber))
-            }.body()
+            httpClient.post(Peppol.Enable()).body()
+        }
+    }
+
+    override suspend fun enablePeppolSendingOnly(): Result<PeppolRegistrationResponse> {
+        return runCatching {
+            httpClient.post(Peppol.EnableSendingOnly()).body()
         }
     }
 

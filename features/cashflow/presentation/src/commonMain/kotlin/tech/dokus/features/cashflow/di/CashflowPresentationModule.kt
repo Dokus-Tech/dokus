@@ -94,6 +94,7 @@ val cashflowViewModelModule = module {
             getRegistration = get(),
             verifyPeppolId = get(),
             enablePeppol = get(),
+            enableSendingOnly = get(),
             waitForTransfer = get(),
             optOut = get(),
             pollTransfer = get()

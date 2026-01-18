@@ -8,6 +8,7 @@
 - `build-logic/`: Gradle convention plugins + versioning; prefer changes here over per-module build hacks.
 - `deployment/`: Docker Compose profiles + `dokus.sh` (self-host); local dev stack is driven by `./dev.sh`.
 - `docs/`: Product/architecture references (see `docs/ARCHITECTURE_UI_GUIDELINES.md` and `docs/REFACTOR_SAFETY.md`).
+- `tasks/`: Engineering notes and implementation write-ups (good place for phased work logs).
 
 ## Build, Test, and Development Commands
 - Local infra stack (Postgres/Redis/MinIO/Traefik): `./dev.sh start` (or `./dev.sh` for the interactive console); uses `deployment/docker-compose.pro.yml` + `deployment/docker-compose.local.yml`.
@@ -25,6 +26,7 @@
 - Follow Route/Screen/Components split; navigation + side effects live in `route/` only (enforced by `./gradlew checkNoNavInComponents`). See `docs/ARCHITECTURE_UI_GUIDELINES.md`.
 - Keep Kotlin files small; `./gradlew checkKotlinFileSize` enforces a 450 LOC max.
 - Reuse `foundation/aura` components for cross-feature UI; use Koin for DI.
+- PEPPOL UX: don’t ask for VAT in UI if it exists in workspace context, and never show external provider names to users.
 
 ## Testing Guidelines
 - Fast local: `./gradlew checkAll` + targeted module tests (e.g. `./gradlew :features:cashflow:presentation:testDebugUnitTest`).

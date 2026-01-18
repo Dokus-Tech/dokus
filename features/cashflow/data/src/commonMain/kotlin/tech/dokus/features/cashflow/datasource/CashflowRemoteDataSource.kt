@@ -677,7 +677,13 @@ interface CashflowRemoteDataSource {
      * Enable PEPPOL for the tenant (start registration)
      * POST /api/v1/peppol/enable
      */
-    suspend fun enablePeppol(vatNumber: VatNumber): Result<PeppolRegistrationResponse>
+    suspend fun enablePeppol(): Result<PeppolRegistrationResponse>
+
+    /**
+     * Enable PEPPOL sending only (receiving remains with another provider)
+     * POST /api/v1/peppol/enable-sending-only
+     */
+    suspend fun enablePeppolSendingOnly(): Result<PeppolRegistrationResponse>
 
     /**
      * Opt to wait for PEPPOL ID transfer from another provider

@@ -1,16 +1,20 @@
 package tech.dokus.peppol.service
 
+import tech.dokus.database.repository.auth.AddressRepository
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.domain.enums.PeppolRegistrationStatus
+import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.EnablePeppolRequest
 import tech.dokus.domain.model.PeppolNextAction
 import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
-import tech.dokus.peppol.provider.client.RecommandCredentials
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCompanyCountry
+import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateCompanyRequest
+import tech.dokus.peppol.provider.client.recommand.model.RecommandUpdateCompanyRequest
 
 /**
  * Service for managing PEPPOL registration state machine.
@@ -29,9 +33,68 @@ class PeppolRegistrationService(
     private val registrationRepository: PeppolRegistrationRepository,
     private val verificationService: PeppolVerificationService,
     private val recommandCompaniesClient: RecommandCompaniesClient,
+    private val tenantRepository: TenantRepository,
+    private val addressRepository: AddressRepository,
     private val moduleConfig: PeppolModuleConfig
 ) {
     private val logger = loggerFor()
+
+    private data class TenantPeppolContext(
+        val tenantId: TenantId,
+        val vatNumber: VatNumber,
+        val peppolId: PeppolId,
+        val companyName: String,
+        val addressLine: String,
+        val postalCode: String,
+        val city: String,
+        val country: RecommandCompanyCountry,
+        val enterpriseNumber: String,
+    )
+
+    private suspend fun loadTenantPeppolContext(tenantId: TenantId): TenantPeppolContext {
+        val tenant = requireNotNull(tenantRepository.findById(tenantId)) {
+            "Tenant not found"
+        }
+        val vatNumber = requireNotNull(tenant.vatNumber) {
+            "Tenant VAT number is missing"
+        }
+        require(vatNumber.isValid) { "Tenant VAT number is invalid" }
+
+        val address = requireNotNull(addressRepository.getCompanyAddress(tenantId)) {
+            "Tenant company address is missing"
+        }
+
+        val streetLine1 = address.streetLine1?.trim().orEmpty()
+        val streetLine2 = address.streetLine2?.trim().orEmpty()
+        val addressLine = listOf(streetLine1, streetLine2).filter { it.isNotBlank() }.joinToString(", ")
+        require(addressLine.isNotBlank()) { "Tenant address is incomplete (street)" }
+
+        val postalCode = address.postalCode?.trim().orEmpty()
+        require(postalCode.isNotBlank()) { "Tenant address is incomplete (postalCode)" }
+
+        val city = address.city?.trim().orEmpty()
+        require(city.isNotBlank()) { "Tenant address is incomplete (city)" }
+
+        val countryCode = address.country?.trim()?.uppercase().orEmpty()
+        require(countryCode.isNotBlank()) { "Tenant address is incomplete (country)" }
+        val country = runCatching { RecommandCompanyCountry.valueOf(countryCode) }
+            .getOrElse { throw IllegalStateException("Unsupported country for Peppol provider: $countryCode") }
+
+        val peppolId = PeppolId("0208:${vatNumber.normalized}")
+        val enterpriseNumber = vatNumber.companyNumber
+
+        return TenantPeppolContext(
+            tenantId = tenantId,
+            vatNumber = vatNumber,
+            peppolId = peppolId,
+            companyName = tenant.legalName.value,
+            addressLine = addressLine,
+            postalCode = postalCode,
+            city = city,
+            country = country,
+            enterpriseNumber = enterpriseNumber,
+        )
+    }
 
     /**
      * Enable PEPPOL for a tenant.
@@ -44,14 +107,13 @@ class PeppolRegistrationService(
      */
     suspend fun enablePeppol(
         tenantId: TenantId,
-        request: EnablePeppolRequest,
-        companyName: String
     ): Result<PeppolRegistrationResponse> = runCatching {
-        val vatNumber = request.vatNumber
+        val ctx = loadTenantPeppolContext(tenantId)
+        val vatNumber = ctx.vatNumber
         logger.info("Enabling PEPPOL for tenant $tenantId with VAT number: ${vatNumber.normalized}")
 
         // Convert VAT number to PEPPOL ID format (0208 = Belgian scheme)
-        val peppolId = "0208:${vatNumber.normalized}"
+        val peppolId = ctx.peppolId.value
 
         // Check existing registration
         val existing = registrationRepository.getRegistration(tenantId).getOrNull()
@@ -64,7 +126,7 @@ class PeppolRegistrationService(
         }
 
         // Create or update registration in PENDING state
-        val registration = if (existing == null) {
+        if (existing == null) {
             registrationRepository.createRegistration(
                 tenantId = tenantId,
                 peppolId = peppolId,
@@ -73,7 +135,6 @@ class PeppolRegistrationService(
             ).getOrThrow()
         } else {
             registrationRepository.updateStatus(tenantId, PeppolRegistrationStatus.Pending).getOrThrow()
-            registrationRepository.getRegistration(tenantId).getOrThrow()!!
         }
 
         // Verify if PEPPOL ID is available
@@ -81,11 +142,11 @@ class PeppolRegistrationService(
 
         if (verifyResult.isBlocked) {
             // ID is blocked - user needs to choose what to do
-            logger.warn("PEPPOL ID $peppolId is blocked by ${verifyResult.blockedBy}")
+            logger.warn("PEPPOL ID $peppolId is blocked (registered elsewhere)")
             registrationRepository.updateStatus(
                 tenantId,
                 PeppolRegistrationStatus.NotConfigured,
-                "PEPPOL ID is registered with another provider: ${verifyResult.blockedBy}"
+                "PEPPOL ID is already registered with another service"
             ).getOrThrow()
 
             val updatedReg = registrationRepository.getRegistration(tenantId).getOrThrow()!!
@@ -108,24 +169,38 @@ class PeppolRegistrationService(
 
             val matchingCompany = companies.find { VatNumber(it.vatNumber).normalized == vatNumber.normalized }
 
-            val companyId = if (matchingCompany != null) {
-                matchingCompany.id
-            } else {
-                // Create new company at Recommand
-                val created = recommandCompaniesClient.createCompany(
+            val companyId = matchingCompany?.id
+                ?: recommandCompaniesClient.createCompany(
                     apiKey = masterCreds.apiKey,
                     apiSecret = masterCreds.apiSecret,
-                    request = tech.dokus.peppol.provider.client.recommand.model.RecommandCreateCompanyRequest(
-                        name = companyName,
-                        address = "", // Will be updated later
-                        postalCode = "",
-                        city = "",
-                        country = tech.dokus.peppol.provider.client.recommand.model.RecommandCompanyCountry.BE,
-                        vatNumber = vatNumber.normalized
+                    request = RecommandCreateCompanyRequest(
+                        name = ctx.companyName,
+                        address = ctx.addressLine,
+                        postalCode = ctx.postalCode,
+                        city = ctx.city,
+                        country = ctx.country,
+                        enterpriseNumber = ctx.enterpriseNumber,
+                        vatNumber = vatNumber.normalized,
+                        isSmpRecipient = true,
                     )
-                ).getOrThrow()
-                created.id
-            }
+                ).getOrThrow().id
+
+            // Ensure company is configured for receiving (SMP recipient) and updated with our tenant info
+            recommandCompaniesClient.updateCompany(
+                apiKey = masterCreds.apiKey,
+                apiSecret = masterCreds.apiSecret,
+                companyId = companyId,
+                request = RecommandUpdateCompanyRequest(
+                    name = ctx.companyName,
+                    address = ctx.addressLine,
+                    postalCode = ctx.postalCode,
+                    city = ctx.city,
+                    country = ctx.country,
+                    enterpriseNumber = ctx.enterpriseNumber,
+                    vatNumber = vatNumber.normalized,
+                    isSmpRecipient = true,
+                )
+            ).getOrThrow()
 
             // Update registration with company ID and set to ACTIVE
             registrationRepository.updateRecommandCompanyId(tenantId, companyId).getOrThrow()
@@ -153,6 +228,82 @@ class PeppolRegistrationService(
                 nextAction = PeppolNextAction.RETRY
             )
         }
+    }
+
+    /**
+     * Enable Peppol sending only.
+     *
+     * Used when receiving is blocked because the PEPPOL ID is registered with another service.
+     * This registers the company in Recommand without publishing SMP recipient capabilities.
+     */
+    suspend fun enableSendingOnly(tenantId: TenantId): Result<PeppolRegistrationResponse> = runCatching {
+        val ctx = loadTenantPeppolContext(tenantId)
+        val vatNumber = ctx.vatNumber
+        logger.info("Enabling PEPPOL sending-only for tenant $tenantId")
+
+        // Ensure a registration row exists
+        val existing = registrationRepository.getRegistration(tenantId).getOrNull()
+        if (existing == null) {
+            registrationRepository.createRegistration(
+                tenantId = tenantId,
+                peppolId = ctx.peppolId.value,
+                status = PeppolRegistrationStatus.SendingOnly,
+                testMode = moduleConfig.globalTestMode
+            ).getOrThrow()
+        }
+
+        val masterCreds = moduleConfig.masterCredentials
+
+        val companies = recommandCompaniesClient.listCompanies(
+            apiKey = masterCreds.apiKey,
+            apiSecret = masterCreds.apiSecret,
+            vatNumber = vatNumber.normalized
+        ).getOrThrow()
+
+        val matchingCompany = companies.find { VatNumber(it.vatNumber).normalized == vatNumber.normalized }
+
+        val companyId = matchingCompany?.id
+            ?: recommandCompaniesClient.createCompany(
+                apiKey = masterCreds.apiKey,
+                apiSecret = masterCreds.apiSecret,
+                request = RecommandCreateCompanyRequest(
+                    name = ctx.companyName,
+                    address = ctx.addressLine,
+                    postalCode = ctx.postalCode,
+                    city = ctx.city,
+                    country = ctx.country,
+                    enterpriseNumber = ctx.enterpriseNumber,
+                    vatNumber = vatNumber.normalized,
+                    isSmpRecipient = false,
+                )
+            ).getOrThrow().id
+
+        // Ensure company is not configured as SMP recipient (sending only)
+        recommandCompaniesClient.updateCompany(
+            apiKey = masterCreds.apiKey,
+            apiSecret = masterCreds.apiSecret,
+            companyId = companyId,
+            request = RecommandUpdateCompanyRequest(
+                name = ctx.companyName,
+                address = ctx.addressLine,
+                postalCode = ctx.postalCode,
+                city = ctx.city,
+                country = ctx.country,
+                enterpriseNumber = ctx.enterpriseNumber,
+                vatNumber = vatNumber.normalized,
+                isSmpRecipient = false,
+            )
+        ).getOrThrow()
+
+        registrationRepository.updateRecommandCompanyId(tenantId, companyId).getOrThrow()
+        registrationRepository.updateStatus(tenantId, PeppolRegistrationStatus.SendingOnly).getOrThrow()
+        registrationRepository.updateCapabilities(tenantId, canReceive = false, canSend = true).getOrThrow()
+
+        val registration = registrationRepository.getRegistration(tenantId).getOrThrow()!!
+        PeppolRegistrationResponse(
+            registration = registration,
+            nextAction = PeppolNextAction.NONE
+        )
     }
 
     /**
@@ -188,8 +339,6 @@ class PeppolRegistrationService(
      */
     suspend fun retryRegistration(
         tenantId: TenantId,
-        vatNumber: VatNumber,
-        companyName: String
     ): Result<PeppolRegistrationResponse> = runCatching {
         logger.info("Retrying PEPPOL registration for tenant $tenantId")
 
@@ -203,11 +352,7 @@ class PeppolRegistrationService(
         // Clear error and retry
         registrationRepository.updateStatus(tenantId, PeppolRegistrationStatus.NotConfigured, null).getOrThrow()
 
-        enablePeppol(
-            tenantId,
-            EnablePeppolRequest(vatNumber),
-            companyName
-        ).getOrThrow()
+        enablePeppol(tenantId).getOrThrow()
     }
 
     /**
@@ -220,7 +365,9 @@ class PeppolRegistrationService(
         val existing = registrationRepository.getRegistration(tenantId).getOrNull()
             ?: throw IllegalStateException("No existing registration found for tenant $tenantId")
 
-        if (existing.status != PeppolRegistrationStatus.WaitingTransfer) {
+        if (existing.status != PeppolRegistrationStatus.WaitingTransfer &&
+            existing.status != PeppolRegistrationStatus.SendingOnly
+        ) {
             return@runCatching PeppolRegistrationResponse(
                 registration = existing,
                 nextAction = PeppolNextAction.NONE
@@ -237,22 +384,9 @@ class PeppolRegistrationService(
         val verifyResult = verificationService.verify(vatNumber).getOrThrow()
 
         if (!verifyResult.isBlocked) {
-            // ID is now available! Try to register
+            // ID is now available! Register automatically.
             logger.info("PEPPOL ID ${existing.peppolId} is now available for tenant $tenantId")
-
-            // TODO: Get vatNumber and companyName from tenant
-            // For now, just update status - full registration will happen on next enablePeppol call
-            registrationRepository.updateStatus(
-                tenantId,
-                PeppolRegistrationStatus.NotConfigured,
-                null
-            ).getOrThrow()
-
-            val updatedReg = registrationRepository.getRegistration(tenantId).getOrThrow()!!
-            return@runCatching PeppolRegistrationResponse(
-                registration = updatedReg,
-                nextAction = PeppolNextAction.RETRY // Signal to try registration again
-            )
+            return@runCatching enablePeppol(tenantId).getOrThrow()
         }
 
         // Still blocked
@@ -275,7 +409,7 @@ class PeppolRegistrationService(
             PeppolRegistrationStatus.Pending -> PeppolNextAction.NONE
             PeppolRegistrationStatus.Active -> PeppolNextAction.NONE
             PeppolRegistrationStatus.WaitingTransfer -> PeppolNextAction.WAIT_FOR_TRANSFER
-            PeppolRegistrationStatus.SendingOnly -> PeppolNextAction.CONTACT_SUPPORT
+            PeppolRegistrationStatus.SendingOnly -> PeppolNextAction.NONE
             PeppolRegistrationStatus.External -> PeppolNextAction.NONE
             PeppolRegistrationStatus.Failed -> PeppolNextAction.RETRY
         }

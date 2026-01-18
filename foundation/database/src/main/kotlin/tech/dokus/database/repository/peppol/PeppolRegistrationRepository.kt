@@ -115,6 +115,7 @@ class PeppolRegistrationRepository {
             }) {
                 it[status] = PeppolRegistrationStatus.WaitingTransfer
                 it[waitingSince] = now
+                it[errorMessage] = null
                 it[updatedAt] = now
             }
         }
