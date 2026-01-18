@@ -49,10 +49,11 @@ internal fun Route.cashflowEntriesRoutes() {
             }
 
             // If entryId is specified, return single-item result for deep link
-            if (route.entryId != null) {
-                val entry = cashflowEntriesService.getEntry(route.entryId, tenantId)
+            val entryId = route.entryId
+            if (entryId != null) {
+                val entry = cashflowEntriesService.getEntry(entryId, tenantId)
                     .getOrElse { throw DokusException.InternalError("Failed to get entry: ${it.message}") }
-                    ?: throw DokusException.NotFound("Cashflow entry not found: ${route.entryId}")
+                    ?: throw DokusException.NotFound("Cashflow entry not found: $entryId")
 
                 call.respond(
                     HttpStatusCode.OK,
