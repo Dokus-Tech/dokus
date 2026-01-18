@@ -817,6 +817,27 @@ enum class PaymentMethod(override val dbValue: String) : DbEnum {
     Other("OTHER")
 }
 
+@Serializable
+enum class PaymentStatus(override val dbValue: String) : DbEnum {
+    @SerialName("PENDING")
+    Pending("PENDING"),
+
+    @SerialName("PROCESSING")
+    Processing("PROCESSING"),
+
+    @SerialName("COMPLETED")
+    Completed("COMPLETED"),
+
+    @SerialName("FAILED")
+    Failed("FAILED"),
+
+    @SerialName("CANCELLED")
+    Cancelled("CANCELLED"),
+
+    @SerialName("REFUNDED")
+    Refunded("REFUNDED")
+}
+
 // ============================================================================
 // BANKING ENUMS
 // ============================================================================
@@ -1125,4 +1146,32 @@ enum class RefundClaimStatus(override val dbValue: String) : DbEnum {
 
     @SerialName("CANCELLED")
     Cancelled("CANCELLED")
+}
+
+// ============================================================================
+// REPORTING ENUMS
+// ============================================================================
+
+/**
+ * Grouping options for financial reports.
+ */
+@Serializable
+enum class ReportGroupBy {
+    @SerialName("DAY")
+    Day,
+
+    @SerialName("WEEK")
+    Week,
+
+    @SerialName("MONTH")
+    Month,
+
+    @SerialName("QUARTER")
+    Quarter,
+
+    @SerialName("YEAR")
+    Year,
+
+    @SerialName("CATEGORY")
+    Category
 }
