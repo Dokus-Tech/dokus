@@ -147,7 +147,7 @@ scan_images() {
     fi
 
     local images=(
-        "${DOKUS_SERVER_IMAGE:-94.111.226.82:5000/dokus-server:latest}"
+        "${DOKUS_SERVER_IMAGE:-docker.invoid.vision/dokus-server:latest}"
         "pgvector/pgvector:pg17"
         "redis:8-alpine"
         "minio/minio:latest"

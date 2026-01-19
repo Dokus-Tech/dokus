@@ -4,6 +4,6 @@
 
 services:
   dokus-server:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-server:dev
+    image: ${DOCKER_REGISTRY:-docker.invoid.vision}/dokus-server:dev
     ports:
       - "5005:5005"   # JVM remote debugging (JDWP)
