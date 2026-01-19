@@ -59,7 +59,7 @@ data class ServerConfig(
          * Used when the app is first installed or when reset to default.
          */
         val Cloud = ServerConfig(
-            host = "app.dokus.tech",
+            host = "dokus.invoid.vision",
             port = HttpsDefaultPort,
             protocol = "https",
             name = "Dokus Cloud",
