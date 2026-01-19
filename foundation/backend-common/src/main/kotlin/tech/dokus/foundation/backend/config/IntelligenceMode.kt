@@ -176,11 +176,11 @@ sealed interface IntelligenceMode {
         override val name = "Sovereign"
         override val configValue = "sovereign"
 
-        // Hardware
-        override val minRamGb = 64
+        // Hardware - YOUR Mac Studio
+        override val minRamGb = 128
         override val parallelCapable = true
 
-        // Models
+        // Models - max available
         override val classificationModel = "qwen3-vl:8b"
         override val fastExtractionModel = "qwen3-vl:8b"
         override val expertExtractionModel = "qwen3-vl:32b"
@@ -192,11 +192,10 @@ sealed interface IntelligenceMode {
         override val enableSelfCorrection = true
         override val maxRetries = 3
 
-        // Concurrency (VERY IMPORTANT)
-        override val maxConcurrentRequests = 3
-        override val maxParallelAgentsPerDocument = 3
+        // Concurrency
+        override val maxConcurrentRequests = 5
+        override val maxParallelAgentsPerDocument = 4
 
-        // Autonomy
         override val autonomyLevel = AutonomyLevel.HIGH
     }
 
