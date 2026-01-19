@@ -72,4 +72,4 @@ docker compose -f docker-compose.pro.yml logs -f dokus-server
 
 ## 🔐 Registry Note
 
-Images are pulled from `94.111.226.82:5000` (HTTP/insecure). `dokus.sh` can configure Docker to allow this registry.
+Images are pulled from `docker.invoid.vision` (HTTPS with authentication). Run `docker login docker.invoid.vision` before pulling images.

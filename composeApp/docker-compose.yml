@@ -4,7 +4,7 @@
 
 services:
   dokus-web:
-    image: 94.111.226.82:5000/dokus-web:latest
+    image: docker.invoid.vision/dokus-web:latest
     container_name: dokus-web
     ports:
       - "8080:8080"
