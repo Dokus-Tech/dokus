@@ -5,9 +5,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.worker.handlers.RAGPipelineHandler
@@ -34,6 +39,7 @@ import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.UnsupportedDocumentTypeException
+import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import java.util.concurrent.atomic.AtomicBoolean
@@ -61,6 +67,7 @@ class DocumentProcessingWorker(
     private val coordinator: AutonomousProcessingCoordinator,
     private val documentImageService: DocumentImageService,
     private val config: ProcessorConfig,
+    private val mode: IntelligenceMode,
     private val draftRepository: DocumentDraftRepository,
     private val contactMatchingService: ContactMatchingService,
     private val tenantRepository: TenantRepository,
@@ -92,7 +99,7 @@ class DocumentProcessingWorker(
 
         logger.info(
             "Starting worker (VISION-FIRST): interval=${config.pollingInterval}ms, " +
-                    "batch=${config.batchSize}, RAG=${ragHandler.isEnabled}"
+                    "batch=${config.batchSize}, concurrency=${mode.maxConcurrentRequests}, RAG=${ragHandler.isEnabled}"
         )
 
         pollingJob = scope.launch {
@@ -126,7 +133,8 @@ class DocumentProcessingWorker(
     }
 
     /**
-     * Process a batch of pending ingestion runs.
+     * Process a batch of pending ingestion runs concurrently.
+     * Concurrency is limited by mode.maxConcurrentRequests.
      */
     private suspend fun processBatch() {
         // Find queued ingestion runs
@@ -141,17 +149,25 @@ class DocumentProcessingWorker(
 
         logger.info("Found ${pending.size} pending ingestion runs to process")
 
-        for (ingestion in pending) {
-            if (!isRunning.get()) break
+        // Concurrent processing limited by mode's maxConcurrentRequests
+        val semaphore = Semaphore(mode.maxConcurrentRequests)
 
-            try {
-                processIngestionRun(ingestion)
-            } catch (e: Exception) {
-                logger.error(
-                    "Failed to process ingestion run ${ingestion.runId} for document ${ingestion.documentId}",
-                    e
-                )
-            }
+        supervisorScope {
+            pending.map { ingestion ->
+                async {
+                    if (!isRunning.get()) return@async
+                    semaphore.withPermit {
+                        try {
+                            processIngestionRun(ingestion)
+                        } catch (e: Exception) {
+                            logger.error(
+                                "Failed to process ingestion run ${ingestion.runId} for document ${ingestion.documentId}",
+                                e
+                            )
+                        }
+                    }
+                }
+            }.awaitAll()
         }
     }
 
