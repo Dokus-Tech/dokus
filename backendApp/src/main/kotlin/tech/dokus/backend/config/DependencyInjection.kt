@@ -521,6 +521,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             coordinator = get(),
             documentImageService = get(),
             config = appConfig.processor,
+            mode = mode,
             draftRepository = get(),
             contactMatchingService = get(),
             tenantRepository = get(),

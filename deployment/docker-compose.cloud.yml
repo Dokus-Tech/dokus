@@ -6,7 +6,6 @@ volumes:
   postgres-data:
   redis-data:
   minio-data:
-  traefik-acme:
 
 x-jvm-cloud-defaults: &jvm-cloud-defaults
   JAVA_OPTS: >-
@@ -21,7 +20,10 @@ x-jvm-cloud-defaults: &jvm-cloud-defaults
 
 services:
   # =========================================================
-  # Traefik (TLS termination + routing)
+  # Traefik (INTERNAL routing only; TLS is terminated on the Pi edge Traefik)
+  # Exposes:
+  #   - Host port 8088 -> Traefik :80 (Pi forwards here)
+  #   - Host 127.0.0.1:8080 -> Traefik dashboard (local only)
   # =========================================================
   traefik:
     image: traefik:v3.2
@@ -34,15 +36,6 @@ services:
       - --providers.file.watch=true
 
       - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
-      - --entrypoints.web.http.redirections.entrypoint.scheme=https
-
-      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-contact@dokus.tech}
-      - --certificatesresolvers.letsencrypt.acme.storage=/acme/acme.json
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
 
       - --api.dashboard=true
       - --ping=true
@@ -51,15 +44,13 @@ services:
       - --accesslog=true
 
     ports:
-      - "80:80"
-      - "443:443"
+      - "8088:80"
       - "127.0.0.1:8080:8080"
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
       - ./logs/traefik:/logs
-      - traefik-acme:/acme
 
     networks:
       - dokus-network
@@ -96,6 +87,8 @@ services:
     image: redis:8-alpine
     container_name: dokus-redis
     restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     command: >
       redis-server
       --appendonly yes
@@ -130,8 +123,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.minio.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/storage`)"
-      - "traefik.http.routers.minio.entrypoints=websecure"
-      - "traefik.http.routers.minio.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.minio.entrypoints=web"
       - "traefik.http.services.minio.loadbalancer.server.port=9000"
       - "traefik.http.middlewares.minio-strip.stripprefix.prefixes=/storage"
       - "traefik.http.routers.minio.middlewares=minio-strip"
@@ -156,7 +148,7 @@ services:
       MINIO_BUCKET: dokus-storage
       # AI configuration (sovereign mode for cloud with max capability)
       DOKUS_INTELLIGENCE_MODE: sovereign
-      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       LOG_PATH: /app/logs
     networks:
@@ -179,7 +171,6 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api`) || Path(`/health`) || Path(`/metrics`))"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.api.entrypoints=web"
       - "traefik.http.routers.api.middlewares=rate-limit@file,cors-api@file,compress@file"
       - "traefik.http.services.api.loadbalancer.server.port=8080"

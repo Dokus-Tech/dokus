@@ -5,9 +5,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.worker.handlers.RAGPipelineHandler
@@ -32,12 +37,11 @@ import tech.dokus.features.ai.models.toExtractedDocumentData
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
-import tech.dokus.features.ai.services.EmbeddingException
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.UnsupportedDocumentTypeException
+import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.storage.DocumentStorageService
-import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -63,6 +67,7 @@ class DocumentProcessingWorker(
     private val coordinator: AutonomousProcessingCoordinator,
     private val documentImageService: DocumentImageService,
     private val config: ProcessorConfig,
+    private val mode: IntelligenceMode,
     private val draftRepository: DocumentDraftRepository,
     private val contactMatchingService: ContactMatchingService,
     private val tenantRepository: TenantRepository,
@@ -94,7 +99,7 @@ class DocumentProcessingWorker(
 
         logger.info(
             "Starting worker (VISION-FIRST): interval=${config.pollingInterval}ms, " +
-                "batch=${config.batchSize}, RAG=${ragHandler.isEnabled}"
+                    "batch=${config.batchSize}, concurrency=${mode.maxConcurrentRequests}, RAG=${ragHandler.isEnabled}"
         )
 
         pollingJob = scope.launch {
@@ -128,7 +133,8 @@ class DocumentProcessingWorker(
     }
 
     /**
-     * Process a batch of pending ingestion runs.
+     * Process a batch of pending ingestion runs concurrently.
+     * Concurrency is limited by mode.maxConcurrentRequests.
      */
     private suspend fun processBatch() {
         // Find queued ingestion runs
@@ -143,17 +149,25 @@ class DocumentProcessingWorker(
 
         logger.info("Found ${pending.size} pending ingestion runs to process")
 
-        for (ingestion in pending) {
-            if (!isRunning.get()) break
+        // Concurrent processing limited by mode's maxConcurrentRequests
+        val semaphore = Semaphore(mode.maxConcurrentRequests)
 
-            try {
-                processIngestionRun(ingestion)
-            } catch (e: Exception) {
-                logger.error(
-                    "Failed to process ingestion run ${ingestion.runId} for document ${ingestion.documentId}",
-                    e
-                )
-            }
+        supervisorScope {
+            pending.map { ingestion ->
+                async {
+                    if (!isRunning.get()) return@async
+                    semaphore.withPermit {
+                        try {
+                            processIngestionRun(ingestion)
+                        } catch (e: Exception) {
+                            logger.error(
+                                "Failed to process ingestion run ${ingestion.runId} for document ${ingestion.documentId}",
+                                e
+                            )
+                        }
+                    }
+                }
+            }.awaitAll()
         }
     }
 
@@ -187,7 +201,10 @@ class DocumentProcessingWorker(
                 )
             } catch (e: UnsupportedDocumentTypeException) {
                 logger.error("Unsupported document type for $documentId: ${e.message}")
-                ingestionRepository.markAsFailed(runId, "Unsupported document type: ${ingestion.contentType}")
+                ingestionRepository.markAsFailed(
+                    runId,
+                    "Unsupported document type: ${ingestion.contentType}"
+                )
                 return
             }
 
@@ -230,7 +247,7 @@ class DocumentProcessingWorker(
             if (judgmentInfo != null) {
                 logger.info(
                     "5-Layer Pipeline: judgment=${judgmentInfo.outcome}, " +
-                        "corrected=${judgmentInfo.wasCorrected}, issues=${judgmentInfo.issues.size}"
+                            "corrected=${judgmentInfo.wasCorrected}, issues=${judgmentInfo.issues.size}"
                 )
             }
 
@@ -251,7 +268,7 @@ class DocumentProcessingWorker(
 
             logger.info(
                 "Processed doc $documentId: type=$documentType, " +
-                    "conf=$confidence, threshold=$meetsThreshold"
+                        "conf=$confidence, threshold=$meetsThreshold"
             )
 
             // RAG preparation: chunk and embed the extracted text
@@ -300,9 +317,7 @@ class DocumentProcessingWorker(
     ): ProcessingResult? {
         logger.info("Processing document $documentId with 5-Layer Autonomous Pipeline")
 
-        val result = coordinator.process(images, tenantContext)
-
-        return when (result) {
+        return when (val result = coordinator.process(images, tenantContext)) {
             is AutonomousResult.Success<*> -> {
                 // Map the autonomous result to our legacy format
                 val aiResult = mapAutonomousResultToDocumentAIResult(result)
@@ -369,6 +384,7 @@ class DocumentProcessingWorker(
                             warnings = result.judgment.issuesForUser,
                             rawText = extraction.extractedText ?: ""
                         )
+
                     tech.dokus.features.ai.models.ClassifiedDocumentType.PRO_FORMA ->
                         tech.dokus.features.ai.models.DocumentAIResult.ProForma(
                             classification = classification,
@@ -377,6 +393,7 @@ class DocumentProcessingWorker(
                             warnings = result.judgment.issuesForUser,
                             rawText = extraction.extractedText ?: ""
                         )
+
                     else ->
                         tech.dokus.features.ai.models.DocumentAIResult.Invoice(
                             classification = classification,
@@ -387,6 +404,7 @@ class DocumentProcessingWorker(
                         )
                 }
             }
+
             is tech.dokus.features.ai.models.ExtractedBillData ->
                 tech.dokus.features.ai.models.DocumentAIResult.Bill(
                     classification = classification,
@@ -395,6 +413,7 @@ class DocumentProcessingWorker(
                     warnings = result.judgment.issuesForUser,
                     rawText = extraction.extractedText ?: ""
                 )
+
             is tech.dokus.features.ai.models.ExtractedReceiptData ->
                 tech.dokus.features.ai.models.DocumentAIResult.Receipt(
                     classification = classification,
@@ -403,6 +422,7 @@ class DocumentProcessingWorker(
                     warnings = result.judgment.issuesForUser,
                     rawText = extraction.extractedText ?: ""
                 )
+
             is tech.dokus.features.ai.models.ExtractedExpenseData ->
                 tech.dokus.features.ai.models.DocumentAIResult.Expense(
                     classification = classification,
@@ -411,6 +431,7 @@ class DocumentProcessingWorker(
                     warnings = result.judgment.issuesForUser,
                     rawText = extraction.extractedText ?: ""
                 )
+
             else -> {
                 logger.warn("Unknown extraction type: ${extraction?.javaClass?.name}")
                 null
@@ -454,6 +475,7 @@ class DocumentProcessingWorker(
                     address = inv.clientAddress
                 )
             }
+
             DocumentType.Bill -> extractedData.bill?.let { bill ->
                 ContactMatchingService.ExtractedCounterparty(
                     name = bill.supplierName,
@@ -461,6 +483,7 @@ class DocumentProcessingWorker(
                     address = bill.supplierAddress
                 )
             }
+
             DocumentType.Expense -> extractedData.expense?.let { exp ->
                 ContactMatchingService.ExtractedCounterparty(
                     name = exp.merchant,
@@ -468,6 +491,7 @@ class DocumentProcessingWorker(
                     address = exp.merchantAddress
                 )
             }
+
             DocumentType.CreditNote,
             DocumentType.Receipt,
             DocumentType.ProForma,
@@ -482,7 +506,8 @@ class DocumentProcessingWorker(
             return
         }
 
-        val suggestion = contactMatchingService.findMatch(tenantId, extractedCounterparty).getOrThrow()
+        val suggestion =
+            contactMatchingService.findMatch(tenantId, extractedCounterparty).getOrThrow()
         if (suggestion.contactId == null) return
 
         val reason = listOfNotNull(
