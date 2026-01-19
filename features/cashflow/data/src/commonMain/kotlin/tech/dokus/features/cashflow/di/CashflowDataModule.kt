@@ -25,6 +25,7 @@ import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGatewayImpl
 import tech.dokus.features.cashflow.usecase.CancelCashflowEntryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConfirmDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetCashflowEntryUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetCashflowOverviewUseCaseImpl
 import tech.dokus.features.cashflow.usecase.LoadCashflowEntriesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.RecordCashflowPaymentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConnectPeppolUseCaseImpl
@@ -51,6 +52,8 @@ import tech.dokus.features.cashflow.usecase.ValidateInvoiceForPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.VerifyPeppolRecipientUseCaseImpl
 import tech.dokus.features.cashflow.usecase.WatchPendingDocumentsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.EnablePeppolUseCaseImpl
+import tech.dokus.features.cashflow.usecase.EnablePeppolSendingOnlyUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetPeppolActivityUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetPeppolRegistrationUseCaseImpl
 import tech.dokus.features.cashflow.usecase.OptOutPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.PollPeppolTransferUseCaseImpl
@@ -59,6 +62,7 @@ import tech.dokus.features.cashflow.usecase.WaitForPeppolTransferUseCaseImpl
 import tech.dokus.features.cashflow.usecases.CancelCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
@@ -85,6 +89,8 @@ import tech.dokus.features.cashflow.usecases.ValidateInvoiceForPeppolUseCase
 import tech.dokus.features.cashflow.usecases.VerifyPeppolRecipientUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
+import tech.dokus.features.cashflow.usecases.EnablePeppolSendingOnlyUseCase
+import tech.dokus.features.cashflow.usecases.GetPeppolActivityUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.features.cashflow.usecases.OptOutPeppolUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolTransferUseCase
@@ -169,9 +175,11 @@ val cashflowNetworkModule = module {
     singleOf(::GetPeppolRegistrationUseCaseImpl) bind GetPeppolRegistrationUseCase::class
     singleOf(::VerifyPeppolIdUseCaseImpl) bind VerifyPeppolIdUseCase::class
     singleOf(::EnablePeppolUseCaseImpl) bind EnablePeppolUseCase::class
+    singleOf(::EnablePeppolSendingOnlyUseCaseImpl) bind EnablePeppolSendingOnlyUseCase::class
     singleOf(::WaitForPeppolTransferUseCaseImpl) bind WaitForPeppolTransferUseCase::class
     singleOf(::OptOutPeppolUseCaseImpl) bind OptOutPeppolUseCase::class
     singleOf(::PollPeppolTransferUseCaseImpl) bind PollPeppolTransferUseCase::class
+    singleOf(::GetPeppolActivityUseCaseImpl) bind GetPeppolActivityUseCase::class
 
     // Cashflow documents
     factory<WatchPendingDocumentsUseCase> { WatchPendingDocumentsUseCaseImpl(get()) }
@@ -181,6 +189,7 @@ val cashflowNetworkModule = module {
     factory<LoadDocumentRecordsUseCase> { LoadDocumentRecordsUseCaseImpl(get()) }
 
     // Cashflow entries (for CashflowLedgerScreen)
+    factory<GetCashflowOverviewUseCase> { GetCashflowOverviewUseCaseImpl(get()) }
     factory<LoadCashflowEntriesUseCase> { LoadCashflowEntriesUseCaseImpl(get()) }
     factory<GetCashflowEntryUseCase> { GetCashflowEntryUseCaseImpl(get()) }
     factory<RecordCashflowPaymentUseCase> { RecordCashflowPaymentUseCaseImpl(get()) }

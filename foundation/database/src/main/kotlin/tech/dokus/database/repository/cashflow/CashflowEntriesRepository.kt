@@ -1,12 +1,18 @@
 package tech.dokus.database.repository.cashflow
 
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.plus
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -17,6 +23,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
@@ -132,14 +139,22 @@ class CashflowEntriesRepository {
     /**
      * List entries for a tenant with optional filters.
      * Includes LEFT JOIN to contacts to fetch counterparty name.
+     *
+     * @param viewMode Determines date field filtering and sorting:
+     *                 - Upcoming: filter by eventDate, sort ASC
+     *                 - History: filter by paidAt, sort DESC
+     * @param statuses Multi-status filter (e.g., [Open, Overdue])
+     *
+     * Cancelled entries are excluded by default.
      * CRITICAL: MUST filter by tenant_id.
      */
     suspend fun listEntries(
         tenantId: TenantId,
+        viewMode: CashflowViewMode? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         direction: CashflowDirection? = null,
-        status: CashflowEntryStatus? = null
+        statuses: List<CashflowEntryStatus>? = null
     ): Result<List<CashflowEntry>> = runCatching {
         dbQuery {
             var query = CashflowEntriesTable
@@ -154,20 +169,62 @@ class CashflowEntriesRepository {
                     CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())
                 }
 
-            if (fromDate != null) {
-                query = query.andWhere { CashflowEntriesTable.eventDate greaterEq fromDate }
+            // Exclude Cancelled by default (unless explicitly included in statuses)
+            if (statuses == null || CashflowEntryStatus.Cancelled !in statuses) {
+                query = query.andWhere { CashflowEntriesTable.status neq CashflowEntryStatus.Cancelled }
             }
-            if (toDate != null) {
-                query = query.andWhere { CashflowEntriesTable.eventDate lessEq toDate }
+
+            // Date filtering based on viewMode
+            when (viewMode) {
+                CashflowViewMode.Upcoming -> {
+                    // Filter by eventDate
+                    if (fromDate != null) {
+                        query = query.andWhere { CashflowEntriesTable.eventDate greaterEq fromDate }
+                    }
+                    if (toDate != null) {
+                        query = query.andWhere { CashflowEntriesTable.eventDate lessEq toDate }
+                    }
+                }
+                CashflowViewMode.History -> {
+                    // Filter by paidAt (using LocalDate as start/end of day in UTC)
+                    if (fromDate != null) {
+                        val startOfDay = LocalDateTime(fromDate.year, fromDate.monthNumber, fromDate.dayOfMonth, 0, 0, 0)
+                        query = query.andWhere { CashflowEntriesTable.paidAt greaterEq startOfDay }
+                    }
+                    if (toDate != null) {
+                        // End of day: next day at 00:00:00
+                        val nextDay = toDate.plus(kotlinx.datetime.DatePeriod(days = 1))
+                        val endOfDay = LocalDateTime(nextDay.year, nextDay.monthNumber, nextDay.dayOfMonth, 0, 0, 0)
+                        query = query.andWhere { CashflowEntriesTable.paidAt less endOfDay }
+                    }
+                }
+                null -> {
+                    // No viewMode: use eventDate range (backward compatibility)
+                    if (fromDate != null) {
+                        query = query.andWhere { CashflowEntriesTable.eventDate greaterEq fromDate }
+                    }
+                    if (toDate != null) {
+                        query = query.andWhere { CashflowEntriesTable.eventDate lessEq toDate }
+                    }
+                }
             }
+
+            // Multi-status filtering
+            if (!statuses.isNullOrEmpty()) {
+                query = query.andWhere { CashflowEntriesTable.status inList statuses }
+            }
+
             if (direction != null) {
                 query = query.andWhere { CashflowEntriesTable.direction eq direction }
             }
-            if (status != null) {
-                query = query.andWhere { CashflowEntriesTable.status eq status }
+
+            // Server-side sorting based on viewMode
+            val sortOrder = when (viewMode) {
+                CashflowViewMode.History -> CashflowEntriesTable.paidAt to SortOrder.DESC
+                else -> CashflowEntriesTable.eventDate to SortOrder.ASC
             }
 
-            query.orderBy(CashflowEntriesTable.eventDate to SortOrder.ASC)
+            query.orderBy(sortOrder)
                 .map { row ->
                     mapRowToEntry(
                         row = row,
@@ -199,12 +256,14 @@ class CashflowEntriesRepository {
 
     /**
      * Update entry status.
+     * When setting to PAID, paidAt MUST be provided.
      * CRITICAL: MUST filter by tenant_id.
      */
     suspend fun updateStatus(
         entryId: CashflowEntryId,
         tenantId: TenantId,
-        newStatus: CashflowEntryStatus
+        newStatus: CashflowEntryStatus,
+        paidAt: LocalDateTime? = null
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
@@ -212,6 +271,9 @@ class CashflowEntriesRepository {
                     (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[status] = newStatus
+                if (paidAt != null) {
+                    it[CashflowEntriesTable.paidAt] = paidAt
+                }
             }
             updated > 0
         }
@@ -219,13 +281,15 @@ class CashflowEntriesRepository {
 
     /**
      * Update both remaining amount and status atomically.
+     * When transitioning to PAID, paidAt MUST be set.
      * CRITICAL: MUST filter by tenant_id.
      */
     suspend fun updateRemainingAmountAndStatus(
         entryId: CashflowEntryId,
         tenantId: TenantId,
         newRemainingAmount: Money,
-        newStatus: CashflowEntryStatus
+        newStatus: CashflowEntryStatus,
+        paidAt: LocalDateTime? = null
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
@@ -234,6 +298,9 @@ class CashflowEntriesRepository {
             }) {
                 it[remainingAmount] = newRemainingAmount.toDbDecimal()
                 it[status] = newStatus
+                if (paidAt != null) {
+                    it[CashflowEntriesTable.paidAt] = paidAt
+                }
             }
             updated > 0
         }
@@ -256,6 +323,7 @@ class CashflowEntriesRepository {
             remainingAmount = Money.fromDbDecimal(row[CashflowEntriesTable.remainingAmount]),
             currency = row[CashflowEntriesTable.currency],
             status = row[CashflowEntriesTable.status],
+            paidAt = row[CashflowEntriesTable.paidAt],
             contactId = row[CashflowEntriesTable.counterpartyId]?.let { ContactId.parse(it.toString()) },
             contactName = contactName,
             description = null, // Will be AI-generated in future

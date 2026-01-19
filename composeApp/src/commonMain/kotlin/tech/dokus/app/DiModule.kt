@@ -79,6 +79,8 @@ internal val diModuleApp = module {
             updateTenantSettings = get(),
             uploadWorkspaceAvatar = get(),
             deleteWorkspaceAvatar = get(),
+            getPeppolRegistration = get(),
+            getPeppolActivity = get(),
         )
     }
     container<TeamSettingsContainer, TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> {

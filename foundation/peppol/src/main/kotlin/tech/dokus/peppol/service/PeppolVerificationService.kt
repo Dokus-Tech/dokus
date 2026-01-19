@@ -46,15 +46,16 @@ class PeppolVerificationService(
         val exactMatch = searchResults.find { it.peppolAddress == peppolId }
 
         if (exactMatch != null) {
-            // ID is registered - check if it's registered with us (Dokus/Recommand) or another provider
-            // For now, we consider any registration as "blocked" since we can't distinguish
-            // TODO: In future, check if the registration is with our master account
-            logger.warn("PEPPOL ID $peppolId is already registered: ${exactMatch.name}")
+            // ID is registered - for now we treat any registration as "blocked" because we can't
+            // reliably distinguish whether the receiver is already configured by Dokus vs another service.
+            //
+            // IMPORTANT: Do not expose provider/receiver names in the UI ("silent by default").
+            logger.warn("PEPPOL ID $peppolId is already registered (directory entry: ${exactMatch.name})")
 
             PeppolIdVerificationResult(
                 peppolId = peppolId,
                 isBlocked = true,
-                blockedBy = exactMatch.name,
+                blockedBy = null,
                 canProceed = false
             )
         } else {

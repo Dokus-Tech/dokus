@@ -376,16 +376,26 @@ internal fun Route.peppolRoutes() {
          */
         post<Peppol.Enable> {
             val tenantId = dokusPrincipal.requireTenantId()
-            val request = call.receive<tech.dokus.domain.model.EnablePeppolRequest>()
+            val result = peppolRegistrationService.enablePeppol(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
 
-            val tenant = tenantRepository.findById(tenantId)
-                ?: throw DokusException.NotFound("Tenant not found")
+            // Trigger immediate poll for initial sync if receiving is enabled
+            if (result.registration.canReceive) {
+                peppolPollingWorker.pollNow(tenantId)
+            }
 
-            val result = peppolRegistrationService.enablePeppol(
-                tenantId = tenantId,
-                request = request,
-                companyName = tenant.legalName.value
-            ).getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
+            call.respond(HttpStatusCode.OK, result)
+        }
+
+        /**
+         * POST /api/v1/peppol/enable-sending-only
+         * Enable PEPPOL sending only (when receiving is blocked elsewhere).
+         */
+        post<Peppol.EnableSendingOnly> {
+            val tenantId = dokusPrincipal.requireTenantId()
+
+            val result = peppolRegistrationService.enableSendingOnly(tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL sending-only: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, result)
         }
@@ -425,6 +435,11 @@ internal fun Route.peppolRoutes() {
 
             val result = peppolRegistrationService.pollTransferStatus(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to poll transfer status: ${it.message}") }
+
+            // If transfer completed and receiving is now enabled, trigger initial sync
+            if (result.registration.canReceive) {
+                peppolPollingWorker.pollNow(tenantId)
+            }
 
             call.respond(HttpStatusCode.OK, result)
         }

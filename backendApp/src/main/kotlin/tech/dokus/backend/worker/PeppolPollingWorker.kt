@@ -179,7 +179,9 @@ class PeppolPollingWorker(
                 val elapsed = Clock.System.now() - lastPoll
                 if (elapsed < minTimeBetweenPolls) {
                     logger.debug(
-                        "Skipping tenant $tenantId - polled ${elapsed.inWholeMinutes}min ago"
+                        "Skipping tenant {} - polled {}min ago",
+                        tenantId,
+                        elapsed.inWholeMinutes
                     )
                     continue
                 }
@@ -222,12 +224,12 @@ class PeppolPollingWorker(
 
         // Skip if already polling this tenant
         if (!mutex.tryLock()) {
-            logger.debug("Already polling tenant $tenantId, skipping")
+            logger.debug("Already polling tenant {}, skipping", tenantId)
             return
         }
 
         try {
-            logger.debug("Polling Peppol inbox for tenant: $tenantId")
+            logger.debug("Polling Peppol inbox for tenant: {}", tenantId)
 
             val result = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid, documentDetail ->
                 runCatching {

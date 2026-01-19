@@ -10,7 +10,7 @@ import tech.dokus.features.auth.mvi.WorkspaceCreateAction
 import tech.dokus.features.auth.mvi.WorkspaceCreateContainer
 import tech.dokus.features.auth.presentation.auth.screen.WorkspaceCreateScreen
 import tech.dokus.foundation.app.mvi.container
-import tech.dokus.navigation.destinations.CoreDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
 
@@ -40,7 +40,7 @@ internal fun WorkspaceCreateRoute(
         triggerWarp = triggerWarp,
         onWarpComplete = {
             triggerWarp = false
-            navController.replace(CoreDestination.Home)
+            navController.replace(SettingsDestination.PeppolRegistration)
         },
     )
 }

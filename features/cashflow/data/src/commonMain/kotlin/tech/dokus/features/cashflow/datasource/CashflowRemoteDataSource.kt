@@ -13,6 +13,7 @@ import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
@@ -381,11 +382,22 @@ interface CashflowRemoteDataSource {
 
     /**
      * Get cashflow overview for a date range
-     * GET /api/v1/cashflow/overview?fromDate={fromDate}&toDate={toDate}
+     * GET /api/v1/cashflow/overview?viewMode={viewMode}&fromDate={fromDate}&toDate={toDate}&direction={direction}&status={status}
+     *
+     * @param viewMode Determines date field filtering:
+     *                 - Upcoming: filter by eventDate
+     *                 - History: filter by paidAt
+     * @param fromDate Start of date range (interpreted based on viewMode)
+     * @param toDate End of date range (interpreted based on viewMode)
+     * @param direction Optional filter: IN or OUT
+     * @param statuses Multi-status filter (e.g., [Open, Overdue])
      */
     suspend fun getCashflowOverview(
+        viewMode: CashflowViewMode,
         fromDate: LocalDate,
-        toDate: LocalDate
+        toDate: LocalDate,
+        direction: CashflowDirection? = null,
+        statuses: List<CashflowEntryStatus>? = null
     ): Result<CashflowOverview>
 
     // ============================================================================
@@ -394,22 +406,26 @@ interface CashflowRemoteDataSource {
 
     /**
      * List cashflow entries with optional filtering.
-     * GET /api/v1/cashflow/entries?fromDate={fromDate}&toDate={toDate}&direction={direction}&status={status}&sourceType={sourceType}&entryId={entryId}&limit={limit}&offset={offset}
+     * GET /api/v1/cashflow/entries?viewMode={viewMode}&fromDate={fromDate}&toDate={toDate}&direction={direction}&status={status}&sourceType={sourceType}&entryId={entryId}&limit={limit}&offset={offset}
      *
-     * @param fromDate Filter by event date start
-     * @param toDate Filter by event date end
+     * @param viewMode Determines date field filtering:
+     *                 - Upcoming: filter by eventDate, sort ASC
+     *                 - History: filter by paidAt, sort DESC
+     * @param fromDate Start of date range (interpreted based on viewMode)
+     * @param toDate End of date range (interpreted based on viewMode)
      * @param direction Filter by direction (IN/OUT)
-     * @param status Filter by status (OPEN/PAID/OVERDUE/CANCELLED)
+     * @param statuses Multi-status filter (comma-separated in URL)
      * @param sourceType Filter by source type (INVOICE/BILL/EXPENSE)
      * @param entryId Exact match by entry ID (for deep links)
      * @param limit Items per page
      * @param offset Pagination offset
      */
     suspend fun listCashflowEntries(
+        viewMode: CashflowViewMode? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         direction: CashflowDirection? = null,
-        status: CashflowEntryStatus? = null,
+        statuses: List<CashflowEntryStatus>? = null,
         sourceType: CashflowSourceType? = null,
         entryId: CashflowEntryId? = null,
         limit: Int = 50,
@@ -661,7 +677,13 @@ interface CashflowRemoteDataSource {
      * Enable PEPPOL for the tenant (start registration)
      * POST /api/v1/peppol/enable
      */
-    suspend fun enablePeppol(vatNumber: VatNumber): Result<PeppolRegistrationResponse>
+    suspend fun enablePeppol(): Result<PeppolRegistrationResponse>
+
+    /**
+     * Enable PEPPOL sending only (receiving remains with another provider)
+     * POST /api/v1/peppol/enable-sending-only
+     */
+    suspend fun enablePeppolSendingOnly(): Result<PeppolRegistrationResponse>
 
     /**
      * Opt to wait for PEPPOL ID transfer from another provider

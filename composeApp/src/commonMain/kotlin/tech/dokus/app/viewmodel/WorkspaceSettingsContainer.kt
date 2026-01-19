@@ -19,6 +19,8 @@ import tech.dokus.features.auth.usecases.GetTenantAddressUseCase
 import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
 import tech.dokus.features.auth.usecases.UpdateTenantSettingsUseCase
 import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCase
+import tech.dokus.features.cashflow.usecases.GetPeppolActivityUseCase
+import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias WorkspaceSettingsCtx =
@@ -43,6 +45,8 @@ internal class WorkspaceSettingsContainer(
     private val updateTenantSettings: UpdateTenantSettingsUseCase,
     private val uploadWorkspaceAvatar: UploadWorkspaceAvatarUseCase,
     private val deleteWorkspaceAvatar: DeleteWorkspaceAvatarUseCase,
+    private val getPeppolRegistration: GetPeppolRegistrationUseCase,
+    private val getPeppolActivity: GetPeppolActivityUseCase,
 ) : Container<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
 
     private val logger = Logger.forClass<WorkspaceSettingsContainer>()
@@ -66,6 +70,9 @@ internal class WorkspaceSettingsContainer(
                     is WorkspaceSettingsIntent.UpdateInvoiceIncludeYear -> handleUpdateInvoiceIncludeYear(intent.value)
                     is WorkspaceSettingsIntent.UpdateInvoiceTimezone -> handleUpdateInvoiceTimezone(intent.value)
                     is WorkspaceSettingsIntent.UpdatePaymentTermsText -> handleUpdatePaymentTermsText(intent.value)
+                    is WorkspaceSettingsIntent.EnterEditMode -> handleEnterEditMode(intent.section)
+                    is WorkspaceSettingsIntent.CancelEditMode -> handleCancelEditMode()
+                    is WorkspaceSettingsIntent.SaveSection -> handleSaveSection(intent.section)
                     is WorkspaceSettingsIntent.SaveSettings -> handleSaveSettings()
                     is WorkspaceSettingsIntent.ResetSaveState -> handleResetSaveState()
                     is WorkspaceSettingsIntent.UploadAvatar -> handleUploadAvatar(intent.imageBytes, intent.filename)
@@ -83,10 +90,15 @@ internal class WorkspaceSettingsContainer(
         val tenantResult = getCurrentTenantUseCase()
         val settingsResult = getTenantSettings()
         val addressResult = getTenantAddress()
+        val peppolRegistrationResult = getPeppolRegistration()
+        val peppolActivityResult = getPeppolActivity()
 
         val tenant = tenantResult.getOrNull()
         val settings = settingsResult.getOrNull()
         val address = addressResult.getOrNull()
+        // PEPPOL data is optional - gracefully handle if not available
+        val peppolRegistration = peppolRegistrationResult.getOrNull()
+        val peppolActivity = peppolActivityResult.getOrNull()
 
         if (tenant != null && settings != null) {
             logger.i { "Workspace settings loaded for ${tenant.displayName.value}" }
@@ -97,6 +109,8 @@ internal class WorkspaceSettingsContainer(
                     settings = settings,
                     form = formState,
                     currentAvatar = tenant.avatar,
+                    peppolRegistration = peppolRegistration,
+                    peppolActivity = peppolActivity,
                 )
             }
         } else {
@@ -211,6 +225,42 @@ internal class WorkspaceSettingsContainer(
     private suspend fun WorkspaceSettingsCtx.handleUpdatePaymentTermsText(value: String) {
         withState<WorkspaceSettingsState.Content, _> {
             updateState { copy(form = form.copy(paymentTermsText = value)) }
+        }
+    }
+
+    // Section edit mode handlers
+    private suspend fun WorkspaceSettingsCtx.handleEnterEditMode(
+        section: WorkspaceSettingsState.Content.EditingSection
+    ) {
+        withState<WorkspaceSettingsState.Content, _> {
+            logger.d { "Entering edit mode for section: $section" }
+            updateState { copy(editingSection = section) }
+        }
+    }
+
+    private suspend fun WorkspaceSettingsCtx.handleCancelEditMode() {
+        withState<WorkspaceSettingsState.Content, _> {
+            logger.d { "Cancelling edit mode" }
+            // Restore form state from original settings
+            val formState = populateFormFromSettings(tenant, settings, null)
+            updateState { copy(editingSection = null, form = formState) }
+        }
+    }
+
+    private suspend fun WorkspaceSettingsCtx.handleSaveSection(
+        section: WorkspaceSettingsState.Content.EditingSection
+    ) {
+        withState<WorkspaceSettingsState.Content, _> {
+            logger.d { "Saving section: $section" }
+            // For simplicity, use the same save logic as full save
+            // Future optimization: save only changed fields per section
+            handleSaveSettings()
+            // Exit edit mode on success
+            withState<WorkspaceSettingsState.Content, _> {
+                if (saveState is WorkspaceSettingsState.Content.SaveState.Success) {
+                    updateState { copy(editingSection = null) }
+                }
+            }
         }
     }
 

@@ -260,7 +260,7 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { ExpenseService(get()) }
     single { BillService(get(), get()) }
     single { CashflowEntriesService(get()) }
-    single { CashflowOverviewService(get(), get(), get()) }
+    single { CashflowOverviewService(get(), get(), get(), get()) }
     single { DocumentConfirmationService(get(), get(), get(), get()) }
 
     // PDF Preview
@@ -285,7 +285,7 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     // PEPPOL Registration State Machine (Phase B)
     single { PeppolRegistrationRepository() }
     single { PeppolVerificationService(get(), get()) }
-    single { PeppolRegistrationService(get(), get(), get(), get()) }
+    single { PeppolRegistrationService(get(), get(), get(), get(), get(), get(), get()) }
     single { PeppolTransferPollingService(get(), get()) }
 
     // Peppol Polling Worker

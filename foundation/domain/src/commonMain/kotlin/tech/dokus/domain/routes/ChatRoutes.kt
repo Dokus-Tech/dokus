@@ -2,6 +2,9 @@ package tech.dokus.domain.routes
 
 import io.ktor.resources.*
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
 
 /**
  * Type-safe route definitions for Chat API.
@@ -25,7 +28,7 @@ class Chat {
      * List chat sessions for the current user
      *
      * Query parameters:
-     * - scope: Optional filter by scope (SINGLE_DOC or ALL_DOCS)
+     * - scope: Optional filter by scope (SingleDoc or AllDocs)
      * - documentId: Optional filter by document ID
      * - page: Page number (default: 0)
      * - limit: Items per page (default: 20)
@@ -34,8 +37,8 @@ class Chat {
     @Resource("sessions")
     class Sessions(
         val parent: Chat = Chat(),
-        val scope: String? = null,
-        val documentId: String? = null,
+        val scope: ChatScope? = null,
+        val documentId: DocumentId? = null,
         val page: Int = 0,
         val limit: Int = 20
     ) {
@@ -52,7 +55,7 @@ class Chat {
         @Resource("{sessionId}")
         class SessionId(
             val parent: Sessions = Sessions(),
-            val sessionId: String,
+            val sessionId: ChatSessionId,
             val page: Int = 0,
             val limit: Int = 50,
             val descending: Boolean = false

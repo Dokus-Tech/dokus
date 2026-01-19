@@ -78,6 +78,7 @@ data class CashflowEntry(
     val remainingAmount: Money,
     val currency: Currency,
     val status: CashflowEntryStatus,
+    val paidAt: LocalDateTime?, // UTC timestamp when entry became fully paid (null until PAID)
     val contactId: ContactId?,
     val contactName: String? = null,
     val description: String? = null,

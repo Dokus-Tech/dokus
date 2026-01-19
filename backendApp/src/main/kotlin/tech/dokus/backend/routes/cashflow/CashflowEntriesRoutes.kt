@@ -8,9 +8,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
-import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.CancelEntryRequest
@@ -50,45 +48,12 @@ internal fun Route.cashflowEntriesRoutes() {
                 throw DokusException.BadRequest("Offset must be non-negative")
             }
 
-            // Parse direction filter
-            val direction = route.direction?.let { dir ->
-                try {
-                    CashflowDirection.valueOf(dir)
-                } catch (_: IllegalArgumentException) {
-                    throw DokusException.BadRequest("Invalid direction: $dir. Must be IN or OUT")
-                }
-            }
-
-            // Parse status filter
-            val status = route.status?.let { s ->
-                try {
-                    CashflowEntryStatus.valueOf(s)
-                } catch (_: IllegalArgumentException) {
-                    throw DokusException.BadRequest("Invalid status: $s. Must be Open, Paid, Overdue, or Cancelled")
-                }
-            }
-
-            // Parse source type filter
-            val sourceType = route.sourceType?.let { st ->
-                try {
-                    CashflowSourceType.valueOf(st)
-                } catch (_: IllegalArgumentException) {
-                    throw DokusException.BadRequest("Invalid sourceType: $st. Must be Invoice, Bill, or Expense")
-                }
-            }
-
             // If entryId is specified, return single-item result for deep link
-            val routeEntryId = route.entryId
-            if (routeEntryId != null) {
-                val entryId = try {
-                    CashflowEntryId(Uuid.parse(routeEntryId))
-                } catch (_: Exception) {
-                    throw DokusException.BadRequest("Invalid entryId format")
-                }
-
+            val entryId = route.entryId
+            if (entryId != null) {
                 val entry = cashflowEntriesService.getEntry(entryId, tenantId)
                     .getOrElse { throw DokusException.InternalError("Failed to get entry: ${it.message}") }
-                    ?: throw DokusException.NotFound("Cashflow entry not found: ${route.entryId}")
+                    ?: throw DokusException.NotFound("Cashflow entry not found: $entryId")
 
                 call.respond(
                     HttpStatusCode.OK,
@@ -102,18 +67,19 @@ internal fun Route.cashflowEntriesRoutes() {
                 return@get
             }
 
-            // List entries with filters
+            // List entries with filters (enums are used directly from route)
             val entries = cashflowEntriesService.listEntries(
                 tenantId = tenantId,
+                viewMode = route.viewMode,
                 fromDate = route.fromDate,
                 toDate = route.toDate,
-                direction = direction,
-                status = status
+                direction = route.direction,
+                statuses = route.statuses
             ).getOrElse { throw DokusException.InternalError("Failed to list entries: ${it.message}") }
 
             // Apply sourceType filter in-memory (repository doesn't support it yet)
-            val filteredEntries = if (sourceType != null) {
-                entries.filter { it.sourceType == sourceType }
+            val filteredEntries = if (route.sourceType != null) {
+                entries.filter { it.sourceType == route.sourceType }
             } else {
                 entries
             }

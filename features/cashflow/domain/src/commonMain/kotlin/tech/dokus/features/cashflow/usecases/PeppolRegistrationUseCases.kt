@@ -24,7 +24,20 @@ interface VerifyPeppolIdUseCase {
  * Use case to enable PEPPOL for the tenant.
  */
 interface EnablePeppolUseCase {
-    suspend operator fun invoke(vatNumber: VatNumber): Result<PeppolRegistrationResponse>
+    /**
+     * Backend derives everything from the current workspace (VAT, company details).
+     * The client must not ask the user for VAT input here.
+     */
+    suspend operator fun invoke(): Result<PeppolRegistrationResponse>
+}
+
+/**
+ * Use case to enable PEPPOL in "sending only" mode.
+ *
+ * Used when receiving is blocked because the PEPPOL inbox is connected elsewhere.
+ */
+interface EnablePeppolSendingOnlyUseCase {
+    suspend operator fun invoke(): Result<PeppolRegistrationResponse>
 }
 
 /**
@@ -46,4 +59,14 @@ interface OptOutPeppolUseCase {
  */
 interface PollPeppolTransferUseCase {
     suspend operator fun invoke(): Result<PeppolRegistrationResponse>
+}
+
+/**
+ * Use case to get PEPPOL activity timestamps.
+ *
+ * Returns the most recent inbound and outbound transmission timestamps
+ * for displaying activity status in workspace settings.
+ */
+interface GetPeppolActivityUseCase {
+    suspend operator fun invoke(): Result<tech.dokus.domain.model.PeppolActivityDto?>
 }

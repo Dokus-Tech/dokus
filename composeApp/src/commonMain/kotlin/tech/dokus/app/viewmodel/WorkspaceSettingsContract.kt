@@ -5,7 +5,10 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.PeppolRegistrationStatus
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.PeppolActivityDto
+import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.common.Thumbnail
@@ -49,6 +52,9 @@ sealed interface WorkspaceSettingsState : MVIState, DokusState<Nothing> {
      * @property saveState Current save operation state
      * @property avatarState Current avatar operation state
      * @property currentAvatar Current company avatar
+     * @property peppolRegistration Current PEPPOL registration state
+     * @property peppolActivity PEPPOL activity timestamps
+     * @property editingSection Currently active editing section (null = view mode)
      */
     @Immutable
     data class Content(
@@ -58,7 +64,27 @@ sealed interface WorkspaceSettingsState : MVIState, DokusState<Nothing> {
         val saveState: SaveState = SaveState.Idle,
         val avatarState: AvatarState = AvatarState.Idle,
         val currentAvatar: Thumbnail? = null,
+        val peppolRegistration: PeppolRegistrationDto? = null,
+        val peppolActivity: PeppolActivityDto? = null,
+        val editingSection: EditingSection? = null,
     ) : WorkspaceSettingsState {
+
+        /**
+         * Whether legal identity fields (Legal Name, VAT Number) are locked.
+         * Locked after PEPPOL registration becomes active.
+         */
+        val isLegalIdentityLocked: Boolean
+            get() = peppolRegistration?.status == PeppolRegistrationStatus.Active
+
+        /**
+         * Sections that can be edited independently.
+         */
+        enum class EditingSection {
+            LegalIdentity,
+            Banking,
+            InvoiceFormat,
+            PaymentTerms
+        }
 
         /**
          * Form state for workspace settings.
@@ -163,7 +189,17 @@ sealed interface WorkspaceSettingsIntent : MVIIntent {
     /** Update payment terms text */
     data class UpdatePaymentTermsText(val value: String) : WorkspaceSettingsIntent
 
-    // Save operations
+    // Section edit mode
+    /** Enter edit mode for a specific section */
+    data class EnterEditMode(val section: WorkspaceSettingsState.Content.EditingSection) : WorkspaceSettingsIntent
+
+    /** Cancel edit mode without saving */
+    data object CancelEditMode : WorkspaceSettingsIntent
+
+    /** Save the current section being edited */
+    data class SaveSection(val section: WorkspaceSettingsState.Content.EditingSection) : WorkspaceSettingsIntent
+
+    // Save operations (legacy - for full save)
     /** Save workspace settings */
     data object SaveSettings : WorkspaceSettingsIntent
 

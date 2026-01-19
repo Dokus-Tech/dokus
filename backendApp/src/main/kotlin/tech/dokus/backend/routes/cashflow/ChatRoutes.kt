@@ -3,9 +3,9 @@ package tech.dokus.backend.routes.cashflow
 import io.ktor.client.HttpClient
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
+import io.ktor.server.resources.get
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -31,6 +31,7 @@ import tech.dokus.domain.model.ai.ChatSessionListResponse
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.routes.Chat
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.ConversationMessage
 import tech.dokus.features.ai.config.AIModels
@@ -191,44 +192,25 @@ internal fun Route.chatRoutes() {
          * List chat sessions for the current user.
          *
          * Query parameters:
-         * - scope: Optional filter by scope (SINGLE_DOC or ALL_DOCS)
+         * - scope: Optional filter by scope (SingleDoc or AllDocs)
          * - documentId: Optional filter by document ID
          * - page: Page number (default: 0)
          * - limit: Items per page (default: 20)
          *
          * Response: ChatSessionListResponse
          */
-        get("/api/v1/chat/sessions") {
+        get<Chat.Sessions> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
-            val scopeParam = call.request.queryParameters["scope"]
-            val documentIdParam = call.request.queryParameters["documentId"]
-            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
-            val limit = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20
+            val limit = route.limit.coerceIn(1, 100)
 
-            val scope = scopeParam?.let {
-                try {
-                    ChatScope.valueOf(it.uppercase().replace("-", "_"))
-                } catch (e: Exception) {
-                    ChatScope.fromDbValue(it)
-                }
-            }
-
-            val documentId = documentIdParam?.let {
-                try {
-                    DocumentId.parse(it)
-                } catch (e: Exception) {
-                    throw DokusException.BadRequest("Invalid document ID format")
-                }
-            }
-
-            logger.debug("Listing chat sessions: tenant=$tenantId, scope=$scope, page=$page")
+            logger.debug("Listing chat sessions: tenant=$tenantId, scope=${route.scope}, page=${route.page}")
 
             val (sessions, total) = chatRepository.listSessions(
                 tenantId = tenantId,
-                scope = scope,
-                documentId = documentId,
+                scope = route.scope,
+                documentId = route.documentId,
                 limit = limit,
-                offset = page * limit
+                offset = route.page * limit
             )
 
             call.respond(
@@ -236,9 +218,9 @@ internal fun Route.chatRoutes() {
                 ChatSessionListResponse(
                     items = sessions,
                     total = total,
-                    page = page,
+                    page = route.page,
                     limit = limit,
-                    hasMore = (page + 1) * limit < total
+                    hasMore = (route.page + 1) * limit < total
                 )
             )
         }
@@ -257,46 +239,35 @@ internal fun Route.chatRoutes() {
          *
          * Response: ChatHistoryResponse
          */
-        get("/api/v1/chat/sessions/{sessionId}") {
+        get<Chat.Sessions.SessionId> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
-            val sessionIdParam = call.parameters["sessionId"]
-                ?: throw DokusException.BadRequest("Session ID is required")
+            val limit = route.limit.coerceIn(1, 100)
 
-            val sessionId = try {
-                ChatSessionId.parse(sessionIdParam)
-            } catch (e: Exception) {
-                throw DokusException.BadRequest("Invalid session ID format")
-            }
-
-            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
-            val limit = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 100) ?: 50
-            val descending = call.request.queryParameters["descending"]?.toBoolean() ?: false
-
-            logger.debug("Getting session history: tenant=$tenantId, session=$sessionId")
+            logger.debug("Getting session history: tenant=$tenantId, session=${route.sessionId}")
 
             // Get session summary
-            val sessionSummary = chatRepository.getSessionSummary(tenantId, sessionId)
+            val sessionSummary = chatRepository.getSessionSummary(tenantId, route.sessionId)
                 ?: throw DokusException.NotFound("Chat session not found")
 
             // Get messages
             val (messages, total) = chatRepository.getSessionMessages(
                 tenantId = tenantId,
-                sessionId = sessionId,
+                sessionId = route.sessionId,
                 limit = limit,
-                offset = page * limit,
-                descending = descending
+                offset = route.page * limit,
+                descending = route.descending
             )
 
             call.respond(
                 HttpStatusCode.OK,
                 ChatHistoryResponse(
-                    sessionId = sessionId,
+                    sessionId = route.sessionId,
                     session = sessionSummary,
                     messages = messages,
                     total = total,
-                    page = page,
+                    page = route.page,
                     limit = limit,
-                    hasMore = (page + 1) * limit < total
+                    hasMore = (route.page + 1) * limit < total
                 )
             )
         }
@@ -311,7 +282,7 @@ internal fun Route.chatRoutes() {
          *
          * Response: ChatConfiguration
          */
-        get("/api/v1/chat/config") {
+        get<Chat.Config> {
             val chatModelName = models.chat.id
             val configuration = ChatConfiguration(
                 maxMessageLength = 4000,

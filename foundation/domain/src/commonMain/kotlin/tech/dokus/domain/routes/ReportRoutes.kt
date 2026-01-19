@@ -3,6 +3,7 @@ package tech.dokus.domain.routes
 import io.ktor.resources.*
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.ReportGroupBy
 
 /**
  * Type-safe route definitions for Reporting API.
@@ -54,7 +55,7 @@ class Reports {
         val parent: Reports = Reports(),
         val fromDate: LocalDate? = null,
         val toDate: LocalDate? = null,
-        val groupBy: String? = null
+        val groupBy: ReportGroupBy? = null
     )
 
     /**
@@ -66,6 +67,6 @@ class Reports {
         val parent: Reports = Reports(),
         val fromDate: LocalDate? = null,
         val toDate: LocalDate? = null,
-        val groupBy: String? = null
+        val groupBy: ReportGroupBy? = null
     )
 }
