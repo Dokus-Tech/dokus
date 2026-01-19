@@ -108,8 +108,37 @@ This log tracks all refactoring changes made during the god file splitting effor
 
 ---
 
+### 2026-01-19 - AutonomousProcessingCoordinator.kt
+**Action:** Extract validators
+**Original Size:** 927 lines
+**New Main File Size:** 802 lines
+**Files Created:**
+- `features/ai/backend/.../coordinator/validators/EssentialFieldsValidator.kt` (~120 lines)
+
+**Build Status:** PASS
+**Notes:**
+- Extracted EssentialFieldsValidator with checkInvoice, checkBill, checkReceipt, checkExpense
+- Extracted EssentialFieldsCheck data class and getExtractionConfidence utility
+- Type-specific processing methods kept in main file (tightly coupled to private state)
+- All public APIs preserved
+
+---
+
+### 2026-01-19 - CashflowRemoteDataSourceImpl.kt
+**Action:** Intentionally skipped
+**Original Size:** 907 lines
+**Reason:** Original developers annotated with @Suppress("LargeClass") and commented:
+  "Single API facade; split would add indirection without reducing IO surface."
+- All methods are thin HTTP wrappers with identical patterns
+- Splitting would require interface changes and DI updates
+- Risk outweighs benefit
+**See:** NEEDS_REVIEW.md for full analysis
+
+---
+
 ## Statistics
-- Total files refactored: 5/7
-- Total new files created: 14
+- Total files refactored: 6/7 (1 intentionally skipped)
+- Total new files created: 15
 - Build failures: 0
 - Reverts: 0
+- Skipped (by design): 1 (CashflowRemoteDataSourceImpl.kt)
