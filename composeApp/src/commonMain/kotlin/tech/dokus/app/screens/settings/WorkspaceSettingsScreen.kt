@@ -103,6 +103,8 @@ import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.app.screens.settings.sections.BankingDetailsSection
+import tech.dokus.app.screens.settings.sections.PaymentTermsSection
 
 // Invoice padding configuration options (number of digits)
 private const val InvoicePaddingMin = 3
@@ -631,66 +633,6 @@ private fun LegalIdentitySection(
     }
 }
 
-// =============================================================================
-// BANKING DETAILS SECTION
-// =============================================================================
-
-@Composable
-private fun BankingDetailsSection(
-    formState: WorkspaceSettingsState.Content.FormState,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    editMode: Boolean,
-    onEdit: () -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
-    onIntent: (WorkspaceSettingsIntent) -> Unit,
-) {
-    val subtitle = if (!expanded && formState.iban.isNotBlank()) {
-        formState.iban.take(10) + "..."
-    } else null
-
-    SettingsSection(
-        title = stringResource(Res.string.workspace_banking),
-        subtitle = subtitle,
-        expanded = expanded,
-        onToggle = onToggle,
-        editMode = editMode,
-        onEdit = onEdit,
-        onSave = onSave,
-        onCancel = onCancel,
-    ) {
-        if (editMode) {
-            PTextFieldStandard(
-                fieldName = stringResource(Res.string.workspace_iban),
-                value = formState.iban,
-                onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateIban(it)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(Constrains.Spacing.small))
-
-            PTextFieldStandard(
-                fieldName = stringResource(Res.string.workspace_bic),
-                value = formState.bic,
-                onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateBic(it)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-        } else {
-            DataRow(
-                label = stringResource(Res.string.workspace_iban),
-                value = formState.iban,
-                mono = true,
-            )
-
-            DataRow(
-                label = stringResource(Res.string.workspace_bic),
-                value = formState.bic,
-                mono = true,
-            )
-        }
-    }
-}
 
 // =============================================================================
 // INVOICE FORMAT SECTION
@@ -876,81 +818,6 @@ private fun InvoicePreviewCard(previewNumber: String) {
     }
 }
 
-// =============================================================================
-// PAYMENT TERMS SECTION
-// =============================================================================
-
-@Composable
-private fun PaymentTermsSection(
-    formState: WorkspaceSettingsState.Content.FormState,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    editMode: Boolean,
-    onEdit: () -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
-    onIntent: (WorkspaceSettingsIntent) -> Unit,
-) {
-    val subtitle = if (!expanded) "${formState.defaultPaymentTerms} days" else null
-
-    SettingsSection(
-        title = stringResource(Res.string.workspace_payment_terms_section),
-        subtitle = subtitle,
-        expanded = expanded,
-        onToggle = onToggle,
-        editMode = editMode,
-        onEdit = onEdit,
-        onSave = onSave,
-        onCancel = onCancel,
-    ) {
-        if (editMode) {
-            Text(
-                text = stringResource(Res.string.workspace_payment_terms_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textMuted
-            )
-
-            Spacer(Modifier.height(Constrains.Spacing.medium))
-
-            // Payment Terms (Days)
-            Text(
-                text = stringResource(Res.string.workspace_payment_days_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textMuted
-            )
-            Spacer(Modifier.height(Constrains.Spacing.xSmall))
-            PTextFieldStandard(
-                fieldName = stringResource(Res.string.workspace_payment_terms),
-                value = formState.defaultPaymentTerms.toString(),
-                onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateDefaultPaymentTerms(it)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(Constrains.Spacing.medium))
-
-            // Payment Terms Text
-            PTextFieldFree(
-                fieldName = stringResource(Res.string.workspace_payment_terms_text),
-                value = formState.paymentTermsText,
-                onValueChange = { onIntent(WorkspaceSettingsIntent.UpdatePaymentTermsText(it)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-        } else {
-            DataRow(
-                label = stringResource(Res.string.workspace_payment_terms),
-                value = "${formState.defaultPaymentTerms} days",
-            )
-
-            if (formState.paymentTermsText.isNotBlank()) {
-                DataRow(
-                    label = stringResource(Res.string.workspace_payment_terms_text),
-                    value = formState.paymentTermsText,
-                )
-            }
-        }
-    }
-}
 
 // =============================================================================
 // SUPPORTING COMPONENTS
