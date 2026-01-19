@@ -19,7 +19,8 @@ import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.retry.FeedbackDrivenRetryAgent
 import tech.dokus.features.ai.retry.RetryResult
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
-import tech.dokus.features.ai.utils.AmountParser
+import tech.dokus.features.ai.coordinator.validators.EssentialFieldsCheck
+import tech.dokus.features.ai.coordinator.validators.EssentialFieldsValidator
 import tech.dokus.features.ai.validation.AuditReport
 import tech.dokus.features.ai.validation.AuditStatus
 import tech.dokus.features.ai.validation.ExtractionAuditService
@@ -391,7 +392,7 @@ class AutonomousProcessingCoordinator(
             conflictReport = conflictReport,
             auditReport = finalAuditReport,
             retryResult = retryResult,
-            essentialFieldsCheck = checkEssentialInvoiceFields(finalExtraction)
+            essentialFieldsCheck = EssentialFieldsValidator.checkInvoice(finalExtraction)
         )
     }
 
@@ -473,7 +474,7 @@ class AutonomousProcessingCoordinator(
             conflictReport = conflictReport,
             auditReport = finalAuditReport,
             retryResult = retryResult,
-            essentialFieldsCheck = checkEssentialBillFields(finalExtraction)
+            essentialFieldsCheck = EssentialFieldsValidator.checkBill(finalExtraction)
         )
     }
 
@@ -555,7 +556,7 @@ class AutonomousProcessingCoordinator(
             conflictReport = conflictReport,
             auditReport = finalAuditReport,
             retryResult = retryResult,
-            essentialFieldsCheck = checkEssentialReceiptFields(finalExtraction)
+            essentialFieldsCheck = EssentialFieldsValidator.checkReceipt(finalExtraction)
         )
     }
 
@@ -637,7 +638,7 @@ class AutonomousProcessingCoordinator(
             conflictReport = conflictReport,
             auditReport = finalAuditReport,
             retryResult = retryResult,
-            essentialFieldsCheck = checkEssentialExpenseFields(finalExtraction)
+            essentialFieldsCheck = EssentialFieldsValidator.checkExpense(finalExtraction)
         )
     }
 
@@ -755,7 +756,7 @@ class AutonomousProcessingCoordinator(
         logger.info("Layer 5: Making final judgment")
 
         val context = JudgmentContext(
-            extractionConfidence = getExtractionConfidence(extraction),
+            extractionConfidence = EssentialFieldsValidator.getExtractionConfidence(extraction),
             consensusReport = conflictReport,
             auditReport = auditReport,
             retryResult = retryResult,
@@ -780,132 +781,6 @@ class AutonomousProcessingCoordinator(
             retryResult = retryResult,
             judgment = decision
         )
-    }
-
-    // =========================================================================
-    // Essential Fields Checks
-    // =========================================================================
-
-    /**
-     * Result of checking essential fields.
-     */
-    private data class EssentialFieldsCheck(
-        val hasAllFields: Boolean,
-        val missingFields: List<String>
-    )
-
-    /**
-     * Check essential invoice fields:
-     * - totalAmount: must be present AND parseable as a number
-     * - issueDate: required
-     * - vendorIdentity: vendorName OR vendorVatNumber
-     */
-    private fun checkEssentialInvoiceFields(invoice: ExtractedInvoiceData): EssentialFieldsCheck {
-        val missing = mutableListOf<String>()
-
-        // Amount: must be present AND parseable
-        if (!AmountParser.isParseable(invoice.totalAmount)) {
-            missing.add("totalAmount")
-        }
-
-        // Date: required
-        if (invoice.issueDate.isNullOrBlank()) {
-            missing.add("issueDate")
-        }
-
-        // Vendor identity: name OR VAT number
-        val hasVendorIdentity = !invoice.vendorName.isNullOrBlank() ||
-            !invoice.vendorVatNumber.isNullOrBlank()
-        if (!hasVendorIdentity) {
-            missing.add("vendorIdentity (vendorName or vendorVatNumber)")
-        }
-
-        return EssentialFieldsCheck(missing.isEmpty(), missing)
-    }
-
-    /**
-     * Check essential bill fields:
-     * - totalAmount: must be present AND parseable
-     * - issueDate: required
-     * - supplierIdentity: supplierName OR supplierVatNumber
-     */
-    private fun checkEssentialBillFields(bill: ExtractedBillData): EssentialFieldsCheck {
-        val missing = mutableListOf<String>()
-
-        if (!AmountParser.isParseable(bill.totalAmount)) {
-            missing.add("totalAmount")
-        }
-
-        if (bill.issueDate.isNullOrBlank()) {
-            missing.add("issueDate")
-        }
-
-        val hasSupplierIdentity = !bill.supplierName.isNullOrBlank() ||
-            !bill.supplierVatNumber.isNullOrBlank()
-        if (!hasSupplierIdentity) {
-            missing.add("supplierIdentity (supplierName or supplierVatNumber)")
-        }
-
-        return EssentialFieldsCheck(missing.isEmpty(), missing)
-    }
-
-    /**
-     * Check essential receipt fields:
-     * - totalAmount: must be present AND parseable
-     * - transactionDate: required
-     * - merchantIdentity: merchantName OR merchantVatNumber
-     */
-    private fun checkEssentialReceiptFields(receipt: ExtractedReceiptData): EssentialFieldsCheck {
-        val missing = mutableListOf<String>()
-
-        if (!AmountParser.isParseable(receipt.totalAmount)) {
-            missing.add("totalAmount")
-        }
-
-        if (receipt.transactionDate.isNullOrBlank()) {
-            missing.add("transactionDate")
-        }
-
-        val hasMerchantIdentity = !receipt.merchantName.isNullOrBlank() ||
-            !receipt.merchantVatNumber.isNullOrBlank()
-        if (!hasMerchantIdentity) {
-            missing.add("merchantIdentity (merchantName or merchantVatNumber)")
-        }
-
-        return EssentialFieldsCheck(missing.isEmpty(), missing)
-    }
-
-    /**
-     * Check essential expense fields:
-     * - totalAmount: must be present AND parseable
-     * - date: required
-     * (merchant is optional for expenses)
-     */
-    private fun checkEssentialExpenseFields(expense: ExtractedExpenseData): EssentialFieldsCheck {
-        val missing = mutableListOf<String>()
-
-        if (!AmountParser.isParseable(expense.totalAmount)) {
-            missing.add("totalAmount")
-        }
-
-        if (expense.date.isNullOrBlank()) {
-            missing.add("date")
-        }
-
-        return EssentialFieldsCheck(missing.isEmpty(), missing)
-    }
-
-    /**
-     * Get extraction confidence from any extraction type.
-     */
-    private fun getExtractionConfidence(extraction: Any): Double {
-        return when (extraction) {
-            is ExtractedInvoiceData -> extraction.confidence
-            is ExtractedBillData -> extraction.confidence
-            is ExtractedReceiptData -> extraction.confidence
-            is ExtractedExpenseData -> extraction.confidence
-            else -> 0.5 // Default confidence for unknown types
-        }
     }
 
     private fun formatPercent(value: Double): String = "${(value * 100).toInt()}%"

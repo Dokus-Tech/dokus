@@ -11,14 +11,24 @@
       "Edit(./**)",
       "Glob(./**)",
       "Grep(./**)",
+      "Read(/Users/voider/Developer/predict/the-predict/**)",
+      "Write(/Users/voider/Developer/predict/the-predict/**)",
+      "Edit(/Users/voider/Developer/predict/the-predict/**)",
+      "Glob(/Users/voider/Developer/predict/the-predict/**)",
+      "Grep(/Users/voider/Developer/predict/the-predict/**)",
+      "Read(/Users/voider/Developer/predict/the-predict/.auto-claude/roadmap/**)",
+      "Write(/Users/voider/Developer/predict/the-predict/.auto-claude/roadmap/**)",
+      "Edit(/Users/voider/Developer/predict/the-predict/.auto-claude/roadmap/**)",
       "Bash(*)",
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs",
-      "mcp__graphiti-memory__search_nodes",
-      "mcp__graphiti-memory__search_facts",
-      "mcp__graphiti-memory__add_episode",
-      "mcp__graphiti-memory__get_episodes",
-      "mcp__graphiti-memory__get_entity_edge"
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__get-library-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
     ]
   }
 }

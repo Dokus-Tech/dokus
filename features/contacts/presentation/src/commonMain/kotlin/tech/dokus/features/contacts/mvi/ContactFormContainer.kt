@@ -32,6 +32,9 @@ import tech.dokus.features.contacts.usecases.DeleteContactUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactUseCase
+import tech.dokus.features.contacts.mvi.extensions.toCreateRequest
+import tech.dokus.features.contacts.mvi.extensions.toFormData
+import tech.dokus.features.contacts.mvi.extensions.toUpdateRequest
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ContactFormCtx = PipelineContext<ContactFormState, ContactFormIntent, ContactFormAction>
@@ -619,89 +622,3 @@ internal class ContactFormContainer(
     }
 }
 
-// ============================================================================
-// EXTENSION FUNCTIONS
-// ============================================================================
-
-/**
- * Convert ContactDto to ContactFormData for editing.
- */
-private fun ContactDto.toFormData(): ContactFormData = ContactFormData(
-    name = name,
-    email = email ?: Email.Empty,
-    phone = phone ?: PhoneNumber.Empty,
-    contactPerson = contactPerson ?: "",
-    vatNumber = vatNumber ?: VatNumber.Empty,
-    companyNumber = companyNumber ?: "",
-    businessType = businessType,
-    addressLine1 = addressLine1 ?: "",
-    addressLine2 = addressLine2 ?: "",
-    city = City(city ?: ""),  // Wrap in City for form validation
-    postalCode = postalCode ?: "",
-    country = country ?: "",
-    // NOTE: peppolId/peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
-    defaultPaymentTerms = defaultPaymentTerms,
-    defaultVatRate = defaultVatRate?.toString() ?: "",
-    tags = tags ?: "",
-    isActive = isActive
-)
-
-/**
- * Convert ContactFormData to CreateContactRequest.
- * Note: Addresses are managed separately via ContactAddressRepository.
- */
-private fun ContactFormData.toCreateRequest(): CreateContactRequest = CreateContactRequest(
-    name = name,
-    email = email.takeIf { it.value.isNotBlank() },
-    phone = phone.takeIf { it.value.isNotBlank() },
-    vatNumber = vatNumber.takeIf { it.value.isNotBlank() },
-    businessType = businessType,
-    addresses = toContactAddresses(),
-    contactPerson = contactPerson.takeIf { it.isNotBlank() },
-    companyNumber = companyNumber.takeIf { it.isNotBlank() },
-    defaultPaymentTerms = defaultPaymentTerms,
-    defaultVatRate = defaultVatRate.takeIf { it.isNotBlank() },
-    // NOTE: peppolId/peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
-    tags = tags.takeIf { it.isNotBlank() },
-    initialNote = initialNote.takeIf { it.isNotBlank() }
-)
-
-/**
- * Convert ContactFormData to UpdateContactRequest.
- * Note: Addresses are managed separately via ContactAddressRepository.
- */
-private fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateContactRequest(
-    name = name,
-    email = email.takeIf { it.value.isNotBlank() },
-    phone = phone.takeIf { it.value.isNotBlank() },
-    vatNumber = vatNumber.takeIf { it.value.isNotBlank() },
-    businessType = businessType,
-    // Note: Address updates are handled separately via ContactAddressRepository
-    contactPerson = contactPerson.takeIf { it.isNotBlank() },
-    companyNumber = companyNumber.takeIf { it.isNotBlank() },
-    defaultPaymentTerms = defaultPaymentTerms,
-    defaultVatRate = defaultVatRate.takeIf { it.isNotBlank() },
-    // NOTE: peppolId/peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
-    tags = tags.takeIf { it.isNotBlank() },
-    isActive = isActive
-)
-
-/**
- * Convert address fields to list of ContactAddressInput for create request.
- * Returns empty list if required address fields are missing.
- */
-private fun ContactFormData.toContactAddresses(): List<ContactAddressInput> {
-    val requiredFields = listOf(addressLine1, city.value, postalCode, country)
-    if (requiredFields.any { it.isBlank() }) {
-        return emptyList()
-    }
-    return listOf(
-        ContactAddressInput(
-            streetLine1 = addressLine1,
-            streetLine2 = addressLine2.takeIf { it.isNotBlank() },
-            city = city.value,  // Extract value from City wrapper
-            postalCode = postalCode,
-            country = country
-        )
-    )
-}

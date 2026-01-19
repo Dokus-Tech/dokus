@@ -23,6 +23,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.routes.Documents
+import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
+import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
