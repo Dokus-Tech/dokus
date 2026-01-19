@@ -148,7 +148,7 @@ services:
       MINIO_BUCKET: dokus-storage
       # AI configuration (sovereign mode for cloud with max capability)
       DOKUS_INTELLIGENCE_MODE: sovereign
-      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       LOG_PATH: /app/logs
     networks:
