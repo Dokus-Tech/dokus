@@ -60,8 +60,56 @@ This log tracks all refactoring changes made during the god file splitting effor
 
 ---
 
+### 2026-01-19 - ContactFormContainer.kt
+**Action:** Extract extensions
+**Original Size:** 707 lines
+**New Main File Size:** 625 lines
+**Files Created:**
+- `features/contacts/presentation/.../mvi/extensions/ContactFormExtensions.kt` (~82 lines)
+
+**Build Status:** PASS
+**Notes:**
+- Extracted toFormData, toCreateRequest, toUpdateRequest, toContactAddresses extensions
+- MVI handlers kept in main file (tightly coupled to state management)
+- All public APIs preserved
+
+---
+
+### 2026-01-19 - DocumentRecordRoutes.kt
+**Action:** Extract route helpers
+**Original Size:** 757 lines
+**New Main File Size:** 541 lines
+**Files Created:**
+- `backendApp/.../routes/cashflow/documents/DocumentRouteHelpers.kt` (~216 lines)
+
+**Build Status:** PASS
+**Notes:**
+- Extracted addDownloadUrl, findConfirmedEntity, buildCorrections, toDto extensions
+- Extracted updateDraftCounterparty helper
+- DocumentUploadRoutes.kt updated to use shared helpers
+- All public APIs preserved
+
+---
+
+### 2026-01-19 - DocumentProcessingWorker.kt
+**Action:** Extract models and RAG handler
+**Original Size:** 644 lines
+**New Main File Size:** 510 lines
+**Files Created:**
+- `backendApp/.../worker/models/ProcessingModels.kt` (~27 lines)
+- `backendApp/.../worker/handlers/RAGPipelineHandler.kt` (~144 lines)
+
+**Build Status:** PASS
+**Notes:**
+- Extracted ProcessingResult and JudgmentInfo data classes
+- Extracted RAGPipelineHandler class with chunkAndEmbed, sha256
+- Main file uses ragHandler.isEnabled and ragHandler.chunkAndEmbed
+- All public APIs preserved
+
+---
+
 ## Statistics
-- Total files refactored: 2/7
-- Total new files created: 10
+- Total files refactored: 5/7
+- Total new files created: 14
 - Build failures: 0
 - Reverts: 0
