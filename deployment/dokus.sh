@@ -1009,32 +1009,22 @@ EOF
 }
 
 configure_registry() {
-    local OS=$(detect_os)
-    local DAEMON_JSON="/etc/docker/daemon.json"
-    local REGISTRY="94.111.226.82:5000"
+    local REGISTRY="docker.invoid.vision"
 
-    if [[ "$OS" == "macos" ]]; then
-        print_status warning "On macOS, configure insecure registry via Docker Desktop:"
-        echo "  Settings → Docker Engine → add: \"insecure-registries\": [\"$REGISTRY\"]"
-        read -p "  Press Enter after configuring the registry..."
-    elif [[ "$OS" == "linux" ]]; then
-        if [ -f "$DAEMON_JSON" ] && grep -q "$REGISTRY" "$DAEMON_JSON"; then
-            print_status success "Insecure registry already configured"
-            return
-        fi
+    print_status info "Configuring Docker registry: $REGISTRY"
+    echo ""
+    echo_e "  ${SOFT_CYAN}The registry requires authentication.${NC}"
+    echo_e "  ${DIM_WHITE}Run: docker login $REGISTRY${NC}"
+    echo ""
+    read -p "  Press Enter after logging in..."
 
-        print_status warning "Configuring insecure registry (sudo required)"
-        if [ -f "$DAEMON_JSON" ]; then
-            sudo cp "$DAEMON_JSON" "$DAEMON_JSON.backup"
-        fi
-
-        echo "{
-  \"insecure-registries\": [\"$REGISTRY\"]
-}" | sudo tee "$DAEMON_JSON" > /dev/null
-
-        sudo systemctl restart docker
-        sleep 3
-        print_status success "Docker configured for insecure registry"
+    # Verify login by attempting to pull
+    print_status info "Verifying registry access..."
+    if docker pull $REGISTRY/dokus-server:latest > /dev/null 2>&1; then
+        print_status success "Registry authentication verified"
+    else
+        print_status warning "Could not verify registry access"
+        print_status info "You may need to run: docker login $REGISTRY"
     fi
 }
 

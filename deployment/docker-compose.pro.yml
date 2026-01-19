@@ -185,7 +185,7 @@ services:
   # BACKEND
   # ==========================================================================
   dokus-server:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-server:${TAG:-latest}
+    image: ${DOCKER_REGISTRY:-docker.invoid.vision}/dokus-server:${TAG:-latest}
     container_name: dokus-server
     env_file:
       - .env
@@ -241,7 +241,7 @@ services:
   # WEB UI
   # ==========================================================================
   web:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-web:${TAG:-latest}
+    image: ${DOCKER_REGISTRY:-docker.invoid.vision}/dokus-web:${TAG:-latest}
     container_name: dokus-web
     networks:
       - dokus-network

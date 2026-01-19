@@ -38,7 +38,7 @@ permissions:
 env:
   GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
   JAVA_VERSION: '21'
-  REGISTRY: '94.111.226.82:5000'
+  REGISTRY: 'docker.invoid.vision'
   IMAGE_NAME: 'dokus-server'
 
 jobs:
@@ -140,10 +140,13 @@ jobs:
         with:
           driver-opts: |
             network=host
-          config-inline: |
-            [registry."94.111.226.82:5000"]
-              http = true
-              insecure = true
+
+      - name: 🔐 Login to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
 
       - name: 🏗️ Build and push Docker image (production)
         uses: docker/build-push-action@v6

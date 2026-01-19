@@ -140,7 +140,7 @@ services:
   # Backend (single server)
   # =========================================================
   dokus-server:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-server:${TAG:-latest}
+    image: ${DOCKER_REGISTRY:-docker.invoid.vision}/dokus-server:${TAG:-latest}
     container_name: dokus-server
     restart: unless-stopped
     env_file:
