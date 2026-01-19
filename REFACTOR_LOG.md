@@ -38,8 +38,30 @@ This log tracks all refactoring changes made during the god file splitting effor
 
 ---
 
+### 2026-01-19 - WorkspaceSettingsScreen.kt
+**Action:** Split into 6 files
+**Original Size:** 1182 lines
+**New Main File Size:** 344 lines
+**Files Created:**
+- `composeApp/.../screens/settings/sections/BankingDetailsSection.kt` (~75 lines)
+- `composeApp/.../screens/settings/sections/PaymentTermsSection.kt` (~100 lines)
+- `composeApp/.../screens/settings/sections/PeppolConnectionSection.kt` (~120 lines)
+- `composeApp/.../screens/settings/sections/LegalIdentitySection.kt` (~280 lines, includes avatar components)
+- `composeApp/.../screens/settings/sections/InvoiceFormatSection.kt` (~220 lines, includes preview card)
+- `composeApp/.../screens/settings/components/SettingsUtils.kt` (~48 lines)
+
+**Build Status:** PASS
+**Notes:**
+- Extracted all 5 settings sections (Peppol, Legal, Banking, Invoice, Payment) into separate files
+- Extracted utility functions (formatRelativeTime, generateInvoiceNumberPreview) to SettingsUtils
+- CompanyAvatarSection and AvatarStateIndicator moved to LegalIdentitySection
+- InvoicePreviewCard moved to InvoiceFormatSection
+- Main file now only contains orchestration (screen, content, save feedback)
+
+---
+
 ## Statistics
-- Total files refactored: 1/7
-- Total new files created: 4
+- Total files refactored: 2/7
+- Total new files created: 10
 - Build failures: 0
 - Reverts: 0
