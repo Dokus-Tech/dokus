@@ -162,7 +162,7 @@ sealed interface IntelligenceMode {
     /**
      * SOVEREIGN
      *
-     * Target: Mac Studio M4 Max (≥128GB RAM recommended)
+     * Target: Mac Studio M4 Max (128GB RAM)
      * Philosophy: "The system governs itself."
      *
      * Characteristics:
@@ -183,7 +183,7 @@ sealed interface IntelligenceMode {
         // Models
         override val classificationModel = "qwen3-vl:8b"
         override val fastExtractionModel = "qwen3-vl:8b"
-        override val expertExtractionModel = "qwen3-vl:72b"
+        override val expertExtractionModel = "qwen3-vl:32b"
         override val chatModel = "qwen3:32b"
 
         // Processing
@@ -193,8 +193,8 @@ sealed interface IntelligenceMode {
         override val maxRetries = 3
 
         // Concurrency (VERY IMPORTANT)
-        override val maxConcurrentRequests = 2
-        override val maxParallelAgentsPerDocument = 2
+        override val maxConcurrentRequests = 3
+        override val maxParallelAgentsPerDocument = 3
 
         // Autonomy
         override val autonomyLevel = AutonomyLevel.HIGH
