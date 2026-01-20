@@ -18,8 +18,8 @@ import tech.dokus.foundation.backend.config.IntelligenceMode
  */
 object AIModels {
 
-    /** Embedding model name (for Ollama API calls) */
-    const val EMBEDDING_MODEL_NAME = "nomic-embed-text"
+    /** Embedding model name (LM Studio format) */
+    const val EMBEDDING_MODEL_NAME = "text-embedding-nomic-embed-text-v1.5"
 
     /** Embedding dimensions for nomic-embed-text */
     const val EMBEDDING_DIMENSIONS = 768
@@ -36,14 +36,18 @@ object AIModels {
     /**
      * Create an LLModel from a model ID.
      * Uses ModelRegistry for deterministic context length lookup.
+     *
+     * Uses LLMProvider.OpenAI for LM Studio compatibility (OpenAI-compatible API).
      */
     private fun createModel(id: String): LLModel = LLModel(
-        provider = LLMProvider.Ollama,
+        provider = LLMProvider.OpenAI,
         id = id,
-        capabilities = if (ModelRegistry.isVisionModel(id)) {
-            listOf(LLMCapability.Vision.Image)
-        } else {
-            emptyList()
+        capabilities = buildList {
+            add(LLMCapability.Completion)
+            add(LLMCapability.OpenAIEndpoint.Completions)
+            if (ModelRegistry.isVisionModel(id)) {
+                add(LLMCapability.Vision.Image)
+            }
         },
         contextLength = ModelRegistry.contextLength(id),
         maxOutputTokens = null

@@ -98,10 +98,10 @@ sealed interface IntelligenceMode {
         override val minRamGb = 8
         override val parallelCapable = false
 
-        // Models
-        override val orchestratorModel = "qwen3:8b"
-        override val visionModel = "qwen3-vl:8b"
-        override val chatModel = "qwen3:8b"
+        // Models (LM Studio format: qwen/qwen3-vl-8b)
+        override val orchestratorModel = "qwen/qwen3-32b"
+        override val visionModel = "qwen/qwen3-vl-8b"
+        override val chatModel = "qwen/qwen3-32b"
 
         // Processing
         override val enableSelfCorrection = false
@@ -136,10 +136,10 @@ sealed interface IntelligenceMode {
         override val minRamGb = 32
         override val parallelCapable = false
 
-        // Models
-        override val orchestratorModel = "qwen3:32b"
-        override val visionModel = "qwen3-vl:32b"
-        override val chatModel = "qwen3:32b"
+        // Models (LM Studio format: qwen/qwen3-vl-8b)
+        override val orchestratorModel = "qwen/qwen3-32b"
+        override val visionModel = "qwen/qwen3-vl-8b"
+        override val chatModel = "qwen/qwen3-32b"
 
         // Processing
         override val enableSelfCorrection = true
@@ -175,10 +175,10 @@ sealed interface IntelligenceMode {
         override val minRamGb = 128
         override val parallelCapable = true
 
-        // Models - max available
-        override val orchestratorModel = "qwen3:32b"
-        override val visionModel = "qwen3-vl:32b"
-        override val chatModel = "qwen3:32b"
+        // Models (LM Studio format: qwen/qwen3-vl-8b)
+        override val orchestratorModel = "qwen/qwen3-32b"
+        override val visionModel = "qwen/qwen3-vl-8b"
+        override val chatModel = "qwen/qwen3-32b"
 
         // Processing
         override val enableSelfCorrection = true

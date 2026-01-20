@@ -13,14 +13,11 @@ object ModelRegistry {
     private const val CONTEXT_128K = 131_072L
 
     private val contextLengths = mapOf(
-        // Vision models
-        "qwen3-vl:2b" to CONTEXT_32K,
-        "qwen3-vl:8b" to CONTEXT_32K,
-        "qwen3-vl:32b" to CONTEXT_128K,
-        "qwen3-vl:72b" to CONTEXT_128K,
-        // Chat models
-        "qwen3:8b" to CONTEXT_32K,
-        "qwen3:32b" to CONTEXT_128K
+        // Vision models (LM Studio format)
+        "qwen/qwen3-vl-8b" to CONTEXT_32K,
+        "qwen/qwen3-vl-32b" to CONTEXT_128K,
+        // Chat models (LM Studio format)
+        "qwen/qwen3-32b" to CONTEXT_128K
     )
 
     /**

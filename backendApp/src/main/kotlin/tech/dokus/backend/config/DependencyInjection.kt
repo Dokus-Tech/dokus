@@ -13,7 +13,6 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -44,20 +43,20 @@ import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.database.DokusSchema
 import tech.dokus.database.di.repositoryModules
+import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
-import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
-import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
@@ -332,18 +331,13 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     // Create shared executor for all AI operations
     single<PromptExecutor> { AIProviderFactory.createOpenAiExecutor(appConfig.ai) }
 
-    // Document Orchestrator - single orchestrator with tool calling
-    // NOTE: Full orchestrator wiring with tools requires additional setup.
-    // For now, we provide the core orchestrator without tool registry.
-    // The tool registry should be configured in the worker with access to
-    // repositories and services.
+    // Document Orchestrator - vision-based extraction with example learning
     single {
         DocumentOrchestrator(
             executor = get(),
-            orchestratorModel = models.orchestrator,
             visionModel = models.vision,
-            toolRegistry = ai.koog.agents.core.tools.ToolRegistry { },  // Empty for now
-            mode = mode
+            mode = mode,
+            exampleRepository = get()
         )
     }
 

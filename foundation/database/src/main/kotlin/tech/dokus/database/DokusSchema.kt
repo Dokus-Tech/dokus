@@ -3,6 +3,7 @@ package tech.dokus.database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import tech.dokus.database.tables.ai.ChatMessagesTable
 import tech.dokus.database.tables.ai.DocumentChunksTable
+import tech.dokus.database.tables.ai.DocumentExamplesTable
 import tech.dokus.database.tables.auth.AddressTable
 import tech.dokus.database.tables.auth.PasswordResetTokensTable
 import tech.dokus.database.tables.auth.RefreshTokensTable
@@ -101,6 +102,7 @@ object DokusSchema {
                 // ----------------------------
                 DocumentChunksTable,
                 ChatMessagesTable,
+                DocumentExamplesTable,
             )
         }
 

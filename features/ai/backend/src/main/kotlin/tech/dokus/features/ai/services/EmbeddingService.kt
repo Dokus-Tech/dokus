@@ -6,6 +6,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.config.AIModels
@@ -13,10 +14,10 @@ import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
- * Service for generating text embeddings via Ollama.
+ * Service for generating text embeddings via LM Studio.
  *
- * Uses `nomic-embed-text` model (768 dimensions) via `/api/embeddings` endpoint.
- * This model is hardcoded as it runs on all hardware and provides good quality.
+ * Uses `text-embedding-nomic-embed-text-v1.5` model (768 dimensions) via OpenAI-compatible
+ * `/v1/embeddings` endpoint.
  *
  * Usage:
  * ```kotlin
@@ -52,37 +53,37 @@ class EmbeddingService(
      */
     @Suppress("ThrowsCount")
     suspend fun generateEmbedding(text: String): EmbeddingResult {
-        val baseUrl = config.ollamaHost.trimEnd('/')
-        val url = "$baseUrl/api/embeddings"
+        val baseUrl = config.lmStudioHost.trimEnd('/')
+        val url = "$baseUrl/v1/embeddings"
 
         logger.debug("Generating embedding: model=${AIModels.EMBEDDING_MODEL_NAME}, textLength=${text.length}")
 
         try {
-            val request = OllamaEmbeddingRequest(
+            val request = OpenAIEmbeddingRequest(
                 model = AIModels.EMBEDDING_MODEL_NAME,
-                prompt = text
+                input = text
             )
 
             val response = httpClient.post(url) {
                 contentType(ContentType.Application.Json)
-                setBody(json.encodeToString(OllamaEmbeddingRequest.serializer(), request))
+                setBody(json.encodeToString(OpenAIEmbeddingRequest.serializer(), request))
             }
 
             if (response.status.value !in 200..299) {
                 val errorBody = response.body<String>()
-                logger.error("Ollama embedding API error: ${response.status} - $errorBody")
+                logger.error("LM Studio embedding API error: ${response.status} - $errorBody")
                 throw EmbeddingException(
-                    message = "Ollama API returned ${response.status}",
+                    message = "LM Studio API returned ${response.status}",
                     isRetryable = response.status.value >= 500
                 )
             }
 
-            val ollamaResponse = response.body<OllamaEmbeddingResponse>()
-            val embedding = ollamaResponse.embedding
+            val embeddingResponse = response.body<OpenAIEmbeddingResponse>()
+            val embedding = embeddingResponse.data.firstOrNull()?.embedding ?: emptyList()
 
             if (embedding.isEmpty()) {
                 throw EmbeddingException(
-                    message = "Ollama returned empty embedding",
+                    message = "LM Studio returned empty embedding",
                     isRetryable = true
                 )
             }
@@ -142,12 +143,23 @@ class EmbeddingException(
 ) : RuntimeException(message, cause)
 
 @Serializable
-private data class OllamaEmbeddingRequest(
+private data class OpenAIEmbeddingRequest(
     val model: String,
-    val prompt: String
+    val input: String
 )
 
 @Serializable
-private data class OllamaEmbeddingResponse(
-    val embedding: List<Float>
+private data class OpenAIEmbeddingResponse(
+    val data: List<EmbeddingData>,
+    val model: String,
+    @SerialName("object")
+    val objectType: String = "list"
+)
+
+@Serializable
+private data class EmbeddingData(
+    val embedding: List<Float>,
+    val index: Int,
+    @SerialName("object")
+    val objectType: String = "embedding"
 )

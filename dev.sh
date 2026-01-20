@@ -121,8 +121,11 @@ export MINIO_PASSWORD="dokusadminpassword"
 # Ensure empty .env exists (compose validates before applying overrides)
 touch deployment/.env 2>/dev/null || true
 
-# AI/Ollama configuration
+# AI configuration
+# Ollama (custom API)
 OLLAMA_PORT="11434"
+# LM Studio (OpenAI-compatible API)
+LM_STUDIO_PORT="1234"
 # Models used by IntelligenceMode (Assisted mode as default for dev)
 OLLAMA_DEFAULT_MODELS=("qwen3-vl:2b" "qwen3-vl:8b" "qwen3:8b" "nomic-embed-text")
 
@@ -448,10 +451,12 @@ start_services() {
             sleep 1
         done
 
-        # Check Ollama (AI) - runs on the host (optional)
-        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Ollama AI Server"
-        if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+        # Check LM Studio (AI) - runs on the host (optional)
+        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "LM Studio AI"
+        if curl -f -s http://localhost:${LM_STUDIO_PORT}/v1/models &>/dev/null; then
             echo_e "${SOFT_GREEN}◎ Ready${NC}"
+        elif curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+            echo_e "${SOFT_GREEN}◎ Ollama${NC}"
         else
             echo_e "${SOFT_YELLOW}◒ Optional${NC}"
         fi
@@ -577,10 +582,12 @@ show_status() {
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
-    # Ollama AI
-    printf "  ${SOFT_GRAY}│${NC} Ollama AI Server        ${SOFT_GRAY}│${NC} "
-    if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+    # LM Studio AI (primary)
+    printf "  ${SOFT_GRAY}│${NC} LM Studio AI            ${SOFT_GRAY}│${NC} "
+    if curl -f -s http://localhost:${LM_STUDIO_PORT}/v1/models &>/dev/null; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+    elif curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+        echo_e "${SOFT_YELLOW}◒ OLLAMA${NC}        ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
@@ -700,28 +707,68 @@ access_redis() {
     docker-compose -f $COMPOSE_FILE exec redis redis-cli -a devredispass
 }
 
-# Function to check Ollama status
+# Function to check AI status (LM Studio or Ollama)
 ollama_status() {
-    print_gradient_header "🤖 Ollama AI Status"
+    print_gradient_header "🤖 AI Server Status"
 
-    # Check if container is running
-    printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Ollama Server"
+    # Check LM Studio first (primary)
+    printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "LM Studio"
+    local lm_studio_running=false
+    if curl -f -s http://localhost:${LM_STUDIO_PORT}/v1/models > /dev/null 2>&1; then
+        echo_e "${SOFT_GREEN}◎ Running${NC}"
+        lm_studio_running=true
+    else
+        echo_e "${SOFT_YELLOW}◒ Not Running${NC}"
+    fi
+
+    # Check Ollama (fallback)
+    printf "  ${SOFT_CYAN}${TREE_LAST}${TREE_RIGHT}${NC} %-22s" "Ollama"
+    local ollama_running=false
     if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ Running${NC}"
+        ollama_running=true
     else
-        echo_e "${SOFT_RED}⨯ Not Running${NC}"
+        echo_e "${SOFT_YELLOW}◒ Not Running${NC}"
+    fi
+
+    if [ "$lm_studio_running" = false ] && [ "$ollama_running" = false ]; then
         echo ""
-        print_status warning "Ollama is not running. Start Ollama on the host (e.g. Ollama app or 'ollama serve')."
+        print_status warning "No AI server is running."
+        echo_e "    ${DIM_WHITE}Start LM Studio (recommended) or Ollama.${NC}"
         return 1
     fi
 
     echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}Loaded Models:${NC}\n"
 
-    # Get list of models
-    local models=$(curl -s http://localhost:${OLLAMA_PORT}/api/tags 2>/dev/null)
-    if [ -n "$models" ]; then
-        echo "$models" | python3 -c "
+    # Show LM Studio models if running
+    if [ "$lm_studio_running" = true ]; then
+        echo_e "  ${SOFT_CYAN}${BOLD}LM Studio Loaded Models:${NC}\n"
+        local lm_models=$(curl -s http://localhost:${LM_STUDIO_PORT}/v1/models 2>/dev/null)
+        if [ -n "$lm_models" ]; then
+            echo "$lm_models" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    models = data.get('data', [])
+    if models:
+        for m in models:
+            model_id = m.get('id', 'unknown')
+            print(f'    ◎ {model_id}')
+    else:
+        print('    (no models loaded - load a model in LM Studio)')
+except Exception as e:
+    print('    (no models loaded)')
+" 2>/dev/null || echo_e "    ${DIM_WHITE}(no models loaded)${NC}"
+        fi
+        echo ""
+    fi
+
+    # Show Ollama models if running
+    if [ "$ollama_running" = true ]; then
+        echo_e "  ${SOFT_CYAN}${BOLD}Ollama Loaded Models:${NC}\n"
+        local models=$(curl -s http://localhost:${OLLAMA_PORT}/api/tags 2>/dev/null)
+        if [ -n "$models" ]; then
+            echo "$models" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
@@ -737,23 +784,40 @@ try:
 except:
     print('    (no models installed)')
 " 2>/dev/null || echo_e "    ${DIM_WHITE}(no models installed)${NC}"
-    else
-        echo_e "    ${DIM_WHITE}(no models installed)${NC}"
+        else
+            echo_e "    ${DIM_WHITE}(no models installed)${NC}"
+        fi
+        echo ""
     fi
-    echo ""
 }
 
 # Function to pull AI models
 ollama_pull() {
     print_gradient_header "🤖 Pull AI Models"
 
+    # Check if LM Studio is running
+    if curl -f -s http://localhost:${LM_STUDIO_PORT}/v1/models > /dev/null 2>&1; then
+        echo_e "  ${SOFT_GREEN}${BOLD}LM Studio Detected${NC}\n"
+        echo_e "  ${DIM_WHITE}LM Studio models are managed through the LM Studio app.${NC}"
+        echo_e "  ${DIM_WHITE}Open LM Studio → Search → Download models directly.${NC}\n"
+        echo_e "  ${SOFT_CYAN}${BOLD}Recommended models for Dokus:${NC}"
+        echo_e "    ${SOFT_CYAN}•${NC} qwen2.5-vl-7b-instruct  ${DIM_WHITE}(Vision model - classification & extraction)${NC}"
+        echo_e "    ${SOFT_CYAN}•${NC} qwen2.5-32b-instruct    ${DIM_WHITE}(Orchestrator - reasoning & tool calling)${NC}"
+        echo_e "    ${SOFT_CYAN}•${NC} nomic-embed-text        ${DIM_WHITE}(Embeddings for RAG)${NC}"
+        echo ""
+        print_status info "If you also want to pull models via Ollama, start Ollama first."
+        echo ""
+        return 0
+    fi
+
     # Check if Ollama is running
     if ! curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
-        print_status error "Ollama is not running. Start Ollama on the host (e.g. Ollama app or 'ollama serve')."
+        print_status error "No AI server is running."
+        echo_e "  ${DIM_WHITE}Start LM Studio (manage models via GUI) or Ollama (pull via CLI).${NC}"
         return 1
     fi
 
-    echo_e "  ${SOFT_CYAN}${BOLD}Models by IntelligenceMode:${NC}\n"
+    echo_e "  ${SOFT_CYAN}${BOLD}Ollama: Models by IntelligenceMode:${NC}\n"
     echo_e "    ${SOFT_CYAN}${BOLD}Assisted${NC} ${DIM_WHITE}(≤16GB RAM, edge devices)${NC}"
     echo_e "    ${SOFT_CYAN}①${NC}  qwen3-vl:2b     ${DIM_WHITE}(Vision, fast - ~1.5GB)${NC}"
     echo_e "    ${SOFT_CYAN}②${NC}  qwen3-vl:8b     ${DIM_WHITE}(Vision, expert - ~5GB)${NC}"
@@ -840,8 +904,65 @@ pull_model() {
 ollama_test() {
     print_gradient_header "🧪 AI Test"
 
+    # Check LM Studio first
+    if curl -f -s http://localhost:${LM_STUDIO_PORT}/v1/models > /dev/null 2>&1; then
+        print_status loading "Testing LM Studio with a quick prompt..."
+        echo ""
+
+        # Get the first available model
+        local model_id=$(curl -s http://localhost:${LM_STUDIO_PORT}/v1/models 2>/dev/null | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    models = data.get('data', [])
+    if models:
+        print(models[0].get('id', ''))
+except:
+    pass
+" 2>/dev/null)
+
+        if [ -z "$model_id" ]; then
+            print_status error "No model loaded in LM Studio. Load a model first."
+            return 1
+        fi
+
+        echo_e "  ${DIM_WHITE}Using model: ${model_id}${NC}\n"
+
+        local response=$(curl -s http://localhost:${LM_STUDIO_PORT}/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -d "{
+                \"model\": \"${model_id}\",
+                \"messages\": [{\"role\": \"user\", \"content\": \"Say hello in one sentence.\"}],
+                \"max_tokens\": 100
+            }" 2>/dev/null)
+
+        if [ -n "$response" ]; then
+            echo "$response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    choices = data.get('choices', [])
+    if choices:
+        content = choices[0].get('message', {}).get('content', 'No response')
+        print('  Response:', content)
+    else:
+        error = data.get('error', {}).get('message', 'Unknown error')
+        print('  Error:', error)
+except Exception as e:
+    print('  (Failed to parse response)')
+" 2>/dev/null
+            echo ""
+            print_status success "LM Studio is responding correctly"
+        else
+            print_status error "No response from LM Studio."
+        fi
+        echo ""
+        return 0
+    fi
+
+    # Fall back to Ollama
     if ! curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
-        print_status error "Ollama is not running"
+        print_status error "No AI server is running (LM Studio or Ollama)"
         return 1
     fi
 
@@ -864,9 +985,9 @@ except:
     print('  (Failed to parse response)')
 " 2>/dev/null
         echo ""
-        print_status success "AI is responding correctly"
+        print_status success "Ollama is responding correctly"
     else
-        print_status error "No response from AI. Make sure a model is loaded."
+        print_status error "No response from Ollama. Make sure a model is loaded."
     fi
     echo ""
 }
@@ -1020,7 +1141,7 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}PostgreSQL${NC}           ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:$DB_PORT${NC} • ${SOFT_GRAY}$DB_NAME${NC}         ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:9000${NC} • ${SOFT_GRAY}Console: 9001${NC}      ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Ollama AI${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:11434${NC} • ${SOFT_GRAY}API endpoint${NC}     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}LM Studio${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:1234${NC} • ${SOFT_GRAY}OpenAI-compat${NC}    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then
@@ -1039,7 +1160,7 @@ print_services_info() {
     echo_e "    ${SOFT_GRAY}./dev.sh redis${NC}        ${DIM_WHITE}Access Redis CLI${NC}"
     echo_e "    ${SOFT_GRAY}./dev.sh status${NC}       ${DIM_WHITE}Check service health${NC}"
     echo_e "    ${SOFT_GRAY}./dev.sh test${NC}         ${DIM_WHITE}Run all test suites${NC}"
-    echo_e "    ${SOFT_GRAY}./dev.sh ai${NC}           ${DIM_WHITE}Check AI/Ollama status${NC}"
+    echo_e "    ${SOFT_GRAY}./dev.sh ai${NC}           ${DIM_WHITE}Check AI status (LM Studio/Ollama)${NC}"
     echo_e "    ${SOFT_GRAY}./dev.sh ai-pull${NC}      ${DIM_WHITE}Pull AI models${NC}"
     echo ""
 }
@@ -1181,9 +1302,9 @@ show_help() {
     echo_e "    ${SOFT_CYAN}pgadmin${NC}      ${DIM_WHITE}Launch pgAdmin profile${NC}"
     echo ""
 
-    echo_e "  ${SOFT_ORANGE}${BOLD}AI Mesh${NC}"
-    echo_e "    ${SOFT_CYAN}ai${NC}           ${DIM_WHITE}Ollama status + loaded models${NC}"
-    echo_e "    ${SOFT_CYAN}ai-pull${NC}      ${DIM_WHITE}Guided model download${NC}"
+    echo_e "  ${SOFT_ORANGE}${BOLD}AI (LM Studio / Ollama)${NC}"
+    echo_e "    ${SOFT_CYAN}ai${NC}           ${DIM_WHITE}AI server status + loaded models${NC}"
+    echo_e "    ${SOFT_CYAN}ai-pull${NC}      ${DIM_WHITE}Model download guide${NC}"
     echo_e "    ${SOFT_CYAN}ai-test${NC}      ${DIM_WHITE}Send a quick prompt${NC}"
     echo ""
 
@@ -1221,9 +1342,9 @@ show_menu() {
     echo_e "    ${SOFT_CYAN}7${NC}   Redis console"
     echo ""
 
-    echo_e "  ${SOFT_ORANGE}${BOLD}AI / Tests${NC}"
-    echo_e "    ${SOFT_CYAN}8${NC}   AI status"
-    echo_e "    ${SOFT_CYAN}9${NC}   Pull AI models"
+    echo_e "  ${SOFT_ORANGE}${BOLD}AI (LM Studio/Ollama)${NC}"
+    echo_e "    ${SOFT_CYAN}8${NC}   AI server status"
+    echo_e "    ${SOFT_CYAN}9${NC}   Model download guide"
     echo_e "    ${SOFT_CYAN}10${NC}  Run all tests"
     echo ""
 
