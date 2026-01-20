@@ -28,12 +28,10 @@ import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
-import tech.dokus.features.ai.coordinator.AutonomousProcessingCoordinator
-import tech.dokus.features.ai.coordinator.AutonomousResult
-import tech.dokus.features.ai.judgment.JudgmentOutcome
-import tech.dokus.features.ai.models.meetsMinimalThreshold
 import tech.dokus.features.ai.models.toDomainType
 import tech.dokus.features.ai.models.toExtractedDocumentData
+import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
+import tech.dokus.features.ai.orchestrator.OrchestratorResult
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
@@ -47,34 +45,34 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Background worker that polls for pending documents and processes them with AI extraction.
  *
- * VISION-FIRST Architecture:
+ * ORCHESTRATOR Architecture:
  * 1. Download document bytes from storage
  * 2. Convert to images using DocumentImageService
- * 3. Process images through 5-Layer Autonomous Pipeline (vision models)
- * 4. Persist results
- * 5. RAG: Use extractedText from vision model for chunking/embedding
+ * 3. Process images through DocumentOrchestrator (single orchestrator with tool calling)
+ * 4. Persist results (orchestrator handles all business logic including contact creation)
+ * 5. RAG: Orchestrator handles chunking/embedding
  *
  * Features:
  * - Polling-based processing (configurable interval)
  * - Automatic retry with backoff
  * - Graceful shutdown support
- * - RAG preparation: chunking and embedding using vision-extracted text
+ * - Example-based few-shot learning for repeat vendors
  */
 @Suppress("LongParameterList")
 class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val documentStorage: DocumentStorageService,
-    private val coordinator: AutonomousProcessingCoordinator,
+    private val orchestrator: DocumentOrchestrator,
     private val documentImageService: DocumentImageService,
     private val config: ProcessorConfig,
     private val mode: IntelligenceMode,
     private val draftRepository: DocumentDraftRepository,
     private val contactMatchingService: ContactMatchingService,
     private val tenantRepository: TenantRepository,
-    // Optional RAG dependencies - if provided, chunking and embedding will be performed
-    private val chunkingService: ChunkingService? = null,
-    private val embeddingService: EmbeddingService? = null,
-    private val chunkRepository: ChunkRepository? = null
+    // RAG dependencies
+    private val chunkingService: ChunkingService,
+    private val embeddingService: EmbeddingService,
+    private val chunkRepository: ChunkRepository
 ) {
     private val logger = LoggerFactory.getLogger(DocumentProcessingWorker::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -225,10 +223,20 @@ class DocumentProcessingWorker(
                 companyName = tenant?.displayName?.value ?: tenant?.legalName?.value
             )
 
-            // Step 3: Process document through 5-Layer Autonomous Pipeline
-            val (extractedData, documentType, meetsThreshold, rawText, confidence, judgmentInfo) =
-                processDocument(documentImages.images, tenantContext, runId, documentId)
+            // Step 3: Process document through DocumentOrchestrator
+            val processingResult =
+                processDocument(documentImages.images, tenantContext, runId, documentId, tenantId)
                     ?: return // Already marked as failed inside processDocument
+
+            val (extractedData, documentType, meetsThreshold, rawText, confidence, judgmentInfo, contactId, contactCreated) =
+                processingResult
+
+            // Handle null extraction as needs-review
+            if (extractedData == null) {
+                logger.warn("Document $documentId has no extracted data - marking as needs review")
+                ingestionRepository.markAsFailed(runId, "No data could be extracted")
+                return
+            }
 
             // Create draft (always for classifiable types, with appropriate status)
             ingestionRepository.markAsSucceeded(
@@ -307,133 +315,73 @@ class DocumentProcessingWorker(
     // =========================================================================
 
     /**
-     * Process document using the 5-Layer Autonomous Processing Coordinator.
+     * Process document using the DocumentOrchestrator.
      */
     private suspend fun processDocument(
         images: List<DocumentImageService.DocumentImage>,
         tenantContext: AgentPrompt.TenantContext,
         runId: String,
-        documentId: String
+        documentId: String,
+        tenantId: String
     ): ProcessingResult? {
-        logger.info("Processing document $documentId with 5-Layer Autonomous Pipeline")
+        logger.info("Processing document $documentId with DocumentOrchestrator")
 
-        return when (val result = coordinator.process(images, tenantContext)) {
-            is AutonomousResult.Success<*> -> {
-                // Map the autonomous result to our legacy format
-                val aiResult = mapAutonomousResultToDocumentAIResult(result)
-                    ?: run {
-                        logger.error("Failed to map autonomous result for $documentId")
-                        ingestionRepository.markAsFailed(runId, "Failed to map extraction result")
-                        return null
-                    }
+        return when (
+            val result = orchestrator.process(
+                documentId = DocumentId.parse(documentId),
+                tenantId = TenantId.parse(tenantId),
+                images = images,
+                tenantContext = tenantContext
+            )
+        ) {
+            is OrchestratorResult.Success -> {
+                val documentType = result.documentType.toDomainType()
+                val meetsThreshold = result.confidence >= 0.85
 
-                val extractedData = aiResult.toExtractedDocumentData()
-                val documentType = aiResult.toDomainType()
-                val meetsThreshold = aiResult.meetsMinimalThreshold()
-                val rawText = aiResult.rawText
-
-                // Determine if threshold is met based on judgment
-                val finalMeetsThreshold = when (result.judgment.outcome) {
-                    JudgmentOutcome.AUTO_APPROVE -> true
-                    JudgmentOutcome.NEEDS_REVIEW -> meetsThreshold // Use extraction confidence
-                    JudgmentOutcome.REJECT -> false
+                // Log audit trail
+                result.auditTrail.forEach { step ->
+                    logger.debug("Step ${step.step}: ${step.action} (${step.durationMs}ms)")
                 }
 
                 ProcessingResult(
-                    extractedData = extractedData,
+                    extractedData = result.extraction.toExtractedDocumentData(documentType),
                     documentType = documentType,
-                    meetsThreshold = finalMeetsThreshold,
-                    rawText = rawText,
+                    meetsThreshold = meetsThreshold,
+                    rawText = result.rawText,
                     confidence = result.confidence,
                     judgmentInfo = JudgmentInfo(
-                        outcome = result.judgment.outcome,
-                        wasCorrected = result.wasCorrected,
-                        issues = result.judgment.issuesForUser
-                    )
+                        outcome = if (meetsThreshold) "AUTO_APPROVE" else "NEEDS_REVIEW",
+                        wasCorrected = result.correctionsApplied > 0,
+                        issues = if (!result.validationPassed) listOf("Validation failed") else emptyList()
+                    ),
+                    contactId = result.contactId?.toString(),
+                    contactCreated = result.contactCreated
                 )
             }
 
-            is AutonomousResult.Rejected -> {
-                logger.warn(
-                    "5-Layer Pipeline rejected document $documentId at stage ${result.stage}: ${result.reason}"
+            is OrchestratorResult.NeedsReview -> {
+                logger.warn("Document $documentId needs review: ${result.reason}")
+                val documentType = result.documentType?.toDomainType() ?: DocumentType.Unknown
+
+                ProcessingResult(
+                    extractedData = result.partialExtraction?.toExtractedDocumentData(documentType),
+                    documentType = documentType,
+                    meetsThreshold = false,
+                    rawText = "",
+                    confidence = 0.0,
+                    judgmentInfo = JudgmentInfo(
+                        outcome = "NEEDS_REVIEW",
+                        wasCorrected = false,
+                        issues = result.issues
+                    ),
+                    contactId = null,
+                    contactCreated = false
                 )
-                ingestionRepository.markAsFailed(runId, "Rejected: ${result.reason}")
-                null
-            }
-        }
-    }
-
-    /**
-     * Map AutonomousResult.Success to DocumentAIResult for backward compatibility.
-     */
-    private fun mapAutonomousResultToDocumentAIResult(
-        result: AutonomousResult.Success<*>
-    ): tech.dokus.features.ai.models.DocumentAIResult? {
-        val extraction = result.extraction
-        val classification = result.classification
-
-        return when (extraction) {
-            is tech.dokus.features.ai.models.ExtractedInvoiceData -> {
-                // Determine the specific type based on classification
-                when (result.documentType) {
-                    tech.dokus.features.ai.models.ClassifiedDocumentType.CREDIT_NOTE ->
-                        tech.dokus.features.ai.models.DocumentAIResult.CreditNote(
-                            classification = classification,
-                            extractedData = extraction,
-                            confidence = result.confidence,
-                            warnings = result.judgment.issuesForUser,
-                            rawText = extraction.extractedText ?: ""
-                        )
-
-                    tech.dokus.features.ai.models.ClassifiedDocumentType.PRO_FORMA ->
-                        tech.dokus.features.ai.models.DocumentAIResult.ProForma(
-                            classification = classification,
-                            extractedData = extraction,
-                            confidence = result.confidence,
-                            warnings = result.judgment.issuesForUser,
-                            rawText = extraction.extractedText ?: ""
-                        )
-
-                    else ->
-                        tech.dokus.features.ai.models.DocumentAIResult.Invoice(
-                            classification = classification,
-                            extractedData = extraction,
-                            confidence = result.confidence,
-                            warnings = result.judgment.issuesForUser,
-                            rawText = extraction.extractedText ?: ""
-                        )
-                }
             }
 
-            is tech.dokus.features.ai.models.ExtractedBillData ->
-                tech.dokus.features.ai.models.DocumentAIResult.Bill(
-                    classification = classification,
-                    extractedData = extraction,
-                    confidence = result.confidence,
-                    warnings = result.judgment.issuesForUser,
-                    rawText = extraction.extractedText ?: ""
-                )
-
-            is tech.dokus.features.ai.models.ExtractedReceiptData ->
-                tech.dokus.features.ai.models.DocumentAIResult.Receipt(
-                    classification = classification,
-                    extractedData = extraction,
-                    confidence = result.confidence,
-                    warnings = result.judgment.issuesForUser,
-                    rawText = extraction.extractedText ?: ""
-                )
-
-            is tech.dokus.features.ai.models.ExtractedExpenseData ->
-                tech.dokus.features.ai.models.DocumentAIResult.Expense(
-                    classification = classification,
-                    extractedData = extraction,
-                    confidence = result.confidence,
-                    warnings = result.judgment.issuesForUser,
-                    rawText = extraction.extractedText ?: ""
-                )
-
-            else -> {
-                logger.warn("Unknown extraction type: ${extraction?.javaClass?.name}")
+            is OrchestratorResult.Failed -> {
+                logger.error("Document $documentId failed: ${result.reason} at ${result.stage}")
+                ingestionRepository.markAsFailed(runId, "Failed: ${result.reason}")
                 null
             }
         }

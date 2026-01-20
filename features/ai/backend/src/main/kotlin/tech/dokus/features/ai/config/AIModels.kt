@@ -10,6 +10,11 @@ import tech.dokus.foundation.backend.config.IntelligenceMode
  *
  * Model selection is fully delegated to IntelligenceMode - this class only
  * handles the creation of LLModel instances with proper capabilities.
+ *
+ * Architecture: Single orchestrator with vision model for extraction.
+ * - orchestrator: Text model for reasoning and tool calling
+ * - vision: Vision model for document classification and extraction
+ * - chat: Text model for RAG-based document Q&A
  */
 object AIModels {
 
@@ -23,9 +28,8 @@ object AIModels {
      * Get all models for a given intelligence mode.
      */
     fun forMode(mode: IntelligenceMode): ModelSet = ModelSet(
-        classification = createModel(mode.classificationModel),
-        fastExtraction = createModel(mode.fastExtractionModel),
-        expertExtraction = createModel(mode.expertExtractionModel),
+        orchestrator = createModel(mode.orchestratorModel),
+        vision = createModel(mode.visionModel),
         chat = createModel(mode.chatModel)
     )
 
@@ -50,8 +54,10 @@ object AIModels {
  * Complete set of models for a given intelligence mode.
  */
 data class ModelSet(
-    val classification: LLModel,
-    val fastExtraction: LLModel,
-    val expertExtraction: LLModel,
+    /** Model for orchestrator reasoning and tool calling (text-only) */
+    val orchestrator: LLModel,
+    /** Model for vision tasks (classification, extraction) */
+    val vision: LLModel,
+    /** Model for RAG-based chat */
     val chat: LLModel
 )

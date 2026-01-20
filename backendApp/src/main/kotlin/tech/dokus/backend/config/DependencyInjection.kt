@@ -50,23 +50,14 @@ import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.utils.json
-import tech.dokus.features.ai.agents.DocumentClassificationAgent
-import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
-import tech.dokus.features.ai.coordinator.AutonomousProcessingCoordinator
-import tech.dokus.features.ai.judgment.JudgmentAgent
-import tech.dokus.features.ai.models.ExtractedBillData
-import tech.dokus.features.ai.models.ExtractedExpenseData
-import tech.dokus.features.ai.models.ExtractedInvoiceData
-import tech.dokus.features.ai.models.ExtractedReceiptData
-import tech.dokus.features.ai.prompts.AgentPrompt
-import tech.dokus.features.ai.retry.FeedbackDrivenRetryAgent
-import tech.dokus.features.ai.retry.RetryConfig
+import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
+import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
-import tech.dokus.features.ai.validation.ExtractionAuditService
+import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
@@ -316,220 +307,62 @@ private val contactsModule = module {
 }
 
 private fun processorModule(appConfig: AppBaseConfig) = module {
+    // =========================================================================
+    // Document Processing Services
+    // =========================================================================
+
     // Document Image Service (converts PDFs/images to PNG for vision processing)
     single { DocumentImageService() }
 
-    // Optional RAG services - can be enabled when embeddings are needed
-    // single { ChunkingService() }
-    // single { EmbeddingService(appConfig.ai) }
+    // RAG services
+    single { ChunkingService() }
+    single { EmbeddingService(get(), get<AIConfig>()) }
+
+    // Example repository for few-shot learning
+    single<ExampleRepository> { DocumentExamplesRepository() }
 
     // =========================================================================
-    // 5-Layer Autonomous Processing Coordinator
+    // Document Orchestrator
     // =========================================================================
 
-    // Get intelligence mode and models once (single source of truth)
+    // Get intelligence mode and models (single source of truth)
     val mode = appConfig.ai.mode
     val models = AIModels.forMode(mode)
 
-    // Create shared executor for all agents (with throttling based on mode)
+    // Create shared executor for all AI operations
     single<PromptExecutor> { AIProviderFactory.createOpenAiExecutor(appConfig.ai) }
 
-    // Audit service for validation (Layer 3)
-    single { ExtractionAuditService() }
-
-    // Classification agent (Layer 0)
+    // Document Orchestrator - single orchestrator with tool calling
+    // NOTE: Full orchestrator wiring with tools requires additional setup.
+    // For now, we provide the core orchestrator without tool registry.
+    // The tool registry should be configured in the worker with access to
+    // repositories and services.
     single {
-        DocumentClassificationAgent(
+        DocumentOrchestrator(
             executor = get(),
-            model = models.classification,
-            prompt = AgentPrompt.DocumentClassification
-        )
-    }
-
-    // Invoice extraction agents (fast + expert)
-    single(qualifier = named("invoiceFast")) {
-        ExtractionAgent<ExtractedInvoiceData>(
-            executor = get(),
-            model = models.fastExtraction,
-            prompt = AgentPrompt.Extraction.Invoice,
-            userPromptPrefix = "Extract invoice data from this",
-            promptId = "invoice-extractor-fast",
-            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
-        )
-    }
-    single(qualifier = named("invoiceExpert")) {
-        ExtractionAgent<ExtractedInvoiceData>(
-            executor = get(),
-            model = models.expertExtraction,
-            prompt = AgentPrompt.Extraction.Invoice,
-            userPromptPrefix = "Extract invoice data from this",
-            promptId = "invoice-extractor-expert",
-            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
-        )
-    }
-
-    // Bill extraction agents (fast + expert)
-    single(qualifier = named("billFast")) {
-        ExtractionAgent<ExtractedBillData>(
-            executor = get(),
-            model = models.fastExtraction,
-            prompt = AgentPrompt.Extraction.Bill,
-            userPromptPrefix = "Extract bill/supplier invoice data from this",
-            promptId = "bill-extractor-fast",
-            emptyResult = { ExtractedBillData(confidence = 0.0) }
-        )
-    }
-    single(qualifier = named("billExpert")) {
-        ExtractionAgent<ExtractedBillData>(
-            executor = get(),
-            model = models.expertExtraction,
-            prompt = AgentPrompt.Extraction.Bill,
-            userPromptPrefix = "Extract bill/supplier invoice data from this",
-            promptId = "bill-extractor-expert",
-            emptyResult = { ExtractedBillData(confidence = 0.0) }
-        )
-    }
-
-    // Receipt extraction agents (fast + expert)
-    single(qualifier = named("receiptFast")) {
-        ExtractionAgent<ExtractedReceiptData>(
-            executor = get(),
-            model = models.fastExtraction,
-            prompt = AgentPrompt.Extraction.Receipt,
-            userPromptPrefix = "Extract receipt data from this",
-            promptId = "receipt-extractor-fast",
-            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
-        )
-    }
-    single(qualifier = named("receiptExpert")) {
-        ExtractionAgent<ExtractedReceiptData>(
-            executor = get(),
-            model = models.expertExtraction,
-            prompt = AgentPrompt.Extraction.Receipt,
-            userPromptPrefix = "Extract receipt data from this",
-            promptId = "receipt-extractor-expert",
-            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
-        )
-    }
-
-    // Expense extraction agents (fast + expert)
-    single(qualifier = named("expenseFast")) {
-        ExtractionAgent<ExtractedExpenseData>(
-            executor = get(),
-            model = models.fastExtraction,
-            prompt = AgentPrompt.Extraction.Expense,
-            userPromptPrefix = "Extract expense data from this",
-            promptId = "expense-extractor-fast",
-            emptyResult = { ExtractedExpenseData(confidence = 0.0) }
-        )
-    }
-    single(qualifier = named("expenseExpert")) {
-        ExtractionAgent<ExtractedExpenseData>(
-            executor = get(),
-            model = models.expertExtraction,
-            prompt = AgentPrompt.Extraction.Expense,
-            userPromptPrefix = "Extract expense data from this",
-            promptId = "expense-extractor-expert",
-            emptyResult = { ExtractedExpenseData(confidence = 0.0) }
-        )
-    }
-
-    // Retry agents (Layer 4) - using expert model for retries
-    single(qualifier = named("invoiceRetry")) {
-        val auditService = get<ExtractionAuditService>()
-        FeedbackDrivenRetryAgent.create<ExtractedInvoiceData>(
-            executor = get(),
-            model = models.expertExtraction,
-            basePrompt = AgentPrompt.Extraction.Invoice,
-            promptId = "invoice-retry",
-            serializer = ExtractedInvoiceData.serializer(),
-            config = RetryConfig.DEFAULT,
-            validator = { auditService.auditInvoice(it) }
-        )
-    }
-    single(qualifier = named("billRetry")) {
-        val auditService = get<ExtractionAuditService>()
-        FeedbackDrivenRetryAgent.create<ExtractedBillData>(
-            executor = get(),
-            model = models.expertExtraction,
-            basePrompt = AgentPrompt.Extraction.Bill,
-            promptId = "bill-retry",
-            serializer = ExtractedBillData.serializer(),
-            config = RetryConfig.DEFAULT,
-            validator = { auditService.auditBill(it) }
-        )
-    }
-    single(qualifier = named("receiptRetry")) {
-        val auditService = get<ExtractionAuditService>()
-        FeedbackDrivenRetryAgent.create<ExtractedReceiptData>(
-            executor = get(),
-            model = models.expertExtraction,
-            basePrompt = AgentPrompt.Extraction.Receipt,
-            promptId = "receipt-retry",
-            serializer = ExtractedReceiptData.serializer(),
-            config = RetryConfig.DEFAULT,
-            validator = { auditService.auditReceipt(it) }
-        )
-    }
-    single(qualifier = named("expenseRetry")) {
-        val auditService = get<ExtractionAuditService>()
-        FeedbackDrivenRetryAgent.create<ExtractedExpenseData>(
-            executor = get(),
-            model = models.expertExtraction,
-            basePrompt = AgentPrompt.Extraction.Expense,
-            promptId = "expense-retry",
-            serializer = ExtractedExpenseData.serializer(),
-            config = RetryConfig.DEFAULT,
-            validator = { auditService.auditExpense(it) }
-        )
-    }
-
-    // Autonomous Processing Coordinator (5-Layer Pipeline) - uses IntelligenceMode directly
-    single {
-        AutonomousProcessingCoordinator(
-            classificationAgent = get(),
+            orchestratorModel = models.orchestrator,
+            visionModel = models.vision,
+            toolRegistry = ai.koog.agents.core.tools.ToolRegistry { },  // Empty for now
             mode = mode
         )
-            .withInvoiceAgents(
-                fastAgent = get(qualifier = named("invoiceFast")),
-                expertAgent = get(qualifier = named("invoiceExpert"))
-            )
-            .withBillAgents(
-                fastAgent = get(qualifier = named("billFast")),
-                expertAgent = get(qualifier = named("billExpert"))
-            )
-            .withReceiptAgents(
-                fastAgent = get(qualifier = named("receiptFast")),
-                expertAgent = get(qualifier = named("receiptExpert"))
-            )
-            .withExpenseAgents(
-                fastAgent = get(qualifier = named("expenseFast")),
-                expertAgent = get(qualifier = named("expenseExpert"))
-            )
-            .withRetryAgents(
-                invoiceRetry = get(qualifier = named("invoiceRetry")),
-                billRetry = get(qualifier = named("billRetry")),
-                receiptRetry = get(qualifier = named("receiptRetry")),
-                expenseRetry = get(qualifier = named("expenseRetry"))
-            )
-            .withJudgmentAgent(JudgmentAgent.deterministic())
     }
 
+    // Document Processing Worker
     single {
         DocumentProcessingWorker(
             ingestionRepository = get(),
             documentStorage = get<DocumentStorageService>(),
-            coordinator = get(),
+            orchestrator = get(),
             documentImageService = get(),
             config = appConfig.processor,
             mode = mode,
             draftRepository = get(),
             contactMatchingService = get(),
             tenantRepository = get(),
-            // RAG chunking/embedding - use repositories from foundation:database
-            chunkingService = getOrNull<ChunkingService>(),
-            embeddingService = getOrNull<EmbeddingService>(),
-            chunkRepository = getOrNull<ChunkRepository>()
+            // RAG services
+            chunkingService = get<ChunkingService>(),
+            embeddingService = get<EmbeddingService>(),
+            chunkRepository = get<ChunkRepository>()
         )
     }
 }
