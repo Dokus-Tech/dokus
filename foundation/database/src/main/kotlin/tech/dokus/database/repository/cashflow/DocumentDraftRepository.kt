@@ -42,6 +42,8 @@ data class DraftSummary(
     val documentType: DocumentType?,
     val extractedData: ExtractedDocumentData?,
     val aiDraftData: ExtractedDocumentData?,
+    val aiDescription: String? = null,
+    val aiKeywords: List<String> = emptyList(),
     val aiDraftSourceRunId: IngestionRunId?,
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
@@ -81,12 +83,15 @@ class DocumentDraftRepository : DraftStatusChecker {
         runId: IngestionRunId,
         extractedData: ExtractedDocumentData,
         documentType: DocumentType,
+        aiDescription: String? = null,
+        aiKeywords: List<String> = emptyList(),
         force: Boolean = false
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
         val tenantIdUuid = UUID.fromString(tenantId.toString())
         val runIdUuid = UUID.fromString(runId.toString())
+        val keywordsJson = aiKeywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
 
         // Check if draft exists and get current state
         val existing = DocumentDraftsTable.selectAll()
@@ -104,6 +109,8 @@ class DocumentDraftRepository : DraftStatusChecker {
                 it[draftStatus] = DraftStatus.NeedsReview
                 it[DocumentDraftsTable.documentType] = documentType
                 it[aiDraftData] = json.encodeToString(extractedData)
+                it[DocumentDraftsTable.aiDescription] = aiDescription?.takeIf { value -> value.isNotBlank() }
+                it[DocumentDraftsTable.aiKeywords] = keywordsJson
                 it[aiDraftSourceRunId] = runIdUuid
                 it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
                 it[lastSuccessfulRunId] = runIdUuid
@@ -124,6 +131,8 @@ class DocumentDraftRepository : DraftStatusChecker {
                 // ai_draft_data: set only if null (immutable)
                 if (!hasAiDraft) {
                     it[aiDraftData] = json.encodeToString(extractedData)
+                    it[DocumentDraftsTable.aiDescription] = aiDescription?.takeIf { value -> value.isNotBlank() }
+                    it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runIdUuid
                 }
 
@@ -132,6 +141,12 @@ class DocumentDraftRepository : DraftStatusChecker {
                     it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
                     it[DocumentDraftsTable.documentType] = documentType
                     it[draftStatus] = DraftStatus.NeedsReview
+                    if (!aiDescription.isNullOrBlank()) {
+                        it[DocumentDraftsTable.aiDescription] = aiDescription
+                    }
+                    if (keywordsJson != null) {
+                        it[DocumentDraftsTable.aiKeywords] = keywordsJson
+                    }
                 }
 
                 it[lastSuccessfulRunId] = runIdUuid
@@ -410,6 +425,8 @@ class DocumentDraftRepository : DraftStatusChecker {
             documentType = this[DocumentDraftsTable.documentType],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
             aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },
+            aiDescription = this[DocumentDraftsTable.aiDescription],
+            aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
             aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]
                 ?.let { IngestionRunId.parse(it.toString()) },
             draftVersion = this[DocumentDraftsTable.draftVersion],

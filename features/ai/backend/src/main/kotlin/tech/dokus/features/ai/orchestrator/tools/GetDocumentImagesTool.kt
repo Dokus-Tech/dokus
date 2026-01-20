@@ -24,14 +24,21 @@ class GetDocumentImagesTool(
         Use this tool first to get the document images before classification or extraction.
         Returns base64-encoded PNG images for each page.
 
-        For PDFs, renders up to 10 pages at 150 DPI.
+        For PDFs, renders up to 10 pages at 150 DPI by default.
+        You can override with maxPages and dpi.
         For images, converts to PNG format.
     """.trimIndent()
 ) {
     @Serializable
     data class Args(
         @property:LLMDescription("The document ID to convert to images")
-        val documentId: String
+        val documentId: String,
+
+        @property:LLMDescription("Optional max pages to render (default: 10)")
+        val maxPages: Int? = null,
+
+        @property:LLMDescription("Optional DPI for PDF rendering (default: 150)")
+        val dpi: Int? = null
     )
 
     /**
@@ -61,7 +68,9 @@ class GetDocumentImagesTool(
         return try {
             val result = documentImageService.getDocumentImages(
                 documentBytes = documentData.bytes,
-                mimeType = documentData.mimeType
+                mimeType = documentData.mimeType,
+                maxPages = args.maxPages ?: 10,
+                dpi = args.dpi ?: 150
             )
 
             // Return structured information about the images

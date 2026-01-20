@@ -44,6 +44,8 @@ data class DocumentDraftDto(
     val documentType: DocumentType?,
     val extractedData: ExtractedDocumentData?,
     val aiDraftData: ExtractedDocumentData?, // Original immutable AI extraction (for diff display)
+    val aiDescription: String? = null,
+    val aiKeywords: List<String> = emptyList(),
     val aiDraftSourceRunId: IngestionRunId?, // Which run produced ai_draft_data
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,

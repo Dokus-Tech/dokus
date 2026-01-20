@@ -7,6 +7,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
@@ -20,7 +21,8 @@ import java.security.MessageDigest
  * during RAG-based chat and search.
  */
 class StoreChunksTool(
-    private val chunkRepository: ChunkRepository
+    private val chunkRepository: ChunkRepository,
+    private val indexingUpdater: (suspend (runId: String, status: IndexingStatus, chunksCount: Int?, errorMessage: String?) -> Boolean)? = null
 ) : SimpleTool<StoreChunksTool.Args>(
     argsSerializer = Args.serializer(),
     name = "store_chunks",
@@ -40,6 +42,9 @@ class StoreChunksTool(
 
         @property:LLMDescription("The tenant ID")
         val tenantId: String,
+
+        @property:LLMDescription("Optional ingestion run ID to update indexing status")
+        val runId: String? = null,
 
         @property:LLMDescription(
             "JSON array of chunks with format: [{\"content\": \"...\", \"embedding\": [0.1, 0.2, ...], " +
@@ -93,8 +98,25 @@ class StoreChunksTool(
                 chunks = chunksToStore
             )
 
+            if (args.runId != null && indexingUpdater != null) {
+                indexingUpdater.invoke(
+                    args.runId,
+                    IndexingStatus.Succeeded,
+                    chunksToStore.size,
+                    null
+                )
+            }
+
             "SUCCESS: Stored ${chunksToStore.size} chunks for document ${args.documentId}"
         } catch (e: Exception) {
+            if (args.runId != null && indexingUpdater != null) {
+                indexingUpdater.invoke(
+                    args.runId,
+                    IndexingStatus.Failed,
+                    null,
+                    e.message
+                )
+            }
             "ERROR: Failed to store chunks: ${e.message}"
         }
     }

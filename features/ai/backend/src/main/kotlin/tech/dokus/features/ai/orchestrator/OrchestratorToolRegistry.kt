@@ -3,7 +3,6 @@ package tech.dokus.features.ai.orchestrator
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
-import kotlinx.serialization.json.JsonElement
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.features.ai.models.ExtractedDocumentData
@@ -60,18 +59,12 @@ object OrchestratorToolRegistry {
         val chunkRepository: ChunkRepository,
         val cbeApiClient: CbeApiClient?,
         val tenantContext: AgentPrompt.TenantContext,
+        val indexingUpdater: (suspend (runId: String, status: tech.dokus.domain.enums.IndexingStatus, chunksCount: Int?, errorMessage: String?) -> Boolean)?,
 
         // Function hooks for database operations
         val documentFetcher: suspend (documentId: String) -> GetDocumentImagesTool.DocumentData?,
         val peppolDataFetcher: suspend (documentId: String) -> ExtractedDocumentData?,
-        val storeExtraction: suspend (
-            documentId: String,
-            tenantId: String,
-            extraction: JsonElement,
-            description: String,
-            keywords: List<String>,
-            confidence: Double
-        ) -> Boolean,
+        val storeExtraction: suspend (StoreExtractionTool.Payload) -> Boolean,
         val contactLookup: suspend (tenantId: String, vatNumber: String) -> LookupContactTool.ContactInfo?,
         val contactCreator: suspend (
             tenantId: String,
@@ -136,7 +129,7 @@ object OrchestratorToolRegistry {
 
             // Storage tools
             tool(StoreExtractionTool(config.storeExtraction))
-            tool(StoreChunksTool(config.chunkRepository))
+            tool(StoreChunksTool(config.chunkRepository, config.indexingUpdater))
             tool(IndexAsExampleTool(config.exampleRepository))
 
             // Lookup tools
@@ -145,6 +138,74 @@ object OrchestratorToolRegistry {
             tool(CreateContactTool(config.contactCreator))
 
             // Validation tools (existing)
+            tool(VerifyTotalsTool)
+            tool(ValidateOgmTool)
+            tool(ValidateIbanTool)
+            if (config.cbeApiClient != null) {
+                tool(LookupCompanyTool(config.cbeApiClient))
+            }
+        }
+    }
+
+    /**
+     * Create a processing-focused registry.
+     *
+     * Excludes storage/contact tools so the orchestrator focuses on
+     * understanding, extraction, validation, and enrichment. Persistence
+     * remains handled by the worker pipeline.
+     */
+    fun createProcessing(config: Config): ToolRegistry {
+        return ToolRegistry {
+            // Document tools
+            tool(GetDocumentImagesTool(config.documentImageService, config.documentFetcher))
+            tool(GetPeppolDataTool(config.peppolDataFetcher))
+
+            // Vision tools
+            tool(
+                SeeDocumentTool(
+                    executor = config.executor,
+                    model = config.visionModel,
+                    prompt = AgentPrompt.DocumentClassification,
+                    tenantContext = config.tenantContext
+                )
+            )
+            tool(
+                ExtractInvoiceTool(
+                    executor = config.executor,
+                    model = config.visionModel,
+                    prompt = AgentPrompt.Extraction.Invoice
+                )
+            )
+            tool(
+                ExtractBillTool(
+                    executor = config.executor,
+                    model = config.visionModel,
+                    prompt = AgentPrompt.Extraction.Bill
+                )
+            )
+            tool(
+                ExtractReceiptTool(
+                    executor = config.executor,
+                    model = config.visionModel,
+                    prompt = AgentPrompt.Extraction.Receipt
+                )
+            )
+            tool(
+                ExtractExpenseTool(
+                    executor = config.executor,
+                    model = config.visionModel,
+                    prompt = AgentPrompt.Extraction.Expense
+                )
+            )
+
+            // Enrichment tools
+            tool(GenerateDescriptionTool)
+            tool(GenerateKeywordsTool)
+
+            // Lookup tools
+            tool(FindSimilarDocumentTool(config.exampleRepository))
+
+            // Validation tools
             tool(VerifyTotalsTool)
             tool(ValidateOgmTool)
             tool(ValidateIbanTool)

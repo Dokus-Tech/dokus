@@ -47,13 +47,33 @@ import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
+import tech.dokus.database.repository.processor.ProcessorIngestionRepository
+import tech.dokus.domain.Name
+import tech.dokus.domain.enums.ContactSource
+import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
+import tech.dokus.features.ai.models.ClassifiedDocumentType
+import tech.dokus.features.ai.models.toDomainType
+import tech.dokus.features.ai.models.toExtractedDocumentData
 import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
+import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
+import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
+import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
@@ -331,13 +351,144 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     // Create shared executor for all AI operations
     single<PromptExecutor> { AIProviderFactory.createOpenAiExecutor(appConfig.ai) }
 
-    // Document Orchestrator - vision-based extraction with example learning
+    // Document Orchestrator - tool-calling orchestrator with vision tools
     single {
         DocumentOrchestrator(
             executor = get(),
+            orchestratorModel = models.orchestrator,
             visionModel = models.vision,
             mode = mode,
-            exampleRepository = get()
+            exampleRepository = get(),
+            documentImageService = get(),
+            chunkingService = get(),
+            embeddingService = get(),
+            chunkRepository = get(),
+            cbeApiClient = getOrNull(),
+            indexingUpdater = { runId, status, chunksCount, errorMessage ->
+                get<ProcessorIngestionRepository>().updateIndexingStatus(
+                    runId = runId,
+                    status = status,
+                    chunksCount = chunksCount,
+                    errorMessage = errorMessage
+                )
+            },
+            documentFetcher = { documentId, tenantId ->
+                runCatching {
+                    val tenant = TenantId.parse(tenantId)
+                    val doc = get<DocumentRepository>().getById(tenant, DocumentId.parse(documentId))
+                        ?: return@runCatching null
+                    val bytes = get<DocumentStorageService>().downloadDocument(doc.storageKey)
+                    GetDocumentImagesTool.DocumentData(bytes = bytes, mimeType = doc.contentType)
+                }.getOrNull()
+            },
+            peppolDataFetcher = { _ -> null },
+            contactLookup = { tenantId, vatNumber ->
+                val tenant = TenantId.parse(tenantId)
+                val contact = get<ContactRepository>().findByVatNumber(tenant, vatNumber).getOrNull()
+                    ?: return@DocumentOrchestrator null
+
+                val address = listOfNotNull(
+                    contact.addressLine1,
+                    contact.city,
+                    contact.postalCode,
+                    contact.country
+                ).joinToString(", ").ifBlank { null }
+
+                LookupContactTool.ContactInfo(
+                    id = contact.id.toString(),
+                    name = contact.name.value,
+                    vatNumber = contact.vatNumber?.value ?: vatNumber,
+                    address = address
+                )
+            },
+            contactCreator = { tenantId, name, vatNumber, _ ->
+                val request = CreateContactRequest(
+                    name = Name(name),
+                    vatNumber = vatNumber?.let { VatNumber(it) },
+                    source = ContactSource.AI
+                )
+                val created = get<ContactRepository>().createContact(TenantId.parse(tenantId), request)
+                created.fold(
+                    onSuccess = {
+                        CreateContactTool.CreateResult(
+                            success = true,
+                            contactId = it.id.toString(),
+                            error = null
+                        )
+                    },
+                    onFailure = {
+                        CreateContactTool.CreateResult(
+                            success = false,
+                            contactId = null,
+                            error = it.message
+                        )
+                    }
+                )
+            },
+            storeExtraction = { payload ->
+                val ingestionRepository = get<ProcessorIngestionRepository>()
+                val draftRepository = get<DocumentDraftRepository>()
+                val runId = payload.runId
+                    ?: ingestionRepository.findProcessingRunId(payload.tenantId, payload.documentId)
+                    ?: return@DocumentOrchestrator false
+
+                val classifiedType = payload.documentType
+                    ?.trim()
+                    ?.uppercase()
+                    ?.let { runCatching { ClassifiedDocumentType.valueOf(it) }.getOrNull() }
+                val documentType = classifiedType?.toDomainType() ?: DocumentType.Unknown
+
+                val extractedData = payload.extraction.toExtractedDocumentData(documentType)
+                    ?: if (documentType == DocumentType.Unknown) {
+                        ExtractedDocumentData(
+                            documentType = DocumentType.Unknown,
+                            rawText = payload.rawText
+                        )
+                    } else {
+                        return@DocumentOrchestrator false
+                    }
+
+                val meetsThreshold = payload.confidence >= DocumentOrchestrator.AUTO_CONFIRM_THRESHOLD
+
+                val stored = ingestionRepository.markAsSucceeded(
+                    runId = runId,
+                    tenantId = payload.tenantId,
+                    documentId = payload.documentId,
+                    documentType = documentType,
+                    extractedData = extractedData,
+                    confidence = payload.confidence,
+                    rawText = payload.rawText,
+                    description = payload.description,
+                    keywords = payload.keywords,
+                    meetsThreshold = meetsThreshold,
+                    force = false
+                )
+
+                if (!stored) return@DocumentOrchestrator false
+
+                val contactId = payload.contactId
+                    ?.let { runCatching { ContactId.parse(it) }.getOrNull() }
+                    ?: return@DocumentOrchestrator true
+
+                val tenant = TenantId.parse(payload.tenantId)
+                val document = DocumentId.parse(payload.documentId)
+                val draft = draftRepository.getByDocumentId(document, tenant)
+                if (draft != null &&
+                    draft.linkedContactId == null &&
+                    draft.counterpartyIntent != CounterpartyIntent.Pending &&
+                    draft.draftVersion == 0
+                ) {
+                    draftRepository.updateContactSuggestion(
+                        documentId = document,
+                        tenantId = tenant,
+                        contactId = contactId,
+                        confidence = payload.contactConfidence,
+                        reason = payload.contactReason
+                    )
+                }
+
+                true
+            }
         )
     }
 
@@ -345,18 +496,10 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single {
         DocumentProcessingWorker(
             ingestionRepository = get(),
-            documentStorage = get<DocumentStorageService>(),
             orchestrator = get(),
-            documentImageService = get(),
             config = appConfig.processor,
             mode = mode,
-            draftRepository = get(),
-            contactMatchingService = get(),
-            tenantRepository = get(),
-            // RAG services
-            chunkingService = get<ChunkingService>(),
-            embeddingService = get<EmbeddingService>(),
-            chunkRepository = get<ChunkRepository>()
+            tenantRepository = get()
         )
     }
 }

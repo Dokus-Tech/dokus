@@ -59,6 +59,12 @@ object DocumentDraftsTable : Table("document_drafts") {
     // Preserves the AI's initial extraction for audit purposes
     val aiDraftData = text("ai_draft_data").nullable()
 
+    // AI-generated short description for list views
+    val aiDescription = text("ai_description").nullable()
+
+    // AI-generated keywords for search (JSON array)
+    val aiKeywords = text("ai_keywords").nullable()
+
     // Which ingestion run produced the ai_draft_data
     val aiDraftSourceRunId = uuid("ai_draft_source_run_id")
         .references(DocumentIngestionRunsTable.id, onDelete = ReferenceOption.SET_NULL)

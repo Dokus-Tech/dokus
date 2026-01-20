@@ -28,7 +28,7 @@ object AIModels {
      * Get all models for a given intelligence mode.
      */
     fun forMode(mode: IntelligenceMode): ModelSet = ModelSet(
-        orchestrator = createModel(mode.orchestratorModel),
+        orchestrator = createModel(mode.orchestratorModel, supportsTools = true),
         vision = createModel(mode.visionModel),
         chat = createModel(mode.chatModel)
     )
@@ -39,12 +39,16 @@ object AIModels {
      *
      * Uses LLMProvider.OpenAI for LM Studio compatibility (OpenAI-compatible API).
      */
-    private fun createModel(id: String): LLModel = LLModel(
+    private fun createModel(id: String, supportsTools: Boolean = false): LLModel = LLModel(
         provider = LLMProvider.OpenAI,
         id = id,
         capabilities = buildList {
             add(LLMCapability.Completion)
             add(LLMCapability.OpenAIEndpoint.Completions)
+            if (supportsTools) {
+                add(LLMCapability.Tools)
+                add(LLMCapability.ToolChoice)
+            }
             if (ModelRegistry.isVisionModel(id)) {
                 add(LLMCapability.Vision.Image)
             }

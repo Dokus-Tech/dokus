@@ -11,14 +11,7 @@ import kotlinx.serialization.json.JsonElement
  * Stores the extracted data, description, and keywords in the document record.
  */
 class StoreExtractionTool(
-    private val storeFunction: suspend (
-        documentId: String,
-        tenantId: String,
-        extraction: JsonElement,
-        description: String,
-        keywords: List<String>,
-        confidence: Double
-    ) -> Boolean
+    private val storeFunction: suspend (Payload) -> Boolean
 ) : SimpleTool<StoreExtractionTool.Args>(
     argsSerializer = Args.serializer(),
     name = "store_extraction",
@@ -34,6 +27,24 @@ class StoreExtractionTool(
         Use this tool after successful extraction and validation.
     """.trimIndent()
 ) {
+    /**
+     * Parsed payload passed to the storage callback.
+     */
+    data class Payload(
+        val documentId: String,
+        val tenantId: String,
+        val runId: String?,
+        val documentType: String?,
+        val extraction: JsonElement,
+        val description: String,
+        val keywords: List<String>,
+        val confidence: Double,
+        val rawText: String?,
+        val contactId: String?,
+        val contactConfidence: Float?,
+        val contactReason: String?
+    )
+
     @Serializable
     data class Args(
         @property:LLMDescription("The document ID to store extraction for")
@@ -41,6 +52,12 @@ class StoreExtractionTool(
 
         @property:LLMDescription("The tenant ID")
         val tenantId: String,
+
+        @property:LLMDescription("Optional ingestion run ID to update")
+        val runId: String? = null,
+
+        @property:LLMDescription("Document type (INVOICE, BILL, RECEIPT, EXPENSE, CREDIT_NOTE, PRO_FORMA)")
+        val documentType: String? = null,
 
         @property:LLMDescription("The extraction JSON data")
         val extraction: String,
@@ -52,7 +69,19 @@ class StoreExtractionTool(
         val keywords: String,
 
         @property:LLMDescription("Confidence score (0.0 - 1.0)")
-        val confidence: Double
+        val confidence: Double,
+
+        @property:LLMDescription("Optional raw text extracted from the document")
+        val rawText: String? = null,
+
+        @property:LLMDescription("Optional contact ID to suggest/link")
+        val contactId: String? = null,
+
+        @property:LLMDescription("Optional contact suggestion confidence (0.0 - 1.0)")
+        val contactConfidence: Float? = null,
+
+        @property:LLMDescription("Optional contact suggestion reason")
+        val contactReason: String? = null
     )
 
     private val jsonFormat = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
@@ -63,12 +92,20 @@ class StoreExtractionTool(
             val keywordList = args.keywords.split(",").map { it.trim() }.filter { it.isNotBlank() }
 
             val success = storeFunction(
-                args.documentId,
-                args.tenantId,
-                extractionJson,
-                args.description,
-                keywordList,
-                args.confidence
+                Payload(
+                    documentId = args.documentId,
+                    tenantId = args.tenantId,
+                    runId = args.runId,
+                    documentType = args.documentType,
+                    extraction = extractionJson,
+                    description = args.description,
+                    keywords = keywordList,
+                    confidence = args.confidence,
+                    rawText = args.rawText,
+                    contactId = args.contactId,
+                    contactConfidence = args.contactConfidence,
+                    contactReason = args.contactReason
+                )
             )
 
             if (success) {

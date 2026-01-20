@@ -162,6 +162,42 @@ class ProcessorIngestionRepository {
         }
 
     /**
+     * Find the latest processing run ID for a document.
+     *
+     * Used as a fallback when a tool call doesn't include runId.
+     * Returns the most recent run in Processing status for the given document and tenant.
+     */
+    suspend fun findProcessingRunId(
+        tenantId: String,
+        documentId: String
+    ): String? = newSuspendedTransaction {
+        DocumentIngestionRunsTable
+            .selectAll()
+            .where {
+                (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId)) and
+                    (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId)) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
+            }
+            .orderBy(DocumentIngestionRunsTable.startedAt to SortOrder.DESC)
+            .limit(1)
+            .singleOrNull()
+            ?.get(DocumentIngestionRunsTable.id)
+            ?.value
+            ?.toString()
+    }
+
+    /**
+     * Get the current ingestion status for a run ID.
+     */
+    suspend fun getRunStatus(runId: String): IngestionStatus? = newSuspendedTransaction {
+        DocumentIngestionRunsTable
+            .selectAll()
+            .where { DocumentIngestionRunsTable.id eq UUID.fromString(runId) }
+            .singleOrNull()
+            ?.get(DocumentIngestionRunsTable.status)
+    }
+
+    /**
      * Mark an ingestion run as successfully completed.
      *
      * This also creates or updates the document draft with the extraction results.
@@ -183,6 +219,8 @@ class ProcessorIngestionRepository {
      * @param extractedData The extracted data structure
      * @param confidence Overall confidence score (0.0 - 1.0)
      * @param rawText Raw OCR/extracted text
+     * @param description AI-generated short description (optional)
+     * @param keywords AI-generated keywords (optional)
      * @param meetsThreshold Result of AI-layer threshold check (from DocumentAIResult.meetsMinimalThreshold())
      * @param force If true, overwrite extracted_data even if user has edited
      */
@@ -194,6 +232,8 @@ class ProcessorIngestionRepository {
         extractedData: ExtractedDocumentData,
         confidence: Double,
         rawText: String?,
+        description: String? = null,
+        keywords: List<String> = emptyList(),
         meetsThreshold: Boolean,
         force: Boolean = false
     ): Boolean {
@@ -208,6 +248,7 @@ class ProcessorIngestionRepository {
             val extractedDataJson = json.encodeToString(extractedData)
             val fieldConfidencesJson =
                 extractedData.fieldConfidences.let { json.encodeToString(it) }
+            val keywordsJson = keywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
 
             // Update the ingestion run (always, regardless of draft creation)
             val runUpdated = DocumentIngestionRunsTable.update({
@@ -258,6 +299,8 @@ class ProcessorIngestionRepository {
                     it[draftStatus] = calculatedStatus
                     it[DocumentDraftsTable.documentType] = documentType
                     it[aiDraftData] = extractedDataJson
+                    it[DocumentDraftsTable.aiDescription] = description?.takeIf { value -> value.isNotBlank() }
+                    it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runUuid
                     it[DocumentDraftsTable.extractedData] = extractedDataJson
                     it[draftVersion] = 0
@@ -285,17 +328,25 @@ class ProcessorIngestionRepository {
                     it[lastSuccessfulRunId] = runUuid
                     it[updatedAt] = now
 
-                    if (shouldSetAiDraft) {
-                        it[aiDraftData] = extractedDataJson
-                        it[aiDraftSourceRunId] = runUuid
-                    }
+                if (shouldSetAiDraft) {
+                    it[aiDraftData] = extractedDataJson
+                    it[DocumentDraftsTable.aiDescription] = description?.takeIf { value -> value.isNotBlank() }
+                    it[DocumentDraftsTable.aiKeywords] = keywordsJson
+                    it[aiDraftSourceRunId] = runUuid
+                }
 
-                    if (shouldSetExtracted) {
-                        it[DocumentDraftsTable.extractedData] = extractedDataJson
-                        // Update status when we update extracted data
-                        it[draftStatus] = calculatedStatus
+                if (shouldSetExtracted) {
+                    it[DocumentDraftsTable.extractedData] = extractedDataJson
+                    // Update status when we update extracted data
+                    it[draftStatus] = calculatedStatus
+                    if (!description.isNullOrBlank()) {
+                        it[DocumentDraftsTable.aiDescription] = description
+                    }
+                    if (keywordsJson != null) {
+                        it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     }
                 }
+            }
             }
 
             true
