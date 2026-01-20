@@ -93,7 +93,12 @@ class ConsensusEngine(
             // Payment info (critical fields)
             iban = resolveString("iban", fast.iban, expert.iban, conflicts),
             bic = resolveString("bic", fast.bic, expert.bic, conflicts),
-            paymentReference = resolveString("paymentReference", fast.paymentReference, expert.paymentReference, conflicts),
+            paymentReference = resolveString(
+                "paymentReference",
+                fast.paymentReference,
+                expert.paymentReference,
+                conflicts
+            ),
 
             // Metadata - use higher confidence
             confidence = calculateMergedConfidence(fast.confidence, expert.confidence, conflicts.size),
@@ -150,7 +155,12 @@ class ConsensusEngine(
         return ExtractedBillData(
             // Supplier info
             supplierName = resolveString("supplierName", fast.supplierName, expert.supplierName, conflicts),
-            supplierVatNumber = resolveString("supplierVatNumber", fast.supplierVatNumber, expert.supplierVatNumber, conflicts),
+            supplierVatNumber = resolveString(
+                "supplierVatNumber",
+                fast.supplierVatNumber,
+                expert.supplierVatNumber,
+                conflicts
+            ),
             supplierAddress = resolveString("supplierAddress", fast.supplierAddress, expert.supplierAddress, conflicts),
 
             // Bill details
@@ -275,7 +285,12 @@ class ConsensusEngine(
         return ExtractedReceiptData(
             merchantName = resolveString("merchantName", fast.merchantName, expert.merchantName, conflicts),
             merchantAddress = resolveString("merchantAddress", fast.merchantAddress, expert.merchantAddress, conflicts),
-            merchantVatNumber = resolveString("merchantVatNumber", fast.merchantVatNumber, expert.merchantVatNumber, conflicts),
+            merchantVatNumber = resolveString(
+                "merchantVatNumber",
+                fast.merchantVatNumber,
+                expert.merchantVatNumber,
+                conflicts
+            ),
             receiptNumber = resolveString("receiptNumber", fast.receiptNumber, expert.receiptNumber, conflicts),
             transactionDate = resolveString("transactionDate", fast.transactionDate, expert.transactionDate, conflicts),
             transactionTime = resolveString("transactionTime", fast.transactionTime, expert.transactionTime, conflicts),
@@ -286,7 +301,12 @@ class ConsensusEngine(
             totalAmount = resolveAmount("totalAmount", fast.totalAmount, expert.totalAmount, conflicts),
             paymentMethod = resolveString("paymentMethod", fast.paymentMethod, expert.paymentMethod, conflicts),
             cardLastFour = resolveString("cardLastFour", fast.cardLastFour, expert.cardLastFour, conflicts),
-            suggestedCategory = resolveString("suggestedCategory", fast.suggestedCategory, expert.suggestedCategory, conflicts),
+            suggestedCategory = resolveString(
+                "suggestedCategory",
+                fast.suggestedCategory,
+                expert.suggestedCategory,
+                conflicts
+            ),
             confidence = calculateMergedConfidence(fast.confidence, expert.confidence, conflicts.size),
             extractedText = expert.extractedText ?: fast.extractedText,
             provenance = expert.provenance ?: fast.provenance

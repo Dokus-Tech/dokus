@@ -36,8 +36,11 @@ object AIModels {
     private fun createModel(id: String): LLModel = LLModel(
         provider = LLMProvider.Ollama,
         id = id,
-        capabilities = if (ModelRegistry.isVisionModel(id))
-            listOf(LLMCapability.Vision.Image) else emptyList(),
+        capabilities = if (ModelRegistry.isVisionModel(id)) {
+            listOf(LLMCapability.Vision.Image)
+        } else {
+            emptyList()
+        },
         contextLength = ModelRegistry.contextLength(id),
         maxOutputTokens = null
     )

@@ -54,8 +54,14 @@ object BelgianVatRateValidator {
      * Categories eligible for 6% reduced rate.
      */
     private val REDUCED_RATE_CATEGORIES = setOf(
-        "FOOD", "WATER", "BOOKS", "NEWSPAPERS", "PHARMACEUTICALS",
-        "MEDICAL", "RENOVATION", "SOCIAL_HOUSING"
+        "FOOD",
+        "WATER",
+        "BOOKS",
+        "NEWSPAPERS",
+        "PHARMACEUTICALS",
+        "MEDICAL",
+        "RENOVATION",
+        "SOCIAL_HOUSING"
     )
 
     /**
@@ -107,7 +113,9 @@ object BelgianVatRateValidator {
             AuditCheck.warning(
                 type = CheckType.VAT_RATE,
                 field = "vatRate",
-                message = "Unusual VAT rate: ~${formatRate(impliedRateBp)} (nearest standard: ${formatRate(closestRate)})",
+                message = "Unusual VAT rate: ~${formatRate(
+                    impliedRateBp
+                )} (nearest standard: ${formatRate(closestRate)})",
                 hint = buildUnusualRateHint(impliedRateBp, closestRate),
                 expected = formatRate(closestRate),
                 actual = "~${formatRate(impliedRateBp)}"

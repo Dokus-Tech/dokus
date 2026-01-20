@@ -1,9 +1,7 @@
 package tech.dokus.features.ai.judgment
 
-import tech.dokus.features.ai.ensemble.ConflictReport
 import tech.dokus.features.ai.ensemble.ConflictSeverity
 import tech.dokus.features.ai.retry.RetryResult
-import tech.dokus.features.ai.validation.AuditReport
 import tech.dokus.features.ai.validation.AuditStatus
 
 /**
@@ -69,7 +67,9 @@ class JudgmentCriteria(
             val failures = context.auditReport.criticalFailures
             return JudgmentDecision.reject(
                 confidence = 0.85,
-                reasoning = "Critical validation failures remain after ${getRetryAttempts(context.retryResult!!)} retry attempts",
+                reasoning = "Critical validation failures remain after ${getRetryAttempts(
+                    context.retryResult!!
+                )} retry attempts",
                 issues = failures.map { "${it.type}: ${it.message}" },
                 retryAttempts = getRetryAttempts(context.retryResult)
             )
@@ -103,7 +103,9 @@ class JudgmentCriteria(
         if (hasCriticalConflicts && config.requireConsensusForAutoApprove) {
             val conflicts = context.consensusReport!!.conflicts
                 .filter { it.severity == ConflictSeverity.CRITICAL }
-            issues.addAll(conflicts.map { "Model disagreement on ${it.field}: '${it.fastValue}' vs '${it.expertValue}'" })
+            issues.addAll(
+                conflicts.map { "Model disagreement on ${it.field}: '${it.fastValue}' vs '${it.expertValue}'" }
+            )
         }
 
         // 7. Too many warnings
@@ -117,7 +119,9 @@ class JudgmentCriteria(
 
         // 8. Confidence below auto-approve threshold
         if (context.extractionConfidence < config.autoApproveMinConfidence) {
-            issues.add("Extraction confidence ${formatPercent(context.extractionConfidence)} below auto-approve threshold")
+            issues.add(
+                "Extraction confidence ${formatPercent(context.extractionConfidence)} below auto-approve threshold"
+            )
         }
 
         // =====================================================================

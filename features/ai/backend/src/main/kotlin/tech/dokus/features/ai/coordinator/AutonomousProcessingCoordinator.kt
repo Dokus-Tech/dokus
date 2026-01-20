@@ -2,6 +2,8 @@ package tech.dokus.features.ai.coordinator
 
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
 import tech.dokus.features.ai.agents.ExtractionAgent
+import tech.dokus.features.ai.coordinator.validators.EssentialFieldsCheck
+import tech.dokus.features.ai.coordinator.validators.EssentialFieldsValidator
 import tech.dokus.features.ai.ensemble.ConflictReport
 import tech.dokus.features.ai.ensemble.ConsensusEngine
 import tech.dokus.features.ai.ensemble.ConsensusResult
@@ -19,8 +21,6 @@ import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.retry.FeedbackDrivenRetryAgent
 import tech.dokus.features.ai.retry.RetryResult
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
-import tech.dokus.features.ai.coordinator.validators.EssentialFieldsCheck
-import tech.dokus.features.ai.coordinator.validators.EssentialFieldsValidator
 import tech.dokus.features.ai.validation.AuditReport
 import tech.dokus.features.ai.validation.AuditStatus
 import tech.dokus.features.ai.validation.ExtractionAuditService

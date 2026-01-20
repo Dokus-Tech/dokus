@@ -1,5 +1,6 @@
 package tech.dokus.backend.config
 
+import ai.koog.prompt.executor.model.PromptExecutor
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -331,7 +332,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     val models = AIModels.forMode(mode)
 
     // Create shared executor for all agents (with throttling based on mode)
-    single { AIProviderFactory.createExecutor(appConfig.ai) }
+    single<PromptExecutor> { AIProviderFactory.createOpenAiExecutor(appConfig.ai) }
 
     // Audit service for validation (Layer 3)
     single { ExtractionAuditService() }

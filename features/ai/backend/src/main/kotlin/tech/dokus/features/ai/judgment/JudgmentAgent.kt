@@ -12,7 +12,6 @@ import tech.dokus.features.ai.ensemble.ConflictReport
 import tech.dokus.features.ai.ensemble.ConflictSeverity
 import tech.dokus.features.ai.retry.RetryResult
 import tech.dokus.features.ai.validation.AuditReport
-import tech.dokus.features.ai.validation.AuditStatus
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
@@ -199,7 +198,9 @@ class JudgmentAgent(
                 val severity = if (conflict.severity == ConflictSeverity.CRITICAL) "CRITICAL" else "Warning"
                 appendLine("  - [$severity] ${conflict.field}: '${conflict.fastValue}' vs '${conflict.expertValue}'")
             }
-            appendLine("  Critical conflicts: ${context.consensusReport.conflicts.count { it.severity == ConflictSeverity.CRITICAL }}")
+            appendLine(
+                "  Critical conflicts: ${context.consensusReport.conflicts.count { it.severity == ConflictSeverity.CRITICAL }}"
+            )
         }
         appendLine()
 
