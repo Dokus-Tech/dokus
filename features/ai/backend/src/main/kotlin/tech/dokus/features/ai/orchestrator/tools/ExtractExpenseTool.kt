@@ -71,6 +71,8 @@ class ExtractExpenseTool(
                 action = "extract_expense",
                 tool = name,
                 durationMs = 0,
+                input = null,
+                output = null,
                 notes = "error=${e.message}"
             )
             return "ERROR: ${e.message}"
@@ -93,6 +95,8 @@ class ExtractExpenseTool(
             action = "extract_expense",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
+            input = null,
+            output = null,
             notes = "confidence=${result.confidence}"
         )
 

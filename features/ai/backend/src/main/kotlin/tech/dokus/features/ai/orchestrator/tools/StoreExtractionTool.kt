@@ -149,6 +149,8 @@ class StoreExtractionTool(
                 action = "store_extraction",
                 tool = name,
                 durationMs = start.elapsedNow().inWholeMilliseconds,
+                input = null,
+                output = null,
                 notes = "documentId=${args.documentId}, success=$success"
             )
 
@@ -162,6 +164,8 @@ class StoreExtractionTool(
                 action = "store_extraction",
                 tool = name,
                 durationMs = 0,
+                input = null,
+                output = null,
                 notes = "documentId=${args.documentId}, error=${e.message}"
             )
             "ERROR: Failed to store extraction: ${e.message}"

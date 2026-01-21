@@ -166,6 +166,8 @@ class DocumentOrchestrator(
                 action = "orchestrator_run_failed",
                 tool = "document-orchestrator",
                 durationMs = 0,
+                input = null,
+                output = null,
                 notes = e.message
             )
             return OrchestratorResult.Failed(
@@ -179,7 +181,10 @@ class DocumentOrchestrator(
         traceCollector.record(
             action = "orchestrator_run_completed",
             tool = "document-orchestrator",
-            durationMs = duration.inWholeMilliseconds
+            durationMs = duration.inWholeMilliseconds,
+            input = null,
+            output = null,
+            notes = null
         )
 
         val parsed = parseAgentOutputWithRepair(rawResponse, traceCollector)
@@ -385,6 +390,8 @@ class DocumentOrchestrator(
             action = "orchestrator_output_invalid",
             tool = "document-orchestrator",
             durationMs = 0,
+            input = null,
+            output = null,
             notes = "attempting_repair"
         )
 
@@ -442,7 +449,11 @@ class DocumentOrchestrator(
                 id = "orchestrator-output-repair",
                 systemPrompt = repairPrompt
             )
-            agent.run("Fix this output:\n$truncated")
+            try {
+                agent.run("Fix this output:\n$truncated")
+            } finally {
+                runCatching { agent.close() }
+            }
         } catch (e: Exception) {
             logger.error("Failed to repair orchestrator output", e)
             null
@@ -476,6 +487,8 @@ class DocumentOrchestrator(
             action = "fallback_store_extraction",
             tool = "store_extraction",
             durationMs = 0,
+            input = null,
+            output = null,
             notes = "storeCalled=$storeCalled, storeSucceeded=$storeSucceeded"
         )
 
@@ -506,6 +519,8 @@ class DocumentOrchestrator(
             action = "fallback_store_extraction_result",
             tool = "store_extraction",
             durationMs = 0,
+            input = null,
+            output = null,
             notes = "success=$success"
         )
 
