@@ -7,6 +7,7 @@ import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.models.ExtractedExpenseData
@@ -91,12 +92,13 @@ class ExtractExpenseTool(
         // Run extraction
         val start = kotlin.time.TimeSource.Monotonic.markNow()
         val result = agent.extract(documentImages)
+        val outputJson = jsonFormat.decodeFromString<JsonElement>(jsonFormat.encodeToString(result))
         traceSink?.record(
             action = "extract_expense",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
             input = null,
-            output = null,
+            output = outputJson,
             notes = "confidence=${result.confidence}"
         )
 

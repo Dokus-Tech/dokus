@@ -7,6 +7,7 @@ import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.DocumentImageCache
@@ -73,12 +74,13 @@ class SeeDocumentTool(
         val agent = DocumentClassificationAgent(executor, model, prompt)
         val start = kotlin.time.TimeSource.Monotonic.markNow()
         val result = agent.classify(documentImages, tenantContext)
+        val outputJson = jsonFormat.decodeFromString<JsonElement>(jsonFormat.encodeToString(result))
         traceSink?.record(
             action = "classify_document",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
             input = null,
-            output = null,
+            output = outputJson,
             notes = "type=${result.documentType}, confidence=${result.confidence}"
         )
 
