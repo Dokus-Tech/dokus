@@ -1,5 +1,6 @@
 package tech.dokus.backend.config
 
+import ai.koog.prompt.executor.model.PromptExecutor
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -12,7 +13,6 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -36,6 +36,7 @@ import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.backend.services.documents.ContactLinkingService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.DocumentProcessingWorker
@@ -43,29 +44,42 @@ import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.database.DokusSchema
 import tech.dokus.database.di.repositoryModules
+import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
+import tech.dokus.database.repository.processor.ProcessorIngestionRepository
+import tech.dokus.domain.Name
+import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.ContactSource
+import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.ContactEvidence
+import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
-import tech.dokus.features.ai.agents.DocumentClassificationAgent
-import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
-import tech.dokus.features.ai.coordinator.AutonomousProcessingCoordinator
-import tech.dokus.features.ai.judgment.JudgmentAgent
-import tech.dokus.features.ai.models.ExtractedBillData
-import tech.dokus.features.ai.models.ExtractedExpenseData
-import tech.dokus.features.ai.models.ExtractedInvoiceData
-import tech.dokus.features.ai.models.ExtractedReceiptData
-import tech.dokus.features.ai.prompts.AgentPrompt
-import tech.dokus.features.ai.retry.FeedbackDrivenRetryAgent
-import tech.dokus.features.ai.retry.RetryConfig
+import tech.dokus.features.ai.models.ClassifiedDocumentType
+import tech.dokus.features.ai.models.toDomainType
+import tech.dokus.features.ai.models.toExtractedDocumentData
+import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
+import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
+import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
+import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
-import tech.dokus.features.ai.validation.ExtractionAuditService
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
@@ -315,220 +329,224 @@ private val contactsModule = module {
 }
 
 private fun processorModule(appConfig: AppBaseConfig) = module {
+    // =========================================================================
+    // Document Processing Services
+    // =========================================================================
+
     // Document Image Service (converts PDFs/images to PNG for vision processing)
     single { DocumentImageService() }
 
-    // Optional RAG services - can be enabled when embeddings are needed
-    // single { ChunkingService() }
-    // single { EmbeddingService(appConfig.ai) }
+    // RAG services
+    single { ChunkingService() }
+    single { EmbeddingService(get(), get<AIConfig>()) }
+
+    // Example repository for few-shot learning
+    single<ExampleRepository> { DocumentExamplesRepository() }
+
+    // Contact linking policy applier (AI decisions)
+    single { ContactLinkingService(get(), get(), appConfig.processor.linkingPolicy) }
 
     // =========================================================================
-    // 5-Layer Autonomous Processing Coordinator
+    // Document Orchestrator
     // =========================================================================
 
-    // Get intelligence mode and models once (single source of truth)
+    // Get intelligence mode and models (single source of truth)
     val mode = appConfig.ai.mode
     val models = AIModels.forMode(mode)
 
-    // Create shared executor for all agents (with throttling based on mode)
-    single { AIProviderFactory.createExecutor(appConfig.ai) }
+    // Create shared executor for all AI operations
+    single<PromptExecutor> { AIProviderFactory.createOpenAiExecutor(appConfig.ai) }
 
-    // Audit service for validation (Layer 3)
-    single { ExtractionAuditService() }
-
-    // Classification agent (Layer 0)
+    // Document Orchestrator - tool-calling orchestrator with vision tools
     single {
-        DocumentClassificationAgent(
+        DocumentOrchestrator(
             executor = get(),
-            model = models.classification,
-            prompt = AgentPrompt.DocumentClassification
+            orchestratorModel = models.orchestrator,
+            visionModel = models.vision,
+            mode = mode,
+            exampleRepository = get(),
+            documentImageService = get(),
+            chunkingService = get(),
+            embeddingService = get(),
+            chunkRepository = get(),
+            cbeApiClient = getOrNull(),
+            linkingPolicy = appConfig.processor.linkingPolicy,
+            indexingUpdater = { runId, status, chunksCount, errorMessage ->
+                get<ProcessorIngestionRepository>().updateIndexingStatus(
+                    runId = runId,
+                    status = status,
+                    chunksCount = chunksCount,
+                    errorMessage = errorMessage
+                )
+            },
+            documentFetcher = { documentId, tenantId ->
+                runCatching {
+                    val tenant = TenantId.parse(tenantId)
+                    val doc = get<DocumentRepository>().getById(tenant, DocumentId.parse(documentId))
+                        ?: return@runCatching null
+                    val bytes = get<DocumentStorageService>().downloadDocument(doc.storageKey)
+                    GetDocumentImagesTool.DocumentData(bytes = bytes, mimeType = doc.contentType)
+                }.getOrNull()
+            },
+            peppolDataFetcher = { _ -> null },
+            contactLookup = { tenantId, vatNumber ->
+                val tenant = TenantId.parse(tenantId)
+                val contact = get<ContactRepository>().findByVatNumber(tenant, vatNumber).getOrNull()
+                    ?: return@DocumentOrchestrator null
+
+                val address = listOfNotNull(
+                    contact.addressLine1,
+                    contact.city,
+                    contact.postalCode,
+                    contact.country
+                ).joinToString(", ").ifBlank { null }
+
+                LookupContactTool.ContactInfo(
+                    id = contact.id.toString(),
+                    name = contact.name.value,
+                    vatNumber = contact.vatNumber?.value ?: vatNumber,
+                    address = address
+                )
+            },
+            contactCreator = { tenantId, name, vatNumber, _ ->
+                val normalizedVat = vatNumber?.takeIf { it.isNotBlank() }
+                    ?: return@DocumentOrchestrator CreateContactTool.CreateResult(
+                        success = false,
+                        contactId = null,
+                        error = "VAT number required for contact creation"
+                    )
+
+                val vat = VatNumber(normalizedVat)
+                if (!vat.isValid) {
+                    return@DocumentOrchestrator CreateContactTool.CreateResult(
+                        success = false,
+                        contactId = null,
+                        error = "Invalid VAT number"
+                    )
+                }
+
+                val tenant = TenantId.parse(tenantId)
+                val existing = get<ContactRepository>()
+                    .findByVatNumber(tenant, vat.value)
+                    .getOrNull()
+                if (existing != null) {
+                    return@DocumentOrchestrator CreateContactTool.CreateResult(
+                        success = false,
+                        contactId = null,
+                        error = "Contact already exists"
+                    )
+                }
+
+                val request = CreateContactRequest(
+                    name = Name(name),
+                    vatNumber = vat,
+                    source = ContactSource.AI
+                )
+                val created = get<ContactRepository>().createContact(tenant, request)
+                created.fold(
+                    onSuccess = {
+                        CreateContactTool.CreateResult(
+                            success = true,
+                            contactId = it.id.toString(),
+                            error = null
+                        )
+                    },
+                    onFailure = {
+                        CreateContactTool.CreateResult(
+                            success = false,
+                            contactId = null,
+                            error = it.message
+                        )
+                    }
+                )
+            },
+            storeExtraction = { payload ->
+                val ingestionRepository = get<ProcessorIngestionRepository>()
+                val draftRepository = get<DocumentDraftRepository>()
+                val contactLinkingService = get<ContactLinkingService>()
+                val runId = payload.runId
+                    ?: ingestionRepository.findProcessingRunId(payload.tenantId, payload.documentId)
+                    ?: return@DocumentOrchestrator false
+
+                val classifiedType = payload.documentType
+                    ?.trim()
+                    ?.uppercase()
+                    ?.let { runCatching { ClassifiedDocumentType.valueOf(it) }.getOrNull() }
+                val documentType = classifiedType?.toDomainType() ?: DocumentType.Unknown
+
+                val extractedData = payload.extraction.toExtractedDocumentData(documentType)
+                    ?: if (documentType == DocumentType.Unknown) {
+                        ExtractedDocumentData(
+                            documentType = DocumentType.Unknown,
+                            rawText = payload.rawText
+                        )
+                    } else {
+                        return@DocumentOrchestrator false
+                    }
+
+                val meetsThreshold = payload.confidence >= DocumentOrchestrator.AUTO_CONFIRM_THRESHOLD
+
+                val stored = ingestionRepository.markAsSucceeded(
+                    runId = runId,
+                    tenantId = payload.tenantId,
+                    documentId = payload.documentId,
+                    documentType = documentType,
+                    extractedData = extractedData,
+                    confidence = payload.confidence,
+                    rawText = payload.rawText,
+                    description = payload.description,
+                    keywords = payload.keywords,
+                    meetsThreshold = meetsThreshold,
+                    force = false
+                )
+
+                if (!stored) return@DocumentOrchestrator false
+
+                val decisionType = payload.linkDecisionType
+                val decisionContactId = payload.linkDecisionContactId?.takeIf { it.isNotBlank() }
+                    ?: payload.contactId?.takeIf { it.isNotBlank() }
+                val contactId = decisionContactId
+                    ?.let { runCatching { ContactId.parse(it) }.getOrNull() }
+                    ?: return@DocumentOrchestrator true
+
+                val tenant = TenantId.parse(payload.tenantId)
+                val document = DocumentId.parse(payload.documentId)
+                val draft = draftRepository.getByDocumentId(document, tenant)
+                if (draft != null &&
+                    draft.linkedContactId == null &&
+                    draft.counterpartyIntent != CounterpartyIntent.Pending &&
+                    draft.draftVersion == 0
+                ) {
+                    val evidenceFromPayload = payload.linkDecisionEvidence?.let {
+                        runCatching { json.decodeFromString<ContactEvidence>(it) }.getOrNull()
+                    }
+
+                    contactLinkingService.applyLinkDecision(
+                        tenantId = tenant,
+                        documentId = document,
+                        documentType = documentType,
+                        extractedData = extractedData,
+                        decisionType = decisionType,
+                        contactId = contactId,
+                        decisionReason = payload.linkDecisionReason ?: payload.contactReason,
+                        decisionConfidence = payload.linkDecisionConfidence ?: payload.contactConfidence,
+                        evidence = evidenceFromPayload
+                    )
+                }
+
+                true
+            }
         )
     }
 
-    // Invoice extraction agents (fast + expert)
-    single(qualifier = named("invoiceFast")) {
-        ExtractionAgent<ExtractedInvoiceData>(
-            executor = get(),
-            model = models.fastExtraction,
-            prompt = AgentPrompt.Extraction.Invoice,
-            userPromptPrefix = "Extract invoice data from this",
-            promptId = "invoice-extractor-fast",
-            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
-        )
-    }
-    single(qualifier = named("invoiceExpert")) {
-        ExtractionAgent<ExtractedInvoiceData>(
-            executor = get(),
-            model = models.expertExtraction,
-            prompt = AgentPrompt.Extraction.Invoice,
-            userPromptPrefix = "Extract invoice data from this",
-            promptId = "invoice-extractor-expert",
-            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
-        )
-    }
-
-    // Bill extraction agents (fast + expert)
-    single(qualifier = named("billFast")) {
-        ExtractionAgent<ExtractedBillData>(
-            executor = get(),
-            model = models.fastExtraction,
-            prompt = AgentPrompt.Extraction.Bill,
-            userPromptPrefix = "Extract bill/supplier invoice data from this",
-            promptId = "bill-extractor-fast",
-            emptyResult = { ExtractedBillData(confidence = 0.0) }
-        )
-    }
-    single(qualifier = named("billExpert")) {
-        ExtractionAgent<ExtractedBillData>(
-            executor = get(),
-            model = models.expertExtraction,
-            prompt = AgentPrompt.Extraction.Bill,
-            userPromptPrefix = "Extract bill/supplier invoice data from this",
-            promptId = "bill-extractor-expert",
-            emptyResult = { ExtractedBillData(confidence = 0.0) }
-        )
-    }
-
-    // Receipt extraction agents (fast + expert)
-    single(qualifier = named("receiptFast")) {
-        ExtractionAgent<ExtractedReceiptData>(
-            executor = get(),
-            model = models.fastExtraction,
-            prompt = AgentPrompt.Extraction.Receipt,
-            userPromptPrefix = "Extract receipt data from this",
-            promptId = "receipt-extractor-fast",
-            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
-        )
-    }
-    single(qualifier = named("receiptExpert")) {
-        ExtractionAgent<ExtractedReceiptData>(
-            executor = get(),
-            model = models.expertExtraction,
-            prompt = AgentPrompt.Extraction.Receipt,
-            userPromptPrefix = "Extract receipt data from this",
-            promptId = "receipt-extractor-expert",
-            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
-        )
-    }
-
-    // Expense extraction agents (fast + expert)
-    single(qualifier = named("expenseFast")) {
-        ExtractionAgent<ExtractedExpenseData>(
-            executor = get(),
-            model = models.fastExtraction,
-            prompt = AgentPrompt.Extraction.Expense,
-            userPromptPrefix = "Extract expense data from this",
-            promptId = "expense-extractor-fast",
-            emptyResult = { ExtractedExpenseData(confidence = 0.0) }
-        )
-    }
-    single(qualifier = named("expenseExpert")) {
-        ExtractionAgent<ExtractedExpenseData>(
-            executor = get(),
-            model = models.expertExtraction,
-            prompt = AgentPrompt.Extraction.Expense,
-            userPromptPrefix = "Extract expense data from this",
-            promptId = "expense-extractor-expert",
-            emptyResult = { ExtractedExpenseData(confidence = 0.0) }
-        )
-    }
-
-    // Retry agents (Layer 4) - using expert model for retries
-    single(qualifier = named("invoiceRetry")) {
-        val auditService = get<ExtractionAuditService>()
-        FeedbackDrivenRetryAgent.create<ExtractedInvoiceData>(
-            executor = get(),
-            model = models.expertExtraction,
-            basePrompt = AgentPrompt.Extraction.Invoice,
-            promptId = "invoice-retry",
-            serializer = ExtractedInvoiceData.serializer(),
-            config = RetryConfig.DEFAULT,
-            validator = { auditService.auditInvoice(it) }
-        )
-    }
-    single(qualifier = named("billRetry")) {
-        val auditService = get<ExtractionAuditService>()
-        FeedbackDrivenRetryAgent.create<ExtractedBillData>(
-            executor = get(),
-            model = models.expertExtraction,
-            basePrompt = AgentPrompt.Extraction.Bill,
-            promptId = "bill-retry",
-            serializer = ExtractedBillData.serializer(),
-            config = RetryConfig.DEFAULT,
-            validator = { auditService.auditBill(it) }
-        )
-    }
-    single(qualifier = named("receiptRetry")) {
-        val auditService = get<ExtractionAuditService>()
-        FeedbackDrivenRetryAgent.create<ExtractedReceiptData>(
-            executor = get(),
-            model = models.expertExtraction,
-            basePrompt = AgentPrompt.Extraction.Receipt,
-            promptId = "receipt-retry",
-            serializer = ExtractedReceiptData.serializer(),
-            config = RetryConfig.DEFAULT,
-            validator = { auditService.auditReceipt(it) }
-        )
-    }
-    single(qualifier = named("expenseRetry")) {
-        val auditService = get<ExtractionAuditService>()
-        FeedbackDrivenRetryAgent.create<ExtractedExpenseData>(
-            executor = get(),
-            model = models.expertExtraction,
-            basePrompt = AgentPrompt.Extraction.Expense,
-            promptId = "expense-retry",
-            serializer = ExtractedExpenseData.serializer(),
-            config = RetryConfig.DEFAULT,
-            validator = { auditService.auditExpense(it) }
-        )
-    }
-
-    // Autonomous Processing Coordinator (5-Layer Pipeline) - uses IntelligenceMode directly
-    single {
-        AutonomousProcessingCoordinator(
-            classificationAgent = get(),
-            mode = mode
-        )
-            .withInvoiceAgents(
-                fastAgent = get(qualifier = named("invoiceFast")),
-                expertAgent = get(qualifier = named("invoiceExpert"))
-            )
-            .withBillAgents(
-                fastAgent = get(qualifier = named("billFast")),
-                expertAgent = get(qualifier = named("billExpert"))
-            )
-            .withReceiptAgents(
-                fastAgent = get(qualifier = named("receiptFast")),
-                expertAgent = get(qualifier = named("receiptExpert"))
-            )
-            .withExpenseAgents(
-                fastAgent = get(qualifier = named("expenseFast")),
-                expertAgent = get(qualifier = named("expenseExpert"))
-            )
-            .withRetryAgents(
-                invoiceRetry = get(qualifier = named("invoiceRetry")),
-                billRetry = get(qualifier = named("billRetry")),
-                receiptRetry = get(qualifier = named("receiptRetry")),
-                expenseRetry = get(qualifier = named("expenseRetry"))
-            )
-            .withJudgmentAgent(JudgmentAgent.deterministic())
-    }
-
+    // Document Processing Worker
     single {
         DocumentProcessingWorker(
             ingestionRepository = get(),
-            documentStorage = get<DocumentStorageService>(),
-            coordinator = get(),
-            documentImageService = get(),
+            orchestrator = get(),
             config = appConfig.processor,
             mode = mode,
-            draftRepository = get(),
-            contactMatchingService = get(),
-            tenantRepository = get(),
-            // RAG chunking/embedding - use repositories from foundation:database
-            chunkingService = getOrNull<ChunkingService>(),
-            embeddingService = getOrNull<EmbeddingService>(),
-            chunkRepository = getOrNull<ChunkRepository>()
+            tenantRepository = get()
         )
     }
 }

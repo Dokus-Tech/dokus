@@ -6,13 +6,14 @@ package tech.dokus.foundation.backend.config
  *
  * This is the SINGLE SOURCE OF TRUTH for:
  * - Hardware assumptions
- * - Model selection
- * - Execution strategy (sequential vs parallel)
+ * - Model selection (orchestrator, vision, chat)
  * - Self-correction and retry behavior
  * - Concurrency budgets
  *
  * Philosophy:
  * "How much can the system be trusted to operate without human intervention?"
+ *
+ * Architecture: Single orchestrator with tool calling, no ensemble.
  */
 sealed interface IntelligenceMode {
 
@@ -37,20 +38,18 @@ sealed interface IntelligenceMode {
      * Model profile
      * ---------------------------------------------------------------------- */
 
-    val classificationModel: String
-    val fastExtractionModel: String
-    val expertExtractionModel: String
+    /** Model for orchestrator reasoning (text-only, tool calling) */
+    val orchestratorModel: String
+
+    /** Model for vision tasks (classification, extraction) */
+    val visionModel: String
+
+    /** Model for chat/RAG */
     val chatModel: String
 
     /* -------------------------------------------------------------------------
      * Processing strategy
      * ---------------------------------------------------------------------- */
-
-    /** Whether fast + expert ensemble extraction is allowed */
-    val enableEnsemble: Boolean
-
-    /** Whether extraction agents may run in parallel */
-    val parallelExtraction: Boolean
 
     /** Whether self-correction loops are allowed */
     val enableSelfCorrection: Boolean
@@ -99,15 +98,12 @@ sealed interface IntelligenceMode {
         override val minRamGb = 8
         override val parallelCapable = false
 
-        // Models
-        override val classificationModel = "qwen3-vl:2b"
-        override val fastExtractionModel = "qwen3-vl:2b"
-        override val expertExtractionModel = "qwen3-vl:8b"
-        override val chatModel = "qwen3:8b"
+        // Models (LM Studio format: qwen/qwen3-vl-8b)
+        override val orchestratorModel = "qwen/qwen3-32b"
+        override val visionModel = "qwen/qwen3-vl-8b"
+        override val chatModel = "qwen/qwen3-32b"
 
         // Processing
-        override val enableEnsemble = false
-        override val parallelExtraction = false
         override val enableSelfCorrection = false
         override val maxRetries = 1
 
@@ -126,8 +122,9 @@ sealed interface IntelligenceMode {
      * Philosophy: "I run the operation, you supervise."
      *
      * Characteristics:
-     * - Sequential ensemble (fast → expert)
-     * - Validation and retries
+     * - Single orchestrator with tool calling
+     * - Validation and self-correction
+     * - Example-based few-shot learning
      * - Deterministic, stable behavior
      */
     data object Autonomous : IntelligenceMode {
@@ -139,15 +136,12 @@ sealed interface IntelligenceMode {
         override val minRamGb = 32
         override val parallelCapable = false
 
-        // Models
-        override val classificationModel = "qwen3-vl:8b"
-        override val fastExtractionModel = "qwen3-vl:8b"
-        override val expertExtractionModel = "qwen3-vl:32b"
-        override val chatModel = "qwen3:32b"
+        // Models (LM Studio format: qwen/qwen3-vl-8b)
+        override val orchestratorModel = "qwen/qwen3-32b"
+        override val visionModel = "qwen/qwen3-vl-8b"
+        override val chatModel = "qwen/qwen3-32b"
 
         // Processing
-        override val enableEnsemble = true
-        override val parallelExtraction = false
         override val enableSelfCorrection = true
         override val maxRetries = 2
 
@@ -166,8 +160,9 @@ sealed interface IntelligenceMode {
      * Philosophy: "The system governs itself."
      *
      * Characteristics:
-     * - Parallel agents
-     * - Deep self-correction
+     * - Orchestrator with advanced tool calling
+     * - Deep self-correction (up to 3 retries)
+     * - Example-based few-shot learning
      * - Cross-document reasoning
      * - Highest autonomy and throughput
      */
@@ -180,15 +175,12 @@ sealed interface IntelligenceMode {
         override val minRamGb = 128
         override val parallelCapable = true
 
-        // Models - max available
-        override val classificationModel = "qwen3-vl:8b"
-        override val fastExtractionModel = "qwen3-vl:8b"
-        override val expertExtractionModel = "qwen3-vl:32b"
-        override val chatModel = "qwen3:32b"
+        // Models (LM Studio format: qwen/qwen3-vl-8b)
+        override val orchestratorModel = "qwen/qwen3-32b"
+        override val visionModel = "qwen/qwen3-vl-8b"
+        override val chatModel = "qwen/qwen3-32b"
 
         // Processing
-        override val enableEnsemble = true
-        override val parallelExtraction = true
         override val enableSelfCorrection = true
         override val maxRetries = 3
 

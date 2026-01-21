@@ -10,11 +10,16 @@ import tech.dokus.foundation.backend.config.IntelligenceMode
  *
  * Model selection is fully delegated to IntelligenceMode - this class only
  * handles the creation of LLModel instances with proper capabilities.
+ *
+ * Architecture: Single orchestrator with vision model for extraction.
+ * - orchestrator: Text model for reasoning and tool calling
+ * - vision: Vision model for document classification and extraction
+ * - chat: Text model for RAG-based document Q&A
  */
 object AIModels {
 
-    /** Embedding model name (for Ollama API calls) */
-    const val EMBEDDING_MODEL_NAME = "nomic-embed-text"
+    /** Embedding model name (LM Studio format) */
+    const val EMBEDDING_MODEL_NAME = "text-embedding-nomic-embed-text-v1.5"
 
     /** Embedding dimensions for nomic-embed-text */
     const val EMBEDDING_DIMENSIONS = 768
@@ -23,21 +28,31 @@ object AIModels {
      * Get all models for a given intelligence mode.
      */
     fun forMode(mode: IntelligenceMode): ModelSet = ModelSet(
-        classification = createModel(mode.classificationModel),
-        fastExtraction = createModel(mode.fastExtractionModel),
-        expertExtraction = createModel(mode.expertExtractionModel),
+        orchestrator = createModel(mode.orchestratorModel, supportsTools = true),
+        vision = createModel(mode.visionModel),
         chat = createModel(mode.chatModel)
     )
 
     /**
      * Create an LLModel from a model ID.
      * Uses ModelRegistry for deterministic context length lookup.
+     *
+     * Uses LLMProvider.OpenAI for LM Studio compatibility (OpenAI-compatible API).
      */
-    private fun createModel(id: String): LLModel = LLModel(
-        provider = LLMProvider.Ollama,
+    private fun createModel(id: String, supportsTools: Boolean = false): LLModel = LLModel(
+        provider = LLMProvider.OpenAI,
         id = id,
-        capabilities = if (ModelRegistry.isVisionModel(id))
-            listOf(LLMCapability.Vision.Image) else emptyList(),
+        capabilities = buildList {
+            add(LLMCapability.Completion)
+            add(LLMCapability.OpenAIEndpoint.Completions)
+            if (supportsTools) {
+                add(LLMCapability.Tools)
+                add(LLMCapability.ToolChoice)
+            }
+            if (ModelRegistry.isVisionModel(id)) {
+                add(LLMCapability.Vision.Image)
+            }
+        },
         contextLength = ModelRegistry.contextLength(id),
         maxOutputTokens = null
     )
@@ -47,8 +62,10 @@ object AIModels {
  * Complete set of models for a given intelligence mode.
  */
 data class ModelSet(
-    val classification: LLModel,
-    val fastExtraction: LLModel,
-    val expertExtraction: LLModel,
+    /** Model for orchestrator reasoning and tool calling (text-only) */
+    val orchestrator: LLModel,
+    /** Model for vision tasks (classification, extraction) */
+    val vision: LLModel,
+    /** Model for RAG-based chat */
     val chat: LLModel
 )

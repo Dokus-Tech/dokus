@@ -9,7 +9,8 @@ import com.typesafe.config.Config
  */
 data class AIConfig(
     val mode: IntelligenceMode,
-    val ollamaHost: String
+    val ollamaHost: String,
+    val lmStudioHost: String
 ) {
     companion object {
         /**
@@ -18,7 +19,8 @@ data class AIConfig(
         fun fromConfig(config: Config): AIConfig {
             val mode = IntelligenceMode.fromConfigValue(config.getString("mode"))
             val ollamaHost = config.getString("ollama-host")
-            return AIConfig(mode = mode, ollamaHost = ollamaHost)
+            val lmStudioHost = config.getString("lm-studio-host")
+            return AIConfig(mode = mode, ollamaHost = ollamaHost, lmStudioHost = lmStudioHost)
         }
     }
 }

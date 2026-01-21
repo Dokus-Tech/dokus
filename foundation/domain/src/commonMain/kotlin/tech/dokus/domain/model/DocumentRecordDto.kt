@@ -13,6 +13,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.enums.ContactLinkSource
 
 /**
  * Document ingestion run DTO - represents a single AI extraction attempt.
@@ -44,6 +45,8 @@ data class DocumentDraftDto(
     val documentType: DocumentType?,
     val extractedData: ExtractedDocumentData?,
     val aiDraftData: ExtractedDocumentData?, // Original immutable AI extraction (for diff display)
+    val aiDescription: String? = null,
+    val aiKeywords: List<String> = emptyList(),
     val aiDraftSourceRunId: IngestionRunId?, // Which run produced ai_draft_data
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
@@ -52,6 +55,8 @@ data class DocumentDraftDto(
     val contactSuggestionConfidence: Float?,
     val contactSuggestionReason: String?,
     val linkedContactId: ContactId?,
+    val linkedContactSource: ContactLinkSource? = null,
+    val contactEvidence: ContactEvidence? = null,
     val counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
     val rejectReason: DocumentRejectReason? = null,
     val lastSuccessfulRunId: IngestionRunId?,

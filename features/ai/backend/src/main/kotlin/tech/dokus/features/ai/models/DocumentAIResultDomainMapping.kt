@@ -1,5 +1,8 @@
 package tech.dokus.features.ai.models
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromJsonElement
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.model.ExtractedBillFields
@@ -9,6 +12,7 @@ import tech.dokus.domain.model.ExtractedExpenseFields
 import tech.dokus.domain.model.ExtractedInvoiceFields
 import tech.dokus.domain.model.ExtractedLineItem
 import tech.dokus.domain.model.ExtractedProFormaFields
+import tech.dokus.domain.utils.json
 
 /**
  * Convert DocumentAIResult to domain ExtractedDocumentData.
@@ -195,4 +199,103 @@ private fun ExtractedExpenseData.toExpenseFieldsFromExpense(): ExtractedExpenseF
         category = category?.parseExpenseCategory(),
         description = description
     )
+}
+
+// =============================================================================
+// ClassifiedDocumentType / JsonElement extensions for Orchestrator
+// =============================================================================
+
+/**
+ * Convert ClassifiedDocumentType to domain DocumentType.
+ */
+fun ClassifiedDocumentType.toDomainType(): DocumentType = when (this) {
+    ClassifiedDocumentType.INVOICE -> DocumentType.Invoice
+    ClassifiedDocumentType.CREDIT_NOTE -> DocumentType.CreditNote
+    ClassifiedDocumentType.PRO_FORMA -> DocumentType.ProForma
+    ClassifiedDocumentType.BILL -> DocumentType.Bill
+    ClassifiedDocumentType.RECEIPT -> DocumentType.Receipt
+    ClassifiedDocumentType.EXPENSE -> DocumentType.Expense
+    ClassifiedDocumentType.UNKNOWN -> DocumentType.Unknown
+}
+
+/**
+ * Convert extraction JsonElement to domain ExtractedDocumentData.
+ *
+ * @param documentType The classified document type to determine the extraction model.
+ */
+fun JsonElement.toExtractedDocumentData(documentType: DocumentType): ExtractedDocumentData? {
+    return try {
+        when (documentType) {
+            DocumentType.Invoice -> {
+                val data = json.decodeFromJsonElement<ExtractedInvoiceData>(this)
+                ExtractedDocumentData(
+                    documentType = documentType,
+                    rawText = null,
+                    invoice = data.toInvoiceFields(),
+                    overallConfidence = null,
+                    fieldConfidences = data.provenance?.toFieldConfidences() ?: emptyMap()
+                )
+            }
+
+            DocumentType.Bill -> {
+                val data = json.decodeFromJsonElement<ExtractedBillData>(this)
+                ExtractedDocumentData(
+                    documentType = documentType,
+                    rawText = null,
+                    bill = data.toBillFields(),
+                    overallConfidence = null,
+                    fieldConfidences = data.provenance?.toFieldConfidences() ?: emptyMap()
+                )
+            }
+
+            DocumentType.Receipt -> {
+                val data = json.decodeFromJsonElement<ExtractedReceiptData>(this)
+                ExtractedDocumentData(
+                    documentType = documentType,
+                    rawText = null,
+                    expense = data.toExpenseFields(),
+                    overallConfidence = null,
+                    fieldConfidences = data.provenance?.toFieldConfidences() ?: emptyMap()
+                )
+            }
+
+            DocumentType.Expense -> {
+                val data = json.decodeFromJsonElement<ExtractedExpenseData>(this)
+                ExtractedDocumentData(
+                    documentType = documentType,
+                    rawText = null,
+                    expense = data.toExpenseFieldsFromExpense(),
+                    overallConfidence = null,
+                    fieldConfidences = data.provenance?.toFieldConfidences() ?: emptyMap()
+                )
+            }
+
+            DocumentType.CreditNote -> {
+                val data = json.decodeFromJsonElement<ExtractedInvoiceData>(this)
+                ExtractedDocumentData(
+                    documentType = documentType,
+                    rawText = null,
+                    creditNote = data.toCreditNoteFields(),
+                    overallConfidence = null,
+                    fieldConfidences = data.provenance?.toFieldConfidences() ?: emptyMap()
+                )
+            }
+
+            DocumentType.ProForma -> {
+                val data = json.decodeFromJsonElement<ExtractedInvoiceData>(this)
+                ExtractedDocumentData(
+                    documentType = documentType,
+                    rawText = null,
+                    proForma = data.toProFormaFields(),
+                    overallConfidence = null,
+                    fieldConfidences = data.provenance?.toFieldConfidences() ?: emptyMap()
+                )
+            }
+
+            DocumentType.Unknown -> null
+        }
+    } catch (e: Exception) {
+        // If deserialization fails, return null
+        null
+    }
 }

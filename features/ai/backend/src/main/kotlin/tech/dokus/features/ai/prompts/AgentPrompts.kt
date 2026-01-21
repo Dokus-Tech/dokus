@@ -1,7 +1,5 @@
 package tech.dokus.features.ai.prompts
 
-import tech.dokus.features.ai.models.ClassifiedDocumentType
-
 /**
  * Agent prompts optimized for CORRECTNESS on Belgian business documents.
  *
@@ -14,7 +12,6 @@ import tech.dokus.features.ai.models.ClassifiedDocumentType
  */
 sealed class AgentPrompt {
     abstract val systemPrompt: String
-    open val lightModePrompt: String? = null
 
     /**
      * Build prompt with tenant context.
@@ -655,56 +652,5 @@ sealed class AgentPrompt {
                 ]
             }
         """.trimIndent()
-    }
-
-    // ========================================================================
-    // UTILITIES
-    // ========================================================================
-
-    companion object {
-        /**
-         * Get extraction prompt for ClassifiedDocumentType.
-         */
-        fun extractionFor(documentType: ClassifiedDocumentType): Extraction = when (documentType) {
-            ClassifiedDocumentType.INVOICE -> Extraction.Invoice
-            ClassifiedDocumentType.BILL -> Extraction.Bill
-            ClassifiedDocumentType.RECEIPT -> Extraction.Receipt
-            ClassifiedDocumentType.CREDIT_NOTE -> Extraction.CreditNote
-            ClassifiedDocumentType.PRO_FORMA -> Extraction.ProForma
-            ClassifiedDocumentType.EXPENSE -> Extraction.Expense
-            ClassifiedDocumentType.UNKNOWN -> Extraction.Invoice // Fallback to Invoice for unknown
-        }
-
-        /**
-         * Get extraction prompt by string (for flexibility).
-         */
-        fun extractionFor(documentType: String): Extraction = when (documentType.uppercase().replace("-", "_")) {
-            "INVOICE" -> Extraction.Invoice
-            "BILL" -> Extraction.Bill
-            "RECEIPT" -> Extraction.Receipt
-            "CREDIT_NOTE", "CREDITNOTE" -> Extraction.CreditNote
-            "PRO_FORMA", "PROFORMA" -> Extraction.ProForma
-            "EXPENSE" -> Extraction.Expense
-            else -> Extraction.Invoice // Fallback
-        }
-
-        /**
-         * All expense categories matching Belgian tax standards.
-         */
-        val expenseCategories = listOf(
-            "OFFICE_SUPPLIES",
-            "HARDWARE",
-            "SOFTWARE",
-            "TRAVEL",
-            "TRANSPORTATION",
-            "MEALS",
-            "PROFESSIONAL_SERVICES",
-            "UTILITIES",
-            "TRAINING",
-            "MARKETING",
-            "INSURANCE",
-            "RENT",
-            "OTHER"
-        )
     }
 }

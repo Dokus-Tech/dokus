@@ -203,7 +203,12 @@ internal fun Route.chatRoutes() {
             val tenantId = dokusPrincipal.requireTenantId()
             val limit = route.limit.coerceIn(1, 100)
 
-            logger.debug("Listing chat sessions: tenant=$tenantId, scope=${route.scope}, page=${route.page}")
+            logger.debug(
+                "Listing chat sessions: tenant={}, scope={}, page={}",
+                tenantId,
+                route.scope,
+                route.page
+            )
 
             val (sessions, total) = chatRepository.listSessions(
                 tenantId = tenantId,

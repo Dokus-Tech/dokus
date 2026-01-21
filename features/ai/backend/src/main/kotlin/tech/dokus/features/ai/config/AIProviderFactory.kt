@@ -1,5 +1,8 @@
 package tech.dokus.features.ai.config
 
+import ai.koog.prompt.executor.clients.openai.OpenAIClientSettings
+import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
 import ai.koog.prompt.executor.model.PromptExecutor
 import tech.dokus.foundation.backend.config.AIConfig
@@ -34,30 +37,27 @@ object AIProviderFactory {
     }
 
     /**
-     * Get all models for a given config.
+     * Create an OpenAI-compatible executor for LM Studio.
+     *
+     * LM Studio exposes an OpenAI-compatible API at http://localhost:1234/v1 by default.
      */
-    fun getModels(config: AIConfig): ModelSet {
-        return AIModels.forMode(config.mode)
-    }
+    fun createOpenAiExecutor(config: AIConfig): PromptExecutor {
+        val baseUrl = config.lmStudioHost
+        val maxConcurrent = config.mode.maxConcurrentRequests
 
-    /**
-     * Get embedding configuration.
-     * Always uses nomic-embed-text (768 dimensions) via Ollama.
-     */
-    fun getEmbeddingConfig(config: AIConfig): EmbeddingConfig {
-        return EmbeddingConfig(
-            modelName = AIModels.EMBEDDING_MODEL_NAME,
-            dimensions = AIModels.EMBEDDING_DIMENSIONS,
-            baseUrl = config.ollamaHost
+        logger.info(
+            "Creating LM Studio executor: {} (max concurrent: {}, mode: {})",
+            baseUrl,
+            maxConcurrent,
+            config.mode.name
         )
+
+        val client = OpenAILLMClient(
+            apiKey = "",
+            settings = OpenAIClientSettings(baseUrl = baseUrl)
+        )
+        val baseExecutor = SingleLLMPromptExecutor(client)
+
+        return wrapWithThrottling(baseExecutor, maxConcurrent)
     }
 }
-
-/**
- * Configuration for embedding model.
- */
-data class EmbeddingConfig(
-    val modelName: String,
-    val dimensions: Int,
-    val baseUrl: String
-)
