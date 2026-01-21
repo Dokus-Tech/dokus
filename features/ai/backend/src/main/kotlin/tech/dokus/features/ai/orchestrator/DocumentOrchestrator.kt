@@ -19,13 +19,11 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.features.ai.models.ClassifiedDocumentType
-import tech.dokus.features.ai.models.ExtractedDocumentData
 import tech.dokus.features.ai.orchestrator.tools.ContactCreatorHandler
 import tech.dokus.features.ai.orchestrator.tools.ContactLookupHandler
-import tech.dokus.features.ai.orchestrator.tools.DocumentImageFetcher
+import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.IndexingStatusUpdater
 import tech.dokus.features.ai.orchestrator.tools.PeppolDataFetcher
-import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.ChunkingService
@@ -186,7 +184,7 @@ class DocumentOrchestrator(
             cbeApiClient = cbeApiClient,
             tenantContext = tenantContext,
             indexingUpdater = indexingUpdater,
-            documentFetcher = DocumentImageFetcher { documentId ->
+            documentFetcher = { documentId ->
                 documentFetcher(documentId, tenantId.toString())
             },
             peppolDataFetcher = peppolDataFetcher,
