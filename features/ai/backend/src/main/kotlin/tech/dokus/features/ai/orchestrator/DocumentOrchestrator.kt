@@ -195,6 +195,15 @@ class DocumentOrchestrator(
         if (parsed == null) {
             val fallback = buildFallbackOutputFromTrace(traceCollector.snapshot())
             if (fallback != null) {
+                val fallbackTool = findLatestExtractionTool(traceCollector.snapshot())
+                traceCollector.record(
+                    action = "orchestrator_output_parse_failed",
+                    tool = "document-orchestrator",
+                    durationMs = 0,
+                    input = null,
+                    output = null,
+                    notes = "using_extraction_trace_fallback, sourceTool=${fallbackTool ?: "unknown"}"
+                )
                 val persisted = ensureExtractionPersisted(
                     documentId = documentId,
                     tenantId = tenantId,
@@ -599,7 +608,8 @@ class DocumentOrchestrator(
             step.tool in extractionToolNames && step.output != null
         } ?: return null
 
-        val documentType = extractionStep.tool?.let { toolName ->
+        val sourceTool = extractionStep.tool
+        val documentType = sourceTool?.let { toolName ->
             extractionToolDocumentType[toolName]
         } ?: return null
 
@@ -619,9 +629,18 @@ class DocumentOrchestrator(
             correctionsApplied = 0,
             contactId = null,
             contactCreated = null,
-            issues = listOf("Orchestrator output parse failed; persisted extraction output"),
-            reason = "Orchestrator output parse failed"
+            issues = listOf(
+                "Orchestrator output parse failed; persisted extraction output",
+                "Fallback source tool: ${sourceTool ?: "unknown"}"
+            ),
+            reason = "Orchestrator output parse failed (fallback source: ${sourceTool ?: "unknown"})"
         )
+    }
+
+    private fun findLatestExtractionTool(auditTrail: List<ProcessingStep>): String? {
+        return auditTrail.lastOrNull { step ->
+            step.tool in extractionToolNames && step.output != null
+        }?.tool
     }
 
     private fun JsonElement?.asStringOrNull(): String? {
