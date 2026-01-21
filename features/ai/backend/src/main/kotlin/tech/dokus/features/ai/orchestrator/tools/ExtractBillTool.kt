@@ -68,6 +68,8 @@ class ExtractBillTool(
                 action = "extract_bill",
                 tool = name,
                 durationMs = 0,
+                input = null,
+                output = null,
                 notes = "error=${e.message}"
             )
             return "ERROR: ${e.message}"
@@ -90,6 +92,8 @@ class ExtractBillTool(
             action = "extract_bill",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
+            input = null,
+            output = null,
             notes = "confidence=${result.confidence}, lineItems=${result.lineItems.size}"
         )
 

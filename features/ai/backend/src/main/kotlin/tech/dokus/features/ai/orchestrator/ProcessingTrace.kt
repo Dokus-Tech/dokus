@@ -5,14 +5,14 @@ import kotlinx.serialization.json.JsonElement
 /**
  * Lightweight sink for recording tool-level trace events during orchestration.
  */
-fun interface ToolTraceSink {
+interface ToolTraceSink {
     fun record(
         action: String,
-        tool: String? = null,
-        durationMs: Long = 0,
-        input: JsonElement? = null,
-        output: JsonElement? = null,
-        notes: String? = null
+        tool: String?,
+        durationMs: Long,
+        input: JsonElement?,
+        output: JsonElement?,
+        notes: String?
     )
 }
 

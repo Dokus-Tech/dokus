@@ -90,6 +90,8 @@ class GetDocumentImagesTool(
                 action = "convert_document_images",
                 tool = name,
                 durationMs = start.elapsedNow().inWholeMilliseconds,
+                input = null,
+                output = null,
                 notes = "processedPages=${result.processedPages}, totalPages=${result.totalPages}"
             )
 
@@ -109,6 +111,8 @@ class GetDocumentImagesTool(
                 action = "convert_document_images",
                 tool = name,
                 durationMs = 0,
+                input = null,
+                output = null,
                 notes = "error=${e.message}"
             )
             "ERROR: Failed to convert document: ${e.message}"

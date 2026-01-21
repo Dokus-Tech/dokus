@@ -14,6 +14,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
@@ -25,6 +26,9 @@ import tech.dokus.features.ai.orchestrator.OrchestratorResult
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.ProcessorConfig
+import tech.dokus.domain.utils.json
+import kotlinx.serialization.builtins.ListSerializer
+import tech.dokus.features.ai.orchestrator.ProcessingStep
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -148,6 +152,10 @@ class DocumentProcessingWorker(
         val documentId = ingestion.documentId
         val tenantId = ingestion.tenantId
 
+        MDC.put("runId", runId)
+        MDC.put("documentId", documentId)
+        MDC.put("tenantId", tenantId)
+
         logger.info("Processing ingestion run: $runId for document: $documentId")
 
         // Mark as processing
@@ -208,6 +216,10 @@ class DocumentProcessingWorker(
         } catch (e: Exception) {
             logger.error("Unexpected error processing document $documentId", e)
             ingestionRepository.markAsFailed(runId, "Processing error: ${e.message}")
+        } finally {
+            MDC.remove("runId")
+            MDC.remove("documentId")
+            MDC.remove("tenantId")
         }
     }
 
@@ -245,6 +257,22 @@ class DocumentProcessingWorker(
         }
         auditTrail.forEach { step ->
             logger.debug("Step ${step.step}: ${step.action} (${step.durationMs}ms)")
+        }
+
+        // Persist processing trace for observability
+        val trace = when (result) {
+            is OrchestratorResult.Success -> result.auditTrail
+            is OrchestratorResult.NeedsReview -> result.auditTrail
+            is OrchestratorResult.Failed -> result.auditTrail
+        }
+        runCatching {
+            val traceJson = json.encodeToString(
+                ListSerializer(ProcessingStep.serializer()),
+                trace
+            )
+            ingestionRepository.updateProcessingTrace(runId, traceJson)
+        }.onFailure { e ->
+            logger.warn("Failed to persist processing trace for runId=$runId", e)
         }
 
         return result

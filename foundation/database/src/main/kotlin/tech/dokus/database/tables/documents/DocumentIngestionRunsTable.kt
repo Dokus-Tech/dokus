@@ -62,6 +62,9 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     // Raw extraction JSON output from AI (immutable after finished)
     val rawExtractionJson = text("raw_extraction_json").nullable()
 
+    // Processing trace JSON (tool calls + orchestration steps)
+    val processingTrace = text("processing_trace").nullable()
+
     // Confidence score (0.0000 - 1.0000)
     val confidence = decimal("confidence", 5, 4).nullable()
 

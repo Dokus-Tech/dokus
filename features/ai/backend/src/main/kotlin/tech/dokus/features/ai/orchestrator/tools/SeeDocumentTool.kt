@@ -62,6 +62,8 @@ class SeeDocumentTool(
                 action = "classify_document",
                 tool = name,
                 durationMs = 0,
+                input = null,
+                output = null,
                 notes = "error=${e.message}"
             )
             return "ERROR: ${e.message}"
@@ -75,6 +77,8 @@ class SeeDocumentTool(
             action = "classify_document",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
+            input = null,
+            output = null,
             notes = "type=${result.documentType}, confidence=${result.confidence}"
         )
 

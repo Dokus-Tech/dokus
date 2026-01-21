@@ -67,6 +67,8 @@ class ExtractInvoiceTool(
                 action = "extract_invoice",
                 tool = name,
                 durationMs = 0,
+                input = null,
+                output = null,
                 notes = "error=${e.message}"
             )
             return "ERROR: ${e.message}"
@@ -89,6 +91,8 @@ class ExtractInvoiceTool(
             action = "extract_invoice",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
+            input = null,
+            output = null,
             notes = "confidence=${result.confidence}, lineItems=${result.lineItems.size}"
         )
 
