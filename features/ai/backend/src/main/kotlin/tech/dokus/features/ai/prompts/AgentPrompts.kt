@@ -282,9 +282,9 @@ sealed class AgentPrompt {
                 - Handle "Intracommunautaire" / "Reverse charge" / "BTW verlegd" → vatRate: "0%"
 
                 ### Totals
-                - **amount**: Subtotal before VAT
+                - **amount**: Total amount to pay (gross, incl. VAT)
                 - **vatAmount**: Total VAT
-                - **totalAmount**: Final amount to pay
+                - **totalAmount**: Optional explicit total line (if present, same as amount)
                 - **currency**: Usually "EUR"
 
                 ### Payment

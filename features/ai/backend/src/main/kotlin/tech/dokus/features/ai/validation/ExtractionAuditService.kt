@@ -153,20 +153,17 @@ class ExtractionAuditService {
     // =========================================================================
 
     private fun auditBillMath(bill: ExtractedBillData): AuditCheck {
-        val subtotal = bill.amount?.let { Money.parse(it) }
-        val vatAmount = bill.vatAmount?.let { Money.parse(it) }
-        val total = bill.totalAmount?.let { Money.parse(it) }
+        val amounts = resolveBillAmounts(bill)
 
-        return MathValidator.verifyTotals(subtotal, vatAmount, total)
+        return MathValidator.verifyTotals(amounts.net, amounts.vat, amounts.gross)
     }
 
     private fun auditBillVatRate(bill: ExtractedBillData): AuditCheck {
-        val subtotal = bill.amount?.let { Money.parse(it) }
-        val vatAmount = bill.vatAmount?.let { Money.parse(it) }
+        val amounts = resolveBillAmounts(bill)
         val documentDate = bill.issueDate?.let { parseDate(it) }
         val category = bill.category
 
-        return BelgianVatRateValidator.verify(subtotal, vatAmount, documentDate, category)
+        return BelgianVatRateValidator.verify(amounts.net, amounts.vat, documentDate, category)
     }
 
     private fun auditBillLineItems(bill: ExtractedBillData): List<AuditCheck> {
@@ -176,12 +173,13 @@ class ExtractionAuditService {
             return checks
         }
 
-        // Verify sum of line items equals amount (subtotal)
-        val lineItemTotals = bill.lineItems.mapNotNull { it.total?.let { t -> Money.parse(t) } }
-        val subtotal = bill.amount?.let { Money.parse(it) }
+        val amounts = resolveBillAmounts(bill)
+        val lineItemTotals = bill.lineItems
+            .filterNot(::isIncludedFeeLineItem)
+            .mapNotNull { it.total?.let { t -> Money.parse(t) } }
 
         if (lineItemTotals.isNotEmpty()) {
-            checks += MathValidator.verifyLineItems(lineItemTotals, subtotal)
+            checks += MathValidator.verifyLineItems(lineItemTotals, amounts.net)
         }
 
         // Verify individual line item calculations
@@ -198,6 +196,41 @@ class ExtractionAuditService {
         val lineTotal = item.total?.let { Money.parse(it) }
 
         return MathValidator.verifyLineItemCalculation(quantity, unitPrice, lineTotal, lineIndex)
+    }
+
+    private data class BillAmountContext(
+        val net: Money?,
+        val vat: Money?,
+        val gross: Money?
+    )
+
+    private fun resolveBillAmounts(bill: ExtractedBillData): BillAmountContext {
+        val amount = bill.amount?.let { Money.parse(it) }
+        val explicitTotal = bill.totalAmount?.let { Money.parse(it) }
+        val vatAmount = bill.vatAmount?.let { Money.parse(it) }
+        val gross = explicitTotal ?: amount
+        val net = when {
+            explicitTotal != null && amount != null && explicitTotal != amount -> amount
+            gross != null && vatAmount != null -> gross - vatAmount
+            else -> null
+        }
+
+        return BillAmountContext(net = net, vat = vatAmount, gross = gross)
+    }
+
+    private fun isIncludedFeeLineItem(item: BillLineItem): Boolean {
+        val normalized = item.description
+            .lowercase()
+            .replace('\n', ' ')
+            .replace('\t', ' ')
+            .trim()
+
+        return normalized.startsWith("incl ") ||
+            normalized.startsWith("incl.") ||
+            normalized.startsWith("included ") ||
+            normalized.startsWith("inclusief ") ||
+            normalized.contains("recupel") ||
+            normalized.contains("auvibel")
     }
 
     // =========================================================================
