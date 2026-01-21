@@ -40,6 +40,7 @@ import tech.dokus.features.ai.models.toDomainType
 import tech.dokus.features.ai.models.toExtractedDocumentData
 import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
 import tech.dokus.features.ai.orchestrator.tools.StoreChunksTool
+import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -134,16 +135,16 @@ class OrchestratorToolPersistenceTest {
 
     @Test
     fun `store_extraction and store_chunks update ingestion and indexing status`() = runBlocking {
-        val storeExtractionTool = StoreExtractionTool { payload ->
+        val storeExtractionHandler = StoreExtractionHandler { payload ->
             val docType = payload.documentType
                 ?.trim()
                 ?.uppercase()
                 ?.let { runCatching { ClassifiedDocumentType.valueOf(it) }.getOrNull() }
                 ?.toDomainType() ?: DocumentType.Unknown
 
-            val extractedData = payload.extraction.toExtractedDocumentData(docType) ?: return@StoreExtractionTool false
+            val extractedData = payload.extraction.toExtractedDocumentData(docType) ?: return@StoreExtractionHandler false
             ingestionRepository.markAsSucceeded(
-                runId = payload.runId ?: return@StoreExtractionTool false,
+                runId = payload.runId ?: return@StoreExtractionHandler false,
                 tenantId = payload.tenantId,
                 documentId = payload.documentId,
                 documentType = docType,
@@ -156,6 +157,11 @@ class OrchestratorToolPersistenceTest {
                 force = false
             )
         }
+
+        val storeExtractionTool = StoreExtractionTool(
+            storeFunction = storeExtractionHandler,
+            traceSink = null
+        )
 
         val extraction = ExtractedInvoiceData(
             vendorName = "Acme Corp",
