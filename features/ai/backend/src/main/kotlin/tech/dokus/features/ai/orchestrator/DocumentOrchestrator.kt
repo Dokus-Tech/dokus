@@ -27,6 +27,7 @@ import tech.dokus.features.ai.orchestrator.tools.PeppolDataFetcher
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.ChunkingService
+import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.utils.normalizeJson
@@ -55,6 +56,7 @@ class DocumentOrchestrator(
     private val mode: IntelligenceMode,
     private val exampleRepository: ExampleRepository,
     private val documentImageService: DocumentImageService,
+    private val imageCache: DocumentImageCache,
     private val chunkingService: ChunkingService,
     private val embeddingService: EmbeddingService,
     private val chunkRepository: ChunkRepository,
@@ -177,6 +179,7 @@ class DocumentOrchestrator(
             executor = executor,
             visionModel = visionModel,
             documentImageService = documentImageService,
+            imageCache = imageCache,
             chunkingService = chunkingService,
             embeddingService = embeddingService,
             exampleRepository = exampleRepository,
@@ -214,7 +217,7 @@ class DocumentOrchestrator(
         - Output ONLY valid JSON (no markdown).
 
         Tool usage notes:
-        - get_document_images returns lines "Page N: <base64>". Use the base64 values.
+        - get_document_images returns lines "Page N: <image_id>". Use the IDs as-is.
         - If maxPages or dpi are provided in the task, pass them to get_document_images.
         - see_document and extract_* tools return a JSON section. Use that JSON.
         - find_similar_document may return an extraction example. Use it to re-run extraction once.

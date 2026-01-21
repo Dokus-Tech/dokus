@@ -78,6 +78,7 @@ import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.services.ChunkingService
+import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.foundation.backend.cache.RedisClient
@@ -335,6 +336,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
 
     // Document Image Service (converts PDFs/images to PNG for vision processing)
     single { DocumentImageService() }
+    single { DocumentImageCache() }
 
     // RAG services
     single { ChunkingService() }
@@ -366,6 +368,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             mode = mode,
             exampleRepository = get(),
             documentImageService = get(),
+            imageCache = get(),
             chunkingService = get(),
             embeddingService = get(),
             chunkRepository = get(),

@@ -3,8 +3,8 @@ package tech.dokus.features.ai.orchestrator.tools
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
+import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
-import java.util.Base64
 
 fun interface DocumentImageFetcher {
     suspend operator fun invoke(documentId: String): GetDocumentImagesTool.DocumentData?
@@ -14,11 +14,12 @@ fun interface DocumentImageFetcher {
  * Tool for converting documents to images for vision model processing.
  *
  * Converts PDFs and images to PNG format suitable for vision models.
- * Returns base64-encoded images that can be passed to vision tools.
+ * Returns cache-backed image IDs that can be passed to vision tools.
  */
 class GetDocumentImagesTool(
     private val documentImageService: DocumentImageService,
-    private val documentFetcher: DocumentImageFetcher
+    private val documentFetcher: DocumentImageFetcher,
+    private val imageCache: DocumentImageCache
 ) : SimpleTool<GetDocumentImagesTool.Args>(
     argsSerializer = Args.serializer(),
     name = "get_document_images",
@@ -26,7 +27,7 @@ class GetDocumentImagesTool(
         Converts a document (PDF or image) to PNG images for vision processing.
 
         Use this tool first to get the document images before classification or extraction.
-        Returns base64-encoded PNG images for each page.
+        Returns opaque image IDs for each page (cache-backed).
 
         For PDFs, renders up to 10 pages at 150 DPI by default.
         You can override with maxPages and dpi.
@@ -77,16 +78,21 @@ class GetDocumentImagesTool(
                 dpi = args.dpi ?: 150
             )
 
+            val refs = imageCache.store(
+                documentId = args.documentId,
+                runId = null,
+                images = result.images
+            )
+
             // Return structured information about the images
             buildString {
                 appendLine("SUCCESS: Converted document to ${result.processedPages} image(s)")
                 appendLine("Total pages: ${result.totalPages}")
                 appendLine("Processed pages: ${result.processedPages}")
                 appendLine()
-                appendLine("Images (base64-encoded PNG):")
-                result.images.forEach { image ->
-                    val base64 = Base64.getEncoder().encodeToString(image.imageBytes)
-                    appendLine("Page ${image.pageNumber}: $base64")
+                appendLine("Images (cache IDs):")
+                refs.forEach { ref ->
+                    appendLine("Page ${ref.pageNumber}: ${ref.imageId}")
                 }
             }
         } catch (e: Exception) {

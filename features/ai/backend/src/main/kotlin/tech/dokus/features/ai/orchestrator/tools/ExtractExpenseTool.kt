@@ -7,11 +7,10 @@ import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.models.ExtractedExpenseData
 import tech.dokus.features.ai.prompts.AgentPrompt
-import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
-import java.util.Base64
 
 /**
  * Vision tool for extracting expense report data from document images.
@@ -26,7 +25,8 @@ import java.util.Base64
 class ExtractExpenseTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
-    private val prompt: AgentPrompt.Extraction
+    private val prompt: AgentPrompt.Extraction,
+    private val imageCache: DocumentImageCache
 ) : SimpleTool<ExtractExpenseTool.Args>(
     argsSerializer = Args.serializer(),
     name = "extract_expense",
@@ -49,7 +49,7 @@ class ExtractExpenseTool(
     @Serializable
     data class Args(
         @property:LLMDescription(
-            "Base64-encoded PNG images of the expense document, separated by newlines."
+            "Image IDs (from get_document_images) or base64 PNGs, separated by newlines."
         )
         val images: String,
 
@@ -63,19 +63,10 @@ class ExtractExpenseTool(
     private val jsonFormat = Json { prettyPrint = true; ignoreUnknownKeys = true }
 
     override suspend fun execute(args: Args): String {
-        // Parse base64 images
-        val imageLines = args.images.trim().lines().filter { it.isNotBlank() }
-        if (imageLines.isEmpty()) {
-            return "ERROR: No images provided for extraction"
-        }
-
         val documentImages = try {
-            imageLines.mapIndexed { index, base64 ->
-                val bytes = Base64.getDecoder().decode(base64.trim())
-                DocumentImage(pageNumber = index + 1, imageBytes = bytes)
-            }
+            DocumentImageResolver(imageCache).resolve(args.images)
         } catch (e: Exception) {
-            return "ERROR: Invalid base64 image data: ${e.message}"
+            return "ERROR: ${e.message}"
         }
 
         // Create extraction agent

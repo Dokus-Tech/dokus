@@ -30,6 +30,7 @@ import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.ChunkingService
+import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.tools.LookupCompanyTool
@@ -58,6 +59,7 @@ object OrchestratorToolRegistry {
         val executor: PromptExecutor,
         val visionModel: LLModel,
         val documentImageService: DocumentImageService,
+        val imageCache: DocumentImageCache,
         val chunkingService: ChunkingService,
         val embeddingService: EmbeddingService,
         val exampleRepository: ExampleRepository,
@@ -80,7 +82,7 @@ object OrchestratorToolRegistry {
     fun create(config: Config): ToolRegistry {
         return ToolRegistry {
             // Document tools
-            tool(GetDocumentImagesTool(config.documentImageService, config.documentFetcher))
+            tool(GetDocumentImagesTool(config.documentImageService, config.documentFetcher, config.imageCache))
             tool(GetPeppolDataTool(config.peppolDataFetcher))
 
             // Vision tools
@@ -89,35 +91,40 @@ object OrchestratorToolRegistry {
                     executor = config.executor,
                     model = config.visionModel,
                     prompt = AgentPrompt.DocumentClassification,
-                    tenantContext = config.tenantContext
+                    tenantContext = config.tenantContext,
+                    imageCache = config.imageCache
                 )
             )
             tool(
                 ExtractInvoiceTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Invoice
+                    prompt = AgentPrompt.Extraction.Invoice,
+                    imageCache = config.imageCache
                 )
             )
             tool(
                 ExtractBillTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Bill
+                    prompt = AgentPrompt.Extraction.Bill,
+                    imageCache = config.imageCache
                 )
             )
             tool(
                 ExtractReceiptTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Receipt
+                    prompt = AgentPrompt.Extraction.Receipt,
+                    imageCache = config.imageCache
                 )
             )
             tool(
                 ExtractExpenseTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Expense
+                    prompt = AgentPrompt.Extraction.Expense,
+                    imageCache = config.imageCache
                 )
             )
 
