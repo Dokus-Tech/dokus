@@ -4,6 +4,7 @@ import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import tech.dokus.domain.enums.ContactLinkDecisionType
 
 /**
  * Tool for persisting document extraction to the database.
@@ -45,7 +46,7 @@ class StoreExtractionTool(
         val contactCreated: Boolean?,
         val contactConfidence: Float?,
         val contactReason: String?,
-        val linkDecisionType: String?,
+        val linkDecisionType: ContactLinkDecisionType?,
         val linkDecisionContactId: String?,
         val linkDecisionReason: String?,
         val linkDecisionConfidence: Float?,
@@ -94,7 +95,7 @@ class StoreExtractionTool(
         val contactReason: String? = null,
 
         @property:LLMDescription("Link decision type: AUTO_LINK | SUGGEST | NONE")
-        val linkDecisionType: String? = null,
+        val linkDecisionType: ContactLinkDecisionType? = null,
 
         @property:LLMDescription("Contact ID associated with link decision")
         val linkDecisionContactId: String? = null,

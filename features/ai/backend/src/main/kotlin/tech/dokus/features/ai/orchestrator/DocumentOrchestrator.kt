@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import tech.dokus.domain.enums.IndexingStatus
+import tech.dokus.domain.enums.ContactLinkPolicy
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -58,6 +59,7 @@ class DocumentOrchestrator(
     private val embeddingService: EmbeddingService,
     private val chunkRepository: ChunkRepository,
     private val cbeApiClient: CbeApiClient?,
+    private val linkingPolicy: ContactLinkPolicy = ContactLinkPolicy.VatOnly,
     private val indexingUpdater: (suspend (runId: String, status: IndexingStatus, chunksCount: Int?, errorMessage: String?) -> Boolean)? = null,
     private val documentFetcher: suspend (documentId: String, tenantId: String) -> GetDocumentImagesTool.DocumentData?,
     private val peppolDataFetcher: suspend (documentId: String) -> ExtractedDocumentData? = { null },
@@ -225,9 +227,7 @@ class DocumentOrchestrator(
         - generate_description / generate_keywords should be used after extraction.
         - After success (or needs_review with extraction), call store_extraction with runId, documentType,
           extraction, description, keywords, confidence, rawText, and a LinkDecision payload.
-        - LinkDecision policy (VAT-only):
-          AUTO_LINK only when VAT is valid AND exact VAT match (no ambiguity).
-          If VAT missing/invalid, NEVER auto-link; use SUGGEST or NONE.
+        ${linkPolicyPrompt()}
         - Provide linkDecision fields:
           linkDecisionType = AUTO_LINK | SUGGEST | NONE
           linkDecisionContactId (if applicable)
@@ -258,6 +258,24 @@ class DocumentOrchestrator(
 
         If status="needs_review" and you have any extraction data, include it in "extraction".
     """.trimIndent()
+
+    private fun linkPolicyPrompt(): String {
+        return when (linkingPolicy) {
+            ContactLinkPolicy.VatOnly -> """
+        - LinkDecision policy (VAT-only):
+          AUTO_LINK only when VAT is valid AND exact VAT match (no ambiguity).
+          If VAT missing/invalid, NEVER auto-link; use SUGGEST or NONE.
+            """.trimIndent()
+
+            ContactLinkPolicy.VatOrStrongSignals -> """
+        - LinkDecision policy (VAT or strong signals):
+          AUTO_LINK when VAT is valid AND exact VAT match (no ambiguity),
+          OR when strong multi-signal evidence is present:
+            nameSimilarity >= 0.93, ibanMatched=true, addressMatched=true, ambiguityCount=1.
+          If VAT missing/invalid and strong signals are not met, NEVER auto-link; use SUGGEST or NONE.
+            """.trimIndent()
+        }
+    }
 
     private fun buildUserPrompt(
         documentId: DocumentId,

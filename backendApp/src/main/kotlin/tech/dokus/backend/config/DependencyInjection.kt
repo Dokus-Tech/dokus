@@ -54,6 +54,8 @@ import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.ContactLinkDecisionType
+import tech.dokus.domain.enums.ContactLinkPolicy
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
@@ -366,6 +368,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             embeddingService = get(),
             chunkRepository = get(),
             cbeApiClient = getOrNull(),
+            linkingPolicy = appConfig.processor.linkingPolicy,
             indexingUpdater = { runId, status, chunksCount, errorMessage ->
                 get<ProcessorIngestionRepository>().updateIndexingStatus(
                     runId = runId,
@@ -458,6 +461,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             storeExtraction = { payload ->
                 val ingestionRepository = get<ProcessorIngestionRepository>()
                 val draftRepository = get<DocumentDraftRepository>()
+                val linkingPolicy = appConfig.processor.linkingPolicy
                 val runId = payload.runId
                     ?: ingestionRepository.findProcessingRunId(payload.tenantId, payload.documentId)
                     ?: return@DocumentOrchestrator false
@@ -497,9 +501,6 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                 if (!stored) return@DocumentOrchestrator false
 
                 val decisionType = payload.linkDecisionType
-                    ?.trim()
-                    ?.uppercase()
-                    ?.takeIf { it.isNotBlank() }
                 val decisionContactId = payload.linkDecisionContactId?.takeIf { it.isNotBlank() }
                     ?: payload.contactId?.takeIf { it.isNotBlank() }
                 val contactId = decisionContactId
@@ -545,14 +546,23 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                         ambiguityCount = evidenceFromPayload?.ambiguityCount ?: 1
                     )
 
+                    val ambiguityCount = evidence.ambiguityCount ?: 1
+                    val strongSignals = linkingPolicy == ContactLinkPolicy.VatOrStrongSignals &&
+                        (evidence.ibanMatched == true) &&
+                        (evidence.addressMatched == true) &&
+                        ((evidence.nameSimilarity ?: 0.0) >= 0.93) &&
+                        ambiguityCount == 1
+                    val autoLinkAllowed = (vatMatched && ambiguityCount == 1) || strongSignals
+
                     val effectiveDecision = when (decisionType) {
-                        "AUTO_LINK" -> if (vatMatched) "AUTO_LINK" else "SUGGEST"
-                        "SUGGEST" -> "SUGGEST"
-                        "NONE" -> "NONE"
-                        else -> if (decisionContactId != null) "SUGGEST" else "NONE"
+                        ContactLinkDecisionType.AutoLink ->
+                            if (autoLinkAllowed) ContactLinkDecisionType.AutoLink else ContactLinkDecisionType.Suggest
+                        ContactLinkDecisionType.Suggest -> ContactLinkDecisionType.Suggest
+                        ContactLinkDecisionType.None -> ContactLinkDecisionType.None
+                        null -> if (decisionContactId != null) ContactLinkDecisionType.Suggest else ContactLinkDecisionType.None
                     }
 
-                    if (effectiveDecision == "AUTO_LINK" && vatMatched) {
+                    if (effectiveDecision == ContactLinkDecisionType.AutoLink && autoLinkAllowed) {
                         draftRepository.updateCounterparty(
                             documentId = document,
                             tenantId = tenant,
@@ -561,7 +571,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                             source = ContactLinkSource.AI,
                             contactEvidence = evidence
                         )
-                    } else if (effectiveDecision == "SUGGEST") {
+                    } else if (effectiveDecision == ContactLinkDecisionType.Suggest) {
                         draftRepository.updateContactSuggestion(
                             documentId = document,
                             tenantId = tenant,
