@@ -112,6 +112,7 @@ private fun ExtractedInvoiceData.toInvoiceFields(): ExtractedInvoiceFields {
 }
 
 private fun ExtractedBillData.toBillFields(): ExtractedBillFields {
+    val grossAmount = totalAmount?.parseMoney() ?: amount?.parseMoney()
     return ExtractedBillFields(
         supplierName = supplierName,
         supplierVatNumber = supplierVatNumber,
@@ -119,7 +120,7 @@ private fun ExtractedBillData.toBillFields(): ExtractedBillFields {
         invoiceNumber = invoiceNumber,
         issueDate = issueDate?.parseLocalDate(),
         dueDate = dueDate?.parseLocalDate(),
-        amount = amount?.parseMoney(),
+        amount = grossAmount,
         vatAmount = vatAmount?.parseMoney(),
         vatRate = vatRate?.parseVatRate(),
         currency = Currency.fromDisplay(currency),

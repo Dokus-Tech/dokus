@@ -61,10 +61,10 @@ data class ExtractedBillData(
 
     // Amounts
     val currency: String? = null, // EUR, USD, etc.
-    val amount: String? = null, // Total amount before VAT
+    val amount: String? = null, // Total amount including VAT (gross)
     val vatAmount: String? = null,
     val vatRate: String? = null, // e.g., "21%"
-    val totalAmount: String? = null, // Total including VAT
+    val totalAmount: String? = null, // Optional explicit total line (may match amount)
 
     // Line items (optional, some bills don't have itemized breakdown)
     val lineItems: List<BillLineItem> = emptyList(),
