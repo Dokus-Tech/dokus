@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.serialization.builtins.ListSerializer
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import tech.dokus.database.entity.IngestionItemEntity
@@ -21,14 +22,13 @@ import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
 import tech.dokus.features.ai.orchestrator.OrchestratorResult
+import tech.dokus.features.ai.orchestrator.ProcessingStep
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.ProcessorConfig
-import tech.dokus.domain.utils.json
-import kotlinx.serialization.builtins.ListSerializer
-import tech.dokus.features.ai.orchestrator.ProcessingStep
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
