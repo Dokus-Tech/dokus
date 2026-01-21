@@ -329,6 +329,7 @@ private val contactsModule = module {
     single { ContactMatchingService(get()) }
 }
 
+@Suppress("LongMethod", "CyclomaticComplexMethod", "ComplexCondition")
 private fun processorModule(appConfig: AppBaseConfig) = module {
     // =========================================================================
     // Document Processing Services

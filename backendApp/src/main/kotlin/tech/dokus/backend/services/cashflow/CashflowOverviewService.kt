@@ -52,6 +52,7 @@ class CashflowOverviewService(
      * @param direction Optional filter: IN or OUT
      * @param statuses Multi-status filter (e.g., [Open, Overdue])
      */
+    @Suppress("LongParameterList")
     suspend fun getCashflowOverview(
         tenantId: TenantId,
         viewMode: CashflowViewMode? = null,
@@ -65,7 +66,9 @@ class CashflowOverviewService(
         val effectiveToDate = toDate ?: today
 
         logger.info(
-            "Calculating cashflow overview for tenant: $tenantId (viewMode=$viewMode, from=$effectiveFromDate, to=$effectiveToDate, direction=$direction, statuses=$statuses)"
+            "Calculating cashflow overview for tenant: $tenantId " +
+                "(viewMode=$viewMode, from=$effectiveFromDate, to=$effectiveToDate, " +
+                "direction=$direction, statuses=$statuses)"
         )
 
         // If viewMode is specified, use cashflow entries for summary calculation
@@ -170,6 +173,7 @@ class CashflowOverviewService(
      * Calculate overview from cashflow entries table.
      * Used when viewMode is specified (modern path).
      */
+    @Suppress("LongParameterList")
     private suspend fun calculateFromCashflowEntries(
         tenantId: TenantId,
         viewMode: CashflowViewMode,

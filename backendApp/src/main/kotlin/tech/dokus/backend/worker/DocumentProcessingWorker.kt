@@ -131,7 +131,8 @@ class DocumentProcessingWorker(
                             processIngestionRun(ingestion)
                         } catch (e: Exception) {
                             logger.error(
-                                "Failed to process ingestion run ${ingestion.runId} for document ${ingestion.documentId}",
+                                "Failed to process ingestion run ${ingestion.runId} " +
+                                    "for document ${ingestion.documentId}",
                                 e
                             )
                         }

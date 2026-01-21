@@ -22,7 +22,7 @@ class ContactLinkingService(
     private val contactRepository: ContactRepository,
     private val linkingPolicy: ContactLinkPolicy
 ) {
-    @Suppress("LongParameterList")
+    @Suppress("LongParameterList", "CyclomaticComplexMethod")
     suspend fun applyLinkDecision(
         tenantId: TenantId,
         documentId: DocumentId,

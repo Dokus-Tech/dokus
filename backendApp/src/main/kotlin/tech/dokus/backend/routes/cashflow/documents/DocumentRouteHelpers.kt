@@ -26,6 +26,7 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
 /**
  * Add download URL to document DTO.
  */
+@Suppress("TooGenericExceptionCaught")
 internal suspend fun addDownloadUrl(
     document: DocumentDto,
     minioStorage: MinioDocumentStorageService,
@@ -33,7 +34,7 @@ internal suspend fun addDownloadUrl(
 ): DocumentDto {
     val downloadUrl = try {
         minioStorage.getDownloadUrl(document.storageKey)
-    } catch (e: Exception) {
+    } catch (e: RuntimeException) {
         logger.warn("Failed to get download URL for ${document.storageKey}: ${e.message}")
         null
     }
@@ -43,6 +44,7 @@ internal suspend fun addDownloadUrl(
 /**
  * Find confirmed financial entity by document ID.
  */
+@Suppress("LongParameterList")
 internal suspend fun findConfirmedEntity(
     documentId: DocumentId,
     documentType: DocumentType?,
@@ -67,6 +69,7 @@ internal suspend fun findConfirmedEntity(
 /**
  * Build list of tracked corrections between old and new extracted data.
  */
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 internal fun buildCorrections(
     oldData: ExtractedDocumentData?,
     newData: ExtractedDocumentData,

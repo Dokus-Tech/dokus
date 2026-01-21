@@ -12,6 +12,9 @@ import tech.dokus.domain.model.ContactEvidence
  */
 object ContactLinkDecisionResolver {
 
+    private const val StrongNameSimilarityThreshold = 0.93
+
+    @Suppress("CyclomaticComplexMethod")
     fun resolve(
         policy: ContactLinkPolicy,
         requested: ContactLinkDecisionType?,
@@ -23,7 +26,7 @@ object ContactLinkDecisionResolver {
         val strongSignals = policy == ContactLinkPolicy.VatOrStrongSignals &&
             evidence.ibanMatched == true &&
             evidence.addressMatched == true &&
-            (evidence.nameSimilarity ?: 0.0) >= 0.93 &&
+            (evidence.nameSimilarity ?: 0.0) >= StrongNameSimilarityThreshold &&
             ambiguityCount == 1
 
         val autoLinkAllowed = (vatMatched && ambiguityCount == 1) || strongSignals
