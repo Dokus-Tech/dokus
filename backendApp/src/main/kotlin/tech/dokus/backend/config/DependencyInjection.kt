@@ -36,6 +36,7 @@ import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.backend.services.documents.ContactLinkDecisionResolver
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.DocumentProcessingWorker
@@ -546,23 +547,15 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                         ambiguityCount = evidenceFromPayload?.ambiguityCount ?: 1
                     )
 
-                    val ambiguityCount = evidence.ambiguityCount ?: 1
-                    val strongSignals = linkingPolicy == ContactLinkPolicy.VatOrStrongSignals &&
-                        (evidence.ibanMatched == true) &&
-                        (evidence.addressMatched == true) &&
-                        ((evidence.nameSimilarity ?: 0.0) >= 0.93) &&
-                        ambiguityCount == 1
-                    val autoLinkAllowed = (vatMatched && ambiguityCount == 1) || strongSignals
+                    val effectiveDecision = ContactLinkDecisionResolver.resolve(
+                        policy = linkingPolicy,
+                        requested = decisionType,
+                        hasContact = decisionContactId != null,
+                        vatMatched = vatMatched,
+                        evidence = evidence
+                    )
 
-                    val effectiveDecision = when (decisionType) {
-                        ContactLinkDecisionType.AutoLink ->
-                            if (autoLinkAllowed) ContactLinkDecisionType.AutoLink else ContactLinkDecisionType.Suggest
-                        ContactLinkDecisionType.Suggest -> ContactLinkDecisionType.Suggest
-                        ContactLinkDecisionType.None -> ContactLinkDecisionType.None
-                        null -> if (decisionContactId != null) ContactLinkDecisionType.Suggest else ContactLinkDecisionType.None
-                    }
-
-                    if (effectiveDecision == ContactLinkDecisionType.AutoLink && autoLinkAllowed) {
+                    if (effectiveDecision == ContactLinkDecisionType.AutoLink) {
                         draftRepository.updateCounterparty(
                             documentId = document,
                             tenantId = tenant,
