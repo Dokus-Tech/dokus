@@ -16,7 +16,8 @@ fun interface StoreExtractionHandler {
  * Stores the extracted data, description, and keywords in the document record.
  */
 class StoreExtractionTool(
-    private val storeFunction: StoreExtractionHandler
+    private val storeFunction: StoreExtractionHandler,
+    private val traceSink: tech.dokus.features.ai.orchestrator.ToolTraceSink? = null
 ) : SimpleTool<StoreExtractionTool.Args>(
     argsSerializer = Args.serializer(),
     name = "store_extraction",
@@ -118,6 +119,7 @@ class StoreExtractionTool(
 
     override suspend fun execute(args: Args): String {
         return try {
+            val start = kotlin.time.TimeSource.Monotonic.markNow()
             val extractionJson = jsonFormat.parseToJsonElement(args.extraction)
             val keywordList = args.keywords.split(",").map { it.trim() }.filter { it.isNotBlank() }
 
@@ -143,6 +145,12 @@ class StoreExtractionTool(
                     linkDecisionEvidence = args.linkDecisionEvidence
                 )
             )
+            traceSink?.record(
+                action = "store_extraction",
+                tool = name,
+                durationMs = start.elapsedNow().inWholeMilliseconds,
+                notes = "documentId=${args.documentId}, success=$success"
+            )
 
             if (success) {
                 "SUCCESS: Stored extraction for document ${args.documentId}"
@@ -150,6 +158,12 @@ class StoreExtractionTool(
                 "ERROR: Failed to store extraction - database operation returned false"
             }
         } catch (e: Exception) {
+            traceSink?.record(
+                action = "store_extraction",
+                tool = name,
+                durationMs = 0,
+                notes = "documentId=${args.documentId}, error=${e.message}"
+            )
             "ERROR: Failed to store extraction: ${e.message}"
         }
     }

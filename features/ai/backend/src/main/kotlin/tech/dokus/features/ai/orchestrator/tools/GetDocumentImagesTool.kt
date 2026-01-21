@@ -19,7 +19,8 @@ fun interface DocumentImageFetcher {
 class GetDocumentImagesTool(
     private val documentImageService: DocumentImageService,
     private val documentFetcher: DocumentImageFetcher,
-    private val imageCache: DocumentImageCache
+    private val imageCache: DocumentImageCache,
+    private val traceSink: tech.dokus.features.ai.orchestrator.ToolTraceSink? = null
 ) : SimpleTool<GetDocumentImagesTool.Args>(
     argsSerializer = Args.serializer(),
     name = "get_document_images",
@@ -71,6 +72,7 @@ class GetDocumentImagesTool(
             ?: return "ERROR: Document not found: ${args.documentId}"
 
         return try {
+            val start = kotlin.time.TimeSource.Monotonic.markNow()
             val result = documentImageService.getDocumentImages(
                 documentBytes = documentData.bytes,
                 mimeType = documentData.mimeType,
@@ -82,6 +84,13 @@ class GetDocumentImagesTool(
                 documentId = args.documentId,
                 runId = null,
                 images = result.images
+            )
+
+            traceSink?.record(
+                action = "convert_document_images",
+                tool = name,
+                durationMs = start.elapsedNow().inWholeMilliseconds,
+                notes = "processedPages=${result.processedPages}, totalPages=${result.totalPages}"
             )
 
             // Return structured information about the images
@@ -96,6 +105,12 @@ class GetDocumentImagesTool(
                 }
             }
         } catch (e: Exception) {
+            traceSink?.record(
+                action = "convert_document_images",
+                tool = name,
+                durationMs = 0,
+                notes = "error=${e.message}"
+            )
             "ERROR: Failed to convert document: ${e.message}"
         }
     }
