@@ -166,6 +166,7 @@ private fun DesktopReviewContent(
             previewState = state.previewState,
             selectedFieldPath = state.selectedFieldPath,
             onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
+            isProcessing = state.isProcessing,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
@@ -187,6 +188,7 @@ private fun DocumentPreviewPane(
     previewState: DocumentPreviewState,
     selectedFieldPath: String?,
     onLoadMore: (Int) -> Unit,
+    isProcessing: Boolean,
     modifier: Modifier = Modifier,
 ) {
     DokusCardSurface(
@@ -196,7 +198,8 @@ private fun DocumentPreviewPane(
             state = previewState,
             selectedFieldPath = selectedFieldPath,
             onLoadMore = onLoadMore,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            showScanAnimation = isProcessing
         )
     }
 }
@@ -350,7 +353,10 @@ private fun MobileReviewContent(
                 )
             } else {
                 when (selectedTab) {
-                    TAB_PREVIEW -> PreviewTabContent(previewState = state.previewState)
+                    TAB_PREVIEW -> PreviewTabContent(
+                        previewState = state.previewState,
+                        showScanAnimation = state.isProcessing
+                    )
                     TAB_DETAILS -> DetailsTabContent(
                         state = state,
                         onIntent = onIntent,

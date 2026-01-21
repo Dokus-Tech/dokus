@@ -164,7 +164,10 @@ internal fun Route.documentRecordRoutes() {
                 DocumentRecordDto(
                     document = documentWithUrl,
                     draft = draft?.toDto(),
-                    latestIngestion = latestIngestion?.toDto(),
+                    latestIngestion = latestIngestion?.toDto(
+                        includeRawExtraction = true,
+                        includeTrace = true
+                    ),
                     confirmedEntity = confirmedEntity
                 )
             )
@@ -296,7 +299,10 @@ internal fun Route.documentRecordRoutes() {
 
             val runs = ingestionRepository.listByDocument(documentId, tenantId)
 
-            call.respond(HttpStatusCode.OK, runs.map { it.toDto() })
+            call.respond(
+                HttpStatusCode.OK,
+                runs.map { it.toDto(includeRawExtraction = true, includeTrace = true) }
+            )
         }
 
         /**
@@ -408,7 +414,10 @@ internal fun Route.documentRecordRoutes() {
                     DocumentRecordDto(
                         document = documentWithUrl,
                         draft = draft.toDto(),
-                        latestIngestion = latestIngestion?.toDto(),
+                        latestIngestion = latestIngestion?.toDto(
+                            includeRawExtraction = true,
+                            includeTrace = true
+                        ),
                         confirmedEntity = confirmedEntity,
                         cashflowEntryId = cashflowEntry?.id
                     )
@@ -486,7 +495,10 @@ internal fun Route.documentRecordRoutes() {
                 DocumentRecordDto(
                     document = documentWithUrl,
                     draft = updatedDraft.toDto(),
-                    latestIngestion = latestIngestion?.toDto(),
+                    latestIngestion = latestIngestion?.toDto(
+                        includeRawExtraction = true,
+                        includeTrace = true
+                    ),
                     confirmedEntity = confirmationResult.entity,
                     cashflowEntryId = confirmationResult.cashflowEntryId
                 )
@@ -525,7 +537,10 @@ internal fun Route.documentRecordRoutes() {
                 DocumentRecordDto(
                     document = documentWithUrl,
                     draft = updatedDraft.toDto(),
-                    latestIngestion = latestIngestion?.toDto(),
+                    latestIngestion = latestIngestion?.toDto(
+                        includeRawExtraction = true,
+                        includeTrace = true
+                    ),
                     confirmedEntity = null
                 )
             )

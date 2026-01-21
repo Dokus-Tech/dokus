@@ -1,7 +1,9 @@
 package tech.dokus.domain.model
 
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
@@ -14,6 +16,21 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.enums.ContactLinkSource
+
+/**
+ * Processing trace step for document ingestion.
+ */
+@Serializable
+data class DocumentProcessingStepDto(
+    val step: Int,
+    val action: String,
+    val tool: String? = null,
+    val timestamp: Instant,
+    val durationMs: Long,
+    val input: JsonElement? = null,
+    val output: JsonElement? = null,
+    val notes: String? = null
+)
 
 /**
  * Document ingestion run DTO - represents a single AI extraction attempt.
@@ -30,7 +47,9 @@ data class DocumentIngestionDto(
     val startedAt: LocalDateTime?,
     val finishedAt: LocalDateTime?,
     val errorMessage: String?,
-    val confidence: Double?
+    val confidence: Double?,
+    val rawExtraction: ExtractedDocumentData? = null,
+    val processingTrace: List<DocumentProcessingStepDto>? = null
 )
 
 /**

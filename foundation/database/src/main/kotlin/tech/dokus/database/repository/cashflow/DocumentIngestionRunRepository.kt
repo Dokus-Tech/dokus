@@ -40,7 +40,9 @@ data class IngestionRunSummary(
     val startedAt: LocalDateTime?,
     val finishedAt: LocalDateTime?,
     val errorMessage: String?,
-    val confidence: Double?
+    val confidence: Double?,
+    val rawExtractionJson: String? = null,
+    val processingTrace: String? = null
 )
 
 /**
@@ -317,7 +319,9 @@ class DocumentIngestionRunRepository {
             startedAt = this[DocumentIngestionRunsTable.startedAt],
             finishedAt = this[DocumentIngestionRunsTable.finishedAt],
             errorMessage = this[DocumentIngestionRunsTable.errorMessage],
-            confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble()
+            confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble(),
+            rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
+            processingTrace = this[DocumentIngestionRunsTable.processingTrace]
         )
     }
 }

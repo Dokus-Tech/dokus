@@ -15,10 +15,12 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentProcessingStepDto
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.TrackedCorrection
 import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.utils.parseSafe
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
@@ -226,18 +228,37 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
 /**
  * Convert IngestionRunSummary to DocumentIngestionDto.
  */
-internal fun IngestionRunSummary.toDto(): DocumentIngestionDto = DocumentIngestionDto(
-    id = id,
-    documentId = documentId,
-    tenantId = tenantId,
-    status = status,
-    provider = provider,
-    queuedAt = queuedAt,
-    startedAt = startedAt,
-    finishedAt = finishedAt,
-    errorMessage = errorMessage,
-    confidence = confidence
-)
+internal fun IngestionRunSummary.toDto(
+    includeRawExtraction: Boolean = false,
+    includeTrace: Boolean = false
+): DocumentIngestionDto {
+    val rawExtraction = if (includeRawExtraction) {
+        rawExtractionJson?.let { parseSafe<ExtractedDocumentData>(it).getOrNull() }
+    } else {
+        null
+    }
+
+    val processingTrace = if (includeTrace) {
+        processingTrace?.let { parseSafe<List<DocumentProcessingStepDto>>(it).getOrNull() }
+    } else {
+        null
+    }
+
+    return DocumentIngestionDto(
+        id = id,
+        documentId = documentId,
+        tenantId = tenantId,
+        status = status,
+        provider = provider,
+        queuedAt = queuedAt,
+        startedAt = startedAt,
+        finishedAt = finishedAt,
+        errorMessage = errorMessage,
+        confidence = confidence,
+        rawExtraction = rawExtraction,
+        processingTrace = processingTrace
+    )
+}
 
 /**
  * Update draft counterparty (contact ID and intent).
