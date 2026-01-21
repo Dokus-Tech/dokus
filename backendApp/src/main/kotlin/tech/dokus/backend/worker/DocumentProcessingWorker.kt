@@ -13,15 +13,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.serialization.builtins.ListSerializer
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
 import tech.dokus.features.ai.orchestrator.OrchestratorResult
+import tech.dokus.features.ai.orchestrator.ProcessingStep
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.ProcessorConfig
@@ -127,7 +131,8 @@ class DocumentProcessingWorker(
                             processIngestionRun(ingestion)
                         } catch (e: Exception) {
                             logger.error(
-                                "Failed to process ingestion run ${ingestion.runId} for document ${ingestion.documentId}",
+                                "Failed to process ingestion run ${ingestion.runId} " +
+                                    "for document ${ingestion.documentId}",
                                 e
                             )
                         }
@@ -147,6 +152,10 @@ class DocumentProcessingWorker(
         val runId = ingestion.runId
         val documentId = ingestion.documentId
         val tenantId = ingestion.tenantId
+
+        MDC.put("runId", runId)
+        MDC.put("documentId", documentId)
+        MDC.put("tenantId", tenantId)
 
         logger.info("Processing ingestion run: $runId for document: $documentId")
 
@@ -208,6 +217,10 @@ class DocumentProcessingWorker(
         } catch (e: Exception) {
             logger.error("Unexpected error processing document $documentId", e)
             ingestionRepository.markAsFailed(runId, "Processing error: ${e.message}")
+        } finally {
+            MDC.remove("runId")
+            MDC.remove("documentId")
+            MDC.remove("tenantId")
         }
     }
 
@@ -245,6 +258,22 @@ class DocumentProcessingWorker(
         }
         auditTrail.forEach { step ->
             logger.debug("Step ${step.step}: ${step.action} (${step.durationMs}ms)")
+        }
+
+        // Persist processing trace for observability
+        val trace = when (result) {
+            is OrchestratorResult.Success -> result.auditTrail
+            is OrchestratorResult.NeedsReview -> result.auditTrail
+            is OrchestratorResult.Failed -> result.auditTrail
+        }
+        runCatching {
+            val traceJson = json.encodeToString(
+                ListSerializer(ProcessingStep.serializer()),
+                trace
+            )
+            ingestionRepository.updateProcessingTrace(runId, traceJson)
+        }.onFailure { e ->
+            logger.warn("Failed to persist processing trace for runId=$runId", e)
         }
 
         return result

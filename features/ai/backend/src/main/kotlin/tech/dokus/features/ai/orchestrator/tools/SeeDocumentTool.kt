@@ -22,7 +22,8 @@ class SeeDocumentTool(
     private val model: LLModel,
     private val prompt: AgentPrompt.DocumentClassification,
     private val tenantContext: AgentPrompt.TenantContext,
-    private val imageCache: DocumentImageCache
+    private val imageCache: DocumentImageCache,
+    private val traceSink: tech.dokus.features.ai.orchestrator.ToolTraceSink? = null
 ) : SimpleTool<SeeDocumentTool.Args>(
     argsSerializer = Args.serializer(),
     name = "see_document",
@@ -57,12 +58,29 @@ class SeeDocumentTool(
         val documentImages = try {
             DocumentImageResolver(imageCache).resolve(args.images)
         } catch (e: Exception) {
+            traceSink?.record(
+                action = "classify_document",
+                tool = name,
+                durationMs = 0,
+                input = null,
+                output = null,
+                notes = "error=${e.message}"
+            )
             return "ERROR: ${e.message}"
         }
 
         // Run classification
         val agent = DocumentClassificationAgent(executor, model, prompt)
+        val start = kotlin.time.TimeSource.Monotonic.markNow()
         val result = agent.classify(documentImages, tenantContext)
+        traceSink?.record(
+            action = "classify_document",
+            tool = name,
+            durationMs = start.elapsedNow().inWholeMilliseconds,
+            input = null,
+            output = null,
+            notes = "type=${result.documentType}, confidence=${result.confidence}"
+        )
 
         return buildString {
             appendLine("CLASSIFICATION RESULT:")

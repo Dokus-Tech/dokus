@@ -13,6 +13,11 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
+import tech.dokus.backend.routes.cashflow.documents.buildCorrections
+import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
+import tech.dokus.backend.routes.cashflow.documents.toDto
+import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
 import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
@@ -36,11 +41,6 @@ import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Documents
-import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
-import tech.dokus.backend.routes.cashflow.documents.buildCorrections
-import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
-import tech.dokus.backend.routes.cashflow.documents.toDto
-import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
@@ -164,7 +164,10 @@ internal fun Route.documentRecordRoutes() {
                 DocumentRecordDto(
                     document = documentWithUrl,
                     draft = draft?.toDto(),
-                    latestIngestion = latestIngestion?.toDto(),
+                    latestIngestion = latestIngestion?.toDto(
+                        includeRawExtraction = true,
+                        includeTrace = true
+                    ),
                     confirmedEntity = confirmedEntity
                 )
             )
@@ -296,7 +299,10 @@ internal fun Route.documentRecordRoutes() {
 
             val runs = ingestionRepository.listByDocument(documentId, tenantId)
 
-            call.respond(HttpStatusCode.OK, runs.map { it.toDto() })
+            call.respond(
+                HttpStatusCode.OK,
+                runs.map { it.toDto(includeRawExtraction = true, includeTrace = true) }
+            )
         }
 
         /**
@@ -408,7 +414,10 @@ internal fun Route.documentRecordRoutes() {
                     DocumentRecordDto(
                         document = documentWithUrl,
                         draft = draft.toDto(),
-                        latestIngestion = latestIngestion?.toDto(),
+                        latestIngestion = latestIngestion?.toDto(
+                            includeRawExtraction = true,
+                            includeTrace = true
+                        ),
                         confirmedEntity = confirmedEntity,
                         cashflowEntryId = cashflowEntry?.id
                     )
@@ -486,7 +495,10 @@ internal fun Route.documentRecordRoutes() {
                 DocumentRecordDto(
                     document = documentWithUrl,
                     draft = updatedDraft.toDto(),
-                    latestIngestion = latestIngestion?.toDto(),
+                    latestIngestion = latestIngestion?.toDto(
+                        includeRawExtraction = true,
+                        includeTrace = true
+                    ),
                     confirmedEntity = confirmationResult.entity,
                     cashflowEntryId = confirmationResult.cashflowEntryId
                 )
@@ -525,7 +537,10 @@ internal fun Route.documentRecordRoutes() {
                 DocumentRecordDto(
                     document = documentWithUrl,
                     draft = updatedDraft.toDto(),
-                    latestIngestion = latestIngestion?.toDto(),
+                    latestIngestion = latestIngestion?.toDto(
+                        includeRawExtraction = true,
+                        includeTrace = true
+                    ),
                     confirmedEntity = null
                 )
             )

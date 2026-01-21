@@ -67,6 +67,7 @@ object OrchestratorToolRegistry {
         val cbeApiClient: CbeApiClient?,
         val tenantContext: AgentPrompt.TenantContext,
         val indexingUpdater: IndexingStatusUpdater?,
+        val traceSink: ToolTraceSink? = null,
 
         // Function hooks for database operations
         val documentFetcher: DocumentImageFetcher,
@@ -82,7 +83,14 @@ object OrchestratorToolRegistry {
     fun create(config: Config): ToolRegistry {
         return ToolRegistry {
             // Document tools
-            tool(GetDocumentImagesTool(config.documentImageService, config.documentFetcher, config.imageCache))
+            tool(
+                GetDocumentImagesTool(
+                    config.documentImageService,
+                    config.documentFetcher,
+                    config.imageCache,
+                    config.traceSink
+                )
+            )
             tool(GetPeppolDataTool(config.peppolDataFetcher))
 
             // Vision tools
@@ -92,7 +100,8 @@ object OrchestratorToolRegistry {
                     model = config.visionModel,
                     prompt = AgentPrompt.DocumentClassification,
                     tenantContext = config.tenantContext,
-                    imageCache = config.imageCache
+                    imageCache = config.imageCache,
+                    traceSink = config.traceSink
                 )
             )
             tool(
@@ -100,7 +109,8 @@ object OrchestratorToolRegistry {
                     executor = config.executor,
                     model = config.visionModel,
                     prompt = AgentPrompt.Extraction.Invoice,
-                    imageCache = config.imageCache
+                    imageCache = config.imageCache,
+                    traceSink = config.traceSink
                 )
             )
             tool(
@@ -108,7 +118,8 @@ object OrchestratorToolRegistry {
                     executor = config.executor,
                     model = config.visionModel,
                     prompt = AgentPrompt.Extraction.Bill,
-                    imageCache = config.imageCache
+                    imageCache = config.imageCache,
+                    traceSink = config.traceSink
                 )
             )
             tool(
@@ -116,7 +127,8 @@ object OrchestratorToolRegistry {
                     executor = config.executor,
                     model = config.visionModel,
                     prompt = AgentPrompt.Extraction.Receipt,
-                    imageCache = config.imageCache
+                    imageCache = config.imageCache,
+                    traceSink = config.traceSink
                 )
             )
             tool(
@@ -124,7 +136,8 @@ object OrchestratorToolRegistry {
                     executor = config.executor,
                     model = config.visionModel,
                     prompt = AgentPrompt.Extraction.Expense,
-                    imageCache = config.imageCache
+                    imageCache = config.imageCache,
+                    traceSink = config.traceSink
                 )
             )
 
@@ -135,7 +148,7 @@ object OrchestratorToolRegistry {
             tool(EmbedTextTool(config.embeddingService))
 
             // Storage tools
-            tool(StoreExtractionTool(config.storeExtraction))
+            tool(StoreExtractionTool(config.storeExtraction, config.traceSink))
             tool(StoreChunksTool(config.chunkRepository, config.indexingUpdater))
             tool(IndexAsExampleTool(config.exampleRepository))
 

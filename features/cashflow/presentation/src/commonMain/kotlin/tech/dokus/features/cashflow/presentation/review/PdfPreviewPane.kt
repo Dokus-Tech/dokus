@@ -82,7 +82,8 @@ fun PdfPreviewPane(
     state: DocumentPreviewState,
     selectedFieldPath: String?,
     onLoadMore: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showScanAnimation: Boolean = false
 ) {
     val imageLoader = rememberAuthenticatedImageLoader()
 
@@ -106,7 +107,8 @@ fun PdfPreviewPane(
                 onLoadMore = onLoadMore,
                 imageLoader = imageLoader,
                 selectedFieldPath = selectedFieldPath,
-                modifier = modifier
+                modifier = modifier,
+                showScanAnimation = showScanAnimation
             )
         }
         DocumentPreviewState.NotPdf,
@@ -171,7 +173,8 @@ private fun ReadyPreview(
     onLoadMore: (Int) -> Unit,
     imageLoader: ImageLoader,
     selectedFieldPath: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showScanAnimation: Boolean = false
 ) {
     val scrollState = rememberLazyListState()
 
@@ -197,6 +200,7 @@ private fun ReadyPreview(
                         page = page,
                         imageLoader = imageLoader,
                         modifier = Modifier.fillMaxWidth(),
+                        showScanAnimation = showScanAnimation
                     )
                 }
 
@@ -222,51 +226,58 @@ private fun ReadyPreview(
 private fun PdfPageImage(
     page: DocumentPagePreviewDto,
     imageLoader: ImageLoader,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showScanAnimation: Boolean = false
 ) {
     DokusCardSurface(
         modifier = modifier,
     ) {
-        SubcomposeAsyncImage(
-            model = page.imageUrl,
-            contentDescription = stringResource(Res.string.cashflow_preview_page_label, page.page),
-            imageLoader = imageLoader,
-            loading = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(A4AspectRatio)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            },
-            error = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(A4AspectRatio)
-                        .background(MaterialTheme.colorScheme.errorContainer),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                        Text(
-                            text = stringResource(Res.string.cashflow_preview_page_failed, page.page),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            SubcomposeAsyncImage(
+                model = page.imageUrl,
+                contentDescription = stringResource(Res.string.cashflow_preview_page_label, page.page),
+                imageLoader = imageLoader,
+                loading = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(A4AspectRatio)
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
                     }
-                }
-            },
-            contentScale = ContentScale.FillWidth,
-            modifier = Modifier.fillMaxWidth(),
-        )
+                },
+                error = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(A4AspectRatio)
+                            .background(MaterialTheme.colorScheme.errorContainer),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                            Text(
+                                text = stringResource(Res.string.cashflow_preview_page_failed, page.page),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                        }
+                    }
+                },
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            if (showScanAnimation) {
+                ScanningLineOverlay(modifier = Modifier.matchParentSize())
+            }
+        }
     }
 }
 

@@ -46,6 +46,7 @@ import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.ScanningLineOverlay
 import tech.dokus.features.cashflow.presentation.review.components.AnalysisFailedBanner
 import tech.dokus.features.cashflow.presentation.review.components.details.AmountsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
@@ -66,7 +67,8 @@ private const val A4_ASPECT_RATIO = 0.707f
 @Composable
 internal fun PreviewTabContent(
     previewState: DocumentPreviewState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showScanAnimation: Boolean = false
 ) {
     val imageLoader = rememberAuthenticatedImageLoader()
 
@@ -107,7 +109,8 @@ internal fun PreviewTabContent(
                             MobilePdfPageImage(
                                 page = page,
                                 imageLoader = imageLoader,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                showScanAnimation = showScanAnimation
                             )
                         }
                     }
@@ -125,49 +128,56 @@ internal fun PreviewTabContent(
 private fun MobilePdfPageImage(
     page: DocumentPagePreviewDto,
     imageLoader: coil3.ImageLoader,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showScanAnimation: Boolean = false
 ) {
     DokusCardSurface(modifier = modifier) {
-        SubcomposeAsyncImage(
-            model = page.imageUrl,
-            contentDescription = stringResource(Res.string.cashflow_preview_page_label, page.page),
-            imageLoader = imageLoader,
-            loading = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(A4_ASPECT_RATIO)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            },
-            error = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(A4_ASPECT_RATIO)
-                        .background(MaterialTheme.colorScheme.errorContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Text(
-                            text = stringResource(Res.string.cashflow_preview_page_failed, page.page),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            SubcomposeAsyncImage(
+                model = page.imageUrl,
+                contentDescription = stringResource(Res.string.cashflow_preview_page_label, page.page),
+                imageLoader = imageLoader,
+                loading = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(A4_ASPECT_RATIO)
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
-                }
-            },
-            contentScale = ContentScale.FillWidth,
-            modifier = Modifier.fillMaxWidth()
-        )
+                },
+                error = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(A4_ASPECT_RATIO)
+                            .background(MaterialTheme.colorScheme.errorContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Text(
+                                text = stringResource(Res.string.cashflow_preview_page_failed, page.page),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                },
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            if (showScanAnimation) {
+                ScanningLineOverlay(modifier = Modifier.matchParentSize())
+            }
+        }
     }
 }
 

@@ -52,9 +52,10 @@ internal class DocumentReviewLoader(
         documentId: DocumentId,
         document: DocumentRecordDto
     ) {
-        val extractedData = document.draft?.extractedData
-        val editableData = EditableExtractedData.fromExtractedData(extractedData)
-        val documentType = document.draft?.documentType
+        val extractionSnapshot = document.draft?.extractedData
+            ?: document.latestIngestion?.rawExtraction
+        val editableData = EditableExtractedData.fromExtractedData(extractionSnapshot)
+        val documentType = document.draft?.documentType ?: extractionSnapshot?.documentType
 
         val contactSuggestions = buildContactSuggestions(document)
         val isContactRequired = documentType == DocumentType.Invoice
@@ -71,7 +72,7 @@ internal class DocumentReviewLoader(
                 documentId = documentId,
                 document = document,
                 editableData = editableData,
-                originalData = extractedData,
+                originalData = document.draft?.aiDraftData ?: extractionSnapshot,
                 hasUnsavedChanges = false,
                 isSaving = false,
                 isConfirming = false,

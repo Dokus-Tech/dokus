@@ -325,7 +325,9 @@ class DocumentRepository {
             startedAt = this[DocumentIngestionRunsTable.startedAt],
             finishedAt = this[DocumentIngestionRunsTable.finishedAt],
             errorMessage = this[DocumentIngestionRunsTable.errorMessage],
-            confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble()
+            confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble(),
+            rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
+            processingTrace = this[DocumentIngestionRunsTable.processingTrace]
         )
     }
 

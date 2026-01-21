@@ -402,4 +402,18 @@ class ProcessorIngestionRepository {
             }
         } > 0
     }
+
+    /**
+     * Store processing trace JSON for a run.
+     */
+    suspend fun updateProcessingTrace(
+        runId: String,
+        traceJson: String?
+    ): Boolean = newSuspendedTransaction {
+        DocumentIngestionRunsTable.update({
+            DocumentIngestionRunsTable.id eq UUID.fromString(runId)
+        }) {
+            it[processingTrace] = traceJson
+        } > 0
+    }
 }

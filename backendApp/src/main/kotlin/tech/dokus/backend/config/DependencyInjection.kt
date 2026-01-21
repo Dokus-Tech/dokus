@@ -13,6 +13,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -35,8 +36,8 @@ import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
-import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.documents.ContactLinkingService
+import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.DocumentProcessingWorker
@@ -54,7 +55,6 @@ import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.Name
-import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
@@ -65,7 +65,6 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.ContactEvidence
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.contact.CreateContactRequest
-import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.config.AIModels
@@ -80,12 +79,11 @@ import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
-import tech.dokus.features.ai.services.RedisDocumentImageCache
 import tech.dokus.features.ai.services.EmbeddingService
+import tech.dokus.features.ai.services.RedisDocumentImageCache
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
-import org.koin.core.qualifier.named
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
 import tech.dokus.foundation.backend.config.MinioConfig
@@ -331,6 +329,7 @@ private val contactsModule = module {
     single { ContactMatchingService(get()) }
 }
 
+@Suppress("LongMethod", "CyclomaticComplexMethod", "ComplexCondition")
 private fun processorModule(appConfig: AppBaseConfig) = module {
     // =========================================================================
     // Document Processing Services

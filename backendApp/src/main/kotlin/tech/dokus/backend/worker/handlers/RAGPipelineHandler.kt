@@ -42,6 +42,7 @@ internal class RAGPipelineHandler(
      * @param rawText The extracted text to chunk and embed (from vision model)
      * @return Number of chunks created (or existing if unchanged)
      */
+    @Suppress("TooGenericExceptionCaught", "ThrowsCount")
     suspend fun chunkAndEmbed(
         tenantId: String,
         documentId: String,

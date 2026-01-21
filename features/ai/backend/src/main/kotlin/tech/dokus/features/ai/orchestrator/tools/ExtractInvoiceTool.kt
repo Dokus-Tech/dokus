@@ -26,7 +26,8 @@ class ExtractInvoiceTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
     private val prompt: AgentPrompt.Extraction,
-    private val imageCache: DocumentImageCache
+    private val imageCache: DocumentImageCache,
+    private val traceSink: tech.dokus.features.ai.orchestrator.ToolTraceSink? = null
 ) : SimpleTool<ExtractInvoiceTool.Args>(
     argsSerializer = Args.serializer(),
     name = "extract_invoice",
@@ -62,6 +63,14 @@ class ExtractInvoiceTool(
         val documentImages = try {
             DocumentImageResolver(imageCache).resolve(args.images)
         } catch (e: Exception) {
+            traceSink?.record(
+                action = "extract_invoice",
+                tool = name,
+                durationMs = 0,
+                input = null,
+                output = null,
+                notes = "error=${e.message}"
+            )
             return "ERROR: ${e.message}"
         }
 
@@ -76,7 +85,16 @@ class ExtractInvoiceTool(
         )
 
         // Run extraction
+        val start = kotlin.time.TimeSource.Monotonic.markNow()
         val result = agent.extract(documentImages)
+        traceSink?.record(
+            action = "extract_invoice",
+            tool = name,
+            durationMs = start.elapsedNow().inWholeMilliseconds,
+            input = null,
+            output = null,
+            notes = "confidence=${result.confidence}, lineItems=${result.lineItems.size}"
+        )
 
         return buildString {
             appendLine("EXTRACTION RESULT:")
