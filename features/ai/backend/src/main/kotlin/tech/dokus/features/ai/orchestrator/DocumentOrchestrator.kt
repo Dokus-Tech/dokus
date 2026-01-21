@@ -12,7 +12,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.ContactLinkPolicy
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -21,10 +20,13 @@ import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.ExtractedDocumentData
+import tech.dokus.features.ai.orchestrator.tools.ContactCreatorHandler
+import tech.dokus.features.ai.orchestrator.tools.ContactLookupHandler
+import tech.dokus.features.ai.orchestrator.tools.DocumentImageFetcher
+import tech.dokus.features.ai.orchestrator.tools.IndexingStatusUpdater
+import tech.dokus.features.ai.orchestrator.tools.PeppolDataFetcher
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
-import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
-import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
-import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
+import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
@@ -60,20 +62,15 @@ class DocumentOrchestrator(
     private val chunkRepository: ChunkRepository,
     private val cbeApiClient: CbeApiClient?,
     private val linkingPolicy: ContactLinkPolicy = ContactLinkPolicy.VatOnly,
-    private val indexingUpdater: (suspend (runId: String, status: IndexingStatus, chunksCount: Int?, errorMessage: String?) -> Boolean)? = null,
-    private val documentFetcher: suspend (documentId: String, tenantId: String) -> GetDocumentImagesTool.DocumentData?,
-    private val peppolDataFetcher: suspend (documentId: String) -> ExtractedDocumentData? = { null },
-    private val contactLookup: suspend (tenantId: String, vatNumber: String) -> LookupContactTool.ContactInfo? =
-        { _, _ -> null },
-    private val contactCreator: suspend (
-        tenantId: String,
-        name: String,
-        vatNumber: String?,
-        address: String?
-    ) -> CreateContactTool.CreateResult =
-        { _, _, _, _ -> CreateContactTool.CreateResult(success = false, contactId = null, error = "disabled") },
-    private val storeExtraction: suspend (StoreExtractionTool.Payload) -> Boolean =
-        { false }
+    private val indexingUpdater: IndexingStatusUpdater? = null,
+    private val documentFetcher: DocumentFetcher,
+    private val peppolDataFetcher: PeppolDataFetcher = PeppolDataFetcher { null },
+    private val contactLookup: ContactLookupHandler = ContactLookupHandler { _, _ -> null },
+    private val contactCreator: ContactCreatorHandler =
+        ContactCreatorHandler { _, _, _, _ ->
+            CreateContactTool.CreateResult(success = false, contactId = null, error = "disabled")
+        },
+    private val storeExtraction: StoreExtractionHandler = StoreExtractionHandler { false }
 ) {
     private val logger = loggerFor()
     private val json = Json { ignoreUnknownKeys = true }
@@ -189,7 +186,7 @@ class DocumentOrchestrator(
             cbeApiClient = cbeApiClient,
             tenantContext = tenantContext,
             indexingUpdater = indexingUpdater,
-            documentFetcher = { documentId ->
+            documentFetcher = DocumentImageFetcher { documentId ->
                 documentFetcher(documentId, tenantId.toString())
             },
             peppolDataFetcher = peppolDataFetcher,

@@ -7,6 +7,10 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import tech.dokus.features.ai.models.ExtractedDocumentData
 
+fun interface PeppolDataFetcher {
+    suspend operator fun invoke(documentId: String): ExtractedDocumentData?
+}
+
 /**
  * Tool for fetching pre-parsed PEPPOL UBL data.
  *
@@ -14,7 +18,7 @@ import tech.dokus.features.ai.models.ExtractedDocumentData
  * This tool retrieves the already-extracted data for enrichment.
  */
 class GetPeppolDataTool(
-    private val peppolDataFetcher: suspend (documentId: String) -> ExtractedDocumentData?
+    private val peppolDataFetcher: PeppolDataFetcher
 ) : SimpleTool<GetPeppolDataTool.Args>(
     argsSerializer = Args.serializer(),
     name = "get_peppol_data",

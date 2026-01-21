@@ -6,6 +6,10 @@ import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.services.DocumentImageService
 import java.util.Base64
 
+fun interface DocumentImageFetcher {
+    suspend operator fun invoke(documentId: String): GetDocumentImagesTool.DocumentData?
+}
+
 /**
  * Tool for converting documents to images for vision model processing.
  *
@@ -14,7 +18,7 @@ import java.util.Base64
  */
 class GetDocumentImagesTool(
     private val documentImageService: DocumentImageService,
-    private val documentFetcher: suspend (documentId: String) -> DocumentData?
+    private val documentFetcher: DocumentImageFetcher
 ) : SimpleTool<GetDocumentImagesTool.Args>(
     argsSerializer = Args.serializer(),
     name = "get_document_images",

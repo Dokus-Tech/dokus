@@ -6,13 +6,17 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.domain.enums.ContactLinkDecisionType
 
+fun interface StoreExtractionHandler {
+    suspend operator fun invoke(payload: StoreExtractionTool.Payload): Boolean
+}
+
 /**
  * Tool for persisting document extraction to the database.
  *
  * Stores the extracted data, description, and keywords in the document record.
  */
 class StoreExtractionTool(
-    private val storeFunction: suspend (Payload) -> Boolean
+    private val storeFunction: StoreExtractionHandler
 ) : SimpleTool<StoreExtractionTool.Args>(
     argsSerializer = Args.serializer(),
     name = "store_extraction",

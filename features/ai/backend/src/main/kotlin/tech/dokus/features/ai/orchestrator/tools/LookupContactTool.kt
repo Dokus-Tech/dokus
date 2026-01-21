@@ -4,6 +4,10 @@ import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
 
+fun interface ContactLookupHandler {
+    suspend operator fun invoke(tenantId: String, vatNumber: String): LookupContactTool.ContactInfo?
+}
+
 /**
  * Tool for looking up existing contacts by VAT number.
  *
@@ -11,7 +15,7 @@ import kotlinx.serialization.Serializable
  * Used to link documents to existing contacts rather than creating duplicates.
  */
 class LookupContactTool(
-    private val contactLookup: suspend (tenantId: String, vatNumber: String) -> ContactInfo?
+    private val contactLookup: ContactLookupHandler
 ) : SimpleTool<LookupContactTool.Args>(
     argsSerializer = Args.serializer(),
     name = "lookup_contact",

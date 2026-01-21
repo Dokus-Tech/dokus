@@ -4,6 +4,15 @@ import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
 
+fun interface ContactCreatorHandler {
+    suspend operator fun invoke(
+        tenantId: String,
+        name: String,
+        vatNumber: String?,
+        address: String?
+    ): CreateContactTool.CreateResult
+}
+
 /**
  * Tool for creating new contacts from document extraction.
  *
@@ -14,12 +23,7 @@ import kotlinx.serialization.Serializable
  * 3. Extraction confidence is above threshold
  */
 class CreateContactTool(
-    private val contactCreator: suspend (
-        tenantId: String,
-        name: String,
-        vatNumber: String?,
-        address: String?
-    ) -> CreateResult
+    private val contactCreator: ContactCreatorHandler
 ) : SimpleTool<CreateContactTool.Args>(
     argsSerializer = Args.serializer(),
     name = "create_contact",

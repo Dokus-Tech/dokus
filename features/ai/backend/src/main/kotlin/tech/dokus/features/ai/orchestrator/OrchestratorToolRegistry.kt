@@ -5,8 +5,10 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ExampleRepository
-import tech.dokus.features.ai.models.ExtractedDocumentData
+import tech.dokus.features.ai.orchestrator.tools.ContactCreatorHandler
+import tech.dokus.features.ai.orchestrator.tools.ContactLookupHandler
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
+import tech.dokus.features.ai.orchestrator.tools.DocumentImageFetcher
 import tech.dokus.features.ai.orchestrator.tools.EmbedTextTool
 import tech.dokus.features.ai.orchestrator.tools.ExtractBillTool
 import tech.dokus.features.ai.orchestrator.tools.ExtractExpenseTool
@@ -16,13 +18,16 @@ import tech.dokus.features.ai.orchestrator.tools.FindSimilarDocumentTool
 import tech.dokus.features.ai.orchestrator.tools.GenerateDescriptionTool
 import tech.dokus.features.ai.orchestrator.tools.GenerateKeywordsTool
 import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
+import tech.dokus.features.ai.orchestrator.tools.IndexingStatusUpdater
 import tech.dokus.features.ai.orchestrator.tools.GetPeppolDataTool
 import tech.dokus.features.ai.orchestrator.tools.IndexAsExampleTool
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
+import tech.dokus.features.ai.orchestrator.tools.PeppolDataFetcher
 import tech.dokus.features.ai.orchestrator.tools.PrepareRagChunksTool
 import tech.dokus.features.ai.orchestrator.tools.SeeDocumentTool
 import tech.dokus.features.ai.orchestrator.tools.StoreChunksTool
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
+import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageService
@@ -59,19 +64,14 @@ object OrchestratorToolRegistry {
         val chunkRepository: ChunkRepository,
         val cbeApiClient: CbeApiClient?,
         val tenantContext: AgentPrompt.TenantContext,
-        val indexingUpdater: (suspend (runId: String, status: tech.dokus.domain.enums.IndexingStatus, chunksCount: Int?, errorMessage: String?) -> Boolean)?,
+        val indexingUpdater: IndexingStatusUpdater?,
 
         // Function hooks for database operations
-        val documentFetcher: suspend (documentId: String) -> GetDocumentImagesTool.DocumentData?,
-        val peppolDataFetcher: suspend (documentId: String) -> ExtractedDocumentData?,
-        val storeExtraction: suspend (StoreExtractionTool.Payload) -> Boolean,
-        val contactLookup: suspend (tenantId: String, vatNumber: String) -> LookupContactTool.ContactInfo?,
-        val contactCreator: suspend (
-            tenantId: String,
-            name: String,
-            vatNumber: String?,
-            address: String?
-        ) -> CreateContactTool.CreateResult
+        val documentFetcher: DocumentImageFetcher,
+        val peppolDataFetcher: PeppolDataFetcher,
+        val storeExtraction: StoreExtractionHandler,
+        val contactLookup: ContactLookupHandler,
+        val contactCreator: ContactCreatorHandler
     )
 
     /**

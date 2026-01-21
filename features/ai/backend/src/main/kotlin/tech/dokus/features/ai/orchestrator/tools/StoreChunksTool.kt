@@ -14,6 +14,15 @@ import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ChunkWithEmbedding
 import java.security.MessageDigest
 
+fun interface IndexingStatusUpdater {
+    suspend operator fun invoke(
+        runId: String,
+        status: IndexingStatus,
+        chunksCount: Int?,
+        errorMessage: String?
+    ): Boolean
+}
+
 /**
  * Tool for persisting RAG chunks with embeddings to the database.
  *
@@ -22,7 +31,7 @@ import java.security.MessageDigest
  */
 class StoreChunksTool(
     private val chunkRepository: ChunkRepository,
-    private val indexingUpdater: (suspend (runId: String, status: IndexingStatus, chunksCount: Int?, errorMessage: String?) -> Boolean)? = null
+    private val indexingUpdater: IndexingStatusUpdater? = null
 ) : SimpleTool<StoreChunksTool.Args>(
     argsSerializer = Args.serializer(),
     name = "store_chunks",
