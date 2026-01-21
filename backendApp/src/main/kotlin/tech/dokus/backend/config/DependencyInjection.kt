@@ -478,13 +478,22 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                     draft.counterpartyIntent != CounterpartyIntent.Pending &&
                     draft.draftVersion == 0
                 ) {
-                    draftRepository.updateContactSuggestion(
-                        documentId = document,
-                        tenantId = tenant,
-                        contactId = contactId,
-                        confidence = payload.contactConfidence,
-                        reason = payload.contactReason
-                    )
+                    if (payload.contactCreated == true) {
+                        draftRepository.updateCounterparty(
+                            documentId = document,
+                            tenantId = tenant,
+                            contactId = contactId,
+                            intent = CounterpartyIntent.None
+                        )
+                    } else {
+                        draftRepository.updateContactSuggestion(
+                            documentId = document,
+                            tenantId = tenant,
+                            contactId = contactId,
+                            confidence = payload.contactConfidence,
+                            reason = payload.contactReason
+                        )
+                    }
                 }
 
                 true

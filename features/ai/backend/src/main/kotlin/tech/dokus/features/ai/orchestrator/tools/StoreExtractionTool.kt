@@ -41,6 +41,7 @@ class StoreExtractionTool(
         val confidence: Double,
         val rawText: String?,
         val contactId: String?,
+        val contactCreated: Boolean?,
         val contactConfidence: Float?,
         val contactReason: String?
     )
@@ -77,6 +78,9 @@ class StoreExtractionTool(
         @property:LLMDescription("Optional contact ID to suggest/link")
         val contactId: String? = null,
 
+        @property:LLMDescription("Whether the contact was created during this run")
+        val contactCreated: Boolean? = null,
+
         @property:LLMDescription("Optional contact suggestion confidence (0.0 - 1.0)")
         val contactConfidence: Float? = null,
 
@@ -103,6 +107,7 @@ class StoreExtractionTool(
                     confidence = args.confidence,
                     rawText = args.rawText,
                     contactId = args.contactId,
+                    contactCreated = args.contactCreated,
                     contactConfidence = args.contactConfidence,
                     contactReason = args.contactReason
                 )

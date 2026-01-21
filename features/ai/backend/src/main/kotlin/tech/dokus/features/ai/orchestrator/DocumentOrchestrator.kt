@@ -225,6 +225,7 @@ class DocumentOrchestrator(
         - generate_description / generate_keywords should be used after extraction.
         - After success (or needs_review with extraction), call store_extraction with runId, documentType,
           extraction, description, keywords, confidence, rawText, and any contactId you resolved.
+          If you created a contact, set contactCreated=true in store_extraction.
         - For RAG indexing, call prepare_rag_chunks -> embed_text for each chunk -> store_chunks with runId.
         - If you can resolve a contact, use lookup_contact then create_contact if missing, and pass contactId to store_extraction.
 
