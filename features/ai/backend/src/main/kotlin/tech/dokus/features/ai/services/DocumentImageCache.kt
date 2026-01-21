@@ -9,20 +9,30 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * In-memory cache for document images used by vision tools.
+ * Cache for document images used by vision tools.
  *
  * Stores rendered PNG bytes keyed by an opaque ID to avoid sending
  * base64 image data through the orchestrator prompt.
  */
-class DocumentImageCache(
-    private val clock: Clock = Clock.System,
-    private val ttl: Duration = 30.minutes
-) {
+interface DocumentImageCache {
     data class ImageRef(
         val pageNumber: Int,
         val imageId: String
     )
 
+    suspend fun store(
+        documentId: String,
+        runId: String?,
+        images: List<DocumentImage>
+    ): List<ImageRef>
+
+    suspend fun get(imageId: String): DocumentImage?
+}
+
+class InMemoryDocumentImageCache(
+    private val clock: Clock = Clock.System,
+    private val ttl: Duration = 30.minutes
+) : DocumentImageCache {
     private data class CachedImage(
         val image: DocumentImage,
         val expiresAt: Instant
@@ -30,11 +40,11 @@ class DocumentImageCache(
 
     private val cache = ConcurrentHashMap<String, CachedImage>()
 
-    fun store(
+    override suspend fun store(
         documentId: String,
         runId: String?,
         images: List<DocumentImage>
-    ): List<ImageRef> {
+    ): List<DocumentImageCache.ImageRef> {
         pruneExpired()
         return images.map { image ->
             val imageId = buildId(documentId, runId)
@@ -42,11 +52,11 @@ class DocumentImageCache(
                 clock.now().toEpochMilliseconds() + ttl.inWholeMilliseconds
             )
             cache[imageId] = CachedImage(image = image, expiresAt = expiresAt)
-            ImageRef(pageNumber = image.pageNumber, imageId = imageId)
+            DocumentImageCache.ImageRef(pageNumber = image.pageNumber, imageId = imageId)
         }
     }
 
-    fun get(imageId: String): DocumentImage? {
+    override suspend fun get(imageId: String): DocumentImage? {
         val cached = cache[imageId] ?: return null
         if (cached.expiresAt <= clock.now()) {
             cache.remove(imageId)

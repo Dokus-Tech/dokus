@@ -6,6 +6,7 @@ package tech.dokus.foundation.backend.cache
  */
 enum class RedisNamespace(val value: String) {
     Auth("auth"),
+    Ai("ai"),
     Invoicing("invoicing"),
     Expense("expense"),
     Payment("payment"),

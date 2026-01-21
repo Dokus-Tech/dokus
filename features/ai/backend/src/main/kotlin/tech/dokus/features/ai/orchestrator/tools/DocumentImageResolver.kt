@@ -7,15 +7,18 @@ import java.util.Base64
 internal class DocumentImageResolver(
     private val imageCache: DocumentImageCache
 ) {
-    fun resolve(imagesInput: String): List<DocumentImage> {
+    suspend fun resolve(imagesInput: String): List<DocumentImage> {
         val imageLines = imagesInput.trim().lines().map { it.trim() }.filter { it.isNotBlank() }
         if (imageLines.isEmpty()) {
             throw IllegalArgumentException("No images provided for processing")
         }
 
-        return imageLines.mapIndexed { index, token ->
-            imageCache.get(token) ?: decodeBase64(token, index)
+        val resolved = mutableListOf<DocumentImage>()
+        imageLines.forEachIndexed { index, token ->
+            val cached = imageCache.get(token)
+            resolved += cached ?: decodeBase64(token, index)
         }
+        return resolved
     }
 
     private fun decodeBase64(token: String, index: Int): DocumentImage {
