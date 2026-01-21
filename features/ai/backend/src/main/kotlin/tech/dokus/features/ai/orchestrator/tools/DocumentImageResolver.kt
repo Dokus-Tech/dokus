@@ -15,10 +15,20 @@ internal class DocumentImageResolver(
 
         val resolved = mutableListOf<DocumentImage>()
         imageLines.forEachIndexed { index, token ->
-            val cached = imageCache.get(token)
-            resolved += cached ?: decodeBase64(token, index)
+            val imageToken = extractImageToken(token)
+            val cached = imageCache.get(imageToken)
+            resolved += cached ?: decodeBase64(imageToken, index)
         }
         return resolved
+    }
+
+    private fun extractImageToken(token: String): String {
+        val trimmed = token.trim()
+        val colonIndex = trimmed.indexOf(':')
+        if (colonIndex >= 0 && colonIndex + 1 < trimmed.length) {
+            return trimmed.substring(colonIndex + 1).trim()
+        }
+        return trimmed
     }
 
     private fun decodeBase64(token: String, index: Int): DocumentImage {
