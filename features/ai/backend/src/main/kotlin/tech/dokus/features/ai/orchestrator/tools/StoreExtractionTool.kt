@@ -23,6 +23,7 @@ class StoreExtractionTool(
         - Human-readable description for UI
         - Search keywords
         - Confidence score
+        - Link decision (auto-link or suggestion) with evidence
 
         Use this tool after successful extraction and validation.
     """.trimIndent()
@@ -43,7 +44,12 @@ class StoreExtractionTool(
         val contactId: String?,
         val contactCreated: Boolean?,
         val contactConfidence: Float?,
-        val contactReason: String?
+        val contactReason: String?,
+        val linkDecisionType: String?,
+        val linkDecisionContactId: String?,
+        val linkDecisionReason: String?,
+        val linkDecisionConfidence: Float?,
+        val linkDecisionEvidence: String?
     )
 
     @Serializable
@@ -85,7 +91,22 @@ class StoreExtractionTool(
         val contactConfidence: Float? = null,
 
         @property:LLMDescription("Optional contact suggestion reason")
-        val contactReason: String? = null
+        val contactReason: String? = null,
+
+        @property:LLMDescription("Link decision type: AUTO_LINK | SUGGEST | NONE")
+        val linkDecisionType: String? = null,
+
+        @property:LLMDescription("Contact ID associated with link decision")
+        val linkDecisionContactId: String? = null,
+
+        @property:LLMDescription("Reason for link decision")
+        val linkDecisionReason: String? = null,
+
+        @property:LLMDescription("Suggestion confidence (0.0 - 1.0) when decision is SUGGEST")
+        val linkDecisionConfidence: Float? = null,
+
+        @property:LLMDescription("JSON evidence payload for link decision")
+        val linkDecisionEvidence: String? = null
     )
 
     private val jsonFormat = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
@@ -109,7 +130,12 @@ class StoreExtractionTool(
                     contactId = args.contactId,
                     contactCreated = args.contactCreated,
                     contactConfidence = args.contactConfidence,
-                    contactReason = args.contactReason
+                    contactReason = args.contactReason,
+                    linkDecisionType = args.linkDecisionType,
+                    linkDecisionContactId = args.linkDecisionContactId,
+                    linkDecisionReason = args.linkDecisionReason,
+                    linkDecisionConfidence = args.linkDecisionConfidence,
+                    linkDecisionEvidence = args.linkDecisionEvidence
                 )
             )
 

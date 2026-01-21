@@ -243,6 +243,19 @@ enum class ContactSource(override val dbValue: String) : DbEnum {
     Peppol("peppol")
 }
 
+/**
+ * Source of a linked contact on a document draft.
+ * USER means the user explicitly selected it and should not be overridden.
+ */
+@Serializable
+enum class ContactLinkSource(override val dbValue: String) : DbEnum {
+    @SerialName("ai")
+    AI("ai"),
+
+    @SerialName("user")
+    User("user")
+}
+
 // ============================================================================
 // INVOICE ENUMS
 // ============================================================================

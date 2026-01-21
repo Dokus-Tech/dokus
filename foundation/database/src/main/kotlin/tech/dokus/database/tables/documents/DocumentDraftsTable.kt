@@ -11,6 +11,7 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
@@ -111,6 +112,10 @@ object DocumentDraftsTable : Table("document_drafts") {
     val linkedContactId = uuid("linked_contact_id")
         .references(ContactsTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable()
+    val linkedContactSource = dbEnumeration<ContactLinkSource>("linked_contact_source").nullable()
+
+    // Evidence JSON for contact decision (auto-link or suggestion)
+    val contactEvidence = text("contact_evidence").nullable()
 
     // Counterparty intent (NONE/PENDING)
     val counterpartyIntent = dbEnumeration<CounterpartyIntent>("counterparty_intent")

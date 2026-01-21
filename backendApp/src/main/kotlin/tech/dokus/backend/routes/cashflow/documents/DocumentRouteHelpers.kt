@@ -6,6 +6,7 @@ import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -213,6 +214,8 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     contactSuggestionConfidence = contactSuggestionConfidence,
     contactSuggestionReason = contactSuggestionReason,
     linkedContactId = linkedContactId,
+    linkedContactSource = linkedContactSource,
+    contactEvidence = contactEvidence,
     counterpartyIntent = counterpartyIntent,
     rejectReason = rejectReason,
     lastSuccessfulRunId = lastSuccessfulRunId,
@@ -250,7 +253,8 @@ internal suspend fun updateDraftCounterparty(
         documentId = documentId,
         tenantId = tenantId,
         contactId = contactId,
-        intent = request.counterpartyIntent
+        intent = request.counterpartyIntent,
+        source = if (contactId != null) ContactLinkSource.User else null
     )
     if (!updated) {
         throw DokusException.InternalError("Failed to update document counterparty")

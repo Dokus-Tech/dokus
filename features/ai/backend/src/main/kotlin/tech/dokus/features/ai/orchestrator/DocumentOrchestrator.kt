@@ -224,11 +224,20 @@ class DocumentOrchestrator(
         - verify_totals / validate_iban / validate_ogm / lookup_company are validation tools.
         - generate_description / generate_keywords should be used after extraction.
         - After success (or needs_review with extraction), call store_extraction with runId, documentType,
-          extraction, description, keywords, confidence, rawText, and any contactId you resolved.
-          If you created a contact, set contactCreated=true in store_extraction.
+          extraction, description, keywords, confidence, rawText, and a LinkDecision payload.
+        - LinkDecision policy (VAT-only):
+          AUTO_LINK only when VAT is valid AND exact VAT match (no ambiguity).
+          If VAT missing/invalid, NEVER auto-link; use SUGGEST or NONE.
+        - Provide linkDecision fields:
+          linkDecisionType = AUTO_LINK | SUGGEST | NONE
+          linkDecisionContactId (if applicable)
+          linkDecisionReason (short, human-readable)
+          linkDecisionConfidence (only for SUGGEST)
+          linkDecisionEvidence (JSON string with evidence fields):
+            vatExtracted, vatValid, vatMatched, cbeExists, ibanMatched, nameSimilarity, addressMatched, ambiguityCount
+        - If you created a contact, set contactCreated=true in store_extraction.
         - For RAG indexing, call prepare_rag_chunks -> embed_text for each chunk -> store_chunks with runId.
-        - If you can resolve a contact, use lookup_contact then create_contact if missing, and pass contactId to store_extraction.
-          If you found an existing contact with high certainty (e.g., exact VAT match), set contactConfidence accordingly.
+        - If you can resolve a contact, use lookup_contact then create_contact if missing, and include VAT evidence.
 
         Final output JSON schema:
         {

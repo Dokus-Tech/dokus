@@ -53,6 +53,7 @@ import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.Name
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
@@ -60,6 +61,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.ContactEvidence
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.repository.ChunkRepository
@@ -402,12 +404,40 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                 )
             },
             contactCreator = { tenantId, name, vatNumber, _ ->
+                val normalizedVat = vatNumber?.takeIf { it.isNotBlank() }
+                    ?: return@DocumentOrchestrator CreateContactTool.CreateResult(
+                        success = false,
+                        contactId = null,
+                        error = "VAT number required for contact creation"
+                    )
+
+                val vat = VatNumber(normalizedVat)
+                if (!vat.isValid) {
+                    return@DocumentOrchestrator CreateContactTool.CreateResult(
+                        success = false,
+                        contactId = null,
+                        error = "Invalid VAT number"
+                    )
+                }
+
+                val tenant = TenantId.parse(tenantId)
+                val existing = get<ContactRepository>()
+                    .findByVatNumber(tenant, vat.value)
+                    .getOrNull()
+                if (existing != null) {
+                    return@DocumentOrchestrator CreateContactTool.CreateResult(
+                        success = false,
+                        contactId = null,
+                        error = "Contact already exists"
+                    )
+                }
+
                 val request = CreateContactRequest(
                     name = Name(name),
-                    vatNumber = vatNumber?.let { VatNumber(it) },
+                    vatNumber = vat,
                     source = ContactSource.AI
                 )
-                val created = get<ContactRepository>().createContact(TenantId.parse(tenantId), request)
+                val created = get<ContactRepository>().createContact(tenant, request)
                 created.fold(
                     onSuccess = {
                         CreateContactTool.CreateResult(
@@ -466,7 +496,13 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
 
                 if (!stored) return@DocumentOrchestrator false
 
-                val contactId = payload.contactId
+                val decisionType = payload.linkDecisionType
+                    ?.trim()
+                    ?.uppercase()
+                    ?.takeIf { it.isNotBlank() }
+                val decisionContactId = payload.linkDecisionContactId?.takeIf { it.isNotBlank() }
+                    ?: payload.contactId?.takeIf { it.isNotBlank() }
+                val contactId = decisionContactId
                     ?.let { runCatching { ContactId.parse(it) }.getOrNull() }
                     ?: return@DocumentOrchestrator true
 
@@ -499,20 +535,40 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                         contactVat != null &&
                         VatNumber.normalize(counterpartyVat) == VatNumber.normalize(contactVat)
 
-                    if (vatMatched) {
+                    val evidenceFromPayload = payload.linkDecisionEvidence?.let {
+                        runCatching { json.decodeFromString<ContactEvidence>(it) }.getOrNull()
+                    }
+                    val evidence = (evidenceFromPayload ?: ContactEvidence()).copy(
+                        vatExtracted = evidenceFromPayload?.vatExtracted ?: counterpartyVat,
+                        vatValid = evidenceFromPayload?.vatValid ?: vatValid,
+                        vatMatched = evidenceFromPayload?.vatMatched ?: vatMatched,
+                        ambiguityCount = evidenceFromPayload?.ambiguityCount ?: 1
+                    )
+
+                    val effectiveDecision = when (decisionType) {
+                        "AUTO_LINK" -> if (vatMatched) "AUTO_LINK" else "SUGGEST"
+                        "SUGGEST" -> "SUGGEST"
+                        "NONE" -> "NONE"
+                        else -> if (decisionContactId != null) "SUGGEST" else "NONE"
+                    }
+
+                    if (effectiveDecision == "AUTO_LINK" && vatMatched) {
                         draftRepository.updateCounterparty(
                             documentId = document,
                             tenantId = tenant,
                             contactId = contactId,
-                            intent = CounterpartyIntent.None
+                            intent = CounterpartyIntent.None,
+                            source = ContactLinkSource.AI,
+                            contactEvidence = evidence
                         )
-                    } else {
+                    } else if (effectiveDecision == "SUGGEST") {
                         draftRepository.updateContactSuggestion(
                             documentId = document,
                             tenantId = tenant,
                             contactId = contactId,
-                            confidence = payload.contactConfidence,
-                            reason = payload.contactReason
+                            confidence = payload.linkDecisionConfidence ?: payload.contactConfidence,
+                            reason = payload.linkDecisionReason ?: payload.contactReason,
+                            contactEvidence = evidence
                         )
                     }
                 }

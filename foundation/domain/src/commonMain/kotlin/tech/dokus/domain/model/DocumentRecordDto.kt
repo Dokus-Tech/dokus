@@ -13,6 +13,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.enums.ContactLinkSource
 
 /**
  * Document ingestion run DTO - represents a single AI extraction attempt.
@@ -54,6 +55,8 @@ data class DocumentDraftDto(
     val contactSuggestionConfidence: Float?,
     val contactSuggestionReason: String?,
     val linkedContactId: ContactId?,
+    val linkedContactSource: ContactLinkSource? = null,
+    val contactEvidence: ContactEvidence? = null,
     val counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
     val rejectReason: DocumentRejectReason? = null,
     val lastSuccessfulRunId: IngestionRunId?,

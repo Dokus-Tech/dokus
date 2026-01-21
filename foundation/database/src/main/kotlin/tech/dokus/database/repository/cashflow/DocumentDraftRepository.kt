@@ -15,6 +15,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.DocumentDraftsTable
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
@@ -24,6 +25,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.ContactEvidence
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.TrackedCorrection
 import tech.dokus.domain.repository.DraftStatusChecker
@@ -52,6 +54,8 @@ data class DraftSummary(
     val contactSuggestionConfidence: Float?,
     val contactSuggestionReason: String?,
     val linkedContactId: ContactId?,
+    val linkedContactSource: ContactLinkSource? = null,
+    val contactEvidence: ContactEvidence? = null,
     val counterpartyIntent: CounterpartyIntent,
     val rejectReason: DocumentRejectReason?,
     val lastSuccessfulRunId: IngestionRunId?,
@@ -263,11 +267,14 @@ class DocumentDraftRepository : DraftStatusChecker {
         documentId: DocumentId,
         tenantId: TenantId,
         contactId: ContactId?,
-        intent: CounterpartyIntent?
+        intent: CounterpartyIntent?,
+        source: ContactLinkSource? = null,
+        contactEvidence: ContactEvidence? = null
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
         val tenantIdUuid = UUID.fromString(tenantId.toString())
+        val evidenceJson = contactEvidence?.let { json.encodeToString(it) }
 
         val current = DocumentDraftsTable.selectAll()
             .where {
@@ -286,10 +293,15 @@ class DocumentDraftRepository : DraftStatusChecker {
             if (contactId != null) {
                 it[linkedContactId] = UUID.fromString(contactId.toString())
                 it[counterpartyIntent] = CounterpartyIntent.None
+                it[linkedContactSource] = source
+                if (evidenceJson != null) {
+                    it[DocumentDraftsTable.contactEvidence] = evidenceJson
+                }
             } else if (intent != null) {
                 it[counterpartyIntent] = intent
                 if (intent == CounterpartyIntent.None || intent == CounterpartyIntent.Pending) {
                     it[linkedContactId] = null
+                    it[linkedContactSource] = null
                 }
             }
             if (shouldReview) {
@@ -365,9 +377,11 @@ class DocumentDraftRepository : DraftStatusChecker {
         tenantId: TenantId,
         contactId: ContactId?,
         confidence: Float?,
-        reason: String?
+        reason: String?,
+        contactEvidence: ContactEvidence? = null
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val evidenceJson = contactEvidence?.let { json.encodeToString(it) }
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
                 (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
@@ -375,6 +389,9 @@ class DocumentDraftRepository : DraftStatusChecker {
             it[suggestedContactId] = contactId?.let { id -> UUID.fromString(id.toString()) }
             it[contactSuggestionConfidence] = confidence
             it[contactSuggestionReason] = reason
+            if (evidenceJson != null) {
+                it[DocumentDraftsTable.contactEvidence] = evidenceJson
+            }
             it[updatedAt] = now
         } > 0
     }
@@ -436,6 +453,8 @@ class DocumentDraftRepository : DraftStatusChecker {
             contactSuggestionConfidence = this[DocumentDraftsTable.contactSuggestionConfidence],
             contactSuggestionReason = this[DocumentDraftsTable.contactSuggestionReason],
             linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it.toKotlinUuid()) },
+            linkedContactSource = this[DocumentDraftsTable.linkedContactSource],
+            contactEvidence = this[DocumentDraftsTable.contactEvidence]?.let { json.decodeFromString(it) },
             counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
             rejectReason = this[DocumentDraftsTable.rejectReason],
             lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]
