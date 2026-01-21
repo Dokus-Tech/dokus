@@ -54,4 +54,32 @@ class ContactLinkDecisionResolverTest {
 
         assertEquals(ContactLinkDecisionType.AutoLink, decision)
     }
+
+    @Test
+    fun `AUTO_LINK downgrades when ambiguity is greater than one`() {
+        val evidence = ContactEvidence(ambiguityCount = 2)
+        val decision = ContactLinkDecisionResolver.resolve(
+            policy = ContactLinkPolicy.VatOnly,
+            requested = ContactLinkDecisionType.AutoLink,
+            hasContact = true,
+            vatMatched = true,
+            evidence = evidence
+        )
+
+        assertEquals(ContactLinkDecisionType.Suggest, decision)
+    }
+
+    @Test
+    fun `no contact defaults to NONE`() {
+        val evidence = ContactEvidence()
+        val decision = ContactLinkDecisionResolver.resolve(
+            policy = ContactLinkPolicy.VatOnly,
+            requested = null,
+            hasContact = false,
+            vatMatched = false,
+            evidence = evidence
+        )
+
+        assertEquals(ContactLinkDecisionType.None, decision)
+    }
 }
