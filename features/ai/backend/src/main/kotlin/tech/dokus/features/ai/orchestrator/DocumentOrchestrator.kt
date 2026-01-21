@@ -8,8 +8,12 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import tech.dokus.domain.enums.ContactLinkPolicy
@@ -189,6 +193,38 @@ class DocumentOrchestrator(
 
         val parsed = parseAgentOutputWithRepair(rawResponse, traceCollector)
         if (parsed == null) {
+            val fallback = buildFallbackOutputFromTrace(traceCollector.snapshot())
+            if (fallback != null) {
+                val fallbackTool = findLatestExtractionTool(traceCollector.snapshot())
+                traceCollector.record(
+                    action = "orchestrator_output_parse_failed",
+                    tool = "document-orchestrator",
+                    durationMs = 0,
+                    input = null,
+                    output = null,
+                    notes = "using_extraction_trace_fallback, sourceTool=${fallbackTool ?: "unknown"}"
+                )
+                val persisted = ensureExtractionPersisted(
+                    documentId = documentId,
+                    tenantId = tenantId,
+                    runId = runId,
+                    output = fallback,
+                    storeCalled = storeCalled,
+                    storeSucceeded = storeSucceeded,
+                    traceSink = traceCollector,
+                    storeHandler = baseStoreHandler
+                )
+                if (!persisted) {
+                    return OrchestratorResult.Failed(
+                        reason = "Extraction completed but could not be persisted",
+                        stage = "store_extraction",
+                        auditTrail = traceCollector.snapshot()
+                    )
+                }
+
+                return toResult(fallback, traceCollector.snapshot())
+            }
+
             logger.error("Failed to parse orchestrator response: {}", rawResponse.take(1000))
             return OrchestratorResult.Failed(
                 reason = "Failed to parse orchestrator output",
@@ -378,12 +414,15 @@ class DocumentOrchestrator(
         traceSink: ToolTraceSink? = null
     ): OrchestratorAgentOutput? {
         val normalized = normalizeJson(output)
-        val parsed = runCatching {
-            json.decodeFromString(OrchestratorAgentOutput.serializer(), normalized)
-        }.getOrNull()
+        val parsed = parseAgentOutputStrict(normalized)
 
         if (parsed != null && !containsPlaceholders(normalized)) {
             return parsed
+        }
+
+        val lenientParsed = parseAgentOutputLenient(normalized)
+        if (lenientParsed != null && !containsPlaceholders(normalized)) {
+            return lenientParsed
         }
 
         traceSink?.record(
@@ -400,9 +439,44 @@ class DocumentOrchestrator(
         if (containsPlaceholders(repairedNormalized)) {
             return null
         }
+
+        val repairedParsed = parseAgentOutputStrict(repairedNormalized)
+        if (repairedParsed != null) {
+            return repairedParsed
+        }
+
+        return parseAgentOutputLenient(repairedNormalized)
+    }
+
+    private fun parseAgentOutputStrict(normalized: String): OrchestratorAgentOutput? {
         return runCatching {
-            json.decodeFromString(OrchestratorAgentOutput.serializer(), repairedNormalized)
+            json.decodeFromString(OrchestratorAgentOutput.serializer(), normalized)
         }.getOrNull()
+    }
+
+    private fun parseAgentOutputLenient(normalized: String): OrchestratorAgentOutput? {
+        val element = runCatching { json.decodeFromString<JsonElement>(normalized) }.getOrNull()
+            ?: return null
+        val obj = element.jsonObject
+
+        val status = obj["status"].asStringOrNull() ?: return null
+        val keywords = obj["keywords"].asStringListOrNull()
+
+        return OrchestratorAgentOutput(
+            status = status,
+            documentType = obj["documentType"].asStringOrNull(),
+            extraction = obj["extraction"],
+            rawText = obj["rawText"].asStringOrNull(),
+            description = obj["description"].asStringOrNull(),
+            keywords = keywords,
+            confidence = obj["confidence"].asDoubleOrNull(),
+            validationPassed = obj["validationPassed"].asBooleanOrNull(),
+            correctionsApplied = obj["correctionsApplied"].asIntOrNull(),
+            contactId = obj["contactId"].asStringOrNull(),
+            contactCreated = obj["contactCreated"].asBooleanOrNull(),
+            issues = obj["issues"].asStringListOrNull(),
+            reason = obj["reason"].asStringOrNull()
+        )
     }
 
     private fun containsPlaceholders(output: String): Boolean {
@@ -526,6 +600,95 @@ class DocumentOrchestrator(
 
         return success
     }
+
+    private fun buildFallbackOutputFromTrace(
+        auditTrail: List<ProcessingStep>
+    ): OrchestratorAgentOutput? {
+        val extractionStep = auditTrail.lastOrNull { step ->
+            step.tool in extractionToolNames && step.output != null
+        } ?: return null
+
+        val sourceTool = extractionStep.tool
+        val documentType = sourceTool?.let { toolName ->
+            extractionToolDocumentType[toolName]
+        } ?: return null
+
+        val extraction = extractionStep.output ?: return null
+        val confidence = extractConfidence(extraction)
+        val rawText = extractRawText(extraction)
+
+        return OrchestratorAgentOutput(
+            status = "needs_review",
+            documentType = documentType,
+            extraction = extraction,
+            rawText = rawText,
+            description = null,
+            keywords = emptyList(),
+            confidence = confidence,
+            validationPassed = false,
+            correctionsApplied = 0,
+            contactId = null,
+            contactCreated = null,
+            issues = listOf(
+                "Orchestrator output parse failed; persisted extraction output",
+                "Fallback source tool: ${sourceTool ?: "unknown"}"
+            ),
+            reason = "Orchestrator output parse failed (fallback source: ${sourceTool ?: "unknown"})"
+        )
+    }
+
+    private fun findLatestExtractionTool(auditTrail: List<ProcessingStep>): String? {
+        return auditTrail.lastOrNull { step ->
+            step.tool in extractionToolNames && step.output != null
+        }?.tool
+    }
+
+    private fun JsonElement?.asStringOrNull(): String? {
+        val primitive = this as? JsonPrimitive ?: return null
+        if (!primitive.isString && primitive.content.isBlank()) return null
+        return primitive.content
+    }
+
+    private fun JsonElement?.asBooleanOrNull(): Boolean? {
+        val primitive = this as? JsonPrimitive ?: return null
+        return primitive.booleanOrNull ?: primitive.content.toBooleanStrictOrNull()
+            ?: primitive.content.toBoolean()
+    }
+
+    private fun JsonElement?.asIntOrNull(): Int? {
+        val primitive = this as? JsonPrimitive ?: return null
+        return primitive.intOrNull ?: primitive.content.toIntOrNull()
+    }
+
+    private fun JsonElement?.asDoubleOrNull(): Double? {
+        val primitive = this as? JsonPrimitive ?: return null
+        return primitive.doubleOrNull ?: primitive.content.toDoubleOrNull()
+    }
+
+    private fun JsonElement?.asStringListOrNull(): List<String>? {
+        return when (this) {
+            is JsonArray -> this.mapNotNull { it.asStringOrNull() }
+            is JsonPrimitive -> this.content
+                .split(",")
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+            else -> null
+        }
+    }
+
+    private val extractionToolNames = setOf(
+        "extract_invoice",
+        "extract_bill",
+        "extract_receipt",
+        "extract_expense"
+    )
+
+    private val extractionToolDocumentType = mapOf(
+        "extract_invoice" to "INVOICE",
+        "extract_bill" to "BILL",
+        "extract_receipt" to "RECEIPT",
+        "extract_expense" to "EXPENSE"
+    )
 
     private fun toResult(
         output: OrchestratorAgentOutput,
