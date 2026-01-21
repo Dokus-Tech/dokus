@@ -78,11 +78,14 @@ import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.services.ChunkingService
+import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
+import tech.dokus.features.ai.services.RedisDocumentImageCache
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
+import org.koin.core.qualifier.named
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
 import tech.dokus.foundation.backend.config.MinioConfig
@@ -335,6 +338,13 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
 
     // Document Image Service (converts PDFs/images to PNG for vision processing)
     single { DocumentImageService() }
+    single<RedisClient>(named("ai-cache")) {
+        redis {
+            config = appConfig.caching.redis
+            namespace = RedisNamespace.Ai
+        }
+    }
+    single<DocumentImageCache> { RedisDocumentImageCache(get(named("ai-cache"))) }
 
     // RAG services
     single { ChunkingService() }
@@ -366,6 +376,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             mode = mode,
             exampleRepository = get(),
             documentImageService = get(),
+            imageCache = get(),
             chunkingService = get(),
             embeddingService = get(),
             chunkRepository = get(),

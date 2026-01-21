@@ -9,8 +9,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
 import tech.dokus.features.ai.prompts.AgentPrompt
-import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
-import java.util.Base64
+import tech.dokus.features.ai.services.DocumentImageCache
 
 /**
  * Vision tool for document classification (triage).
@@ -22,7 +21,8 @@ class SeeDocumentTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
     private val prompt: AgentPrompt.DocumentClassification,
-    private val tenantContext: AgentPrompt.TenantContext
+    private val tenantContext: AgentPrompt.TenantContext,
+    private val imageCache: DocumentImageCache
 ) : SimpleTool<SeeDocumentTool.Args>(
     argsSerializer = Args.serializer(),
     name = "see_document",
@@ -45,7 +45,7 @@ class SeeDocumentTool(
     @Serializable
     data class Args(
         @property:LLMDescription(
-            "Base64-encoded PNG images of document pages, separated by newlines. " +
+            "Image IDs (from get_document_images) or base64 PNGs, separated by newlines. " +
                 "Include at least the first page for classification."
         )
         val images: String
@@ -54,19 +54,10 @@ class SeeDocumentTool(
     private val jsonFormat = Json { prettyPrint = true }
 
     override suspend fun execute(args: Args): String {
-        // Parse base64 images
-        val imageLines = args.images.trim().lines().filter { it.isNotBlank() }
-        if (imageLines.isEmpty()) {
-            return "ERROR: No images provided for classification"
-        }
-
         val documentImages = try {
-            imageLines.mapIndexed { index, base64 ->
-                val bytes = Base64.getDecoder().decode(base64.trim())
-                DocumentImage(pageNumber = index + 1, imageBytes = bytes)
-            }
+            DocumentImageResolver(imageCache).resolve(args.images)
         } catch (e: Exception) {
-            return "ERROR: Invalid base64 image data: ${e.message}"
+            return "ERROR: ${e.message}"
         }
 
         // Run classification
