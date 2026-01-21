@@ -228,6 +228,7 @@ class DocumentOrchestrator(
           If you created a contact, set contactCreated=true in store_extraction.
         - For RAG indexing, call prepare_rag_chunks -> embed_text for each chunk -> store_chunks with runId.
         - If you can resolve a contact, use lookup_contact then create_contact if missing, and pass contactId to store_extraction.
+          If you found an existing contact with high certainty (e.g., exact VAT match), set contactConfidence accordingly.
 
         Final output JSON schema:
         {

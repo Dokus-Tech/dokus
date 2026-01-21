@@ -478,7 +478,28 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                     draft.counterpartyIntent != CounterpartyIntent.Pending &&
                     draft.draftVersion == 0
                 ) {
-                    if (payload.contactCreated == true) {
+                    val counterpartyVat = when (documentType) {
+                        DocumentType.Invoice -> extractedData.invoice?.clientVatNumber
+                        DocumentType.Bill -> extractedData.bill?.supplierVatNumber
+                        DocumentType.Expense -> extractedData.expense?.merchantVatNumber
+                        DocumentType.Receipt -> extractedData.receipt?.merchantVatNumber
+                        DocumentType.CreditNote -> extractedData.creditNote?.counterpartyVatNumber
+                        DocumentType.ProForma -> extractedData.proForma?.clientVatNumber
+                        DocumentType.Unknown -> null
+                    }
+
+                    val vatValid = counterpartyVat?.let { VatNumber(it).isValid } == true
+                    val contactVat = get<ContactRepository>()
+                        .getContact(contactId, tenant)
+                        .getOrNull()
+                        ?.vatNumber
+                        ?.value
+                    val vatMatched = vatValid &&
+                        counterpartyVat != null &&
+                        contactVat != null &&
+                        VatNumber.normalize(counterpartyVat) == VatNumber.normalize(contactVat)
+
+                    if (vatMatched) {
                         draftRepository.updateCounterparty(
                             documentId = document,
                             tenantId = tenant,
