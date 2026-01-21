@@ -36,7 +36,7 @@ import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.DocumentConfirmationService
-import tech.dokus.backend.services.documents.ContactLinkDecisionResolver
+import tech.dokus.backend.services.documents.ContactLinkingService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.DocumentProcessingWorker
@@ -55,8 +55,6 @@ import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.ContactLinkDecisionType
-import tech.dokus.domain.enums.ContactLinkPolicy
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
@@ -345,6 +343,9 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     // Example repository for few-shot learning
     single<ExampleRepository> { DocumentExamplesRepository() }
 
+    // Contact linking policy applier (AI decisions)
+    single { ContactLinkingService(get(), get(), appConfig.processor.linkingPolicy) }
+
     // =========================================================================
     // Document Orchestrator
     // =========================================================================
@@ -462,7 +463,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             storeExtraction = { payload ->
                 val ingestionRepository = get<ProcessorIngestionRepository>()
                 val draftRepository = get<DocumentDraftRepository>()
-                val linkingPolicy = appConfig.processor.linkingPolicy
+                val contactLinkingService = get<ContactLinkingService>()
                 val runId = payload.runId
                     ?: ingestionRepository.findProcessingRunId(payload.tenantId, payload.documentId)
                     ?: return@DocumentOrchestrator false
@@ -516,64 +517,21 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                     draft.counterpartyIntent != CounterpartyIntent.Pending &&
                     draft.draftVersion == 0
                 ) {
-                    val counterpartyVat = when (documentType) {
-                        DocumentType.Invoice -> extractedData.invoice?.clientVatNumber
-                        DocumentType.Bill -> extractedData.bill?.supplierVatNumber
-                        DocumentType.Expense -> extractedData.expense?.merchantVatNumber
-                        DocumentType.Receipt -> extractedData.receipt?.merchantVatNumber
-                        DocumentType.CreditNote -> extractedData.creditNote?.counterpartyVatNumber
-                        DocumentType.ProForma -> extractedData.proForma?.clientVatNumber
-                        DocumentType.Unknown -> null
-                    }
-
-                    val vatValid = counterpartyVat?.let { VatNumber(it).isValid } == true
-                    val contactVat = get<ContactRepository>()
-                        .getContact(contactId, tenant)
-                        .getOrNull()
-                        ?.vatNumber
-                        ?.value
-                    val vatMatched = vatValid &&
-                        counterpartyVat != null &&
-                        contactVat != null &&
-                        VatNumber.normalize(counterpartyVat) == VatNumber.normalize(contactVat)
-
                     val evidenceFromPayload = payload.linkDecisionEvidence?.let {
                         runCatching { json.decodeFromString<ContactEvidence>(it) }.getOrNull()
                     }
-                    val evidence = (evidenceFromPayload ?: ContactEvidence()).copy(
-                        vatExtracted = evidenceFromPayload?.vatExtracted ?: counterpartyVat,
-                        vatValid = evidenceFromPayload?.vatValid ?: vatValid,
-                        vatMatched = evidenceFromPayload?.vatMatched ?: vatMatched,
-                        ambiguityCount = evidenceFromPayload?.ambiguityCount ?: 1
-                    )
 
-                    val effectiveDecision = ContactLinkDecisionResolver.resolve(
-                        policy = linkingPolicy,
-                        requested = decisionType,
-                        hasContact = decisionContactId != null,
-                        vatMatched = vatMatched,
-                        evidence = evidence
+                    contactLinkingService.applyLinkDecision(
+                        tenantId = tenant,
+                        documentId = document,
+                        documentType = documentType,
+                        extractedData = extractedData,
+                        decisionType = decisionType,
+                        contactId = contactId,
+                        decisionReason = payload.linkDecisionReason ?: payload.contactReason,
+                        decisionConfidence = payload.linkDecisionConfidence ?: payload.contactConfidence,
+                        evidence = evidenceFromPayload
                     )
-
-                    if (effectiveDecision == ContactLinkDecisionType.AutoLink) {
-                        draftRepository.updateCounterparty(
-                            documentId = document,
-                            tenantId = tenant,
-                            contactId = contactId,
-                            intent = CounterpartyIntent.None,
-                            source = ContactLinkSource.AI,
-                            contactEvidence = evidence
-                        )
-                    } else if (effectiveDecision == ContactLinkDecisionType.Suggest) {
-                        draftRepository.updateContactSuggestion(
-                            documentId = document,
-                            tenantId = tenant,
-                            contactId = contactId,
-                            confidence = payload.linkDecisionConfidence ?: payload.contactConfidence,
-                            reason = payload.linkDecisionReason ?: payload.contactReason,
-                            contactEvidence = evidence
-                        )
-                    }
                 }
 
                 true
