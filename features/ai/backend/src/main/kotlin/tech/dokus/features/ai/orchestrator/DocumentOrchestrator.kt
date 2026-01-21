@@ -359,7 +359,7 @@ class DocumentOrchestrator(
         when (mode) {
             IntelligenceMode.Assisted -> 8
             IntelligenceMode.Autonomous -> 12
-            IntelligenceMode.Sovereign -> 16
+            IntelligenceMode.Sovereign -> 32
         }
 
     // =========================================================================
