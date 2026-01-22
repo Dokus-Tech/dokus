@@ -31,6 +31,7 @@ import tech.dokus.features.ai.orchestrator.tools.PeppolDataFetcher
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
 import tech.dokus.features.ai.prompts.AgentPrompt
+import tech.dokus.features.ai.prompts.Prompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
@@ -71,10 +72,9 @@ class DocumentOrchestrator(
     private val documentFetcher: DocumentFetcher,
     private val peppolDataFetcher: PeppolDataFetcher = PeppolDataFetcher { null },
     private val contactLookup: ContactLookupHandler = ContactLookupHandler { _, _ -> null },
-    private val contactCreator: ContactCreatorHandler =
-        ContactCreatorHandler { _, _, _, _ ->
-            CreateContactTool.CreateResult(success = false, contactId = null, error = "disabled")
-        },
+    private val contactCreator: ContactCreatorHandler = ContactCreatorHandler { _, _, _, _ ->
+        CreateContactTool.CreateResult(success = false, contactId = null, error = "disabled")
+    },
     private val storeExtraction: StoreExtractionHandler = StoreExtractionHandler { false }
 ) {
     private val logger = loggerFor()
@@ -147,7 +147,7 @@ class DocumentOrchestrator(
             storeExtractionOverride = storeWrapper
         )
         val agentConfig = AIAgentConfig.withSystemPrompt(
-            prompt = orchestratorSystemPrompt(),
+            prompt = orchestratorSystemPrompt().value,
             llm = orchestratorModel,
             id = "document-orchestrator",
             maxAgentIterations = maxAgentIterations()
@@ -298,7 +298,8 @@ class DocumentOrchestrator(
     // Prompting
     // =========================================================================
 
-    private fun orchestratorSystemPrompt(): String = """
+    private fun orchestratorSystemPrompt(): Prompt = Prompt(
+        """
         You are the Dokus document processing orchestrator.
         You must solve the task by calling tools. Do not guess.
 
@@ -352,23 +353,24 @@ class DocumentOrchestrator(
         }
 
         If status="needs_review" and you have any extraction data, include it in "extraction".
-    """.trimIndent()
+    """
+    )
 
-    private fun linkPolicyPrompt(): String {
+    private fun linkPolicyPrompt(): Prompt {
         return when (linkingPolicy) {
-            ContactLinkPolicy.VatOnly -> """
+            ContactLinkPolicy.VatOnly -> Prompt("""
         - LinkDecision policy (VAT-only):
           AUTO_LINK only when VAT is valid AND exact VAT match (no ambiguity).
           If VAT missing/invalid, NEVER auto-link; use SUGGEST or NONE.
-            """.trimIndent()
+            """)
 
-            ContactLinkPolicy.VatOrStrongSignals -> """
+            ContactLinkPolicy.VatOrStrongSignals -> Prompt("""
         - LinkDecision policy (VAT or strong signals):
           AUTO_LINK when VAT is valid AND exact VAT match (no ambiguity),
           OR when strong multi-signal evidence is present:
             nameSimilarity >= 0.93, ibanMatched=true, addressMatched=true, ambiguityCount=1.
           If VAT missing/invalid and strong signals are not met, NEVER auto-link; use SUGGEST or NONE.
-            """.trimIndent()
+            """)
         }
     }
 
@@ -381,8 +383,8 @@ class DocumentOrchestrator(
         dpi: Int?
     ): String = """
         Task: Process document
-        documentId: ${documentId}
-        tenantId: ${tenantId}
+        documentId: $documentId
+        tenantId: $tenantId
         runId: ${runId ?: "unknown"}
         tenantVatNumber: ${tenantContext.vatNumber ?: "unknown"}
         tenantCompanyName: ${tenantContext.companyName ?: "unknown"}
@@ -652,7 +654,7 @@ class DocumentOrchestrator(
     private fun JsonElement?.asBooleanOrNull(): Boolean? {
         val primitive = this as? JsonPrimitive ?: return null
         return primitive.booleanOrNull ?: primitive.content.toBooleanStrictOrNull()
-            ?: primitive.content.toBoolean()
+        ?: primitive.content.toBoolean()
     }
 
     private fun JsonElement?.asIntOrNull(): Int? {
@@ -672,6 +674,7 @@ class DocumentOrchestrator(
                 .split(",")
                 .map { it.trim() }
                 .filter { it.isNotBlank() }
+
             else -> null
         }
     }
@@ -782,7 +785,8 @@ class DocumentOrchestrator(
     private fun normalizeExtraction(extraction: JsonElement?): JsonElement? {
         if (extraction == null) return null
         if (extraction is JsonPrimitive && extraction.isString) {
-            return runCatching { json.parseToJsonElement(extraction.content) }.getOrNull() ?: extraction
+            return runCatching { json.parseToJsonElement(extraction.content) }.getOrNull()
+                ?: extraction
         }
         return extraction
     }
