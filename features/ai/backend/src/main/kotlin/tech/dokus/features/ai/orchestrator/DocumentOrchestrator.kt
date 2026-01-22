@@ -10,11 +10,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import tech.dokus.domain.enums.ContactLinkPolicy
 import tech.dokus.domain.ids.ContactId
@@ -459,7 +459,7 @@ class DocumentOrchestrator(
     private fun parseAgentOutputLenient(normalized: String): OrchestratorAgentOutput? {
         val element = runCatching { json.decodeFromString<JsonElement>(normalized) }.getOrNull()
             ?: return null
-        val obj = element.jsonObject
+        val obj = parseJsonObjectOrNull(element) ?: return null
 
         val status = obj["status"].asStringOrNull() ?: return null
         val keywords = obj["keywords"].asStringListOrNull()
@@ -773,21 +773,47 @@ class DocumentOrchestrator(
     }
 
     private fun extractRawText(extraction: JsonElement?): String {
-        val obj = extraction?.jsonObject ?: return ""
+        val obj = parseJsonObjectOrNull(extraction) ?: return ""
         return obj["extractedText"]?.jsonPrimitive?.content ?: ""
     }
 
     private fun extractConfidence(extraction: JsonElement?): Double? {
-        val obj = extraction?.jsonObject ?: return null
+        val obj = parseJsonObjectOrNull(extraction) ?: return null
         return obj["confidence"]?.jsonPrimitive?.content?.toDoubleOrNull()
     }
 
     private fun normalizeExtraction(extraction: JsonElement?): JsonElement? {
         if (extraction == null) return null
-        if (extraction is JsonPrimitive && extraction.isString) {
-            return runCatching { json.parseToJsonElement(extraction.content) }.getOrNull()
-                ?: extraction
+        return when (extraction) {
+            is JsonObject, is JsonArray -> extraction
+            is JsonPrimitive -> {
+                if (!extraction.isString) {
+                    null
+                } else {
+                    val parsed = runCatching { json.parseToJsonElement(extraction.content) }.getOrNull()
+                    when (parsed) {
+                        is JsonObject, is JsonArray -> parsed
+                        else -> null
+                    }
+                }
+            }
+            else -> null
         }
-        return extraction
+    }
+
+    private fun parseJsonObjectOrNull(element: JsonElement?): JsonObject? {
+        if (element == null) return null
+        return when (element) {
+            is JsonObject -> element
+            is JsonPrimitive -> {
+                if (!element.isString) {
+                    null
+                } else {
+                    val parsed = runCatching { json.parseToJsonElement(element.content) }.getOrNull()
+                    parsed as? JsonObject
+                }
+            }
+            else -> null
+        }
     }
 }
