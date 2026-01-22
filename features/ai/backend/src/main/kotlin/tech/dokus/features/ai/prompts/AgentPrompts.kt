@@ -11,13 +11,13 @@ package tech.dokus.features.ai.prompts
  * - Provenance tracking for audit trail
  */
 sealed class AgentPrompt {
-    abstract val systemPrompt: String
+    abstract val systemPrompt: Prompt
 
     /**
      * Build prompt with tenant context.
      * Override in prompts that benefit from knowing user's company info.
      */
-    open fun build(context: TenantContext): String = systemPrompt
+    open fun build(context: TenantContext): Prompt = systemPrompt
 
     /**
      * Tenant context for prompt customization.
@@ -37,7 +37,8 @@ sealed class AgentPrompt {
      * Classifies documents into one of 7 types with tenant context support.
      */
     data object DocumentClassification : AgentPrompt() {
-        override val systemPrompt: String = """
+        override val systemPrompt = Prompt(
+            """
             You are a document classification expert for Belgian business documents.
             Analyze the document carefully and classify it into exactly one type.
 
@@ -121,9 +122,11 @@ sealed class AgentPrompt {
                 "confidence": 0.85,
                 "reasoning": "Brief explanation of classification decision"
             }
-        """.trimIndent()
+        """
+        )
 
-        private val TENANT_CONTEXT_TEMPLATE = """
+        private val TENANT_CONTEXT_TEMPLATE = Prompt(
+            """
 
             ## Your Company Information
             Your company VAT number: %s
@@ -133,9 +136,10 @@ sealed class AgentPrompt {
             - If YOUR VAT/name appears as sender → INVOICE (you sent it)
             - If YOUR VAT/name appears as recipient → BILL (you received it)
             - If neither matches clearly, use other context clues
-        """.trimIndent()
+        """
+        )
 
-        override fun build(context: TenantContext): String {
+        override fun build(context: TenantContext): Prompt {
             return if (context.vatNumber != null || context.companyName != null) {
                 systemPrompt + TENANT_CONTEXT_TEMPLATE.format(
                     context.vatNumber ?: "Unknown",
@@ -160,7 +164,8 @@ sealed class AgentPrompt {
          * Outbound invoice extraction (you sent it to a client).
          */
         data object Invoice : Extraction() {
-            override val systemPrompt: String = """
+            override val systemPrompt = Prompt(
+                """
                 You are an invoice data extraction specialist with vision capabilities.
                 Extract ALL visible data from this outbound invoice (invoice you sent to a client).
                 Always respond with ONLY valid JSON (no markdown, no explanation).
@@ -251,14 +256,16 @@ sealed class AgentPrompt {
                         "invoiceNumber": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.95}
                     }
                 }
-            """.trimIndent()
+            """
+            )
         }
 
         /**
          * Inbound invoice/bill extraction (you received it, you owe money).
          */
         data object Bill : Extraction() {
-            override val systemPrompt: String = """
+            override val systemPrompt = Prompt(
+                """
                 You are a bill/supplier invoice extraction specialist with vision capabilities.
                 Extract ALL visible data from this inbound invoice/bill (from a supplier you need to pay).
                 Always respond with ONLY valid JSON (no markdown, no explanation).
@@ -330,14 +337,16 @@ sealed class AgentPrompt {
                         "invoiceNumber": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.95}
                     }
                 }
-            """.trimIndent()
+            """
+            )
         }
 
         /**
          * Receipt extraction (POS/store receipt).
          */
         data object Receipt : Extraction() {
-            override val systemPrompt: String = """
+            override val systemPrompt = Prompt(
+                """
                 You are a receipt data extraction specialist with vision capabilities.
                 Extract ALL visible data from this receipt (proof of purchase/payment).
                 Always respond with ONLY valid JSON (no markdown, no explanation).
@@ -399,14 +408,16 @@ sealed class AgentPrompt {
                         "totalAmount": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.95}
                     }
                 }
-            """.trimIndent()
+            """
+            )
         }
 
         /**
          * Credit note extraction.
          */
         data object CreditNote : Extraction() {
-            override val systemPrompt: String = """
+            override val systemPrompt = Prompt(
+                """
                 You are a credit note data extraction specialist with vision capabilities.
                 Extract ALL visible data from this credit note (reduces/refunds a previous invoice).
                 Always respond with ONLY valid JSON (no markdown, no explanation).
@@ -462,14 +473,16 @@ sealed class AgentPrompt {
                         "vendorName": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.9}
                     }
                 }
-            """.trimIndent()
+            """
+            )
         }
 
         /**
          * Pro forma / quote extraction.
          */
         data object ProForma : Extraction() {
-            override val systemPrompt: String = """
+            override val systemPrompt = Prompt(
+                """
                 You are a proforma/quote extraction specialist with vision capabilities.
                 Extract ALL visible data from this quote or estimate (NOT a legal tax invoice).
                 Always respond with ONLY valid JSON (no markdown, no explanation).
@@ -524,14 +537,16 @@ sealed class AgentPrompt {
                         "vendorName": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.9}
                     }
                 }
-            """.trimIndent()
+            """
+            )
         }
 
         /**
          * Simple expense extraction (parking, transport, subscriptions).
          */
         data object Expense : Extraction() {
-            override val systemPrompt: String = """
+            override val systemPrompt = Prompt(
+                """
                 You are an expense document extraction specialist with vision capabilities.
                 Extract data from simple expense documents (parking, transport, subscriptions, etc.)
                 Always respond with ONLY valid JSON (no markdown, no explanation).
@@ -582,7 +597,8 @@ sealed class AgentPrompt {
                         "totalAmount": {"pageNumber": 1, "sourceText": "...", "fieldConfidence": 0.95}
                     }
                 }
-            """.trimIndent()
+            """
+            )
         }
     }
 
@@ -594,7 +610,8 @@ sealed class AgentPrompt {
      * RAG-backed chat/Q&A prompt.
      */
     data object Chat : AgentPrompt() {
-        override val systemPrompt: String = """
+        override val systemPrompt = Prompt(
+            """
             You are a helpful document assistant that answers questions based on provided context.
 
             ## Guidelines
@@ -608,7 +625,8 @@ sealed class AgentPrompt {
             1. Direct answer to the question
             2. Supporting details with [Source N] citations
             3. If uncertain, express uncertainty clearly
-        """.trimIndent()
+        """
+        )
     }
 
     // ========================================================================
@@ -619,7 +637,8 @@ sealed class AgentPrompt {
      * Expense category suggestion prompt.
      */
     data object CategorySuggestion : AgentPrompt() {
-        override val systemPrompt: String = """
+        override val systemPrompt = Prompt(
+            """
             Categorize this expense for a Belgian IT freelancer/SME.
 
             ## Categories (Belgian tax-relevant)
@@ -651,6 +670,7 @@ sealed class AgentPrompt {
                     {"category": "ALTERNATIVE", "confidence": 0.0 to 1.0}
                 ]
             }
-        """.trimIndent()
+        """
+        )
     }
 }
