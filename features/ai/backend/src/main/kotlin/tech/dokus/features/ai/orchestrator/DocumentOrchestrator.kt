@@ -13,9 +13,11 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import tech.dokus.domain.enums.ContactLinkDecisionType
 import tech.dokus.domain.enums.ContactLinkPolicy
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -568,6 +570,9 @@ class DocumentOrchestrator(
             notes = "storeCalled=$storeCalled, storeSucceeded=$storeSucceeded"
         )
 
+        // Use AUTO_LINK when contactId is recovered from fallback (sets linkedContactId → confirm works)
+        val hasRecoveredContact = output.contactId != null
+
         val success = storeHandler(
             StoreExtractionTool.Payload(
                 documentId = documentId.toString(),
@@ -583,10 +588,11 @@ class DocumentOrchestrator(
                 contactCreated = output.contactCreated,
                 contactConfidence = null,
                 contactReason = null,
-                linkDecisionType = null,
-                linkDecisionContactId = null,
-                linkDecisionReason = null,
-                linkDecisionConfidence = null,
+                linkDecisionType = if (hasRecoveredContact) ContactLinkDecisionType.AutoLink else null,
+                linkDecisionContactId = output.contactId,
+                linkDecisionReason = if (hasRecoveredContact)
+                    "Recovered from trace: VAT lookup exact match (fallback)" else null,
+                linkDecisionConfidence = if (hasRecoveredContact) 1.0f else null,
                 linkDecisionEvidence = null
             )
         )
@@ -601,6 +607,42 @@ class DocumentOrchestrator(
         )
 
         return success
+    }
+
+    /**
+     * Recovers contact ID from trace if orchestrator already performed a lookup.
+     * Only returns contact when:
+     * 1. store_extraction output contains linkedContactId or contactId (not suggestedContactId), OR
+     * 2. lookup_contact returned found=true with matchType=EXACT
+     */
+    private fun findContactFromTrace(auditTrail: List<ProcessingStep>): String? {
+        fun JsonElement?.str(key: String): String? =
+            (this as? JsonObject)?.get(key)?.jsonPrimitive?.contentOrNull
+
+        // Priority 1: Explicit linked contact from store_extraction (if it partially succeeded)
+        // GUARDRAIL: Only use linkedContactId or contactId - NOT suggestedContactId
+        // (suggested is not a confirmed identity decision)
+        auditTrail.lastOrNull {
+            it.action == "store_extraction" || it.tool == "store_extraction"
+        }?.output?.let { output ->
+            output.str("linkedContactId") ?: output.str("contactId")
+        }?.let { return it }
+
+        // Priority 2: VAT lookup exact match
+        // GUARDRAIL: Only return contactId when matchType == "EXACT"
+        // (protects against fuzzy matches if contactLookup ever becomes less strict)
+        auditTrail.lastOrNull {
+            it.action == "lookup_contact" || it.tool == "lookup_contact"
+        }?.output?.let { output ->
+            val obj = output as? JsonObject ?: return@let
+            val found = obj["found"]?.jsonPrimitive?.booleanOrNull ?: false
+            val matchType = obj["matchType"]?.jsonPrimitive?.contentOrNull
+            if (found && matchType == "EXACT") {
+                obj["contactId"]?.jsonPrimitive?.contentOrNull?.let { return it }
+            }
+        }
+
+        return null
     }
 
     private fun buildFallbackOutputFromTrace(
@@ -619,6 +661,9 @@ class DocumentOrchestrator(
         val confidence = extractConfidence(extraction)
         val rawText = extractRawText(extraction)
 
+        // Recover contact from trace if orchestrator already performed lookup
+        val contactId = findContactFromTrace(auditTrail)
+
         return OrchestratorAgentOutput(
             status = "needs_review",
             documentType = documentType,
@@ -629,7 +674,7 @@ class DocumentOrchestrator(
             confidence = confidence,
             validationPassed = false,
             correctionsApplied = 0,
-            contactId = null,
+            contactId = contactId,
             contactCreated = null,
             issues = listOf(
                 "Orchestrator output parse failed; persisted extraction output",

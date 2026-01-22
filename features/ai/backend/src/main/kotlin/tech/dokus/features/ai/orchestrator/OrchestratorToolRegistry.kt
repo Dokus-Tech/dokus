@@ -154,7 +154,7 @@ object OrchestratorToolRegistry {
 
             // Lookup tools
             tool(FindSimilarDocumentTool(config.exampleRepository))
-            tool(LookupContactTool(config.contactLookup))
+            tool(LookupContactTool(config.contactLookup, config.traceSink))
             tool(CreateContactTool(config.contactCreator))
 
             // Validation tools (existing)

@@ -3,6 +3,10 @@ package tech.dokus.features.ai.orchestrator.tools
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import tech.dokus.features.ai.orchestrator.ToolTraceSink
+import kotlin.time.TimeSource
 
 fun interface ContactLookupHandler {
     suspend operator fun invoke(tenantId: String, vatNumber: String): LookupContactTool.ContactInfo?
@@ -15,7 +19,8 @@ fun interface ContactLookupHandler {
  * Used to link documents to existing contacts rather than creating duplicates.
  */
 class LookupContactTool(
-    private val contactLookup: ContactLookupHandler
+    private val contactLookup: ContactLookupHandler,
+    private val traceSink: ToolTraceSink? = null
 ) : SimpleTool<LookupContactTool.Args>(
     argsSerializer = Args.serializer(),
     name = "lookup_contact",
@@ -48,12 +53,48 @@ class LookupContactTool(
     )
 
     override suspend fun execute(args: Args): String {
+        val start = TimeSource.Monotonic.markNow()
+
         if (args.vatNumber.isBlank()) {
+            traceSink?.record(
+                action = "lookup_contact",
+                tool = "lookup_contact",
+                durationMs = start.elapsedNow().inWholeMilliseconds,
+                input = buildJsonObject {
+                    put("vatNumber", JsonPrimitive(args.vatNumber))
+                },
+                output = buildJsonObject {
+                    put("found", JsonPrimitive(false))
+                    put("error", JsonPrimitive("VAT number is blank"))
+                },
+                notes = "error=blank_vat"
+            )
             return "ERROR: VAT number is required for contact lookup"
         }
 
         return try {
             val contact = contactLookup(args.tenantId, args.vatNumber)
+
+            // Record to trace with structured output
+            traceSink?.record(
+                action = "lookup_contact",
+                tool = "lookup_contact",
+                durationMs = start.elapsedNow().inWholeMilliseconds,
+                input = buildJsonObject {
+                    put("vatNumber", JsonPrimitive(args.vatNumber))
+                },
+                output = contact?.let { c ->
+                    buildJsonObject {
+                        put("found", JsonPrimitive(true))
+                        put("contactId", JsonPrimitive(c.id))
+                        put("vatNumber", JsonPrimitive(c.vatNumber))
+                        put("matchType", JsonPrimitive("EXACT"))
+                    }
+                } ?: buildJsonObject {
+                    put("found", JsonPrimitive(false))
+                },
+                notes = if (contact != null) "found=${contact.id}, matchType=EXACT" else "not_found"
+            )
 
             if (contact != null) {
                 buildString {
@@ -69,6 +110,19 @@ class LookupContactTool(
                 "NOT_FOUND: No contact found with VAT number ${args.vatNumber}"
             }
         } catch (e: Exception) {
+            traceSink?.record(
+                action = "lookup_contact",
+                tool = "lookup_contact",
+                durationMs = start.elapsedNow().inWholeMilliseconds,
+                input = buildJsonObject {
+                    put("vatNumber", JsonPrimitive(args.vatNumber))
+                },
+                output = buildJsonObject {
+                    put("found", JsonPrimitive(false))
+                    put("error", JsonPrimitive(e.message ?: "unknown"))
+                },
+                notes = "error=${e.message}"
+            )
             "ERROR: Failed to lookup contact: ${e.message}"
         }
     }
