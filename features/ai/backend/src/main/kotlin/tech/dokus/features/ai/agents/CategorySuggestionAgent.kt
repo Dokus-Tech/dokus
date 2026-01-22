@@ -48,7 +48,7 @@ class CategorySuggestionAgent(
                 strategy = singleRunStrategy(),
                 toolRegistry = ToolRegistry.EMPTY,
                 id = "category-suggester",
-                systemPrompt = prompt.systemPrompt
+                systemPrompt = prompt.systemPrompt.value
             )
 
             val response: String = agent.run(userPrompt)

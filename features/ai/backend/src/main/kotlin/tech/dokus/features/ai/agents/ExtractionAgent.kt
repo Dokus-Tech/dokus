@@ -99,7 +99,7 @@ internal class ExtractionAgentImpl<T : Any>(
         return try {
             // Build vision prompt with image attachments
             val systemMessage = Message.System(
-                parts = listOf(ContentPart.Text(prompt.systemPrompt)),
+                parts = listOf(ContentPart.Text(prompt.systemPrompt.value)),
                 metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
             )
 

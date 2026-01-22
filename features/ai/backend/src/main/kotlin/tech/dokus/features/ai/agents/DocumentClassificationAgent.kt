@@ -55,7 +55,7 @@ class DocumentClassificationAgent(
             // Build vision prompt with image attachments (direct construction for compatibility)
             // Use build() to inject tenant context for better INVOICE/BILL classification
             val systemMessage = Message.System(
-                parts = listOf(ContentPart.Text(prompt.build(tenantContext))),
+                parts = listOf(ContentPart.Text(prompt.build(tenantContext).value)),
                 metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
             )
 

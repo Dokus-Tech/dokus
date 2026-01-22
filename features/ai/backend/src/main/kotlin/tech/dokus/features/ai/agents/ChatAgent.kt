@@ -234,7 +234,7 @@ class ChatAgent(
 
         // Step 3: Construct the system prompt with RAG context
         val systemPrompt = ragService.formatRAGPrompt(
-            basePrompt = prompt.systemPrompt,
+            basePrompt = prompt.systemPrompt.value,
             context = context
         )
 
