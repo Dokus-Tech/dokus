@@ -177,8 +177,8 @@ sealed interface IntelligenceMode {
 
         // Models (LM Studio format: qwen/qwen3-vl-8b)
         override val orchestratorModel = "openai/gpt-oss-20b"
-        override val visionModel = "qwen/qwen3-vl-8b"
-        override val chatModel = "qwen/qwen3-32b"
+        override val visionModel = "qwen/qwen3-vl-30b"
+        override val chatModel = "openai/gpt-oss-20b"
 
         // Processing
         override val enableSelfCorrection = true
