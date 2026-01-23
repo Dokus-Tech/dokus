@@ -1,5 +1,6 @@
 package tech.dokus.backend.routes.cashflow
 
+import ai.koog.prompt.executor.model.PromptExecutor
 import io.ktor.client.HttpClient
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -35,7 +36,6 @@ import tech.dokus.domain.routes.Chat
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.ConversationMessage
 import tech.dokus.features.ai.config.AIModels
-import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.RAGService
@@ -64,12 +64,12 @@ internal fun Route.chatRoutes() {
     val documentRepository by inject<DocumentRepository>()
     val httpClient by inject<HttpClient>()
     val aiConfig by inject<AIConfig>()
+    val executor by inject<PromptExecutor>()
     val logger = LoggerFactory.getLogger("ChatRoutes")
 
     // Create AI services for RAG and chat
     val embeddingService = EmbeddingService(httpClient, aiConfig)
     val ragService = RAGService(embeddingService, chunksRepository)
-    val executor = AIProviderFactory.createExecutor(aiConfig)
     val models = AIModels.forMode(aiConfig.mode)
     val chatAgent = ChatAgent(executor, models.chat, ragService, AgentPrompt.Chat)
 
@@ -448,7 +448,7 @@ private suspend fun processChat(
         citations = citations,
         chunksRetrieved = chatResult.chunksRetrieved,
         aiModel = chatModelId,
-        aiProvider = "ollama",
+        aiProvider = "lm-studio",
         generationTimeMs = generationTimeMs,
         promptTokens = null, // TODO: Track from LLM response
         completionTokens = null,
