@@ -194,44 +194,59 @@ class DocumentOrchestrator(
         )
 
         val parsed = parseAgentOutputWithRepair(rawResponse, traceCollector)
-        if (parsed == null) {
-            val fallback = buildFallbackOutputFromTrace(traceCollector.snapshot())
-            if (fallback != null) {
-                val fallbackTool = findLatestExtractionTool(traceCollector.snapshot())
-                traceCollector.record(
-                    action = "orchestrator_output_parse_failed",
-                    tool = "document-orchestrator",
-                    durationMs = 0,
-                    input = null,
-                    output = null,
-                    notes = "using_extraction_trace_fallback, sourceTool=${fallbackTool ?: "unknown"}"
-                )
-                val persisted = ensureExtractionPersisted(
-                    documentId = documentId,
-                    tenantId = tenantId,
-                    runId = runId,
-                    output = fallback,
-                    storeCalled = storeCalled,
-                    storeSucceeded = storeSucceeded,
-                    traceSink = traceCollector,
-                    storeHandler = baseStoreHandler
-                )
-                if (!persisted) {
-                    return OrchestratorResult.Failed(
-                        reason = "Extraction completed but could not be persisted",
-                        stage = "store_extraction",
-                        auditTrail = traceCollector.snapshot()
+        val auditTrail = traceCollector.snapshot()
+
+        val resolvedOutput = when (parsed) {
+            null -> {
+                val fallback = buildFallbackOutputFromTrace(auditTrail)
+                if (fallback != null) {
+                    val fallbackTool = findLatestExtractionTool(auditTrail)
+                    traceCollector.record(
+                        action = "orchestrator_output_parse_failed",
+                        tool = "document-orchestrator",
+                        durationMs = 0,
+                        input = null,
+                        output = null,
+                        notes = "using_extraction_trace_fallback, sourceTool=${fallbackTool ?: "unknown"}"
                     )
                 }
-
-                return toResult(fallback, traceCollector.snapshot())
+                fallback
             }
 
+            else -> {
+                val normalizedParsed = parsed.copy(
+                    extraction = normalizeExtraction(parsed.extraction)
+                )
+                val missingDocumentType = normalizedParsed.documentType.isNullOrBlank()
+                val missingExtraction = normalizedParsed.extraction == null
+
+                if (missingDocumentType || missingExtraction) {
+                    val fallback = buildFallbackOutputFromTrace(auditTrail)
+                    if (fallback != null) {
+                        traceCollector.record(
+                            action = "orchestrator_output_incomplete",
+                            tool = "document-orchestrator",
+                            durationMs = 0,
+                            input = null,
+                            output = null,
+                            notes = "missingDocumentType=$missingDocumentType, missingExtraction=$missingExtraction"
+                        )
+                        mergeFallbackOutput(fallback, normalizedParsed)
+                    } else {
+                        null
+                    }
+                } else {
+                    normalizedParsed
+                }
+            }
+        }
+
+        if (resolvedOutput == null) {
             logger.error("Failed to parse orchestrator response: {}", rawResponse.take(1000))
             return OrchestratorResult.Failed(
                 reason = "Failed to parse orchestrator output",
                 stage = "orchestrator",
-                auditTrail = traceCollector.snapshot()
+                auditTrail = auditTrail
             )
         }
 
@@ -239,13 +254,13 @@ class DocumentOrchestrator(
             documentId = documentId,
             tenantId = tenantId,
             runId = runId,
-            output = parsed,
+            output = resolvedOutput,
             storeCalled = storeCalled,
             storeSucceeded = storeSucceeded,
             traceSink = traceCollector,
             storeHandler = baseStoreHandler
         )
-        if (!persisted && parsed.extraction != null && parsed.documentType != null) {
+        if (!persisted && resolvedOutput.extraction != null && resolvedOutput.documentType != null) {
             logger.error(
                 "Orchestrator produced extraction but persistence failed: documentId={}, runId={}",
                 documentId,
@@ -254,11 +269,11 @@ class DocumentOrchestrator(
             return OrchestratorResult.Failed(
                 reason = "Extraction completed but could not be persisted",
                 stage = "store_extraction",
-                auditTrail = traceCollector.snapshot()
+                auditTrail = auditTrail
             )
         }
 
-        return toResult(parsed, traceCollector.snapshot())
+        return toResult(resolvedOutput, auditTrail)
     }
 
     // =========================================================================
@@ -553,7 +568,7 @@ class DocumentOrchestrator(
         }
 
         val documentType = output.documentType?.trim()?.uppercase() ?: return false
-        val extraction = output.extraction ?: return false
+        val extraction = normalizeExtraction(output.extraction) ?: return false
         val description = output.description ?: ""
         val keywords = output.keywords ?: emptyList()
         val confidence = output.confidence
@@ -649,10 +664,10 @@ class DocumentOrchestrator(
         auditTrail: List<ProcessingStep>
     ): OrchestratorAgentOutput? {
         val extractionStep = auditTrail.lastOrNull { step ->
-            step.tool in extractionToolNames && step.output != null
+            isExtractionStep(step) && step.output != null
         } ?: return null
 
-        val sourceTool = extractionStep.tool
+        val sourceTool = extractionStepName(extractionStep)
         val documentType = sourceTool?.let { toolName ->
             extractionToolDocumentType[toolName]
         } ?: return null
@@ -684,10 +699,33 @@ class DocumentOrchestrator(
         )
     }
 
+    private fun mergeFallbackOutput(
+        fallback: OrchestratorAgentOutput,
+        parsed: OrchestratorAgentOutput
+    ): OrchestratorAgentOutput {
+        val mergedIssues = buildList {
+            addAll(fallback.issues.orEmpty())
+            addAll(parsed.issues.orEmpty())
+        }.distinct()
+
+        val normalizedFallbackExtraction = normalizeExtraction(fallback.extraction) ?: fallback.extraction
+
+        return fallback.copy(
+            extraction = normalizedFallbackExtraction,
+            description = parsed.description ?: fallback.description,
+            keywords = parsed.keywords ?: fallback.keywords,
+            confidence = parsed.confidence ?: fallback.confidence,
+            rawText = parsed.rawText ?: fallback.rawText,
+            contactId = parsed.contactId ?: fallback.contactId,
+            contactCreated = parsed.contactCreated ?: fallback.contactCreated,
+            issues = if (mergedIssues.isEmpty()) null else mergedIssues
+        )
+    }
+
     private fun findLatestExtractionTool(auditTrail: List<ProcessingStep>): String? {
         return auditTrail.lastOrNull { step ->
-            step.tool in extractionToolNames && step.output != null
-        }?.tool
+            isExtractionStep(step) && step.output != null
+        }?.let { extractionStepName(it) }
     }
 
     private fun JsonElement?.asStringOrNull(): String? {
@@ -737,6 +775,15 @@ class DocumentOrchestrator(
         "extract_receipt" to "RECEIPT",
         "extract_expense" to "EXPENSE"
     )
+
+    private fun extractionStepName(step: ProcessingStep): String? {
+        return step.tool ?: step.action
+    }
+
+    private fun isExtractionStep(step: ProcessingStep): Boolean {
+        val name = extractionStepName(step) ?: return false
+        return name in extractionToolNames
+    }
 
     private fun toResult(
         output: OrchestratorAgentOutput,
