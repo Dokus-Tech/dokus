@@ -17,6 +17,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.mvi.AddDocumentContainer
 import tech.dokus.features.cashflow.presentation.cashflow.components.AppDownloadQrDialog
 import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentUploadSidebar
+import tech.dokus.features.cashflow.presentation.cashflow.components.fileDropTarget
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
@@ -77,7 +78,22 @@ internal fun DocumentsRoute(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .fileDropTarget(
+                onDragStateChange = { isDragging ->
+                    if (isDragging) {
+                        isUploadSidebarVisible = true
+                    }
+                },
+                onFilesDropped = { files ->
+                    if (files.isNotEmpty()) {
+                        uploadContainer.provideUploadManager().enqueueFiles(files)
+                    }
+                }
+            )
+    ) {
         DocumentsScreen(
             state = state,
             snackbarHostState = snackbarHostState,
