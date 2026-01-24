@@ -17,7 +17,7 @@ data class AIConfig(
          * Load AI config from HOCON configuration.
          */
         fun fromConfig(config: Config): AIConfig {
-            val mode = IntelligenceMode.fromConfigValue(config.getString("mode"))
+            val mode = IntelligenceMode.fromDbValue(config.getString("mode"))
             val ollamaHost = config.getString("ollama-host")
             val lmStudioHost = config.getString("lm-studio-host")
             return AIConfig(mode = mode, ollamaHost = ollamaHost, lmStudioHost = lmStudioHost)
