@@ -107,14 +107,10 @@ data object DocumentClassificationPrompt : AgentPrompt() {
     """
     )
 
-    override fun build(context: TenantContext): Prompt {
-        return if (context.vatNumber != null || context.companyName != null) {
-            systemPrompt + TENANT_CONTEXT_TEMPLATE.format(
-                context.vatNumber ?: "Unknown",
-                context.companyName ?: "Unknown"
-            )
-        } else {
-            systemPrompt
-        }
+    override operator fun invoke(context: TenantContext): Prompt {
+        return systemPrompt + TENANT_CONTEXT_TEMPLATE.format(
+            context.vatNumber,
+            context.companyName
+        )
     }
 }

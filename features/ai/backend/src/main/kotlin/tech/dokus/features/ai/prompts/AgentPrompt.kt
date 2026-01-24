@@ -1,5 +1,9 @@
 package tech.dokus.features.ai.prompts
 
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.Address
+
 /**
  * Agent prompts optimized for CORRECTNESS on Belgian business documents.
  *
@@ -11,20 +15,21 @@ package tech.dokus.features.ai.prompts
  * - Provenance tracking for audit trail
  */
 sealed class AgentPrompt {
-    abstract val systemPrompt: Prompt
+    internal abstract val systemPrompt: Prompt
 
     /**
      * Build prompt with tenant context.
      * Override in prompts that benefit from knowing user's company info.
      */
-    open fun build(context: TenantContext): Prompt = systemPrompt
+    open operator fun invoke(context: TenantContext): Prompt = systemPrompt
 
     /**
      * Tenant context for prompt customization.
      * Injecting user's VAT allows accurate INVOICE vs BILL classification.
      */
     data class TenantContext(
-        val vatNumber: String?,
-        val companyName: String?
+        val vatNumber: VatNumber,
+        val companyName: LegalName,
+        val address: Address
     )
 }

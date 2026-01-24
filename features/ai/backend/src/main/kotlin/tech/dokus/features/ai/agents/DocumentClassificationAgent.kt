@@ -12,6 +12,7 @@ import tech.dokus.domain.utils.parseSafe
 import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.DocumentClassification
 import tech.dokus.features.ai.prompts.AgentPrompt
+import tech.dokus.features.ai.prompts.DocumentClassificationPrompt
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -26,7 +27,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 class DocumentClassificationAgent(
     private val executor: PromptExecutor,
     private val model: LLModel,
-    private val prompt: tech.dokus.features.ai.prompts.DocumentClassificationPrompt
+    private val prompt: DocumentClassificationPrompt
 ) {
     private val logger = loggerFor()
 
@@ -55,7 +56,7 @@ class DocumentClassificationAgent(
             // Build vision prompt with image attachments (direct construction for compatibility)
             // Use build() to inject tenant context for better INVOICE/BILL classification
             val systemMessage = Message.System(
-                parts = listOf(ContentPart.Text(prompt.build(tenantContext).value)),
+                parts = listOf(ContentPart.Text(prompt(tenantContext).value)),
                 metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
             )
 
