@@ -390,7 +390,7 @@ private suspend fun processChat(
     )
     chatRepository.saveMessage(userMessage)
 
-    logger.debug("Saved user message: id=$userMessageId, session=$sessionId")
+    logger.debug("Saved user message: id={}, session={}", userMessageId, sessionId)
 
     // Generate AI response using ChatAgent
     val startTime = System.currentTimeMillis()

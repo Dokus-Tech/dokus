@@ -39,6 +39,7 @@ sealed class AgentPrompt {
         )
 
         companion object {
+
             private val TEMPLATE = Prompt(
                 """
         ## Your Company Information

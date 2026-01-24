@@ -3,6 +3,7 @@ package tech.dokus.features.ai.agents
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
@@ -155,7 +156,12 @@ class ChatAgent(
         val startTime = System.currentTimeMillis()
         val scope = if (documentId != null) "single-doc" else "cross-doc"
 
-        logger.debug("Chat request: tenantId=$tenantId, scope=$scope, question=${question.take(100)}...")
+        logger.debug(
+            "Chat request: tenantId={}, scope={}, question={}...",
+            tenantId,
+            scope,
+            question.take(100)
+        )
 
         // For single-document chat, determine document state
         // CRITICAL: Chat is only allowed for Confirmed documents
@@ -234,7 +240,7 @@ class ChatAgent(
 
         // Step 3: Construct the system prompt with RAG context
         val systemPrompt = ragService.formatRAGPrompt(
-            basePrompt = prompt.systemPrompt.value,
+            basePrompt = prompt().value,
             context = context
         )
 
@@ -289,23 +295,6 @@ class ChatAgent(
     }
 
     /**
-     * Process a simple question without conversation history.
-     * Convenience method for single-turn interactions.
-     */
-    suspend fun ask(
-        tenantId: TenantId,
-        question: String,
-        documentId: DocumentId? = null
-    ): ChatResponse {
-        return chat(
-            tenantId = tenantId,
-            question = question,
-            documentId = documentId,
-            conversationHistory = null
-        )
-    }
-
-    /**
      * Build the user prompt, optionally including conversation history.
      */
     private fun buildUserPrompt(
@@ -352,18 +341,6 @@ class ChatAgent(
         val qualityBonus = (highQualityCount.toFloat() / chunks.size.coerceAtLeast(1)) * 0.2f
 
         return (avgSimilarity + qualityBonus).coerceIn(0.0f, 1.0f)
-    }
-
-    /**
-     * Check if the chat agent is available (RAG service is configured and working).
-     */
-    suspend fun isAvailable(): Boolean {
-        return try {
-            ragService.isAvailable()
-        } catch (e: Exception) {
-            logger.warn("Chat agent availability check failed", e)
-            false
-        }
     }
 }
 

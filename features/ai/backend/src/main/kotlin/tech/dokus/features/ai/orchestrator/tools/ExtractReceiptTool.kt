@@ -7,10 +7,12 @@ import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.models.ExtractedReceiptData
+import tech.dokus.features.ai.orchestrator.ToolTraceSink
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.prompts.ExtractionPrompt
+import tech.dokus.features.ai.services.DocumentImageCache
 
 /**
  * Vision tool for extracting receipt data from document images.
@@ -26,8 +28,9 @@ class ExtractReceiptTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
     private val prompt: ExtractionPrompt,
+    private val tenantContext: AgentPrompt.TenantContext,
     private val imageCache: DocumentImageCache,
-    private val traceSink: tech.dokus.features.ai.orchestrator.ToolTraceSink? = null
+    private val traceSink: ToolTraceSink? = null
 ) : SimpleTool<ExtractReceiptTool.Args>(
     argsSerializer = Args.serializer(),
     name = "extract_receipt",
@@ -90,7 +93,7 @@ class ExtractReceiptTool(
 
         // Run extraction
         val start = kotlin.time.TimeSource.Monotonic.markNow()
-        val result = agent.extract(documentImages)
+        val result = agent.extract(documentImages, tenantContext)
         val outputJson = jsonFormat.decodeFromString<JsonElement>(jsonFormat.encodeToString(result))
         traceSink?.record(
             action = "extract_receipt",
@@ -106,7 +109,7 @@ class ExtractReceiptTool(
             appendLine("Merchant: ${result.merchantName ?: "Unknown"}")
             appendLine("Date: ${result.transactionDate ?: "Unknown"}")
             appendLine("Total: ${result.totalAmount ?: "Unknown"} ${result.currency ?: ""}")
-            appendLine("Confidence: ${String.format("%.0f%%", (result.confidence ?: 0.0) * 100)}")
+            appendLine("Confidence: ${String.format("%.0f%%", result.confidence * 100)}")
             appendLine()
             appendLine("JSON:")
             appendLine(jsonFormat.encodeToString(result))

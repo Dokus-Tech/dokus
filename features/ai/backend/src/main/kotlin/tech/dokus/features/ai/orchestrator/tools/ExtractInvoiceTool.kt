@@ -7,10 +7,11 @@ import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.models.ExtractedInvoiceData
+import tech.dokus.features.ai.orchestrator.ToolTraceSink
 import tech.dokus.features.ai.prompts.ExtractionPrompt
+import tech.dokus.features.ai.services.DocumentImageCache
 
 /**
  * Vision tool for extracting invoice data from document images.
@@ -27,7 +28,7 @@ class ExtractInvoiceTool(
     private val model: LLModel,
     private val prompt: ExtractionPrompt,
     private val imageCache: DocumentImageCache,
-    private val traceSink: tech.dokus.features.ai.orchestrator.ToolTraceSink? = null
+    private val traceSink: ToolTraceSink? = null
 ) : SimpleTool<ExtractInvoiceTool.Args>(
     argsSerializer = Args.serializer(),
     name = "extract_invoice",

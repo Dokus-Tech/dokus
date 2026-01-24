@@ -9,6 +9,7 @@ import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.prompts.ExtractionPrompt
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.features.ai.utils.normalizeJson
@@ -28,7 +29,7 @@ interface ExtractionAgent<T : Any> {
      * @param images List of document page images
      * @return Extracted data of type T
      */
-    suspend fun extract(images: List<DocumentImage>): T
+    suspend fun extract(images: List<DocumentImage>, tenantContext: AgentPrompt.TenantContext): T
 
     companion object {
         /**
@@ -89,17 +90,18 @@ internal class ExtractionAgentImpl<T : Any>(
         coerceInputValues = true
     }
 
-    override suspend fun extract(images: List<DocumentImage>): T {
+    override suspend fun extract(
+        images: List<DocumentImage>,
+        tenantContext: AgentPrompt.TenantContext
+    ): T {
         logger.debug("Extracting ${resultClass.simpleName} with vision (${images.size} pages)")
 
-        if (images.isEmpty()) {
-            return emptyResult()
-        }
+        if (images.isEmpty()) return emptyResult()
 
         return try {
             // Build vision prompt with image attachments
             val systemMessage = Message.System(
-                parts = listOf(ContentPart.Text(prompt.systemPrompt.value)),
+                parts = listOf(ContentPart.Text(prompt(tenantContext).value)),
                 metaInfo = RequestMetaInfo(timestamp = Clock.System.now())
             )
 
