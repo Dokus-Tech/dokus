@@ -48,8 +48,54 @@ dependencies {
     // Testing
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutinesTest)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.platform.launcher)
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+
+// =============================================================================
+// Document Extraction E2E Tests
+// =============================================================================
+
+// Run extraction tests with mock AI (fast, CI-friendly)
+tasks.register<Test>("extractionTestMock") {
+    group = "verification"
+    description = "Run extraction tests with mock AI (validates fixture structure only)"
+
+    useJUnitPlatform()
+    environment("EXTRACTION_TEST_MODE", "mock")
+    filter {
+        includeTestsMatching("*DocumentExtractionTest*")
+    }
+}
+
+// Run extraction tests with real AI (slow, requires AI service)
+tasks.register<Test>("extractionTestReal") {
+    group = "verification"
+    description = "Run extraction tests with real AI model (requires running AI service)"
+
+    useJUnitPlatform()
+    environment("EXTRACTION_TEST_MODE", "real")
+    filter {
+        includeTestsMatching("*DocumentExtractionTest*")
+    }
+}
+
+// Record new fixture baselines
+tasks.register<JavaExec>("recordExtractionFixtures") {
+    group = "verification"
+    description = "Run extraction on all fixtures and save results as new baselines"
+
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("tech.dokus.features.ai.extraction.FixtureRecorderKt")
+
+    environment("EXTRACTION_TEST_MODE", "record")
+
+    // Allow filtering by fixture ID: -Pfixture=belgian-standard
+    if (project.hasProperty("fixture")) {
+        args(project.property("fixture").toString())
+    }
 }

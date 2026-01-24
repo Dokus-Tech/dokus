@@ -1,0 +1,12 @@
+{
+  "fixtures": [
+    {
+      "id": "sample-invoice",
+      "path": "invoices/sample-invoice",
+      "documentType": "INVOICE",
+      "description": "Sample invoice for testing the extraction framework",
+      "tags": ["sample", "invoice"],
+      "enabled": true
+    }
+  ]
+}
