@@ -1,4 +1,4 @@
-package tech.dokus.features.ai.orchestrator.tools
+package tech.dokus.features.ai.orchestrator.tools.extraction
 
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
@@ -8,46 +8,45 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.features.ai.agents.ExtractionAgent
-import tech.dokus.features.ai.models.ExtractedExpenseData
+import tech.dokus.features.ai.models.ExtractedBillData
 import tech.dokus.features.ai.orchestrator.ToolTraceSink
+import tech.dokus.features.ai.orchestrator.tools.DocumentImageResolver
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.prompts.ExtractionPrompt
 import tech.dokus.features.ai.services.DocumentImageCache
+import kotlin.time.TimeSource.Monotonic.markNow
 
 /**
- * Vision tool for extracting expense report data from document images.
+ * Vision tool for extracting bill (purchase invoice) data from document images.
  *
- * Uses vision model to extract structured expense data including:
- * - Employee information
- * - Expense category
- * - Date and description
- * - Amount and currency
- * - Supporting receipts/invoices
+ * Uses vision model to extract structured bill data including:
+ * - Supplier information (name, VAT, address)
+ * - Bill details (number, dates, terms)
+ * - Line items (description, quantity, price, VAT)
+ * - Totals (subtotal, VAT breakdown, total)
+ * - Payment info (IBAN, BIC, reference/OGM)
  */
-class ExtractExpenseTool(
+class ExtractBillTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
     private val prompt: ExtractionPrompt,
     private val tenantContext: AgentPrompt.TenantContext,
     private val imageCache: DocumentImageCache,
     private val traceSink: ToolTraceSink? = null
-) : SimpleTool<ExtractExpenseTool.Args>(
+) : SimpleTool<ExtractBillTool.Args>(
     argsSerializer = Args.serializer(),
-    name = "extract_expense",
+    name = "extract_bill",
     description = """
-        Extracts structured data from an EXPENSE document using vision AI.
+        Extracts structured data from a BILL (purchase invoice) document using vision AI.
 
-        An EXPENSE is a reimbursement request or expense report.
-        Use this tool after classifying the document as EXPENSE.
+        A BILL is an invoice received BY the tenant from a supplier (purchase).
+        Use this tool after classifying the document as BILL.
 
-        Expenses typically include:
-        - Employee/claimant info
-        - Expense category (travel, meals, equipment)
-        - Date and description
-        - Amount to be reimbursed
-        - Attached receipts or invoices
-
+        Extracts: supplier info, bill number, dates, line items, totals, payment details.
         Returns structured JSON that can be stored in the database.
+
+        Belgian bills may have OGM (gestructureerde mededeling) payment reference.
+        Optional: Provide an example extraction from a similar supplier to improve accuracy.
     """.trimIndent()
 ) {
     @Serializable
@@ -58,8 +57,8 @@ class ExtractExpenseTool(
         val images: String,
 
         @property:LLMDescription(
-            "Optional: JSON example of a previous similar expense. " +
-                "This improves accuracy for similar expense types."
+            "Optional: JSON example of a previous extraction from the same supplier. " +
+                "This improves accuracy for repeat suppliers."
         )
         val example: String? = null
     )
@@ -71,7 +70,7 @@ class ExtractExpenseTool(
             DocumentImageResolver(imageCache).resolve(args.images)
         } catch (e: Exception) {
             traceSink?.record(
-                action = "extract_expense",
+                action = "extract_bill",
                 tool = name,
                 durationMs = 0,
                 input = null,
@@ -82,33 +81,33 @@ class ExtractExpenseTool(
         }
 
         // Create extraction agent
-        val agent = ExtractionAgent<ExtractedExpenseData>(
+        val agent = ExtractionAgent<ExtractedBillData>(
             executor = executor,
             model = model,
             prompt = prompt,
             userPromptPrefix = buildUserPromptPrefix(args.example),
-            promptId = "expense-extractor",
-            emptyResult = { ExtractedExpenseData(confidence = 0.0) }
+            promptId = "bill-extractor",
+            emptyResult = { ExtractedBillData(confidence = 0.0) }
         )
 
         // Run extraction
-        val start = kotlin.time.TimeSource.Monotonic.markNow()
+        val start = markNow()
         val result = agent.extract(documentImages, tenantContext)
         val outputJson = jsonFormat.decodeFromString<JsonElement>(jsonFormat.encodeToString(result))
         traceSink?.record(
-            action = "extract_expense",
+            action = "extract_bill",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
             input = null,
             output = outputJson,
-            notes = "confidence=${result.confidence}"
+            notes = "confidence=${result.confidence}, lineItems=${result.lineItems.size}"
         )
 
         return buildString {
             appendLine("EXTRACTION RESULT:")
-            appendLine("Category: ${result.category ?: "Unknown"}")
-            appendLine("Date: ${result.date ?: "Unknown"}")
-            appendLine("Amount: ${result.totalAmount ?: "Unknown"} ${result.currency ?: ""}")
+            appendLine("Supplier: ${result.supplierName ?: "Unknown"}")
+            appendLine("Bill #: ${result.invoiceNumber ?: "Unknown"}")
+            appendLine("Total: ${result.totalAmount ?: "Unknown"} ${result.currency ?: ""}")
             appendLine("Confidence: ${String.format("%.0f%%", result.confidence * 100)}")
             appendLine()
             appendLine("JSON:")
@@ -119,15 +118,15 @@ class ExtractExpenseTool(
     private fun buildUserPromptPrefix(example: String?): String {
         return if (example != null) {
             """
-            Extract expense data from this document.
+            Extract bill data from this document.
 
-            REFERENCE EXAMPLE (use this format):
+            REFERENCE EXAMPLE from same supplier (use this format and look for similar fields):
             $example
 
             Now extract from this
             """.trimIndent()
         } else {
-            "Extract expense data from this"
+            "Extract bill data from this"
         }
     }
 }

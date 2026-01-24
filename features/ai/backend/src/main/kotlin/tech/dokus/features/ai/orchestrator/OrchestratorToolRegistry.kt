@@ -10,24 +10,24 @@ import tech.dokus.features.ai.orchestrator.tools.ContactLookupHandler
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.DocumentImageFetcher
 import tech.dokus.features.ai.orchestrator.tools.EmbedTextTool
-import tech.dokus.features.ai.orchestrator.tools.ExtractBillTool
-import tech.dokus.features.ai.orchestrator.tools.ExtractExpenseTool
-import tech.dokus.features.ai.orchestrator.tools.ExtractInvoiceTool
-import tech.dokus.features.ai.orchestrator.tools.ExtractReceiptTool
 import tech.dokus.features.ai.orchestrator.tools.FindSimilarDocumentTool
 import tech.dokus.features.ai.orchestrator.tools.GenerateDescriptionTool
 import tech.dokus.features.ai.orchestrator.tools.GenerateKeywordsTool
 import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
-import tech.dokus.features.ai.orchestrator.tools.IndexingStatusUpdater
 import tech.dokus.features.ai.orchestrator.tools.GetPeppolDataTool
 import tech.dokus.features.ai.orchestrator.tools.IndexAsExampleTool
+import tech.dokus.features.ai.orchestrator.tools.IndexingStatusUpdater
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.orchestrator.tools.PeppolDataFetcher
 import tech.dokus.features.ai.orchestrator.tools.PrepareRagChunksTool
 import tech.dokus.features.ai.orchestrator.tools.SeeDocumentTool
 import tech.dokus.features.ai.orchestrator.tools.StoreChunksTool
-import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
+import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
+import tech.dokus.features.ai.orchestrator.tools.extraction.ExtractBillTool
+import tech.dokus.features.ai.orchestrator.tools.extraction.ExtractExpenseTool
+import tech.dokus.features.ai.orchestrator.tools.extraction.ExtractInvoiceTool
+import tech.dokus.features.ai.orchestrator.tools.extraction.ExtractReceiptTool
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.prompts.DocumentClassificationPrompt
 import tech.dokus.features.ai.prompts.ExtractionPrompt
@@ -69,7 +69,7 @@ object OrchestratorToolRegistry {
         val cbeApiClient: CbeApiClient?,
         val tenantContext: AgentPrompt.TenantContext,
         val indexingUpdater: IndexingStatusUpdater?,
-        val traceSink: ToolTraceSink? = null,
+        val traceSink: ToolTraceSink,
 
         // Function hooks for database operations
         val documentFetcher: DocumentImageFetcher,

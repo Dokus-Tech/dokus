@@ -285,7 +285,3 @@ class DocumentProcessingWorker(
         return result
     }
 }
-
-/**
- * Exception thrown when document processing fails.
- */

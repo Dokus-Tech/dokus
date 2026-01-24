@@ -4,6 +4,8 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.ToolCalls
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.singleRunStrategy
+import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
@@ -127,7 +129,7 @@ class DocumentOrchestrator(
             prompt = OrchestratorPrompt(tenantContext).value,
             llm = orchestratorModel,
             id = "document-orchestrator",
-            maxAgentIterations = maxAgentIterations()
+            maxAgentIterations = mode.maxIterations,
         )
 
         val agent = AIAgent(
@@ -139,6 +141,9 @@ class DocumentOrchestrator(
         )
 
         val userPrompt = buildUserPrompt(documentId, tenantId, tenantContext, runId, maxPages, dpi)
+        val p = prompt("") {
+            user(userPrompt)
+        }
         val (rawResponse, duration) = try {
             measureTimedValue { agent.run(userPrompt) }
         } catch (e: Exception) {
@@ -191,8 +196,8 @@ class DocumentOrchestrator(
     private fun buildToolRegistry(
         tenantId: TenantId,
         tenantContext: AgentPrompt.TenantContext,
-        traceSink: ToolTraceSink? = null
-    ): ai.koog.agents.core.tools.ToolRegistry {
+        traceSink: ToolTraceSink
+    ): ToolRegistry {
         val config = OrchestratorToolRegistry.Config(
             executor = executor,
             visionModel = visionModel,
@@ -237,13 +242,6 @@ class DocumentOrchestrator(
         dpi: ${dpi ?: "default"}
     """.trimIndent()
 
-    private fun maxAgentIterations(): Int =
-        when (mode) {
-            IntelligenceMode.Assisted -> 8
-            IntelligenceMode.Autonomous -> 12
-            IntelligenceMode.Sovereign -> 32
-        }
-
     // =========================================================================
     // Output Parsing
     // =========================================================================
@@ -266,12 +264,10 @@ class DocumentOrchestrator(
         auditTrail: List<ProcessingStep>
     ): OrchestratorResult {
         val status = output.status.lowercase().trim()
-        val documentType = parseDocumentType(output.documentType)
-        val extraction = normalizeExtraction(output.extraction)
-        val rawText = output.rawText ?: extractRawText(extraction)
+        val documentType = output.documentType
+        val extraction = output.extraction
+        val rawText = output.rawText
         val confidence = output.confidence
-            ?: extractConfidence(extraction)
-            ?: 0.0
         val description = output.description ?: ""
         val keywords = output.keywords ?: emptyList()
         val validationPassed = output.validationPassed ?: output.issues.isNullOrEmpty()
@@ -332,58 +328,6 @@ class DocumentOrchestrator(
                     auditTrail = auditTrail
                 )
             }
-        }
-    }
-
-    private fun parseDocumentType(type: String?): ClassifiedDocumentType? {
-        val normalized = type?.trim()?.uppercase() ?: return null
-        return runCatching { ClassifiedDocumentType.valueOf(normalized) }.getOrNull()
-    }
-
-    private fun extractRawText(extraction: JsonElement?): String {
-        val obj = parseJsonObjectOrNull(extraction) ?: return ""
-        return obj["extractedText"]?.jsonPrimitive?.content ?: ""
-    }
-
-    private fun extractConfidence(extraction: JsonElement?): Double? {
-        val obj = parseJsonObjectOrNull(extraction) ?: return null
-        return obj["confidence"]?.jsonPrimitive?.content?.toDoubleOrNull()
-    }
-
-    private fun normalizeExtraction(extraction: JsonElement?): JsonElement? {
-        if (extraction == null) return null
-        return when (extraction) {
-            is JsonObject, is JsonArray -> extraction
-            is JsonPrimitive -> {
-                if (!extraction.isString) {
-                    null
-                } else {
-                    val parsed =
-                        runCatching { json.parseToJsonElement(extraction.content) }.getOrNull()
-                    when (parsed) {
-                        is JsonObject, is JsonArray -> parsed
-                        else -> null
-                    }
-                }
-            }
-        }
-    }
-
-    private fun parseJsonObjectOrNull(element: JsonElement?): JsonObject? {
-        if (element == null) return null
-        return when (element) {
-            is JsonObject -> element
-            is JsonPrimitive -> {
-                if (!element.isString) {
-                    null
-                } else {
-                    val parsed =
-                        runCatching { json.parseToJsonElement(element.content) }.getOrNull()
-                    parsed as? JsonObject
-                }
-            }
-
-            else -> null
         }
     }
 }

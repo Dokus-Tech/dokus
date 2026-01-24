@@ -23,6 +23,7 @@ enum class IntelligenceMode(
     val visionModel: String,
     val chatModel: String,
     val maxConcurrentRequests: Int,
+    val maxIterations: Int,
 ) : DbEnum {
 
     /* =======================================================================
@@ -47,6 +48,7 @@ enum class IntelligenceMode(
         visionModel = "qwen/qwen3-vl-8b",
         chatModel = "qwen/qwen3-32b",
         maxConcurrentRequests = 1,
+        maxIterations = 8,
     ),
 
     /**
@@ -67,6 +69,7 @@ enum class IntelligenceMode(
         visionModel = "qwen/qwen3-vl-8b",
         chatModel = "qwen/qwen3-32b",
         maxConcurrentRequests = 1,
+        maxIterations = 12,
     ),
 
     /**
@@ -88,6 +91,7 @@ enum class IntelligenceMode(
         visionModel = "qwen/qwen3-vl-30b",
         chatModel = "openai/gpt-oss-20b",
         maxConcurrentRequests = 5,
+        maxIterations = 32,
     );
 
     companion object {

@@ -1,4 +1,4 @@
-package tech.dokus.features.ai.orchestrator.tools
+package tech.dokus.features.ai.orchestrator.tools.extraction
 
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
@@ -8,46 +8,44 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.features.ai.agents.ExtractionAgent
-import tech.dokus.features.ai.models.ExtractedReceiptData
+import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.orchestrator.ToolTraceSink
+import tech.dokus.features.ai.orchestrator.tools.DocumentImageResolver
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.prompts.ExtractionPrompt
 import tech.dokus.features.ai.services.DocumentImageCache
+import kotlin.time.TimeSource
 
 /**
- * Vision tool for extracting receipt data from document images.
+ * Vision tool for extracting invoice data from document images.
  *
- * Uses vision model to extract structured receipt data including:
- * - Store information (name, address, VAT)
- * - Receipt details (number, date, time)
- * - Line items (description, quantity, price)
- * - Totals (subtotal, VAT, total)
- * - Payment method
+ * Uses vision model to extract structured invoice data including:
+ * - Vendor information (name, VAT, address)
+ * - Invoice details (number, dates, terms)
+ * - Line items (description, quantity, price, VAT)
+ * - Totals (subtotal, VAT breakdown, total)
+ * - Payment info (IBAN, BIC, reference)
  */
-class ExtractReceiptTool(
+class ExtractInvoiceTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
     private val prompt: ExtractionPrompt,
     private val tenantContext: AgentPrompt.TenantContext,
     private val imageCache: DocumentImageCache,
     private val traceSink: ToolTraceSink? = null
-) : SimpleTool<ExtractReceiptTool.Args>(
+) : SimpleTool<ExtractInvoiceTool.Args>(
     argsSerializer = Args.serializer(),
-    name = "extract_receipt",
+    name = "extract_invoice",
     description = """
-        Extracts structured data from a RECEIPT document using vision AI.
+        Extracts structured data from an INVOICE document using vision AI.
 
-        A RECEIPT is a POS/cash register receipt from a purchase.
-        Use this tool after classifying the document as RECEIPT.
+        An INVOICE is a sales document issued BY the tenant to their customer.
+        Use this tool after classifying the document as INVOICE.
 
-        Receipts typically have:
-        - Merchant/store name and address
-        - Date and time of purchase
-        - List of items with prices
-        - Payment method (cash, card)
-        - Often lower resolution or thermal paper quality
-
+        Extracts: vendor info, invoice number, dates, line items, totals, payment details.
         Returns structured JSON that can be stored in the database.
+
+        Optional: Provide an example extraction from a similar vendor to improve accuracy.
     """.trimIndent()
 ) {
     @Serializable
@@ -58,8 +56,8 @@ class ExtractReceiptTool(
         val images: String,
 
         @property:LLMDescription(
-            "Optional: JSON example of a previous extraction from the same merchant. " +
-                "This improves accuracy for repeat merchants."
+            "Optional: JSON example of a previous extraction from the same vendor. " +
+                "This improves accuracy for repeat vendors."
         )
         val example: String? = null
     )
@@ -71,7 +69,7 @@ class ExtractReceiptTool(
             DocumentImageResolver(imageCache).resolve(args.images)
         } catch (e: Exception) {
             traceSink?.record(
-                action = "extract_receipt",
+                action = "extract_invoice",
                 tool = name,
                 durationMs = 0,
                 input = null,
@@ -82,34 +80,34 @@ class ExtractReceiptTool(
         }
 
         // Create extraction agent
-        val agent = ExtractionAgent<ExtractedReceiptData>(
+        val agent = ExtractionAgent<ExtractedInvoiceData>(
             executor = executor,
             model = model,
             prompt = prompt,
             userPromptPrefix = buildUserPromptPrefix(args.example),
-            promptId = "receipt-extractor",
-            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
+            promptId = "invoice-extractor",
+            emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
         )
 
         // Run extraction
-        val start = kotlin.time.TimeSource.Monotonic.markNow()
+        val start = TimeSource.Monotonic.markNow()
         val result = agent.extract(documentImages, tenantContext)
         val outputJson = jsonFormat.decodeFromString<JsonElement>(jsonFormat.encodeToString(result))
         traceSink?.record(
-            action = "extract_receipt",
+            action = "extract_invoice",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
             input = null,
             output = outputJson,
-            notes = "confidence=${result.confidence}, items=${result.items.size}"
+            notes = "confidence=${result.confidence}, lineItems=${result.lineItems.size}"
         )
 
         return buildString {
             appendLine("EXTRACTION RESULT:")
-            appendLine("Merchant: ${result.merchantName ?: "Unknown"}")
-            appendLine("Date: ${result.transactionDate ?: "Unknown"}")
+            appendLine("Vendor: ${result.vendorName ?: "Unknown"}")
+            appendLine("Invoice #: ${result.invoiceNumber ?: "Unknown"}")
             appendLine("Total: ${result.totalAmount ?: "Unknown"} ${result.currency ?: ""}")
-            appendLine("Confidence: ${String.format("%.0f%%", result.confidence * 100)}")
+            appendLine("Confidence: ${String.format("%.0f%%", (result.confidence ?: 0.0) * 100)}")
             appendLine()
             appendLine("JSON:")
             appendLine(jsonFormat.encodeToString(result))
@@ -119,15 +117,15 @@ class ExtractReceiptTool(
     private fun buildUserPromptPrefix(example: String?): String {
         return if (example != null) {
             """
-            Extract receipt data from this document.
+            Extract invoice data from this document.
 
-            REFERENCE EXAMPLE from same merchant (use this format and look for similar fields):
+            REFERENCE EXAMPLE from same vendor (use this format and look for similar fields):
             $example
 
             Now extract from this
             """.trimIndent()
         } else {
-            "Extract receipt data from this"
+            "Extract invoice data from this"
         }
     }
 }
