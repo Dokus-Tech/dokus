@@ -1,6 +1,7 @@
 package tech.dokus.features.ai.orchestrator
 
 import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import tech.dokus.domain.repository.ChunkRepository
@@ -35,10 +36,7 @@ import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
-import tech.dokus.features.ai.tools.LookupCompanyTool
-import tech.dokus.features.ai.tools.ValidateIbanTool
-import tech.dokus.features.ai.tools.ValidateOgmTool
-import tech.dokus.features.ai.tools.VerifyTotalsTool
+import tech.dokus.features.ai.tools.LegalEntitiesTools
 import tech.dokus.foundation.backend.lookup.CbeApiClient
 
 /**
@@ -66,7 +64,7 @@ object OrchestratorToolRegistry {
         val embeddingService: EmbeddingService,
         val exampleRepository: ExampleRepository,
         val chunkRepository: ChunkRepository,
-        val cbeApiClient: CbeApiClient?,
+        val cbeApiClient: CbeApiClient,
         val tenantContext: AgentPrompt.TenantContext,
         val indexingUpdater: IndexingStatusUpdater?,
         val traceSink: ToolTraceSink,
@@ -163,13 +161,7 @@ object OrchestratorToolRegistry {
             tool(LookupContactTool(config.contactLookup, config.traceSink))
             tool(CreateContactTool(config.contactCreator))
 
-            // Validation tools (existing)
-            tool(VerifyTotalsTool)
-            tool(ValidateOgmTool)
-            tool(ValidateIbanTool)
-            if (config.cbeApiClient != null) {
-                tool(LookupCompanyTool(config.cbeApiClient))
-            }
+            tools(LegalEntitiesTools(config.cbeApiClient))
         }
     }
 }

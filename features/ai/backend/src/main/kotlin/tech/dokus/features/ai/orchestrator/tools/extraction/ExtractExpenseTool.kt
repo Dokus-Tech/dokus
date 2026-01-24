@@ -1,6 +1,7 @@
 package tech.dokus.features.ai.orchestrator.tools.extraction
 
 import ai.koog.agents.core.tools.SimpleTool
+import ai.koog.agents.core.tools.Tool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
@@ -32,9 +33,10 @@ class ExtractExpenseTool(
     private val prompt: ExtractionPrompt,
     private val tenantContext: AgentPrompt.TenantContext,
     private val imageCache: DocumentImageCache,
-    private val traceSink: ToolTraceSink? = null
-) : SimpleTool<ExtractExpenseTool.Args>(
+    private val traceSink: ToolTraceSink
+) : Tool<ExtractExpenseTool.Args, ExtractedExpenseData>(
     argsSerializer = Args.serializer(),
+    resource = ExtractedExpenseData.serializer(),
     name = "extract_expense",
     description = """
         Extracts structured data from an EXPENSE document using vision AI.
@@ -50,29 +52,29 @@ class ExtractExpenseTool(
         - Attached receipts or invoices
 
         Returns structured JSON that can be stored in the database.
-    """.trimIndent()
+    """.trimIndent(),
 ) {
     @Serializable
     data class Args(
-        @property:LLMDescription(
-            "Image IDs (from get_document_images) or base64 PNGs, separated by newlines."
-        )
+        @property:LLMDescription("Image IDs (from get_document_images) or base64 PNGs, separated by newlines.")
         val images: String,
 
         @property:LLMDescription(
             "Optional: JSON example of a previous similar expense. " +
-                "This improves accuracy for similar expense types."
+                    "This improves accuracy for similar expense types."
         )
         val example: String? = null
     )
 
     private val jsonFormat = Json { prettyPrint = true; ignoreUnknownKeys = true }
 
+    @Tool("extract_expense")
+    @LLMDescription("")
     override suspend fun execute(args: Args): String {
         val documentImages = try {
             DocumentImageResolver(imageCache).resolve(args.images)
         } catch (e: Exception) {
-            traceSink?.record(
+            traceSink.record(
                 action = "extract_expense",
                 tool = name,
                 durationMs = 0,
@@ -97,7 +99,7 @@ class ExtractExpenseTool(
         val start = TimeSource.Monotonic.markNow()
         val result = agent.extract(documentImages, tenantContext)
         val outputJson = jsonFormat.decodeFromString<JsonElement>(jsonFormat.encodeToString(result))
-        traceSink?.record(
+        traceSink.record(
             action = "extract_expense",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
