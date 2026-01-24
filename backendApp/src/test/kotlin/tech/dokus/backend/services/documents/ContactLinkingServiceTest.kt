@@ -135,7 +135,7 @@ class ContactLinkingServiceTest {
         val contactId = insertContact(counterpartyVat)
         createDraft(counterpartyVat)
 
-        val service = ContactLinkingService(draftRepository, contactRepository, ContactLinkPolicy.VatOnly)
+        val service = ContactLinkingService(draftRepository, contactRepository)
         val updated = service.applyLinkDecision(
             tenantId = tenantId,
             documentId = documentId,
@@ -162,7 +162,7 @@ class ContactLinkingServiceTest {
         val contactId = insertContact(validVatB)
         createDraft(counterpartyVat)
 
-        val service = ContactLinkingService(draftRepository, contactRepository, ContactLinkPolicy.VatOnly)
+        val service = ContactLinkingService(draftRepository, contactRepository)
         service.applyLinkDecision(
             tenantId = tenantId,
             documentId = documentId,
@@ -197,7 +197,7 @@ class ContactLinkingServiceTest {
         )
 
         val aiContactId = insertContact(validVatB)
-        val service = ContactLinkingService(draftRepository, contactRepository, ContactLinkPolicy.VatOnly)
+        val service = ContactLinkingService(draftRepository, contactRepository)
         val updated = service.applyLinkDecision(
             tenantId = tenantId,
             documentId = documentId,
@@ -230,7 +230,7 @@ class ContactLinkingServiceTest {
             ambiguityCount = 1
         )
 
-        val service = ContactLinkingService(draftRepository, contactRepository, ContactLinkPolicy.VatOrStrongSignals)
+        val service = ContactLinkingService(draftRepository, contactRepository)
         service.applyLinkDecision(
             tenantId = tenantId,
             documentId = documentId,

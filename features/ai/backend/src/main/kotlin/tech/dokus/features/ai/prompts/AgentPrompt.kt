@@ -18,6 +18,12 @@ sealed class AgentPrompt {
     protected abstract val systemPrompt: Prompt
 
     /**
+     * Build prompt without tenant context.
+     * Use when tenant-specific customization isn't needed (e.g., chat, general queries).
+     */
+    open operator fun invoke(): Prompt = systemPrompt
+
+    /**
      * Build prompt with tenant context.
      * Override in prompts that benefit from knowing user's company info.
      */
@@ -35,7 +41,8 @@ sealed class AgentPrompt {
         val prompt = TEMPLATE.format(
             vatNumber,
             companyName,
-            address.toString()
+            "${address.streetLine1 ?: ""}, ${address.postalCode ?: ""} ${address.city ?: ""}, ${address.country ?: ""}"
+                .replace(", ,", ",").trim(',', ' ')
         )
 
         companion object {

@@ -13,7 +13,6 @@ import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.BankAccountType
 import tech.dokus.domain.enums.BankProvider
 import tech.dokus.domain.enums.BillStatus
-import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.EntityType
 import tech.dokus.domain.enums.ExpenseCategory
@@ -53,7 +52,7 @@ data class Tenant(
     val plan: TenantPlan,
     val status: TenantStatus,
     val language: Language,
-    val vatNumber: VatNumber? = null,
+    val vatNumber: VatNumber,
     val trialEndsAt: LocalDateTime? = null,
     val subscriptionStartedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,

@@ -70,7 +70,10 @@ internal fun Route.chatRoutes() {
     val embeddingService = EmbeddingService(httpClient, aiConfig)
     val ragService = RAGService(embeddingService, chunksRepository)
     val models = AIModels.forMode(aiConfig.mode)
-    val chatAgent = ChatAgent(executor, models.chat, ragService,
+    val chatAgent = ChatAgent(
+        executor,
+        models.chat,
+        ragService,
         tech.dokus.features.ai.prompts.ChatPrompt
     )
 

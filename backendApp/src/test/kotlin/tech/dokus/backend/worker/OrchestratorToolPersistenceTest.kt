@@ -38,8 +38,8 @@ import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.models.toDomainType
 import tech.dokus.features.ai.models.toExtractedDocumentData
-import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
 import tech.dokus.features.ai.orchestrator.tools.StoreChunksTool
+import tech.dokus.features.ai.prompts.OrchestratorPrompt
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
 import java.util.UUID
@@ -153,7 +153,7 @@ class OrchestratorToolPersistenceTest {
                 rawText = payload.rawText,
                 description = payload.description,
                 keywords = payload.keywords,
-                meetsThreshold = payload.confidence >= DocumentOrchestrator.AUTO_CONFIRM_THRESHOLD,
+                meetsThreshold = payload.confidence >= OrchestratorPrompt.AUTO_CONFIRM_THRESHOLD,
                 force = false
             )
         }

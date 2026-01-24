@@ -111,6 +111,7 @@ object OrchestratorToolRegistry {
                     executor = config.executor,
                     model = config.visionModel,
                     prompt = ExtractionPrompt.Invoice,
+                    tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -120,6 +121,7 @@ object OrchestratorToolRegistry {
                     executor = config.executor,
                     model = config.visionModel,
                     prompt = ExtractionPrompt.Bill,
+                    tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -129,6 +131,7 @@ object OrchestratorToolRegistry {
                     executor = config.executor,
                     model = config.visionModel,
                     prompt = ExtractionPrompt.Receipt,
+                    tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -138,6 +141,7 @@ object OrchestratorToolRegistry {
                     executor = config.executor,
                     model = config.visionModel,
                     prompt = ExtractionPrompt.Expense,
+                    tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )

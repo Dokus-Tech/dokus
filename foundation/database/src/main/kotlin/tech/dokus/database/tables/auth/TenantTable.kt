@@ -31,7 +31,7 @@ object TenantTable : UUIDTable("tenants") {
     val language = dbEnumeration<Language>("language")
 
     // Business info
-    val vatNumber = varchar("vat_number", 50).nullable()
+    val vatNumber = varchar("vat_number", 50)
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

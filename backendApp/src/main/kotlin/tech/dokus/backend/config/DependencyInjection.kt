@@ -513,9 +513,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                 if (!stored) return@DocumentOrchestrator false
 
                 val decisionType = payload.linkDecisionType
-                val decisionContactId = payload.linkDecisionContactId?.takeIf { it.isNotBlank() }
-                    ?: payload.contactId?.takeIf { it.isNotBlank() }
-                val contactId = decisionContactId
+                val contactId = payload.linkDecisionContactId?.takeIf { it.isNotBlank() }
                     ?.let { runCatching { ContactId.parse(it) }.getOrNull() }
                     ?: return@DocumentOrchestrator true
 
@@ -538,8 +536,8 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                         extractedData = extractedData,
                         decisionType = decisionType,
                         contactId = contactId,
-                        decisionReason = payload.linkDecisionReason ?: payload.contactReason,
-                        decisionConfidence = payload.linkDecisionConfidence ?: payload.contactConfidence,
+                        decisionReason = payload.linkDecisionReason,
+                        decisionConfidence = payload.linkDecisionConfidence,
                         evidence = evidenceFromPayload
                     )
                 }
@@ -556,7 +554,8 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             orchestrator = get(),
             config = appConfig.processor,
             mode = mode,
-            tenantRepository = get()
+            tenantRepository = get(),
+            addressRepository = get()
         )
     }
 }
