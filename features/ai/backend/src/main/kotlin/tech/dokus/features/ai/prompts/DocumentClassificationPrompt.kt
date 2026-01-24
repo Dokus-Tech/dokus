@@ -93,24 +93,7 @@ data object DocumentClassificationPrompt : AgentPrompt() {
     """
     )
 
-    private val TENANT_CONTEXT_TEMPLATE = Prompt(
-        """
-
-        ## Your Company Information
-        Your company VAT number: %s
-        Your company name: %s
-
-        Use this to determine direction:
-        - If YOUR VAT/name appears as sender → INVOICE (you sent it)
-        - If YOUR VAT/name appears as recipient → BILL (you received it)
-        - If neither matches clearly, use other context clues
-    """
-    )
-
     override operator fun invoke(context: TenantContext): Prompt {
-        return systemPrompt + TENANT_CONTEXT_TEMPLATE.format(
-            context.vatNumber,
-            context.companyName
-        )
+        return systemPrompt + context.prompt
     }
 }

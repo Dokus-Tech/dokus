@@ -31,5 +31,27 @@ sealed class AgentPrompt {
         val vatNumber: VatNumber,
         val companyName: LegalName,
         val address: Address
-    )
+    ) {
+        val prompt = TEMPLATE.format(
+            vatNumber,
+            companyName,
+            address.toString()
+        )
+
+        companion object {
+            private val TEMPLATE = Prompt(
+                """
+        ## Your Company Information
+        Your company VAT number: %s
+        Your company name: %s
+        Company address: %s
+
+        Use this to determine direction:
+        - If YOUR VAT/name appears as sender → INVOICE (you sent it)
+        - If YOUR VAT/name appears as recipient → BILL (you received it)
+        - If neither matches clearly, use other context clues
+    """
+            )
+        }
+    }
 }
