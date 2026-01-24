@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonElement
 import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.orchestrator.ToolTraceSink
+import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.prompts.ExtractionPrompt
 import tech.dokus.features.ai.services.DocumentImageCache
 
@@ -27,6 +28,7 @@ class ExtractInvoiceTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
     private val prompt: ExtractionPrompt,
+    private val tenantContext: AgentPrompt.TenantContext,
     private val imageCache: DocumentImageCache,
     private val traceSink: ToolTraceSink? = null
 ) : SimpleTool<ExtractInvoiceTool.Args>(
@@ -87,7 +89,7 @@ class ExtractInvoiceTool(
 
         // Run extraction
         val start = kotlin.time.TimeSource.Monotonic.markNow()
-        val result = agent.extract(documentImages)
+        val result = agent.extract(documentImages, tenantContext)
         val outputJson = jsonFormat.decodeFromString<JsonElement>(jsonFormat.encodeToString(result))
         traceSink?.record(
             action = "extract_invoice",
