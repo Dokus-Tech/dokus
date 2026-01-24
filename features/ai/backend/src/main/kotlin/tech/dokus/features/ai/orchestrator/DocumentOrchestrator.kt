@@ -327,17 +327,6 @@ class DocumentOrchestrator(
             IntelligenceMode.Sovereign -> 32
         }
 
-    // =========================================================================
-    // Output Parsing
-    // =========================================================================
-
-    private fun parseAgentOutput(output: String): OrchestratorAgentOutput? {
-        val normalized = normalizeJson(output)
-        return runCatching {
-            json.decodeFromString(OrchestratorAgentOutput.serializer(), normalized)
-        }.getOrNull()
-    }
-
     private suspend fun parseAgentOutputWithRepair(
         output: String,
         traceSink: ToolTraceSink? = null
@@ -603,9 +592,9 @@ class DocumentOrchestrator(
             contactCreated = null,
             issues = listOf(
                 "Orchestrator output parse failed; persisted extraction output",
-                "Fallback source tool: ${sourceTool ?: "unknown"}"
+                "Fallback source tool: ${sourceTool}"
             ),
-            reason = "Orchestrator output parse failed (fallback source: ${sourceTool ?: "unknown"})"
+            reason = "Orchestrator output parse failed (fallback source: ${sourceTool})"
         )
     }
 
@@ -629,7 +618,7 @@ class DocumentOrchestrator(
             rawText = parsed.rawText ?: fallback.rawText,
             contactId = parsed.contactId ?: fallback.contactId,
             contactCreated = parsed.contactCreated ?: fallback.contactCreated,
-            issues = if (mergedIssues.isEmpty()) null else mergedIssues
+            issues = mergedIssues.ifEmpty { null }
         )
     }
 
