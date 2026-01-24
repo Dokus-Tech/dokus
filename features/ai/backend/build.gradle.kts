@@ -17,7 +17,7 @@ kotlin {
 
 dependencies {
     // JetBrains Koog AI Framework (api to expose PromptExecutor, LLModel to dependents)
-    api(libs.koog.agents)
+    implementation(libs.bundles.koog)
 
     // Foundation dependencies
     implementation(projects.foundation.domain)
