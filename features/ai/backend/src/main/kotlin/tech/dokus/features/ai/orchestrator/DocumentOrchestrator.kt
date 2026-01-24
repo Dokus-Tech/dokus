@@ -18,7 +18,6 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import tech.dokus.domain.enums.ContactLinkDecisionType
-import tech.dokus.domain.enums.ContactLinkPolicy
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -33,7 +32,7 @@ import tech.dokus.features.ai.orchestrator.tools.PeppolDataFetcher
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
 import tech.dokus.features.ai.prompts.AgentPrompt
-import tech.dokus.features.ai.prompts.Prompt
+import tech.dokus.features.ai.prompts.OrchestratorPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
@@ -69,7 +68,6 @@ class DocumentOrchestrator(
     private val embeddingService: EmbeddingService,
     private val chunkRepository: ChunkRepository,
     private val cbeApiClient: CbeApiClient?,
-    private val linkingPolicy: ContactLinkPolicy = ContactLinkPolicy.VatOnly,
     private val indexingUpdater: IndexingStatusUpdater? = null,
     private val documentFetcher: DocumentFetcher,
     private val peppolDataFetcher: PeppolDataFetcher = PeppolDataFetcher { null },
@@ -81,14 +79,6 @@ class DocumentOrchestrator(
 ) {
     private val logger = loggerFor()
     private val json = Json { ignoreUnknownKeys = true }
-
-    companion object {
-        /** Confidence threshold for auto-confirm */
-        const val AUTO_CONFIRM_THRESHOLD = 0.85
-
-        /** Maximum self-correction attempts */
-        const val MAX_CORRECTIONS = 3
-    }
 
     @Serializable
     private data class OrchestratorAgentOutput(
@@ -149,7 +139,7 @@ class DocumentOrchestrator(
             storeExtractionOverride = storeWrapper
         )
         val agentConfig = AIAgentConfig.withSystemPrompt(
-            prompt = orchestratorSystemPrompt().value,
+            prompt = OrchestratorPrompt(tenantContext).value,
             llm = orchestratorModel,
             id = "document-orchestrator",
             maxAgentIterations = maxAgentIterations()
@@ -311,86 +301,6 @@ class DocumentOrchestrator(
         return OrchestratorToolRegistry.create(config)
     }
 
-    // =========================================================================
-    // Prompting
-    // =========================================================================
-
-    private fun orchestratorSystemPrompt(): Prompt = Prompt(
-        """
-        You are the Dokus document processing orchestrator.
-        You must solve the task by calling tools. Do not guess.
-
-        Core rules:
-        - Always use tools for document understanding, extraction, and validation.
-        - If a core tool fails (images, classification, extraction, validation, store_extraction), return status="failed".
-        - Non-critical tools (store_chunks, index_as_example) may fail without failing the run; include the error in "issues".
-        - If classification is UNKNOWN or confidence < 0.5, return status="needs_review".
-        - If overall confidence is below ${AUTO_CONFIRM_THRESHOLD}, return status="needs_review".
-        - Max corrections: $MAX_CORRECTIONS attempts.
-        - Output ONLY valid JSON (no markdown, no <think> tags).
-        - Never include placeholders like "..." or "…". Always return concrete JSON values.
-
-        Tool usage notes:
-        - get_document_images returns lines "Page N: <image_id>". Use the IDs as-is.
-        - If maxPages or dpi are provided in the task, pass them to get_document_images.
-        - see_document and extract_* tools return a JSON section. Use that JSON.
-        - find_similar_document may return an extraction example. Use it to re-run extraction once.
-        - verify_totals / validate_iban / validate_ogm / lookup_company are validation tools.
-        - generate_description / generate_keywords should be used after extraction.
-        - After success (or needs_review with extraction), call store_extraction with runId, documentType,
-          extraction, description, keywords, confidence, rawText, and a LinkDecision payload.
-        - You MUST call store_extraction whenever you have any extraction data, even if status="needs_review".
-        ${linkPolicyPrompt()}
-        - Provide linkDecision fields:
-          linkDecisionType = AUTO_LINK | SUGGEST | NONE
-          linkDecisionContactId (if applicable)
-          linkDecisionReason (short, human-readable)
-          linkDecisionConfidence (only for SUGGEST)
-          linkDecisionEvidence (JSON string with evidence fields):
-            vatExtracted, vatValid, vatMatched, cbeExists, ibanMatched, nameSimilarity, addressMatched, ambiguityCount
-        - If you created a contact, set contactCreated=true in store_extraction.
-        - For RAG indexing, call prepare_rag_chunks -> embed_text for each chunk -> store_chunks with runId.
-        - If you can resolve a contact, use lookup_contact then create_contact if missing, and include VAT evidence.
-
-        Final output JSON schema:
-        {
-          "status": "success|needs_review|failed",
-          "documentType": "INVOICE|BILL|RECEIPT|EXPENSE|CREDIT_NOTE|PRO_FORMA|UNKNOWN",
-          "extraction": { ... },
-          "rawText": "string",
-          "description": "string",
-          "keywords": ["..."],
-          "confidence": 0.0,
-          "validationPassed": true,
-          "correctionsApplied": 0,
-          "contactId": "uuid or null",
-          "contactCreated": false,
-          "issues": ["..."],
-          "reason": "string"
-        }
-
-        If status="needs_review" and you have any extraction data, include it in "extraction".
-    """
-    )
-
-    private fun linkPolicyPrompt(): Prompt {
-        return when (linkingPolicy) {
-            ContactLinkPolicy.VatOnly -> Prompt("""
-        - LinkDecision policy (VAT-only):
-          AUTO_LINK only when VAT is valid AND exact VAT match (no ambiguity).
-          If VAT missing/invalid, NEVER auto-link; use SUGGEST or NONE.
-            """)
-
-            ContactLinkPolicy.VatOrStrongSignals -> Prompt("""
-        - LinkDecision policy (VAT or strong signals):
-          AUTO_LINK when VAT is valid AND exact VAT match (no ambiguity),
-          OR when strong multi-signal evidence is present:
-            nameSimilarity >= 0.93, ibanMatched=true, addressMatched=true, ambiguityCount=1.
-          If VAT missing/invalid and strong signals are not met, NEVER auto-link; use SUGGEST or NONE.
-            """)
-        }
-    }
-
     private fun buildUserPrompt(
         documentId: DocumentId,
         tenantId: TenantId,
@@ -403,8 +313,8 @@ class DocumentOrchestrator(
         documentId: $documentId
         tenantId: $tenantId
         runId: ${runId ?: "unknown"}
-        tenantVatNumber: ${tenantContext.vatNumber ?: "unknown"}
-        tenantCompanyName: ${tenantContext.companyName ?: "unknown"}
+        tenantVatNumber: ${tenantContext.vatNumber}
+        tenantCompanyName: ${tenantContext.companyName}
         source: UPLOAD
         maxPages: ${maxPages ?: "default"}
         dpi: ${dpi ?: "default"}
@@ -708,7 +618,8 @@ class DocumentOrchestrator(
             addAll(parsed.issues.orEmpty())
         }.distinct()
 
-        val normalizedFallbackExtraction = normalizeExtraction(fallback.extraction) ?: fallback.extraction
+        val normalizedFallbackExtraction =
+            normalizeExtraction(fallback.extraction) ?: fallback.extraction
 
         return fallback.copy(
             extraction = normalizedFallbackExtraction,
@@ -882,14 +793,14 @@ class DocumentOrchestrator(
                 if (!extraction.isString) {
                     null
                 } else {
-                    val parsed = runCatching { json.parseToJsonElement(extraction.content) }.getOrNull()
+                    val parsed =
+                        runCatching { json.parseToJsonElement(extraction.content) }.getOrNull()
                     when (parsed) {
                         is JsonObject, is JsonArray -> parsed
                         else -> null
                     }
                 }
             }
-            else -> null
         }
     }
 
@@ -901,10 +812,12 @@ class DocumentOrchestrator(
                 if (!element.isString) {
                     null
                 } else {
-                    val parsed = runCatching { json.parseToJsonElement(element.content) }.getOrNull()
+                    val parsed =
+                        runCatching { json.parseToJsonElement(element.content) }.getOrNull()
                     parsed as? JsonObject
                 }
             }
+
             else -> null
         }
     }

@@ -20,7 +20,6 @@ import tech.dokus.domain.model.ExtractedDocumentData
 class ContactLinkingService(
     private val draftRepository: DocumentDraftRepository,
     private val contactRepository: ContactRepository,
-    private val linkingPolicy: ContactLinkPolicy
 ) {
     @Suppress("LongParameterList", "CyclomaticComplexMethod")
     suspend fun applyLinkDecision(
@@ -57,9 +56,8 @@ class ContactLinkingService(
         }
 
         val vatValid = counterpartyVat?.let { VatNumber(it).isValid } == true
-        val vatMatched = vatValid &&
-            counterpartyVat != null &&
-            VatNumber.normalize(counterpartyVat) == VatNumber.normalize(contactVat)
+        val vatMatched =
+            vatValid && VatNumber.normalize(counterpartyVat) == VatNumber.normalize(contactVat)
 
         val mergedEvidence = (evidence ?: ContactEvidence()).copy(
             vatExtracted = evidence?.vatExtracted ?: counterpartyVat,
@@ -69,7 +67,7 @@ class ContactLinkingService(
         )
 
         val effectiveDecision = ContactLinkDecisionResolver.resolve(
-            policy = linkingPolicy,
+            policy = ContactLinkPolicy.default,
             requested = decisionType,
             hasContact = true,
             vatMatched = vatMatched,
@@ -85,6 +83,7 @@ class ContactLinkingService(
                 source = ContactLinkSource.AI,
                 contactEvidence = mergedEvidence
             )
+
             ContactLinkDecisionType.Suggest -> draftRepository.updateContactSuggestion(
                 documentId = documentId,
                 tenantId = tenantId,
@@ -93,6 +92,7 @@ class ContactLinkingService(
                 reason = decisionReason,
                 contactEvidence = mergedEvidence
             )
+
             ContactLinkDecisionType.None -> false
         }
     }

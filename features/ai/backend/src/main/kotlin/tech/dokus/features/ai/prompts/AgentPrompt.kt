@@ -15,7 +15,7 @@ import tech.dokus.domain.model.Address
  * - Provenance tracking for audit trail
  */
 sealed class AgentPrompt {
-    internal abstract val systemPrompt: Prompt
+    protected abstract val systemPrompt: Prompt
 
     /**
      * Build prompt with tenant context.
