@@ -5,13 +5,12 @@ import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.agents.ExtractionAgent
 import tech.dokus.features.ai.models.ExtractedReceiptData
-import tech.dokus.features.ai.prompts.AgentPrompt
+import tech.dokus.features.ai.prompts.ExtractionPrompt
 
 /**
  * Vision tool for extracting receipt data from document images.
@@ -26,7 +25,7 @@ import tech.dokus.features.ai.prompts.AgentPrompt
 class ExtractReceiptTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
-    private val prompt: AgentPrompt.Extraction,
+    private val prompt: ExtractionPrompt,
     private val imageCache: DocumentImageCache,
     private val traceSink: tech.dokus.features.ai.orchestrator.ToolTraceSink? = null
 ) : SimpleTool<ExtractReceiptTool.Args>(

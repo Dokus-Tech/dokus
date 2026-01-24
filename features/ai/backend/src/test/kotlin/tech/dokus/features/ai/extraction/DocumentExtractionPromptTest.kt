@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
  *   ./gradlew :features:ai:backend:extractionTestReal      # real mode (requires AI)
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class DocumentExtractionTest {
+class DocumentExtractionPromptTest {
 
     private lateinit var fixtureLoader: FixtureLoader
     private lateinit var resultComparator: ExtractionResultComparator

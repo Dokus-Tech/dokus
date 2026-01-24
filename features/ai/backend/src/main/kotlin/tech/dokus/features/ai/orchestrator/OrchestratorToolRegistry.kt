@@ -29,6 +29,8 @@ import tech.dokus.features.ai.orchestrator.tools.StoreChunksTool
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.prompts.AgentPrompt
+import tech.dokus.features.ai.prompts.DocumentClassificationPrompt
+import tech.dokus.features.ai.prompts.ExtractionPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
@@ -98,7 +100,7 @@ object OrchestratorToolRegistry {
                 SeeDocumentTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.DocumentClassification,
+                    prompt = DocumentClassificationPrompt,
                     tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
@@ -108,7 +110,7 @@ object OrchestratorToolRegistry {
                 ExtractInvoiceTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Invoice,
+                    prompt = ExtractionPrompt.Invoice,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -117,7 +119,7 @@ object OrchestratorToolRegistry {
                 ExtractBillTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Bill,
+                    prompt = ExtractionPrompt.Bill,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -126,7 +128,7 @@ object OrchestratorToolRegistry {
                 ExtractReceiptTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Receipt,
+                    prompt = ExtractionPrompt.Receipt,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -135,7 +137,7 @@ object OrchestratorToolRegistry {
                 ExtractExpenseTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Expense,
+                    prompt = ExtractionPrompt.Expense,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )

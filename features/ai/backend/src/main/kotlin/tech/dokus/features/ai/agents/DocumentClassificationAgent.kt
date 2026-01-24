@@ -26,7 +26,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 class DocumentClassificationAgent(
     private val executor: PromptExecutor,
     private val model: LLModel,
-    private val prompt: AgentPrompt.DocumentClassification
+    private val prompt: tech.dokus.features.ai.prompts.DocumentClassificationPrompt
 ) {
     private val logger = loggerFor()
 

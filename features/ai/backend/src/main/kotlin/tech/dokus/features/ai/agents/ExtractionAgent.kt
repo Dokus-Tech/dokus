@@ -9,7 +9,7 @@ import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
-import tech.dokus.features.ai.prompts.AgentPrompt
+import tech.dokus.features.ai.prompts.ExtractionPrompt
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -49,7 +49,7 @@ interface ExtractionAgent<T : Any> {
         inline operator fun <reified T : Any> invoke(
             executor: PromptExecutor,
             model: LLModel,
-            prompt: AgentPrompt.Extraction,
+            prompt: ExtractionPrompt,
             userPromptPrefix: String,
             promptId: String,
             noinline emptyResult: () -> T
@@ -75,7 +75,7 @@ interface ExtractionAgent<T : Any> {
 internal class ExtractionAgentImpl<T : Any>(
     private val executor: PromptExecutor,
     private val model: LLModel,
-    private val prompt: AgentPrompt.Extraction,
+    private val prompt: ExtractionPrompt,
     private val userPromptPrefix: String,
     private val promptId: String,
     private val emptyResult: () -> T,

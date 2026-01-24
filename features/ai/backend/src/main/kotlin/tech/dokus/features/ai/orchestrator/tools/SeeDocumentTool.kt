@@ -5,11 +5,11 @@ import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.features.ai.agents.DocumentClassificationAgent
 import tech.dokus.features.ai.prompts.AgentPrompt
+import tech.dokus.features.ai.prompts.DocumentClassificationPrompt
 import tech.dokus.features.ai.services.DocumentImageCache
 
 /**
@@ -21,7 +21,7 @@ import tech.dokus.features.ai.services.DocumentImageCache
 class SeeDocumentTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
-    private val prompt: AgentPrompt.DocumentClassification,
+    private val prompt: DocumentClassificationPrompt,
     private val tenantContext: AgentPrompt.TenantContext,
     private val imageCache: DocumentImageCache,
     private val traceSink: tech.dokus.features.ai.orchestrator.ToolTraceSink? = null

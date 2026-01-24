@@ -7,7 +7,6 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import tech.dokus.domain.utils.parseSafe
 import tech.dokus.features.ai.models.CategorySuggestion
-import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -18,7 +17,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 class CategorySuggestionAgent(
     private val executor: PromptExecutor,
     private val model: LLModel,
-    private val prompt: AgentPrompt.CategorySuggestion
+    private val prompt: tech.dokus.features.ai.prompts.CategoryPrompt
 ) {
     private val logger = loggerFor()
 
