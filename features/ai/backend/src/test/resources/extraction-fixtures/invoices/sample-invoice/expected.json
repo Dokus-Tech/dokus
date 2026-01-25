@@ -1,0 +1,40 @@
+{
+  "documentType": "INVOICE",
+  "extraction": {
+    "vendorName": "Sample Vendor BV",
+    "vendorVatNumber": "BE0123456789",
+    "vendorAddress": "Sample Street 123, 1000 Brussels",
+    "invoiceNumber": "2024-0001",
+    "issueDate": "2024-01-15",
+    "dueDate": "2024-02-14",
+    "paymentTerms": "30 days",
+    "lineItems": [
+      {
+        "description": "Consulting services",
+        "quantity": 10,
+        "unitPrice": "100.00",
+        "vatRate": "21%",
+        "total": "1000.00"
+      }
+    ],
+    "currency": "EUR",
+    "subtotal": "1000.00",
+    "vatBreakdown": [
+      {"rate": "21%", "base": "1000.00", "amount": "210.00"}
+    ],
+    "totalVatAmount": "210.00",
+    "totalAmount": "1210.00",
+    "iban": "BE68539007547034",
+    "bic": "KREDBEBB",
+    "paymentReference": "+++123/4567/89012+++"
+  },
+  "minConfidence": 0.7,
+  "fieldOverrides": {
+    "totalAmount": "NUMERIC",
+    "subtotal": "NUMERIC",
+    "totalVatAmount": "NUMERIC",
+    "vendorVatNumber": "SEMANTIC",
+    "iban": "SEMANTIC",
+    "paymentReference": "SEMANTIC"
+  }
+}

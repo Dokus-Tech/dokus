@@ -1,5 +1,7 @@
 package tech.dokus.foundation.backend.config
 
+import tech.dokus.domain.database.DbEnum
+
 /**
  * IntelligenceMode defines the system's level of autonomy, compute expectations,
  * and AI processing strategy.
@@ -15,63 +17,14 @@ package tech.dokus.foundation.backend.config
  *
  * Architecture: Single orchestrator with tool calling, no ensemble.
  */
-sealed interface IntelligenceMode {
-
-    /* -------------------------------------------------------------------------
-     * Identity
-     * ---------------------------------------------------------------------- */
-
-    val name: String
-    val configValue: String
-
-    /* -------------------------------------------------------------------------
-     * Hardware profile
-     * ---------------------------------------------------------------------- */
-
-    /** Minimum RAM required for this mode to function safely */
-    val minRamGb: Int
-
-    /** Whether the hardware is capable of parallel inference */
-    val parallelCapable: Boolean
-
-    /* -------------------------------------------------------------------------
-     * Model profile
-     * ---------------------------------------------------------------------- */
-
-    /** Model for orchestrator reasoning (text-only, tool calling) */
-    val orchestratorModel: String
-
-    /** Model for vision tasks (classification, extraction) */
-    val visionModel: String
-
-    /** Model for chat/RAG */
-    val chatModel: String
-
-    /* -------------------------------------------------------------------------
-     * Processing strategy
-     * ---------------------------------------------------------------------- */
-
-    /** Whether self-correction loops are allowed */
-    val enableSelfCorrection: Boolean
-
-    /** Maximum retry attempts per document */
-    val maxRetries: Int
-
-    /* -------------------------------------------------------------------------
-     * Concurrency budgets (CRITICAL for stability)
-     * ---------------------------------------------------------------------- */
-
-    /** Max concurrent LLM requests system-wide */
-    val maxConcurrentRequests: Int
-
-    /** Max parallel agents per single document */
-    val maxParallelAgentsPerDocument: Int
-
-    /* -------------------------------------------------------------------------
-     * Autonomy
-     * ---------------------------------------------------------------------- */
-
-    val autonomyLevel: AutonomyLevel
+enum class IntelligenceMode(
+    override val dbValue: String,
+    val orchestratorModel: String,
+    val visionModel: String,
+    val chatModel: String,
+    val maxConcurrentRequests: Int,
+    val maxIterations: Int,
+) : DbEnum {
 
     /* =======================================================================
      * MODES
@@ -89,31 +42,14 @@ sealed interface IntelligenceMode {
      * - No parallelism
      * - Optimized for survival, not perfection
      */
-    data object Assisted : IntelligenceMode {
-
-        override val name = "Assisted"
-        override val configValue = "assisted"
-
-        // Hardware
-        override val minRamGb = 8
-        override val parallelCapable = false
-
-        // Models (LM Studio format: qwen/qwen3-vl-8b)
-        override val orchestratorModel = "qwen/qwen3-32b"
-        override val visionModel = "qwen/qwen3-vl-8b"
-        override val chatModel = "qwen/qwen3-32b"
-
-        // Processing
-        override val enableSelfCorrection = false
-        override val maxRetries = 1
-
-        // Concurrency
-        override val maxConcurrentRequests = 1
-        override val maxParallelAgentsPerDocument = 1
-
-        // Autonomy
-        override val autonomyLevel = AutonomyLevel.LOW
-    }
+    Assisted(
+        dbValue = "ASSISTED",
+        orchestratorModel = "qwen/qwen3-32b",
+        visionModel = "qwen/qwen3-vl-8b",
+        chatModel = "qwen/qwen3-32b",
+        maxConcurrentRequests = 1,
+        maxIterations = 8,
+    ),
 
     /**
      * AUTONOMOUS
@@ -127,31 +63,14 @@ sealed interface IntelligenceMode {
      * - Example-based few-shot learning
      * - Deterministic, stable behavior
      */
-    data object Autonomous : IntelligenceMode {
-
-        override val name = "Autonomous"
-        override val configValue = "autonomous"
-
-        // Hardware
-        override val minRamGb = 32
-        override val parallelCapable = false
-
-        // Models (LM Studio format: qwen/qwen3-vl-8b)
-        override val orchestratorModel = "qwen/qwen3-32b"
-        override val visionModel = "qwen/qwen3-vl-8b"
-        override val chatModel = "qwen/qwen3-32b"
-
-        // Processing
-        override val enableSelfCorrection = true
-        override val maxRetries = 2
-
-        // Concurrency
-        override val maxConcurrentRequests = 1
-        override val maxParallelAgentsPerDocument = 1
-
-        // Autonomy
-        override val autonomyLevel = AutonomyLevel.MEDIUM
-    }
+    Autonomous(
+        dbValue = "AUTONOMOUS",
+        orchestratorModel = "qwen/qwen3-32b",
+        visionModel = "qwen/qwen3-vl-8b",
+        chatModel = "qwen/qwen3-32b",
+        maxConcurrentRequests = 1,
+        maxIterations = 12,
+    ),
 
     /**
      * SOVEREIGN
@@ -166,54 +85,18 @@ sealed interface IntelligenceMode {
      * - Cross-document reasoning
      * - Highest autonomy and throughput
      */
-    data object Sovereign : IntelligenceMode {
-
-        override val name = "Sovereign"
-        override val configValue = "sovereign"
-
-        // Hardware - YOUR Mac Studio
-        override val minRamGb = 128
-        override val parallelCapable = true
-
-        // Models (LM Studio format: qwen/qwen3-vl-8b)
-        override val orchestratorModel = "openai/gpt-oss-20b"
-        override val visionModel = "qwen/qwen3-vl-30b"
-        override val chatModel = "openai/gpt-oss-20b"
-
-        // Processing
-        override val enableSelfCorrection = true
-        override val maxRetries = 3
-
-        // Concurrency
-        override val maxConcurrentRequests = 5
-        override val maxParallelAgentsPerDocument = 4
-
-        override val autonomyLevel = AutonomyLevel.HIGH
-    }
+    Sovereign(
+        dbValue = "SOVEREIGN",
+        orchestratorModel = "openai/gpt-oss-20b",
+        visionModel = "qwen/qwen3-vl-30b",
+        chatModel = "openai/gpt-oss-20b",
+        maxConcurrentRequests = 5,
+        maxIterations = 32,
+    );
 
     companion object {
-
-        fun fromConfigValue(value: String): IntelligenceMode =
-            when (value.lowercase()) {
-                "assisted" -> Assisted
-                "autonomous" -> Autonomous
-                "sovereign" -> Sovereign
-                else -> error(
-                    "Unknown IntelligenceMode '$value'. " +
-                        "Valid values: assisted, autonomous, sovereign"
-                )
-            }
-
-        val all: List<IntelligenceMode> =
-            listOf(Assisted, Autonomous, Sovereign)
+        fun fromDbValue(value: String): IntelligenceMode {
+            return requireNotNull(entries.find { it.dbValue == value }) { "Unknown IntelligenceMode: $value" }
+        }
     }
-}
-
-/**
- * Describes how independently the system can operate.
- */
-enum class AutonomyLevel {
-    LOW,    // Assists, requires human control
-    MEDIUM, // Operates with supervision
-    HIGH    // Self-governing within boundaries
 }

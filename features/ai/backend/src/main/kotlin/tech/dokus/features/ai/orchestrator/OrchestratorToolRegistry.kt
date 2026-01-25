@@ -1,6 +1,7 @@
 package tech.dokus.features.ai.orchestrator
 
 import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import tech.dokus.domain.repository.ChunkRepository
@@ -10,33 +11,32 @@ import tech.dokus.features.ai.orchestrator.tools.ContactLookupHandler
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.DocumentImageFetcher
 import tech.dokus.features.ai.orchestrator.tools.EmbedTextTool
-import tech.dokus.features.ai.orchestrator.tools.ExtractBillTool
-import tech.dokus.features.ai.orchestrator.tools.ExtractExpenseTool
-import tech.dokus.features.ai.orchestrator.tools.ExtractInvoiceTool
-import tech.dokus.features.ai.orchestrator.tools.ExtractReceiptTool
 import tech.dokus.features.ai.orchestrator.tools.FindSimilarDocumentTool
 import tech.dokus.features.ai.orchestrator.tools.GenerateDescriptionTool
 import tech.dokus.features.ai.orchestrator.tools.GenerateKeywordsTool
 import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
-import tech.dokus.features.ai.orchestrator.tools.IndexingStatusUpdater
 import tech.dokus.features.ai.orchestrator.tools.GetPeppolDataTool
 import tech.dokus.features.ai.orchestrator.tools.IndexAsExampleTool
+import tech.dokus.features.ai.orchestrator.tools.IndexingStatusUpdater
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.orchestrator.tools.PeppolDataFetcher
 import tech.dokus.features.ai.orchestrator.tools.PrepareRagChunksTool
 import tech.dokus.features.ai.orchestrator.tools.SeeDocumentTool
 import tech.dokus.features.ai.orchestrator.tools.StoreChunksTool
-import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
 import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
+import tech.dokus.features.ai.orchestrator.tools.StoreExtractionTool
+import tech.dokus.features.ai.orchestrator.tools.extraction.ExtractBillTool
+import tech.dokus.features.ai.orchestrator.tools.extraction.ExtractExpenseTool
+import tech.dokus.features.ai.orchestrator.tools.extraction.ExtractInvoiceTool
+import tech.dokus.features.ai.orchestrator.tools.extraction.ExtractReceiptTool
 import tech.dokus.features.ai.prompts.AgentPrompt
+import tech.dokus.features.ai.prompts.DocumentClassificationPrompt
+import tech.dokus.features.ai.prompts.ExtractionPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
-import tech.dokus.features.ai.tools.LookupCompanyTool
-import tech.dokus.features.ai.tools.ValidateIbanTool
-import tech.dokus.features.ai.tools.ValidateOgmTool
-import tech.dokus.features.ai.tools.VerifyTotalsTool
+import tech.dokus.features.ai.tools.LegalEntitiesTools
 import tech.dokus.foundation.backend.lookup.CbeApiClient
 
 /**
@@ -64,10 +64,10 @@ object OrchestratorToolRegistry {
         val embeddingService: EmbeddingService,
         val exampleRepository: ExampleRepository,
         val chunkRepository: ChunkRepository,
-        val cbeApiClient: CbeApiClient?,
+        val cbeApiClient: CbeApiClient,
         val tenantContext: AgentPrompt.TenantContext,
         val indexingUpdater: IndexingStatusUpdater?,
-        val traceSink: ToolTraceSink? = null,
+        val traceSink: ToolTraceSink,
 
         // Function hooks for database operations
         val documentFetcher: DocumentImageFetcher,
@@ -98,7 +98,7 @@ object OrchestratorToolRegistry {
                 SeeDocumentTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.DocumentClassification,
+                    prompt = DocumentClassificationPrompt,
                     tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
@@ -108,7 +108,8 @@ object OrchestratorToolRegistry {
                 ExtractInvoiceTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Invoice,
+                    prompt = ExtractionPrompt.Invoice,
+                    tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -117,7 +118,8 @@ object OrchestratorToolRegistry {
                 ExtractBillTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Bill,
+                    prompt = ExtractionPrompt.Bill,
+                    tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -126,7 +128,8 @@ object OrchestratorToolRegistry {
                 ExtractReceiptTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Receipt,
+                    prompt = ExtractionPrompt.Receipt,
+                    tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -135,7 +138,8 @@ object OrchestratorToolRegistry {
                 ExtractExpenseTool(
                     executor = config.executor,
                     model = config.visionModel,
-                    prompt = AgentPrompt.Extraction.Expense,
+                    prompt = ExtractionPrompt.Expense,
+                    tenantContext = config.tenantContext,
                     imageCache = config.imageCache,
                     traceSink = config.traceSink
                 )
@@ -157,13 +161,7 @@ object OrchestratorToolRegistry {
             tool(LookupContactTool(config.contactLookup, config.traceSink))
             tool(CreateContactTool(config.contactCreator))
 
-            // Validation tools (existing)
-            tool(VerifyTotalsTool)
-            tool(ValidateOgmTool)
-            tool(ValidateIbanTool)
-            if (config.cbeApiClient != null) {
-                tool(LookupCompanyTool(config.cbeApiClient))
-            }
+            tools(LegalEntitiesTools(config.cbeApiClient))
         }
     }
 }

@@ -30,6 +30,8 @@ enum class ContactLinkPolicy {
     VatOrStrongSignals;
 
     companion object {
+        val default = VatOrStrongSignals
+
         fun fromConfig(raw: String?): ContactLinkPolicy {
             val normalized = raw?.trim()?.uppercase() ?: return VatOnly
             return when (normalized) {

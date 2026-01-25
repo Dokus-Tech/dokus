@@ -51,7 +51,8 @@ class DocumentProcessingWorker(
     private val orchestrator: DocumentOrchestrator,
     private val config: ProcessorConfig,
     private val mode: IntelligenceMode,
-    private val tenantRepository: TenantRepository
+    private val tenantRepository: TenantRepository,
+    private val addressRepository: tech.dokus.database.repository.auth.AddressRepository
 ) {
     private val logger = LoggerFactory.getLogger(DocumentProcessingWorker::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -164,10 +165,15 @@ class DocumentProcessingWorker(
 
         try {
             // Fetch tenant context for improved INVOICE vs BILL classification
-            val tenant = tenantRepository.findById(TenantId.parse(tenantId))
+            val parsedTenantId = TenantId.parse(tenantId)
+            val tenant = tenantRepository.findById(parsedTenantId)
+                ?: error("Tenant not found: $tenantId")
+            val address = addressRepository.getCompanyAddress(parsedTenantId)
+                ?: error("Address not found for tenant: $tenantId")
             val tenantContext = AgentPrompt.TenantContext(
-                vatNumber = tenant?.vatNumber?.value,
-                companyName = tenant?.displayName?.value ?: tenant?.legalName?.value
+                vatNumber = tenant.vatNumber,
+                companyName = tenant.legalName,
+                address = address
             )
 
             // Process document through DocumentOrchestrator (tool-calling orchestrator)
@@ -279,7 +285,3 @@ class DocumentProcessingWorker(
         return result
     }
 }
-
-/**
- * Exception thrown when document processing fails.
- */

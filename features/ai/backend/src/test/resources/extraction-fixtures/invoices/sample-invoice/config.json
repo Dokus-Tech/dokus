@@ -1,0 +1,11 @@
+{
+  "documentType": "INVOICE",
+  "mimeType": "application/pdf",
+  "maxPages": 3,
+  "dpi": 150,
+  "minConfidence": 0.7,
+  "fieldComparisonMode": "FUZZY",
+  "requiredFields": ["vendorName", "invoiceNumber", "totalAmount"],
+  "ignoredFields": ["confidence", "provenance", "extractedText"],
+  "amountTolerance": 0.02
+}

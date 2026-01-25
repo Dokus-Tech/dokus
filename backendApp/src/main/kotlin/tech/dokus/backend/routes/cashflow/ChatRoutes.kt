@@ -36,7 +36,6 @@ import tech.dokus.domain.routes.Chat
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.ConversationMessage
 import tech.dokus.features.ai.config.AIModels
-import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.RAGService
 import tech.dokus.foundation.backend.config.AIConfig
@@ -71,7 +70,12 @@ internal fun Route.chatRoutes() {
     val embeddingService = EmbeddingService(httpClient, aiConfig)
     val ragService = RAGService(embeddingService, chunksRepository)
     val models = AIModels.forMode(aiConfig.mode)
-    val chatAgent = ChatAgent(executor, models.chat, ragService, AgentPrompt.Chat)
+    val chatAgent = ChatAgent(
+        executor,
+        models.chat,
+        ragService,
+        tech.dokus.features.ai.prompts.ChatPrompt
+    )
 
     authenticateJwt {
         // =========================================================================
@@ -389,7 +393,7 @@ private suspend fun processChat(
     )
     chatRepository.saveMessage(userMessage)
 
-    logger.debug("Saved user message: id=$userMessageId, session=$sessionId")
+    logger.debug("Saved user message: id={}, session={}", userMessageId, sessionId)
 
     // Generate AI response using ChatAgent
     val startTime = System.currentTimeMillis()

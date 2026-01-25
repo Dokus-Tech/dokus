@@ -76,6 +76,7 @@ import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
+import tech.dokus.features.ai.prompts.OrchestratorPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
@@ -353,7 +354,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     single<ExampleRepository> { DocumentExamplesRepository() }
 
     // Contact linking policy applier (AI decisions)
-    single { ContactLinkingService(get(), get(), appConfig.processor.linkingPolicy) }
+    single { ContactLinkingService(get(), get()) }
 
     // =========================================================================
     // Document Orchestrator
@@ -380,7 +381,6 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             embeddingService = get(),
             chunkRepository = get(),
             cbeApiClient = getOrNull(),
-            linkingPolicy = appConfig.processor.linkingPolicy,
             indexingUpdater = { runId, status, chunksCount, errorMessage ->
                 get<ProcessorIngestionRepository>().updateIndexingStatus(
                     runId = runId,
@@ -494,7 +494,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                         return@DocumentOrchestrator false
                     }
 
-                val meetsThreshold = payload.confidence >= DocumentOrchestrator.AUTO_CONFIRM_THRESHOLD
+                val meetsThreshold = payload.confidence >= OrchestratorPrompt.AUTO_CONFIRM_THRESHOLD
 
                 val stored = ingestionRepository.markAsSucceeded(
                     runId = runId,
@@ -513,9 +513,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                 if (!stored) return@DocumentOrchestrator false
 
                 val decisionType = payload.linkDecisionType
-                val decisionContactId = payload.linkDecisionContactId?.takeIf { it.isNotBlank() }
-                    ?: payload.contactId?.takeIf { it.isNotBlank() }
-                val contactId = decisionContactId
+                val contactId = payload.linkDecisionContactId?.takeIf { it.isNotBlank() }
                     ?.let { runCatching { ContactId.parse(it) }.getOrNull() }
                     ?: return@DocumentOrchestrator true
 
@@ -538,8 +536,8 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                         extractedData = extractedData,
                         decisionType = decisionType,
                         contactId = contactId,
-                        decisionReason = payload.linkDecisionReason ?: payload.contactReason,
-                        decisionConfidence = payload.linkDecisionConfidence ?: payload.contactConfidence,
+                        decisionReason = payload.linkDecisionReason,
+                        decisionConfidence = payload.linkDecisionConfidence,
                         evidence = evidenceFromPayload
                     )
                 }
@@ -556,7 +554,8 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             orchestrator = get(),
             config = appConfig.processor,
             mode = mode,
-            tenantRepository = get()
+            tenantRepository = get(),
+            addressRepository = get()
         )
     }
 }

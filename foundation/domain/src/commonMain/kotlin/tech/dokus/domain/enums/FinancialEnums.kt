@@ -1160,31 +1160,3 @@ enum class RefundClaimStatus(override val dbValue: String) : DbEnum {
     @SerialName("CANCELLED")
     Cancelled("CANCELLED")
 }
-
-// ============================================================================
-// REPORTING ENUMS
-// ============================================================================
-
-/**
- * Grouping options for financial reports.
- */
-@Serializable
-enum class ReportGroupBy {
-    @SerialName("DAY")
-    Day,
-
-    @SerialName("WEEK")
-    Week,
-
-    @SerialName("MONTH")
-    Month,
-
-    @SerialName("QUARTER")
-    Quarter,
-
-    @SerialName("YEAR")
-    Year,
-
-    @SerialName("CATEGORY")
-    Category
-}

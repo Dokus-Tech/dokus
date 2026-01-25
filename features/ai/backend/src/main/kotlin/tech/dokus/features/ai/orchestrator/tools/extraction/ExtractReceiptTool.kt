@@ -1,48 +1,55 @@
-package tech.dokus.features.ai.orchestrator.tools
+package tech.dokus.features.ai.orchestrator.tools.extraction
 
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.agents.ExtractionAgent
-import tech.dokus.features.ai.models.ExtractedBillData
+import tech.dokus.features.ai.models.ExtractedReceiptData
+import tech.dokus.features.ai.orchestrator.ToolTraceSink
+import tech.dokus.features.ai.orchestrator.tools.DocumentImageResolver
 import tech.dokus.features.ai.prompts.AgentPrompt
+import tech.dokus.features.ai.prompts.ExtractionPrompt
+import tech.dokus.features.ai.services.DocumentImageCache
+import kotlin.time.TimeSource
 
 /**
- * Vision tool for extracting bill (purchase invoice) data from document images.
+ * Vision tool for extracting receipt data from document images.
  *
- * Uses vision model to extract structured bill data including:
- * - Supplier information (name, VAT, address)
- * - Bill details (number, dates, terms)
- * - Line items (description, quantity, price, VAT)
- * - Totals (subtotal, VAT breakdown, total)
- * - Payment info (IBAN, BIC, reference/OGM)
+ * Uses vision model to extract structured receipt data including:
+ * - Store information (name, address, VAT)
+ * - Receipt details (number, date, time)
+ * - Line items (description, quantity, price)
+ * - Totals (subtotal, VAT, total)
+ * - Payment method
  */
-class ExtractBillTool(
+class ExtractReceiptTool(
     private val executor: PromptExecutor,
     private val model: LLModel,
-    private val prompt: AgentPrompt.Extraction,
+    private val prompt: ExtractionPrompt,
+    private val tenantContext: AgentPrompt.TenantContext,
     private val imageCache: DocumentImageCache,
-    private val traceSink: tech.dokus.features.ai.orchestrator.ToolTraceSink? = null
-) : SimpleTool<ExtractBillTool.Args>(
+    private val traceSink: ToolTraceSink? = null
+) : SimpleTool<ExtractReceiptTool.Args>(
     argsSerializer = Args.serializer(),
-    name = "extract_bill",
+    name = "extract_receipt",
     description = """
-        Extracts structured data from a BILL (purchase invoice) document using vision AI.
+        Extracts structured data from a RECEIPT document using vision AI.
 
-        A BILL is an invoice received BY the tenant from a supplier (purchase).
-        Use this tool after classifying the document as BILL.
+        A RECEIPT is a POS/cash register receipt from a purchase.
+        Use this tool after classifying the document as RECEIPT.
 
-        Extracts: supplier info, bill number, dates, line items, totals, payment details.
+        Receipts typically have:
+        - Merchant/store name and address
+        - Date and time of purchase
+        - List of items with prices
+        - Payment method (cash, card)
+        - Often lower resolution or thermal paper quality
+
         Returns structured JSON that can be stored in the database.
-
-        Belgian bills may have OGM (gestructureerde mededeling) payment reference.
-        Optional: Provide an example extraction from a similar supplier to improve accuracy.
     """.trimIndent()
 ) {
     @Serializable
@@ -53,8 +60,8 @@ class ExtractBillTool(
         val images: String,
 
         @property:LLMDescription(
-            "Optional: JSON example of a previous extraction from the same supplier. " +
-                "This improves accuracy for repeat suppliers."
+            "Optional: JSON example of a previous extraction from the same merchant. " +
+                "This improves accuracy for repeat merchants."
         )
         val example: String? = null
     )
@@ -66,7 +73,7 @@ class ExtractBillTool(
             DocumentImageResolver(imageCache).resolve(args.images)
         } catch (e: Exception) {
             traceSink?.record(
-                action = "extract_bill",
+                action = "extract_receipt",
                 tool = name,
                 durationMs = 0,
                 input = null,
@@ -77,34 +84,34 @@ class ExtractBillTool(
         }
 
         // Create extraction agent
-        val agent = ExtractionAgent<ExtractedBillData>(
+        val agent = ExtractionAgent<ExtractedReceiptData>(
             executor = executor,
             model = model,
             prompt = prompt,
             userPromptPrefix = buildUserPromptPrefix(args.example),
-            promptId = "bill-extractor",
-            emptyResult = { ExtractedBillData(confidence = 0.0) }
+            promptId = "receipt-extractor",
+            emptyResult = { ExtractedReceiptData(confidence = 0.0) }
         )
 
         // Run extraction
-        val start = kotlin.time.TimeSource.Monotonic.markNow()
-        val result = agent.extract(documentImages)
+        val start = TimeSource.Monotonic.markNow()
+        val result = agent.extract(documentImages, tenantContext)
         val outputJson = jsonFormat.decodeFromString<JsonElement>(jsonFormat.encodeToString(result))
         traceSink?.record(
-            action = "extract_bill",
+            action = "extract_receipt",
             tool = name,
             durationMs = start.elapsedNow().inWholeMilliseconds,
             input = null,
             output = outputJson,
-            notes = "confidence=${result.confidence}, lineItems=${result.lineItems.size}"
+            notes = "confidence=${result.confidence}, items=${result.items.size}"
         )
 
         return buildString {
             appendLine("EXTRACTION RESULT:")
-            appendLine("Supplier: ${result.supplierName ?: "Unknown"}")
-            appendLine("Bill #: ${result.invoiceNumber ?: "Unknown"}")
+            appendLine("Merchant: ${result.merchantName ?: "Unknown"}")
+            appendLine("Date: ${result.transactionDate ?: "Unknown"}")
             appendLine("Total: ${result.totalAmount ?: "Unknown"} ${result.currency ?: ""}")
-            appendLine("Confidence: ${String.format("%.0f%%", (result.confidence ?: 0.0) * 100)}")
+            appendLine("Confidence: ${String.format("%.0f%%", result.confidence * 100)}")
             appendLine()
             appendLine("JSON:")
             appendLine(jsonFormat.encodeToString(result))
@@ -114,15 +121,15 @@ class ExtractBillTool(
     private fun buildUserPromptPrefix(example: String?): String {
         return if (example != null) {
             """
-            Extract bill data from this document.
+            Extract receipt data from this document.
 
-            REFERENCE EXAMPLE from same supplier (use this format and look for similar fields):
+            REFERENCE EXAMPLE from same merchant (use this format and look for similar fields):
             $example
 
             Now extract from this
             """.trimIndent()
         } else {
-            "Extract bill data from this"
+            "Extract receipt data from this"
         }
     }
 }

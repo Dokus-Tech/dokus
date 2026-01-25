@@ -5,7 +5,7 @@ import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import tech.dokus.features.ai.models.ExtractedDocumentData
+import tech.dokus.domain.model.ExtractedDocumentData
 
 fun interface PeppolDataFetcher {
     suspend operator fun invoke(documentId: String): ExtractedDocumentData?
