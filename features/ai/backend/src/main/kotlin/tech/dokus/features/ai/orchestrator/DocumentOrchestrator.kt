@@ -21,6 +21,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.features.ai.models.ClassifiedDocumentType
+import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.orchestrator.tools.ContactCreatorHandler
 import tech.dokus.features.ai.orchestrator.tools.ContactLookupHandler
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
