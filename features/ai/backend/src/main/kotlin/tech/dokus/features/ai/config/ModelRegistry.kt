@@ -16,6 +16,7 @@ object ModelRegistry {
         // Vision models (LM Studio format)
         "qwen/qwen3-vl-8b" to CONTEXT_32K,
         "qwen/qwen3-vl-32b" to CONTEXT_128K,
+        "qwen/qwen3-vl-30b" to CONTEXT_128K,
         // Chat models (LM Studio format)
         "qwen/qwen3-32b" to CONTEXT_128K
     )

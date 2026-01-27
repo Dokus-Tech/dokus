@@ -24,7 +24,7 @@ internal class DocumentFetcherTool(
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun execute(args: Input): Output {
-        return fetcher(tenantId, args.documentId).fold(
+        return fetcher(tenantId, DocumentId(args.documentId)).fold(
             onSuccess = {
                 Output.DocumentFound(it.bytes, it.mimeType)
             },
@@ -38,7 +38,7 @@ internal class DocumentFetcherTool(
     @Serializable
     data class Input(
         @property:LLMDescription("The document ID to fetch")
-        val documentId: DocumentId,
+        val documentId: String,
     )
 
 

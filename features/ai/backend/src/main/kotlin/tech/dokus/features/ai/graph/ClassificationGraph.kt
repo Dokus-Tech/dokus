@@ -3,7 +3,6 @@ package tech.dokus.features.ai.graph
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.tools.Tool
-import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.ext.agent.subgraphWithTask
@@ -31,10 +30,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
 internal class ClassificationFinishTool : Tool<ClassificationToolInput, ClassificationResult>(
     argsSerializer = ClassificationToolInput.serializer(),
     resultSerializer = ClassificationResult.serializer(),
-    descriptor = ToolDescriptor(
-        name = "submit_classification",
-        description = "Submit the final document classification after analyzing the document"
-    )
+    name = "submit_classification",
+    description = "Submit the final document classification after analyzing the document"
 ) {
     override suspend fun execute(args: ClassificationToolInput): ClassificationResult {
         return ClassificationResult(
