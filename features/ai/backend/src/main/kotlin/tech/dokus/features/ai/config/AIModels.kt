@@ -69,3 +69,7 @@ data class ModelSet(
     /** Model for RAG-based chat */
     val chat: LLModel
 )
+
+
+val IntelligenceMode.asVisionModel
+    get() = AIModels.forMode(this).vision
