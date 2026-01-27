@@ -1,21 +1,12 @@
 package tech.dokus.features.ai.tools
 
 import ai.koog.agents.core.tools.Tool
-import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
-
-private val descriptor = ToolDescriptor(
-    name = "fetch_document",
-    description = """
-            Retrieves a document's raw content by ID.
-            Returns the document bytes and MIME type (image/png, image/jpeg, application/pdf).
-            Returns an error if the document is not found or inaccessible.
-        """.trimIndent()
-)
+import kotlin.uuid.ExperimentalUuidApi
 
 internal class DocumentFetcherTool(
     private val tenantId: TenantId,
@@ -23,9 +14,15 @@ internal class DocumentFetcherTool(
 ) : Tool<DocumentFetcherTool.Input, DocumentFetcherTool.Output>(
     argsSerializer = Input.serializer(),
     resultSerializer = Output.serializer(),
-    descriptor = descriptor,
+    name = "document_fetcher_tool",
+    description = """
+            Retrieves a document's raw content by ID.
+            Returns the document bytes and MIME type (image/png, image/jpeg, application/pdf).
+            Returns an error if the document is not found or inaccessible.
+        """.trimIndent()
 ) {
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun execute(args: Input): Output {
         return fetcher(tenantId, args.documentId).fold(
             onSuccess = {

@@ -9,6 +9,8 @@ import kotlin.uuid.Uuid
 @Serializable
 @JvmInline
 value class DocumentId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
     override fun toString(): String = value.toString()
 
     companion object {
