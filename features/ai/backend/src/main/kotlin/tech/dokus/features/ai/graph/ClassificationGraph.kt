@@ -2,11 +2,10 @@ package tech.dokus.features.ai.graph
 
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
+import ai.koog.agents.core.tools.Tool
+import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.annotations.LLMDescription
-import ai.koog.agents.core.tools.annotations.Tool
-import ai.koog.agents.core.tools.reflect.ToolSet
-import ai.koog.agents.core.tools.reflect.asTools
 import ai.koog.agents.ext.agent.subgraphWithTask
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -21,36 +20,43 @@ fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentGraph(
     aiConfig: AIConfig,
     registry: ToolRegistry
 ): AIAgentSubgraphDelegate<ClassifyDocumentInput, ClassificationResult> {
-    return subgraphWithTask<ClassifyDocumentInput, ClassificationResult>(
+    return subgraphWithTask(
         name = "Classify document",
         llmModel = aiConfig.mode.asVisionModel,
-        tools = registry.tools + ClassificationFinishTool().asTools()
+        tools = registry.tools,
+        finishTool = ClassificationFinishTool()
     ) { it.prompt }
 }
 
-@LLMDescription("Submit the final classification result")
-class ClassificationFinishTool : ToolSet {
-
-    @Tool
-    @LLMDescription("Submit the document classification result after analyzing the document")
-    fun submitClassification(
-        @LLMDescription("The detected document type")
-        documentType: DocumentType,
-        @LLMDescription("Confidence score from 0.0 to 1.0")
-        confidence: Double,
-        @LLMDescription("Detected language: nl, fr, en, or de")
-        language: String,
-        @LLMDescription("Brief explanation of key indicators")
-        reasoning: String
-    ): ClassificationResult {
+internal class ClassificationFinishTool : Tool<ClassificationToolInput, ClassificationResult>(
+    argsSerializer = ClassificationToolInput.serializer(),
+    resultSerializer = ClassificationResult.serializer(),
+    descriptor = ToolDescriptor(
+        name = "submit_classification",
+        description = "Submit the final document classification after analyzing the document"
+    )
+) {
+    override suspend fun execute(args: ClassificationToolInput): ClassificationResult {
         return ClassificationResult(
-            documentType = documentType,
-            confidence = confidence,
-            language = language,
-            reasoning = reasoning
+            documentType = args.documentType,
+            confidence = args.confidence,
+            language = args.language,
+            reasoning = args.reasoning
         )
     }
 }
+
+@Serializable
+data class ClassificationToolInput(
+    @property:LLMDescription("The detected document type")
+    val documentType: DocumentType,
+    @property:LLMDescription("Confidence score from 0.0 to 1.0")
+    val confidence: Double,
+    @property:LLMDescription("Detected language: nl, fr, en, or de")
+    val language: String,
+    @property:LLMDescription("Brief explanation of key indicators")
+    val reasoning: String
+)
 
 @Serializable
 data class ClassifyDocumentInput(
@@ -64,13 +70,10 @@ data class ClassifyDocumentInput(
 data class ClassificationResult(
     @property:LLMDescription("The detected document type (use exact enum name)")
     val documentType: DocumentType,
-
     @property:LLMDescription("Confidence score from 0.0 to 1.0")
     val confidence: Double,
-
     @property:LLMDescription("Detected language: nl, fr, en, or de")
     val language: String,
-
     @property:LLMDescription("Brief explanation of key indicators that led to this classification")
     val reasoning: String
 )

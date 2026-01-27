@@ -22,6 +22,7 @@ fun acceptDocumentGraph(
         val godRegistry = ToolRegistry { tools(registries.flatMap { it.tools }) }
 
         val classifyDocument by classifyDocumentGraph(aiConfig, godRegistry)
-        
+
+
     }
 }
