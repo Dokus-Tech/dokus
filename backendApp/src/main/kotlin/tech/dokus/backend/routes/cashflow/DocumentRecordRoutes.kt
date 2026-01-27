@@ -1,12 +1,11 @@
 package tech.dokus.backend.routes.cashflow
 
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
-import io.ktor.server.resources.delete
-import io.ktor.server.resources.get
+import io.ktor.http.*
+import io.ktor.server.request.*
+import io.ktor.server.resources.*
 import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
-import io.ktor.server.response.respond
+import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -281,7 +280,7 @@ internal fun Route.documentRecordRoutes() {
                         updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
                     )
                 )
-            } else if (hasContactUpdate) {
+            } else {
                 updateDraftCounterparty(draftRepository, documentId, tenantId, request)
                 call.respond(HttpStatusCode.NoContent)
             }
@@ -351,9 +350,6 @@ internal fun Route.documentRecordRoutes() {
             val runId = ingestionRepository.createRun(
                 documentId = documentId,
                 tenantId = tenantId,
-                overrideMaxPages = request.maxPages,
-                overrideDpi = request.dpi,
-                overrideTimeoutSeconds = request.timeoutSeconds
             )
 
             call.respond(

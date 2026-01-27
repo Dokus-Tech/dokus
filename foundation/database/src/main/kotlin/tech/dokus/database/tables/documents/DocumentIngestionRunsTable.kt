@@ -31,8 +31,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
 object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
 
     // Reference to the document being processed
-    val documentId = uuid("document_id")
-        .references(DocumentsTable.id, onDelete = ReferenceOption.CASCADE)
+    val documentId = uuid("document_id").references(DocumentsTable.id, onDelete = ReferenceOption.CASCADE)
 
     // Multi-tenancy (denormalized for query performance)
     val tenantId = uuid("tenant_id").references(
@@ -84,12 +83,6 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
 
     // Number of chunks created (for diagnostics)
     val chunksCount = integer("chunks_count").nullable()
-
-    // Processing overrides (nullable = use defaults)
-    // These allow per-reprocess customization for debugging/retries
-    val overrideMaxPages = integer("override_max_pages").nullable()
-    val overrideDpi = integer("override_dpi").nullable()
-    val overrideTimeoutSeconds = integer("override_timeout_seconds").nullable()
 
     init {
         // For processor: find runs to process by status

@@ -14,9 +14,9 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.builtins.ListSerializer
-import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import tech.dokus.database.entity.IngestionItemEntity
+import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.IngestionStatus
@@ -29,6 +29,7 @@ import tech.dokus.features.ai.orchestrator.ProcessingStep
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.ProcessorConfig
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -52,10 +53,10 @@ class DocumentProcessingWorker(
     private val config: ProcessorConfig,
     private val mode: IntelligenceMode,
     private val tenantRepository: TenantRepository,
-    private val addressRepository: tech.dokus.database.repository.auth.AddressRepository
+    private val addressRepository: AddressRepository,
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 ) {
-    private val logger = LoggerFactory.getLogger(DocumentProcessingWorker::class.java)
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val logger = loggerFor()
     private var pollingJob: Job? = null
     private val isRunning = AtomicBoolean(false)
 
@@ -70,7 +71,7 @@ class DocumentProcessingWorker(
 
         logger.info(
             "Starting worker (ORCHESTRATOR-FIRST): interval=${config.pollingInterval}ms, " +
-                "batch=${config.batchSize}, concurrency=${mode.maxConcurrentRequests}"
+                    "batch=${config.batchSize}, concurrency=${mode.maxConcurrentRequests}"
         )
 
         pollingJob = scope.launch {
@@ -133,7 +134,7 @@ class DocumentProcessingWorker(
                         } catch (e: Exception) {
                             logger.error(
                                 "Failed to process ingestion run ${ingestion.runId} " +
-                                    "for document ${ingestion.documentId}",
+                                        "for document ${ingestion.documentId}",
                                 e
                             )
                         }
@@ -177,28 +178,27 @@ class DocumentProcessingWorker(
             )
 
             // Process document through DocumentOrchestrator (tool-calling orchestrator)
-            val processingResult =
-                processDocument(
-                    tenantContext = tenantContext,
-                    runId = runId,
-                    documentId = documentId,
-                    tenantId = tenantId,
-                    maxPages = ingestion.overrideMaxPages,
-                    dpi = ingestion.overrideDpi
-                )
+            val processingResult = processDocument(
+                tenantContext = tenantContext,
+                runId = runId,
+                documentId = documentId,
+                tenantId = tenantId,
+                maxPages = ingestion.overrideMaxPages,
+                dpi = ingestion.overrideDpi
+            )
 
             when (processingResult) {
                 is OrchestratorResult.Success -> {
                     logger.info(
                         "Processed doc $documentId: type=${processingResult.documentType}, " +
-                            "conf=${processingResult.confidence}, validated=${processingResult.validationPassed}"
+                                "conf=${processingResult.confidence}, validated=${processingResult.validationPassed}"
                     )
                 }
 
                 is OrchestratorResult.NeedsReview -> {
                     logger.warn(
                         "Document $documentId needs review: ${processingResult.reason} " +
-                            "(${processingResult.issues.size} issues)"
+                                "(${processingResult.issues.size} issues)"
                     )
                 }
 
@@ -235,21 +235,19 @@ class DocumentProcessingWorker(
     // =========================================================================
 
     /**
-     * Process document using the DocumentOrchestrator.
+     * Process a document using the DocumentOrchestrator.
      */
     private suspend fun processDocument(
         tenantContext: AgentPrompt.TenantContext,
         runId: String,
-        documentId: String,
-        tenantId: String,
-        maxPages: Int?,
-        dpi: Int?
+        documentId: DocumentId,
+        tenantId: TenantId,
     ): OrchestratorResult {
         logger.info("Processing document $documentId with DocumentOrchestrator")
 
         val result = orchestrator.process(
-            documentId = DocumentId.parse(documentId),
-            tenantId = TenantId.parse(tenantId),
+            documentId = documentId,
+            tenantId = tenantId,
             tenantContext = tenantContext,
             runId = runId,
             maxPages = maxPages,

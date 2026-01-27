@@ -19,10 +19,15 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.utils.json
-import java.util.UUID
+import java.util.*
 import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toKotlinUuid
 
 /**
  * Repository for ingestion run operations in the processor worker.
@@ -37,10 +42,6 @@ import kotlin.time.ExperimentalTime
  * the /reprocess endpoint which creates new runs.
  */
 class ProcessorIngestionRepository {
-
-    // NOTE: meetsMinimalThreshold() was REMOVED from this file.
-    // The ONLY threshold check is DocumentAIResult.meetsMinimalThreshold() in the AI module.
-    // The worker passes the threshold result to markAsSucceeded() via the meetsThreshold parameter.
 
     /**
      * Determine the draft status based on extracted data validation.
@@ -61,6 +62,7 @@ class ProcessorIngestionRepository {
                     DraftStatus.NeedsReview
                 }
             }
+
             DocumentType.Bill -> {
                 val bill = data.bill ?: return DraftStatus.NeedsReview
                 if (bill.amount != null && bill.supplierName != null &&
@@ -72,6 +74,7 @@ class ProcessorIngestionRepository {
                     DraftStatus.NeedsReview
                 }
             }
+
             DocumentType.Expense -> {
                 val exp = data.expense ?: return DraftStatus.NeedsReview
                 if (exp.amount != null && exp.merchant != null &&
@@ -82,6 +85,7 @@ class ProcessorIngestionRepository {
                     DraftStatus.NeedsReview
                 }
             }
+
             DocumentType.Receipt -> {
                 // Receipt uses same required fields as Expense (confirms into Expense)
                 val receipt = data.receipt ?: return DraftStatus.NeedsReview
@@ -93,6 +97,7 @@ class ProcessorIngestionRepository {
                     DraftStatus.NeedsReview
                 }
             }
+
             DocumentType.ProForma -> {
                 // ProForma is informational - client/totals needed for conversion
                 val proForma = data.proForma ?: return DraftStatus.NeedsReview
@@ -104,6 +109,7 @@ class ProcessorIngestionRepository {
                     DraftStatus.NeedsReview
                 }
             }
+
             DocumentType.CreditNote -> {
                 // CreditNote needs counterparty, amount, and issue date
                 val creditNote = data.creditNote ?: return DraftStatus.NeedsReview
@@ -115,6 +121,7 @@ class ProcessorIngestionRepository {
                     DraftStatus.NeedsReview
                 }
             }
+
             DocumentType.Unknown -> DraftStatus.NeedsReview
         }
     }
@@ -123,6 +130,7 @@ class ProcessorIngestionRepository {
      * Find pending ingestion runs ready for processing.
      * Only picks up runs with status=Queued, ordered by queue time (FIFO).
      */
+    @OptIn(ExperimentalUuidApi::class)
     suspend fun findPendingForProcessing(limit: Int = 10): List<IngestionItemEntity> =
         newSuspendedTransaction {
             (DocumentIngestionRunsTable innerJoin DocumentsTable)
@@ -134,9 +142,9 @@ class ProcessorIngestionRepository {
                 .limit(limit)
                 .map { row ->
                     IngestionItemEntity(
-                        runId = row[DocumentIngestionRunsTable.id].value.toString(),
-                        documentId = row[DocumentIngestionRunsTable.documentId].toString(),
-                        tenantId = row[DocumentIngestionRunsTable.tenantId].toString(),
+                        runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
+                        documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
+                        tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
                         storageKey = row[DocumentsTable.storageKey],
                         filename = row[DocumentsTable.filename],
                         contentType = row[DocumentsTable.contentType]
@@ -175,8 +183,8 @@ class ProcessorIngestionRepository {
             .selectAll()
             .where {
                 (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId)) and
-                    (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId)) and
-                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
+                        (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId)) and
+                        (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             }
             .orderBy(DocumentIngestionRunsTable.startedAt to SortOrder.DESC)
             .limit(1)
@@ -287,7 +295,7 @@ class ProcessorIngestionRepository {
             val existingDraft = DocumentDraftsTable.selectAll()
                 .where {
                     (DocumentDraftsTable.documentId eq documentUuid) and
-                        (DocumentDraftsTable.tenantId eq tenantUuid)
+                            (DocumentDraftsTable.tenantId eq tenantUuid)
                 }
                 .singleOrNull()
 
@@ -322,31 +330,31 @@ class ProcessorIngestionRepository {
                 // SECURITY: Always filter by tenantId to prevent cross-tenant modification
                 DocumentDraftsTable.update({
                     (DocumentDraftsTable.documentId eq documentUuid) and
-                        (DocumentDraftsTable.tenantId eq tenantUuid)
+                            (DocumentDraftsTable.tenantId eq tenantUuid)
                 }) {
                     it[DocumentDraftsTable.documentType] = documentType
                     it[lastSuccessfulRunId] = runUuid
                     it[updatedAt] = now
 
-                if (shouldSetAiDraft) {
-                    it[aiDraftData] = extractedDataJson
-                    it[DocumentDraftsTable.aiDescription] = description?.takeIf { value -> value.isNotBlank() }
-                    it[DocumentDraftsTable.aiKeywords] = keywordsJson
-                    it[aiDraftSourceRunId] = runUuid
-                }
-
-                if (shouldSetExtracted) {
-                    it[DocumentDraftsTable.extractedData] = extractedDataJson
-                    // Update status when we update extracted data
-                    it[draftStatus] = calculatedStatus
-                    if (!description.isNullOrBlank()) {
-                        it[DocumentDraftsTable.aiDescription] = description
-                    }
-                    if (keywordsJson != null) {
+                    if (shouldSetAiDraft) {
+                        it[aiDraftData] = extractedDataJson
+                        it[DocumentDraftsTable.aiDescription] = description?.takeIf { value -> value.isNotBlank() }
                         it[DocumentDraftsTable.aiKeywords] = keywordsJson
+                        it[aiDraftSourceRunId] = runUuid
+                    }
+
+                    if (shouldSetExtracted) {
+                        it[DocumentDraftsTable.extractedData] = extractedDataJson
+                        // Update status when we update extracted data
+                        it[draftStatus] = calculatedStatus
+                        if (!description.isNullOrBlank()) {
+                            it[DocumentDraftsTable.aiDescription] = description
+                        }
+                        if (keywordsJson != null) {
+                            it[DocumentDraftsTable.aiKeywords] = keywordsJson
+                        }
                     }
                 }
-            }
             }
 
             true

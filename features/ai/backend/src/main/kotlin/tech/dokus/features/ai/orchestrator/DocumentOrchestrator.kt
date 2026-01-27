@@ -17,6 +17,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ExampleRepository
@@ -66,8 +67,8 @@ class DocumentOrchestrator(
     private val chunkingService: ChunkingService,
     private val embeddingService: EmbeddingService,
     private val chunkRepository: ChunkRepository,
-    private val cbeApiClient: CbeApiClient?,
-    private val indexingUpdater: IndexingStatusUpdater? = null,
+    private val cbeApiClient: CbeApiClient,
+    private val indexingUpdater: IndexingStatusUpdater,
     private val documentFetcher: DocumentFetcher,
     private val peppolDataFetcher: PeppolDataFetcher = PeppolDataFetcher { null },
     private val contactLookup: ContactLookupHandler = ContactLookupHandler { _, _ -> null },
@@ -108,15 +109,13 @@ class DocumentOrchestrator(
         documentId: DocumentId,
         tenantId: TenantId,
         tenantContext: AgentPrompt.TenantContext,
-        runId: String? = null,
-        maxPages: Int? = null,
-        dpi: Int? = null
+        runId: IngestionRunId,
     ): OrchestratorResult {
         logger.info(
             "Starting orchestration run: documentId={}, tenantId={}, runId={}",
             documentId,
             tenantId,
-            runId ?: "unknown"
+            runId
         )
 
         val traceCollector = ProcessingTraceCollector()
@@ -141,7 +140,7 @@ class DocumentOrchestrator(
             id = "document-orchestrator"
         )
 
-        val userPrompt = buildUserPrompt(documentId, tenantId, tenantContext, runId, maxPages, dpi)
+        val userPrompt = buildUserPrompt(documentId, tenantId, tenantContext, runId)
         val p = prompt("") {
             user(userPrompt)
         }
@@ -228,19 +227,17 @@ class DocumentOrchestrator(
         documentId: DocumentId,
         tenantId: TenantId,
         tenantContext: AgentPrompt.TenantContext,
-        runId: String?,
-        maxPages: Int?,
-        dpi: Int?
+        runId: IngestionRunId,
     ): String = """
         Task: Process document
         documentId: $documentId
         tenantId: $tenantId
-        runId: ${runId ?: "unknown"}
+        runId: $runId
         tenantVatNumber: ${tenantContext.vatNumber}
         tenantCompanyName: ${tenantContext.companyName}
         source: UPLOAD
-        maxPages: ${maxPages ?: "default"}
-        dpi: ${dpi ?: "default"}
+        maxPages: "default"
+        dpi: "default"
     """.trimIndent()
 
     // =========================================================================
