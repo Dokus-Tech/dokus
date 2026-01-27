@@ -16,7 +16,7 @@ import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.extensions.description
 import tech.dokus.foundation.backend.config.AIConfig
 
-fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentGraph(
+fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
     aiConfig: AIConfig,
     registry: ToolRegistry
 ): AIAgentSubgraphDelegate<ClassifyDocumentInput, ClassificationResult> {
