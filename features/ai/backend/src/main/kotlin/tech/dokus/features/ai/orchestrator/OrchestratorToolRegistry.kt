@@ -9,7 +9,6 @@ import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.features.ai.orchestrator.tools.ContactCreatorHandler
 import tech.dokus.features.ai.orchestrator.tools.ContactLookupHandler
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
-import tech.dokus.features.ai.orchestrator.tools.DocumentImageFetcher
 import tech.dokus.features.ai.orchestrator.tools.EmbedTextTool
 import tech.dokus.features.ai.orchestrator.tools.FindSimilarDocumentTool
 import tech.dokus.features.ai.orchestrator.tools.GenerateDescriptionTool
@@ -70,7 +69,7 @@ object OrchestratorToolRegistry {
         val traceSink: ToolTraceSink,
 
         // Function hooks for database operations
-        val documentFetcher: DocumentImageFetcher,
+        val documentFetcher: DocumentFetcher,
         val peppolDataFetcher: PeppolDataFetcher,
         val storeExtraction: StoreExtractionHandler,
         val contactLookup: ContactLookupHandler,

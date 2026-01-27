@@ -1,11 +1,11 @@
 package tech.dokus.features.ai.orchestrator.tools.extraction
 
-import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.Tool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.features.ai.agents.ExtractionAgent
@@ -15,6 +15,7 @@ import tech.dokus.features.ai.orchestrator.tools.DocumentImageResolver
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.prompts.ExtractionPrompt
 import tech.dokus.features.ai.services.DocumentImageCache
+import tech.dokus.features.ai.services.DocumentImageService
 import kotlin.time.TimeSource
 
 /**
@@ -34,9 +35,9 @@ class ExtractExpenseTool(
     private val tenantContext: AgentPrompt.TenantContext,
     private val imageCache: DocumentImageCache,
     private val traceSink: ToolTraceSink
-) : Tool<ExtractExpenseTool.Args, ExtractedExpenseData>(
+) : Tool<ExtractExpenseTool.Args, String>(
     argsSerializer = Args.serializer(),
-    resource = ExtractedExpenseData.serializer(),
+    resultSerializer = String.serializer(),
     name = "extract_expense",
     description = """
         Extracts structured data from an EXPENSE document using vision AI.
@@ -68,7 +69,6 @@ class ExtractExpenseTool(
 
     private val jsonFormat = Json { prettyPrint = true; ignoreUnknownKeys = true }
 
-    @Tool("extract_expense")
     @LLMDescription("")
     override suspend fun execute(args: Args): String {
         val documentImages = try {
@@ -82,7 +82,6 @@ class ExtractExpenseTool(
                 output = null,
                 notes = "error=${e.message}"
             )
-            return "ERROR: ${e.message}"
         }
 
         // Create extraction agent
@@ -97,7 +96,7 @@ class ExtractExpenseTool(
 
         // Run extraction
         val start = TimeSource.Monotonic.markNow()
-        val result = agent.extract(documentImages, tenantContext)
+        val result = agent.extract(documentImages as List<DocumentImageService.DocumentImage>, tenantContext)
         val outputJson = jsonFormat.decodeFromString<JsonElement>(jsonFormat.encodeToString(result))
         traceSink.record(
             action = "extract_expense",

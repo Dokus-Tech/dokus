@@ -1,6 +1,5 @@
 package tech.dokus.features.ai.models
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import tech.dokus.domain.enums.Currency
@@ -215,6 +214,7 @@ fun JsonElement.toExtractedDocumentData(documentType: DocumentType): ExtractedDo
             }
 
             DocumentType.Unknown -> null
+            else -> null
         }
     } catch (e: Exception) {
         // If deserialization fails, return null

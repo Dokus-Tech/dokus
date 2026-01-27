@@ -9,6 +9,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.config.AIProviderFactory
+import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.tools.DocumentFetcherTool
@@ -31,7 +32,7 @@ class ClassificationGraphTest {
     @Test
     fun `should classify invoice correctly`() = runBlocking {
         // Load test invoice
-        val invoiceBytes = javaClass.getResourceAsStream("/test-data/invoice-nl.pdf")!!.readBytes()
+        val invoiceBytes = ClassLoader.getSystemResourceAsStream("test-invoice.pdf").readBytes()
 
         val mockFetcher = DocumentFetcher { tenantId, documentId ->
             Result.success(
@@ -42,7 +43,7 @@ class ClassificationGraphTest {
             )
         }
 
-        val tenantId = TenantId("test")
+        val tenantId = TenantId.generate()
         val toolRegistry = ToolRegistry {
             tool(DocumentFetcherTool(tenantId, mockFetcher))
         }
@@ -56,7 +57,11 @@ class ClassificationGraphTest {
             promptExecutor = AIProviderFactory.createOpenAiExecutor(testAiConfig),
             toolRegistry = toolRegistry,
             strategy = strategy,
-            agentConfig = AIAgentConfig.withSystemPrompt("You are a document classifier.")
+            agentConfig = AIAgentConfig.withSystemPrompt(
+                prompt = "You are a document classifier.",
+                llm = testAiConfig.mode.asVisionModel,
+                maxAgentIterations = testAiConfig.mode.maxIterations
+            )
         )
 
         val result = agent.run(ClassifyDocumentInput(DocumentId.generate(), tenantId))

@@ -29,7 +29,7 @@ object AIModels {
      */
     fun forMode(mode: IntelligenceMode): ModelSet = ModelSet(
         orchestrator = createModel(mode.orchestratorModel, supportsTools = true),
-        vision = createModel(mode.visionModel),
+        vision = createModel(mode.visionModel, supportsTools = true),
         chat = createModel(mode.chatModel)
     )
 

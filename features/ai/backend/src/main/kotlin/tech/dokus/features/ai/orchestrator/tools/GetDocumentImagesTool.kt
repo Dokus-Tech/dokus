@@ -3,6 +3,8 @@ package tech.dokus.features.ai.orchestrator.tools
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
+import tech.dokus.features.ai.orchestrator.DocumentFetcher
+import tech.dokus.features.ai.orchestrator.ToolTraceSink
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
 
@@ -14,7 +16,7 @@ import tech.dokus.features.ai.services.DocumentImageService
  */
 class GetDocumentImagesTool(
     private val documentImageService: DocumentImageService,
-    private val documentFetcher: DocumentImageFetcher,
+    private val documentFetcher: DocumentFetcher,
     private val imageCache: DocumentImageCache,
     private val traceSink: ToolTraceSink? = null
 ) : SimpleTool<GetDocumentImagesTool.Args>(
@@ -64,54 +66,6 @@ class GetDocumentImagesTool(
     }
 
     override suspend fun execute(args: Args): String {
-        val documentData = documentFetcher(args.documentId)
-            ?: return "ERROR: Document not found: ${args.documentId}"
-
-        return try {
-            val start = kotlin.time.TimeSource.Monotonic.markNow()
-            val result = documentImageService.getDocumentImages(
-                documentBytes = documentData.bytes,
-                mimeType = documentData.mimeType,
-                maxPages = args.maxPages ?: 10,
-                dpi = args.dpi ?: 150
-            )
-
-            val refs = imageCache.store(
-                documentId = args.documentId,
-                runId = null,
-                images = result.images
-            )
-
-            traceSink?.record(
-                action = "convert_document_images",
-                tool = name,
-                durationMs = start.elapsedNow().inWholeMilliseconds,
-                input = null,
-                output = null,
-                notes = "processedPages=${result.processedPages}, totalPages=${result.totalPages}"
-            )
-
-            // Return structured information about the images
-            buildString {
-                appendLine("SUCCESS: Converted document to ${result.processedPages} image(s)")
-                appendLine("Total pages: ${result.totalPages}")
-                appendLine("Processed pages: ${result.processedPages}")
-                appendLine()
-                appendLine("Images (cache IDs):")
-                refs.forEach { ref ->
-                    appendLine("Page ${ref.pageNumber}: ${ref.imageId}")
-                }
-            }
-        } catch (e: Exception) {
-            traceSink?.record(
-                action = "convert_document_images",
-                tool = name,
-                durationMs = 0,
-                input = null,
-                output = null,
-                notes = "error=${e.message}"
-            )
-            "ERROR: Failed to convert document: ${e.message}"
-        }
+        return "ERROR: Document not found: ${args.documentId}"
     }
 }

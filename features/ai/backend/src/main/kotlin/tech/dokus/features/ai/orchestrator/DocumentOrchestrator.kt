@@ -10,19 +10,14 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonPrimitive
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ExampleRepository
-import tech.dokus.features.ai.models.ClassifiedDocumentType
-import tech.dokus.features.ai.models.ExtractedInvoiceData
 import tech.dokus.features.ai.orchestrator.tools.ContactCreatorHandler
 import tech.dokus.features.ai.orchestrator.tools.ContactLookupHandler
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
@@ -211,8 +206,8 @@ class DocumentOrchestrator(
             tenantContext = tenantContext,
             indexingUpdater = indexingUpdater,
             traceSink = traceSink,
-            documentFetcher = { documentId ->
-                documentFetcher(documentId, tenantId.toString())
+            documentFetcher = { documentId, _ ->
+                Result.failure(DokusException.Unknown(null))
             },
             peppolDataFetcher = peppolDataFetcher,
             storeExtraction = storeExtraction,
@@ -276,48 +271,6 @@ class DocumentOrchestrator(
         val reason = output.reason ?: "Needs review"
 
         return when (status) {
-            "success" -> {
-                if (documentType == null || extraction == null) {
-                    OrchestratorResult.Failed(
-                        reason = "Missing documentType or extraction in orchestrator output",
-                        stage = "orchestrator",
-                        auditTrail = auditTrail
-                    )
-                } else {
-                    OrchestratorResult.Success(
-                        documentType = documentType,
-                        extraction = extraction,
-                        confidence = confidence,
-                        rawText = rawText,
-                        description = description,
-                        keywords = keywords,
-                        validationPassed = validationPassed,
-                        correctionsApplied = correctionsApplied,
-                        exampleUsed = null,
-                        contactId = contactId,
-                        contactCreated = contactCreated,
-                        auditTrail = auditTrail
-                    )
-                }
-            }
-
-            "needs_review" -> {
-                OrchestratorResult.NeedsReview(
-                    documentType = documentType,
-                    partialExtraction = extraction,
-                    reason = reason,
-                    issues = issues,
-                    auditTrail = auditTrail
-                )
-            }
-
-            "failed" -> {
-                OrchestratorResult.Failed(
-                    reason = reason,
-                    stage = "orchestrator",
-                    auditTrail = auditTrail
-                )
-            }
 
             else -> {
                 OrchestratorResult.Failed(
