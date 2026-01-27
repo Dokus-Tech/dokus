@@ -7,11 +7,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
-import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
@@ -45,12 +45,10 @@ object DocumentDraftsTable : Table("document_drafts") {
     )
 
     // Draft review status
-    val draftStatus = dbEnumeration<DraftStatus>("draft_status")
-        .default(DraftStatus.NeedsReview)
+    val draftStatus = dbEnumeration<DraftStatus>("draft_status").default(DraftStatus.NeedsReview)
 
     // Detected document type
-    val documentType = dbEnumeration<DocumentType>("document_type")
-        .nullable()
+    val documentType = dbEnumeration<DocumentType>("document_type").nullable()
 
     // ============================================
     // Extraction Data Fields

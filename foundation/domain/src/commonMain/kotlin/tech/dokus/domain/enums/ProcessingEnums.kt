@@ -11,27 +11,231 @@ import tech.dokus.domain.database.DbEnum
  * See CLASSIFICATION.md for full documentation.
  */
 @Serializable
-enum class DocumentType(override val dbValue: String) : DbEnum {
+enum class DocumentType(
+    override val dbValue: String,
+    val supported: Boolean
+) : DbEnum {
+
+    // ═══════════════════════════════════════════════════════════════════
+    // SALES (money coming in)
+    // ═══════════════════════════════════════════════════════════════════
+
     @SerialName("INVOICE")
-    Invoice("INVOICE"),
-
-    @SerialName("BILL")
-    Bill("BILL"),
-
-    @SerialName("EXPENSE")
-    Expense("EXPENSE"),
+    Invoice("INVOICE", true),
 
     @SerialName("CREDIT_NOTE")
-    CreditNote("CREDIT_NOTE"),
-
-    @SerialName("RECEIPT")
-    Receipt("RECEIPT"),
+    CreditNote("CREDIT_NOTE", true),
 
     @SerialName("PRO_FORMA")
-    ProForma("PRO_FORMA"),
+    ProForma("PRO_FORMA", false),
+
+    @SerialName("QUOTE")
+    Quote("QUOTE", false),
+
+    @SerialName("ORDER_CONFIRMATION")
+    OrderConfirmation("ORDER_CONFIRMATION", false),
+
+    @SerialName("DELIVERY_NOTE")
+    DeliveryNote("DELIVERY_NOTE", false),
+
+    @SerialName("REMINDER")
+    Reminder("REMINDER", false),
+
+    @SerialName("STATEMENT_OF_ACCOUNT")
+    StatementOfAccount("STATEMENT_OF_ACCOUNT", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PURCHASES (money going out)
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("BILL")
+    Bill("BILL", true),
+
+    @SerialName("EXPENSE")
+    Expense("EXPENSE", true),
+
+    @SerialName("RECEIPT")
+    Receipt("RECEIPT", true),
+
+    @SerialName("PURCHASE_ORDER")
+    PurchaseOrder("PURCHASE_ORDER", false),
+
+    @SerialName("EXPENSE_CLAIM")
+    ExpenseClaim("EXPENSE_CLAIM", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BANKING
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("BANK_STATEMENT")
+    BankStatement("BANK_STATEMENT", true),
+
+    @SerialName("BANK_FEE")
+    BankFee("BANK_FEE", false),
+
+    @SerialName("INTEREST_STATEMENT")
+    InterestStatement("INTEREST_STATEMENT", false),
+
+    @SerialName("PAYMENT_CONFIRMATION")
+    PaymentConfirmation("PAYMENT_CONFIRMATION", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // VAT (Belgium)
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("VAT_RETURN")
+    VatReturn("VAT_RETURN", false),
+
+    @SerialName("VAT_LISTING")
+    VatListing("VAT_LISTING", false),
+
+    @SerialName("VAT_ASSESSMENT")
+    VatAssessment("VAT_ASSESSMENT", false),
+
+    @SerialName("IC_LISTING")
+    IcListing("IC_LISTING", false),
+
+    @SerialName("OSS_RETURN")
+    OssReturn("OSS_RETURN", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // TAX - CORPORATE
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("CORPORATE_TAX")
+    CorporateTax("CORPORATE_TAX", false),
+
+    @SerialName("CORPORATE_TAX_ADVANCE")
+    CorporateTaxAdvance("CORPORATE_TAX_ADVANCE", false),
+
+    @SerialName("TAX_ASSESSMENT")
+    TaxAssessment("TAX_ASSESSMENT", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // TAX - PERSONAL (eenmanszaak / freelancer)
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("PERSONAL_TAX")
+    PersonalTax("PERSONAL_TAX", false),
+
+    @SerialName("WITHHOLDING_TAX")
+    WithholdingTax("WITHHOLDING_TAX", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // SOCIAL CONTRIBUTIONS (Belgium)
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("SOCIAL_CONTRIBUTION")
+    SocialContribution("SOCIAL_CONTRIBUTION", false),
+
+    @SerialName("SOCIAL_FUND")
+    SocialFund("SOCIAL_FUND", false),
+
+    @SerialName("SELF_EMPLOYED_CONTRIBUTION")
+    SelfEmployedContribution("SELF_EMPLOYED_CONTRIBUTION", false),
+
+    @SerialName("VAPZ")
+    Vapz("VAPZ", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PAYROLL / HR
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("SALARY_SLIP")
+    SalarySlip("SALARY_SLIP", false),
+
+    @SerialName("PAYROLL_SUMMARY")
+    PayrollSummary("PAYROLL_SUMMARY", false),
+
+    @SerialName("EMPLOYMENT_CONTRACT")
+    EmploymentContract("EMPLOYMENT_CONTRACT", false),
+
+    @SerialName("DIMONA")
+    Dimona("DIMONA", false),
+
+    @SerialName("C4")
+    C4("C4", false),
+
+    @SerialName("HOLIDAY_PAY")
+    HolidayPay("HOLIDAY_PAY", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // LEGAL / CONTRACTS
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("CONTRACT")
+    Contract("CONTRACT", false),
+
+    @SerialName("LEASE")
+    Lease("LEASE", false),
+
+    @SerialName("LOAN")
+    Loan("LOAN", false),
+
+    @SerialName("INSURANCE")
+    Insurance("INSURANCE", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CORPORATE DOCUMENTS
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("DIVIDEND")
+    Dividend("DIVIDEND", false),
+
+    @SerialName("SHAREHOLDER_REGISTER")
+    ShareholderRegister("SHAREHOLDER_REGISTER", false),
+
+    @SerialName("COMPANY_EXTRACT")
+    CompanyExtract("COMPANY_EXTRACT", false),
+
+    @SerialName("ANNUAL_ACCOUNTS")
+    AnnualAccounts("ANNUAL_ACCOUNTS", false),
+
+    @SerialName("BOARD_MINUTES")
+    BoardMinutes("BOARD_MINUTES", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // GOVERNMENT / REGULATORY
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("SUBSIDY")
+    Subsidy("SUBSIDY", false),
+
+    @SerialName("FINE")
+    Fine("FINE", false),
+
+    @SerialName("PERMIT")
+    Permit("PERMIT", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // INTERNATIONAL TRADE
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("CUSTOMS_DECLARATION")
+    CustomsDeclaration("CUSTOMS_DECLARATION", false),
+
+    @SerialName("INTRASTAT")
+    Intrastat("INTRASTAT", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ASSETS
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("DEPRECIATION_SCHEDULE")
+    DepreciationSchedule("DEPRECIATION_SCHEDULE", false),
+
+    @SerialName("INVENTORY")
+    Inventory("INVENTORY", false),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CATCH-ALL
+    // ═══════════════════════════════════════════════════════════════════
+
+    @SerialName("OTHER")
+    Other("OTHER", false),
 
     @SerialName("UNKNOWN")
-    Unknown("UNKNOWN")
+    Unknown("UNKNOWN", false);
 }
 
 /**
@@ -128,10 +332,6 @@ enum class DocumentRejectReason(override val dbValue: String) : DbEnum {
 
     @SerialName("OTHER")
     Other("OTHER");
-
-    companion object {
-        fun fromDbValue(value: String): DocumentRejectReason = entries.find { it.dbValue == value }!!
-    }
 }
 
 /**
@@ -151,10 +351,6 @@ enum class IndexingStatus(override val dbValue: String) : DbEnum {
     /** Indexing failed (retryable) */
     @SerialName("FAILED")
     Failed("FAILED");
-
-    companion object {
-        fun fromDbValue(value: String): IndexingStatus = entries.find { it.dbValue == value }!!
-    }
 }
 
 /**
@@ -180,8 +376,4 @@ enum class DocumentLinkType(override val dbValue: String) : DbEnum {
     /** Generic document relationship */
     @SerialName("RELATED_TO")
     RelatedTo("RELATED_TO");
-
-    companion object {
-        fun fromDbValue(value: String): DocumentLinkType = entries.find { it.dbValue == value }!!
-    }
 }
