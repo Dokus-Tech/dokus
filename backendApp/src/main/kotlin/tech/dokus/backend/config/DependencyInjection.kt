@@ -1,6 +1,5 @@
 package tech.dokus.backend.config
 
-import ai.koog.prompt.executor.model.PromptExecutor
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -67,11 +66,14 @@ import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
+import tech.dokus.features.ai.aiModule
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.models.ClassifiedDocumentType
 import tech.dokus.features.ai.models.toDomainType
 import tech.dokus.features.ai.models.toExtractedDocumentData
+import tech.dokus.features.ai.orchestrator.DocumentFetcher
+import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
@@ -103,6 +105,7 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
 import tech.dokus.foundation.backend.storage.MinioStorage
 import tech.dokus.foundation.backend.storage.ObjectStorage
+import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.mapper.PeppolMapper
 import tech.dokus.peppol.policy.DefaultDocumentConfirmationPolicy
@@ -118,12 +121,13 @@ import tech.dokus.peppol.service.PeppolService
 import tech.dokus.peppol.service.PeppolTransferPollingService
 import tech.dokus.peppol.service.PeppolVerificationService
 import tech.dokus.peppol.validator.PeppolValidator
+import kotlin.text.get
 
 /**
  * Koin setup for the modular monolith server.
  */
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
-    val logger = LoggerFactory.getLogger("ServerDI")
+    val logger = loggerFor("ServerDI")
 
     install(Koin) {
         modules(
@@ -146,6 +150,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             cashflowModule(appConfig),
             contactsModule,
             processorModule(appConfig),
+            aiModule(appConfig)
         )
     }
 
@@ -355,6 +360,21 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
 
     // Contact linking policy applier (AI decisions)
     single { ContactLinkingService(get(), get()) }
+
+    single<DocumentFetcher> {
+        val documentRepository = get<DocumentRepository>()
+        val storageService = get<DocumentStorageService>()
+        object : DocumentFetcher {
+            override suspend fun invoke(tenantId: TenantId, documentId: DocumentId): Result<FetchedDocumentData> {
+                return runCatching {
+                    val doc = documentRepository.getById(tenantId, documentId)
+                    requireNotNull(doc)
+                    val bytes = storageService.downloadDocument(doc.storageKey)
+                    FetchedDocumentData(bytes = bytes, mimeType = doc.contentType)
+                }
+            }
+        }
+    }
 
     // =========================================================================
     // Document Orchestrator
