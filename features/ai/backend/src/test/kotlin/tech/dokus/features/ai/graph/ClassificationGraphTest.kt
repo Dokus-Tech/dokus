@@ -3,7 +3,6 @@ package tech.dokus.features.ai.graph
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.strategy
-import ai.koog.agents.core.tools.ToolRegistry
 import kotlinx.coroutines.runBlocking
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
@@ -12,7 +11,8 @@ import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
-import tech.dokus.features.ai.tools.DocumentFetcherTool
+import tech.dokus.features.ai.services.DocumentImageService
+import tech.dokus.features.ai.tools.TenantDocumentsRegistry
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.IntelligenceMode
 import kotlin.test.Test
@@ -44,9 +44,7 @@ class ClassificationGraphTest {
         }
 
         val tenantId = TenantId.generate()
-        val toolRegistry = ToolRegistry {
-            tool(DocumentFetcherTool(tenantId, mockFetcher))
-        }
+        val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher, DocumentImageService())
 
         val strategy = strategy<ClassifyDocumentInput, ClassificationResult>("test") {
             val classify by classifyDocumentSubGraph(testAiConfig, toolRegistry)

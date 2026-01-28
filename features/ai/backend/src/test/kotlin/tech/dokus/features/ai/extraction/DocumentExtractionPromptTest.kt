@@ -107,7 +107,6 @@ class DocumentExtractionPromptTest {
         val documentImages = documentImageService.getDocumentImages(
             documentBytes = documentBytes,
             mimeType = mimeType,
-            maxPages = config.maxPages ?: 10,
             dpi = config.dpi ?: 150
         )
 

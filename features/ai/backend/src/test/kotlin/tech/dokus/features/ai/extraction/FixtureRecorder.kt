@@ -62,7 +62,6 @@ class FixtureRecorder {
         val images = documentImageService.getDocumentImages(
             documentBytes = documentBytes,
             mimeType = mimeType,
-            maxPages = config.maxPages ?: 10,
             dpi = config.dpi ?: 150
         )
 

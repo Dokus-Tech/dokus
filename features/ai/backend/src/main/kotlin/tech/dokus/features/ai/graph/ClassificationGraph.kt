@@ -80,9 +80,11 @@ private val ClassifyDocumentInput.prompt
     Classify the document with ID: $documentId
     
     ## STEPS
-    1. Use fetch_document tool to retrieve the document image
-    2. Analyze its content, layout, and keywords
-    3. Call submitClassification with your result
+    1. Call fetch_document_pages to get first pages (default: pages 1-3)
+    2. Analyze content, layout, keywords
+    3. For most documents, first 1-3 pages are enough to classify
+    4. If unclear, fetch more pages using nextPageStart
+    5. Call submitClassification with your result
     
     ## DOCUMENT TYPES
     
