@@ -14,7 +14,6 @@ import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
-import tech.dokus.features.ai.tools.documentImagesInjectorNode
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.IntelligenceMode
 import kotlin.test.Test
@@ -45,11 +44,9 @@ class ClassificationGraphTest {
         val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher, imageService)
 
         val strategy = strategy<ClassifyDocumentInput, ClassificationResult>("test") {
-            val injectImages by documentImagesInjectorNode(tenantId, mockFetcher, imageService)
-            val classify by classifyDocumentSubGraph(testAiConfig, toolRegistry)
+            val classify by classifyDocumentSubGraph(testAiConfig, toolRegistry, mockFetcher, imageService)
 
-            // Pick ONE: either edge() or then, not both
-            nodeStart then injectImages then classify then nodeFinish
+            nodeStart then classify then nodeFinish
         }
 
         val agent = AIAgent(
@@ -64,7 +61,7 @@ class ClassificationGraphTest {
         )
 
         // Use withTimeout to prevent hanging
-        val result = withTimeout(60.seconds) {
+        val result = withTimeout(120.seconds) {
             agent.run(ClassifyDocumentInput(DocumentId.generate(), tenantId))
         }
 

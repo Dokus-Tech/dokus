@@ -6,6 +6,8 @@ import ai.koog.agents.core.tools.Tool
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.ext.agent.subgraphWithTask
+import ai.koog.prompt.message.AttachmentContent
+import ai.koog.prompt.message.ContentPart
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.DocumentType
@@ -13,18 +15,44 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.extensions.description
+import tech.dokus.features.ai.orchestrator.DocumentFetcher
+import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
     aiConfig: AIConfig,
-    registry: ToolRegistry
+    registry: ToolRegistry,
+    documentFetcher: DocumentFetcher,
+    documentImageService: DocumentImageService = DocumentImageService()
 ): AIAgentSubgraphDelegate<ClassifyDocumentInput, ClassificationResult> {
     return subgraphWithTask(
         name = "Classify document",
         llmModel = aiConfig.mode.asVisionModel,
         tools = registry.tools,
         finishTool = ClassificationFinishTool()
-    ) { it.prompt }
+    ) { input ->
+        val document = documentFetcher(input.tenantId, input.documentId).getOrElse {
+            return@subgraphWithTask "Failed to get the document"
+        }
+        val images = documentImageService.getDocumentImages(document.bytes, document.mimeType)
+        llm.writeSession {
+            appendPrompt {
+                user {
+                    images.images.forEach { image ->
+                        image(
+                            ContentPart.Image(
+                                content = AttachmentContent.Binary.Bytes(image.imageBytes),
+                                format = "png",
+                                mimeType = image.mimeType,
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        input.prompt
+    }
 }
 
 internal class ClassificationFinishTool : Tool<ClassificationToolInput, ClassificationResult>(

@@ -10,7 +10,9 @@ object TenantDocumentsRegistry {
         val tenantId: TenantId
     )
 
-    operator fun invoke(tenantId: TenantId, documentFetcher: DocumentFetcher, imageService: DocumentImageService) = ToolRegistry {
-//        tool(DocumentImagesFetcherTool(tenantId, documentFetcher, imageService))
-    }
+    operator fun invoke(
+        tenantId: TenantId,
+        documentFetcher: DocumentFetcher,
+        imageService: DocumentImageService
+    ) = ToolRegistry {}
 }

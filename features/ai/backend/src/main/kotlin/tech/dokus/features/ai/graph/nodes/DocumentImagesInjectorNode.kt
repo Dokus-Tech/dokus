@@ -1,0 +1,61 @@
+package tech.dokus.features.ai.graph.nodes
+
+import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
+import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
+import ai.koog.prompt.message.AttachmentContent
+import ai.koog.prompt.message.ContentPart
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.features.ai.graph.ClassifyDocumentInput
+import tech.dokus.features.ai.orchestrator.DocumentFetcher
+import tech.dokus.features.ai.services.DocumentImageService
+import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
+
+internal fun AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
+    tenantId: TenantId,
+    fetcher: DocumentFetcher,
+    documentImageService: DocumentImageService,
+): AIAgentNodeDelegate<ClassifyDocumentInput, ClassifyDocumentInput> {
+    return node<ClassifyDocumentInput, ClassifyDocumentInput> { args ->
+        val document = fetcher(tenantId, args.documentId).getOrElse {
+            llm.writeSession {
+                DocumentImagesFetcherTool.Output.Failure(it.localizedMessage)
+            }
+            return@node args
+        }
+
+        val images = documentImageService.getDocumentImages(
+            document.bytes,
+            document.mimeType,
+        )
+
+//        DocumentImagesFetcherTool.Output.DocumentFound(
+//            images = images.images.map {
+//                DocumentImagesFetcherTool.Output.DocumentFound.DocumentImage(
+//                    it.imageBytes,
+//                    it.mimeType,
+//                    it.pageNumber
+//                )
+//            },
+//            totalPages = images.totalPages,
+//            processedPages = images.processedPages,
+//            hasMorePages = images.hasMorePages,
+//            nextPageStart = images.nextPageStart,
+//        )
+        llm.writeSession {
+            appendPrompt {
+                user {
+                    images.images.forEach { image ->
+                        image(
+                            ContentPart.Image(
+                                content = AttachmentContent.Binary.Bytes(image.imageBytes),
+                                format = "png",
+                                mimeType = image.mimeType,
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        args
+    }
+}
