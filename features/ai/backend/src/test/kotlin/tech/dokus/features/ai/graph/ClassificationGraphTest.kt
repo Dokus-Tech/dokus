@@ -62,11 +62,58 @@ class ClassificationGraphTest {
 
         // Use withTimeout to prevent hanging
         val result = withTimeout(120.seconds) {
-            agent.run(ClassifyDocumentInput(DocumentId.generate(), tenantId))
+            try {
+                agent.run(ClassifyDocumentInput(DocumentId.generate(), tenantId))
+            } finally {
+                runCatching { agent.close() } // Ignore cleanup errors
+            }
         }
 
         assertEquals(DocumentType.Invoice, result.documentType)
         assertTrue(result.confidence >= 0.8)
         assertEquals("en", result.language)
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    @Test
+    fun `should classify receipt correctly`() = runBlocking {
+        val invoiceBytes = ClassLoader.getSystemResourceAsStream("test-receipt.pdf")!!.readBytes()
+
+        val mockFetcher = DocumentFetcher { _, _ ->
+            Result.success(FetchedDocumentData(invoiceBytes, "application/pdf"))
+        }
+
+        val tenantId = TenantId.generate()
+        val imageService = DocumentImageService()
+        val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher, imageService)
+
+        val strategy = strategy<ClassifyDocumentInput, ClassificationResult>("test") {
+            val classify by classifyDocumentSubGraph(testAiConfig, toolRegistry, mockFetcher, imageService)
+
+            nodeStart then classify then nodeFinish
+        }
+
+        val agent = AIAgent(
+            promptExecutor = AIProviderFactory.createOpenAiExecutor(testAiConfig),
+            toolRegistry = toolRegistry,
+            strategy = strategy,
+            agentConfig = AIAgentConfig.withSystemPrompt(
+                prompt = "You are a document classifier.",
+                llm = testAiConfig.mode.asVisionModel,
+                maxAgentIterations = testAiConfig.mode.maxIterations
+            )
+        )
+
+        val result = withTimeout(120.seconds) {
+            try {
+                agent.run(ClassifyDocumentInput(DocumentId.generate(), tenantId))
+            } finally {
+                runCatching { agent.close() } // Ignore cleanup errors
+            }
+        }
+
+        assertEquals(DocumentType.Receipt, result.documentType)
+        assertTrue(result.confidence >= 0.8)
+        assertEquals("fr", result.language)
     }
 }
