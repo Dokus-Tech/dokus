@@ -11,6 +11,6 @@ object TenantDocumentsRegistry {
     )
 
     operator fun invoke(tenantId: TenantId, documentFetcher: DocumentFetcher, imageService: DocumentImageService) = ToolRegistry {
-        tool(DocumentImagesFetcherTool(tenantId, documentFetcher, imageService))
+//        tool(DocumentImagesFetcherTool(tenantId, documentFetcher, imageService))
     }
 }
