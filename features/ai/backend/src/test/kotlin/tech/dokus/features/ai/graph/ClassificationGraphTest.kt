@@ -105,7 +105,7 @@ class ClassificationGraphTest {
 
         val strategy = strategy<ClassifyDocumentInput, ClassificationResult>("test") {
             val classify by classifyDocumentSubGraph(testAiConfig)
-            val documentInjector by documentImagesInjectorNode(tenantId, mockFetcher)
+            val documentInjector by documentImagesInjectorNode(mockFetcher)
             val tenantInjector by tenantContextInjectorNode<ClassifyDocumentInput>(testTenant)
 
             nodeStart then tenantInjector then documentInjector then classify then nodeFinish

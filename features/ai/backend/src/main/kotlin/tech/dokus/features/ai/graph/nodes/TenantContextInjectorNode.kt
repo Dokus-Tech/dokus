@@ -20,6 +20,23 @@ internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.tenantConte
     }
 }
 
+internal interface WithTenantContext {
+    val tenant: Tenant
+}
+
+internal inline fun <reified Input : WithTenantContext> AIAgentSubgraphBuilderBase<*, *>.tenantContextInjectorNode(): AIAgentNodeDelegate<Input, Input> {
+    return node<Input, Input> { args ->
+        llm.writeSession {
+            appendPrompt {
+                user {
+                    text(args.tenant.prompt)
+                }
+            }
+        }
+        args
+    }
+}
+
 private val Tenant.prompt
     get() = """
     ## TENANT CONTEXT

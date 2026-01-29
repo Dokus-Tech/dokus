@@ -4,18 +4,16 @@ import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.graph.ClassifyDocumentInput
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
 
 internal fun AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
-    tenantId: TenantId,
     fetcher: DocumentFetcher,
 ): AIAgentNodeDelegate<ClassifyDocumentInput, ClassifyDocumentInput> {
     return node<ClassifyDocumentInput, ClassifyDocumentInput> { args ->
-        val document = fetcher(tenantId, args.documentId).getOrElse {
+        val document = fetcher(args.tenant.id, args.documentId).getOrElse {
             llm.writeSession {
                 DocumentImagesFetcherTool.Output.Failure(it.localizedMessage)
             }
