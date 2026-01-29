@@ -21,6 +21,7 @@ import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractBillSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractCreditNoteSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractInvoiceSubGraph
+import tech.dokus.features.ai.graph.sub.extraction.financial.extractProFormaSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractQuoteSubGraph
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
@@ -48,6 +49,7 @@ fun acceptDocumentGraph(
         val extractBill by extractBillSubGraph(aiConfig)
         val extractCreditNote by extractCreditNoteSubGraph(aiConfig)
         val extractQuote by extractQuoteSubGraph(aiConfig)
+        val extractProForma by extractProFormaSubGraph(aiConfig)
 
         // Transform AcceptDocumentInput → ClassifyDocumentInput
         val prepareClassifyInput by node<AcceptDocumentInput, ClassifyDocumentInput>("prepare-classify") { input ->
@@ -70,7 +72,8 @@ fun acceptDocumentGraph(
         edge(prepareExtractionInput forwardTo extractInvoice onCondition { it.documentType == DocumentType.Invoice })
         edge(prepareExtractionInput forwardTo extractBill onCondition { it.documentType == DocumentType.Bill })
         edge(prepareExtractionInput forwardTo extractCreditNote onCondition { it.documentType == DocumentType.CreditNote })
-        edge(prepareExtractionInput forwardTo extractQuote onCondition { it.documentType == DocumentType.CreditNote })
+        edge(prepareExtractionInput forwardTo extractQuote onCondition { it.documentType == DocumentType.Quote })
+        edge(prepareExtractionInput forwardTo extractProForma onCondition { it.documentType == DocumentType.ProForma })
 
         edge(extractFinancialDocument forwardTo nodeFinish)
     }
