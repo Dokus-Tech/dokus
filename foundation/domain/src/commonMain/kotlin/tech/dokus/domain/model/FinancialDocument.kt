@@ -212,36 +212,3 @@ data class InvoiceItemDto(
     val vatAmount: Money,
     val sortOrder: Int = 0
 )
-
-/**
- * Extension function to check if document is an invoice.
- */
-fun FinancialDocumentDto.isInvoice(): Boolean = this is FinancialDocumentDto.InvoiceDto
-
-/**
- * Extension function to check if document is an expense.
- */
-fun FinancialDocumentDto.isExpense(): Boolean = this is FinancialDocumentDto.ExpenseDto
-
-/**
- * Extension function to check if document is a bill.
- */
-fun FinancialDocumentDto.isBill(): Boolean = this is FinancialDocumentDto.BillDto
-
-/**
- * Extension function to check if document is a credit note.
- */
-fun FinancialDocumentDto.isCreditNote(): Boolean = this is FinancialDocumentDto.CreditNoteDto
-
-/**
- * Extension function to check if document is cash-in (money coming in).
- * Note: CreditNotes are NOT cash-in/out until refund is recorded.
- */
-fun FinancialDocumentDto.isCashIn(): Boolean = this is FinancialDocumentDto.InvoiceDto
-
-/**
- * Extension function to check if document is cash-out (money going out).
- * Note: CreditNotes are NOT cash-in/out until refund is recorded.
- */
-fun FinancialDocumentDto.isCashOut(): Boolean =
-    this is FinancialDocumentDto.ExpenseDto || this is FinancialDocumentDto.BillDto
