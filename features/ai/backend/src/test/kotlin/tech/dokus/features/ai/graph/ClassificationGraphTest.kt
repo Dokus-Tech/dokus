@@ -24,6 +24,9 @@ import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
 import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
+import tech.dokus.features.ai.graph.sub.ClassificationResult
+import tech.dokus.features.ai.graph.sub.ClassifyDocumentInput
+import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry

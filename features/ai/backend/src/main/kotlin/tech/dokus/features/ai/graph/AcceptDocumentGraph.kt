@@ -11,6 +11,8 @@ import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
 import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
 import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
+import tech.dokus.features.ai.graph.sub.ClassifyDocumentInput
+import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.foundation.backend.config.AIConfig
 

@@ -1,4 +1,4 @@
-package tech.dokus.features.ai.graph
+package tech.dokus.features.ai.graph.sub
 
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate

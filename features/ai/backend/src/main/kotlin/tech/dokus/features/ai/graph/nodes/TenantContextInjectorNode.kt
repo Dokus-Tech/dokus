@@ -25,7 +25,7 @@ internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.tenantConte
 }
 
 internal inline fun <reified Input : InputWithTenantContext> AIAgentSubgraphBuilderBase<*, *>.tenantContextInjectorNode(): AIAgentNodeDelegate<Input, Input> {
-    return node<Input, Input> { args ->
+    return node<Input, Input>("inject-tenant-context") { args ->
         llm.writeSession {
             appendPrompt {
                 user {

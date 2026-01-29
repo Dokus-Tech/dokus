@@ -16,7 +16,7 @@ internal interface InputWithDocumentId {
 internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
     fetcher: DocumentFetcher,
 ): AIAgentNodeDelegate<Input, Input> where Input : InputWithDocumentId, Input : InputWithTenantContext {
-    return node<Input, Input> { args ->
+    return node<Input, Input>("inject-document-images") { args ->
         val document = fetcher(args.tenant.id, args.documentId).getOrElse {
             llm.writeSession {
                 DocumentImagesFetcherTool.Output.Failure(it.localizedMessage)
