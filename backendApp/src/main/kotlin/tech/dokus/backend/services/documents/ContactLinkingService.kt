@@ -48,7 +48,6 @@ class ContactLinkingService(
         val counterpartyVat = when (documentType) {
             DocumentType.Invoice -> extractedData.invoice?.clientVatNumber
             DocumentType.Bill -> extractedData.bill?.supplierVatNumber
-            DocumentType.Expense -> extractedData.expense?.merchantVatNumber
             DocumentType.Receipt -> extractedData.receipt?.merchantVatNumber
             DocumentType.CreditNote -> extractedData.creditNote?.counterpartyVatNumber
             DocumentType.ProForma -> extractedData.proForma?.clientVatNumber

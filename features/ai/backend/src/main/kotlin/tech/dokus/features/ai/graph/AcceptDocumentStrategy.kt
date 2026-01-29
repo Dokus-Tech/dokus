@@ -6,8 +6,6 @@ import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.tools.ToolRegistry
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DocumentTypeCategory
-import tech.dokus.domain.enums.category
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.Tenant
@@ -24,6 +22,7 @@ import tech.dokus.features.ai.graph.sub.extraction.financial.extractInvoiceSubGr
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractProFormaSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractPurchaseOrderSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractQuoteSubGraph
+import tech.dokus.features.ai.graph.sub.extraction.simple.extractReceiptSubGraph
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.foundation.backend.config.AIConfig
@@ -52,6 +51,7 @@ fun acceptDocumentGraph(
         val extractQuote by extractQuoteSubGraph(aiConfig)
         val extractProForma by extractProFormaSubGraph(aiConfig)
         val extractPurchaseOrder by extractPurchaseOrderSubGraph(aiConfig)
+        val extractReceipt by extractReceiptSubGraph(aiConfig)
 
         // Transform AcceptDocumentInput → ClassifyDocumentInput
         val prepareClassifyInput by node<AcceptDocumentInput, ClassifyDocumentInput>("prepare-classify") { input ->
@@ -85,7 +85,6 @@ fun acceptDocumentGraph(
         edge(prepareExtractionInput forwardTo extractQuote onCondition { it.documentType == DocumentType.Quote })
         edge(prepareExtractionInput forwardTo extractProForma onCondition { it.documentType == DocumentType.ProForma })
         edge(prepareExtractionInput forwardTo extractPurchaseOrder onCondition { it.documentType == DocumentType.PurchaseOrder })
-
-        edge(extractFinancialDocument forwardTo nodeFinish)
+        edge(prepareExtractionInput forwardTo extractReceipt onCondition { it.documentType == DocumentType.Receipt })
     }
 }

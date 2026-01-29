@@ -8,6 +8,7 @@ import tech.dokus.features.ai.graph.sub.extraction.financial.InvoiceExtractionRe
 import tech.dokus.features.ai.graph.sub.extraction.financial.ProFormaExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.PurchaseOrderExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.QuoteExtractionResult
+import tech.dokus.features.ai.graph.sub.extraction.simple.ReceiptExtractionResult
 
 /**
  * Unified extraction output for all financial document extractors.
@@ -56,6 +57,12 @@ sealed interface FinancialExtractionResult {
     @SerialName("PurchaseOrderExtraction")
     data class PurchaseOrder(
         val data: PurchaseOrderExtractionResult
+    ) : FinancialExtractionResult
+
+    @Serializable
+    @SerialName("ReceiptExtraction")
+    data class Receipt(
+        val data: ReceiptExtractionResult
     ) : FinancialExtractionResult
 
     /**
