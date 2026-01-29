@@ -23,12 +23,10 @@ import tech.dokus.features.ai.orchestrator.tools.ContactLookupHandler
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.IndexingStatusUpdater
 import tech.dokus.features.ai.orchestrator.tools.PeppolDataFetcher
-import tech.dokus.features.ai.orchestrator.tools.StoreExtractionHandler
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.prompts.OrchestratorPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
-import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.utils.normalizeJson
 import tech.dokus.foundation.backend.config.IntelligenceMode
@@ -57,20 +55,17 @@ class DocumentOrchestrator(
     private val visionModel: LLModel,
     private val mode: IntelligenceMode,
     private val exampleRepository: ExampleRepository,
-    private val documentImageService: DocumentImageService,
     private val imageCache: DocumentImageCache,
     private val chunkingService: ChunkingService,
     private val embeddingService: EmbeddingService,
     private val chunkRepository: ChunkRepository,
     private val cbeApiClient: CbeApiClient,
     private val indexingUpdater: IndexingStatusUpdater,
-    private val documentFetcher: DocumentFetcher,
     private val peppolDataFetcher: PeppolDataFetcher = PeppolDataFetcher { null },
     private val contactLookup: ContactLookupHandler = ContactLookupHandler { _, _ -> null },
     private val contactCreator: ContactCreatorHandler = ContactCreatorHandler { _, _, _, _ ->
         CreateContactTool.CreateResult(success = false, contactId = null, error = "disabled")
     },
-    private val storeExtraction: StoreExtractionHandler = StoreExtractionHandler { false }
 ) {
     private val logger = loggerFor()
     private val json = Json { ignoreUnknownKeys = true }
@@ -196,7 +191,6 @@ class DocumentOrchestrator(
         val config = OrchestratorToolRegistry.Config(
             executor = executor,
             visionModel = visionModel,
-            documentImageService = documentImageService,
             imageCache = imageCache,
             chunkingService = chunkingService,
             embeddingService = embeddingService,
@@ -210,7 +204,6 @@ class DocumentOrchestrator(
                 Result.failure(DokusException.Unknown(null))
             },
             peppolDataFetcher = peppolDataFetcher,
-            storeExtraction = storeExtraction,
             contactLookup = contactLookup,
             contactCreator = contactCreator
         )

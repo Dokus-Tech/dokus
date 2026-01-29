@@ -76,7 +76,6 @@ import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
-import tech.dokus.features.ai.orchestrator.tools.GetDocumentImagesTool
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.prompts.OrchestratorPrompt
 import tech.dokus.features.ai.services.ChunkingService
@@ -395,12 +394,11 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             visionModel = models.vision,
             mode = mode,
             exampleRepository = get(),
-            documentImageService = get(),
             imageCache = get(),
             chunkingService = get(),
             embeddingService = get(),
             chunkRepository = get(),
-            cbeApiClient = getOrNull(),
+            cbeApiClient = get(),
             indexingUpdater = { runId, status, chunksCount, errorMessage ->
                 get<ProcessorIngestionRepository>().updateIndexingStatus(
                     runId = runId,
@@ -408,15 +406,6 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                     chunksCount = chunksCount,
                     errorMessage = errorMessage
                 )
-            },
-            documentFetcher = { documentId, tenantId ->
-                runCatching {
-                    val tenant = TenantId.parse(tenantId)
-                    val doc = get<DocumentRepository>().getById(tenant, DocumentId.parse(documentId))
-                        ?: return@runCatching null
-                    val bytes = get<DocumentStorageService>().downloadDocument(doc.storageKey)
-                    GetDocumentImagesTool.DocumentData(bytes = bytes, mimeType = doc.contentType)
-                }.getOrNull()
             },
             peppolDataFetcher = { _ -> null },
             contactLookup = { tenantId, vatNumber ->
@@ -490,80 +479,6 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
                     }
                 )
             },
-            storeExtraction = { payload ->
-                val ingestionRepository = get<ProcessorIngestionRepository>()
-                val draftRepository = get<DocumentDraftRepository>()
-                val contactLinkingService = get<ContactLinkingService>()
-                val runId = payload.runId
-                    ?: ingestionRepository.findProcessingRunId(payload.tenantId, payload.documentId)
-                    ?: return@DocumentOrchestrator false
-
-                val classifiedType = payload.documentType
-                    ?.trim()
-                    ?.uppercase()
-                    ?.let { runCatching { ClassifiedDocumentType.valueOf(it) }.getOrNull() }
-                val documentType = classifiedType?.toDomainType() ?: DocumentType.Unknown
-
-                val extractedData = payload.extraction.toExtractedDocumentData(documentType)
-                    ?: if (documentType == DocumentType.Unknown) {
-                        ExtractedDocumentData(
-                            documentType = DocumentType.Unknown,
-                            rawText = payload.rawText
-                        )
-                    } else {
-                        return@DocumentOrchestrator false
-                    }
-
-                val meetsThreshold = payload.confidence >= OrchestratorPrompt.AUTO_CONFIRM_THRESHOLD
-
-                val stored = ingestionRepository.markAsSucceeded(
-                    runId = runId,
-                    tenantId = payload.tenantId,
-                    documentId = payload.documentId,
-                    documentType = documentType,
-                    extractedData = extractedData,
-                    confidence = payload.confidence,
-                    rawText = payload.rawText,
-                    description = payload.description,
-                    keywords = payload.keywords,
-                    meetsThreshold = meetsThreshold,
-                    force = false
-                )
-
-                if (!stored) return@DocumentOrchestrator false
-
-                val decisionType = payload.linkDecisionType
-                val contactId = payload.linkDecisionContactId?.takeIf { it.isNotBlank() }
-                    ?.let { runCatching { ContactId.parse(it) }.getOrNull() }
-                    ?: return@DocumentOrchestrator true
-
-                val tenant = TenantId.parse(payload.tenantId)
-                val document = DocumentId.parse(payload.documentId)
-                val draft = draftRepository.getByDocumentId(document, tenant)
-                if (draft != null &&
-                    draft.linkedContactId == null &&
-                    draft.counterpartyIntent != CounterpartyIntent.Pending &&
-                    draft.draftVersion == 0
-                ) {
-                    val evidenceFromPayload = payload.linkDecisionEvidence?.let {
-                        runCatching { json.decodeFromString<ContactEvidence>(it) }.getOrNull()
-                    }
-
-                    contactLinkingService.applyLinkDecision(
-                        tenantId = tenant,
-                        documentId = document,
-                        documentType = documentType,
-                        extractedData = extractedData,
-                        decisionType = decisionType,
-                        contactId = contactId,
-                        decisionReason = payload.linkDecisionReason,
-                        decisionConfidence = payload.linkDecisionConfidence,
-                        evidence = evidenceFromPayload
-                    )
-                }
-
-                true
-            }
         )
     }
 

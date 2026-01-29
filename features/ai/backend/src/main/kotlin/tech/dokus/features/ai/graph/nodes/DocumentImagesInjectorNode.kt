@@ -13,7 +13,6 @@ import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
 internal fun AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
     tenantId: TenantId,
     fetcher: DocumentFetcher,
-    documentImageService: DocumentImageService,
 ): AIAgentNodeDelegate<ClassifyDocumentInput, ClassifyDocumentInput> {
     return node<ClassifyDocumentInput, ClassifyDocumentInput> { args ->
         val document = fetcher(tenantId, args.documentId).getOrElse {
@@ -23,7 +22,7 @@ internal fun AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
             return@node args
         }
 
-        val images = documentImageService.getDocumentImages(
+        val images = DocumentImageService.getDocumentImages(
             document.bytes,
             document.mimeType,
         )

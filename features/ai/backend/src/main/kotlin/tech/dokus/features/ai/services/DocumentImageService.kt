@@ -20,26 +20,24 @@ import javax.imageio.ImageIO
  * - PDF: Renders each page to PNG at the specified DPI
  * - Images (JPEG, PNG, WebP, GIF, BMP, TIFF): Passed through as-is or converted to PNG
  */
-class DocumentImageService {
+object DocumentImageService {
     private val logger = loggerFor()
 
-    companion object {
-        private const val MIN_DPI = 72
-        private const val MAX_DPI = 300
-        private const val DEFAULT_DPI = 150
-        private const val MIN_PAGE_COUNT = 1
-        private const val MAX_PAGE_COUNT = 10
-        private const val DEFAULT_PAGE_COUNT = 6
+    private const val MIN_DPI = 72
+    private const val MAX_DPI = 300
+    private const val DEFAULT_DPI = 150
+    private const val MIN_PAGE_COUNT = 1
+    private const val MAX_PAGE_COUNT = 10
+    private const val DEFAULT_PAGE_COUNT = 6
 
-        private val SUPPORTED_IMAGE_TYPES = setOf(
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/gif",
-            "image/bmp",
-            "image/tiff"
-        )
-    }
+    private val SUPPORTED_IMAGE_TYPES = setOf(
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/bmp",
+        "image/tiff"
+    )
 
     data class DocumentImage(
         val pageNumber: Int,

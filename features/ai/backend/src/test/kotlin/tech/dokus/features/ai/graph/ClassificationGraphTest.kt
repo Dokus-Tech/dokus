@@ -14,7 +14,6 @@ import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
-import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.IntelligenceMode
@@ -78,11 +77,10 @@ class ClassificationGraphTest {
         }
 
         val tenantId = TenantId.generate()
-        val imageService = DocumentImageService()
-        val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher, imageService)
+        val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher)
 
         val strategy = strategy<ClassifyDocumentInput, ClassificationResult>("test") {
-            val classify by classifyDocumentSubGraph(testAiConfig, toolRegistry, mockFetcher, imageService)
+            val classify by classifyDocumentSubGraph(testAiConfig, toolRegistry, mockFetcher)
             nodeStart then classify then nodeFinish
         }
 

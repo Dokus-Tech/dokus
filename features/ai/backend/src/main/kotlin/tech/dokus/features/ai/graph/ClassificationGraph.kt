@@ -23,7 +23,6 @@ fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
     aiConfig: AIConfig,
     registry: ToolRegistry,
     documentFetcher: DocumentFetcher,
-    documentImageService: DocumentImageService = DocumentImageService()
 ): AIAgentSubgraphDelegate<ClassifyDocumentInput, ClassificationResult> {
     return subgraphWithTask(
         name = "Classify document",
@@ -34,7 +33,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
         val document = documentFetcher(input.tenantId, input.documentId).getOrElse {
             return@subgraphWithTask "Failed to get the document"
         }
-        val images = documentImageService.getDocumentImages(document.bytes, document.mimeType)
+        val images = DocumentImageService.getDocumentImages(document.bytes, document.mimeType)
         llm.writeSession {
             appendPrompt {
                 user {
