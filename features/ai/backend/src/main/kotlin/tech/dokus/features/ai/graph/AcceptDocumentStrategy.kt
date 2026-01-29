@@ -18,6 +18,7 @@ import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
 import tech.dokus.features.ai.graph.sub.ClassificationResult
 import tech.dokus.features.ai.graph.sub.ClassifyDocumentInput
 import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
+import tech.dokus.features.ai.graph.sub.extraction.financial.extractBillSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractInvoiceSubGraph
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
@@ -41,7 +42,8 @@ fun acceptDocumentGraph(
         val injectImages by documentImagesInjectorNode<AcceptDocumentInput>(documentFetcher)
         val injectTenant by tenantContextInjectorNode<AcceptDocumentInput>()
 
-        val extractInvoiceSubGraph by extractInvoiceSubGraph(aiConfig)
+        val extractInvoice by extractInvoiceSubGraph(aiConfig)
+        val extractBill by extractBillSubGraph(aiConfig)
 
         // Transform AcceptDocumentInput → ClassifyDocumentInput
         val prepareClassifyInput by node<AcceptDocumentInput, ClassifyDocumentInput>("prepare-classify") { input ->
@@ -61,7 +63,8 @@ fun acceptDocumentGraph(
 
         // Extraction
         edge(classify forwardTo prepareExtractionInput)
-        edge(prepareExtractionInput forwardTo extractInvoiceSubGraph onCondition { it.documentType == DocumentType.Invoice })
+        edge(prepareExtractionInput forwardTo extractInvoice onCondition { it.documentType == DocumentType.Invoice })
+        edge(prepareExtractionInput forwardTo extractBill onCondition { it.documentType == DocumentType.Bill })
 
         edge(extractFinancialDocument forwardTo nodeFinish)
     }
