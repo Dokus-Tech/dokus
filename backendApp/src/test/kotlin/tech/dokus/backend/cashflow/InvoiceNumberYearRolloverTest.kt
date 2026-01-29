@@ -1,15 +1,5 @@
 package tech.dokus.backend.cashflow
 
-import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
-import tech.dokus.database.services.InvoiceNumberGenerator
-import tech.dokus.database.tables.auth.TenantSettingsTable
-import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.database.tables.cashflow.InvoiceNumberSequencesTable
-import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
-import tech.dokus.domain.enums.TenantStatus
-import tech.dokus.domain.enums.TenantType
-import tech.dokus.domain.ids.TenantId
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
@@ -18,9 +8,19 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
+import tech.dokus.database.services.InvoiceNumberGenerator
+import tech.dokus.database.tables.auth.TenantSettingsTable
+import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.database.tables.cashflow.InvoiceNumberSequencesTable
+import tech.dokus.domain.enums.Language
+import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.domain.enums.TenantStatus
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.TenantId
 import java.math.BigDecimal
 import java.time.Year
-import java.util.UUID
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.uuid.ExperimentalUuidApi
@@ -79,7 +79,7 @@ class InvoiceNumberYearRolloverTest {
                 it[type] = TenantType.Company
                 it[legalName] = "Yearly Rollover Test Company"
                 it[displayName] = "Yearly Rollover Test Company"
-                it[plan] = TenantPlan.Professional
+                it[plan] = SubscriptionTier.default
                 it[status] = TenantStatus.Active
                 it[language] = Language.En
             }
@@ -385,7 +385,7 @@ class InvoiceNumberYearRolloverTest {
                 it[type] = TenantType.Freelancer
                 it[legalName] = "Second Tenant"
                 it[displayName] = "Second Tenant"
-                it[plan] = TenantPlan.Starter
+                it[plan] = SubscriptionTier.default
                 it[status] = TenantStatus.Active
                 it[language] = Language.En
             }

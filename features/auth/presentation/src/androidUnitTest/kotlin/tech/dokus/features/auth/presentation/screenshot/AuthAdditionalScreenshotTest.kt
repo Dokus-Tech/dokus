@@ -24,7 +24,7 @@ import tech.dokus.domain.Name
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.TenantId
@@ -231,9 +231,10 @@ private fun sampleTenants(): List<Tenant> {
             type = TenantType.Company,
             legalName = LegalName("Acme Corporation"),
             displayName = DisplayName("Acme"),
-            plan = TenantPlan.Starter,
+            subscription = SubscriptionTier.default,
             status = TenantStatus.Active,
             language = Language.En,
+            vatNumber = VatNumber.Empty,
             createdAt = now,
             updatedAt = now
         ),
@@ -242,9 +243,10 @@ private fun sampleTenants(): List<Tenant> {
             type = TenantType.Company,
             legalName = LegalName("Dokus Labs"),
             displayName = DisplayName("Dokus"),
-            plan = TenantPlan.Professional,
+            subscription = SubscriptionTier.default,
             status = TenantStatus.Active,
             language = Language.En,
+            vatNumber = VatNumber.Empty,
             createdAt = now,
             updatedAt = now
         ),
@@ -253,7 +255,7 @@ private fun sampleTenants(): List<Tenant> {
             type = TenantType.Freelancer,
             legalName = LegalName("Freelance Studio"),
             displayName = DisplayName("Studio"),
-            plan = TenantPlan.Free,
+            subscription = SubscriptionTier.default,
             status = TenantStatus.Active,
             language = Language.En,
             vatNumber = VatNumber("BE0123456789"),

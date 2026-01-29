@@ -3,55 +3,26 @@ package tech.dokus.features.ai.graph
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.tools.Tool
-import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.ext.agent.subgraphWithTask
-import ai.koog.prompt.message.AttachmentContent
-import ai.koog.prompt.message.ContentPart
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.extensions.description
-import tech.dokus.features.ai.orchestrator.DocumentFetcher
-import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
     aiConfig: AIConfig,
-    registry: ToolRegistry,
-    documentFetcher: DocumentFetcher,
 ): AIAgentSubgraphDelegate<ClassifyDocumentInput, ClassificationResult> {
     return subgraphWithTask(
         name = "Classify document",
         llmModel = aiConfig.mode.asVisionModel,
-        tools = registry.tools,
+        tools = emptyList(),
         finishTool = ClassificationFinishTool()
-    ) { input ->
-        val document = documentFetcher(input.tenantId, input.documentId).getOrElse {
-            return@subgraphWithTask "Failed to get the document"
-        }
-        val images = DocumentImageService.getDocumentImages(document.bytes, document.mimeType)
-        llm.writeSession {
-            appendPrompt {
-                user {
-                    images.images.forEach { image ->
-                        image(
-                            ContentPart.Image(
-                                content = AttachmentContent.Binary.Bytes(image.imageBytes),
-                                format = "png",
-                                mimeType = image.mimeType,
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        input.prompt
-    }
+    ) { it.prompt }
 }
 
 internal class ClassificationFinishTool : Tool<ClassificationToolInput, ClassificationResult>(
@@ -85,7 +56,7 @@ data class ClassificationToolInput(
 @Serializable
 data class ClassifyDocumentInput(
     val documentId: DocumentId,
-    val tenantId: TenantId
+    val tenant: Tenant
 )
 
 @Serializable

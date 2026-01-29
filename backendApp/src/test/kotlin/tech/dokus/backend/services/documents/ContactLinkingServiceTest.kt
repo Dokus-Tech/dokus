@@ -16,13 +16,12 @@ import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.ContactLinkDecisionType
-import tech.dokus.domain.enums.ContactLinkPolicy
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.ContactId
@@ -32,7 +31,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ContactEvidence
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedInvoiceFields
-import java.util.UUID
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -87,7 +86,7 @@ class ContactLinkingServiceTest {
                 it[type] = TenantType.Company
                 it[legalName] = "Contact Link Test Tenant"
                 it[displayName] = "Contact Link Test Tenant"
-                it[plan] = TenantPlan.Professional
+                it[plan] = SubscriptionTier.Core
                 it[status] = TenantStatus.Active
                 it[language] = Language.En
             }

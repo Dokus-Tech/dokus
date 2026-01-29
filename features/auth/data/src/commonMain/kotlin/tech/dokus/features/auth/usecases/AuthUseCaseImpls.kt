@@ -5,7 +5,7 @@ import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
@@ -54,7 +54,7 @@ internal class CreateTenantUseCaseImpl(
         type: TenantType,
         legalName: LegalName,
         displayName: DisplayName,
-        plan: TenantPlan,
+        plan: SubscriptionTier,
         language: Language,
         vatNumber: VatNumber,
         address: UpsertTenantAddressRequest,

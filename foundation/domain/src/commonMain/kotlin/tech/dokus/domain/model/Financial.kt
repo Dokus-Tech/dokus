@@ -20,7 +20,7 @@ import tech.dokus.domain.enums.InvitationStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.enums.UserRole
@@ -49,7 +49,7 @@ data class Tenant(
     val type: TenantType,
     val legalName: LegalName,
     val displayName: DisplayName,
-    val plan: TenantPlan,
+    val subscription: SubscriptionTier,
     val status: TenantStatus,
     val language: Language,
     val vatNumber: VatNumber,
@@ -301,7 +301,7 @@ data class CreateTenantRequest(
     val type: TenantType,
     val legalName: LegalName,
     val displayName: DisplayName,
-    val plan: TenantPlan = TenantPlan.Free,
+    val subscription: SubscriptionTier = SubscriptionTier.default,
     val language: Language = Language.En,
     val vatNumber: VatNumber,
     val address: UpsertTenantAddressRequest,

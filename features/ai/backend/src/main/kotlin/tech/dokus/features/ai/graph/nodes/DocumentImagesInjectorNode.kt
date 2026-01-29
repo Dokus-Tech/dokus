@@ -26,20 +26,6 @@ internal fun AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
             document.bytes,
             document.mimeType,
         )
-
-//        DocumentImagesFetcherTool.Output.DocumentFound(
-//            images = images.images.map {
-//                DocumentImagesFetcherTool.Output.DocumentFound.DocumentImage(
-//                    it.imageBytes,
-//                    it.mimeType,
-//                    it.pageNumber
-//                )
-//            },
-//            totalPages = images.totalPages,
-//            processedPages = images.processedPages,
-//            hasMorePages = images.hasMorePages,
-//            nextPageStart = images.nextPageStart,
-//        )
         llm.writeSession {
             appendPrompt {
                 user {

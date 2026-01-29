@@ -4,7 +4,7 @@ import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.foundation.backend.database.dbEnumeration
@@ -22,7 +22,7 @@ object TenantTable : UUIDTable("tenants") {
     val displayName = varchar("display_name", 255)
 
     // Subscription
-    val plan = dbEnumeration<TenantPlan>("plan")
+    val plan = dbEnumeration<SubscriptionTier>("plan")
     val status = dbEnumeration<TenantStatus>("status").default(TenantStatus.Active).index()
     val trialEndsAt = datetime("trial_ends_at").nullable()
     val subscriptionStartedAt = datetime("subscription_started_at").nullable()

@@ -23,6 +23,6 @@ fun acceptDocumentGraph(
     return strategy<AcceptDocumentInput, Boolean>("accept-document-graph") {
         val godRegistry = ToolRegistry { tools(registries.flatMap { it.tools }) }
 
-        val classifyDocument by classifyDocumentSubGraph(aiConfig, godRegistry, documentFetcher)
+        val classifyDocument by classifyDocumentSubGraph(aiConfig)
     }
 }

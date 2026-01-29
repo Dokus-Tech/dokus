@@ -32,21 +32,6 @@ enum class TenantType(
 }
 
 @Serializable
-enum class TenantPlan(override val dbValue: String) : DbEnum {
-    @SerialName("FREE")
-    Free("FREE"),
-
-    @SerialName("STARTER")
-    Starter("STARTER"),
-
-    @SerialName("PROFESSIONAL")
-    Professional("PROFESSIONAL"),
-
-    @SerialName("ENTERPRISE")
-    Enterprise("ENTERPRISE")
-}
-
-@Serializable
 enum class TenantStatus(override val dbValue: String) : DbEnum {
     @SerialName("ACTIVE")
     Active("ACTIVE"),
@@ -79,7 +64,9 @@ enum class Language(override val dbValue: String) : DbEnum {
     Es("ES"),
 
     @SerialName("IT")
-    It("IT")
+    It("IT");
+
+    val code get() = dbValue.lowercase()
 }
 
 @Serializable

@@ -5,13 +5,24 @@ import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.strategy
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.Language
+import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.domain.enums.TenantStatus
+import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
+import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
@@ -27,6 +38,19 @@ private val testAiConfig = AIConfig(
     mode = IntelligenceMode.Sovereign,
     ollamaHost = "",
     lmStudioHost = "http://192.168.0.150:1234"
+)
+
+private val testTenant = Tenant(
+    id = TenantId.generate(),
+    type = TenantType.Company,
+    legalName = LegalName("Invoid Vision B.V."),
+    displayName = DisplayName("Invoid Vision"),
+    subscription = SubscriptionTier.CoreFounder,
+    status = TenantStatus.Active,
+    language = Language.En,
+    vatNumber = VatNumber(""),
+    createdAt = LocalDateTime(2024, 1, 1, 10, 0),
+    updatedAt = LocalDateTime(2024, 1, 1, 10, 0),
 )
 
 /**
@@ -80,8 +104,11 @@ class ClassificationGraphTest {
         val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher)
 
         val strategy = strategy<ClassifyDocumentInput, ClassificationResult>("test") {
-            val classify by classifyDocumentSubGraph(testAiConfig, toolRegistry, mockFetcher)
-            nodeStart then classify then nodeFinish
+            val classify by classifyDocumentSubGraph(testAiConfig)
+            val documentInjector by documentImagesInjectorNode(tenantId, mockFetcher)
+            val tenantInjector by tenantContextInjectorNode<ClassifyDocumentInput>(testTenant)
+
+            nodeStart then tenantInjector then documentInjector then classify then nodeFinish
         }
 
         val agent = AIAgent(
@@ -97,7 +124,7 @@ class ClassificationGraphTest {
 
         val result = withTimeout(120.seconds) {
             try {
-                agent.run(ClassifyDocumentInput(DocumentId.generate(), tenantId))
+                agent.run(ClassifyDocumentInput(DocumentId.generate(), testTenant))
             } finally {
                 runCatching { agent.close() }
             }
