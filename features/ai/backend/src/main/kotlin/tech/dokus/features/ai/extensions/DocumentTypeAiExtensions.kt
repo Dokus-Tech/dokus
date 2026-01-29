@@ -74,6 +74,11 @@ val DocumentType.description: String
             - No reference to previous invoice → probably INVOICE
             - It's a discount offer for future purchase → QUOTE
             - It's a refund receipt from a store → RECEIPT
+            
+            ⚠️ NOT A CREDIT NOTE:
+            - "REGULARISATIEBERICHT" from social funds → SELF_EMPLOYED_CONTRIBUTION (recalculation, not credit)
+            - Adjustment notices that result in MORE to pay → original document type
+            - Bank statements showing credits → BANK_STATEMENT
             """.trimIndent()
 
         DocumentType.ProForma ->
@@ -938,33 +943,50 @@ val DocumentType.description: String
 
         DocumentType.SelfEmployedContribution ->
             """
-            SELF-EMPLOYED CONTRIBUTION — Social contributions for independents.
+            SELF-EMPLOYED CONTRIBUTION — Quarterly social security for independents (zelfstandigen).
             
-            KEYWORDS (look for these exact terms):
-            - NL: "Sociale bijdragen zelfstandige", "Sociaal verzekeringsfonds", "Acerta", "Liantis", "Xerius", "Partena", "Kwartaalbijdrage zelfstandige"
-            - FR: "Cotisations sociales indépendant", "Caisse d'assurances sociales", "Cotisations trimestrielles"
+            KEYWORDS (look for these EXACT terms):
+            - NL: "Sociale bijdragen zelfstandige", "Sociale bijdragen als zelfstandige", "Sociaal verzekeringsfonds", 
+                  "Kwartaalbijdrage", "REGULARISATIEBERICHT", "Regularisatie", "Voorlopige bijdrage", "Definitieve bijdrage"
+            - FR: "Cotisations sociales indépendant", "Caisse d'assurances sociales", "Cotisations trimestrielles", 
+                  "Régularisation", "Cotisations provisoires", "Cotisations définitives"
             - EN: "Self-employed social contribution", "Independent social security"
             
-            COMMON FUNDS: Acerta, Liantis (Zenito), Xerius, Partena, Securex, Group S, UCM, Multipen
+            COMMON FUNDS (Belgian): Acerta, Liantis (Zenito), Xerius, Partena, Securex, Group S, UCM, Multipen, AVIXI
             
             VISUAL STRUCTURE:
-            - Quarterly payment request
-            - Based on income (provisional or definitive)
-            - Contribution rate (~20.5%)
-            - Categories: starter, primary, supplementary
-            - Payment deadline (end of quarter)
-            - Fund name and bank account
+            - Social insurance fund logo and letterhead
+            - Recipient is the self-employed person (you)
+            - Shows quarterly breakdown (kwartaal 2024/1, 2024/2, etc.)
+            - Contribution amount based on income (bijdrage)
+            - Payment deadline and bank account (IBAN)
+            - Structured communication (+++xxx/xxxx/xxxxx+++)
+            - May show "vorige toestand" vs "nieuwe toestand" for regularizations
+            
+            DOCUMENT SUBTYPES (all are SelfEmployedContribution):
+            - Regular quarterly contribution request
+            - REGULARISATIEBERICHT: Recalculation based on updated income — still a PAYMENT REQUEST
+            - Provisional contribution (voorlopige bijdrage)
+            - Definitive contribution (definitieve bijdrage)
             
             DISTINGUISHING FEATURES:
-            - SELF-EMPLOYED person paying for themselves
-            - Quarterly basis
-            - From social insurance fund (not RSZ)
-            - Based on professional income
+            - FROM: Social insurance fund (sociaal verzekeringsfonds / caisse d'assurances sociales)
+            - TO: Self-employed individual
+            - Shows income-based calculation
+            - Quarterly periods referenced
+            - Amount TO PAY (not a refund)
+            
+            ⚠️ CRITICAL: REGULARISATIEBERICHT is NOT a credit note!
+            - It's a recalculation when income data changes
+            - Shows old vs new contribution amounts
+            - Results in payment DUE (te betalen), not a refund
+            - The word "regularisatie" means ADJUSTMENT, not CREDIT
             
             NOT THIS TYPE IF:
-            - Employer RSZ → SOCIAL_CONTRIBUTION
-            - VAPZ pension → VAPZ
-            - Salary slip (employee) → SALARY_SLIP
+            - Employer RSZ/ONSS payment → SOCIAL_CONTRIBUTION
+            - VAPZ pension contribution → VAPZ
+            - Social secretariat invoice → SOCIAL_FUND
+            - Actual credit/refund from fund → could be CREDIT_NOTE (rare)
             """.trimIndent()
 
         DocumentType.Vapz ->

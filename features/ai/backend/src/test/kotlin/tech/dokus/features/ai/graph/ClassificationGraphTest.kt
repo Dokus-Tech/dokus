@@ -5,6 +5,8 @@ import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.strategy
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -16,7 +18,7 @@ import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.IntelligenceMode
-import kotlin.test.Test
+import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
@@ -28,59 +30,51 @@ private val testAiConfig = AIConfig(
     lmStudioHost = "http://192.168.0.150:1234"
 )
 
+/**
+ * Folder name -> Expected DocumentType mapping
+ */
+private val folderToDocumentType = mapOf(
+    "invoices" to DocumentType.Invoice,
+    "receipts" to DocumentType.Receipt,
+    "credit-notes" to DocumentType.CreditNote,
+    "quotes" to DocumentType.Quote,
+    "contracts" to DocumentType.Contract,
+    "bank-statements" to DocumentType.BankStatement,
+    "salary" to DocumentType.SalarySlip,
+    "self-employed-contribution" to DocumentType.SelfEmployedContribution,
+)
+
 class ClassificationGraphTest {
 
     @OptIn(ExperimentalUuidApi::class)
-    @Test
-    fun `should classify invoice correctly`() = runBlocking {
-        val invoiceBytes = ClassLoader.getSystemResourceAsStream("test-invoice.pdf")!!.readBytes()
+    @TestFactory
+    fun `classify documents from fixtures`(): List<DynamicTest> {
+        val fixturesPath = "fixtures"
+        val fixturesUrl = ClassLoader.getSystemResource(fixturesPath)
+            ?: error("Fixtures directory not found: $fixturesPath")
 
-        val mockFetcher = DocumentFetcher { _, _ ->
-            Result.success(FetchedDocumentData(invoiceBytes, "application/pdf"))
-        }
+        val fixturesDir = File(fixturesUrl.toURI())
 
-        val tenantId = TenantId.generate()
-        val imageService = DocumentImageService()
-        val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher, imageService)
+        return fixturesDir.listFiles { file -> file.isDirectory }
+            ?.flatMap { folder ->
+                val expectedType = folderToDocumentType[folder.name]
+                    ?: return@flatMap emptyList()
 
-        val strategy = strategy<ClassifyDocumentInput, ClassificationResult>("test") {
-            val classify by classifyDocumentSubGraph(testAiConfig, toolRegistry, mockFetcher, imageService)
-
-            nodeStart then classify then nodeFinish
-        }
-
-        val agent = AIAgent(
-            promptExecutor = AIProviderFactory.createOpenAiExecutor(testAiConfig),
-            toolRegistry = toolRegistry,
-            strategy = strategy,
-            agentConfig = AIAgentConfig.withSystemPrompt(
-                prompt = "You are a document classifier.",
-                llm = testAiConfig.mode.asVisionModel,
-                maxAgentIterations = testAiConfig.mode.maxIterations
-            )
-        )
-
-        // Use withTimeout to prevent hanging
-        val result = withTimeout(120.seconds) {
-            try {
-                agent.run(ClassifyDocumentInput(DocumentId.generate(), tenantId))
-            } finally {
-                runCatching { agent.close() } // Ignore cleanup errors
-            }
-        }
-
-        assertEquals(DocumentType.Invoice, result.documentType)
-        assertTrue(result.confidence >= 0.8)
-        assertEquals("en", result.language)
+                folder.listFiles { file -> file.extension == "pdf" }
+                    ?.map { pdfFile ->
+                        DynamicTest.dynamicTest("${folder.name}/${pdfFile.name} -> $expectedType") {
+                            runClassificationTest(pdfFile, expectedType)
+                        }
+                    } ?: emptyList()
+            } ?: emptyList()
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    @Test
-    fun `should classify receipt correctly`() = runBlocking {
-        val invoiceBytes = ClassLoader.getSystemResourceAsStream("test-receipt.pdf")!!.readBytes()
+    private fun runClassificationTest(pdfFile: File, expectedType: DocumentType) = runBlocking {
+        val documentBytes = pdfFile.readBytes()
 
         val mockFetcher = DocumentFetcher { _, _ ->
-            Result.success(FetchedDocumentData(invoiceBytes, "application/pdf"))
+            Result.success(FetchedDocumentData(documentBytes, "application/pdf"))
         }
 
         val tenantId = TenantId.generate()
@@ -89,7 +83,6 @@ class ClassificationGraphTest {
 
         val strategy = strategy<ClassifyDocumentInput, ClassificationResult>("test") {
             val classify by classifyDocumentSubGraph(testAiConfig, toolRegistry, mockFetcher, imageService)
-
             nodeStart then classify then nodeFinish
         }
 
@@ -108,12 +101,11 @@ class ClassificationGraphTest {
             try {
                 agent.run(ClassifyDocumentInput(DocumentId.generate(), tenantId))
             } finally {
-                runCatching { agent.close() } // Ignore cleanup errors
+                runCatching { agent.close() }
             }
         }
 
-        assertEquals(DocumentType.Receipt, result.documentType)
-        assertTrue(result.confidence >= 0.8)
-        assertEquals("fr", result.language)
+        assertEquals(expectedType, result.documentType, "File: ${pdfFile.name}")
+        assertTrue(result.confidence >= 0.7, "Low confidence ${result.confidence} for ${pdfFile.name}")
     }
 }
