@@ -12,7 +12,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.extensions.description
-import tech.dokus.features.ai.graph.nodes.WithTenantContext
+import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
@@ -58,7 +58,7 @@ data class ClassificationToolInput(
 data class ClassifyDocumentInput(
     val documentId: DocumentId,
     override val tenant: Tenant
-): WithTenantContext
+): InputWithTenantContext
 
 @Serializable
 @SerialName("ClassificationResult")

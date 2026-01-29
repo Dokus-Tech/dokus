@@ -6,7 +6,8 @@ import ai.koog.agents.core.tools.ToolRegistry
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Tenant
-import tech.dokus.features.ai.graph.nodes.WithTenantContext
+import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
+import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
 import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
 import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
@@ -14,9 +15,9 @@ import tech.dokus.foundation.backend.config.AIConfig
 
 @Serializable
 data class AcceptDocumentInput(
-    val documentId: DocumentId,
+    override val documentId: DocumentId,
     override val tenant: Tenant
-) : WithTenantContext
+) : InputWithDocumentId, InputWithTenantContext
 
 fun acceptDocumentGraph(
     aiConfig: AIConfig,
@@ -30,5 +31,6 @@ fun acceptDocumentGraph(
         val documentInjector by documentImagesInjectorNode(documentFetcher)
         val tenantInjector by tenantContextInjectorNode<ClassifyDocumentInput>()
 
+        
     }
 }

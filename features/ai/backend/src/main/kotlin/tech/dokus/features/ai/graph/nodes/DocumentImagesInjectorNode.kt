@@ -4,10 +4,15 @@ import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.ai.graph.ClassifyDocumentInput
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
+
+internal interface InputWithDocumentId {
+    val documentId: DocumentId
+}
 
 internal fun AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
     fetcher: DocumentFetcher,

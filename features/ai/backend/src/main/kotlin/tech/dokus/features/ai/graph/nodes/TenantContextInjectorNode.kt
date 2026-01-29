@@ -5,6 +5,10 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.model.Tenant
 
+internal interface InputWithTenantContext {
+    val tenant: Tenant
+}
+
 internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.tenantContextInjectorNode(
     tenant: Tenant,
 ): AIAgentNodeDelegate<Input, Input> {
@@ -20,11 +24,7 @@ internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.tenantConte
     }
 }
 
-internal interface WithTenantContext {
-    val tenant: Tenant
-}
-
-internal inline fun <reified Input : WithTenantContext> AIAgentSubgraphBuilderBase<*, *>.tenantContextInjectorNode(): AIAgentNodeDelegate<Input, Input> {
+internal inline fun <reified Input : InputWithTenantContext> AIAgentSubgraphBuilderBase<*, *>.tenantContextInjectorNode(): AIAgentNodeDelegate<Input, Input> {
     return node<Input, Input> { args ->
         llm.writeSession {
             appendPrompt {
