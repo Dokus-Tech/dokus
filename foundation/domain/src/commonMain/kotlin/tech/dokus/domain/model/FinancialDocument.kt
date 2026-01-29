@@ -15,6 +15,8 @@ import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PurchaseOrderStatus
+import tech.dokus.domain.enums.QuoteStatus
 import tech.dokus.domain.enums.RefundClaimStatus
 import tech.dokus.domain.enums.SettlementIntent
 import tech.dokus.domain.ids.BillId
@@ -26,6 +28,9 @@ import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.PeppolId
+import tech.dokus.domain.ids.ProFormaId
+import tech.dokus.domain.ids.PurchaseOrderId
+import tech.dokus.domain.ids.QuoteId
 import tech.dokus.domain.ids.RefundClaimId
 import tech.dokus.domain.ids.TenantId
 
@@ -174,6 +179,92 @@ sealed interface FinancialDocumentDto {
         override val updatedAt: LocalDateTime
     ) : FinancialDocumentDto {
         override val date: LocalDate get() = issueDate
+        override val amount: Money get() = totalAmount
+    }
+
+    /**
+     * Quote DTO - represents a sales quotation/offer.
+     * No financial impact until converted to invoice.
+     */
+    @Serializable
+    @SerialName("Quote")
+    data class QuoteDto(
+        val id: QuoteId,
+        override val tenantId: TenantId,
+        val contactId: ContactId,
+        val quoteNumber: String,
+        val issueDate: LocalDate,
+        val validUntil: LocalDate,
+        val subtotalAmount: Money,
+        val vatAmount: Money,
+        val totalAmount: Money,
+        val status: QuoteStatus, // DRAFT, SENT, ACCEPTED, REJECTED, EXPIRED, CONVERTED
+        override val currency: Currency = Currency.Eur,
+        override val notes: String? = null,
+        val termsAndConditions: String? = null,
+        val items: List<String> = emptyList(),
+        override val documentId: DocumentId? = null,
+        val convertedToInvoiceId: InvoiceId? = null,
+        override val createdAt: LocalDateTime,
+        override val updatedAt: LocalDateTime
+    ) : FinancialDocumentDto {
+        override val date: LocalDate get() = issueDate
+        override val amount: Money get() = totalAmount
+    }
+
+    /**
+     * ProForma DTO - represents a pro forma invoice.
+     * No financial impact - informational/customs purposes only.
+     */
+    @Serializable
+    @SerialName("ProForma")
+    data class ProFormaDto(
+        val id: ProFormaId,
+        override val tenantId: TenantId,
+        val contactId: ContactId,
+        val proFormaNumber: String,
+        val issueDate: LocalDate,
+        val subtotalAmount: Money,
+        val vatAmount: Money,
+        val totalAmount: Money,
+        override val currency: Currency = Currency.Eur,
+        override val notes: String? = null,
+        val items: List<String> = emptyList(),
+        override val documentId: DocumentId? = null,
+        val relatedInvoiceId: InvoiceId? = null, // If converted
+        override val createdAt: LocalDateTime,
+        override val updatedAt: LocalDateTime
+    ) : FinancialDocumentDto {
+        override val date: LocalDate get() = issueDate
+        override val amount: Money get() = totalAmount
+    }
+
+    /**
+     * PurchaseOrder DTO - represents an order to a supplier.
+     * Creates expected cashflow when confirmed, actual when billed.
+     */
+    @Serializable
+    @SerialName("PurchaseOrder")
+    data class PurchaseOrderDto(
+        val id: PurchaseOrderId,
+        override val tenantId: TenantId,
+        val supplierId: ContactId,
+        val poNumber: String,
+        val orderDate: LocalDate,
+        val expectedDeliveryDate: LocalDate? = null,
+        val subtotalAmount: Money,
+        val vatAmount: Money,
+        val totalAmount: Money,
+        val status: PurchaseOrderStatus, // DRAFT, SENT, CONFIRMED, PARTIALLY_RECEIVED, RECEIVED, CANCELLED
+        override val currency: Currency = Currency.Eur,
+        override val notes: String? = null,
+        val items: List<String> = emptyList(),
+        override val documentId: DocumentId? = null,
+        val linkedBillIds: List<BillId> = emptyList(),
+        override val createdAt: LocalDateTime,
+        override val updatedAt: LocalDateTime
+    ) : FinancialDocumentDto {
+        override val date: LocalDate get() = orderDate
         override val amount: Money get() = totalAmount
     }
 }

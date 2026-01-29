@@ -1147,3 +1147,13 @@ enum class RefundClaimStatus(override val dbValue: String) : DbEnum {
     @SerialName("CANCELLED")
     Cancelled("CANCELLED")
 }
+
+@Serializable
+enum class QuoteStatus {
+    DRAFT, SENT, ACCEPTED, REJECTED, EXPIRED, CONVERTED
+}
+
+@Serializable
+enum class PurchaseOrderStatus {
+    DRAFT, SENT, CONFIRMED, PARTIALLY_RECEIVED, RECEIVED, CANCELLED
+}

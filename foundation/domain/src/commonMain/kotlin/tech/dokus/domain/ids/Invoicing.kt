@@ -104,3 +104,39 @@ value class DocumentLinkId(val value: Uuid) {
         fun parse(value: String): DocumentLinkId = DocumentLinkId(Uuid.parse(value))
     }
 }
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class QuoteId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): QuoteId = QuoteId(Uuid.random())
+        fun parse(value: String): QuoteId = QuoteId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class ProFormaId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): ProFormaId = ProFormaId(Uuid.random())
+        fun parse(value: String): ProFormaId = ProFormaId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class PurchaseOrderId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): PurchaseOrderId = PurchaseOrderId(Uuid.random())
+        fun parse(value: String): PurchaseOrderId = PurchaseOrderId(Uuid.parse(value))
+    }
+}

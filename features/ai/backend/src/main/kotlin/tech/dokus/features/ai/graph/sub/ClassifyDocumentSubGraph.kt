@@ -27,7 +27,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
     ) { it.prompt }
 }
 
-internal class ClassificationFinishTool : Tool<ClassificationToolInput, ClassificationResult>(
+private class ClassificationFinishTool : Tool<ClassificationToolInput, ClassificationResult>(
     argsSerializer = ClassificationToolInput.serializer(),
     resultSerializer = ClassificationResult.serializer(),
     name = "submit_classification",
@@ -75,16 +75,13 @@ data class ClassificationResult(
     val reasoning: String
 )
 
+@Suppress("UnusedReceiverParameter")
 private val ClassifyDocumentInput.prompt
-    get() = """
-    Classify the document with ID: $documentId
-    
-    ## STEPS
-    1. Call fetch_document_pages to get first pages (default: pages 1-3)
-    2. Analyze content, layout, keywords
-    3. For most documents, first 1-3 pages are enough to classify
-    4. If unclear, fetch more pages using nextPageStart
-    5. Call submitClassification with your result
+    get() = """    
+    You will receive document pages as images in context.
+
+    Task: classify the document type and language.
+    Output MUST be submitted via tool: submit_classification.
     
     ## DOCUMENT TYPES
     
