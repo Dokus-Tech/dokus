@@ -9,8 +9,8 @@ import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
 import kotlinx.datetime.Clock
 import tech.dokus.domain.utils.parseSafe
-import tech.dokus.features.ai.models.ClassifiedDocumentType
-import tech.dokus.features.ai.models.DocumentClassification
+import tech.dokus.features.ai.models.old.ClassifiedDocumentType
+import tech.dokus.features.ai.models.old.DocumentClassification
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.prompts.DocumentClassificationPrompt
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage

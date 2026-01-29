@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ExampleId
-import tech.dokus.features.ai.models.ClassifiedDocumentType
+import tech.dokus.features.ai.models.old.ClassifiedDocumentType
 
 /**
  * Result of document processing by the orchestrator.

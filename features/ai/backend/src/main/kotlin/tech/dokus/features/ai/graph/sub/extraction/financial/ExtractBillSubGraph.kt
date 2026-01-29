@@ -10,11 +10,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractBillSubGraph(
     aiConfig: AIConfig,
-): AIAgentSubgraphDelegate<ExtractDocumentInput, BillExtractionResult> {
+): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult.Bill> {
     return subgraphWithTask(
         name = "Extract bill information",
         llmModel = aiConfig.mode.asVisionModel,
@@ -59,27 +60,29 @@ data class BillExtractionToolInput(
     val reasoning: String? = null,
 )
 
-private class BillExtractionFinishTool : Tool<BillExtractionToolInput, BillExtractionResult>(
+private class BillExtractionFinishTool : Tool<BillExtractionToolInput, FinancialExtractionResult.Bill>(
     argsSerializer = BillExtractionToolInput.serializer(),
-    resultSerializer = BillExtractionResult.serializer(),
+    resultSerializer = FinancialExtractionResult.Bill.serializer(),
     name = "submit_bill_extraction",
     description = "Submit extracted bill fields from the document. Only include values you can see.",
 ) {
-    override suspend fun execute(args: BillExtractionToolInput): BillExtractionResult {
-        return BillExtractionResult(
-            supplierName = args.supplierName,
-            supplierVat = args.supplierVat,
-            invoiceNumber = args.invoiceNumber,
-            issueDate = args.issueDate,
-            dueDate = args.dueDate,
-            currency = args.currency,
-            totalAmount = args.totalAmount,
-            vatAmount = args.vatAmount,
-            vatRatePercent = args.vatRatePercent,
-            iban = args.iban,
-            paymentReference = args.paymentReference,
-            confidence = args.confidence,
-            reasoning = args.reasoning,
+    override suspend fun execute(args: BillExtractionToolInput): FinancialExtractionResult.Bill {
+        return FinancialExtractionResult.Bill(
+            BillExtractionResult(
+                supplierName = args.supplierName,
+                supplierVat = args.supplierVat,
+                invoiceNumber = args.invoiceNumber,
+                issueDate = args.issueDate,
+                dueDate = args.dueDate,
+                currency = args.currency,
+                totalAmount = args.totalAmount,
+                vatAmount = args.vatAmount,
+                vatRatePercent = args.vatRatePercent,
+                iban = args.iban,
+                paymentReference = args.paymentReference,
+                confidence = args.confidence,
+                reasoning = args.reasoning,
+            )
         )
     }
 }

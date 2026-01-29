@@ -11,6 +11,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 
 @Serializable
@@ -44,7 +45,7 @@ data class InvoiceExtractionResult(
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractInvoiceSubGraph(
     aiConfig: AIConfig,
-): AIAgentSubgraphDelegate<ExtractDocumentInput, InvoiceExtractionResult> {
+): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult.Invoice> {
     return subgraphWithTask(
         name = "Extract invoice information",
         llmModel = aiConfig.mode.asVisionModel,
@@ -86,28 +87,30 @@ data class InvoiceExtractionToolInput(
     val reasoning: String? = null
 )
 
-private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, InvoiceExtractionResult>(
+private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, FinancialExtractionResult.Invoice>(
     argsSerializer = InvoiceExtractionToolInput.serializer(),
-    resultSerializer = InvoiceExtractionResult.serializer(),
+    resultSerializer = FinancialExtractionResult.Invoice.serializer(),
     name = "submit_invoice_extraction",
     description = "Submit extracted invoice fields from the document. Only include values you can see."
 ) {
-    override suspend fun execute(args: InvoiceExtractionToolInput): InvoiceExtractionResult {
-        return InvoiceExtractionResult(
-            invoiceNumber = args.invoiceNumber,
-            issueDate = args.issueDate,
-            dueDate = args.dueDate,
-            currency = args.currency,
-            subtotalAmount = args.subtotalAmount,
-            vatAmount = args.vatAmount,
-            totalAmount = args.totalAmount,
-            customerName = args.customerName,
-            customerVat = args.customerVat,
-            customerEmail = args.customerEmail,
-            iban = args.iban,
-            paymentReference = args.paymentReference,
-            confidence = args.confidence,
-            reasoning = args.reasoning
+    override suspend fun execute(args: InvoiceExtractionToolInput): FinancialExtractionResult.Invoice {
+        return FinancialExtractionResult.Invoice(
+            InvoiceExtractionResult(
+                invoiceNumber = args.invoiceNumber,
+                issueDate = args.issueDate,
+                dueDate = args.dueDate,
+                currency = args.currency,
+                subtotalAmount = args.subtotalAmount,
+                vatAmount = args.vatAmount,
+                totalAmount = args.totalAmount,
+                customerName = args.customerName,
+                customerVat = args.customerVat,
+                customerEmail = args.customerEmail,
+                iban = args.iban,
+                paymentReference = args.paymentReference,
+                confidence = args.confidence,
+                reasoning = args.reasoning
+            )
         )
     }
 }

@@ -69,6 +69,14 @@ fun acceptDocumentGraph(
         // Classification
         edge(prepareClassifyInput forwardTo classify)
 
+        // Handle unsupported case
+        val unsupported by node<ExtractDocumentInput, FinancialDocumentDto>("unsupported-doc-type") { input ->
+            // TODO: create a lightweight DTO with warning that the type is not yet supported.
+            error("Unsupported document type: ${input.documentType}")
+        }
+        edge(prepareExtractionInput forwardTo unsupported onCondition { !it.documentType.supported })
+        edge(unsupported forwardTo nodeFinish)
+
         // Extraction
         edge(classify forwardTo prepareExtractionInput)
         edge(prepareExtractionInput forwardTo extractInvoice onCondition { it.documentType == DocumentType.Invoice })

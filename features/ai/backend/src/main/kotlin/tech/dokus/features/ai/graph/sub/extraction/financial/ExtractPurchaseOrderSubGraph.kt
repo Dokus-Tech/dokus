@@ -10,11 +10,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractPurchaseOrderSubGraph(
     aiConfig: AIConfig,
-): AIAgentSubgraphDelegate<ExtractDocumentInput, PurchaseOrderExtractionResult> {
+): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult.PurchaseOrder> {
     return subgraphWithTask(
         name = "Extract purchase order information",
         llmModel = aiConfig.mode.asVisionModel,
@@ -65,28 +66,31 @@ data class PurchaseOrderExtractionToolInput(
     val reasoning: String? = null,
 )
 
-private class PurchaseOrderExtractionFinishTool : Tool<PurchaseOrderExtractionToolInput, PurchaseOrderExtractionResult>(
-    argsSerializer = PurchaseOrderExtractionToolInput.serializer(),
-    resultSerializer = PurchaseOrderExtractionResult.serializer(),
-    name = "submit_purchase_order_extraction",
-    description = "Submit extracted purchase order fields from the document. Only include values you can see.",
-) {
-    override suspend fun execute(args: PurchaseOrderExtractionToolInput): PurchaseOrderExtractionResult {
-        return PurchaseOrderExtractionResult(
-            poNumber = args.poNumber,
-            orderDate = args.orderDate,
-            expectedDeliveryDate = args.expectedDeliveryDate,
-            supplierName = args.supplierName,
-            supplierVat = args.supplierVat,
-            supplierEmail = args.supplierEmail,
-            currency = args.currency,
-            subtotalAmount = args.subtotalAmount,
-            vatAmount = args.vatAmount,
-            totalAmount = args.totalAmount,
-            iban = args.iban,
-            paymentReference = args.paymentReference,
-            confidence = args.confidence,
-            reasoning = args.reasoning,
+private class PurchaseOrderExtractionFinishTool :
+    Tool<PurchaseOrderExtractionToolInput, FinancialExtractionResult.PurchaseOrder>(
+        argsSerializer = PurchaseOrderExtractionToolInput.serializer(),
+        resultSerializer = FinancialExtractionResult.PurchaseOrder.serializer(),
+        name = "submit_purchase_order_extraction",
+        description = "Submit extracted purchase order fields from the document. Only include values you can see.",
+    ) {
+    override suspend fun execute(args: PurchaseOrderExtractionToolInput): FinancialExtractionResult.PurchaseOrder {
+        return FinancialExtractionResult.PurchaseOrder(
+            PurchaseOrderExtractionResult(
+                poNumber = args.poNumber,
+                orderDate = args.orderDate,
+                expectedDeliveryDate = args.expectedDeliveryDate,
+                supplierName = args.supplierName,
+                supplierVat = args.supplierVat,
+                supplierEmail = args.supplierEmail,
+                currency = args.currency,
+                subtotalAmount = args.subtotalAmount,
+                vatAmount = args.vatAmount,
+                totalAmount = args.totalAmount,
+                iban = args.iban,
+                paymentReference = args.paymentReference,
+                confidence = args.confidence,
+                reasoning = args.reasoning,
+            )
         )
     }
 }

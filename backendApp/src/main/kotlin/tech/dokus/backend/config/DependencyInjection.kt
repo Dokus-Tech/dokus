@@ -16,7 +16,6 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
-import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.DisabledEmailService
 import tech.dokus.backend.services.auth.EmailConfig
@@ -48,36 +47,26 @@ import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
-import tech.dokus.domain.enums.CounterpartyIntent
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.ContactEvidence
-import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.aiModule
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
-import tech.dokus.features.ai.models.ClassifiedDocumentType
-import tech.dokus.features.ai.models.toDomainType
-import tech.dokus.features.ai.models.toExtractedDocumentData
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
-import tech.dokus.features.ai.prompts.OrchestratorPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.DocumentImageService
@@ -120,7 +109,6 @@ import tech.dokus.peppol.service.PeppolService
 import tech.dokus.peppol.service.PeppolTransferPollingService
 import tech.dokus.peppol.service.PeppolVerificationService
 import tech.dokus.peppol.validator.PeppolValidator
-import kotlin.text.get
 
 /**
  * Koin setup for the modular monolith server.

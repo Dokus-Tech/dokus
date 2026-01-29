@@ -2,12 +2,12 @@ package tech.dokus.features.ai.validation
 
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
-import tech.dokus.features.ai.models.BillLineItem
-import tech.dokus.features.ai.models.ExtractedBillData
-import tech.dokus.features.ai.models.ExtractedExpenseData
-import tech.dokus.features.ai.models.ExtractedInvoiceData
-import tech.dokus.features.ai.models.ExtractedReceiptData
-import tech.dokus.features.ai.models.InvoiceLineItem
+import tech.dokus.features.ai.models.old.BillLineItem
+import tech.dokus.features.ai.models.old.ExtractedBillData
+import tech.dokus.features.ai.models.old.ExtractedExpenseData
+import tech.dokus.features.ai.models.old.ExtractedInvoiceData
+import tech.dokus.features.ai.models.old.ExtractedReceiptData
+import tech.dokus.features.ai.models.old.InvoiceLineItem
 
 /**
  * Layer 3: Legally-Aware Auditor

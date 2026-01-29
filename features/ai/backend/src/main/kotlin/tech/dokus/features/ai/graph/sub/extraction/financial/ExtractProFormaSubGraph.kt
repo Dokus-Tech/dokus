@@ -10,11 +10,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractProFormaSubGraph(
     aiConfig: AIConfig,
-): AIAgentSubgraphDelegate<ExtractDocumentInput, ProFormaExtractionResult> {
+): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult.ProForma> {
     return subgraphWithTask(
         name = "Extract pro forma invoice information",
         llmModel = aiConfig.mode.asVisionModel,
@@ -58,25 +59,27 @@ data class ProFormaExtractionToolInput(
     val reasoning: String? = null,
 )
 
-private class ProFormaExtractionFinishTool : Tool<ProFormaExtractionToolInput, ProFormaExtractionResult>(
+private class ProFormaExtractionFinishTool : Tool<ProFormaExtractionToolInput, FinancialExtractionResult.ProForma>(
     argsSerializer = ProFormaExtractionToolInput.serializer(),
-    resultSerializer = ProFormaExtractionResult.serializer(),
+    resultSerializer = FinancialExtractionResult.ProForma.serializer(),
     name = "submit_proforma_extraction",
     description = "Submit extracted pro forma invoice fields from the document. Only include values you can see.",
 ) {
-    override suspend fun execute(args: ProFormaExtractionToolInput): ProFormaExtractionResult {
-        return ProFormaExtractionResult(
-            proFormaNumber = args.proFormaNumber,
-            issueDate = args.issueDate,
-            currency = args.currency,
-            subtotalAmount = args.subtotalAmount,
-            vatAmount = args.vatAmount,
-            totalAmount = args.totalAmount,
-            customerName = args.customerName,
-            customerVat = args.customerVat,
-            customerEmail = args.customerEmail,
-            confidence = args.confidence,
-            reasoning = args.reasoning,
+    override suspend fun execute(args: ProFormaExtractionToolInput): FinancialExtractionResult.ProForma {
+        return FinancialExtractionResult.ProForma(
+            ProFormaExtractionResult(
+                proFormaNumber = args.proFormaNumber,
+                issueDate = args.issueDate,
+                currency = args.currency,
+                subtotalAmount = args.subtotalAmount,
+                vatAmount = args.vatAmount,
+                totalAmount = args.totalAmount,
+                customerName = args.customerName,
+                customerVat = args.customerVat,
+                customerEmail = args.customerEmail,
+                confidence = args.confidence,
+                reasoning = args.reasoning,
+            )
         )
     }
 }

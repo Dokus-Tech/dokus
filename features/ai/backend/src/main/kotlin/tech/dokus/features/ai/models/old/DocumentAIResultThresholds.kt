@@ -1,4 +1,4 @@
-package tech.dokus.features.ai.models
+package tech.dokus.features.ai.models.old
 
 /**
  * Check if extraction meets minimum threshold for draft creation.

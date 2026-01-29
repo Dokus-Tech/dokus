@@ -1,4 +1,4 @@
-package tech.dokus.features.ai.models
+package tech.dokus.features.ai.models.old
 
 import kotlinx.serialization.Serializable
 

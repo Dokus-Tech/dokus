@@ -10,11 +10,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractQuoteSubGraph(
     aiConfig: AIConfig,
-): AIAgentSubgraphDelegate<ExtractDocumentInput, QuoteExtractionResult> {
+): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult.Quote> {
     return subgraphWithTask(
         name = "Extract quote information",
         llmModel = aiConfig.mode.asVisionModel,
@@ -65,28 +66,30 @@ data class QuoteExtractionToolInput(
     val reasoning: String? = null,
 )
 
-private class QuoteExtractionFinishTool : Tool<QuoteExtractionToolInput, QuoteExtractionResult>(
+private class QuoteExtractionFinishTool : Tool<QuoteExtractionToolInput, FinancialExtractionResult.Quote>(
     argsSerializer = QuoteExtractionToolInput.serializer(),
-    resultSerializer = QuoteExtractionResult.serializer(),
+    resultSerializer = FinancialExtractionResult.Quote.serializer(),
     name = "submit_quote_extraction",
     description = "Submit extracted quote fields from the document. Only include values you can see.",
 ) {
-    override suspend fun execute(args: QuoteExtractionToolInput): QuoteExtractionResult {
-        return QuoteExtractionResult(
-            quoteNumber = args.quoteNumber,
-            issueDate = args.issueDate,
-            validUntil = args.validUntil,
-            currency = args.currency,
-            subtotalAmount = args.subtotalAmount,
-            vatAmount = args.vatAmount,
-            totalAmount = args.totalAmount,
-            customerName = args.customerName,
-            customerVat = args.customerVat,
-            customerEmail = args.customerEmail,
-            iban = args.iban,
-            paymentReference = args.paymentReference,
-            confidence = args.confidence,
-            reasoning = args.reasoning,
+    override suspend fun execute(args: QuoteExtractionToolInput): FinancialExtractionResult.Quote {
+        return FinancialExtractionResult.Quote(
+            QuoteExtractionResult(
+                quoteNumber = args.quoteNumber,
+                issueDate = args.issueDate,
+                validUntil = args.validUntil,
+                currency = args.currency,
+                subtotalAmount = args.subtotalAmount,
+                vatAmount = args.vatAmount,
+                totalAmount = args.totalAmount,
+                customerName = args.customerName,
+                customerVat = args.customerVat,
+                customerEmail = args.customerEmail,
+                iban = args.iban,
+                paymentReference = args.paymentReference,
+                confidence = args.confidence,
+                reasoning = args.reasoning,
+            )
         )
     }
 }

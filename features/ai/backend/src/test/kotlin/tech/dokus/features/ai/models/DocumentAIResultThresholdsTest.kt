@@ -1,5 +1,12 @@
 package tech.dokus.features.ai.models
 
+import tech.dokus.features.ai.models.old.ClassifiedDocumentType
+import tech.dokus.features.ai.models.old.DocumentAIResult
+import tech.dokus.features.ai.models.old.DocumentClassification
+import tech.dokus.features.ai.models.old.ExtractedBillData
+import tech.dokus.features.ai.models.old.ExtractedInvoiceData
+import tech.dokus.features.ai.models.old.ExtractedReceiptData
+import tech.dokus.features.ai.models.old.meetsMinimalThreshold
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

@@ -10,11 +10,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractCreditNoteSubGraph(
     aiConfig: AIConfig,
-): AIAgentSubgraphDelegate<ExtractDocumentInput, CreditNoteExtractionResult> {
+): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult.CreditNote> {
     return subgraphWithTask(
         name = "Extract credit note information",
         llmModel = aiConfig.mode.asVisionModel,
@@ -71,27 +72,30 @@ data class CreditNoteExtractionToolInput(
     val reasoning: String? = null,
 )
 
-private class CreditNoteExtractionFinishTool : Tool<CreditNoteExtractionToolInput, CreditNoteExtractionResult>(
-    argsSerializer = CreditNoteExtractionToolInput.serializer(),
-    resultSerializer = CreditNoteExtractionResult.serializer(),
-    name = "submit_credit_note_extraction",
-    description = "Submit extracted credit note fields from the document. Only include values you can see.",
-) {
-    override suspend fun execute(args: CreditNoteExtractionToolInput): CreditNoteExtractionResult {
-        return CreditNoteExtractionResult(
-            creditNoteNumber = args.creditNoteNumber,
-            direction = args.direction,
-            issueDate = args.issueDate,
-            currency = args.currency,
-            subtotalAmount = args.subtotalAmount,
-            vatAmount = args.vatAmount,
-            totalAmount = args.totalAmount,
-            counterpartyName = args.counterpartyName,
-            counterpartyVat = args.counterpartyVat,
-            originalInvoiceNumber = args.originalInvoiceNumber,
-            reason = args.reason,
-            confidence = args.confidence,
-            reasoning = args.reasoning,
+private class CreditNoteExtractionFinishTool :
+    Tool<CreditNoteExtractionToolInput, FinancialExtractionResult.CreditNote>(
+        argsSerializer = CreditNoteExtractionToolInput.serializer(),
+        resultSerializer = FinancialExtractionResult.CreditNote.serializer(),
+        name = "submit_credit_note_extraction",
+        description = "Submit extracted credit note fields from the document. Only include values you can see.",
+    ) {
+    override suspend fun execute(args: CreditNoteExtractionToolInput): FinancialExtractionResult.CreditNote {
+        return FinancialExtractionResult.CreditNote(
+            CreditNoteExtractionResult(
+                creditNoteNumber = args.creditNoteNumber,
+                direction = args.direction,
+                issueDate = args.issueDate,
+                currency = args.currency,
+                subtotalAmount = args.subtotalAmount,
+                vatAmount = args.vatAmount,
+                totalAmount = args.totalAmount,
+                counterpartyName = args.counterpartyName,
+                counterpartyVat = args.counterpartyVat,
+                originalInvoiceNumber = args.originalInvoiceNumber,
+                reason = args.reason,
+                confidence = args.confidence,
+                reasoning = args.reasoning,
+            )
         )
     }
 }
