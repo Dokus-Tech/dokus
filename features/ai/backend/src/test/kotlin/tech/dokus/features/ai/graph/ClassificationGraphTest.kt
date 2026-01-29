@@ -2,6 +2,7 @@ package tech.dokus.features.ai.graph
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
+import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -103,12 +104,25 @@ class ClassificationGraphTest {
         val tenantId = TenantId.generate()
         val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher)
 
-        val strategy = strategy<ClassifyDocumentInput, ClassificationResult>("test") {
+        val strategy = strategy<AcceptDocumentInput, ClassificationResult>("test") {
             val classify by classifyDocumentSubGraph(testAiConfig)
-            val documentInjector by documentImagesInjectorNode(mockFetcher)
-            val tenantInjector by tenantContextInjectorNode<ClassifyDocumentInput>(testTenant)
+            val injectImages by documentImagesInjectorNode<AcceptDocumentInput>(mockFetcher)
+            val injectTenant by tenantContextInjectorNode<AcceptDocumentInput>(testTenant)
 
-            nodeStart then tenantInjector then documentInjector then classify then nodeFinish
+            // Transform AcceptDocumentInput → ClassifyDocumentInput
+            val prepareClassifyInput by node<AcceptDocumentInput, ClassifyDocumentInput>("prepare-classify") { input ->
+                ClassifyDocumentInput(input.documentId, input.tenant)
+            }
+
+            // Context setup
+            edge(nodeStart forwardTo injectTenant)
+            edge(injectTenant forwardTo injectImages)
+            edge(injectImages forwardTo prepareClassifyInput)
+
+            // Classification
+            edge(prepareClassifyInput forwardTo classify)
+
+            edge(classify forwardTo nodeFinish)
         }
 
         val agent = AIAgent(
@@ -124,7 +138,7 @@ class ClassificationGraphTest {
 
         val result = withTimeout(120.seconds) {
             try {
-                agent.run(ClassifyDocumentInput(DocumentId.generate(), testTenant))
+                agent.run(AcceptDocumentInput(DocumentId.generate(), testTenant))
             } finally {
                 runCatching { agent.close() }
             }

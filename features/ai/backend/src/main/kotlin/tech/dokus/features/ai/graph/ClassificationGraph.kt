@@ -12,6 +12,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.extensions.description
+import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
 import tech.dokus.foundation.backend.config.AIConfig
 
@@ -56,9 +57,9 @@ data class ClassificationToolInput(
 
 @Serializable
 data class ClassifyDocumentInput(
-    val documentId: DocumentId,
+    override val documentId: DocumentId,
     override val tenant: Tenant
-): InputWithTenantContext
+) : InputWithTenantContext, InputWithDocumentId
 
 @Serializable
 @SerialName("ClassificationResult")
