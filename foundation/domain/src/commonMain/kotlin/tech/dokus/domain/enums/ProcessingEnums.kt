@@ -377,3 +377,22 @@ enum class DocumentLinkType(override val dbValue: String) : DbEnum {
     @SerialName("RELATED_TO")
     RelatedTo("RELATED_TO");
 }
+
+enum class DocumentTypeCategory {
+    FINANCIAL,  // Invoice, Bill, CreditNote, Quote, PurchaseOrder
+    BANKING,    // BankStatement, PaymentConfirmation
+    TAX,        // VATReturn, CorporateTax, TaxAssessment
+    PAYROLL,    // SalarySlip, PayrollSummary
+    LEGAL,      // Contract, Lease, Insurance
+    SIMPLE      // Receipt, DeliveryNote - minimal extraction
+}
+
+val DocumentType.category: DocumentTypeCategory
+    get() = when (this) {
+        DocumentType.Invoice, DocumentType.Bill, DocumentType.CreditNote, DocumentType.Quote, DocumentType.ProForma, DocumentType.PurchaseOrder -> DocumentTypeCategory.FINANCIAL
+        DocumentType.BankStatement, DocumentType.PaymentConfirmation, DocumentType.BankFee -> DocumentTypeCategory.BANKING
+        DocumentType.VatReturn, DocumentType.CorporateTax, DocumentType.TaxAssessment, DocumentType.PersonalTax -> DocumentTypeCategory.TAX
+        DocumentType.SalarySlip, DocumentType.PayrollSummary, DocumentType.HolidayPay -> DocumentTypeCategory.PAYROLL
+        DocumentType.Contract, DocumentType.Lease, DocumentType.Loan, DocumentType.Insurance -> DocumentTypeCategory.LEGAL
+        else -> DocumentTypeCategory.SIMPLE
+    }

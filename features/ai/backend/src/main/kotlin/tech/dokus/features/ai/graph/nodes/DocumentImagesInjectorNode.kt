@@ -5,7 +5,6 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.features.ai.graph.ClassifyDocumentInput
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
@@ -14,10 +13,10 @@ internal interface InputWithDocumentId {
     val documentId: DocumentId
 }
 
-internal fun AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
+internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
     fetcher: DocumentFetcher,
-): AIAgentNodeDelegate<ClassifyDocumentInput, ClassifyDocumentInput> {
-    return node<ClassifyDocumentInput, ClassifyDocumentInput> { args ->
+): AIAgentNodeDelegate<Input, Input> where Input : InputWithDocumentId, Input : InputWithTenantContext {
+    return node<Input, Input> { args ->
         val document = fetcher(args.tenant.id, args.documentId).getOrElse {
             llm.writeSession {
                 DocumentImagesFetcherTool.Output.Failure(it.localizedMessage)

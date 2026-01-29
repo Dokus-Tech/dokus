@@ -1,6 +1,7 @@
 package tech.dokus.features.ai.graph
 
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
+import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.tools.ToolRegistry
 import kotlinx.serialization.Serializable
@@ -28,9 +29,21 @@ fun acceptDocumentGraph(
         val godRegistry = ToolRegistry { tools(registries.flatMap { it.tools }) }
 
         val classify by classifyDocumentSubGraph(aiConfig)
-        val documentInjector by documentImagesInjectorNode(documentFetcher)
-        val tenantInjector by tenantContextInjectorNode<ClassifyDocumentInput>()
+        val injectImages by documentImagesInjectorNode<AcceptDocumentInput>(documentFetcher)
+        val injectTenant by tenantContextInjectorNode<AcceptDocumentInput>()
 
-        
+        // Transform AcceptDocumentInput → ClassifyDocumentInput
+        val prepareClassifyInput by node<AcceptDocumentInput, ClassifyDocumentInput>("prepare-classify") { input ->
+            ClassifyDocumentInput(input.documentId, input.tenant)
+        }
+
+        // Context setup
+        edge(nodeStart forwardTo injectTenant)
+        edge(injectTenant forwardTo injectImages)
+        edge(injectImages forwardTo prepareClassifyInput)
+
+        // Classification
+        edge(prepareClassifyInput forwardTo classify)
+//        edge(classify forwardTo routeByType)
     }
 }
