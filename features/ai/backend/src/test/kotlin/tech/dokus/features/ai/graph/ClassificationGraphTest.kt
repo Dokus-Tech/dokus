@@ -2,6 +2,7 @@ package tech.dokus.features.ai.graph
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
+import ai.koog.agents.core.annotation.ExperimentalAgentsApi
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import kotlinx.coroutines.runBlocking
@@ -69,6 +70,7 @@ private val folderToDocumentType = mapOf(
     "bank-statements" to DocumentType.BankStatement,
     "salary" to DocumentType.SalarySlip,
     "self-employed-contribution" to DocumentType.SelfEmployedContribution,
+    "vat-return" to DocumentType.VatReturn,
 )
 
 class ClassificationGraphTest {
@@ -96,7 +98,7 @@ class ClassificationGraphTest {
             } ?: emptyList()
     }
 
-    @OptIn(ExperimentalUuidApi::class)
+    @OptIn(ExperimentalUuidApi::class, ExperimentalAgentsApi::class)
     private fun runClassificationTest(pdfFile: File, expectedType: DocumentType) = runBlocking {
         val documentBytes = pdfFile.readBytes()
 
