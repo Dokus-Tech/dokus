@@ -77,6 +77,7 @@ import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.config.MinioConfig
 import tech.dokus.foundation.backend.crypto.AesGcmCredentialCryptoService
 import tech.dokus.foundation.backend.crypto.CredentialCryptoService
@@ -119,7 +120,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     install(Koin) {
         modules(
             // Core config
-            module { single { appConfig } },
+            configureConfigDi(appConfig),
 
             // Shared infrastructure
             databaseModule,
@@ -190,13 +191,13 @@ private val cryptoModule = module {
     single<PasswordCryptoService> { PasswordCryptoService4j() }
 
     single<CredentialCryptoService> {
-        val appConfig = get<AppBaseConfig>()
-        val encryptionKey = System.getenv("ENCRYPTION_KEY") ?: appConfig.jwt.secret
+        val config = get<JwtConfig>()
+        val encryptionKey = System.getenv("ENCRYPTION_KEY") ?: config.secret
         AesGcmCredentialCryptoService(encryptionKey)
     }
 
-    single { JwtGenerator(get<AppBaseConfig>().jwt) }
-    single { JwtValidator(get<AppBaseConfig>().jwt) }
+    singleOf(::JwtGenerator)
+    singleOf(::JwtValidator)
 }
 
 private fun authModule(appConfig: AppBaseConfig) = module {
