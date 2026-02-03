@@ -103,9 +103,9 @@ private val ClassifyDocumentInput.prompt
     - INVOICE: Issued BY the business (your company logo/header at top)
     - BILL: Received FROM supplier (supplier's header, you're in "Klant/Client" section)
     
-    RECEIPT vs EXPENSE:
-    - RECEIPT: Small thermal ticket from retail/restaurant
-    - EXPENSE: Formal A4 document from utilities/subscriptions
+    RECEIPT vs BILL:
+    - RECEIPT: Small thermal ticket proving payment already made (retail/restaurant)
+    - BILL: A4 supplier invoice requesting payment (including recurring utilities)
     
     CREDIT_NOTE: Look for "Creditnota", "Note de crédit", "Avoir" — references original invoice
     """.trimIndent()

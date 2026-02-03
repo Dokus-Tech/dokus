@@ -51,9 +51,6 @@ enum class DocumentType(
     @SerialName("BILL")
     Bill("BILL", true),
 
-    @SerialName("EXPENSE")
-    Expense("EXPENSE", true),
-
     @SerialName("RECEIPT")
     Receipt("RECEIPT", true),
 

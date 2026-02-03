@@ -25,7 +25,6 @@ import tech.dokus.domain.enums.MediaDocumentType
 val MediaDocumentType.localized: String
     @Composable get() = when (this) {
         MediaDocumentType.Invoice -> stringResource(Res.string.document_type_invoice)
-        MediaDocumentType.Expense -> stringResource(Res.string.document_type_expense)
         MediaDocumentType.Bill -> stringResource(Res.string.document_type_bill)
         MediaDocumentType.Unknown -> stringResource(Res.string.document_type_unknown)
     }
@@ -62,12 +61,11 @@ val MediaDocumentType.localizedUppercase: String
 val DocumentType.localized: String
     @Composable get() = when (this) {
         DocumentType.Invoice -> stringResource(Res.string.document_type_invoice)
-        DocumentType.Expense -> stringResource(Res.string.document_type_expense)
         DocumentType.Bill -> stringResource(Res.string.document_type_bill)
         DocumentType.CreditNote -> stringResource(Res.string.document_type_document) // TODO: Add specific string resource
         DocumentType.Receipt -> stringResource(Res.string.document_type_document) // TODO: Add specific string resource
         DocumentType.ProForma -> stringResource(Res.string.document_type_document) // TODO: Add specific string resource
-        DocumentType.Unknown -> stringResource(Res.string.document_type_unknown)
+        else -> stringResource(Res.string.document_type_unknown)
     }
 
 /**

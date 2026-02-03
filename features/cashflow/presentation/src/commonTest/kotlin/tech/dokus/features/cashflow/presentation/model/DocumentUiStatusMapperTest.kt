@@ -156,7 +156,7 @@ class DocumentUiStatusMapperTest {
             confidence = 0.95,
             linkedContactId = null,
             draftStatus = DraftStatus.Ready,
-            documentType = DocumentType.Expense
+            documentType = DocumentType.Bill
         )
         assertEquals(DocumentUiStatus.Ready, record.toUiStatus())
     }

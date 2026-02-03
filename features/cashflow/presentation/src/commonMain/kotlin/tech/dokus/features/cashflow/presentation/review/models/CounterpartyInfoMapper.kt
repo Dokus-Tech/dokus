@@ -17,11 +17,6 @@ internal fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyI
             vatNumber = clean(state.editableData.bill?.supplierVatNumber),
             address = clean(state.editableData.bill?.supplierAddress),
         )
-        DocumentType.Expense -> CounterpartyInfo(
-            name = clean(state.editableData.expense?.merchant),
-            vatNumber = clean(state.editableData.expense?.merchantVatNumber),
-            address = clean(state.editableData.expense?.merchantAddress),
-        )
         else -> CounterpartyInfo(
             name = null,
             vatNumber = null,

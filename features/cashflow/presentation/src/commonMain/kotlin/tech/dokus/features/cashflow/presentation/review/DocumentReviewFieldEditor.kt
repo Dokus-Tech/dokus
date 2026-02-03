@@ -230,10 +230,6 @@ internal class DocumentReviewFieldEditor {
                     documentType = type,
                     bill = EditableBillFields(),
                 )
-                DocumentType.Expense -> EditableExtractedData(
-                    documentType = type,
-                    expense = EditableExpenseFields(),
-                )
                 DocumentType.Receipt -> EditableExtractedData(
                     documentType = type,
                     receipt = EditableReceiptFields(),

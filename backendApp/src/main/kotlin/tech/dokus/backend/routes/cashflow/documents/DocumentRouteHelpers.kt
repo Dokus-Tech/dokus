@@ -56,7 +56,6 @@ internal suspend fun findConfirmedEntity(
     return when (documentType) {
         DocumentType.Invoice -> invoiceRepository.findByDocumentId(tenantId, documentId)
         DocumentType.Bill -> billRepository.findByDocumentId(tenantId, documentId)
-        DocumentType.Expense -> expenseRepository.findByDocumentId(tenantId, documentId)
         else -> {
             // Try all types
             invoiceRepository.findByDocumentId(tenantId, documentId)

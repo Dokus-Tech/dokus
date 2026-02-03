@@ -210,7 +210,6 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
             get() = when (editableData.documentType) {
                 DocumentType.Invoice -> Money.parse(editableData.invoice?.totalAmount ?: "")
                 DocumentType.Bill -> Money.parse(editableData.bill?.amount ?: "")
-                DocumentType.Expense -> Money.parse(editableData.expense?.amount ?: "")
                 DocumentType.Receipt -> Money.parse(editableData.receipt?.amount ?: "")
                 DocumentType.ProForma -> Money.parse(editableData.proForma?.totalAmount ?: "")
                 DocumentType.CreditNote -> Money.parse(editableData.creditNote?.totalAmount ?: "")
@@ -231,7 +230,6 @@ private val EditableExtractedData.hasRequiredDates: Boolean
     get() = when (documentType) {
         DocumentType.Invoice -> invoice?.issueDate != null
         DocumentType.Bill -> bill?.issueDate != null
-        DocumentType.Expense -> expense?.date != null
         else -> false
     }
 
@@ -252,10 +250,6 @@ private val EditableExtractedData.hasCoherentAmounts: Boolean
                 val billData = bill ?: return false
                 Money.parse(billData.amount) != null
             }
-            DocumentType.Expense -> {
-                val expenseData = expense ?: return false
-                Money.parse(expenseData.amount) != null
-            }
             else -> false
         }
     }
@@ -265,7 +259,6 @@ private val EditableExtractedData.counterpartyName: String?
     get() = when (documentType) {
         DocumentType.Invoice -> invoice?.clientName?.takeIf { it.isNotBlank() }
         DocumentType.Bill -> bill?.supplierName?.takeIf { it.isNotBlank() }
-        DocumentType.Expense -> expense?.merchant?.takeIf { it.isNotBlank() }
         DocumentType.Receipt -> receipt?.merchant?.takeIf { it.isNotBlank() }
         DocumentType.ProForma -> proForma?.clientName?.takeIf { it.isNotBlank() }
         DocumentType.CreditNote -> creditNote?.counterpartyName?.takeIf { it.isNotBlank() }
@@ -277,7 +270,6 @@ private val EditableExtractedData.contextDescription: String?
     get() = when (documentType) {
         DocumentType.Invoice -> invoice?.notes?.takeIf { it.isNotBlank() }
         DocumentType.Bill -> bill?.description?.takeIf { it.isNotBlank() }
-        DocumentType.Expense -> expense?.description?.takeIf { it.isNotBlank() }
         DocumentType.Receipt -> receipt?.description?.takeIf { it.isNotBlank() }
         DocumentType.ProForma -> proForma?.notes?.takeIf { it.isNotBlank() }
         DocumentType.CreditNote -> creditNote?.reason?.takeIf { it.isNotBlank() }

@@ -112,13 +112,7 @@ class DocumentConfirmationService(
 
         val invoiceNumber: String? = when (documentType) {
             DocumentType.Invoice -> invoiceNumberGenerator.generateInvoiceNumber(tenantId).getOrThrow()
-            DocumentType.Bill,
-            DocumentType.Expense,
-            DocumentType.CreditNote,
-            DocumentType.Receipt,
-            DocumentType.ProForma,
-            DocumentType.Unknown,
-            -> null
+            else -> null
         }
 
         val created = dbQuery {
@@ -134,13 +128,6 @@ class DocumentConfirmationService(
                 )
 
                 DocumentType.Bill -> confirmBillTx(
-                    tenantId = tenantId,
-                    documentId = documentId,
-                    extractedData = extractedData,
-                    linkedContactId = linkedContactId
-                )
-
-                DocumentType.Expense -> confirmExpenseTx(
                     tenantId = tenantId,
                     documentId = documentId,
                     extractedData = extractedData,

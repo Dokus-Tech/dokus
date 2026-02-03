@@ -289,46 +289,12 @@ val DocumentType.description: String
             - Service providers (accountants, lawyers, consultants)
             - Wholesale suppliers, raw material providers
             
+            NOTE: Recurring utilities (Proximus, Luminus, Telenet, etc.) are also BILL.
+            They can be marked as recurring metadata later, but the document type is BILL.
+
             NOT THIS TYPE IF:
             - YOUR company is the seller → INVOICE
             - It's a small receipt/ticket → RECEIPT
-            - It's recurring utility without detailed breakdown → EXPENSE
-            """.trimIndent()
-
-        DocumentType.Expense ->
-            """
-            EXPENSE DOCUMENT — Recurring or operational business costs, often utilities/subscriptions.
-            
-            KEYWORDS (look for these exact terms):
-            - NL: "Maandelijkse afrekening", "Periodieke factuur", "Abonnement", "Verbruik", "Domiciliëring", "Maandelijks bedrag"
-            - FR: "Décompte mensuel", "Facture périodique", "Abonnement", "Consommation", "Domiciliation"
-            - DE: "Monatsabrechnung", "Abonnement", "Verbrauchsabrechnung"
-            - EN: "Monthly statement", "Subscription", "Consumption", "Direct debit"
-            
-            COMMON EXPENSE TYPES:
-            - Telecom: Proximus, Telenet, Orange, mobile phone bills
-            - Energy: Luminus, Engie, Eneco, TotalEnergies (gas, electricity)
-            - Internet, hosting, cloud services (AWS, Google, Microsoft)
-            - Office supplies, cleaning, maintenance
-            - Fuel cards (Lukoil, Q8, Tango)
-            - Subscriptions (software, magazines, memberships)
-            
-            VISUAL STRUCTURE:
-            - Often shows consumption/usage details
-            - Regular billing period (monthly)
-            - May mention direct debit (domiciliëring)
-            - Simpler than detailed purchase invoice
-            
-            DISTINGUISHING FEATURES:
-            - Recurring nature (monthly/periodic)
-            - Often utility or subscription based
-            - May not have detailed line items
-            - Often paid by direct debit
-            
-            NOT THIS TYPE IF:
-            - One-time purchase with line items → BILL
-            - Small cash purchase with ticket → RECEIPT
-            - Employee asking for reimbursement → EXPENSE_CLAIM
             """.trimIndent()
 
         DocumentType.Receipt ->

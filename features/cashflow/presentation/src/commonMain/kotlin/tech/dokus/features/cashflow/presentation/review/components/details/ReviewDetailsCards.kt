@@ -115,7 +115,6 @@ internal fun InvoiceDetailsCard(
     val titleRes = when (state.editableData.documentType) {
         DocumentType.Invoice -> Res.string.cashflow_invoice_details_section
         DocumentType.Bill -> Res.string.cashflow_bill_details_section
-        DocumentType.Expense -> Res.string.cashflow_expense_details_section
         else -> Res.string.cashflow_invoice_details_section
     }
 
@@ -138,13 +137,6 @@ internal fun InvoiceDetailsCard(
                     invoiceNumber = fields.invoiceNumber.takeIf { it.isNotBlank() },
                     issueDate = fields.issueDate?.toString(),
                     dueDate = fields.dueDate?.toString()
-                )
-            }
-            DocumentType.Expense -> {
-                val fields = state.editableData.expense ?: EditableExpenseFields()
-                ExpenseDetailsFactDisplay(
-                    receiptNumber = fields.receiptNumber.takeIf { it.isNotBlank() },
-                    date = fields.date?.toString()
                 )
             }
             else -> {
@@ -174,11 +166,6 @@ internal fun InvoiceDetailsCard(
                             text = stringResource(Res.string.document_type_bill),
                             modifier = Modifier.weight(1f),
                             onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Bill)) },
-                        )
-                        POutlinedButton(
-                            text = stringResource(Res.string.document_type_expense),
-                            modifier = Modifier.weight(1f),
-                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Expense)) },
                         )
                     }
                 }

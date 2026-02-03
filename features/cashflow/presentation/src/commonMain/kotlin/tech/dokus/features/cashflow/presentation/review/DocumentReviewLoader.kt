@@ -165,13 +165,11 @@ internal class DocumentReviewLoader(
             val extractedName = when (document.draft?.documentType) {
                 DocumentType.Invoice -> document.draft?.extractedData?.invoice?.clientName
                 DocumentType.Bill -> document.draft?.extractedData?.bill?.supplierName
-                DocumentType.Expense -> document.draft?.extractedData?.expense?.merchant
                 else -> null
             }
             val extractedVat = when (document.draft?.documentType) {
                 DocumentType.Invoice -> document.draft?.extractedData?.invoice?.clientVatNumber
                 DocumentType.Bill -> document.draft?.extractedData?.bill?.supplierVatNumber
-                DocumentType.Expense -> document.draft?.extractedData?.expense?.merchantVatNumber
                 else -> null
             }
 

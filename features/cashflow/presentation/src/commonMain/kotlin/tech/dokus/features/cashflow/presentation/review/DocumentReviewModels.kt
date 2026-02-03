@@ -29,11 +29,10 @@ data class EditableExtractedData(
         get() = when (documentType) {
             DocumentType.Invoice -> invoice?.isValid == true
             DocumentType.Bill -> bill?.isValid == true
-            DocumentType.Expense -> expense?.isValid == true
             DocumentType.Receipt -> receipt?.isValid == true
             DocumentType.ProForma -> proForma?.isValid == true
             DocumentType.CreditNote -> creditNote?.isValid == true
-            DocumentType.Unknown -> false
+            else -> false
         }
 
     companion object {

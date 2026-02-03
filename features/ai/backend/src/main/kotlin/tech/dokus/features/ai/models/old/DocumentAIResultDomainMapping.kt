@@ -135,7 +135,6 @@ fun ClassifiedDocumentType.toDomainType(): DocumentType = when (this) {
     ClassifiedDocumentType.PRO_FORMA -> DocumentType.ProForma
     ClassifiedDocumentType.BILL -> DocumentType.Bill
     ClassifiedDocumentType.RECEIPT -> DocumentType.Receipt
-    ClassifiedDocumentType.EXPENSE -> DocumentType.Expense
     ClassifiedDocumentType.UNKNOWN -> DocumentType.Unknown
 }
 
@@ -175,17 +174,6 @@ fun JsonElement.toExtractedDocumentData(documentType: DocumentType): ExtractedDo
                     documentType = documentType,
                     rawText = null,
                     expense = data.toExpenseFields(),
-                    overallConfidence = null,
-                    fieldConfidences = data.provenance?.toFieldConfidences() ?: emptyMap()
-                )
-            }
-
-            DocumentType.Expense -> {
-                val data = json.decodeFromJsonElement<ExtractedExpenseData>(this)
-                ExtractedDocumentData(
-                    documentType = documentType,
-                    rawText = null,
-                    expense = data.toExpenseFieldsFromExpense(),
                     overallConfidence = null,
                     fieldConfidences = data.provenance?.toFieldConfidences() ?: emptyMap()
                 )

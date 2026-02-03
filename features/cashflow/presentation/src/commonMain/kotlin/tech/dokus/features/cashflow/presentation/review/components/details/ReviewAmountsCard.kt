@@ -54,13 +54,6 @@ internal fun AmountsCard(
                     vat = fields.vatAmount.formatAmountDisplay()
                 )
             }
-            DocumentType.Expense -> {
-                val fields = state.editableData.expense ?: EditableExpenseFields()
-                ExpenseAmountsDisplay(
-                    total = fields.amount.formatAmountDisplay(),
-                    vat = fields.vatAmount.formatAmountDisplay()
-                )
-            }
             else -> {
                 // Show neutral placeholder during processing, hint when type not selected
                 Text(

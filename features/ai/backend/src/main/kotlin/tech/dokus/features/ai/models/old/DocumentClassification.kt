@@ -33,9 +33,6 @@ enum class ClassifiedDocumentType {
     @SerialName("RECEIPT")
     RECEIPT,
 
-    @SerialName("EXPENSE")
-    EXPENSE,
-
     @SerialName("UNKNOWN")
     UNKNOWN
 }

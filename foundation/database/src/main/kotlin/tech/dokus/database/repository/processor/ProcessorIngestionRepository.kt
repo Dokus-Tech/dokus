@@ -75,17 +75,6 @@ class ProcessorIngestionRepository {
                 }
             }
 
-            DocumentType.Expense -> {
-                val exp = data.expense ?: return DraftStatus.NeedsReview
-                if (exp.amount != null && exp.merchant != null &&
-                    exp.date != null && exp.category != null
-                ) {
-                    DraftStatus.Ready
-                } else {
-                    DraftStatus.NeedsReview
-                }
-            }
-
             DocumentType.Receipt -> {
                 // Receipt uses same required fields as Expense (confirms into Expense)
                 val receipt = data.receipt ?: return DraftStatus.NeedsReview
@@ -122,7 +111,7 @@ class ProcessorIngestionRepository {
                 }
             }
 
-            DocumentType.Unknown -> DraftStatus.NeedsReview
+            else -> DraftStatus.NeedsReview
         }
     }
 

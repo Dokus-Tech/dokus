@@ -290,9 +290,9 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
                 draftStatus = DraftStatus.NeedsReview,
-                documentType = DocumentType.Expense,
+                documentType = DocumentType.Bill,
                 extractedData = ExtractedDocumentData(
-                    expense = ExtractedExpenseFields(merchant = "Restaurant ABC")
+                    bill = ExtractedBillFields(supplierName = "Restaurant ABC")
                 ),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
