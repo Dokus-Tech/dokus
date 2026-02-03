@@ -21,7 +21,7 @@ import tech.dokus.features.ai.graph.sub.extraction.simple.ReceiptExtractionResul
  * - Mapping to domain/frontend DTO happens deterministically in code.
  */
 @Serializable
-sealed interface FinancialExtractionResult {
+sealed interface FinancialExtractionResult : ExtractionResult {
 
     @Serializable
     @SerialName("InvoiceExtraction")

@@ -7,7 +7,6 @@ import ai.koog.agents.core.tools.ToolRegistry
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
@@ -24,6 +23,7 @@ import tech.dokus.features.ai.graph.sub.extraction.financial.extractPurchaseOrde
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractQuoteSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.simple.extractReceiptSubGraph
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.ExtractionResult
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.foundation.backend.config.AIConfig
 
@@ -37,8 +37,8 @@ fun acceptDocumentGraph(
     aiConfig: AIConfig,
     registries: List<ToolRegistry>,
     documentFetcher: DocumentFetcher,
-): AIAgentGraphStrategy<AcceptDocumentInput, FinancialDocumentDto> {
-    return strategy<AcceptDocumentInput, FinancialDocumentDto>("accept-document-graph") {
+): AIAgentGraphStrategy<AcceptDocumentInput, ExtractionResult> {
+    return strategy<AcceptDocumentInput, ExtractionResult>("accept-document-graph") {
         val godRegistry = ToolRegistry { tools(registries.flatMap { it.tools }) }
 
         val classify by classifyDocumentSubGraph(aiConfig)
@@ -70,7 +70,7 @@ fun acceptDocumentGraph(
         edge(prepareClassifyInput forwardTo classify)
 
         // Handle unsupported case
-        val unsupported by node<ExtractDocumentInput, FinancialDocumentDto>("unsupported-doc-type") { input ->
+        val unsupported by node<ExtractDocumentInput, ExtractionResult>("unsupported-doc-type") { input ->
             // TODO: create a lightweight DTO with warning that the type is not yet supported.
             error("Unsupported document type: ${input.documentType}")
         }
