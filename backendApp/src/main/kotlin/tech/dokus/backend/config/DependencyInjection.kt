@@ -329,7 +329,6 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     // =========================================================================
 
     // Document Image Service (converts PDFs/images to PNG for vision processing)
-    single { DocumentImageService() }
     single<RedisClient>(named("ai-cache")) {
         redis {
             config = appConfig.caching.redis
@@ -366,13 +365,6 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
     // =========================================================================
     // Document Orchestrator
     // =========================================================================
-
-    // Get intelligence mode and models (single source of truth)
-    val mode = appConfig.ai.mode
-    val models = AIModels.forMode(mode)
-
-    // Create shared executor for all AI operations
-    single<PromptExecutor> { AIProviderFactory.createOpenAiExecutor(appConfig.ai) }
 
     // Document Orchestrator - tool-calling orchestrator with vision tools
     single {
