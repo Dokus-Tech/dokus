@@ -5,12 +5,14 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.resources.Resources
+import org.koin.ktor.ext.get
 import tech.dokus.backend.config.configureDependencyInjection
 import tech.dokus.backend.plugins.configureBackgroundWorkers
 import tech.dokus.backend.plugins.configureDatabase
 import tech.dokus.backend.plugins.configureGracefulDatabaseShutdown
 import tech.dokus.backend.plugins.configureRouting
 import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 import tech.dokus.foundation.backend.configure.configureErrorHandling
 import tech.dokus.foundation.backend.configure.configureJwtAuthentication
 import tech.dokus.foundation.backend.configure.configureMonitoring
@@ -63,10 +65,10 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureJwtAuthentication()
 
     // Routes
-    configureRouting(appConfig)
+    configureRouting(get<ServerInfoConfig>())
 
     // Lifecycle management
-    configureBackgroundWorkers(appConfig)
+    configureBackgroundWorkers()
     configureGracefulDatabaseShutdown()
 
     logger.info("Dokus Server started successfully")

@@ -2,7 +2,7 @@ package tech.dokus.backend.routes.common
 
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
-import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 import tech.dokus.foundation.backend.routes.healthRoutes
 import tech.dokus.foundation.backend.routes.serverInfoRoutes
 
@@ -13,9 +13,9 @@ import tech.dokus.foundation.backend.routes.serverInfoRoutes
  * - /health, /health/live, /health/ready - Health check endpoints
  * - /server-info - Server information endpoint
  */
-fun Application.configureCommonRoutes(appConfig: AppBaseConfig) {
+fun Application.configureCommonRoutes(serverInfoConfig: ServerInfoConfig) {
     routing {
         healthRoutes()
-        serverInfoRoutes(appConfig.serverInfo)
+        serverInfoRoutes(serverInfoConfig)
     }
 }

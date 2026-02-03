@@ -1,5 +1,6 @@
 package tech.dokus.backend.config
 
+import com.typesafe.config.Config
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -61,7 +62,6 @@ import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.aiModule
 import tech.dokus.features.ai.config.AIModels
-import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
@@ -69,7 +69,6 @@ import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
-import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.RedisDocumentImageCache
 import tech.dokus.foundation.backend.cache.RedisClient
@@ -77,8 +76,14 @@ import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.AuthConfig
+import tech.dokus.foundation.backend.config.CachingConfig
+import tech.dokus.foundation.backend.config.DatabaseConfig
+import tech.dokus.foundation.backend.config.FlywayConfig
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.config.MinioConfig
+import tech.dokus.foundation.backend.config.ProcessorConfig
+import tech.dokus.foundation.backend.config.StorageConfig
 import tech.dokus.foundation.backend.crypto.AesGcmCredentialCryptoService
 import tech.dokus.foundation.backend.crypto.CredentialCryptoService
 import tech.dokus.foundation.backend.crypto.PasswordCryptoService
@@ -134,11 +139,11 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             repositoryModules,
 
             // Feature services
-            authModule(appConfig),
-            cashflowModule(appConfig),
+            authModule(),
+            cashflowModule(),
             contactsModule,
-            processorModule(appConfig),
-            aiModule(appConfig)
+            processorModule(),
+            aiModule()
         )
     }
 
@@ -147,7 +152,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
 
 private val databaseModule = module {
     single {
-        DatabaseFactory(get(), "server-pool").apply {
+        DatabaseFactory(get<DatabaseConfig>(), get<FlywayConfig>(), "server-pool").apply {
             runBlocking {
                 connect()
                 DokusSchema.initialize()
@@ -175,10 +180,8 @@ private val httpClientModule = module {
 
 private val storageModule = module {
     single<ObjectStorage> {
-        val appConfig = get<AppBaseConfig>()
-        val minioConfig = MinioConfig.loadOrNull(appConfig)
-        requireNotNull(minioConfig) { "MinIO config missing. Ensure 'minio { ... }' exists in application config." }
-        val publicUrl = appConfig.storage.publicUrl
+        val minioConfig = get<MinioConfig>()
+        val publicUrl = get<StorageConfig>().publicUrl
         MinioStorage.create(minioConfig, publicUrl)
     }
 
@@ -200,9 +203,9 @@ private val cryptoModule = module {
     singleOf(::JwtValidator)
 }
 
-private fun authModule(appConfig: AppBaseConfig) = module {
+private fun authModule() = module {
     single<EmailService> {
-        val emailConfig = EmailConfig.load(appConfig)
+        val emailConfig = get<EmailConfig>()
         if (emailConfig.enabled && emailConfig.provider == "smtp") {
             SmtpEmailService(emailConfig)
         } else {
@@ -223,25 +226,27 @@ private fun authModule(appConfig: AppBaseConfig) = module {
     }
 
     single<RedisClient> {
+        val cachingConfig = get<CachingConfig>()
         redis {
-            config = appConfig.caching.redis
+            config = cachingConfig.redis
             namespace = RedisNamespace.Auth
         }
     }
 
     single<RateLimitServiceInterface> {
+        val authConfig = get<AuthConfig>()
         RedisRateLimitService(
             redisClient = get(),
-            maxAttempts = appConfig.auth.maxLoginAttempts,
-            attemptWindowMinutes = (appConfig.auth.rateLimit.windowSeconds / 60).toLong(),
-            lockoutDurationMinutes = appConfig.auth.lockDurationMinutes.toLong()
+            maxAttempts = authConfig.maxLoginAttempts,
+            attemptWindowMinutes = (authConfig.rateLimit.windowSeconds / 60).toLong(),
+            lockoutDurationMinutes = authConfig.lockDurationMinutes.toLong()
         )
     }
     singleOf(::RedisTokenBlacklistService) bind TokenBlacklistService::class
     singleOf(::RateLimitCleanupWorker)
 
     single {
-        val appConfig = get<AppBaseConfig>()
+        val authConfig = get<AuthConfig>()
         AuthService(
             userRepository = get(),
             jwtGenerator = get(),
@@ -250,21 +255,20 @@ private fun authModule(appConfig: AppBaseConfig) = module {
             emailVerificationService = get(),
             passwordResetService = get(),
             tokenBlacklistService = get(),
-            maxConcurrentSessions = appConfig.auth.maxConcurrentSessions
+            maxConcurrentSessions = authConfig.maxConcurrentSessions
         )
     }
 
     single { TeamService(get(), get(), get()) }
 
     single {
-        val appConfig = get<AppBaseConfig>()
-        val cbeApiSecret =
-            if (appConfig.config.hasPath("cbe.apiSecret")) appConfig.config.getString("cbe.apiSecret") else ""
+        val config = get<Config>()
+        val cbeApiSecret = if (config.hasPath("cbe.apiSecret")) config.getString("cbe.apiSecret") else ""
         CbeApiClient(get(), cbeApiSecret)
     }
 }
 
-private fun cashflowModule(appConfig: AppBaseConfig) = module {
+private fun cashflowModule() = module {
     single { InvoiceService(get(), get()) }
     single { ExpenseService(get()) }
     single { BillService(get(), get()) }
@@ -276,7 +280,7 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
 
     // Peppol
-    single { PeppolModuleConfig.fromConfig(appConfig.config) }
+    single { PeppolModuleConfig.fromConfig(get<Config>()) }
     single { PeppolProviderFactory(get()) }
     single { RecommandCompaniesClient(get()) }
     single { RecommandProvider(get()) } // For directory lookups
@@ -312,8 +316,6 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    // AI / RAG config (repositories are in repositoryModules)
-    single<AIConfig> { appConfig.ai }
 }
 
 private val contactsModule = module {
@@ -324,15 +326,16 @@ private val contactsModule = module {
 }
 
 @Suppress("LongMethod", "CyclomaticComplexMethod", "ComplexCondition")
-private fun processorModule(appConfig: AppBaseConfig) = module {
+private fun processorModule() = module {
     // =========================================================================
     // Document Processing Services
     // =========================================================================
 
     // Document Image Service (converts PDFs/images to PNG for vision processing)
     single<RedisClient>(named("ai-cache")) {
+        val cachingConfig = get<CachingConfig>()
         redis {
-            config = appConfig.caching.redis
+            config = cachingConfig.redis
             namespace = RedisNamespace.Ai
         }
     }
@@ -369,11 +372,13 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
 
     // Document Orchestrator - tool-calling orchestrator with vision tools
     single {
+        val aiConfig = get<AIConfig>()
+        val models = AIModels.forMode(aiConfig.mode)
         DocumentOrchestrator(
             executor = get(),
             orchestratorModel = models.orchestrator,
             visionModel = models.vision,
-            mode = mode,
+            mode = aiConfig.mode,
             exampleRepository = get(),
             imageCache = get(),
             chunkingService = get(),
@@ -468,7 +473,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
         DocumentProcessingWorker(
             ingestionRepository = get(),
             orchestrator = get(),
-            config = appConfig.processor,
+            config = get<ProcessorConfig>(),
             mode = get<AIConfig>().mode,
             tenantRepository = get(),
             addressRepository = get()

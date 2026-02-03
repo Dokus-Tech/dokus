@@ -141,7 +141,7 @@ Different models can be configured for different tasks:
 ```kotlin
 install(Koin) {
     modules(
-        aiModule(appConfig.config),
+        aiModule(),
         // ... other modules
     )
 }

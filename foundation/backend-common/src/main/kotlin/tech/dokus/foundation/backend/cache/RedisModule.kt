@@ -1,12 +1,12 @@
 package tech.dokus.foundation.backend.cache
 
 import org.koin.dsl.module
-import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.CachingConfig
 
-fun redisModule(appConfig: AppBaseConfig, redistNamespace: RedisNamespace) = module {
+fun redisModule(cachingConfig: CachingConfig, redistNamespace: RedisNamespace) = module {
     single<RedisClient> {
         redis {
-            config = appConfig.caching.redis
+            config = cachingConfig.redis
             namespace = redistNamespace
         }
     }

@@ -5,9 +5,8 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import tech.dokus.features.ai.orchestrator.DocumentFetcher
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
-import tech.dokus.foundation.backend.config.AppBaseConfig
 
-fun aiModule(appConfig: AppBaseConfig) = module {
+fun aiModule() = module {
     factory<ToolRegistry>(named<TenantDocumentsRegistry>()) { (args: TenantDocumentsRegistry.Args) ->
         TenantDocumentsRegistry(
             tenantId = args.tenantId,

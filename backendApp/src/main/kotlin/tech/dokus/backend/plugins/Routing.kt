@@ -7,7 +7,7 @@ import tech.dokus.backend.routes.cashflow.configureCashflowRoutes
 import tech.dokus.backend.routes.common.configureCommonRoutes
 import tech.dokus.backend.routes.contacts.configureContactsRoutes
 import tech.dokus.backend.routes.payment.configurePaymentRoutes
-import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 
 private val logger = LoggerFactory.getLogger("Routing")
 
@@ -18,11 +18,11 @@ private val logger = LoggerFactory.getLogger("Routing")
  * - Each feature exposes a configured*Routes() Application extension function
  * - Routes are organized by feature domain
  */
-fun Application.configureRouting(appConfig: AppBaseConfig) {
+fun Application.configureRouting(serverInfoConfig: ServerInfoConfig) {
     logger.info("Configuring routes...")
 
     // Common routes (health, server info)
-    configureCommonRoutes(appConfig)
+    configureCommonRoutes(serverInfoConfig)
 
     // Feature routes
     configureAuthRoutes()

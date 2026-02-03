@@ -25,9 +25,9 @@ data class MinioConfig(
          * Try to load MinIO config from the app config.
          * Returns null if minio section is not present.
          */
-        fun loadOrNull(baseConfig: AppBaseConfig): MinioConfig? {
-            return if (baseConfig.config.hasPath("minio")) {
-                fromConfig(baseConfig.config.getConfig("minio"))
+        fun loadOrNull(config: Config): MinioConfig? {
+            return if (config.hasPath("minio")) {
+                fromConfig(config.getConfig("minio"))
             } else {
                 null
             }
