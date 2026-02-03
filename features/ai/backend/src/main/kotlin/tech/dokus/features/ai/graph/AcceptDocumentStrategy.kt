@@ -21,7 +21,7 @@ import tech.dokus.features.ai.graph.sub.extraction.financial.extractInvoiceSubGr
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractProFormaSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractPurchaseOrderSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractQuoteSubGraph
-import tech.dokus.features.ai.graph.sub.extraction.simple.extractReceiptSubGraph
+import tech.dokus.features.ai.graph.sub.extraction.financial.extractReceiptSubGraph
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionResult
 import tech.dokus.features.ai.orchestrator.DocumentFetcher

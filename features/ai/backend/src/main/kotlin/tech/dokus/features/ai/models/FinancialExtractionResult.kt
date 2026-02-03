@@ -8,7 +8,7 @@ import tech.dokus.features.ai.graph.sub.extraction.financial.InvoiceExtractionRe
 import tech.dokus.features.ai.graph.sub.extraction.financial.ProFormaExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.PurchaseOrderExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.QuoteExtractionResult
-import tech.dokus.features.ai.graph.sub.extraction.simple.ReceiptExtractionResult
+import tech.dokus.features.ai.graph.sub.extraction.financial.ReceiptExtractionResult
 
 /**
  * Unified extraction output for all financial document extractors.

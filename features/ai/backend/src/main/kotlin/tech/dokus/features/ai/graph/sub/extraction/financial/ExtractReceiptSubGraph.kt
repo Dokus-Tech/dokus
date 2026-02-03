@@ -1,4 +1,4 @@
-package tech.dokus.features.ai.graph.sub.extraction.simple
+package tech.dokus.features.ai.graph.sub.extraction.financial
 
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
