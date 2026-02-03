@@ -469,7 +469,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             ingestionRepository = get(),
             orchestrator = get(),
             config = appConfig.processor,
-            mode = mode,
+            mode = get<AIConfig>().mode,
             tenantRepository = get(),
             addressRepository = get()
         )
