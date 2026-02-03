@@ -232,7 +232,7 @@ enum class DocumentType(
     Other("OTHER", false),
 
     @SerialName("UNKNOWN")
-    Unknown("UNKNOWN", false);
+    Unknown("UNKNOWN", true);
 }
 
 /**
@@ -376,20 +376,67 @@ enum class DocumentLinkType(override val dbValue: String) : DbEnum {
 }
 
 enum class DocumentTypeCategory {
-    FINANCIAL,  // Invoice, Bill, CreditNote, Quote, PurchaseOrder
-    BANKING,    // BankStatement, PaymentConfirmation
-    TAX,        // VATReturn, CorporateTax, TaxAssessment
-    PAYROLL,    // SalarySlip, PayrollSummary
-    LEGAL,      // Contract, Lease, Insurance
-    SIMPLE      // Receipt, DeliveryNote - minimal extraction
+    FINANCIAL,  // Invoices, bills, quotes, orders, assets, financial statements
+    BANKING,    // Bank statements, fees, payment confirmations
+    TAX,        // VAT, corporate/personal tax, social contributions, trade reports
+    PAYROLL,    // Payroll/HR documents
+    LEGAL       // Contracts, corporate governance, permits, fines
 }
 
 val DocumentType.category: DocumentTypeCategory
     get() = when (this) {
-        DocumentType.Invoice, DocumentType.Bill, DocumentType.CreditNote, DocumentType.Quote, DocumentType.ProForma, DocumentType.PurchaseOrder -> DocumentTypeCategory.FINANCIAL
-        DocumentType.BankStatement, DocumentType.PaymentConfirmation, DocumentType.BankFee -> DocumentTypeCategory.BANKING
-        DocumentType.VatReturn, DocumentType.CorporateTax, DocumentType.TaxAssessment, DocumentType.PersonalTax -> DocumentTypeCategory.TAX
-        DocumentType.SalarySlip, DocumentType.PayrollSummary, DocumentType.HolidayPay -> DocumentTypeCategory.PAYROLL
-        DocumentType.Contract, DocumentType.Lease, DocumentType.Loan, DocumentType.Insurance -> DocumentTypeCategory.LEGAL
-        else -> DocumentTypeCategory.SIMPLE
+        DocumentType.Invoice,
+        DocumentType.CreditNote,
+        DocumentType.ProForma,
+        DocumentType.Quote,
+        DocumentType.OrderConfirmation,
+        DocumentType.DeliveryNote,
+        DocumentType.Reminder,
+        DocumentType.StatementOfAccount,
+        DocumentType.Bill,
+        DocumentType.Receipt,
+        DocumentType.PurchaseOrder,
+        DocumentType.ExpenseClaim,
+        DocumentType.Dividend,
+        DocumentType.AnnualAccounts,
+        DocumentType.DepreciationSchedule,
+        DocumentType.Inventory,
+        DocumentType.Other,
+        DocumentType.Unknown -> DocumentTypeCategory.FINANCIAL
+        DocumentType.BankStatement,
+        DocumentType.BankFee,
+        DocumentType.InterestStatement,
+        DocumentType.PaymentConfirmation -> DocumentTypeCategory.BANKING
+        DocumentType.VatReturn,
+        DocumentType.VatListing,
+        DocumentType.VatAssessment,
+        DocumentType.IcListing,
+        DocumentType.OssReturn,
+        DocumentType.CorporateTax,
+        DocumentType.CorporateTaxAdvance,
+        DocumentType.TaxAssessment,
+        DocumentType.PersonalTax,
+        DocumentType.WithholdingTax,
+        DocumentType.SocialContribution,
+        DocumentType.SocialFund,
+        DocumentType.SelfEmployedContribution,
+        DocumentType.Vapz,
+        DocumentType.CustomsDeclaration,
+        DocumentType.Intrastat -> DocumentTypeCategory.TAX
+        DocumentType.SalarySlip,
+        DocumentType.PayrollSummary,
+        DocumentType.EmploymentContract,
+        DocumentType.Dimona,
+        DocumentType.C4,
+        DocumentType.HolidayPay -> DocumentTypeCategory.PAYROLL
+        DocumentType.Contract,
+        DocumentType.Lease,
+        DocumentType.Loan,
+        DocumentType.Insurance,
+        DocumentType.ShareholderRegister,
+        DocumentType.CompanyExtract,
+        DocumentType.BoardMinutes,
+        DocumentType.Subsidy,
+        DocumentType.Fine,
+        DocumentType.Permit -> DocumentTypeCategory.LEGAL
     }
