@@ -7,6 +7,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
@@ -66,6 +67,9 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
 
     // Confidence score (0.0000 - 1.0000)
     val confidence = decimal("confidence", 5, 4).nullable()
+
+    // Processing outcome derived from confidence threshold
+    val processingOutcome = dbEnumeration<ProcessingOutcome>("processing_outcome").nullable()
 
     // Per-field confidence scores as JSON
     val fieldConfidences = text("field_confidences").nullable()

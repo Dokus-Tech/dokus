@@ -9,6 +9,7 @@ import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -48,6 +49,7 @@ data class DocumentIngestionDto(
     val finishedAt: LocalDateTime?,
     val errorMessage: String?,
     val confidence: Double?,
+    val processingOutcome: ProcessingOutcome? = null,
     val rawExtraction: ExtractedDocumentData? = null,
     val processingTrace: List<DocumentProcessingStepDto>? = null
 )

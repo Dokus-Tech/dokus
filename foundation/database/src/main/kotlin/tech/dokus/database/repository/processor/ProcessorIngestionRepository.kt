@@ -19,10 +19,12 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
 import kotlin.time.ExperimentalTime
@@ -246,6 +248,11 @@ class ProcessorIngestionRepository {
             val fieldConfidencesJson =
                 extractedData.fieldConfidences.let { json.encodeToString(it) }
             val keywordsJson = keywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
+            val outcome = if (confidence >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD) {
+                ProcessingOutcome.AutoConfirmEligible
+            } else {
+                ProcessingOutcome.ManualReviewRequired
+            }
 
             // Update the ingestion run (always, regardless of draft creation)
             val runUpdated = DocumentIngestionRunsTable.update({
@@ -256,6 +263,7 @@ class ProcessorIngestionRepository {
                 it[DocumentIngestionRunsTable.rawText] = rawText
                 it[rawExtractionJson] = extractedDataJson
                 it[DocumentIngestionRunsTable.confidence] = confidence.toBigDecimal()
+                it[processingOutcome] = outcome
                 it[fieldConfidences] = fieldConfidencesJson
                 it[errorMessage] = null
             } > 0

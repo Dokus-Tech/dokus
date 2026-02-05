@@ -257,6 +257,7 @@ internal fun IngestionRunSummary.toDto(
         finishedAt = finishedAt,
         errorMessage = errorMessage,
         confidence = confidence,
+        processingOutcome = processingOutcome,
         rawExtraction = rawExtraction,
         processingTrace = processingTrace
     )

@@ -4,7 +4,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.foundation.aura.model.DocumentProcessingConstants.READY_STATUS_CONFIDENCE_THRESHOLD
+import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 
 /**
@@ -54,7 +54,7 @@ private fun DocumentRecordDto.determineSucceededStatus(): DocumentUiStatus {
 
     // Coerce to valid range [0.0, 1.0] to handle any malformed data
     val confidence = (latestIngestion?.confidence ?: 0.0).coerceIn(0.0, 1.0)
-    val hasHighConfidence = confidence >= READY_STATUS_CONFIDENCE_THRESHOLD
+    val hasHighConfidence = confidence >= AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 
     val isDraftReady = when (draft.draftStatus) {
         DraftStatus.Ready, DraftStatus.Confirmed -> true

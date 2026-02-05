@@ -18,10 +18,12 @@ import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
@@ -42,6 +44,7 @@ data class IngestionRunSummary(
     val finishedAt: LocalDateTime?,
     val errorMessage: String?,
     val confidence: Double?,
+    val processingOutcome: ProcessingOutcome?,
     val rawExtractionJson: String? = null,
     val processingTrace: String? = null
 )
@@ -238,6 +241,13 @@ class DocumentIngestionRunRepository {
         confidence: Double?
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val outcome = confidence?.let {
+            if (it >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD) {
+                ProcessingOutcome.AutoConfirmEligible
+            } else {
+                ProcessingOutcome.ManualReviewRequired
+            }
+        }
         DocumentIngestionRunsTable.update({
             DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())
         }) {
@@ -246,6 +256,7 @@ class DocumentIngestionRunRepository {
             it[DocumentIngestionRunsTable.rawText] = rawText
             it[rawExtractionJson] = extractedData?.let { data -> json.encodeToString(data) }
             it[DocumentIngestionRunsTable.confidence] = confidence?.toBigDecimal()
+            it[processingOutcome] = outcome
             it[fieldConfidences] = extractedData?.fieldConfidences?.let { fc -> json.encodeToString(fc) }
             it[errorMessage] = null
         } > 0
@@ -315,6 +326,7 @@ class DocumentIngestionRunRepository {
             finishedAt = this[DocumentIngestionRunsTable.finishedAt],
             errorMessage = this[DocumentIngestionRunsTable.errorMessage],
             confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble(),
+            processingOutcome = this[DocumentIngestionRunsTable.processingOutcome],
             rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
             processingTrace = this[DocumentIngestionRunsTable.processingTrace]
         )
