@@ -7,7 +7,7 @@ import kotlinx.serialization.json.JsonElement
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.CashflowEntryId
@@ -62,7 +62,7 @@ data class DocumentIngestionDto(
 data class DocumentDraftDto(
     val documentId: DocumentId,
     val tenantId: TenantId,
-    val draftStatus: DraftStatus,
+    val documentStatus: DocumentStatus,
     val documentType: DocumentType?,
     val extractedData: ExtractedDocumentData?,
     val aiDraftData: ExtractedDocumentData?, // Original immutable AI extraction (for diff display)
@@ -178,7 +178,7 @@ data class RejectDocumentRequest(
  */
 @Serializable
 data class DocumentFilters(
-    val draftStatus: DraftStatus? = null,
+    val documentStatus: DocumentStatus? = null,
     val documentType: DocumentType? = null,
     val ingestionStatus: IngestionStatus? = null,
     val search: String? = null

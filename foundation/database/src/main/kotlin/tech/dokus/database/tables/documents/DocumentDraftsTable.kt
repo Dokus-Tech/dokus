@@ -11,7 +11,7 @@ import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
@@ -29,7 +29,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * - Contact suggestion from AI matching
  *
  * Note: Confirmation creates Invoice/Bill/Expense with documentId FK.
- * The draft's draftStatus changes to Confirmed, but the linkage is in the
+ * The draft's documentStatus changes to Confirmed, but the linkage is in the
  * financial entity tables (single source of truth).
  */
 object DocumentDraftsTable : Table("document_drafts") {
@@ -45,7 +45,7 @@ object DocumentDraftsTable : Table("document_drafts") {
     )
 
     // Draft review status
-    val draftStatus = dbEnumeration<DraftStatus>("draft_status").default(DraftStatus.NeedsReview)
+    val documentStatus = dbEnumeration<DocumentStatus>("document_status").default(DocumentStatus.NeedsReview)
 
     // Detected document type
     val documentType = dbEnumeration<DocumentType>("document_type").nullable()
@@ -119,7 +119,7 @@ object DocumentDraftsTable : Table("document_drafts") {
     val counterpartyIntent = dbEnumeration<CounterpartyIntent>("counterparty_intent")
         .default(CounterpartyIntent.None)
 
-    // Rejection reason (if draftStatus == Rejected)
+    // Rejection reason (if documentStatus == Rejected)
     val rejectReason = dbEnumeration<DocumentRejectReason>("reject_reason").nullable()
 
     // ============================================
@@ -142,7 +142,7 @@ object DocumentDraftsTable : Table("document_drafts") {
 
     init {
         // For listing documents by status
-        index(false, tenantId, draftStatus)
+        index(false, tenantId, documentStatus)
 
         // For listing documents by type
         index(false, tenantId, documentType)

@@ -11,7 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.foundation.aura.components.CashflowStatusBadge
 import tech.dokus.foundation.aura.components.CashflowType
 import tech.dokus.foundation.aura.components.CashflowTypeBadge
@@ -115,10 +115,10 @@ class BadgeScreenshotTest(private val viewport: ScreenshotViewport) {
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                DraftStatusBadge(status = DraftStatus.NeedsReview)
-                DraftStatusBadge(status = DraftStatus.Ready)
-                DraftStatusBadge(status = DraftStatus.Confirmed)
-                DraftStatusBadge(status = DraftStatus.Rejected)
+                DraftStatusBadge(status = DocumentStatus.NeedsReview)
+                DraftStatusBadge(status = DocumentStatus.Ready)
+                DraftStatusBadge(status = DocumentStatus.Confirmed)
+                DraftStatusBadge(status = DocumentStatus.Rejected)
             }
         }
     }

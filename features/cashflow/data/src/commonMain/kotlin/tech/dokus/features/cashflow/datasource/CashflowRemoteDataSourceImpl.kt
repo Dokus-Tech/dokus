@@ -30,7 +30,7 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
@@ -605,7 +605,7 @@ internal class CashflowRemoteDataSourceImpl(
     // ============================================================================
 
     override suspend fun listDocuments(
-        draftStatus: DraftStatus?,
+        documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,
         search: String?,
@@ -615,7 +615,7 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             httpClient.get(
                 Documents.Paginated(
-                    draftStatus = draftStatus,
+                    documentStatus = documentStatus,
                     documentType = documentType,
                     ingestionStatus = ingestionStatus,
                     search = search,

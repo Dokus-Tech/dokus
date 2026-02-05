@@ -12,7 +12,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -212,7 +212,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             draft = DocumentDraftDto(
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
-                draftStatus = DraftStatus.NeedsReview,
+                documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Invoice,
                 extractedData = ExtractedDocumentData(
                     invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4400")
@@ -249,7 +249,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             draft = DocumentDraftDto(
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
-                draftStatus = DraftStatus.NeedsReview,
+                documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Bill,
                 extractedData = ExtractedDocumentData(
                     bill = ExtractedBillFields(
@@ -289,7 +289,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             draft = DocumentDraftDto(
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
-                draftStatus = DraftStatus.NeedsReview,
+                documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Bill,
                 extractedData = ExtractedDocumentData(
                     bill = ExtractedBillFields(supplierName = "Restaurant ABC")
@@ -341,7 +341,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             draft = DocumentDraftDto(
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
-                draftStatus = DraftStatus.NeedsReview,
+                documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Invoice,
                 extractedData = ExtractedDocumentData(
                     invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4401")

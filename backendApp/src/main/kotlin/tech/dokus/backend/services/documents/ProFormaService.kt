@@ -9,7 +9,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.DocumentLinkType
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -72,8 +72,8 @@ class ProFormaService(
         }
 
         // 3. Validate draft status (must be confirmed or ready)
-        if (draft.draftStatus != DraftStatus.Confirmed && draft.draftStatus != DraftStatus.Ready) {
-            error("ProForma must be confirmed before conversion: status=${draft.draftStatus}")
+        if (draft.documentStatus != DocumentStatus.Confirmed && draft.documentStatus != DocumentStatus.Ready) {
+            error("ProForma must be confirmed before conversion: status=${draft.documentStatus}")
         }
 
         // 4. Check not already converted

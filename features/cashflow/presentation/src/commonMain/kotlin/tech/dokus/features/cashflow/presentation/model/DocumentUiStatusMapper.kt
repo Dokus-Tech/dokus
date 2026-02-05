@@ -2,7 +2,7 @@ package tech.dokus.features.cashflow.presentation.model
 
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 import tech.dokus.foundation.aura.model.DocumentUiStatus
@@ -43,7 +43,7 @@ fun DocumentRecordDto.toUiStatus(): DocumentUiStatus {
  * Determines UI status for successfully processed documents.
  *
  * The ingestion status is already "Succeeded", so we primarily rely on the draft status:
- * - `DraftStatus.Ready` means the extracted data is complete enough to confirm.
+ * - `DocumentStatus.Ready` means the extracted data is complete enough to confirm.
  * - Invoices additionally require a linked contact to be truly confirmable.
  *
  * Confidence is used as a UI guardrail: low-confidence results still show as Review.
@@ -56,9 +56,9 @@ private fun DocumentRecordDto.determineSucceededStatus(): DocumentUiStatus {
     val confidence = (latestIngestion?.confidence ?: 0.0).coerceIn(0.0, 1.0)
     val hasHighConfidence = confidence >= AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 
-    val isDraftReady = when (draft.draftStatus) {
-        DraftStatus.Ready, DraftStatus.Confirmed -> true
-        DraftStatus.NeedsInput, DraftStatus.NeedsReview, DraftStatus.Rejected -> false
+    val isDraftReady = when (draft.documentStatus) {
+        DocumentStatus.Ready, DocumentStatus.Confirmed -> true
+        DocumentStatus.NeedsInput, DocumentStatus.NeedsReview, DocumentStatus.Rejected -> false
     }
 
     if (!isDraftReady) return DocumentUiStatus.Review

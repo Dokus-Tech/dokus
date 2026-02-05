@@ -19,7 +19,7 @@ import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
@@ -203,7 +203,7 @@ private suspend fun buildExistingDocumentRecord(
 
     val draft = context.draftRepository.getByDocumentId(existingDocument.id, tenantId)
     val latestIngestion = context.ingestionRepository.getLatestForDocument(existingDocument.id, tenantId)
-    val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
+    val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
         findConfirmedEntity(
             existingDocument.id,
             draft.documentType,

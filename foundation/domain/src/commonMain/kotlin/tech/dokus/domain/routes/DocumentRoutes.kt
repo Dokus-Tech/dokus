@@ -3,7 +3,7 @@ package tech.dokus.domain.routes
 import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 
 /**
@@ -44,7 +44,7 @@ class Documents {
     @Suppress("LongParameterList") // Query parameters for document filtering
     class Paginated(
         val parent: Documents = Documents(),
-        val draftStatus: DraftStatus? = null,
+        val documentStatus: DocumentStatus? = null,
         val documentType: DocumentType? = null,
         val ingestionStatus: IngestionStatus? = null,
         val search: String? = null,

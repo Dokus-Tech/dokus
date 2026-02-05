@@ -16,7 +16,7 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
@@ -462,11 +462,11 @@ interface CashflowRemoteDataSource {
 
     /**
      * List documents with optional filtering.
-     * GET /api/v1/documents?draftStatus={draftStatus}&documentType={documentType}&ingestionStatus={ingestionStatus}&search={search}&page={page}&limit={limit}
+     * GET /api/v1/documents?documentStatus={documentStatus}&documentType={documentType}&ingestionStatus={ingestionStatus}&search={search}&page={page}&limit={limit}
      *
      * Returns DocumentRecordDto envelope containing document, draft, and latest ingestion.
      *
-     * @param draftStatus Filter by draft status (NeedsReview, Ready, Confirmed, Rejected)
+     * @param documentStatus Filter by draft status (NeedsReview, Ready, Confirmed, Rejected)
      * @param documentType Filter by document type (Invoice, Bill, Expense)
      * @param ingestionStatus Filter by ingestion status (Queued, Processing, Succeeded, Failed)
      * @param search Full-text search query
@@ -474,7 +474,7 @@ interface CashflowRemoteDataSource {
      * @param limit Items per page (max 100)
      */
     suspend fun listDocuments(
-        draftStatus: DraftStatus? = null,
+        documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
         search: String? = null,

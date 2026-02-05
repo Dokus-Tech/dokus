@@ -11,7 +11,7 @@ import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
@@ -92,8 +92,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val canConfirm: Boolean
             get() {
                 val baseValid = (
-                    document.draft?.draftStatus == DraftStatus.NeedsReview ||
-                        document.draft?.draftStatus == DraftStatus.Ready
+                    document.draft?.documentStatus == DocumentStatus.NeedsReview ||
+                        document.draft?.documentStatus == DocumentStatus.Ready
                     ) &&
                     !isConfirming &&
                     !isSaving &&
@@ -119,8 +119,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val showConfidence: Boolean
             get() {
                 val conf = document.latestIngestion?.confidence
-                val status = document.draft?.draftStatus
-                val statusAllowsConfidence = status != DraftStatus.NeedsReview && status != DraftStatus.Rejected
+                val status = document.draft?.documentStatus
+                val statusAllowsConfidence = status != DocumentStatus.NeedsReview && status != DocumentStatus.Rejected
                 return conf != null && conf > MinConfidenceThreshold && statusAllowsConfidence
             }
 

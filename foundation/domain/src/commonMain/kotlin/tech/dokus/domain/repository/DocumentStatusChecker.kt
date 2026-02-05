@@ -11,7 +11,7 @@ import tech.dokus.domain.ids.TenantId
  *
  * Implementations should check the document_drafts table for status.
  */
-interface DraftStatusChecker {
+interface DocumentStatusChecker {
     /**
      * Check if a document has been confirmed by the user.
      *

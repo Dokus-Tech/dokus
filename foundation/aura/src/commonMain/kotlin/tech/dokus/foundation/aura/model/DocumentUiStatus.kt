@@ -2,7 +2,7 @@ package tech.dokus.foundation.aura.model
 
 /**
  * UI-specific status for document processing display.
- * Maps from domain models (IngestionStatus, DraftStatus) to user-facing states.
+ * Maps from domain models (IngestionStatus, DocumentStatus) to user-facing states.
  *
  * Status priority (first matching wins):
  * 1. Failed - ingestion failed or has error message

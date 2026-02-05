@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentRecordDto
@@ -34,14 +34,14 @@ internal class WatchPendingDocumentsUseCaseImpl(
                 flow {
                     emit(DokusState.loading())
                     val statuses = listOf(
-                        DraftStatus.NeedsReview,
-                        DraftStatus.Ready,
-                        DraftStatus.NeedsInput
+                        DocumentStatus.NeedsReview,
+                        DocumentStatus.Ready,
+                        DocumentStatus.NeedsInput
                     )
                     val collected = mutableListOf<DocumentRecordDto>()
                     for (status in statuses) {
                         val result = cashflowRemoteDataSource.listDocuments(
-                            draftStatus = status,
+                            documentStatus = status,
                             page = 0,
                             limit = limit.coerceAtMost(DefaultDocumentLimit)
                         )

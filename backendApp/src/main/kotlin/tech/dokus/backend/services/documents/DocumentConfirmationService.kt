@@ -29,7 +29,7 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BillId
@@ -209,8 +209,8 @@ class DocumentConfirmationService(
             }
             .singleOrNull() ?: throw DokusException.NotFound("Draft not found for document")
 
-        val status = draft[DocumentDraftsTable.draftStatus]
-        if (status != DraftStatus.NeedsReview && status != DraftStatus.Ready) {
+        val status = draft[DocumentDraftsTable.documentStatus]
+        if (status != DocumentStatus.NeedsReview && status != DocumentStatus.Ready) {
             throw DokusException.BadRequest("Draft is not ready for confirmation: $status")
         }
     }
@@ -506,7 +506,7 @@ class DocumentConfirmationService(
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
                 (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[draftStatus] = DraftStatus.Confirmed
+            it[documentStatus] = DocumentStatus.Confirmed
             it[rejectReason] = null
             it[updatedAt] = now
         }

@@ -43,7 +43,7 @@ import tech.dokus.aura.resources.documents_table_counterparty
 import tech.dokus.aura.resources.documents_table_description
 import tech.dokus.aura.resources.documents_view_details
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
@@ -332,15 +332,15 @@ private fun StatusDot(
  */
 internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
-    val draftStatus = document.draft?.draftStatus
+    val documentStatus = document.draft?.documentStatus
 
     return when {
         ingestionStatus == IngestionStatus.Failed -> true
         ingestionStatus == IngestionStatus.Processing ||
             ingestionStatus == IngestionStatus.Queued -> true
-        draftStatus == DraftStatus.NeedsReview ||
-            draftStatus == DraftStatus.NeedsInput -> true
-        draftStatus == DraftStatus.Rejected -> true
+        documentStatus == DocumentStatus.NeedsReview ||
+            documentStatus == DocumentStatus.NeedsInput -> true
+        documentStatus == DocumentStatus.Rejected -> true
         else -> false
     }
 }

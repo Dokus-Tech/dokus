@@ -286,7 +286,7 @@ enum class ProcessingOutcome(override val dbValue: String) : DbEnum {
  * Represents business review state, separate from ingestion lifecycle.
  */
 @Serializable
-enum class DraftStatus(override val dbValue: String) : DbEnum {
+enum class DocumentStatus(override val dbValue: String) : DbEnum {
     /** AI ran but threshold not met - user must fill fields manually */
     @SerialName("NEEDS_INPUT")
     NeedsInput("NEEDS_INPUT"),
@@ -308,7 +308,7 @@ enum class DraftStatus(override val dbValue: String) : DbEnum {
     Rejected("REJECTED");
 
     companion object {
-        fun fromDbValue(value: String): DraftStatus = entries.find { it.dbValue == value }!!
+        fun fromDbValue(value: String): DocumentStatus = entries.find { it.dbValue == value }!!
     }
 }
 

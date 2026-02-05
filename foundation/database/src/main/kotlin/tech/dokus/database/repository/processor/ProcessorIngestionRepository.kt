@@ -16,7 +16,7 @@ import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
@@ -52,68 +52,68 @@ class ProcessorIngestionRepository {
      * - Ready: All required fields present and valid
      * - NeedsReview: Missing required fields or validation issues
      */
-    private fun determineDraftStatus(type: DocumentType, data: ExtractedDocumentData): DraftStatus {
+    private fun determineDocumentStatus(type: DocumentType, data: ExtractedDocumentData): DocumentStatus {
         return when (type) {
             DocumentType.Invoice -> {
-                val inv = data.invoice ?: return DraftStatus.NeedsReview
+                val inv = data.invoice ?: return DocumentStatus.NeedsReview
                 if (inv.totalAmount != null && inv.clientName != null &&
                     inv.issueDate != null && inv.dueDate != null
                 ) {
-                    DraftStatus.Ready
+                    DocumentStatus.Ready
                 } else {
-                    DraftStatus.NeedsReview
+                    DocumentStatus.NeedsReview
                 }
             }
 
             DocumentType.Bill -> {
-                val bill = data.bill ?: return DraftStatus.NeedsReview
+                val bill = data.bill ?: return DocumentStatus.NeedsReview
                 if (bill.amount != null && bill.supplierName != null &&
                     bill.issueDate != null && bill.dueDate != null &&
                     bill.category != null
                 ) {
-                    DraftStatus.Ready
+                    DocumentStatus.Ready
                 } else {
-                    DraftStatus.NeedsReview
+                    DocumentStatus.NeedsReview
                 }
             }
 
             DocumentType.Receipt -> {
                 // Receipt uses same required fields as Expense (confirms into Expense)
-                val receipt = data.receipt ?: return DraftStatus.NeedsReview
+                val receipt = data.receipt ?: return DocumentStatus.NeedsReview
                 if (receipt.amount != null && receipt.merchant != null &&
                     receipt.date != null && receipt.category != null
                 ) {
-                    DraftStatus.Ready
+                    DocumentStatus.Ready
                 } else {
-                    DraftStatus.NeedsReview
+                    DocumentStatus.NeedsReview
                 }
             }
 
             DocumentType.ProForma -> {
                 // ProForma is informational - client/totals needed for conversion
-                val proForma = data.proForma ?: return DraftStatus.NeedsReview
+                val proForma = data.proForma ?: return DocumentStatus.NeedsReview
                 if (proForma.totalAmount != null && proForma.clientName != null &&
                     proForma.issueDate != null
                 ) {
-                    DraftStatus.Ready
+                    DocumentStatus.Ready
                 } else {
-                    DraftStatus.NeedsReview
+                    DocumentStatus.NeedsReview
                 }
             }
 
             DocumentType.CreditNote -> {
                 // CreditNote needs counterparty, amount, and issue date
-                val creditNote = data.creditNote ?: return DraftStatus.NeedsReview
+                val creditNote = data.creditNote ?: return DocumentStatus.NeedsReview
                 if (creditNote.totalAmount != null && creditNote.counterpartyName != null &&
                     creditNote.issueDate != null
                 ) {
-                    DraftStatus.Ready
+                    DocumentStatus.Ready
                 } else {
-                    DraftStatus.NeedsReview
+                    DocumentStatus.NeedsReview
                 }
             }
 
-            else -> DraftStatus.NeedsReview
+            else -> DocumentStatus.NeedsReview
         }
     }
 
@@ -208,8 +208,8 @@ class ProcessorIngestionRepository {
      * Draft creation rules:
      * - Unknown type: NO draft created (ingestion still SUCCEEDED)
      * - Classifiable types (Invoice/Bill/Expense): ALWAYS create draft
-     *   - meetsThreshold=false → DraftStatus.NeedsInput
-     *   - meetsThreshold=true → DraftStatus.Ready or NeedsReview based on completeness
+     *   - meetsThreshold=false → DocumentStatus.NeedsInput
+     *   - meetsThreshold=true → DocumentStatus.Ready or NeedsReview based on completeness
      *
      * @param runId The ingestion run ID
      * @param tenantId The tenant ID (required for draft operations)
@@ -281,10 +281,10 @@ class ProcessorIngestionRepository {
             // Determine draft status based on threshold and field completeness
             val calculatedStatus = if (!meetsThreshold) {
                 // AI ran but threshold not met - user must fill fields manually
-                DraftStatus.NeedsInput
+                DocumentStatus.NeedsInput
             } else {
                 // Threshold met - determine Ready vs NeedsReview based on completeness
-                determineDraftStatus(documentType, extractedData)
+                determineDocumentStatus(documentType, extractedData)
             }
 
             // Check if draft exists and get current state
@@ -301,7 +301,7 @@ class ProcessorIngestionRepository {
                 DocumentDraftsTable.insert {
                     it[DocumentDraftsTable.documentId] = documentUuid
                     it[DocumentDraftsTable.tenantId] = tenantUuid
-                    it[draftStatus] = calculatedStatus
+                    it[documentStatus] = calculatedStatus
                     it[DocumentDraftsTable.documentType] = documentType
                     it[aiDraftData] = extractedDataJson
                     it[DocumentDraftsTable.aiDescription] = description?.takeIf { value -> value.isNotBlank() }
@@ -343,7 +343,7 @@ class ProcessorIngestionRepository {
                     if (shouldSetExtracted) {
                         it[DocumentDraftsTable.extractedData] = extractedDataJson
                         // Update status when we update extracted data
-                        it[draftStatus] = calculatedStatus
+                        it[documentStatus] = calculatedStatus
                         if (!description.isNullOrBlank()) {
                             it[DocumentDraftsTable.aiDescription] = description
                         }

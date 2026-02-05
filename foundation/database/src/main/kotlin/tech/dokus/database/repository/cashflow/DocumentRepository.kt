@@ -18,7 +18,7 @@ import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -158,7 +158,7 @@ class DocumentRepository {
      *
      * Documents are returned regardless of whether they have drafts.
      * Filters:
-     * - draftStatus: Only applies when draft exists (documents without drafts pass this filter)
+     * - documentStatus: Only applies when draft exists (documents without drafts pass this filter)
      * - documentType: Only applies when draft exists
      * - ingestionStatus: Filters by latest ingestion status
      * - search: Filters by filename (ILIKE)
@@ -169,7 +169,7 @@ class DocumentRepository {
      */
     suspend fun listWithDraftsAndIngestion(
         tenantId: TenantId,
-        draftStatus: DraftStatus? = null,
+        documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
         search: String? = null,
@@ -196,10 +196,10 @@ class DocumentRepository {
 
         // Apply draft status filter (null-safe: documents without drafts pass)
         // When draft doesn't exist (LEFT JOIN null), the document should still be included
-        val statusFilteredQuery = if (draftStatus != null) {
+        val statusFilteredQuery = if (documentStatus != null) {
             filteredQuery.andWhere {
                 DocumentDraftsTable.tenantId.isNull() or
-                    (DocumentDraftsTable.draftStatus eq draftStatus)
+                    (DocumentDraftsTable.documentStatus eq documentStatus)
             }
         } else {
             filteredQuery
@@ -336,7 +336,7 @@ class DocumentRepository {
         return DraftSummary(
             documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
             tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),
-            draftStatus = this[DocumentDraftsTable.draftStatus],
+            documentStatus = this[DocumentDraftsTable.documentStatus],
             documentType = this[DocumentDraftsTable.documentType],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
             aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },

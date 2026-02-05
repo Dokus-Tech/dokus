@@ -27,7 +27,7 @@ import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
@@ -85,7 +85,7 @@ internal fun Route.documentRecordRoutes() {
             // Query documents with optional drafts and ingestion info
             val (documentsWithInfo, total) = documentRepository.listWithDraftsAndIngestion(
                 tenantId = tenantId,
-                draftStatus = route.draftStatus,
+                documentStatus = route.documentStatus,
                 documentType = route.documentType,
                 ingestionStatus = route.ingestionStatus,
                 search = route.search,
@@ -97,7 +97,7 @@ internal fun Route.documentRecordRoutes() {
             val records = documentsWithInfo.map { docInfo ->
                 val documentWithUrl = addDownloadUrl(docInfo.document, minioStorage, logger)
                 val draft = docInfo.draft
-                val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
+                val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
                     findConfirmedEntity(
                         docInfo.document.id,
                         draft.documentType,
@@ -145,7 +145,7 @@ internal fun Route.documentRecordRoutes() {
             val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
             val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
-            val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
+            val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
                 findConfirmedEntity(
                     documentId,
                     draft.documentType,
@@ -246,7 +246,7 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("No draft changes provided")
             }
 
-            if (draft.draftStatus == DraftStatus.Rejected) {
+            if (draft.documentStatus == DocumentStatus.Rejected) {
                 throw DokusException.BadRequest("Cannot edit rejected draft")
             }
 
@@ -380,12 +380,12 @@ internal fun Route.documentRecordRoutes() {
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
-            if (draft.draftStatus == DraftStatus.Rejected) {
+            if (draft.documentStatus == DocumentStatus.Rejected) {
                 throw DokusException.BadRequest("Cannot confirm a rejected document")
             }
 
             // Check if already confirmed (idempotent)
-            if (draft.draftStatus == DraftStatus.Confirmed) {
+            if (draft.documentStatus == DocumentStatus.Confirmed) {
                 // Return existing confirmed entity
                 val confirmedEntity = findConfirmedEntity(
                     documentId,
@@ -422,8 +422,8 @@ internal fun Route.documentRecordRoutes() {
             }
 
             // Check draft is ready
-            if (draft.draftStatus != DraftStatus.NeedsReview && draft.draftStatus != DraftStatus.Ready) {
-                throw DokusException.BadRequest("Draft is not ready for confirmation: ${draft.draftStatus}")
+            if (draft.documentStatus != DocumentStatus.NeedsReview && draft.documentStatus != DocumentStatus.Ready) {
+                throw DokusException.BadRequest("Draft is not ready for confirmation: ${draft.documentStatus}")
             }
 
             if (draft.counterpartyIntent == CounterpartyIntent.Pending) {
@@ -514,11 +514,11 @@ internal fun Route.documentRecordRoutes() {
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
-            if (draft.draftStatus == DraftStatus.Confirmed) {
+            if (draft.documentStatus == DocumentStatus.Confirmed) {
                 throw DokusException.BadRequest("Cannot reject a confirmed document")
             }
 
-            if (draft.draftStatus != DraftStatus.Rejected) {
+            if (draft.documentStatus != DocumentStatus.Rejected) {
                 draftRepository.rejectDraft(documentId, tenantId, request.reason)
             }
 

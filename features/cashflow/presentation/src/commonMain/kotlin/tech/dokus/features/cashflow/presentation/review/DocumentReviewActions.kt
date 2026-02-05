@@ -4,7 +4,7 @@ import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.ConfirmDocumentRequest
@@ -103,8 +103,8 @@ internal class DocumentReviewActions(
                 ).fold(
                     onSuccess = { record ->
                         val draft = record.draft
-                        val isConfirmed = draft?.draftStatus == DraftStatus.Confirmed
-                        val isRejected = draft?.draftStatus == DraftStatus.Rejected
+                        val isConfirmed = draft?.documentStatus == DocumentStatus.Confirmed
+                        val isRejected = draft?.documentStatus == DocumentStatus.Rejected
                         val cashflowEntryId = record.cashflowEntryId
                         withState<DocumentReviewState.Content, _> {
                             val linkedContactId = draft?.linkedContactId
@@ -205,8 +205,8 @@ internal class DocumentReviewActions(
                                     copy(
                                         document = record,
                                         isRejecting = false,
-                                        isDocumentRejected = draft?.draftStatus == DraftStatus.Rejected,
-                                        isDocumentConfirmed = draft?.draftStatus == DraftStatus.Confirmed,
+                                        isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
+                                        isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
                                         rejectDialogState = null // Close dialog on success
                                     )
                                 }
@@ -304,8 +304,8 @@ internal class DocumentReviewActions(
                             editableData = EditableExtractedData.fromExtractedData(draft?.extractedData),
                             originalData = draft?.extractedData,
                             counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
-                            isDocumentConfirmed = draft?.draftStatus == DraftStatus.Confirmed,
-                            isDocumentRejected = draft?.draftStatus == DraftStatus.Rejected
+                            isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
+                            isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected
                         )
                     }
                 }

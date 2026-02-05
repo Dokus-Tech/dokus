@@ -2,7 +2,7 @@ package tech.dokus.features.cashflow.presentation.review
 
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -59,9 +59,9 @@ internal class DocumentReviewLoader(
 
         val contactSuggestions = buildContactSuggestions(document)
         val isContactRequired = documentType == DocumentType.Invoice
-        val draftStatus = document.draft?.draftStatus
-        val isDocumentConfirmed = draftStatus == DraftStatus.Confirmed
-        val isDocumentRejected = draftStatus == DraftStatus.Rejected
+        val documentStatus = document.draft?.documentStatus
+        val isDocumentConfirmed = documentStatus == DocumentStatus.Confirmed
+        val isDocumentRejected = documentStatus == DocumentStatus.Rejected
         val counterpartyIntent = document.draft?.counterpartyIntent ?: tech.dokus.domain.enums.CounterpartyIntent.None
 
         val (contactSelectionState, selectedContactId, selectedContactSnapshot) =

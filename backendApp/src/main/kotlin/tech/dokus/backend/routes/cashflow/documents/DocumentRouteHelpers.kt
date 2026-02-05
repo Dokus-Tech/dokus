@@ -204,7 +204,7 @@ internal fun buildCorrections(
 internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     documentId = documentId,
     tenantId = tenantId,
-    draftStatus = draftStatus,
+    documentStatus = documentStatus,
     documentType = documentType,
     extractedData = extractedData,
     aiDraftData = aiDraftData,
