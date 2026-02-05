@@ -116,7 +116,6 @@ class BadgeScreenshotTest(private val viewport: ScreenshotViewport) {
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 DraftStatusBadge(status = DocumentStatus.NeedsReview)
-                DraftStatusBadge(status = DocumentStatus.Ready)
                 DraftStatusBadge(status = DocumentStatus.Confirmed)
                 DraftStatusBadge(status = DocumentStatus.Rejected)
             }

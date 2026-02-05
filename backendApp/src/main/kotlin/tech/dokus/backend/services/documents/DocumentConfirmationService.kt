@@ -210,7 +210,7 @@ class DocumentConfirmationService(
             .singleOrNull() ?: throw DokusException.NotFound("Draft not found for document")
 
         val status = draft[DocumentDraftsTable.documentStatus]
-        if (status != DocumentStatus.NeedsReview && status != DocumentStatus.Ready) {
+        if (status != DocumentStatus.NeedsReview && status != DocumentStatus.Confirmed) {
             throw DokusException.BadRequest("Draft is not ready for confirmation: $status")
         }
     }

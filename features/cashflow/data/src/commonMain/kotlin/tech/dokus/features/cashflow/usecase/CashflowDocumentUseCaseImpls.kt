@@ -34,8 +34,7 @@ internal class WatchPendingDocumentsUseCaseImpl(
                 flow {
                     emit(DokusState.loading())
                     val statuses = listOf(
-                        DocumentStatus.NeedsReview,
-                        DocumentStatus.Ready
+                        DocumentStatus.NeedsReview
                     )
                     val collected = mutableListOf<DocumentRecordDto>()
                     for (status in statuses) {

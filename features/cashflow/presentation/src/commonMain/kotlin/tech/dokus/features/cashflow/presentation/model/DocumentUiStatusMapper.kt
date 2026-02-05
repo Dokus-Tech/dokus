@@ -12,7 +12,7 @@ import tech.dokus.foundation.aura.model.DocumentUiStatus
  * 1. Failed: ingestion failed or has error message
  * 2. Queued: no ingestion or ingestion status is Queued
  * 3. Processing: ingestion status is Processing
- * 4. Ready: succeeded and draft is confirmed or otherwise ready
+ * 4. Ready: succeeded and draft is confirmed
  * 5. Review: succeeded but needs user attention
  */
 fun DocumentRecordDto.toUiStatus(): DocumentUiStatus {
@@ -41,13 +41,13 @@ fun DocumentRecordDto.toUiStatus(): DocumentUiStatus {
  * Determines UI status for successfully processed documents.
  *
  * The ingestion status is already "Succeeded", so we primarily rely on the draft status:
- * - `DocumentStatus.Confirmed` or `DocumentStatus.Ready` means the document is ready.
+ * - `DocumentStatus.Confirmed` means the document is ready.
  * - `DocumentStatus.NeedsReview` and `DocumentStatus.Rejected` mean user attention is required.
  */
 private fun DocumentRecordDto.determineSucceededStatus(): DocumentUiStatus {
     val draft = draft ?: return DocumentUiStatus.Review
     return when (draft.documentStatus) {
-        DocumentStatus.Confirmed, DocumentStatus.Ready -> DocumentUiStatus.Ready
+        DocumentStatus.Confirmed -> DocumentUiStatus.Ready
         DocumentStatus.NeedsReview, DocumentStatus.Rejected -> DocumentUiStatus.Review
     }
 }

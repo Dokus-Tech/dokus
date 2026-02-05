@@ -71,8 +71,8 @@ class ProFormaService(
             error("Document is not a ProForma: type=${draft.documentType}")
         }
 
-        // 3. Validate draft status (must be confirmed or ready)
-        if (draft.documentStatus != DocumentStatus.Confirmed && draft.documentStatus != DocumentStatus.Ready) {
+        // 3. Validate draft status (must be confirmed)
+        if (draft.documentStatus != DocumentStatus.Confirmed) {
             error("ProForma must be confirmed before conversion: status=${draft.documentStatus}")
         }
 

@@ -386,7 +386,6 @@ internal fun Route.documentRecordRoutes() {
 
             // Check if already confirmed (idempotent)
             if (draft.documentStatus == DocumentStatus.Confirmed) {
-                // Return existing confirmed entity
                 val confirmedEntity = findConfirmedEntity(
                     documentId,
                     draft.documentType,
@@ -395,34 +394,41 @@ internal fun Route.documentRecordRoutes() {
                     billRepository,
                     expenseRepository
                 )
-                    ?: throw DokusException.InternalError("Draft is confirmed but entity not found")
 
-                val document = documentRepository.getById(tenantId, documentId)!!
-                val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
-                val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
+                if (confirmedEntity != null) {
+                    val document = documentRepository.getById(tenantId, documentId)!!
+                    val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
+                    val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
-                // Look up the cashflow entry for this document
-                val cashflowEntry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId)
-                    .getOrNull()
+                    // Look up the cashflow entry for this document
+                    val cashflowEntry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId)
+                        .getOrNull()
 
-                call.respond(
-                    HttpStatusCode.OK,
-                    DocumentRecordDto(
-                        document = documentWithUrl,
-                        draft = draft.toDto(),
-                        latestIngestion = latestIngestion?.toDto(
-                            includeRawExtraction = true,
-                            includeTrace = true
-                        ),
-                        confirmedEntity = confirmedEntity,
-                        cashflowEntryId = cashflowEntry?.id
+                    call.respond(
+                        HttpStatusCode.OK,
+                        DocumentRecordDto(
+                            document = documentWithUrl,
+                            draft = draft.toDto(),
+                            latestIngestion = latestIngestion?.toDto(
+                                includeRawExtraction = true,
+                                includeTrace = true
+                            ),
+                            confirmedEntity = confirmedEntity,
+                            cashflowEntryId = cashflowEntry?.id
+                        )
                     )
+                    return@post
+                }
+
+                logger.warn(
+                    "Draft is confirmed but entity not found; proceeding with confirmation: document=$documentId"
                 )
-                return@post
             }
 
             // Check draft is ready
-            if (draft.documentStatus != DocumentStatus.NeedsReview && draft.documentStatus != DocumentStatus.Ready) {
+            if (draft.documentStatus != DocumentStatus.NeedsReview &&
+                draft.documentStatus != DocumentStatus.Confirmed
+            ) {
                 throw DokusException.BadRequest("Draft is not ready for confirmation: ${draft.documentStatus}")
             }
 

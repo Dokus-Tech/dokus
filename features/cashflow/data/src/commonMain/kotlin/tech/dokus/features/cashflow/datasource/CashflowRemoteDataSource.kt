@@ -466,7 +466,7 @@ interface CashflowRemoteDataSource {
      *
      * Returns DocumentRecordDto envelope containing document, draft, and latest ingestion.
      *
-     * @param documentStatus Filter by draft status (NeedsReview, Ready, Confirmed, Rejected)
+     * @param documentStatus Filter by draft status (NeedsReview, Confirmed, Rejected)
      * @param documentType Filter by document type (Invoice, Bill, Expense)
      * @param ingestionStatus Filter by ingestion status (Queued, Processing, Succeeded, Failed)
      * @param search Full-text search query

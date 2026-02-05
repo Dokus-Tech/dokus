@@ -71,7 +71,7 @@ class DocumentUiStatusMapperTest {
         assertEquals(DocumentUiStatus.Processing, record.toUiStatus())
     }
 
-    // === READY CASES ===
+    // === CONFIRMED CASES ===
 
     @Test
     fun `returns Ready when draft is Confirmed`() {
@@ -84,10 +84,10 @@ class DocumentUiStatusMapperTest {
     }
 
     @Test
-    fun `returns Ready when draft is Ready`() {
+    fun `returns Ready when draft is Confirmed`() {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Succeeded,
-            documentStatus = DocumentStatus.Ready,
+            documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Ready, record.toUiStatus())
@@ -130,7 +130,7 @@ class DocumentUiStatusMapperTest {
     fun `Failed takes priority over Ready conditions`() {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Failed, // Failed status
-            documentStatus = DocumentStatus.Ready,
+            documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Failed, record.toUiStatus())

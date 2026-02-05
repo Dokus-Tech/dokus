@@ -92,8 +92,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val canConfirm: Boolean
             get() {
                 val baseValid = (
-                    document.draft?.documentStatus == DocumentStatus.NeedsReview ||
-                        document.draft?.documentStatus == DocumentStatus.Ready
+                    document.draft?.documentStatus == DocumentStatus.NeedsReview
                     ) &&
                     !isConfirming &&
                     !isSaving &&

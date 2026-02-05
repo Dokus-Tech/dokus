@@ -291,10 +291,6 @@ enum class DocumentStatus(override val dbValue: String) : DbEnum {
     @SerialName("NEEDS_REVIEW")
     NeedsReview("NEEDS_REVIEW"),
 
-    /** Draft is ready for confirmation (all required fields present) */
-    @SerialName("READY")
-    Ready("READY"),
-
     /** User confirmed, financial entity created */
     @SerialName("CONFIRMED")
     Confirmed("CONFIRMED"),

@@ -13,7 +13,6 @@ import tech.dokus.foundation.aura.extensions.onColor
  *
  * Color mapping:
  * - NeedsReview: Primary container - document awaiting user review
- * - Ready: Tertiary container - document ready for confirmation
  * - Confirmed: Tertiary container - user confirmed, entity created
  * - Rejected: Surface variant - user rejected extraction
  *
