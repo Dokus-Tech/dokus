@@ -21,7 +21,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * CRITICAL: All queries MUST filter by tenant_id for multi-tenant security.
  *
  * This table stores the editable draft state for a document:
- * - Draft status (NeedsReview -> Ready -> Confirmed/Rejected)
+ * - Draft status (NeedsReview -> Confirmed/Rejected)
  * - AI draft data (immutable, from first successful run)
  * - Extracted data (editable current version)
  * - User corrections tracking for audit
@@ -48,7 +48,7 @@ object DocumentDraftsTable : Table("document_drafts") {
     val documentStatus = dbEnumeration<DocumentStatus>("document_status").default(DocumentStatus.NeedsReview)
 
     // Detected document type
-    val documentType = dbEnumeration<DocumentType>("document_type").nullable()
+    val documentType = dbEnumeration<DocumentType>("document_type").default(DocumentType.Unknown)
 
     // ============================================
     // Extraction Data Fields

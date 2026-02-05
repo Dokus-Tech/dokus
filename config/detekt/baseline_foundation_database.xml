@@ -15,7 +15,6 @@
     <ID>ComplexCondition:ProcessorIngestionRepository.kt$ProcessorIngestionRepository$exp.amount != null &amp;&amp; exp.merchant != null &amp;&amp; exp.date != null &amp;&amp; exp.category != null</ID>
     <ID>ComplexCondition:ProcessorIngestionRepository.kt$ProcessorIngestionRepository$inv.totalAmount != null &amp;&amp; inv.clientName != null &amp;&amp; inv.issueDate != null &amp;&amp; inv.dueDate != null</ID>
     <ID>CyclomaticComplexMethod:ContactRepository.kt$ContactRepository$suspend fun updateContact( contactId: ContactId, tenantId: TenantId, request: UpdateContactRequest ): Result&lt;ContactDto&gt;</ID>
-    <ID>CyclomaticComplexMethod:ProcessorIngestionRepository.kt$ProcessorIngestionRepository$private fun determineDocumentStatus(type: DocumentType, data: ExtractedDocumentData): DocumentStatus</ID>
     <ID>EmptyInitBlock:PasswordResetTokensTable.kt$PasswordResetTokensTable${ }</ID>
     <ID>FinalNewline:DokusSchema.kt$tech.dokus.database.DokusSchema.kt</ID>
     <ID>FinalNewline:IngestionItemEntity.kt$tech.dokus.database.entity.IngestionItemEntity.kt</ID>
@@ -98,7 +97,7 @@
     <ID>LongMethod:DocumentRepository.kt$DocumentRepository$suspend fun listWithDraftsAndIngestion( tenantId: TenantId, documentStatus: DocumentStatus? = null, documentType: DocumentType? = null, ingestionStatus: IngestionStatus? = null, search: String? = null, page: Int = 0, limit: Int = 20 ): Pair&lt;List&lt;DocumentWithDraftAndIngestion&gt;, Long&gt;</ID>
     <ID>LongMethod:InvoiceRepository.kt$InvoiceRepository$suspend fun createInvoice( tenantId: TenantId, request: CreateInvoiceRequest ): Result&lt;FinancialDocumentDto.InvoiceDto&gt;</ID>
     <ID>LongMethod:InvoiceRepository.kt$InvoiceRepository$suspend fun updateInvoice( invoiceId: InvoiceId, tenantId: TenantId, request: CreateInvoiceRequest ): Result&lt;FinancialDocumentDto.InvoiceDto&gt;</ID>
-    <ID>LongMethod:ProcessorIngestionRepository.kt$ProcessorIngestionRepository$suspend fun markAsSucceeded( runId: String, tenantId: String, documentId: String, documentType: DocumentType, extractedData: ExtractedDocumentData, confidence: Double, rawText: String?, meetsThreshold: Boolean, force: Boolean = false ): Boolean</ID>
+    <ID>LongMethod:ProcessorIngestionRepository.kt$ProcessorIngestionRepository$suspend fun markAsSucceeded( runId: String, tenantId: String, documentId: String, documentType: DocumentType, extractedData: ExtractedDocumentData, confidence: Double, rawText: String?, description: String? = null, keywords: List<String> = emptyList(), force: Boolean = false ): Boolean</ID>
     <ID>LongParameterList:BankingRepository.kt$BankingRepository$( bankConnectionId: BankConnectionId, tenantId: TenantId, externalId: String, date: LocalDate, amount: Money, description: String, merchantName: String?, category: String?, isPending: Boolean )</ID>
     <ID>LongParameterList:BankingRepository.kt$BankingRepository$( tenantId: TenantId, connectionId: BankConnectionId? = null, fromDate: LocalDate? = null, toDate: LocalDate? = null, reconciled: Boolean? = null, limit: Int = 50, offset: Int = 0 )</ID>
     <ID>LongParameterList:BankingRepository.kt$BankingRepository$( tenantId: TenantId, provider: BankProvider, institutionId: String, institutionName: String, accountId: String, accountName: String?, accountType: BankAccountType?, currency: Currency, encryptedAccessToken: String )</ID>
@@ -112,7 +111,7 @@
     <ID>LongParameterList:PaymentRepository.kt$PaymentRepository$( tenantId: TenantId, invoiceId: InvoiceId, amount: Money, paymentDate: LocalDate, paymentMethod: PaymentMethod, transactionId: TransactionId?, notes: String? )</ID>
     <ID>LongParameterList:PeppolTransmissionRepository.kt$PeppolTransmissionRepository$( tenantId: TenantId, direction: PeppolTransmissionDirection, documentType: PeppolDocumentType, invoiceId: InvoiceId? = null, billId: BillId? = null, recipientPeppolId: PeppolId? = null, senderPeppolId: PeppolId? = null )</ID>
     <ID>LongParameterList:PeppolTransmissionRepository.kt$PeppolTransmissionRepository$( transmissionId: PeppolTransmissionId, tenantId: TenantId, status: PeppolStatus, externalDocumentId: String? = null, errorMessage: String? = null, rawRequest: String? = null, rawResponse: String? = null, transmittedAt: LocalDateTime? = null )</ID>
-    <ID>LongParameterList:ProcessorIngestionRepository.kt$ProcessorIngestionRepository$( runId: String, tenantId: String, documentId: String, documentType: DocumentType, extractedData: ExtractedDocumentData, confidence: Double, rawText: String?, meetsThreshold: Boolean, force: Boolean = false )</ID>
+    <ID>LongParameterList:ProcessorIngestionRepository.kt$ProcessorIngestionRepository$( runId: String, tenantId: String, documentId: String, documentType: DocumentType, extractedData: ExtractedDocumentData, confidence: Double, rawText: String?, description: String? = null, keywords: List<String> = emptyList(), force: Boolean = false )</ID>
     <ID>LongParameterList:TenantRepository.kt$TenantRepository$( type: TenantType, legalName: LegalName, displayName: DisplayName, plan: TenantPlan = TenantPlan.Free, language: Language, vatNumber: VatNumber, address: UpsertTenantAddressRequest, )</ID>
     <ID>LongParameterList:UserRepository.kt$UserRepository$( tenantId: TenantId, email: String, password: String, firstName: String, lastName: String, role: UserRole )</ID>
     <ID>MagicNumber:AddressTable.kt$AddressTable$100</ID>
@@ -219,7 +218,6 @@
     <ID>ReturnCount:DocumentRepository.kt$DocumentRepository$private fun getLatestIngestionForDocument( documentId: DocumentId, tenantIdUuid: UUID ): IngestionRunSummary?</ID>
     <ID>ReturnCount:InvoiceNumberRepository.kt$InvoiceNumberRepository$private fun isDeadlockException(exception: SQLException): Boolean</ID>
     <ID>ReturnCount:InvoiceNumberRepository.kt$InvoiceNumberRepository$private suspend fun &lt;T&gt; retryOnDeadlock(block: suspend () -&gt; Result&lt;T&gt;): Result&lt;T&gt;</ID>
-    <ID>ReturnCount:ProcessorIngestionRepository.kt$ProcessorIngestionRepository$private fun determineDocumentStatus(type: DocumentType, data: ExtractedDocumentData): DocumentStatus</ID>
     <ID>SpacingBetweenDeclarationsWithComments:DokusSchema.kt$DokusSchema$/** * Creates all tables (idempotently) in a deterministic order. */</ID>
     <ID>SpacingBetweenDeclarationsWithComments:UserRepository.kt$UserRepository$/** * Register a new user without associating them with any tenant. * The user can later create or join tenants. */</ID>
     <ID>StringTemplate:DocumentRepository.kt$DocumentRepository$${search}</ID>

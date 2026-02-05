@@ -434,7 +434,10 @@ internal fun Route.documentRecordRoutes() {
             if (resolvedType == DocumentType.Unknown) {
                 throw DokusException.BadRequest("Document type must be resolved before confirmation")
             }
-            if (draft.documentType != null && draft.documentType != resolvedType) {
+            if (draft.documentType != null &&
+                draft.documentType != DocumentType.Unknown &&
+                draft.documentType != resolvedType
+            ) {
                 throw DokusException.BadRequest("Document type mismatch with draft")
             }
 

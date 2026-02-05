@@ -1,10 +1,8 @@
 package tech.dokus.features.cashflow.presentation.model
 
-import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 
 /**
@@ -14,8 +12,8 @@ import tech.dokus.foundation.aura.model.DocumentUiStatus
  * 1. Failed: ingestion failed or has error message
  * 2. Queued: no ingestion or ingestion status is Queued
  * 3. Processing: ingestion status is Processing
- * 4. Ready: succeeded and draft is ready to confirm (invoice additionally requires linked contact)
- * 5. Review: succeeded but needs user attention (needs input/review or low-confidence)
+ * 4. Ready: succeeded and draft is confirmed or otherwise ready
+ * 5. Review: succeeded but needs user attention
  */
 fun DocumentRecordDto.toUiStatus(): DocumentUiStatus {
     val ingestion = latestIngestion
@@ -43,31 +41,13 @@ fun DocumentRecordDto.toUiStatus(): DocumentUiStatus {
  * Determines UI status for successfully processed documents.
  *
  * The ingestion status is already "Succeeded", so we primarily rely on the draft status:
- * - `DocumentStatus.Ready` means the extracted data is complete enough to confirm.
- * - Invoices additionally require a linked contact to be truly confirmable.
- *
- * Confidence is used as a UI guardrail: low-confidence results still show as Review.
+ * - `DocumentStatus.Confirmed` or `DocumentStatus.Ready` means the document is ready.
+ * - `DocumentStatus.NeedsReview` and `DocumentStatus.Rejected` mean user attention is required.
  */
 private fun DocumentRecordDto.determineSucceededStatus(): DocumentUiStatus {
     val draft = draft ?: return DocumentUiStatus.Review
-    val documentType = draft.documentType ?: DocumentType.Unknown
-
-    // Coerce to valid range [0.0, 1.0] to handle any malformed data
-    val confidence = (latestIngestion?.confidence ?: 0.0).coerceIn(0.0, 1.0)
-    val hasHighConfidence = confidence >= AUTO_CONFIRM_CONFIDENCE_THRESHOLD
-
-    val isDraftReady = when (draft.documentStatus) {
-        DocumentStatus.Ready, DocumentStatus.Confirmed -> true
-        DocumentStatus.NeedsInput, DocumentStatus.NeedsReview, DocumentStatus.Rejected -> false
+    return when (draft.documentStatus) {
+        DocumentStatus.Confirmed, DocumentStatus.Ready -> DocumentUiStatus.Ready
+        DocumentStatus.NeedsReview, DocumentStatus.Rejected -> DocumentUiStatus.Review
     }
-
-    if (!isDraftReady) return DocumentUiStatus.Review
-    if (!hasHighConfidence) return DocumentUiStatus.Review
-
-    // Invoice confirmation requires a linked contact; bills/expenses don't.
-    if (documentType == DocumentType.Invoice && draft.linkedContactId == null) {
-        return DocumentUiStatus.Review
-    }
-
-    return DocumentUiStatus.Ready
 }

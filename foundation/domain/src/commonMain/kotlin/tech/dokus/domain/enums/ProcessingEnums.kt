@@ -287,10 +287,6 @@ enum class ProcessingOutcome(override val dbValue: String) : DbEnum {
  */
 @Serializable
 enum class DocumentStatus(override val dbValue: String) : DbEnum {
-    /** AI ran but threshold not met - user must fill fields manually */
-    @SerialName("NEEDS_INPUT")
-    NeedsInput("NEEDS_INPUT"),
-
     /** Draft has partial data and needs user review */
     @SerialName("NEEDS_REVIEW")
     NeedsReview("NEEDS_REVIEW"),

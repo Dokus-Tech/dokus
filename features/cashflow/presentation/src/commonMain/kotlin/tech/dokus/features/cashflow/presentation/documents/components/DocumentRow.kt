@@ -327,7 +327,7 @@ private fun StatusDot(
  * Documents need attention if they are:
  * - Processing or queued (temporary state)
  * - Failed ingestion
- * - Needs review or input
+ * - Needs review
  * - Rejected
  */
 internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
@@ -338,8 +338,7 @@ internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
         ingestionStatus == IngestionStatus.Failed -> true
         ingestionStatus == IngestionStatus.Processing ||
             ingestionStatus == IngestionStatus.Queued -> true
-        documentStatus == DocumentStatus.NeedsReview ||
-            documentStatus == DocumentStatus.NeedsInput -> true
+        documentStatus == DocumentStatus.NeedsReview -> true
         documentStatus == DocumentStatus.Rejected -> true
         else -> false
     }

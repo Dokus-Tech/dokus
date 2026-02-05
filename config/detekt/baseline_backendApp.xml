@@ -15,7 +15,6 @@
     <ID>ArgumentListWrapping:DocumentProcessingWorker.kt$DocumentProcessingWorker$("Embedding count mismatch: expected ${chunkingResult.chunks.size}, got ${embeddings.size}")</ID>
     <ID>ArgumentListWrapping:DocumentProcessingWorker.kt$DocumentProcessingWorker$("Starting document processing worker (interval=${config.pollingInterval}ms, batch=${config.batchSize}, RAG=${isRagEnabled})")</ID>
     <ID>ArgumentListWrapping:DocumentProcessingWorker.kt$DocumentProcessingWorker$("Stored ${chunksWithEmbeddings.size} chunks with embeddings for document $documentId (hash=$contentHash)")</ID>
-    <ID>ArgumentListWrapping:DocumentProcessingWorker.kt$DocumentProcessingWorker$("Successfully processed document $documentId: type=$documentType, confidence=${result.confidence}, meetsThreshold=$meetsThreshold")</ID>
     <ID>ArgumentListWrapping:DocumentRecordRoutes.kt$("Invoice creation from document requires contact selection. Use /api/v1/invoices instead.")</ID>
     <ID>ArgumentListWrapping:DocumentRecordRoutes.kt$("Reprocessing document: $documentId, force=${request.force}, " + "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}, timeout=${request.timeoutSeconds}s], " + "tenant=$tenantId")</ID>
     <ID>ArgumentListWrapping:InvoiceNumberConcurrencyTest.kt$InvoiceNumberConcurrencyTest$((1..numberOfRequests).toList(), results.sorted(), "Numbers should be sequential 1-$numberOfRequests")</ID>
@@ -159,7 +158,6 @@
     <ID>MaxLineLength:DocumentProcessingWorker.kt$DocumentProcessingWorker$logger.info("Deleted $deletedCount old chunks for document $documentId (old hash=$existingHash, new hash=$contentHash)")</ID>
     <ID>MaxLineLength:DocumentProcessingWorker.kt$DocumentProcessingWorker$logger.info("Starting document processing worker (interval=${config.pollingInterval}ms, batch=${config.batchSize}, RAG=${isRagEnabled})")</ID>
     <ID>MaxLineLength:DocumentProcessingWorker.kt$DocumentProcessingWorker$logger.info("Stored ${chunksWithEmbeddings.size} chunks with embeddings for document $documentId (hash=$contentHash)")</ID>
-    <ID>MaxLineLength:DocumentProcessingWorker.kt$DocumentProcessingWorker$logger.info("Successfully processed document $documentId: type=$documentType, confidence=${result.confidence}, meetsThreshold=$meetsThreshold")</ID>
     <ID>MaxLineLength:DocumentProcessingWorker.kt$DocumentProcessingWorker$throw IllegalStateException("Embedding count mismatch: expected ${chunkingResult.chunks.size}, got ${embeddings.size}")</ID>
     <ID>MaxLineLength:DocumentRecordRoutes.kt$throw DokusException.BadRequest("Invoice creation from document requires contact selection. Use /api/v1/invoices instead.")</ID>
     <ID>MaxLineLength:InvoiceNumberConcurrencyTest.kt$InvoiceNumberConcurrencyTest$assertEquals((1..numberOfRequests).toList(), results.sorted(), "Numbers should be sequential 1-$numberOfRequests")</ID>

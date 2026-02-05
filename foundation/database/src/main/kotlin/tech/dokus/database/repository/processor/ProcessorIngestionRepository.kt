@@ -46,78 +46,6 @@ import kotlin.uuid.toKotlinUuid
 class ProcessorIngestionRepository {
 
     /**
-     * Determine the draft status based on extracted data validation.
-     *
-     * Returns:
-     * - Ready: All required fields present and valid
-     * - NeedsReview: Missing required fields or validation issues
-     */
-    private fun determineDocumentStatus(type: DocumentType, data: ExtractedDocumentData): DocumentStatus {
-        return when (type) {
-            DocumentType.Invoice -> {
-                val inv = data.invoice ?: return DocumentStatus.NeedsReview
-                if (inv.totalAmount != null && inv.clientName != null &&
-                    inv.issueDate != null && inv.dueDate != null
-                ) {
-                    DocumentStatus.Ready
-                } else {
-                    DocumentStatus.NeedsReview
-                }
-            }
-
-            DocumentType.Bill -> {
-                val bill = data.bill ?: return DocumentStatus.NeedsReview
-                if (bill.amount != null && bill.supplierName != null &&
-                    bill.issueDate != null && bill.dueDate != null &&
-                    bill.category != null
-                ) {
-                    DocumentStatus.Ready
-                } else {
-                    DocumentStatus.NeedsReview
-                }
-            }
-
-            DocumentType.Receipt -> {
-                // Receipt uses same required fields as Expense (confirms into Expense)
-                val receipt = data.receipt ?: return DocumentStatus.NeedsReview
-                if (receipt.amount != null && receipt.merchant != null &&
-                    receipt.date != null && receipt.category != null
-                ) {
-                    DocumentStatus.Ready
-                } else {
-                    DocumentStatus.NeedsReview
-                }
-            }
-
-            DocumentType.ProForma -> {
-                // ProForma is informational - client/totals needed for conversion
-                val proForma = data.proForma ?: return DocumentStatus.NeedsReview
-                if (proForma.totalAmount != null && proForma.clientName != null &&
-                    proForma.issueDate != null
-                ) {
-                    DocumentStatus.Ready
-                } else {
-                    DocumentStatus.NeedsReview
-                }
-            }
-
-            DocumentType.CreditNote -> {
-                // CreditNote needs counterparty, amount, and issue date
-                val creditNote = data.creditNote ?: return DocumentStatus.NeedsReview
-                if (creditNote.totalAmount != null && creditNote.counterpartyName != null &&
-                    creditNote.issueDate != null
-                ) {
-                    DocumentStatus.Ready
-                } else {
-                    DocumentStatus.NeedsReview
-                }
-            }
-
-            else -> DocumentStatus.NeedsReview
-        }
-    }
-
-    /**
      * Find pending ingestion runs ready for processing.
      * Only picks up runs with status=Queued, ordered by queue time (FIFO).
      */
@@ -206,10 +134,10 @@ class ProcessorIngestionRepository {
      * - last_successful_run_id: Always updated to this run
      *
      * Draft creation rules:
-     * - Unknown type: NO draft created (ingestion still SUCCEEDED)
-     * - Classifiable types (Invoice/Bill/Expense): ALWAYS create draft
-     *   - meetsThreshold=false → DocumentStatus.NeedsInput
-     *   - meetsThreshold=true → DocumentStatus.Ready or NeedsReview based on completeness
+     * - Always create a draft (including Unknown type)
+     * - Unknown type → DocumentStatus.NeedsReview
+     * - confidence < threshold → DocumentStatus.NeedsReview
+     * - confidence >= threshold → DocumentStatus.Confirmed
      *
      * @param runId The ingestion run ID
      * @param tenantId The tenant ID (required for draft operations)
@@ -220,7 +148,6 @@ class ProcessorIngestionRepository {
      * @param rawText Raw OCR/extracted text
      * @param description AI-generated short description (optional)
      * @param keywords AI-generated keywords (optional)
-     * @param meetsThreshold Result of AI-layer threshold check (from DocumentAIResult.meetsMinimalThreshold())
      * @param force If true, overwrite extracted_data even if user has edited
      */
     suspend fun markAsSucceeded(
@@ -233,7 +160,6 @@ class ProcessorIngestionRepository {
         rawText: String?,
         description: String? = null,
         keywords: List<String> = emptyList(),
-        meetsThreshold: Boolean,
         force: Boolean = false
     ): Boolean {
         // Defense-in-depth: Validate tenantId is provided
@@ -248,7 +174,9 @@ class ProcessorIngestionRepository {
             val fieldConfidencesJson =
                 extractedData.fieldConfidences.let { json.encodeToString(it) }
             val keywordsJson = keywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
-            val outcome = if (confidence >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD) {
+            val outcome = if (documentType == DocumentType.Unknown) {
+                ProcessingOutcome.ManualReviewRequired
+            } else if (confidence >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD) {
                 ProcessingOutcome.AutoConfirmEligible
             } else {
                 ProcessingOutcome.ManualReviewRequired
@@ -270,21 +198,20 @@ class ProcessorIngestionRepository {
 
             if (!runUpdated) return@newSuspendedTransaction false
 
-            // Skip draft creation ONLY for Unknown type
-            // For all classifiable types, we ALWAYS create a draft
-            if (documentType == DocumentType.Unknown) {
-                // Unknown type - no draft, but ingestion is still SUCCEEDED
-                // Artifacts (raw_text, raw_extraction_json) are saved for debugging
-                return@newSuspendedTransaction true
-            }
-
-            // Determine draft status based on threshold and field completeness
-            val calculatedStatus = if (!meetsThreshold) {
-                // AI ran but threshold not met - user must fill fields manually
-                DocumentStatus.NeedsInput
-            } else {
-                // Threshold met - determine Ready vs NeedsReview based on completeness
-                determineDocumentStatus(documentType, extractedData)
+            // Determine draft status based on confidence threshold.
+            val calculatedStatus = when {
+                documentType == DocumentType.Unknown -> {
+                    // Unknown classification requires manual review.
+                    DocumentStatus.NeedsReview
+                }
+                confidence >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD -> {
+                    // High confidence - auto-confirm.
+                    DocumentStatus.Confirmed
+                }
+                else -> {
+                    // Low confidence - user review required.
+                    DocumentStatus.NeedsReview
+                }
             }
 
             // Check if draft exists and get current state

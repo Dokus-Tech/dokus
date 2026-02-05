@@ -24,7 +24,6 @@ import tech.dokus.domain.enums.DocumentStatus
  */
 val DocumentStatus.localized: String
     @Composable get() = when (this) {
-        DocumentStatus.NeedsInput -> stringResource(Res.string.draft_status_unconfirmed)
         DocumentStatus.NeedsReview -> stringResource(Res.string.draft_status_needs_review)
         DocumentStatus.Ready -> stringResource(Res.string.draft_status_unconfirmed)
         DocumentStatus.Confirmed -> stringResource(Res.string.draft_status_confirmed)
@@ -59,7 +58,6 @@ val DocumentStatus.localizedUppercase: String
  */
 val DocumentStatus.color: Color
     @Composable get() = when (this) {
-        DocumentStatus.NeedsInput -> MaterialTheme.colorScheme.errorContainer
         DocumentStatus.NeedsReview -> MaterialTheme.colorScheme.primaryContainer
         DocumentStatus.Ready -> MaterialTheme.colorScheme.tertiaryContainer
         DocumentStatus.Confirmed -> MaterialTheme.colorScheme.tertiaryContainer
@@ -79,7 +77,6 @@ val DocumentStatus.color: Color
  */
 val DocumentStatus.onColor: Color
     @Composable get() = when (this) {
-        DocumentStatus.NeedsInput -> MaterialTheme.colorScheme.onErrorContainer
         DocumentStatus.NeedsReview -> MaterialTheme.colorScheme.onPrimaryContainer
         DocumentStatus.Ready -> MaterialTheme.colorScheme.onTertiaryContainer
         DocumentStatus.Confirmed -> MaterialTheme.colorScheme.onTertiaryContainer
@@ -90,7 +87,7 @@ val DocumentStatus.onColor: Color
  * Checks if this draft status indicates the document needs user attention.
  */
 val DocumentStatus.needsAttention: Boolean
-    get() = this == DocumentStatus.NeedsInput || this == DocumentStatus.NeedsReview
+    get() = this == DocumentStatus.NeedsReview
 
 /**
  * Checks if this draft status indicates the document is ready for confirmation.
