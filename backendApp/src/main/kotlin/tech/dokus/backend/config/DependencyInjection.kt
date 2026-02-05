@@ -62,9 +62,8 @@ import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.aiModule
 import tech.dokus.features.ai.config.AIModels
-import tech.dokus.features.ai.orchestrator.DocumentFetcher
-import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
-import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
+import tech.dokus.features.ai.services.DocumentFetcher
+import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
 import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.services.ChunkingService

@@ -1,4 +1,4 @@
-package tech.dokus.features.ai.orchestrator
+package tech.dokus.features.ai.services
 
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId

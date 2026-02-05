@@ -5,7 +5,7 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.features.ai.orchestrator.DocumentFetcher
+import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
 

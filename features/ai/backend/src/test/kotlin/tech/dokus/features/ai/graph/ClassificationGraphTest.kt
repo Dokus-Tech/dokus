@@ -28,8 +28,8 @@ import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
 import tech.dokus.features.ai.graph.sub.ClassificationResult
 import tech.dokus.features.ai.graph.sub.ClassifyDocumentInput
 import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
-import tech.dokus.features.ai.orchestrator.DocumentFetcher
-import tech.dokus.features.ai.orchestrator.DocumentFetcher.FetchedDocumentData
+import tech.dokus.features.ai.services.DocumentFetcher
+import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.IntelligenceMode
@@ -42,7 +42,7 @@ import kotlin.uuid.ExperimentalUuidApi
 private val testAiConfig = AIConfig(
     mode = IntelligenceMode.Sovereign,
     ollamaHost = "",
-    lmStudioHost = "http://192.168.0.150:1234"
+    lmStudioHost = "http://192.168.8.47:1234"
 )
 
 private val testTenant = Tenant(

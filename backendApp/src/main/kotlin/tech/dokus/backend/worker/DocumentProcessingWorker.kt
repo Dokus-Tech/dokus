@@ -23,9 +23,6 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.utils.json
-import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
-import tech.dokus.features.ai.orchestrator.OrchestratorResult
-import tech.dokus.features.ai.orchestrator.ProcessingStep
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.ProcessorConfig

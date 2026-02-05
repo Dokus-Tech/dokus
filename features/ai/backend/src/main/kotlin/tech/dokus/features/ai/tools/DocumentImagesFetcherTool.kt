@@ -5,7 +5,7 @@ import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.features.ai.orchestrator.DocumentFetcher
+import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
 import kotlin.uuid.ExperimentalUuidApi
 

@@ -24,7 +24,7 @@ import tech.dokus.features.ai.graph.sub.extraction.financial.extractQuoteSubGrap
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractReceiptSubGraph
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionResult
-import tech.dokus.features.ai.orchestrator.DocumentFetcher
+import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.foundation.backend.config.AIConfig
 
 @Serializable
