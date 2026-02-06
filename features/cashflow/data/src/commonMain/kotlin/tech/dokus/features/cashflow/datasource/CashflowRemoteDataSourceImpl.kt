@@ -49,7 +49,6 @@ import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentRequest
-import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
@@ -211,15 +210,6 @@ internal class CashflowRemoteDataSourceImpl(
     // EXPENSE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createExpense(request: CreateExpenseRequest): Result<FinancialDocumentDto.ExpenseDto> {
-        return runCatching {
-            httpClient.post(Expenses()) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body()
-        }
-    }
-
     override suspend fun getExpense(id: ExpenseId): Result<FinancialDocumentDto.ExpenseDto> {
         return runCatching {
             httpClient.get(Expenses.Id(id = id.toString())).body()
@@ -269,15 +259,6 @@ internal class CashflowRemoteDataSourceImpl(
     // ============================================================================
     // BILL MANAGEMENT (Supplier Invoices / Cash-Out)
     // ============================================================================
-
-    override suspend fun createBill(request: CreateBillRequest): Result<FinancialDocumentDto.BillDto> {
-        return runCatching {
-            httpClient.post(Bills()) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body()
-        }
-    }
 
     override suspend fun getBill(id: BillId): Result<FinancialDocumentDto.BillDto> {
         return runCatching {
@@ -686,14 +667,12 @@ internal class CashflowRemoteDataSourceImpl(
     }
 
     override suspend fun confirmDocument(
-        documentId: DocumentId,
-        request: ConfirmDocumentRequest
+        documentId: DocumentId
     ): Result<DocumentRecordDto> {
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.post(Documents.Id.Confirm(parent = docIdRoute)) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
+                // No body; confirm uses latest draft state on the server.
             }.body()
         }
     }

@@ -150,12 +150,6 @@ interface CashflowRemoteDataSource {
     // ============================================================================
 
     /**
-     * Create a new expense
-     * POST /api/v1/expenses
-     */
-    suspend fun createExpense(request: CreateExpenseRequest): Result<FinancialDocumentDto.ExpenseDto>
-
-    /**
      * Get a single expense by ID
      * GET /api/v1/expenses/{id}
      */
@@ -191,12 +185,6 @@ interface CashflowRemoteDataSource {
     // ============================================================================
     // BILL MANAGEMENT (Supplier Invoices / Cash-Out)
     // ============================================================================
-
-    /**
-     * Create a new bill (supplier invoice)
-     * POST /api/v1/cashflow/cash-out/bills
-     */
-    suspend fun createBill(request: CreateBillRequest): Result<FinancialDocumentDto.BillDto>
 
     /**
      * Get a single bill by ID

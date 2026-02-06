@@ -54,17 +54,6 @@ internal fun Route.expenseRoutes() {
             call.respond(HttpStatusCode.OK, expenses)
         }
 
-        // POST /api/v1/expenses - Create expense
-        post<Expenses> {
-            val tenantId = dokusPrincipal.requireTenantId()
-            val request = call.receive<CreateExpenseRequest>()
-
-            val expense = expenseService.createExpense(tenantId, request)
-                .getOrElse { throw DokusException.InternalError("Failed to create expense: ${it.message}") }
-
-            call.respond(HttpStatusCode.Created, expense)
-        }
-
         // GET /api/v1/expenses/{id} - Get expense by ID
         get<Expenses.Id> { route ->
             val tenantId = dokusPrincipal.requireTenantId()

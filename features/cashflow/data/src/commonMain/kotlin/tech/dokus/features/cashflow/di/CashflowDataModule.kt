@@ -184,7 +184,6 @@ val cashflowNetworkModule = module {
     // Cashflow documents
     factory<WatchPendingDocumentsUseCase> { WatchPendingDocumentsUseCaseImpl(get()) }
     factory<SubmitInvoiceUseCase> { SubmitInvoiceUseCaseImpl(get()) }
-
     // Document records (for DocumentsScreen)
     factory<LoadDocumentRecordsUseCase> { LoadDocumentRecordsUseCaseImpl(get()) }
 

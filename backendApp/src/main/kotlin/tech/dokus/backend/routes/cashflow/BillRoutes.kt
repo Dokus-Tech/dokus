@@ -57,17 +57,6 @@ internal fun Route.billRoutes() {
             call.respond(HttpStatusCode.OK, bills)
         }
 
-        // POST /api/v1/bills - Create bill
-        post<Bills> {
-            val tenantId = dokusPrincipal.requireTenantId()
-            val request = call.receive<CreateBillRequest>()
-
-            val bill = billService.createBill(tenantId, request)
-                .getOrElse { throw DokusException.InternalError("Failed to create bill: ${it.message}") }
-
-            call.respond(HttpStatusCode.Created, bill)
-        }
-
         // GET /api/v1/bills/overdue - List overdue bills
         get<Bills.Overdue> {
             val tenantId = dokusPrincipal.requireTenantId()

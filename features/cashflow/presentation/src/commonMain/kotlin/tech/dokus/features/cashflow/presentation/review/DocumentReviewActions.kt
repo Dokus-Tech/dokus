@@ -7,7 +7,6 @@ import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -94,13 +93,33 @@ internal class DocumentReviewActions(
 
             launch {
                 val updatedData = mapper.buildExtractedDataFromEditable(editableData, originalData)
-                confirmDocument(
-                    documentId,
-                    ConfirmDocumentRequest(
-                        documentType = editableData.documentType,
-                        extractedData = updatedData
+                if (hasUnsavedChanges) {
+                    val updateResult = updateDocumentDraft(
+                        documentId,
+                        UpdateDraftRequest(extractedData = updatedData)
                     )
-                ).fold(
+                    val updateFailure = updateResult.exceptionOrNull()
+                    if (updateFailure != null) {
+                        logger.e(updateFailure) { "Failed to save draft before confirm: $documentId" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState { copy(isConfirming = false) }
+                        }
+                        action(DocumentReviewAction.ShowError(updateFailure.asDokusException))
+                        return@launch
+                    }
+                    val savedData = updateResult.getOrThrow().extractedData
+                    withState<DocumentReviewState.Content, _> {
+                        updateState {
+                            copy(
+                                editableData = EditableExtractedData.fromExtractedData(savedData),
+                                originalData = savedData,
+                                hasUnsavedChanges = false
+                            )
+                        }
+                    }
+                }
+
+                confirmDocument(documentId).fold(
                     onSuccess = { record ->
                         val draft = record.draft
                         val isConfirmed = draft?.documentStatus == DocumentStatus.Confirmed

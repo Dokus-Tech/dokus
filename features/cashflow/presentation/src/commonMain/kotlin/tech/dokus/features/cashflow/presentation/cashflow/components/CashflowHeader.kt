@@ -141,5 +141,6 @@ fun CashflowHeaderActions(
             onClick = onCreateInvoiceClick,
             isEnabled = isOnline
         )
+
     }
 }
