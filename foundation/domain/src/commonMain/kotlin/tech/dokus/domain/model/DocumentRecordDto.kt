@@ -157,15 +157,6 @@ data class UpdateDraftResponse(
 )
 
 /**
- * Request to confirm a document and create a financial entity.
- */
-@Serializable
-data class ConfirmDocumentRequest(
-    val documentType: DocumentType,
-    val extractedData: ExtractedDocumentData? = null // Optional overrides
-)
-
-/**
  * Request to reject a document draft with a reason.
  */
 @Serializable

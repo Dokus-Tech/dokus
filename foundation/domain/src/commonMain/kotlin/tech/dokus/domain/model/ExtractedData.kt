@@ -288,7 +288,6 @@ data class ExtractedLineItem(
 // Used when user confirms extracted data to create financial entity
 // ============================================================================
 
-// Note: ConfirmDocumentRequest moved to DocumentRecordDto.kt
 
 /**
  * Corrections that user can make to extracted data before confirmation.

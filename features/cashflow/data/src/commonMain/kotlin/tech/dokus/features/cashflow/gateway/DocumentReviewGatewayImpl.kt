@@ -3,7 +3,6 @@ package tech.dokus.features.cashflow.gateway
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -33,9 +32,8 @@ internal class DocumentReviewGatewayImpl(
     }
 
     override suspend fun confirmDocument(
-        documentId: DocumentId,
-        request: ConfirmDocumentRequest
-    ) = cashflowRemoteDataSource.confirmDocument(documentId, request)
+        documentId: DocumentId
+    ) = cashflowRemoteDataSource.confirmDocument(documentId)
 
     override suspend fun rejectDocument(
         documentId: DocumentId,

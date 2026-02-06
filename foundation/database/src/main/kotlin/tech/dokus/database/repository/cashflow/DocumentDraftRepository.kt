@@ -223,6 +223,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
             (DocumentDraftsTable.documentId eq docIdUuid) and
                 (DocumentDraftsTable.tenantId eq tenantIdUuid)
         }) {
+            it[documentType] = updatedData.documentType
             it[extractedData] = json.encodeToString(updatedData)
             it[userCorrections] = json.encodeToString(allCorrections)
             it[draftVersion] = newVersion
