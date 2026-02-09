@@ -9,10 +9,6 @@ import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.models.ExtractDocumentInput
-import tech.dokus.features.ai.models.FinancialExtractionResult
-import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.domain.Email
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
@@ -21,9 +17,13 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.LineItemToolInput
 import tech.dokus.features.ai.models.VatBreakdownToolInput
 import tech.dokus.features.ai.models.toDomain
+import tech.dokus.foundation.backend.config.AIConfig
 
 @Serializable
 @SerialName("InvoiceExtractionResult")
