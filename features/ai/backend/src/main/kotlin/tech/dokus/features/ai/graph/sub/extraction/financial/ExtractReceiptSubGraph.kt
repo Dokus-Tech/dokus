@@ -123,6 +123,7 @@ private val ExtractDocumentInput.receiptPrompt
 
     ## VAT
     - If VAT breakdown is shown, extract vatBreakdown rows (rate, base, amount).
+    - If reverse charge is indicated, use rate "0" and VAT amount "0".
 
     ## RECEIPT NUMBER
     - Look for ticket/receipt number, transaction ID, or similar identifier.

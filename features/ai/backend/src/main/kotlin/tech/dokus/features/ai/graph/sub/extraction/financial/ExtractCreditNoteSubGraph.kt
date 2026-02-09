@@ -148,6 +148,7 @@ private val ExtractDocumentInput.creditNotePrompt: String
 
     ## VAT BREAKDOWN
     If a VAT breakdown table is present, extract vatBreakdown rows (rate, base, amount).
+    If reverse charge is indicated, use rate "0" and VAT amount "0".
     If not shown, return an empty list.
 
     Language hint: $language
