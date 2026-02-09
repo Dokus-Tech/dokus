@@ -1,7 +1,7 @@
 package tech.dokus.domain.model
 
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.validators.ValidateOgmUseCase
+import tech.dokus.domain.ids.StructuredCommunication
 
 /**
  * Canonical representation of payment reference information.
@@ -11,7 +11,7 @@ import tech.dokus.domain.validators.ValidateOgmUseCase
  */
 @Serializable
 data class CanonicalPayment(
-    val structuredComm: String? = null,
+    val structuredComm: StructuredCommunication? = null,
     val reference: String? = null
 ) {
     companion object {
@@ -30,10 +30,9 @@ data class CanonicalPayment(
                 return CanonicalPayment(reference = trimmed)
             }
 
-            val ogmResult = ValidateOgmUseCase.validate(trimmed)
-            val normalized = ogmResult.normalizedOrNull
-            return if (normalized != null) {
-                CanonicalPayment(structuredComm = normalized)
+            val structured = StructuredCommunication.from(trimmed)
+            return if (structured != null) {
+                CanonicalPayment(structuredComm = structured)
             } else {
                 CanonicalPayment(reference = trimmed)
             }

@@ -6,6 +6,7 @@ import tech.dokus.domain.ValueClass
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.validators.ValidateBicUseCase
 import tech.dokus.domain.validators.ValidateIbanUseCase
+import tech.dokus.domain.validators.ValidateOgmUseCase
 import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -70,6 +71,35 @@ value class Iban(override val value: String) : ValueClass<String>, Validatable<I
                 .replace(Regex("[\\s-]"), "")
                 .uppercase()
             return Iban(cleaned)
+        }
+    }
+}
+
+@Serializable
+@JvmInline
+value class StructuredCommunication(override val value: String) : ValueClass<String>, Validatable<StructuredCommunication> {
+    override fun toString(): String = value
+
+    override val isValid: Boolean
+        get() = ValidateOgmUseCase.validate(value).isValid
+
+    override val validOrThrows: StructuredCommunication
+        get() = if (isValid) this else throw DokusException.Validation.InvalidStructuredCommunication
+
+    companion object {
+        /**
+         * Normalize raw structured communication into canonical OGM form.
+         *
+         * Returns null when the input is not a valid OGM (including checksum).
+         */
+        fun from(raw: String?): StructuredCommunication? {
+            if (raw == null) return null
+            val trimmed = raw.trim()
+            if (trimmed.isEmpty()) return null
+
+            val result = ValidateOgmUseCase.validate(trimmed)
+            val normalized = result.normalizedOrNull ?: return null
+            return StructuredCommunication(normalized)
         }
     }
 }
