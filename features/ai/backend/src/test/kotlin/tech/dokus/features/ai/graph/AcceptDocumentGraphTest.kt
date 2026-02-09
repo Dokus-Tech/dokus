@@ -16,7 +16,6 @@ import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
-import java.io.File
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
@@ -28,7 +27,7 @@ class AcceptDocumentGraphTest {
     @Disabled("Requires running AI model endpoint (LM Studio / OpenAI)")
     @Test
     fun `accept document graph end-to-end`() = runBlocking {
-        val pdfFile = loadFixture("fixtures/invoices/test-invoice.pdf")
+        val pdfFile = TestAiFixtures.loadFixture("fixtures/invoices/test-invoice.pdf")
         val documentBytes = pdfFile.readBytes()
 
         val mockFetcher = DocumentFetcher { _, _ ->
@@ -72,10 +71,4 @@ class AcceptDocumentGraphTest {
             "Expected extraction result, got Unsupported"
         )
     }
-}
-
-private fun loadFixture(resourcePath: String): File {
-    val fixturesUrl = ClassLoader.getSystemResource(resourcePath)
-        ?: error("Fixture not found: $resourcePath")
-    return File(fixturesUrl.toURI())
 }

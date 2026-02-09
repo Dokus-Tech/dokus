@@ -12,6 +12,7 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.IntelligenceMode
+import java.io.File
 
 object TestAiFixtures {
     val aiConfig = AIConfig(
@@ -32,4 +33,10 @@ object TestAiFixtures {
         createdAt = LocalDateTime(2024, 1, 1, 10, 0),
         updatedAt = LocalDateTime(2024, 1, 1, 10, 0),
     )
+
+    fun loadFixture(resourcePath: String): File {
+        val fixturesUrl = ClassLoader.getSystemResource(resourcePath)
+            ?: error("Fixture not found: $resourcePath")
+        return File(fixturesUrl.toURI())
+    }
 }
