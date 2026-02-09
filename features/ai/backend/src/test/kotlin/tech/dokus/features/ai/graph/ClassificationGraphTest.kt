@@ -23,11 +23,9 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
-import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
 import tech.dokus.features.ai.graph.sub.ClassificationResult
-import tech.dokus.features.ai.graph.sub.ClassifyDocumentInput
 import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
+import tech.dokus.features.ai.graph.sub.documentPreparationSubGraph
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
@@ -111,21 +109,11 @@ class ClassificationGraphTest {
 
         val strategy = strategy<AcceptDocumentInput, ClassificationResult>("test") {
             val classify by classifyDocumentSubGraph(testAiConfig)
-            val injectImages by documentImagesInjectorNode<AcceptDocumentInput>(mockFetcher)
-            val injectTenant by tenantContextInjectorNode<AcceptDocumentInput>(testTenant)
-
-            // Transform AcceptDocumentInput → ClassifyDocumentInput
-            val prepareClassifyInput by node<AcceptDocumentInput, ClassifyDocumentInput>("prepare-classify") { input ->
-                ClassifyDocumentInput(input.documentId, input.tenant)
-            }
-
-            // Context setup
-            edge(nodeStart forwardTo injectTenant)
-            edge(injectTenant forwardTo injectImages)
-            edge(injectImages forwardTo prepareClassifyInput)
+            val prepare by documentPreparationSubGraph<AcceptDocumentInput>(mockFetcher)
 
             // Classification
-            edge(prepareClassifyInput forwardTo classify)
+            edge(nodeStart forwardTo prepare)
+            edge(prepare forwardTo classify)
 
             edge(classify forwardTo nodeFinish)
         }
