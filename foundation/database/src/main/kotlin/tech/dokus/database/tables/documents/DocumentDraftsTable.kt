@@ -99,12 +99,11 @@ object DocumentDraftsTable : Table("document_drafts") {
     // Contact Suggestion Fields
     // ============================================
 
-    // Suggested contact from AI matching (populated after extraction)
-    val suggestedContactId = uuid("suggested_contact_id")
-        .references(ContactsTable.id, onDelete = ReferenceOption.SET_NULL)
-        .nullable()
-    val contactSuggestionConfidence = float("contact_suggestion_confidence").nullable()
-    val contactSuggestionReason = varchar("contact_suggestion_reason", 255).nullable()
+    // Contact suggestions (JSON array of SuggestedContact)
+    val contactSuggestions = text("contact_suggestions").nullable()
+
+    // Counterparty snapshot used for matching (JSON)
+    val counterpartySnapshot = text("counterparty_snapshot").nullable()
 
     // User-linked contact (explicit selection)
     val linkedContactId = uuid("linked_contact_id")
@@ -112,8 +111,8 @@ object DocumentDraftsTable : Table("document_drafts") {
         .nullable()
     val linkedContactSource = dbEnumeration<ContactLinkSource>("linked_contact_source").nullable()
 
-    // Evidence JSON for contact decision (auto-link or suggestion)
-    val contactEvidence = text("contact_evidence").nullable()
+    // Evidence JSON for contact decision (MatchEvidence)
+    val matchEvidence = text("match_evidence").nullable()
 
     // Counterparty intent (NONE/PENDING)
     val counterpartyIntent = dbEnumeration<CounterpartyIntent>("counterparty_intent")
@@ -148,7 +147,6 @@ object DocumentDraftsTable : Table("document_drafts") {
         index(false, tenantId, documentType)
 
         // For contact activity queries
-        index(false, tenantId, suggestedContactId)
         index(false, tenantId, linkedContactId)
     }
 }

@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentKind
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
@@ -17,6 +18,9 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.MatchEvidence
+import tech.dokus.domain.model.contact.SuggestedContact
 
 /**
  * Processing trace step for document ingestion.
@@ -50,7 +54,7 @@ data class DocumentIngestionDto(
     val errorMessage: String?,
     val confidence: Double?,
     val processingOutcome: ProcessingOutcome? = null,
-    val rawExtraction: ExtractedDocumentData? = null,
+    val rawExtraction: JsonElement? = null,
     val processingTrace: List<DocumentProcessingStepDto>? = null
 )
 
@@ -64,20 +68,20 @@ data class DocumentDraftDto(
     val tenantId: TenantId,
     val documentStatus: DocumentStatus,
     val documentType: DocumentType?,
-    val extractedData: ExtractedDocumentData?,
-    val aiDraftData: ExtractedDocumentData?, // Original immutable AI extraction (for diff display)
+    val draftKind: DocumentKind? = null,
+    val extractedData: DocumentDraftData?,
+    val aiDraftData: DocumentDraftData?, // Original immutable AI extraction (for diff display)
     val aiDescription: String? = null,
     val aiKeywords: List<String> = emptyList(),
     val aiDraftSourceRunId: IngestionRunId?, // Which run produced ai_draft_data
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
     val draftEditedBy: UserId?,
-    val suggestedContactId: ContactId?,
-    val contactSuggestionConfidence: Float?,
-    val contactSuggestionReason: String?,
+    val contactSuggestions: List<SuggestedContact> = emptyList(),
+    val counterpartySnapshot: CounterpartySnapshot? = null,
+    val matchEvidence: MatchEvidence? = null,
     val linkedContactId: ContactId?,
     val linkedContactSource: ContactLinkSource? = null,
-    val contactEvidence: ContactEvidence? = null,
     val counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
     val rejectReason: DocumentRejectReason? = null,
     val lastSuccessfulRunId: IngestionRunId?,
@@ -139,7 +143,7 @@ data class ReprocessResponse(
  */
 @Serializable
 data class UpdateDraftRequest(
-    val extractedData: ExtractedDocumentData? = null,
+    val extractedData: DocumentDraftData? = null,
     val contactId: String? = null,
     val counterpartyIntent: CounterpartyIntent? = null,
     val changeDescription: String? = null
@@ -152,7 +156,7 @@ data class UpdateDraftRequest(
 data class UpdateDraftResponse(
     val documentId: DocumentId,
     val draftVersion: Int,
-    val extractedData: ExtractedDocumentData,
+    val extractedData: DocumentDraftData,
     val updatedAt: LocalDateTime
 )
 

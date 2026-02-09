@@ -35,8 +35,8 @@ import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
-import tech.dokus.backend.services.documents.ContactLinkingService
 import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.DocumentProcessingWorker
@@ -52,20 +52,15 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
-import tech.dokus.domain.Name
-import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.aiModule
-import tech.dokus.features.ai.config.AIModels
+import tech.dokus.features.ai.agents.DocumentProcessingAgent
+import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
-import tech.dokus.features.ai.orchestrator.tools.CreateContactTool
-import tech.dokus.features.ai.orchestrator.tools.LookupContactTool
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.EmbeddingService
@@ -344,11 +339,16 @@ private fun processorModule() = module {
     single { ChunkingService() }
     single { EmbeddingService(get(), get<AIConfig>()) }
 
-    // Example repository for few-shot learning
+    // Example repository for few-shot learning (legacy orchestrator use)
     single<ExampleRepository> { DocumentExamplesRepository() }
 
-    // Contact linking policy applier (AI decisions)
-    single { ContactLinkingService(get(), get()) }
+    // Koog prompt executor (shared across AI features)
+    single<ai.koog.prompt.executor.model.PromptExecutor> {
+        AIProviderFactory.createOllamaExecutor(get<AIConfig>())
+    }
+
+    // Contact resolution (deterministic post-processing)
+    single { ContactResolutionService(get(), get()) }
 
     single<DocumentFetcher> {
         val documentRepository = get<DocumentRepository>()
@@ -365,117 +365,19 @@ private fun processorModule() = module {
         }
     }
 
-    // =========================================================================
-    // Document Orchestrator
-    // =========================================================================
-
-    // Document Orchestrator - tool-calling orchestrator with vision tools
-    single {
-        val aiConfig = get<AIConfig>()
-        val models = AIModels.forMode(aiConfig.mode)
-        DocumentOrchestrator(
-            executor = get(),
-            orchestratorModel = models.orchestrator,
-            visionModel = models.vision,
-            mode = aiConfig.mode,
-            exampleRepository = get(),
-            imageCache = get(),
-            chunkingService = get(),
-            embeddingService = get(),
-            chunkRepository = get(),
-            cbeApiClient = get(),
-            indexingUpdater = { runId, status, chunksCount, errorMessage ->
-                get<ProcessorIngestionRepository>().updateIndexingStatus(
-                    runId = runId,
-                    status = status,
-                    chunksCount = chunksCount,
-                    errorMessage = errorMessage
-                )
-            },
-            peppolDataFetcher = { _ -> null },
-            contactLookup = { tenantId, vatNumber ->
-                val tenant = TenantId.parse(tenantId)
-                val contact = get<ContactRepository>().findByVatNumber(tenant, vatNumber).getOrNull()
-                    ?: return@DocumentOrchestrator null
-
-                val address = listOfNotNull(
-                    contact.addressLine1,
-                    contact.city,
-                    contact.postalCode,
-                    contact.country
-                ).joinToString(", ").ifBlank { null }
-
-                LookupContactTool.ContactInfo(
-                    id = contact.id.toString(),
-                    name = contact.name.value,
-                    vatNumber = contact.vatNumber?.value ?: vatNumber,
-                    address = address
-                )
-            },
-            contactCreator = { tenantId, name, vatNumber, _ ->
-                val normalizedVat = vatNumber?.takeIf { it.isNotBlank() }
-                    ?: return@DocumentOrchestrator CreateContactTool.CreateResult(
-                        success = false,
-                        contactId = null,
-                        error = "VAT number required for contact creation"
-                    )
-
-                val vat = VatNumber(normalizedVat)
-                if (!vat.isValid) {
-                    return@DocumentOrchestrator CreateContactTool.CreateResult(
-                        success = false,
-                        contactId = null,
-                        error = "Invalid VAT number"
-                    )
-                }
-
-                val tenant = TenantId.parse(tenantId)
-                val existing = get<ContactRepository>()
-                    .findByVatNumber(tenant, vat.value)
-                    .getOrNull()
-                if (existing != null) {
-                    return@DocumentOrchestrator CreateContactTool.CreateResult(
-                        success = false,
-                        contactId = null,
-                        error = "Contact already exists"
-                    )
-                }
-
-                val request = CreateContactRequest(
-                    name = Name(name),
-                    vatNumber = vat,
-                    source = ContactSource.AI
-                )
-                val created = get<ContactRepository>().createContact(tenant, request)
-                created.fold(
-                    onSuccess = {
-                        CreateContactTool.CreateResult(
-                            success = true,
-                            contactId = it.id.toString(),
-                            error = null
-                        )
-                    },
-                    onFailure = {
-                        CreateContactTool.CreateResult(
-                            success = false,
-                            contactId = null,
-                            error = it.message
-                        )
-                    }
-                )
-            },
-        )
-    }
+    // Koog document processing agent
+    single { DocumentProcessingAgent(get(), get(), get()) }
 
     // Document Processing Worker
     single {
         DocumentProcessingWorker(
             ingestionRepository = get(),
-            orchestrator = get(),
+            processingAgent = get(),
+            contactResolutionService = get(),
+            draftRepository = get(),
             config = get<ProcessorConfig>(),
             mode = get<AIConfig>().mode,
-            tenantRepository = get(),
-            addressRepository = get()
+            tenantRepository = get()
         )
     }
 }

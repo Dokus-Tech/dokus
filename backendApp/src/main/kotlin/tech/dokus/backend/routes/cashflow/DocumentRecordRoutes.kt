@@ -437,8 +437,8 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Document type must be resolved before confirmation")
             }
 
-            val extractedData = draft.extractedData
-                ?: throw DokusException.BadRequest("No extracted data available for confirmation")
+            val draftData = draft.extractedData
+                ?: throw DokusException.BadRequest("No draft data available for confirmation")
 
             // Check if entity already exists for this document (idempotent check)
             val existingEntity = findConfirmedEntity(
@@ -458,12 +458,12 @@ internal fun Route.documentRecordRoutes() {
                 tenantId = tenantId,
                 documentId = documentId,
                 documentType = draftType,
-                extractedData = extractedData,
+                draftData = draftData,
                 linkedContactId = draft.linkedContactId
             ).getOrThrow()
 
             val entryId = confirmationResult.cashflowEntryId
-            logger.info("Document confirmed: $documentId -> $resolvedType, cashflowEntryId=$entryId")
+            logger.info("Document confirmed: $documentId -> $draftType, cashflowEntryId=$entryId")
 
             // Return full record
             val document = documentRepository.getById(tenantId, documentId)!!

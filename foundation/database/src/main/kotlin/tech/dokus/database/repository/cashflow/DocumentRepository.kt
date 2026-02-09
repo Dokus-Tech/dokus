@@ -340,6 +340,8 @@ class DocumentRepository {
             documentType = this[DocumentDraftsTable.documentType],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
             aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },
+            aiDescription = this[DocumentDraftsTable.aiDescription],
+            aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
             aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]?.let {
                 IngestionRunId.parse(
                     it.toString()
@@ -348,10 +350,15 @@ class DocumentRepository {
             draftVersion = this[DocumentDraftsTable.draftVersion],
             draftEditedAt = this[DocumentDraftsTable.draftEditedAt],
             draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
-            suggestedContactId = this[DocumentDraftsTable.suggestedContactId]?.let { ContactId(it.toKotlinUuid()) },
-            contactSuggestionConfidence = this[DocumentDraftsTable.contactSuggestionConfidence],
-            contactSuggestionReason = this[DocumentDraftsTable.contactSuggestionReason],
+            contactSuggestions = this[DocumentDraftsTable.contactSuggestions]
+                ?.let { json.decodeFromString(it) }
+                ?: emptyList(),
+            counterpartySnapshot = this[DocumentDraftsTable.counterpartySnapshot]
+                ?.let { json.decodeFromString(it) },
+            matchEvidence = this[DocumentDraftsTable.matchEvidence]
+                ?.let { json.decodeFromString(it) },
             linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it.toKotlinUuid()) },
+            linkedContactSource = this[DocumentDraftsTable.linkedContactSource],
             counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
             rejectReason = this[DocumentDraftsTable.rejectReason],
             lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let {

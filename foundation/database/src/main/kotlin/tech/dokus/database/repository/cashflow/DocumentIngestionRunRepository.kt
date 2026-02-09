@@ -22,9 +22,7 @@ import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.processing.DocumentProcessingConstants
-import tech.dokus.domain.utils.json
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
@@ -204,7 +202,7 @@ class DocumentIngestionRunRepository {
             .limit(limit)
             .map { row ->
                 IngestionItemEntity(
-                    runId = row[DocumentIngestionRunsTable.id].value.toString(),
+                    runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
                     documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
                     tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
                     storageKey = row[DocumentsTable.storageKey],
@@ -237,7 +235,7 @@ class DocumentIngestionRunRepository {
     suspend fun markAsSucceeded(
         runId: IngestionRunId,
         rawText: String?,
-        extractedData: ExtractedDocumentData?,
+        rawExtractionJson: String?,
         confidence: Double?
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -254,10 +252,10 @@ class DocumentIngestionRunRepository {
             it[status] = IngestionStatus.Succeeded
             it[finishedAt] = now
             it[DocumentIngestionRunsTable.rawText] = rawText
-            it[rawExtractionJson] = extractedData?.let { data -> json.encodeToString(data) }
+            it[DocumentIngestionRunsTable.rawExtractionJson] = rawExtractionJson
             it[DocumentIngestionRunsTable.confidence] = confidence?.toBigDecimal()
             it[processingOutcome] = outcome
-            it[fieldConfidences] = extractedData?.fieldConfidences?.let { fc -> json.encodeToString(fc) }
+            it[fieldConfidences] = null
             it[errorMessage] = null
         } > 0
     }
@@ -291,27 +289,6 @@ class DocumentIngestionRunRepository {
             (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
                     (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }
-    }
-
-    /**
-     * Get raw extraction JSON for a run.
-     * Used by draft repository to populate draft data.
-     */
-    suspend fun getRawExtraction(
-        runId: IngestionRunId,
-        tenantId: TenantId
-    ): ExtractedDocumentData? = newSuspendedTransaction {
-        DocumentIngestionRunsTable.selectAll()
-            .where {
-                (DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())) and
-                        (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }
-            .map { row ->
-                row[DocumentIngestionRunsTable.rawExtractionJson]?.let { jsonStr ->
-                    json.decodeFromString<ExtractedDocumentData>(jsonStr)
-                }
-            }
-            .singleOrNull()
     }
 
     private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {

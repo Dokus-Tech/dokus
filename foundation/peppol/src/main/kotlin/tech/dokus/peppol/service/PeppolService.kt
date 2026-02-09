@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Duration.Companion.days
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.domain.enums.PeppolDocumentType
@@ -15,7 +14,7 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -38,6 +37,7 @@ import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
 import tech.dokus.peppol.validator.PeppolValidator
+import kotlin.time.Duration.Companion.days
 
 /**
  * Provider-agnostic Peppol service.
@@ -244,14 +244,14 @@ class PeppolService(
      *
      * @param tenantId The tenant to poll for
      * @param createDocumentCallback Callback to create document with:
-     *   - ExtractedDocumentData: parsed invoice/bill data
+     *   - DocumentDraftData: normalized draft data
      *   - String: sender Peppol ID
      *   - TenantId: tenant ID
      *   - RecommandDocumentDetail?: raw document detail with attachments (Recommand only)
      */
     suspend fun pollInbox(
         tenantId: TenantId,
-        createDocumentCallback: suspend (ExtractedDocumentData, String, TenantId, RecommandDocumentDetail?) -> Result<DocumentId>
+        createDocumentCallback: suspend (DocumentDraftData, String, TenantId, RecommandDocumentDetail?) -> Result<DocumentId>
     ): Result<PeppolInboxPollResponse> {
         logger.info("Polling Peppol inbox for tenant: $tenantId")
 
@@ -318,12 +318,12 @@ class PeppolService(
                         senderPeppolId = PeppolId(inboxItem.senderPeppolId),
                     ).getOrThrow()
 
-                    // Convert to extracted data (for draft)
-                    val extractedData = mapper.toExtractedDocumentData(fullDocument, inboxItem.senderPeppolId)
+                    // Convert to normalized draft data
+                    val draftData = mapper.toDraftData(fullDocument, inboxItem.senderPeppolId)
 
                     // Create document + draft via callback
                     val documentId = createDocumentCallback(
-                        extractedData,
+                        draftData,
                         inboxItem.senderPeppolId,
                         tenantId,
                         rawDetail
@@ -348,8 +348,8 @@ class PeppolService(
                             transmissionId = transmission.id,
                             documentId = documentId,
                             senderPeppolId = PeppolId(inboxItem.senderPeppolId),
-                            invoiceNumber = extractedData.bill?.invoiceNumber,
-                            totalAmount = extractedData.bill?.amount,
+                            invoiceNumber = draftData.invoiceNumber,
+                            totalAmount = draftData.totalAmount,
                             receivedAt = now
                         )
                     )

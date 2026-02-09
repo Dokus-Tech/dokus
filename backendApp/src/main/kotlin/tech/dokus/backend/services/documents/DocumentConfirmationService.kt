@@ -39,7 +39,11 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.BillDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.toDbDecimal
@@ -96,7 +100,7 @@ class DocumentConfirmationService(
      * @param tenantId The tenant ID
      * @param documentId The document ID
      * @param documentType The resolved document type
-     * @param extractedData The extracted data to use for entity creation
+     * @param draftData The normalized draft data to use for entity creation
      * @param linkedContactId The linked contact (required for invoices)
      * @return The created financial entity
      */
@@ -105,7 +109,7 @@ class DocumentConfirmationService(
         tenantId: TenantId,
         documentId: DocumentId,
         documentType: DocumentType,
-        extractedData: ExtractedDocumentData,
+        draftData: DocumentDraftData,
         linkedContactId: ContactId?
     ): Result<ConfirmationResult> = runCatching {
         logger.info("Confirming document: $documentId as $documentType for tenant: $tenantId")
@@ -118,40 +122,44 @@ class DocumentConfirmationService(
         val created = dbQuery {
             ensureDraftConfirmable(tenantId = tenantId, documentId = documentId)
 
-            when (documentType) {
-                DocumentType.Invoice -> confirmInvoiceTx(
+            val draftType = when (draftData) {
+                is InvoiceDraftData -> DocumentType.Invoice
+                is BillDraftData -> DocumentType.Bill
+                is ReceiptDraftData -> DocumentType.Receipt
+                is CreditNoteDraftData -> DocumentType.CreditNote
+            }
+
+            if (draftType != documentType) {
+                throw DokusException.BadRequest(
+                    "Draft data type $draftType does not match document type $documentType"
+                )
+            }
+
+            when (draftData) {
+                is InvoiceDraftData -> confirmInvoiceTx(
                     tenantId = tenantId,
                     documentId = documentId,
-                    extractedData = extractedData,
+                    draftData = draftData,
                     linkedContactId = linkedContactId,
                     invoiceNumber = requireNotNull(invoiceNumber)
                 )
 
-                DocumentType.Bill -> confirmBillTx(
+                is BillDraftData -> confirmBillTx(
                     tenantId = tenantId,
                     documentId = documentId,
-                    extractedData = extractedData,
+                    draftData = draftData,
                     linkedContactId = linkedContactId
                 )
 
-                DocumentType.Receipt -> confirmReceiptTx(
+                is ReceiptDraftData -> confirmReceiptTx(
                     tenantId = tenantId,
                     documentId = documentId,
-                    extractedData = extractedData,
+                    draftData = draftData,
                     linkedContactId = linkedContactId
                 )
 
-                DocumentType.ProForma -> confirmProFormaTx(
-                    tenantId = tenantId,
-                    documentId = documentId
-                )
-
-                DocumentType.CreditNote -> throw DokusException.BadRequest(
+                is CreditNoteDraftData -> throw DokusException.BadRequest(
                     "CreditNote confirmation is handled via CreditNoteService"
-                )
-
-                DocumentType.Unknown -> throw DokusException.BadRequest(
-                    "Cannot confirm document with type: $documentType"
                 )
             }
         }
@@ -173,14 +181,6 @@ class DocumentConfirmationService(
                 bill to created.cashflowEntryId
             }
 
-            is CreatedConfirmation.Expense -> {
-                val expense = expenseRepository.getExpense(
-                    expenseId = ExpenseId.parse(created.expenseId.toString()),
-                    tenantId = tenantId
-                ).getOrThrow() ?: throw DokusException.InternalError("Expense not found after confirmation")
-                expense to created.cashflowEntryId
-            }
-
             is CreatedConfirmation.Receipt -> {
                 // Receipt creates an Expense entity, so retrieve it as Expense
                 val expense = expenseRepository.getExpense(
@@ -188,11 +188,6 @@ class DocumentConfirmationService(
                     tenantId = tenantId
                 ).getOrThrow() ?: throw DokusException.InternalError("Expense not found after receipt confirmation")
                 expense to created.cashflowEntryId
-            }
-
-            is CreatedConfirmation.ProForma -> {
-                // ProForma has no financial entity and no cashflow entry
-                null to null
             }
         }
 
@@ -219,45 +214,67 @@ class DocumentConfirmationService(
     private fun confirmInvoiceTx(
         tenantId: TenantId,
         documentId: DocumentId,
-        extractedData: ExtractedDocumentData,
+        draftData: InvoiceDraftData,
         linkedContactId: ContactId?,
         invoiceNumber: String
     ): CreatedConfirmation.Invoice {
-        val invoiceData = extractedData.invoice
-            ?: throw DokusException.BadRequest("No invoice data extracted from document")
-
         val contactId = linkedContactId
             ?: throw DokusException.BadRequest("Invoice requires a linked contact")
 
-        val items = invoiceData.items?.mapIndexed { index, item ->
-            InvoiceItemDto(
-                description = item.description ?: "Item",
-                quantity = item.quantity ?: 1.0,
-                unitPrice = item.unitPrice ?: Money.ZERO,
-                vatRate = item.vatRate ?: VatRate.ZERO,
-                lineTotal = item.lineTotal ?: Money.ZERO,
-                vatAmount = item.vatAmount ?: Money.ZERO,
-                sortOrder = index
+        val items = if (draftData.lineItems.isNotEmpty()) {
+            draftData.lineItems.mapIndexed { index, item ->
+                val quantity = item.quantity?.takeIf { it > 0 } ?: 1L
+                val unitPrice = item.unitPrice?.let { Money(it) }
+                    ?: item.netAmount?.let { net ->
+                        Money(net / quantity)
+                    }
+                val lineTotal = item.netAmount?.let { Money(it) }
+                    ?: unitPrice?.let { Money(it.minor * quantity) }
+                    ?: Money.ZERO
+                val vatRate = item.vatRate?.let { VatRate(it) } ?: VatRate.ZERO
+                val vatAmount = vatRate.applyTo(lineTotal)
+
+                InvoiceItemDto(
+                    description = item.description.ifBlank { "Item" },
+                    quantity = quantity.toDouble(),
+                    unitPrice = unitPrice ?: lineTotal,
+                    vatRate = vatRate,
+                    lineTotal = lineTotal,
+                    vatAmount = vatAmount,
+                    sortOrder = index
+                )
+            }
+        } else {
+            val base = draftData.subtotalAmount ?: draftData.totalAmount ?: Money.ZERO
+            val vat = draftData.vatAmount ?: Money.ZERO
+            val vatRate = if (!base.isZero) {
+                VatRate(((vat.minor * 10000L) / base.minor).toInt())
+            } else {
+                VatRate.ZERO
+            }
+            listOf(
+                InvoiceItemDto(
+                    description = "Services",
+                    quantity = 1.0,
+                    unitPrice = base,
+                    vatRate = vatRate,
+                    lineTotal = base,
+                    vatAmount = vat,
+                    sortOrder = 0
+                )
             )
-        } ?: listOf(
-            InvoiceItemDto(
-                description = "Services",
-                quantity = 1.0,
-                unitPrice = invoiceData.subtotalAmount ?: invoiceData.totalAmount ?: Money.ZERO,
-                vatRate = VatRate.ZERO,
-                lineTotal = invoiceData.subtotalAmount ?: invoiceData.totalAmount ?: Money.ZERO,
-                vatAmount = invoiceData.vatAmount ?: Money.ZERO,
-                sortOrder = 0
-            )
-        )
+        }
 
         val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
-        val issueDate = invoiceData.issueDate ?: today
-        val dueDate = invoiceData.dueDate ?: issueDate.plus(DatePeriod(days = 30))
+        val issueDate = draftData.issueDate ?: today
+        val dueDate = draftData.dueDate ?: issueDate.plus(DatePeriod(days = 30))
 
-        val subtotalAmount = items.sumOf { it.lineTotal.toDbDecimal() }
-        val vatAmount = items.sumOf { it.vatAmount.toDbDecimal() }
-        val totalAmount = items.sumOf { it.lineTotal.toDbDecimal() + it.vatAmount.toDbDecimal() }
+        val subtotalAmount = draftData.subtotalAmount?.toDbDecimal()
+            ?: items.sumOf { it.lineTotal.toDbDecimal() }
+        val vatAmount = draftData.vatAmount?.toDbDecimal()
+            ?: items.sumOf { it.vatAmount.toDbDecimal() }
+        val totalAmount = draftData.totalAmount?.toDbDecimal()
+            ?: (subtotalAmount + vatAmount)
 
         val invoiceId = InvoicesTable.insertAndGetId {
             it[InvoicesTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -270,7 +287,7 @@ class DocumentConfirmationService(
             it[InvoicesTable.totalAmount] = totalAmount
             it[InvoicesTable.paidAmount] = Money.ZERO.toDbDecimal()
             it[InvoicesTable.status] = InvoiceStatus.Draft
-            it[InvoicesTable.notes] = invoiceData.notes
+            it[InvoicesTable.notes] = draftData.notes
             it[InvoicesTable.documentId] = UUID.fromString(documentId.toString())
         }.value
 
@@ -313,31 +330,37 @@ class DocumentConfirmationService(
     private fun confirmBillTx(
         tenantId: TenantId,
         documentId: DocumentId,
-        extractedData: ExtractedDocumentData,
+        draftData: BillDraftData,
         linkedContactId: ContactId?,
     ): CreatedConfirmation.Bill {
-        val billData = extractedData.bill
-            ?: throw DokusException.BadRequest("No bill data extracted from document")
-
-        val issueDate = billData.issueDate ?: throw DokusException.BadRequest("Issue date is required")
-        val dueDate = billData.dueDate ?: issueDate
-        val amount = billData.amount ?: throw DokusException.BadRequest("Amount is required")
-        val category = billData.category ?: throw DokusException.BadRequest("Category is required")
+        val issueDate = draftData.issueDate ?: throw DokusException.BadRequest("Issue date is required")
+        val dueDate = draftData.dueDate ?: issueDate
+        val subtotalAmount = draftData.subtotalAmount
+        val vatAmount = draftData.vatAmount
+        val amount = draftData.totalAmount ?: subtotalAmount
+            ?: throw DokusException.BadRequest("Amount is required")
+        val category = tech.dokus.domain.enums.ExpenseCategory.Other
+        val vatRate = if (subtotalAmount != null && vatAmount != null && !subtotalAmount.isZero) {
+            VatRate(((vatAmount.minor * 10000L) / subtotalAmount.minor).toInt())
+        } else {
+            null
+        }
 
         val billId = BillsTable.insertAndGetId {
             it[BillsTable.tenantId] = UUID.fromString(tenantId.toString())
-            it[BillsTable.supplierName] = billData.supplierName ?: "Unknown Supplier"
-            it[BillsTable.supplierVatNumber] = billData.supplierVatNumber
-            it[BillsTable.invoiceNumber] = billData.invoiceNumber
+            it[BillsTable.supplierName] = draftData.supplierName ?: "Unknown Supplier"
+            it[BillsTable.supplierVatNumber] = draftData.supplierVat?.value
+            it[BillsTable.invoiceNumber] = draftData.invoiceNumber
             it[BillsTable.issueDate] = issueDate
             it[BillsTable.dueDate] = dueDate
             it[BillsTable.amount] = amount.toDbDecimal()
-            it[BillsTable.vatAmount] = billData.vatAmount?.toDbDecimal()
-            it[BillsTable.vatRate] = billData.vatRate?.toDbDecimal()
+            it[BillsTable.vatAmount] = vatAmount?.toDbDecimal()
+            it[BillsTable.vatRate] = vatRate?.toDbDecimal()
             it[BillsTable.status] = BillStatus.Pending
             it[BillsTable.category] = category
-            it[BillsTable.description] = billData.description
-            it[BillsTable.notes] = billData.notes
+            it[BillsTable.description] = null
+            it[BillsTable.notes] = draftData.notes
+            it[BillsTable.currency] = draftData.currency
             it[BillsTable.documentId] = UUID.fromString(documentId.toString())
             it[BillsTable.contactId] = linkedContactId?.let { id -> UUID.fromString(id.toString()) }
         }.value
@@ -350,7 +373,7 @@ class DocumentConfirmationService(
             it[CashflowEntriesTable.direction] = CashflowDirection.Out
             it[CashflowEntriesTable.eventDate] = dueDate
             it[CashflowEntriesTable.amountGross] = amount.toDbDecimal()
-            it[CashflowEntriesTable.amountVat] = (billData.vatAmount ?: Money.ZERO).toDbDecimal()
+            it[CashflowEntriesTable.amountVat] = (draftData.vatAmount ?: Money.ZERO).toDbDecimal()
             it[CashflowEntriesTable.remainingAmount] = amount.toDbDecimal()
             it[CashflowEntriesTable.status] = CashflowEntryStatus.Open
             it[CashflowEntriesTable.counterpartyId] = linkedContactId?.let { id -> UUID.fromString(id.toString()) }
@@ -364,62 +387,6 @@ class DocumentConfirmationService(
         )
     }
 
-    @Suppress("ThrowsCount")
-    private fun confirmExpenseTx(
-        tenantId: TenantId,
-        documentId: DocumentId,
-        extractedData: ExtractedDocumentData,
-        linkedContactId: ContactId?,
-    ): CreatedConfirmation.Expense {
-        val expenseData = extractedData.expense
-            ?: throw DokusException.BadRequest("No expense data extracted from document")
-
-        val date = expenseData.date ?: throw DokusException.BadRequest("Date is required")
-        val merchant = expenseData.merchant ?: throw DokusException.BadRequest("Merchant is required")
-        val amount = expenseData.amount ?: throw DokusException.BadRequest("Amount is required")
-        val category = expenseData.category ?: throw DokusException.BadRequest("Category is required")
-
-        val expenseId = ExpensesTable.insertAndGetId {
-            it[ExpensesTable.tenantId] = UUID.fromString(tenantId.toString())
-            it[ExpensesTable.date] = date
-            it[ExpensesTable.merchant] = merchant
-            it[ExpensesTable.amount] = amount.toDbDecimal()
-            it[ExpensesTable.vatAmount] = expenseData.vatAmount?.toDbDecimal()
-            it[ExpensesTable.vatRate] = expenseData.vatRate?.toDbDecimal()
-            it[ExpensesTable.category] = category
-            it[ExpensesTable.description] = expenseData.description
-            it[ExpensesTable.documentId] = UUID.fromString(documentId.toString())
-            it[ExpensesTable.contactId] = linkedContactId?.let { id -> UUID.fromString(id.toString()) }
-            it[ExpensesTable.isDeductible] = expenseData.isDeductible ?: true
-            it[ExpensesTable.deductiblePercentage] =
-                (expenseData.deductiblePercentage ?: Percentage.FULL).toDbDecimal()
-            it[ExpensesTable.paymentMethod] = expenseData.paymentMethod
-            it[ExpensesTable.isRecurring] = false
-            it[ExpensesTable.notes] = expenseData.notes
-        }.value
-
-        val entryId = CashflowEntriesTable.insertAndGetId {
-            it[CashflowEntriesTable.tenantId] = UUID.fromString(tenantId.toString())
-            it[CashflowEntriesTable.sourceType] = CashflowSourceType.Expense
-            it[CashflowEntriesTable.sourceId] = expenseId
-            it[CashflowEntriesTable.documentId] = UUID.fromString(documentId.toString())
-            it[CashflowEntriesTable.direction] = CashflowDirection.Out
-            it[CashflowEntriesTable.eventDate] = date
-            it[CashflowEntriesTable.amountGross] = amount.toDbDecimal()
-            it[CashflowEntriesTable.amountVat] = (expenseData.vatAmount ?: Money.ZERO).toDbDecimal()
-            it[CashflowEntriesTable.remainingAmount] = amount.toDbDecimal()
-            it[CashflowEntriesTable.status] = CashflowEntryStatus.Open
-            it[CashflowEntriesTable.counterpartyId] = linkedContactId?.let { id -> UUID.fromString(id.toString()) }
-        }.value
-
-        markDraftConfirmed(tenantId = tenantId, documentId = documentId)
-
-        return CreatedConfirmation.Expense(
-            expenseId = expenseId,
-            cashflowEntryId = CashflowEntryId.parse(entryId.toString())
-        )
-    }
-
     /**
      * Confirm a Receipt document.
      * Receipt confirms into an Expense entity + cashflow OUT entry.
@@ -429,16 +396,25 @@ class DocumentConfirmationService(
     private fun confirmReceiptTx(
         tenantId: TenantId,
         documentId: DocumentId,
-        extractedData: ExtractedDocumentData,
+        draftData: ReceiptDraftData,
         linkedContactId: ContactId?,
     ): CreatedConfirmation.Receipt {
-        val receiptData = extractedData.receipt
-            ?: throw DokusException.BadRequest("No receipt data extracted from document")
-
-        val date = receiptData.date ?: throw DokusException.BadRequest("Date is required")
-        val merchant = receiptData.merchant ?: throw DokusException.BadRequest("Merchant is required")
-        val amount = receiptData.amount ?: throw DokusException.BadRequest("Amount is required")
-        val category = receiptData.category ?: throw DokusException.BadRequest("Category is required")
+        val date = draftData.date ?: throw DokusException.BadRequest("Date is required")
+        val merchant = draftData.merchantName ?: throw DokusException.BadRequest("Merchant is required")
+        val totalAmount = draftData.totalAmount ?: throw DokusException.BadRequest("Amount is required")
+        val vatAmount = draftData.vatAmount
+        val amount = totalAmount
+        val category = tech.dokus.domain.enums.ExpenseCategory.Other
+        val vatRate = if (vatAmount != null) {
+            val baseMinor = (totalAmount - vatAmount).minor
+            if (baseMinor > 0L) {
+                VatRate(((vatAmount.minor * 10000L) / baseMinor).toInt())
+            } else {
+                null
+            }
+        } else {
+            null
+        }
 
         // Receipt creates an Expense entity (same structure)
         val expenseId = ExpensesTable.insertAndGetId {
@@ -446,18 +422,17 @@ class DocumentConfirmationService(
             it[ExpensesTable.date] = date
             it[ExpensesTable.merchant] = merchant
             it[ExpensesTable.amount] = amount.toDbDecimal()
-            it[ExpensesTable.vatAmount] = receiptData.vatAmount?.toDbDecimal()
-            it[ExpensesTable.vatRate] = receiptData.vatRate?.toDbDecimal()
+            it[ExpensesTable.vatAmount] = vatAmount?.toDbDecimal()
+            it[ExpensesTable.vatRate] = vatRate?.toDbDecimal()
             it[ExpensesTable.category] = category
-            it[ExpensesTable.description] = receiptData.description
+            it[ExpensesTable.description] = null
             it[ExpensesTable.documentId] = UUID.fromString(documentId.toString())
             it[ExpensesTable.contactId] = linkedContactId?.let { id -> UUID.fromString(id.toString()) }
-            it[ExpensesTable.isDeductible] = receiptData.isDeductible ?: true
-            it[ExpensesTable.deductiblePercentage] =
-                (receiptData.deductiblePercentage ?: Percentage.FULL).toDbDecimal()
-            it[ExpensesTable.paymentMethod] = receiptData.paymentMethod
+            it[ExpensesTable.isDeductible] = true
+            it[ExpensesTable.deductiblePercentage] = Percentage.FULL.toDbDecimal()
+            it[ExpensesTable.paymentMethod] = draftData.paymentMethod
             it[ExpensesTable.isRecurring] = false
-            it[ExpensesTable.notes] = receiptData.notes
+            it[ExpensesTable.notes] = draftData.notes
         }.value
 
         // Create cashflow OUT entry
@@ -469,7 +444,7 @@ class DocumentConfirmationService(
             it[CashflowEntriesTable.direction] = CashflowDirection.Out
             it[CashflowEntriesTable.eventDate] = date
             it[CashflowEntriesTable.amountGross] = amount.toDbDecimal()
-            it[CashflowEntriesTable.amountVat] = (receiptData.vatAmount ?: Money.ZERO).toDbDecimal()
+            it[CashflowEntriesTable.amountVat] = (vatAmount ?: Money.ZERO).toDbDecimal()
             it[CashflowEntriesTable.remainingAmount] = amount.toDbDecimal()
             it[CashflowEntriesTable.status] = CashflowEntryStatus.Open
             it[CashflowEntriesTable.counterpartyId] = linkedContactId?.let { id -> UUID.fromString(id.toString()) }
@@ -481,23 +456,6 @@ class DocumentConfirmationService(
             expenseId = expenseId,
             cashflowEntryId = CashflowEntryId.parse(entryId.toString())
         )
-    }
-
-    /**
-     * Confirm a ProForma document.
-     * ProForma is informational only - marks draft as Confirmed but creates NO cashflow/VAT impact.
-     * Conversion to Invoice is handled separately via ProFormaService.convertToInvoice().
-     */
-    private fun confirmProFormaTx(
-        tenantId: TenantId,
-        documentId: DocumentId
-    ): CreatedConfirmation.ProForma {
-        // ProForma creates no financial entity and no cashflow entry
-        // Just mark the draft as confirmed
-        markDraftConfirmed(tenantId = tenantId, documentId = documentId)
-
-        // ProForma is document-only - no financial entity, no cashflow entry
-        return CreatedConfirmation.ProForma(documentId = documentId)
     }
 
     private fun markDraftConfirmed(tenantId: TenantId, documentId: DocumentId) {
@@ -527,17 +485,8 @@ private sealed interface CreatedConfirmation {
         val cashflowEntryId: CashflowEntryId
     ) : CreatedConfirmation
 
-    data class Expense(
-        val expenseId: UUID,
-        val cashflowEntryId: CashflowEntryId
-    ) : CreatedConfirmation
-
     data class Receipt(
         val expenseId: UUID, // Receipt creates an Expense entity
         val cashflowEntryId: CashflowEntryId
-    ) : CreatedConfirmation
-
-    data class ProForma(
-        val documentId: DocumentId
     ) : CreatedConfirmation
 }

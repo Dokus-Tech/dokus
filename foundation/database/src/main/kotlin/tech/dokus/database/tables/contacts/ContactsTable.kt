@@ -29,6 +29,7 @@ object ContactsTable : UUIDTable("contacts") {
     val email = varchar("email", 255).nullable().index()
     val phone = varchar("phone", 50).nullable()
     val contactPerson = varchar("contact_person", 255).nullable()
+    val iban = varchar("iban", 34).nullable()
 
     // Business identification
     val vatNumber = varchar("vat_number", 50).nullable()

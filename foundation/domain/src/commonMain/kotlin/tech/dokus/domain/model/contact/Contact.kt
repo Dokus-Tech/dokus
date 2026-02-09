@@ -18,6 +18,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.ids.Iban
 
 /**
  * Main contact DTO representing a customer, vendor, or both.
@@ -29,6 +30,7 @@ data class ContactDto(
     val tenantId: TenantId,
     val name: Name,
     val email: Email? = null,
+    val iban: Iban? = null,
     val vatNumber: VatNumber? = null,
     val businessType: ClientType = ClientType.Business,
     val contactPerson: String? = null,
@@ -151,6 +153,7 @@ data class ContactAddressInput(
 data class CreateContactRequest(
     val name: Name,
     val email: Email? = null,
+    val iban: Iban? = null,
     val phone: PhoneNumber? = null,
     val vatNumber: VatNumber? = null,
     val businessType: ClientType = ClientType.Business,
@@ -174,6 +177,7 @@ data class CreateContactRequest(
 data class UpdateContactRequest(
     val name: Name? = null,
     val email: Email? = null,
+    val iban: Iban? = null,
     val phone: PhoneNumber? = null,
     val vatNumber: VatNumber? = null,
     val businessType: ClientType? = null,

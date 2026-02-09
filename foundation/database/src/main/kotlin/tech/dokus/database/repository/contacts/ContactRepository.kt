@@ -29,6 +29,7 @@ import tech.dokus.domain.VatRate
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -66,6 +67,7 @@ class ContactRepository {
                 it[ContactsTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[name] = request.name.value
                 it[email] = request.email?.value
+                it[iban] = request.iban?.value
                 it[phone] = request.phone?.value
                 it[vatNumber] = request.vatNumber?.value
                 // contactType removed - roles are derived from cashflow items
@@ -216,6 +218,7 @@ class ContactRepository {
             }) {
                 request.name?.let { value -> it[name] = value.value }
                 request.email?.let { value -> it[email] = value.value }
+                request.iban?.let { value -> it[iban] = value.value }
                 request.phone?.let { value -> it[phone] = value.value }
                 request.vatNumber?.let { value -> it[vatNumber] = value.value }
                 // contactType removed - roles are derived from cashflow items
@@ -392,6 +395,24 @@ class ContactRepository {
             }.singleOrNull()?.let { row ->
                 mapRowToContactDto(row)
             }
+        }
+    }
+
+    /**
+     * Find contacts by IBAN (exact match, normalized).
+     * Returns active matches.
+     */
+    suspend fun findByIban(
+        tenantId: TenantId,
+        iban: Iban
+    ): Result<List<ContactDto>> = runCatching {
+        dbQuery {
+            val normalized = Iban.from(iban.value)?.value ?: return@dbQuery emptyList()
+            ContactsTable.selectAll().where {
+                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (ContactsTable.isActive eq true) and
+                    (ContactsTable.iban eq normalized)
+            }.map { row -> mapRowToContactDto(row) }
         }
     }
 
@@ -669,6 +690,7 @@ class ContactRepository {
             tenantId = TenantId.parse(row[ContactsTable.tenantId].toString()),
             name = Name(row[ContactsTable.name]),
             email = row[ContactsTable.email]?.let { Email(it) },
+            iban = row[ContactsTable.iban]?.let { Iban(it) },
             vatNumber = row[ContactsTable.vatNumber]?.let { VatNumber(it) },
             businessType = row[ContactsTable.businessType],
             // Addresses are now in ContactAddressesTable, populated by caller

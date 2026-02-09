@@ -27,6 +27,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
@@ -231,7 +232,7 @@ class PeppolPollingWorker(
         try {
             logger.debug("Polling Peppol inbox for tenant: {}", tenantId)
 
-            val result = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid, documentDetail ->
+            val result = peppolService.pollInbox(tenantId) { draftData, senderPeppolId, tid, documentDetail ->
                 runCatching {
                     // Find PDF attachment (if any)
                     val pdfAttachment = documentDetail
@@ -245,7 +246,7 @@ class PeppolPollingWorker(
                                 tenantId = tid,
                                 prefix = "peppol",
                                 filename = pdfAttachment.filename.ifBlank {
-                                    "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.pdf"
+                                    "peppol-${(draftData as? BillDraftData)?.invoiceNumber ?: "unknown"}.pdf"
                                 },
                                 data = pdfBytes,
                                 contentType = "application/pdf"
@@ -291,7 +292,7 @@ class PeppolPollingWorker(
                     ingestionRunRepository.markAsSucceeded(
                         runId = runId,
                         rawText = null,
-                        extractedData = extractedData,
+                        rawExtractionJson = json.encodeToString(draftData),
                         confidence = 1.0 // Peppol data is authoritative
                     )
 
@@ -300,25 +301,25 @@ class PeppolPollingWorker(
                         documentId = documentId,
                         tenantId = tid,
                         runId = runId,
-                        extractedData = extractedData,
+                        extractedData = draftData,
                         documentType = DocumentType.Bill,
                         force = true
                     )
 
                     // Auto-confirm if policy allows (PEPPOL documents are always auto-confirmed)
-                    if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, extractedData, tid)) {
+                    if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, draftData, tid)) {
                         // Find or create contact from Peppol data
                         val linkedContactId = findOrCreateContactForPeppol(
                             tenantId = tid,
-                            supplierName = extractedData.bill?.supplierName,
-                            supplierVatNumber = extractedData.bill?.supplierVatNumber
+                            supplierName = (draftData as? BillDraftData)?.supplierName,
+                            supplierVatNumber = (draftData as? BillDraftData)?.supplierVat?.value
                         )
 
                         confirmationService.confirmDocument(
                             tenantId = tid,
                             documentId = documentId,
                             documentType = DocumentType.Bill,
-                            extractedData = extractedData,
+                            draftData = draftData,
                             linkedContactId = linkedContactId
                         ).getOrThrow()
                     }

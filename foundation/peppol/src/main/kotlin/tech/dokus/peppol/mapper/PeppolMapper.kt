@@ -3,17 +3,19 @@ package tech.dokus.peppol.mapper
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
-import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreateBillRequest
-import tech.dokus.domain.model.ExtractedBillFields
-import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.model.PeppolDocumentType
@@ -23,6 +25,7 @@ import tech.dokus.peppol.model.PeppolParty
 import tech.dokus.peppol.model.PeppolPaymentInfo
 import tech.dokus.peppol.model.PeppolReceivedDocument
 import tech.dokus.peppol.model.PeppolSendRequest
+import kotlin.math.roundToInt
 
 /**
  * Maps between domain models and provider-agnostic Peppol models.
@@ -194,13 +197,13 @@ class PeppolMapper {
     }
 
     /**
-     * Convert a received Peppol document to ExtractedDocumentData.
+     * Convert a received Peppol document to normalized draft data.
      * Used when creating Documents+Drafts from Peppol inbox (architectural boundary).
      */
-    fun toExtractedDocumentData(
+    fun toDraftData(
         document: PeppolReceivedDocument,
         senderPeppolId: String
-    ): ExtractedDocumentData {
+    ): BillDraftData {
         val seller = document.seller
         val totals = document.totals
         val taxTotal = document.taxTotal
@@ -209,35 +212,55 @@ class PeppolMapper {
         val issueDate = document.issueDate?.let { parseDate(it) }
         val dueDate = document.dueDate?.let { parseDate(it) } ?: issueDate
 
-        // Calculate amounts
-        val amount = totals?.payableAmount?.let { Money.fromDouble(it) }
+        // Amounts
+        val totalAmount = totals?.payableAmount?.let { Money.fromDouble(it) }
             ?: totals?.taxInclusiveAmount?.let { Money.fromDouble(it) }
-
         val vatAmount = taxTotal?.taxAmount?.let { Money.fromDouble(it) }
+        val subtotalAmount = totals?.taxExclusiveAmount?.let { Money.fromDouble(it) }
+            ?: if (totalAmount != null && vatAmount != null) totalAmount - vatAmount else null
 
-        // Determine VAT rate from tax subtotals
-        val vatRate = taxTotal?.taxSubtotals?.firstOrNull()?.taxPercent?.let { percent ->
-            VatRate.parse(percent.toString())
+        val lineItems = document.lineItems.orEmpty().mapNotNull { line ->
+            val description = line.description ?: line.name ?: return@mapNotNull null
+            val quantity = line.quantity?.takeIf { it % 1.0 == 0.0 }?.toLong()
+            val unitPrice = line.unitPrice?.let { Money.fromDouble(it).minor }
+            val netAmount = line.lineTotal?.let { Money.fromDouble(it).minor }
+            val vatRate = line.taxPercent?.let { (it * 100).roundToInt() }
+
+            FinancialLineItem(
+                description = description,
+                quantity = quantity,
+                unitPrice = unitPrice,
+                vatRate = vatRate,
+                netAmount = netAmount
+            )
         }
 
-        // Infer category from document content
-        val category = inferCategory(document)
-
-        return ExtractedDocumentData(
-            documentType = DocumentType.Bill,
-            bill = ExtractedBillFields(
-                supplierName = seller?.name,
-                supplierVatNumber = seller?.vatNumber,
-                invoiceNumber = document.invoiceNumber,
-                issueDate = issueDate,
-                dueDate = dueDate,
-                amount = amount,
-                vatAmount = vatAmount,
-                vatRate = vatRate,
-                category = category,
-                description = document.note,
-                notes = "Received via Peppol from $senderPeppolId"
+        val vatBreakdown = taxTotal?.taxSubtotals.orEmpty().mapNotNull { subtotal ->
+            val rate = subtotal.taxPercent?.let { (it * 100).roundToInt() } ?: return@mapNotNull null
+            val base = subtotal.taxableAmount?.let { Money.fromDouble(it).minor } ?: return@mapNotNull null
+            val amount = subtotal.taxAmount?.let { Money.fromDouble(it).minor } ?: return@mapNotNull null
+            VatBreakdownEntry(
+                rate = rate,
+                base = base,
+                amount = amount
             )
+        }
+
+        return BillDraftData(
+            supplierName = seller?.name,
+            supplierVat = VatNumber.from(seller?.vatNumber),
+            invoiceNumber = document.invoiceNumber,
+            issueDate = issueDate,
+            dueDate = dueDate,
+            currency = Currency.from(document.currencyCode),
+            subtotalAmount = subtotalAmount,
+            vatAmount = vatAmount,
+            totalAmount = totalAmount,
+            lineItems = lineItems,
+            vatBreakdown = vatBreakdown,
+            iban = null,
+            payment = null,
+            notes = document.note ?: "Received via Peppol from $senderPeppolId"
         )
     }
 

@@ -23,7 +23,7 @@ import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
@@ -127,7 +127,7 @@ class ProcessorIngestionRepository {
     /**
      * Mark an ingestion run as successfully completed.
      *
-     * This also creates or updates the document draft with the extraction results.
+     * This also creates or updates the document draft with normalized draft data.
      * Draft update logic:
      * - ai_draft_data: Set ONLY if null (immutable original from first successful run)
      * - extracted_data: Set ONLY if draftVersion == 0 (not user-edited) or force=true
@@ -136,15 +136,17 @@ class ProcessorIngestionRepository {
      * Draft creation rules:
      * - Always create a draft (including Unknown type)
      * - Unknown type → DocumentStatus.NeedsReview
-     * - confidence < threshold → DocumentStatus.NeedsReview
-     * - confidence >= threshold → DocumentStatus.Confirmed
+     * - processingOutcome == AutoConfirmEligible → DocumentStatus.Confirmed
+     * - otherwise → DocumentStatus.NeedsReview
      *
      * @param runId The ingestion run ID
      * @param tenantId The tenant ID (required for draft operations)
      * @param documentId The document ID
      * @param documentType Detected document type
-     * @param extractedData The extracted data structure
+     * @param draftData The normalized draft data (AI-agnostic)
+     * @param rawExtractionJson Full AI output (serialized DocumentAiProcessingResult)
      * @param confidence Overall confidence score (0.0 - 1.0)
+     * @param processingOutcome Derived outcome used for draft status
      * @param rawText Raw OCR/extracted text
      * @param description AI-generated short description (optional)
      * @param keywords AI-generated keywords (optional)
@@ -155,8 +157,10 @@ class ProcessorIngestionRepository {
         tenantId: String,
         documentId: String,
         documentType: DocumentType,
-        extractedData: ExtractedDocumentData,
+        draftData: DocumentDraftData?,
+        rawExtractionJson: String,
         confidence: Double,
+        processingOutcome: ProcessingOutcome,
         rawText: String?,
         description: String? = null,
         keywords: List<String> = emptyList(),
@@ -170,16 +174,14 @@ class ProcessorIngestionRepository {
             val runUuid = UUID.fromString(runId)
             val documentUuid = UUID.fromString(documentId)
             val tenantUuid = UUID.fromString(tenantId)
-            val extractedDataJson = json.encodeToString(extractedData)
-            val fieldConfidencesJson =
-                extractedData.fieldConfidences.let { json.encodeToString(it) }
+            val draftJson = draftData?.let { json.encodeToString(it) }
             val keywordsJson = keywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
-            val outcome = if (documentType == DocumentType.Unknown) {
-                ProcessingOutcome.ManualReviewRequired
-            } else if (confidence >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD) {
-                ProcessingOutcome.AutoConfirmEligible
+            val calculatedStatus = if (documentType == DocumentType.Unknown) {
+                DocumentStatus.NeedsReview
+            } else if (processingOutcome == ProcessingOutcome.AutoConfirmEligible) {
+                DocumentStatus.Confirmed
             } else {
-                ProcessingOutcome.ManualReviewRequired
+                DocumentStatus.NeedsReview
             }
 
             // Update the ingestion run (always, regardless of draft creation)
@@ -189,30 +191,14 @@ class ProcessorIngestionRepository {
                 it[status] = IngestionStatus.Succeeded
                 it[finishedAt] = now
                 it[DocumentIngestionRunsTable.rawText] = rawText
-                it[rawExtractionJson] = extractedDataJson
+                it[DocumentIngestionRunsTable.rawExtractionJson] = rawExtractionJson
                 it[DocumentIngestionRunsTable.confidence] = confidence.toBigDecimal()
-                it[processingOutcome] = outcome
-                it[fieldConfidences] = fieldConfidencesJson
+                it[DocumentIngestionRunsTable.processingOutcome] = processingOutcome
+                it[fieldConfidences] = null
                 it[errorMessage] = null
             } > 0
 
             if (!runUpdated) return@newSuspendedTransaction false
-
-            // Determine draft status based on confidence threshold.
-            val calculatedStatus = when {
-                documentType == DocumentType.Unknown -> {
-                    // Unknown classification requires manual review.
-                    DocumentStatus.NeedsReview
-                }
-                confidence >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD -> {
-                    // High confidence - auto-confirm.
-                    DocumentStatus.Confirmed
-                }
-                else -> {
-                    // Low confidence - user review required.
-                    DocumentStatus.NeedsReview
-                }
-            }
 
             // Check if draft exists and get current state
             // SECURITY: Always filter by tenantId to prevent cross-tenant access
@@ -230,11 +216,11 @@ class ProcessorIngestionRepository {
                     it[DocumentDraftsTable.tenantId] = tenantUuid
                     it[documentStatus] = calculatedStatus
                     it[DocumentDraftsTable.documentType] = documentType
-                    it[aiDraftData] = extractedDataJson
+                    it[aiDraftData] = draftJson
                     it[DocumentDraftsTable.aiDescription] = description?.takeIf { value -> value.isNotBlank() }
                     it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runUuid
-                    it[DocumentDraftsTable.extractedData] = extractedDataJson
+                    it[DocumentDraftsTable.extractedData] = draftJson
                     it[draftVersion] = 0
                     it[lastSuccessfulRunId] = runUuid
                     it[createdAt] = now
@@ -261,14 +247,14 @@ class ProcessorIngestionRepository {
                     it[updatedAt] = now
 
                     if (shouldSetAiDraft) {
-                        it[aiDraftData] = extractedDataJson
+                        it[aiDraftData] = draftJson
                         it[DocumentDraftsTable.aiDescription] = description?.takeIf { value -> value.isNotBlank() }
                         it[DocumentDraftsTable.aiKeywords] = keywordsJson
                         it[aiDraftSourceRunId] = runUuid
                     }
 
                     if (shouldSetExtracted) {
-                        it[DocumentDraftsTable.extractedData] = extractedDataJson
+                        it[DocumentDraftsTable.extractedData] = draftJson
                         // Update status when we update extracted data
                         it[documentStatus] = calculatedStatus
                         if (!description.isNullOrBlank()) {

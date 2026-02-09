@@ -16,7 +16,11 @@ import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentProcessingStepDto
-import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.BillDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.TrackedCorrection
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -70,124 +74,141 @@ internal suspend fun findConfirmedEntity(
  */
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 internal fun buildCorrections(
-    oldData: ExtractedDocumentData?,
-    newData: ExtractedDocumentData,
+    oldData: DocumentDraftData?,
+    newData: DocumentDraftData,
     now: String
 ): List<TrackedCorrection> {
     val corrections = mutableListOf<TrackedCorrection>()
 
-    if (oldData?.documentType != newData.documentType) {
+    if (oldData?.kind != newData.kind) {
         corrections.add(
             TrackedCorrection(
-                "documentType",
-                oldData?.documentType?.name,
-                newData.documentType.name,
+                "documentKind",
+                oldData?.kind?.name,
+                newData.kind.name,
                 now
             )
         )
     }
 
-    // Invoice fields
-    oldData?.invoice?.let { old ->
-        newData.invoice?.let { new ->
-            if (old.clientName != new.clientName) {
+    when (newData) {
+        is InvoiceDraftData -> {
+            val old = oldData as? InvoiceDraftData
+            if (old?.customerName != newData.customerName) {
                 corrections.add(
                     TrackedCorrection(
-                        "invoice.clientName",
-                        old.clientName,
-                        new.clientName,
+                        "invoice.customerName",
+                        old?.customerName,
+                        newData.customerName,
                         now
                     )
                 )
             }
-            if (old.invoiceNumber != new.invoiceNumber) {
+            if (old?.invoiceNumber != newData.invoiceNumber) {
                 corrections.add(
                     TrackedCorrection(
                         "invoice.invoiceNumber",
-                        old.invoiceNumber,
-                        new.invoiceNumber,
+                        old?.invoiceNumber,
+                        newData.invoiceNumber,
                         now
                     )
                 )
             }
-            if (old.totalAmount != new.totalAmount) {
+            if (old?.totalAmount != newData.totalAmount) {
                 corrections.add(
                     TrackedCorrection(
                         "invoice.totalAmount",
-                        old.totalAmount?.toString(),
-                        new.totalAmount?.toString(),
+                        old?.totalAmount?.toString(),
+                        newData.totalAmount?.toString(),
                         now
                     )
                 )
             }
         }
-    }
-
-    // Bill fields
-    oldData?.bill?.let { old ->
-        newData.bill?.let { new ->
-            if (old.supplierName != new.supplierName) {
+        is BillDraftData -> {
+            val old = oldData as? BillDraftData
+            if (old?.supplierName != newData.supplierName) {
                 corrections.add(
                     TrackedCorrection(
                         "bill.supplierName",
-                        old.supplierName,
-                        new.supplierName,
+                        old?.supplierName,
+                        newData.supplierName,
                         now
                     )
                 )
             }
-            if (old.invoiceNumber != new.invoiceNumber) {
+            if (old?.invoiceNumber != newData.invoiceNumber) {
                 corrections.add(
                     TrackedCorrection(
                         "bill.invoiceNumber",
-                        old.invoiceNumber,
-                        new.invoiceNumber,
+                        old?.invoiceNumber,
+                        newData.invoiceNumber,
                         now
                     )
                 )
             }
-            if (old.amount != new.amount) {
+            if (old?.totalAmount != newData.totalAmount) {
                 corrections.add(
                     TrackedCorrection(
-                        "bill.amount",
-                        old.amount?.toString(),
-                        new.amount?.toString(),
+                        "bill.totalAmount",
+                        old?.totalAmount?.toString(),
+                        newData.totalAmount?.toString(),
                         now
                     )
                 )
             }
         }
-    }
-
-    // Expense fields
-    oldData?.expense?.let { old ->
-        newData.expense?.let { new ->
-            if (old.merchant != new.merchant) {
+        is CreditNoteDraftData -> {
+            val old = oldData as? CreditNoteDraftData
+            if (old?.counterpartyName != newData.counterpartyName) {
                 corrections.add(
                     TrackedCorrection(
-                        "expense.merchant",
-                        old.merchant,
-                        new.merchant,
+                        "creditNote.counterpartyName",
+                        old?.counterpartyName,
+                        newData.counterpartyName,
                         now
                     )
                 )
             }
-            if (old.amount != new.amount) {
+            if (old?.creditNoteNumber != newData.creditNoteNumber) {
                 corrections.add(
                     TrackedCorrection(
-                        "expense.amount",
-                        old.amount?.toString(),
-                        new.amount?.toString(),
+                        "creditNote.creditNoteNumber",
+                        old?.creditNoteNumber,
+                        newData.creditNoteNumber,
                         now
                     )
                 )
             }
-            if (old.category != new.category) {
+            if (old?.totalAmount != newData.totalAmount) {
                 corrections.add(
                     TrackedCorrection(
-                        "expense.category",
-                        old.category?.name,
-                        new.category?.name,
+                        "creditNote.totalAmount",
+                        old?.totalAmount?.toString(),
+                        newData.totalAmount?.toString(),
+                        now
+                    )
+                )
+            }
+        }
+        is ReceiptDraftData -> {
+            val old = oldData as? ReceiptDraftData
+            if (old?.merchantName != newData.merchantName) {
+                corrections.add(
+                    TrackedCorrection(
+                        "receipt.merchantName",
+                        old?.merchantName,
+                        newData.merchantName,
+                        now
+                    )
+                )
+            }
+            if (old?.totalAmount != newData.totalAmount) {
+                corrections.add(
+                    TrackedCorrection(
+                        "receipt.totalAmount",
+                        old?.totalAmount?.toString(),
+                        newData.totalAmount?.toString(),
                         now
                     )
                 )
@@ -206,6 +227,7 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     tenantId = tenantId,
     documentStatus = documentStatus,
     documentType = documentType,
+    draftKind = extractedData?.kind ?: aiDraftData?.kind,
     extractedData = extractedData,
     aiDraftData = aiDraftData,
     aiDescription = aiDescription,
@@ -214,12 +236,11 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     draftVersion = draftVersion,
     draftEditedAt = draftEditedAt,
     draftEditedBy = draftEditedBy,
-    suggestedContactId = suggestedContactId,
-    contactSuggestionConfidence = contactSuggestionConfidence,
-    contactSuggestionReason = contactSuggestionReason,
+    contactSuggestions = contactSuggestions,
+    counterpartySnapshot = counterpartySnapshot,
+    matchEvidence = matchEvidence,
     linkedContactId = linkedContactId,
     linkedContactSource = linkedContactSource,
-    contactEvidence = contactEvidence,
     counterpartyIntent = counterpartyIntent,
     rejectReason = rejectReason,
     lastSuccessfulRunId = lastSuccessfulRunId,
@@ -235,7 +256,7 @@ internal fun IngestionRunSummary.toDto(
     includeTrace: Boolean = false
 ): DocumentIngestionDto {
     val rawExtraction = if (includeRawExtraction) {
-        rawExtractionJson?.let { parseSafe<ExtractedDocumentData>(it).getOrNull() }
+        rawExtractionJson?.let { parseSafe<kotlinx.serialization.json.JsonElement>(it).getOrNull() }
     } else {
         null
     }
