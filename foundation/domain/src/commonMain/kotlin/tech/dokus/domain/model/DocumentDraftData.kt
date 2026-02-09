@@ -7,7 +7,6 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CreditNoteDirection
 import tech.dokus.domain.enums.Currency
-import tech.dokus.domain.enums.DocumentKind
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
@@ -18,7 +17,6 @@ import tech.dokus.domain.ids.VatNumber
  */
 @Serializable
 sealed interface DocumentDraftData {
-    val kind: DocumentKind
 }
 
 @Serializable
@@ -40,7 +38,6 @@ data class InvoiceDraftData(
     val payment: CanonicalPayment? = null,
     val notes: String? = null
 ) : DocumentDraftData {
-    override val kind: DocumentKind = DocumentKind.Invoice
 }
 
 @Serializable
@@ -61,7 +58,6 @@ data class BillDraftData(
     val payment: CanonicalPayment? = null,
     val notes: String? = null
 ) : DocumentDraftData {
-    override val kind: DocumentKind = DocumentKind.Bill
 }
 
 @Serializable
@@ -82,7 +78,6 @@ data class CreditNoteDraftData(
     val reason: String? = null,
     val notes: String? = null
 ) : DocumentDraftData {
-    override val kind: DocumentKind = DocumentKind.CreditNote
 }
 
 @Serializable
@@ -100,5 +95,4 @@ data class ReceiptDraftData(
     val paymentMethod: PaymentMethod? = null,
     val notes: String? = null
 ) : DocumentDraftData {
-    override val kind: DocumentKind = DocumentKind.Receipt
 }

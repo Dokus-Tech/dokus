@@ -26,8 +26,8 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.CounterpartyIntent
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
@@ -250,17 +250,16 @@ internal fun Route.documentRecordRoutes() {
             }
 
             if (hasExtractedData) {
-                val updatedData = requestData ?: throw DokusException.BadRequest("No extracted data provided")
                 // Build tracked corrections
-                val now = kotlinx.datetime.Clock.System.now().toString()
-                val corrections = buildCorrections(draft.extractedData, updatedData, now)
+                val now = Clock.System.now().toString()
+                val corrections = buildCorrections(draft.extractedData, requestData, now)
 
                 // Update draft (may transition Confirmed -> NeedsReview)
                 val newVersion = draftRepository.updateDraft(
                     documentId = documentId,
                     tenantId = tenantId,
                     userId = userId,
-                    updatedData = updatedData,
+                    updatedData = requestData,
                     corrections = corrections
                 ) ?: throw DokusException.InternalError("Failed to update draft")
 
@@ -275,7 +274,7 @@ internal fun Route.documentRecordRoutes() {
                     UpdateDraftResponse(
                         documentId = documentId,
                         draftVersion = newVersion,
-                        extractedData = updatedData,
+                        extractedData = requestData,
                         updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
                     )
                 )

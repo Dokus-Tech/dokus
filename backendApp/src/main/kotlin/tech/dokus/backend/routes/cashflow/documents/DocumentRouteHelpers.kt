@@ -7,6 +7,7 @@ import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.DocumentKind
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -80,12 +81,14 @@ internal fun buildCorrections(
 ): List<TrackedCorrection> {
     val corrections = mutableListOf<TrackedCorrection>()
 
-    if (oldData?.kind != newData.kind) {
+    val oldKind = oldData?.let { resolveDraftKind(it) }
+    val newKind = resolveDraftKind(newData)
+    if (oldKind != newKind) {
         corrections.add(
             TrackedCorrection(
                 "documentKind",
-                oldData?.kind?.name,
-                newData.kind.name,
+                oldKind?.name,
+                newKind.name,
                 now
             )
         )
@@ -227,7 +230,7 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     tenantId = tenantId,
     documentStatus = documentStatus,
     documentType = documentType,
-    draftKind = extractedData?.kind ?: aiDraftData?.kind,
+    draftKind = extractedData?.let { resolveDraftKind(it) } ?: aiDraftData?.let { resolveDraftKind(it) },
     extractedData = extractedData,
     aiDraftData = aiDraftData,
     aiDescription = aiDescription,
@@ -247,6 +250,13 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     createdAt = createdAt,
     updatedAt = updatedAt
 )
+
+private fun resolveDraftKind(data: DocumentDraftData): DocumentKind = when (data) {
+    is InvoiceDraftData -> DocumentKind.Invoice
+    is BillDraftData -> DocumentKind.Bill
+    is CreditNoteDraftData -> DocumentKind.CreditNote
+    is ReceiptDraftData -> DocumentKind.Receipt
+}
 
 /**
  * Convert IngestionRunSummary to DocumentIngestionDto.
