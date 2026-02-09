@@ -8,6 +8,7 @@ import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Email
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.VatNumber
@@ -40,8 +41,8 @@ data class ProFormaExtractionResult(
     val totalAmount: Money?,
 
     val customerName: String?,
-    val customerVat: String?,
-    val customerEmail: String?,
+    val customerVat: VatNumber?,
+    val customerEmail: Email?,
 
     val confidence: Double,
     val reasoning: String?,
@@ -78,8 +79,8 @@ private class ProFormaExtractionFinishTool : Tool<ProFormaExtractionToolInput, F
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
                 customerName = args.customerName,
-                customerVat = VatNumber.from(args.customerVat)?.value,
-                customerEmail = args.customerEmail,
+                customerVat = VatNumber.from(args.customerVat),
+                customerEmail = Email.from(args.customerEmail),
                 confidence = args.confidence,
                 reasoning = args.reasoning,
             )

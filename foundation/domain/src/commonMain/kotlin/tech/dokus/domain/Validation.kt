@@ -47,6 +47,20 @@ value class Email(override val value: String) : ValueClass<String>, Validatable<
 
     companion object {
         val Empty = Email("")
+
+        /**
+         * Normalize raw email input into canonical form.
+         *
+         * Rules:
+         * - Trim whitespace
+         * - Lowercase for consistent storage/display
+         * - Keep cleaned value even if invalid
+         */
+        fun from(raw: String?): Email? {
+            if (raw == null) return null
+            val cleaned = raw.trim().lowercase()
+            return Email(cleaned)
+        }
     }
 }
 

@@ -93,8 +93,9 @@ object ChecksumValidator {
      * @param iban The IBAN string to validate (may be null)
      * @return AuditCheck with validation result and retry hints if failed
      */
-    fun auditIban(iban: String?): AuditCheck {
-        if (iban.isNullOrBlank()) {
+    fun auditIban(iban: Iban?): AuditCheck {
+        val raw = iban?.value
+        if (raw.isNullOrBlank()) {
             return AuditCheck.incomplete(
                 type = CheckType.CHECKSUM_IBAN,
                 field = "iban",
@@ -102,11 +103,10 @@ object ChecksumValidator {
             )
         }
 
-        val ibanValue = Iban(iban)
-        val isValid = ValidateIbanUseCase(ibanValue)
+        val isValid = ValidateIbanUseCase(iban)
 
         return if (isValid) {
-            val normalized = normalizeIban(iban)
+            val normalized = normalizeIban(raw)
             AuditCheck.passed(
                 type = CheckType.CHECKSUM_IBAN,
                 field = "iban",
@@ -117,9 +117,9 @@ object ChecksumValidator {
                 type = CheckType.CHECKSUM_IBAN,
                 field = "iban",
                 message = "IBAN checksum failed",
-                hint = buildIbanHint(iban),
+                hint = buildIbanHint(raw),
                 expected = "Valid IBAN (mod-97 check)",
-                actual = iban
+                actual = raw
             )
         }
     }

@@ -35,7 +35,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractBillSubGraph(
 @SerialName("BillExtractionResult")
 data class BillExtractionResult(
     val supplierName: String?,
-    val supplierVat: String?,
+    val supplierVat: VatNumber?,
     val invoiceNumber: String?,
     val issueDate: LocalDate?,
     val dueDate: LocalDate?,
@@ -43,7 +43,7 @@ data class BillExtractionResult(
     val totalAmount: Money?,
     val vatAmount: Money?,
     val vatRate: VatRate?,
-    val iban: String?,
+    val iban: Iban?,
     val payment: CanonicalPayment?,
     val confidence: Double,
     val reasoning: String?,
@@ -76,7 +76,7 @@ private class BillExtractionFinishTool : Tool<BillExtractionToolInput, Financial
         return FinancialExtractionResult.Bill(
             BillExtractionResult(
                 supplierName = args.supplierName,
-                supplierVat = VatNumber.from(args.supplierVat)?.value,
+                supplierVat = VatNumber.from(args.supplierVat),
                 invoiceNumber = args.invoiceNumber,
                 issueDate = args.issueDate,
                 dueDate = args.dueDate,
@@ -84,7 +84,7 @@ private class BillExtractionFinishTool : Tool<BillExtractionToolInput, Financial
                 totalAmount = Money.from(args.totalAmount),
                 vatAmount = Money.from(args.vatAmount),
                 vatRate = VatRate.from(args.vatRate),
-                iban = Iban.from(args.iban)?.value,
+                iban = Iban.from(args.iban),
                 payment = CanonicalPayment.from(args.paymentReference),
                 confidence = args.confidence,
                 reasoning = args.reasoning,

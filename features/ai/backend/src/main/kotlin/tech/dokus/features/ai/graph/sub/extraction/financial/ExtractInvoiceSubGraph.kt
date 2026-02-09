@@ -13,6 +13,7 @@ import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.domain.Email
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.Iban
@@ -36,11 +37,11 @@ data class InvoiceExtractionResult(
 
     // Parties (facts only)
     val customerName: String?,
-    val customerVat: String?,
-    val customerEmail: String? = null,
+    val customerVat: VatNumber?,
+    val customerEmail: Email? = null,
 
     // Payment hints
-    val iban: String? = null,
+    val iban: Iban? = null,
     val payment: CanonicalPayment? = null,
 
     // Evidence/quality
@@ -109,9 +110,9 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
                 customerName = args.customerName,
-                customerVat = VatNumber.from(args.customerVat)?.value,
-                customerEmail = args.customerEmail,
-                iban = Iban.from(args.iban)?.value,
+                customerVat = VatNumber.from(args.customerVat),
+                customerEmail = Email.from(args.customerEmail),
+                iban = Iban.from(args.iban),
                 payment = CanonicalPayment.from(args.paymentReference),
                 confidence = args.confidence,
                 reasoning = args.reasoning

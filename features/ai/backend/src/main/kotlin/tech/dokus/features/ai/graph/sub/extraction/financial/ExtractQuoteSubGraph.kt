@@ -8,6 +8,7 @@ import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Email
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.Iban
@@ -43,10 +44,10 @@ data class QuoteExtractionResult(
     val totalAmount: Money?,
 
     val customerName: String?,
-    val customerVat: String?,
-    val customerEmail: String?,
+    val customerVat: VatNumber?,
+    val customerEmail: Email?,
 
-    val iban: String?,
+    val iban: Iban?,
     val payment: CanonicalPayment?,
 
     val confidence: Double,
@@ -88,9 +89,9 @@ private class QuoteExtractionFinishTool : Tool<QuoteExtractionToolInput, Financi
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
                 customerName = args.customerName,
-                customerVat = VatNumber.from(args.customerVat)?.value,
-                customerEmail = args.customerEmail,
-                iban = Iban.from(args.iban)?.value,
+                customerVat = VatNumber.from(args.customerVat),
+                customerEmail = Email.from(args.customerEmail),
+                iban = Iban.from(args.iban),
                 payment = CanonicalPayment.from(args.paymentReference),
                 confidence = args.confidence,
                 reasoning = args.reasoning,

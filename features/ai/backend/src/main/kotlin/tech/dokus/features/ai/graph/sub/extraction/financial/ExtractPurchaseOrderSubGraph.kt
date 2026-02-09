@@ -8,6 +8,7 @@ import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Email
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.Iban
@@ -38,15 +39,15 @@ data class PurchaseOrderExtractionResult(
     val expectedDeliveryDate: LocalDate?,
 
     val supplierName: String?,
-    val supplierVat: String?,
-    val supplierEmail: String?,
+    val supplierVat: VatNumber?,
+    val supplierEmail: Email?,
 
     val currency: Currency,
     val subtotalAmount: Money?,
     val vatAmount: Money?,
     val totalAmount: Money?,
 
-    val iban: String?,
+    val iban: Iban?,
     val payment: CanonicalPayment?,
 
     val confidence: Double,
@@ -85,13 +86,13 @@ private class PurchaseOrderExtractionFinishTool :
                 orderDate = args.orderDate,
                 expectedDeliveryDate = args.expectedDeliveryDate,
                 supplierName = args.supplierName,
-                supplierVat = VatNumber.from(args.supplierVat)?.value,
-                supplierEmail = args.supplierEmail,
+                supplierVat = VatNumber.from(args.supplierVat),
+                supplierEmail = Email.from(args.supplierEmail),
                 currency = Currency.from(args.currency),
                 subtotalAmount = Money.from(args.subtotalAmount),
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
-                iban = Iban.from(args.iban)?.value,
+                iban = Iban.from(args.iban),
                 payment = CanonicalPayment.from(args.paymentReference),
                 confidence = args.confidence,
                 reasoning = args.reasoning,

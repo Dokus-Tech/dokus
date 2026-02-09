@@ -1,5 +1,6 @@
 package tech.dokus.features.ai.validation
 
+import tech.dokus.domain.ids.Iban
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -92,7 +93,7 @@ class ChecksumValidatorTest {
 
     @Test
     fun `auditIban returns incomplete for blank input`() {
-        val result = ChecksumValidator.auditIban("   ")
+        val result = ChecksumValidator.auditIban(Iban.from("   "))
 
         assertTrue(result.passed)
         assertEquals(Severity.INFO, result.severity)
@@ -101,7 +102,7 @@ class ChecksumValidatorTest {
     @Test
     fun `auditIban passes for valid Belgian IBAN`() {
         // BE68 5390 0754 7034 is a valid Belgian IBAN
-        val result = ChecksumValidator.auditIban("BE68539007547034")
+        val result = ChecksumValidator.auditIban(Iban.from("BE68539007547034"))
 
         assertTrue(result.passed)
         assertEquals(Severity.INFO, result.severity)
@@ -110,14 +111,14 @@ class ChecksumValidatorTest {
 
     @Test
     fun `auditIban passes for valid IBAN with spaces`() {
-        val result = ChecksumValidator.auditIban("BE68 5390 0754 7034")
+        val result = ChecksumValidator.auditIban(Iban.from("BE68 5390 0754 7034"))
 
         assertTrue(result.passed)
     }
 
     @Test
     fun `auditIban passes for valid IBAN with lowercase`() {
-        val result = ChecksumValidator.auditIban("be68539007547034")
+        val result = ChecksumValidator.auditIban(Iban.from("be68539007547034"))
 
         assertTrue(result.passed)
     }
@@ -125,7 +126,7 @@ class ChecksumValidatorTest {
     @Test
     fun `auditIban fails critical for invalid checksum`() {
         // Changed last digit to make checksum fail
-        val result = ChecksumValidator.auditIban("BE68539007547035")
+        val result = ChecksumValidator.auditIban(Iban.from("BE68539007547035"))
 
         assertFalse(result.passed)
         assertEquals(Severity.CRITICAL, result.severity)
@@ -136,7 +137,7 @@ class ChecksumValidatorTest {
     @Test
     fun `auditIban hint mentions Belgian format for BE IBAN`() {
         // Invalid Belgian IBAN (wrong length)
-        val result = ChecksumValidator.auditIban("BE6853900754")
+        val result = ChecksumValidator.auditIban(Iban.from("BE6853900754"))
 
         assertFalse(result.passed)
         assertTrue(result.hint?.contains("Belgian") == true)

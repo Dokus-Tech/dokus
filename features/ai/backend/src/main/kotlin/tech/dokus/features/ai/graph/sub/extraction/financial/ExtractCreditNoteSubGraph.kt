@@ -49,7 +49,7 @@ data class CreditNoteExtractionResult(
     val totalAmount: Money?,
 
     val counterpartyName: String?,        // customer or supplier depending on direction
-    val counterpartyVat: String?,
+    val counterpartyVat: VatNumber?,
 
     val originalInvoiceNumber: String?,   // if referenced
     val reason: String?,                  // if explicit (e.g. "Remboursement", "Retour")
@@ -93,7 +93,7 @@ private class CreditNoteExtractionFinishTool :
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
                 counterpartyName = args.counterpartyName,
-                counterpartyVat = VatNumber.from(args.counterpartyVat)?.value,
+                counterpartyVat = VatNumber.from(args.counterpartyVat),
                 originalInvoiceNumber = args.originalInvoiceNumber,
                 reason = args.reason,
                 confidence = args.confidence,
