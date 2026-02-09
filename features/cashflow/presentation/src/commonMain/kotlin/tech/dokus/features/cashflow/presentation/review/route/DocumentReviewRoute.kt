@@ -153,6 +153,17 @@ internal fun DocumentReviewRoute(
             // Open the contact sheet instead of navigating away
             container.store.intent(DocumentReviewIntent.OpenContactSheet)
         },
+        onCreateContact = { counterparty ->
+            container.store.intent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
+            navController.navigateTo(
+                ContactsDestination.CreateContact(
+                    prefillCompanyName = counterparty.name,
+                    prefillVat = counterparty.vatNumber,
+                    prefillAddress = counterparty.address,
+                    origin = ContactCreateOrigin.DocumentReview.name
+                )
+            )
+        },
         snackbarHostState = snackbarHostState,
     )
 

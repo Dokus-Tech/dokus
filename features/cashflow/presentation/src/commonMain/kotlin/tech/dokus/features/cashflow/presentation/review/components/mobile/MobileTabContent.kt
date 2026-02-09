@@ -217,6 +217,7 @@ internal fun DetailsTabContent(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -248,6 +249,7 @@ internal fun DetailsTabContent(
             state = state,
             onIntent = onIntent,
             onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
             modifier = Modifier.fillMaxWidth()
         )
 

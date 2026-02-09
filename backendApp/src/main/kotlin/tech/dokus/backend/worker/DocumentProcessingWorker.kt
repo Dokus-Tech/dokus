@@ -17,9 +17,11 @@ import org.slf4j.MDC
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.utils.json
@@ -32,6 +34,8 @@ import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.services.documents.DocumentConfirmationService
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -54,6 +58,9 @@ class DocumentProcessingWorker(
     private val processingAgent: DocumentProcessingAgent,
     private val contactResolutionService: ContactResolutionService,
     private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
+    private val autoConfirmPolicy: AutoConfirmPolicy,
+    private val confirmationService: DocumentConfirmationService,
     private val config: ProcessorConfig,
     private val mode: IntelligenceMode,
     private val tenantRepository: TenantRepository,
@@ -207,9 +214,18 @@ class DocumentProcessingWorker(
             )
 
             if (draftData != null) {
+                // Ensure drafts start in NeedsReview; auto-confirm will set Confirmed explicitly.
+                draftRepository.updateDocumentStatus(
+                    documentId = documentId,
+                    tenantId = parsedTenantId,
+                    status = DocumentStatus.NeedsReview
+                )
+
                 val resolution = contactResolutionService.resolve(parsedTenantId, draftData)
+                var linkedContactId: tech.dokus.domain.ids.ContactId? = null
                 when (val decision = resolution.resolution) {
                     is tech.dokus.domain.model.contact.ContactResolution.Matched -> {
+                        linkedContactId = decision.contactId
                         draftRepository.updateContactResolution(
                             documentId = documentId,
                             tenantId = parsedTenantId,
@@ -225,6 +241,7 @@ class DocumentProcessingWorker(
                             tenantId = parsedTenantId,
                             resolution = decision
                         )
+                        linkedContactId = contactId
                         draftRepository.updateContactResolution(
                             documentId = documentId,
                             tenantId = parsedTenantId,
@@ -256,6 +273,39 @@ class DocumentProcessingWorker(
                             linkedContactId = null,
                             linkedContactSource = null
                         )
+                    }
+                }
+
+                val document = documentRepository.getById(parsedTenantId, documentId)
+                if (document != null) {
+                    val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
+                        tenantId = parsedTenantId,
+                        documentId = documentId,
+                        source = document.source,
+                        documentType = documentType,
+                        draftData = draftData,
+                        auditPassed = result.auditReport.isValid,
+                        confidence = confidence,
+                        linkedContactId = linkedContactId
+                    )
+
+                    if (canAutoConfirm) {
+                        try {
+                            confirmationService.confirmDocument(
+                                tenantId = parsedTenantId,
+                                documentId = documentId,
+                                documentType = documentType,
+                                draftData = draftData,
+                                linkedContactId = linkedContactId
+                            ).getOrThrow()
+                        } catch (e: Exception) {
+                            logger.error("Auto-confirm failed for document $documentId", e)
+                            draftRepository.updateDocumentStatus(
+                                documentId = documentId,
+                                tenantId = parsedTenantId,
+                                status = DocumentStatus.NeedsReview
+                            )
+                        }
                     }
                 }
             }

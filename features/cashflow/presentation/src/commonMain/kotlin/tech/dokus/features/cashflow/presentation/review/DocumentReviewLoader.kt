@@ -79,7 +79,11 @@ internal class DocumentReviewLoader(
                 vatNumber = suggestion.vatNumber?.value
             )
         }
-        val isContactRequired = documentType in listOf(DocumentType.Invoice, DocumentType.Bill)
+        val isContactRequired = documentType in listOf(
+            DocumentType.Invoice,
+            DocumentType.Bill,
+            DocumentType.CreditNote
+        )
         val documentStatus = draft.documentStatus
         val isDocumentConfirmed = documentStatus == DocumentStatus.Confirmed
         val isDocumentRejected = documentStatus == DocumentStatus.Rejected
@@ -129,14 +133,11 @@ internal class DocumentReviewLoader(
         }
         val topSuggestion = suggestions.firstOrNull()
         if (topSuggestion != null) {
-            val confidence = topSuggestion.matchScore.nameSimilarity.toFloat()
             return Triple(
                 ContactSelectionState.Suggested(
                     contactId = topSuggestion.contactId,
                     name = topSuggestion.name,
                     vatNumber = topSuggestion.vatNumber?.value,
-                    confidence = confidence,
-                    reason = topSuggestion.reason
                 ),
                 null,
                 null

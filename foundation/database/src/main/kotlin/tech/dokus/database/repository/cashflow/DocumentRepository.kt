@@ -96,6 +96,23 @@ class DocumentRepository {
         }
 
     /**
+     * Get the content hash for a document by ID.
+     * CRITICAL: Must filter by tenantId.
+     */
+    suspend fun getContentHash(tenantId: TenantId, documentId: DocumentId): String? =
+        newSuspendedTransaction {
+            DocumentsTable
+                .slice(DocumentsTable.contentHash)
+                .selectAll()
+                .where {
+                    (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
+                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                }
+                .singleOrNull()
+                ?.get(DocumentsTable.contentHash)
+        }
+
+    /**
      * Get a document by storage key.
      * CRITICAL: Must filter by tenantId.
      */

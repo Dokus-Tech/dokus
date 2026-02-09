@@ -35,6 +35,7 @@ import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.pdf.PdfPreviewService
@@ -349,6 +350,7 @@ private fun processorModule() = module {
 
     // Contact resolution (deterministic post-processing)
     single { ContactResolutionService(get(), get()) }
+    single { AutoConfirmPolicy(get()) }
 
     single<DocumentFetcher> {
         val documentRepository = get<DocumentRepository>()
@@ -375,6 +377,9 @@ private fun processorModule() = module {
             processingAgent = get(),
             contactResolutionService = get(),
             draftRepository = get(),
+            documentRepository = get(),
+            autoConfirmPolicy = get(),
+            confirmationService = get(),
             config = get<ProcessorConfig>(),
             mode = get<AIConfig>().mode,
             tenantRepository = get()

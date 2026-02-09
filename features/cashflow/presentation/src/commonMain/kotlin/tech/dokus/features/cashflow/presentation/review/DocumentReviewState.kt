@@ -33,9 +33,6 @@ data class RejectDialogState(
     val isConfirming: Boolean = false,
 )
 
-private const val MinConfidenceThreshold = 0.0
-private const val PercentageMultiplier = 100
-
 @Immutable
 sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 
@@ -121,17 +118,6 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                 else -> null
             }
 
-        val showConfidence: Boolean
-            get() {
-                val conf = document.latestIngestion?.confidence
-                val status = document.draft?.documentStatus
-                val statusAllowsConfidence = status != DocumentStatus.NeedsReview && status != DocumentStatus.Rejected
-                return conf != null && conf > MinConfidenceThreshold && statusAllowsConfidence
-            }
-
-        val confidencePercent: Int
-            get() = ((document.latestIngestion?.confidence ?: MinConfidenceThreshold) * PercentageMultiplier).toInt()
-
         /**
          * Hard gate - Confirm button is disabled when this is true.
          * True when: missing required fields (type, total, issue date).
@@ -145,16 +131,12 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          */
         val contactMatchStatus: ContactMatchStatus
             get() = when {
-                // User explicitly selected or high-confidence suggestion
-                selectedContactSnapshot != null && contactSelectionState is ContactSelectionState.Selected ->
+                // User explicitly selected
+                contactSelectionState is ContactSelectionState.Selected ->
                     ContactMatchStatus.Matched
-                // Suggested with high confidence (>=0.8)
-                selectedContactSnapshot != null &&
-                    contactSelectionState is ContactSelectionState.Suggested &&
-                    (contactSelectionState as ContactSelectionState.Suggested).confidence >= HIGH_CONFIDENCE_THRESHOLD ->
-                    ContactMatchStatus.Matched
-                // Contact exists but low confidence
-                selectedContactSnapshot != null ->
+                // Suggested contact exists for required types, but needs user confirmation
+                contactSelectionState is ContactSelectionState.Suggested &&
+                    editableData.documentType in CONTACT_REQUIRED_TYPES ->
                     ContactMatchStatus.Uncertain
                 // No contact, but required for this document type (Invoice/Bill)
                 editableData.documentType in CONTACT_REQUIRED_TYPES ->
@@ -183,8 +165,10 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                     contactMatchStatus == ContactMatchStatus.MissingButRequired) return true
 
                 // Due date missing for invoices/bills (only when not confirmed)
-                val needsDueDate = editableData.documentType in CONTACT_REQUIRED_TYPES &&
-                    !isDocumentConfirmed
+                val needsDueDate = editableData.documentType in listOf(
+                    DocumentType.Invoice,
+                    DocumentType.Bill
+                ) && !isDocumentConfirmed
                 if (needsDueDate && editableData.dueDate == null) return true
 
                 return false
@@ -307,18 +291,19 @@ private val EditableExtractedData.dueDate: kotlinx.datetime.LocalDate?
  * Used for policy-based attention signals in the UI.
  */
 enum class ContactMatchStatus {
-    /** Bound with high confidence or explicit user selection. */
+    /** Bound via explicit user selection. */
     Matched,
-    /** Bound but low confidence or multiple candidates - user should review. */
+    /** Suggested but not yet confirmed. */
     Uncertain,
-    /** No contact, and document type requires one (Invoice/Bill). */
+    /** No contact, and document type requires one (Invoice/Bill/CreditNote). */
     MissingButRequired,
     /** No contact, but acceptable for this document type (Receipt). */
     NotRequired
 }
 
-/** Confidence threshold for considering a contact match as "high confidence". */
-private const val HIGH_CONFIDENCE_THRESHOLD = 0.8f
-
 /** Document types that require a contact (for VAT/accounting purposes). */
-private val CONTACT_REQUIRED_TYPES = listOf(DocumentType.Invoice, DocumentType.Bill)
+private val CONTACT_REQUIRED_TYPES = listOf(
+    DocumentType.Invoice,
+    DocumentType.Bill,
+    DocumentType.CreditNote
+)

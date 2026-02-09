@@ -20,8 +20,6 @@ sealed interface ContactSelectionState {
         val contactId: ContactId,
         val name: String,
         val vatNumber: String?,
-        val confidence: Float,
-        val reason: String? = null,
     ) : ContactSelectionState
 }
 

@@ -71,6 +71,7 @@ internal fun ReviewContent(
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: (CounterpartyInfo) -> Unit,
+    onCreateContact: (CounterpartyInfo) -> Unit,
     onBackClick: () -> Unit,
 ) {
     when (state) {
@@ -90,6 +91,7 @@ internal fun ReviewContent(
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                     onCorrectContact = { onCorrectContact(counterparty) },
+                    onCreateContact = { onCreateContact(counterparty) },
                 )
             } else {
                 MobileReviewContent(
@@ -97,6 +99,7 @@ internal fun ReviewContent(
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                     onCorrectContact = { onCorrectContact(counterparty) },
+                    onCreateContact = { onCreateContact(counterparty) },
                     onBackClick = onBackClick,
                 )
             }
@@ -190,6 +193,7 @@ private fun DesktopReviewContent(
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -212,6 +216,7 @@ private fun DesktopReviewContent(
             state = state,
             onIntent = onIntent,
             onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
             modifier = Modifier
                 .width(420.dp)
                 .fillMaxHeight()
@@ -245,6 +250,7 @@ private fun ReviewDetailsPane(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -287,6 +293,7 @@ private fun ReviewDetailsPane(
                     state = state,
                     onIntent = onIntent,
                     onCorrectContact = onCorrectContact,
+                    onCreateContact = onCreateContact,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 InvoiceDetailsCard(
@@ -335,6 +342,7 @@ private fun MobileReviewContent(
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
     onBackClick: () -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -385,7 +393,8 @@ private fun MobileReviewContent(
                 DetailsTabContent(
                     state = state,
                     onIntent = onIntent,
-                    onCorrectContact = onCorrectContact
+                    onCorrectContact = onCorrectContact,
+                    onCreateContact = onCreateContact
                 )
             } else {
                 when (selectedTab) {
@@ -396,7 +405,8 @@ private fun MobileReviewContent(
                     TAB_DETAILS -> DetailsTabContent(
                         state = state,
                         onIntent = onIntent,
-                        onCorrectContact = onCorrectContact
+                        onCorrectContact = onCorrectContact,
+                        onCreateContact = onCreateContact
                     )
                 }
             }
