@@ -7,7 +7,6 @@ import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.DocumentKind
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -81,143 +80,26 @@ internal fun buildCorrections(
 ): List<TrackedCorrection> {
     val corrections = mutableListOf<TrackedCorrection>()
 
-    val oldKind = oldData?.let { resolveDraftKind(it) }
-    val newKind = resolveDraftKind(newData)
-    if (oldKind != newKind) {
+    val oldType = oldData?.let { resolveDraftType(it) }
+    val newType = resolveDraftType(newData)
+    if (oldType != newType) {
         corrections.add(
             TrackedCorrection(
-                "documentKind",
-                oldKind?.name,
-                newKind.name,
+                "documentType",
+                oldType?.name,
+                newType.name,
                 now
             )
         )
     }
 
-    when (newData) {
-        is InvoiceDraftData -> {
-            val old = oldData as? InvoiceDraftData
-            if (old?.customerName != newData.customerName) {
-                corrections.add(
-                    TrackedCorrection(
-                        "invoice.customerName",
-                        old?.customerName,
-                        newData.customerName,
-                        now
-                    )
-                )
-            }
-            if (old?.invoiceNumber != newData.invoiceNumber) {
-                corrections.add(
-                    TrackedCorrection(
-                        "invoice.invoiceNumber",
-                        old?.invoiceNumber,
-                        newData.invoiceNumber,
-                        now
-                    )
-                )
-            }
-            if (old?.totalAmount != newData.totalAmount) {
-                corrections.add(
-                    TrackedCorrection(
-                        "invoice.totalAmount",
-                        old?.totalAmount?.toString(),
-                        newData.totalAmount?.toString(),
-                        now
-                    )
-                )
-            }
-        }
-        is BillDraftData -> {
-            val old = oldData as? BillDraftData
-            if (old?.supplierName != newData.supplierName) {
-                corrections.add(
-                    TrackedCorrection(
-                        "bill.supplierName",
-                        old?.supplierName,
-                        newData.supplierName,
-                        now
-                    )
-                )
-            }
-            if (old?.invoiceNumber != newData.invoiceNumber) {
-                corrections.add(
-                    TrackedCorrection(
-                        "bill.invoiceNumber",
-                        old?.invoiceNumber,
-                        newData.invoiceNumber,
-                        now
-                    )
-                )
-            }
-            if (old?.totalAmount != newData.totalAmount) {
-                corrections.add(
-                    TrackedCorrection(
-                        "bill.totalAmount",
-                        old?.totalAmount?.toString(),
-                        newData.totalAmount?.toString(),
-                        now
-                    )
-                )
-            }
-        }
-        is CreditNoteDraftData -> {
-            val old = oldData as? CreditNoteDraftData
-            if (old?.counterpartyName != newData.counterpartyName) {
-                corrections.add(
-                    TrackedCorrection(
-                        "creditNote.counterpartyName",
-                        old?.counterpartyName,
-                        newData.counterpartyName,
-                        now
-                    )
-                )
-            }
-            if (old?.creditNoteNumber != newData.creditNoteNumber) {
-                corrections.add(
-                    TrackedCorrection(
-                        "creditNote.creditNoteNumber",
-                        old?.creditNoteNumber,
-                        newData.creditNoteNumber,
-                        now
-                    )
-                )
-            }
-            if (old?.totalAmount != newData.totalAmount) {
-                corrections.add(
-                    TrackedCorrection(
-                        "creditNote.totalAmount",
-                        old?.totalAmount?.toString(),
-                        newData.totalAmount?.toString(),
-                        now
-                    )
-                )
-            }
-        }
-        is ReceiptDraftData -> {
-            val old = oldData as? ReceiptDraftData
-            if (old?.merchantName != newData.merchantName) {
-                corrections.add(
-                    TrackedCorrection(
-                        "receipt.merchantName",
-                        old?.merchantName,
-                        newData.merchantName,
-                        now
-                    )
-                )
-            }
-            if (old?.totalAmount != newData.totalAmount) {
-                corrections.add(
-                    TrackedCorrection(
-                        "receipt.totalAmount",
-                        old?.totalAmount?.toString(),
-                        newData.totalAmount?.toString(),
-                        now
-                    )
-                )
-            }
-        }
+    val typeCorrections = when (newData) {
+        is InvoiceDraftData -> buildCorrections(oldData as? InvoiceDraftData, newData, now)
+        is BillDraftData -> buildCorrections(oldData as? BillDraftData, newData, now)
+        is CreditNoteDraftData -> buildCorrections(oldData as? CreditNoteDraftData, newData, now)
+        is ReceiptDraftData -> buildCorrections(oldData as? ReceiptDraftData, newData, now)
     }
+    corrections.addAll(typeCorrections)
 
     return corrections
 }
@@ -250,11 +132,157 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     updatedAt = updatedAt
 )
 
-private fun resolveDraftKind(data: DocumentDraftData): DocumentKind = when (data) {
-    is InvoiceDraftData -> DocumentKind.Invoice
-    is BillDraftData -> DocumentKind.Bill
-    is CreditNoteDraftData -> DocumentKind.CreditNote
-    is ReceiptDraftData -> DocumentKind.Receipt
+private fun resolveDraftType(data: DocumentDraftData): DocumentType = when (data) {
+    is InvoiceDraftData -> DocumentType.Invoice
+    is BillDraftData -> DocumentType.Bill
+    is CreditNoteDraftData -> DocumentType.CreditNote
+    is ReceiptDraftData -> DocumentType.Receipt
+}
+
+private fun buildCorrections(
+    oldData: InvoiceDraftData?,
+    newData: InvoiceDraftData,
+    now: String
+): List<TrackedCorrection> {
+    val corrections = mutableListOf<TrackedCorrection>()
+    if (oldData?.customerName != newData.customerName) {
+        corrections.add(
+            TrackedCorrection(
+                "invoice.customerName",
+                oldData?.customerName,
+                newData.customerName,
+                now
+            )
+        )
+    }
+    if (oldData?.invoiceNumber != newData.invoiceNumber) {
+        corrections.add(
+            TrackedCorrection(
+                "invoice.invoiceNumber",
+                oldData?.invoiceNumber,
+                newData.invoiceNumber,
+                now
+            )
+        )
+    }
+    if (oldData?.totalAmount != newData.totalAmount) {
+        corrections.add(
+            TrackedCorrection(
+                "invoice.totalAmount",
+                oldData?.totalAmount?.toString(),
+                newData.totalAmount?.toString(),
+                now
+            )
+        )
+    }
+    return corrections
+}
+
+private fun buildCorrections(
+    oldData: BillDraftData?,
+    newData: BillDraftData,
+    now: String
+): List<TrackedCorrection> {
+    val corrections = mutableListOf<TrackedCorrection>()
+    if (oldData?.supplierName != newData.supplierName) {
+        corrections.add(
+            TrackedCorrection(
+                "bill.supplierName",
+                oldData?.supplierName,
+                newData.supplierName,
+                now
+            )
+        )
+    }
+    if (oldData?.invoiceNumber != newData.invoiceNumber) {
+        corrections.add(
+            TrackedCorrection(
+                "bill.invoiceNumber",
+                oldData?.invoiceNumber,
+                newData.invoiceNumber,
+                now
+            )
+        )
+    }
+    if (oldData?.totalAmount != newData.totalAmount) {
+        corrections.add(
+            TrackedCorrection(
+                "bill.totalAmount",
+                oldData?.totalAmount?.toString(),
+                newData.totalAmount?.toString(),
+                now
+            )
+        )
+    }
+    return corrections
+}
+
+private fun buildCorrections(
+    oldData: CreditNoteDraftData?,
+    newData: CreditNoteDraftData,
+    now: String
+): List<TrackedCorrection> {
+    val corrections = mutableListOf<TrackedCorrection>()
+    if (oldData?.counterpartyName != newData.counterpartyName) {
+        corrections.add(
+            TrackedCorrection(
+                "creditNote.counterpartyName",
+                oldData?.counterpartyName,
+                newData.counterpartyName,
+                now
+            )
+        )
+    }
+    if (oldData?.creditNoteNumber != newData.creditNoteNumber) {
+        corrections.add(
+            TrackedCorrection(
+                "creditNote.creditNoteNumber",
+                oldData?.creditNoteNumber,
+                newData.creditNoteNumber,
+                now
+            )
+        )
+    }
+    if (oldData?.totalAmount != newData.totalAmount) {
+        corrections.add(
+            TrackedCorrection(
+                "creditNote.totalAmount",
+                oldData?.totalAmount?.toString(),
+                newData.totalAmount?.toString(),
+                now
+            )
+        )
+    }
+    return corrections
+}
+
+private fun buildCorrections(
+    oldData: ReceiptDraftData?,
+    newData: ReceiptDraftData,
+    now: String
+): List<TrackedCorrection> {
+    val corrections = mutableListOf<TrackedCorrection>()
+    if (oldData?.merchantName != newData.merchantName) {
+        corrections.add(
+            TrackedCorrection(
+                "receipt.merchantName",
+                oldData?.merchantName,
+                newData.merchantName,
+                now
+            )
+        )
+    }
+    if (oldData?.totalAmount != newData.totalAmount) {
+        corrections.add(
+            TrackedCorrection(
+                "receipt.totalAmount",
+                oldData?.totalAmount?.toString(),
+                newData.totalAmount?.toString(),
+                now
+            )
+        )
+    }
+    return corrections
 }
 
 /**
