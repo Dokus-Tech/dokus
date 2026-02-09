@@ -30,7 +30,6 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.TrackedCorrection
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
@@ -192,8 +191,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
         documentId: DocumentId,
         tenantId: TenantId,
         userId: UserId,
-        updatedData: DocumentDraftData,
-        corrections: List<TrackedCorrection>
+        updatedData: DocumentDraftData
     ): Int? = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
@@ -210,12 +208,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
         val currentVersion = current[DocumentDraftsTable.draftVersion]
         val newVersion = currentVersion + 1
 
-        // Merge corrections with existing
-        val existingCorrections = current[DocumentDraftsTable.userCorrections]?.let {
-            json.decodeFromString<List<TrackedCorrection>>(it)
-        } ?: emptyList()
-        val allCorrections = existingCorrections + corrections
-
         val currentStatus = current[DocumentDraftsTable.documentStatus]
         val nextStatus = if (currentStatus == DocumentStatus.Confirmed) {
             // If a confirmed draft is edited, require review again.
@@ -230,7 +222,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
         }) {
             it[documentType] = updatedData.toDocumentType()
             it[extractedData] = json.encodeToString(updatedData)
-            it[userCorrections] = json.encodeToString(allCorrections)
             it[draftVersion] = newVersion
             it[draftEditedAt] = now
             it[draftEditedBy] = UUID.fromString(userId.toString())

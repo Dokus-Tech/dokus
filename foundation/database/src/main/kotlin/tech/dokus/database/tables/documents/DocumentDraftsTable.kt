@@ -24,7 +24,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * - Draft status (NeedsReview -> Confirmed/Rejected)
  * - AI draft data (immutable, from first successful run)
  * - Extracted data (editable current version)
- * - User corrections tracking for audit
+ * - User edits and versioning for audit
  * - Version number for optimistic locking
  * - Contact suggestion from AI matching
  *
@@ -71,10 +71,6 @@ object DocumentDraftsTable : Table("document_drafts") {
 
     // Current extraction data (may include user edits)
     val extractedData = text("extracted_data").nullable()
-
-    // JSON tracking user corrections/edits from the AI draft
-    // Format: [{ "field": "vendorName", "aiValue": "Acme Inc", "userValue": "ACME Corporation", "editedAt": "..." }, ...]
-    val userCorrections = text("user_corrections").nullable()
 
     // JSON linking extracted fields to their source locations in the document
     // Format: { "vendorName": { "page": 1, "bbox": [x1,y1,x2,y2], "text": "..." }, ... }

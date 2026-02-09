@@ -72,7 +72,13 @@ internal class DocumentReviewLoader(
         val editableData = EditableExtractedData.fromDraftData(extractedData)
         val documentType = draft.documentType ?: editableData.documentType
 
-        val contactSuggestions = emptyList<ContactSuggestion>()
+        val contactSuggestions = draft.contactSuggestions.map { suggestion ->
+            ContactSuggestion(
+                contactId = suggestion.contactId,
+                name = suggestion.name,
+                vatNumber = suggestion.vatNumber?.value
+            )
+        }
         val isContactRequired = documentType in listOf(DocumentType.Invoice, DocumentType.Bill)
         val documentStatus = draft.documentStatus
         val isDocumentConfirmed = documentStatus == DocumentStatus.Confirmed
@@ -80,7 +86,7 @@ internal class DocumentReviewLoader(
         val counterpartyIntent = draft.counterpartyIntent ?: tech.dokus.domain.enums.CounterpartyIntent.None
 
         val (contactSelectionState, selectedContactId, selectedContactSnapshot) =
-            buildContactSelectionState(document)
+            buildContactSelectionState(document, draft.contactSuggestions)
 
         updateState {
             DocumentReviewState.Content(
@@ -113,12 +119,28 @@ internal class DocumentReviewLoader(
     }
 
     private fun buildContactSelectionState(
-        document: DocumentRecordDto
+        document: DocumentRecordDto,
+        suggestions: List<tech.dokus.domain.model.contact.SuggestedContact>
     ): Triple<ContactSelectionState, ContactId?, ContactSnapshot?> {
         val draft = document.draft ?: return Triple(ContactSelectionState.NoContact, null, null)
         val linkedContactId = draft.linkedContactId
         if (linkedContactId != null) {
             return Triple(ContactSelectionState.Selected, linkedContactId, null)
+        }
+        val topSuggestion = suggestions.firstOrNull()
+        if (topSuggestion != null) {
+            val confidence = topSuggestion.matchScore.nameSimilarity.toFloat()
+            return Triple(
+                ContactSelectionState.Suggested(
+                    contactId = topSuggestion.contactId,
+                    name = topSuggestion.name,
+                    vatNumber = topSuggestion.vatNumber?.value,
+                    confidence = confidence,
+                    reason = topSuggestion.reason
+                ),
+                null,
+                null
+            )
         }
         return Triple(
             ContactSelectionState.NoContact,

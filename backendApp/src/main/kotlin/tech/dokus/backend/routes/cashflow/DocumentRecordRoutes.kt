@@ -13,7 +13,6 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
-import tech.dokus.backend.routes.cashflow.documents.buildCorrections
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
@@ -250,17 +249,12 @@ internal fun Route.documentRecordRoutes() {
             }
 
             if (hasExtractedData) {
-                // Build tracked corrections
-                val now = Clock.System.now().toString()
-                val corrections = buildCorrections(draft.extractedData, requestData, now)
-
                 // Update draft (may transition Confirmed -> NeedsReview)
                 val newVersion = draftRepository.updateDraft(
                     documentId = documentId,
                     tenantId = tenantId,
                     userId = userId,
-                    updatedData = requestData,
-                    corrections = corrections
+                    updatedData = requestData
                 ) ?: throw DokusException.InternalError("Failed to update draft")
 
                 logger.info("Draft updated: document=$documentId, version=$newVersion")
