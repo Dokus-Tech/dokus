@@ -37,6 +37,16 @@ object FinancialExtractionAuditor {
 
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
+        addAll(LineItemsValidator.verify(data.lineItems, subtotal, required = true))
+        addAll(
+            VatBreakdownValidator.verify(
+                vatBreakdown = data.vatBreakdown,
+                subtotal = subtotal,
+                vatAmount = vat,
+                documentDate = data.issueDate,
+                required = true
+            )
+        )
         add(ChecksumValidator.auditIban(data.iban))
         add(ChecksumValidator.auditOgm(data.payment?.structuredComm))
     }
@@ -47,6 +57,16 @@ object FinancialExtractionAuditor {
         val subtotal = derivedSubtotal(total, vat)
 
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
+        addAll(LineItemsValidator.verify(data.lineItems, subtotal, required = true))
+        addAll(
+            VatBreakdownValidator.verify(
+                vatBreakdown = data.vatBreakdown,
+                subtotal = subtotal,
+                vatAmount = vat,
+                documentDate = data.issueDate,
+                required = true
+            )
+        )
         add(ChecksumValidator.auditIban(data.iban))
         add(ChecksumValidator.auditOgm(data.payment?.structuredComm))
     }
@@ -57,6 +77,16 @@ object FinancialExtractionAuditor {
         val subtotal = derivedSubtotal(total, vat)
 
         add(BelgianVatRateValidator.verify(subtotal, vat, data.date, null))
+        addAll(LineItemsValidator.verify(data.lineItems, subtotal, required = false))
+        addAll(
+            VatBreakdownValidator.verify(
+                vatBreakdown = data.vatBreakdown,
+                subtotal = subtotal,
+                vatAmount = vat,
+                documentDate = data.date,
+                required = false
+            )
+        )
     }
 
     private fun auditCreditNote(data: CreditNoteExtractionResult): List<AuditCheck> = buildList {
@@ -66,6 +96,16 @@ object FinancialExtractionAuditor {
 
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
+        addAll(LineItemsValidator.verify(data.lineItems, subtotal, required = true))
+        addAll(
+            VatBreakdownValidator.verify(
+                vatBreakdown = data.vatBreakdown,
+                subtotal = subtotal,
+                vatAmount = vat,
+                documentDate = data.issueDate,
+                required = true
+            )
+        )
     }
 
     private fun auditQuote(data: QuoteExtractionResult): List<AuditCheck> = buildList {

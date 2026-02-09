@@ -9,14 +9,18 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
-import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CanonicalPayment
+import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
+import tech.dokus.features.ai.models.LineItemToolInput
+import tech.dokus.features.ai.models.VatBreakdownToolInput
+import tech.dokus.features.ai.models.toDomain
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractBillSubGraph(
@@ -42,7 +46,8 @@ data class BillExtractionResult(
     val currency: Currency,
     val totalAmount: Money?,
     val vatAmount: Money?,
-    val vatRate: VatRate?,
+    val lineItems: List<FinancialLineItem> = emptyList(),
+    val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
     val iban: Iban?,
     val payment: CanonicalPayment?,
     val confidence: Double,
@@ -59,7 +64,8 @@ data class BillExtractionToolInput(
     val currency: String = "EUR",
     val totalAmount: String?,
     val vatAmount: String?,
-    val vatRate: String? = null,
+    val lineItems: List<LineItemToolInput>? = null,
+    val vatBreakdown: List<VatBreakdownToolInput>? = null,
     val iban: String? = null,
     val paymentReference: String? = null,
     val confidence: Double,
@@ -83,7 +89,8 @@ private class BillExtractionFinishTool : Tool<BillExtractionToolInput, Financial
                 currency = Currency.from(args.currency),
                 totalAmount = Money.from(args.totalAmount),
                 vatAmount = Money.from(args.vatAmount),
-                vatRate = VatRate.from(args.vatRate),
+                lineItems = args.lineItems.orEmpty().mapNotNull { it.toDomain() },
+                vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
                 iban = Iban.from(args.iban),
                 payment = CanonicalPayment.from(args.paymentReference),
                 confidence = args.confidence,
@@ -105,7 +112,7 @@ private val ExtractDocumentInput.billPrompt: String
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
     - totalAmount = gross total payable (final total).
     - vatAmount = total VAT amount, if present.
-    - vatRate: if there is a single clear VAT rate, return it like "21". If multiple rates or unclear, return null.
+    - If VAT breakdown is shown, extract it as vatBreakdown (rate/base/amount).
 
     ## PARTY DETECTION
     BILL means:
@@ -120,6 +127,14 @@ private val ExtractDocumentInput.billPrompt: String
 
     ## PAYMENT
     Extract IBAN and structured reference/communication if present.
+
+    ## LINE ITEMS
+    If an itemized table is present, extract lineItems with description, quantity, unitPrice, vatRate, netAmount.
+    If no clear itemization, return an empty list.
+
+    ## VAT BREAKDOWN
+    If a VAT breakdown table is present, extract vatBreakdown rows (rate, base, amount).
+    If not shown, return an empty list.
 
     Language hint: $language
     """.trimIndent()

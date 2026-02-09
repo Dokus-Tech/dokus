@@ -11,8 +11,7 @@ import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
 
 // ============================================================================
-// EXTRACTED DATA MODELS
-// These mirror the create request fields for easy form pre-filling after AI extraction
+// DEPRECATED, OLD AI SETUP.
 // ============================================================================
 
 /**
@@ -289,52 +288,6 @@ data class ExtractedLineItem(
 // ============================================================================
 
 
-/**
- * Corrections that user can make to extracted data before confirmation.
- * All fields are nullable - only non-null fields override extracted values.
- */
-@Serializable
-data class DocumentCorrections(
-    // Common fields
-    val date: LocalDate? = null,
-    val dueDate: LocalDate? = null,
-    val amount: Money? = null,
-    val vatAmount: Money? = null,
-    val vatRate: VatRate? = null,
-    val category: ExpenseCategory? = null,
-    val description: String? = null,
-    val notes: String? = null,
-
-    // Invoice-specific
-    val contactId: String? = null, // UUID string of existing contact (customer)
-    val invoiceNumber: String? = null,
-    val items: List<ExtractedLineItem>? = null,
-
-    // Bill-specific
-    val supplierName: String? = null,
-    val supplierVatNumber: String? = null,
-
-    // Expense-specific
-    val merchant: String? = null,
-    val isDeductible: Boolean? = null,
-    val deductiblePercentage: Percentage? = null,
-    val paymentMethod: PaymentMethod? = null
-)
-
-/**
- * Response after confirming a document.
- */
-@Serializable
-data class ConfirmDocumentResponse(
-    /** The created entity ID */
-    val entityId: String,
-
-    /** Entity type that was created */
-    val entityType: DocumentType,
-
-    /** The processing record ID */
-    val processingId: String
-)
 
 // ============================================================================
 // DRAFT UPDATE MODELS

@@ -11,9 +11,14 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
+import tech.dokus.features.ai.models.LineItemToolInput
+import tech.dokus.features.ai.models.VatBreakdownToolInput
+import tech.dokus.features.ai.models.toDomain
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractCreditNoteSubGraph(
@@ -48,6 +53,9 @@ data class CreditNoteExtractionResult(
     val vatAmount: Money?,
     val totalAmount: Money?,
 
+    val lineItems: List<FinancialLineItem> = emptyList(),
+    val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
+
     val counterpartyName: String?,        // customer or supplier depending on direction
     val counterpartyVat: VatNumber?,
 
@@ -67,6 +75,8 @@ data class CreditNoteExtractionToolInput(
     val subtotalAmount: String?,
     val vatAmount: String?,
     val totalAmount: String?,
+    val lineItems: List<LineItemToolInput>? = null,
+    val vatBreakdown: List<VatBreakdownToolInput>? = null,
     val counterpartyName: String?,
     val counterpartyVat: String?,
     val originalInvoiceNumber: String? = null,
@@ -92,6 +102,8 @@ private class CreditNoteExtractionFinishTool :
                 subtotalAmount = Money.from(args.subtotalAmount),
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
+                lineItems = args.lineItems.orEmpty().mapNotNull { it.toDomain() },
+                vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
                 counterpartyName = args.counterpartyName,
                 counterpartyVat = VatNumber.from(args.counterpartyVat),
                 originalInvoiceNumber = args.originalInvoiceNumber,
@@ -129,6 +141,14 @@ private val ExtractDocumentInput.creditNotePrompt: String
 
     ## REASON
     If a clear reason is written (return, correction, discount), extract it; else null.
+
+    ## LINE ITEMS
+    If an itemized table is present, extract lineItems with description, quantity, unitPrice, vatRate, netAmount.
+    If no clear itemization, return an empty list.
+
+    ## VAT BREAKDOWN
+    If a VAT breakdown table is present, extract vatBreakdown rows (rate, base, amount).
+    If not shown, return an empty list.
 
     Language hint: $language
     """.trimIndent()

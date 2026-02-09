@@ -9,6 +9,12 @@ enum class CheckType {
     /** Mathematical verification (subtotal + VAT = total) */
     MATH,
 
+    /** Line items verification */
+    LINE_ITEMS,
+
+    /** VAT breakdown verification */
+    VAT_BREAKDOWN,
+
     /** Belgian OGM (Structured Communication) checksum */
     CHECKSUM_OGM,
 

@@ -19,6 +19,11 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CanonicalPayment
+import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.features.ai.models.LineItemToolInput
+import tech.dokus.features.ai.models.VatBreakdownToolInput
+import tech.dokus.features.ai.models.toDomain
 
 @Serializable
 @SerialName("InvoiceExtractionResult")
@@ -34,6 +39,10 @@ data class InvoiceExtractionResult(
     val subtotalAmount: Money?,
     val vatAmount: Money?,
     val totalAmount: Money?,
+
+    // Line items & VAT breakdown
+    val lineItems: List<FinancialLineItem> = emptyList(),
+    val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
 
     // Parties (facts only)
     val customerName: String?,
@@ -77,6 +86,10 @@ data class InvoiceExtractionToolInput(
     val vatAmount: String?,
     @property:LLMDescription("Total/gross amount. Use plain number string. Null if not present.")
     val totalAmount: String?,
+    @property:LLMDescription("Line items table. Leave empty if not itemized.")
+    val lineItems: List<LineItemToolInput>? = null,
+    @property:LLMDescription("VAT breakdown rows per rate (rate/base/amount). Leave empty if not shown.")
+    val vatBreakdown: List<VatBreakdownToolInput>? = null,
     @property:LLMDescription("Customer name (the billed-to party). Null if unclear.")
     val customerName: String?,
     @property:LLMDescription("Customer VAT number if shown (e.g. BE0123456789). Null if not visible.")
@@ -109,6 +122,8 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
                 subtotalAmount = Money.from(args.subtotalAmount),
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
+                lineItems = args.lineItems.orEmpty().mapNotNull { it.toDomain() },
+                vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
                 customerName = args.customerName,
                 customerVat = VatNumber.from(args.customerVat),
                 customerEmail = Email.from(args.customerEmail),
@@ -149,6 +164,14 @@ private val ExtractDocumentInput.prompt
 
     ## PAYMENT FIELDS
     If IBAN or structured reference is present, extract it. Otherwise null.
+
+    ## LINE ITEMS
+    If an itemized table is present, extract lineItems with description, quantity, unitPrice, vatRate, netAmount (line total excl VAT).
+    If no clear itemization, return an empty list.
+
+    ## VAT BREAKDOWN
+    If a VAT breakdown table is present, extract vatBreakdown rows (rate, base, amount).
+    If not shown, return an empty list.
 
     ## LANGUAGE HINT
     Detected language hint: $language
