@@ -120,13 +120,4 @@ object ChecksumValidator {
             append("Verify country code and all characters are correct.")
         }
     }
-
-    /**
-     * Normalizes an IBAN to standard format (uppercase, no spaces).
-     */
-    private fun normalizeIban(iban: String): String {
-        val cleaned = iban.replace(" ", "").replace("-", "").uppercase()
-        // Format with spaces every 4 characters for readability
-        return cleaned.chunked(4).joinToString(" ")
-    }
 }
