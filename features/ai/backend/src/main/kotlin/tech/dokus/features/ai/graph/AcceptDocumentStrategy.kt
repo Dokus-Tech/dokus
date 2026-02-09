@@ -9,7 +9,7 @@ import ai.koog.agents.ext.agent.subgraphWithRetrySimple
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.processing.DocumentProcessingConstants
+import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
 import tech.dokus.features.ai.graph.sub.documentProcessingSubGraph
@@ -32,7 +32,6 @@ fun acceptDocumentGraph(
     documentFetcher: DocumentFetcher,
 ): AIAgentGraphStrategy<AcceptDocumentInput, DocumentAiProcessingResult> {
     return strategy<AcceptDocumentInput, DocumentAiProcessingResult>("accept-document-graph") {
-        val autoConfirmThreshold = DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 
         val processWithRetry by subgraphWithRetrySimple<AcceptDocumentInput, DocumentAiProcessingResult>(
             name = "process-document-with-retry",
@@ -40,8 +39,8 @@ fun acceptDocumentGraph(
             strict = false,
             conditionDescription = buildString {
                 appendLine("Auto-confirm only if:")
-                appendLine("- classification confidence >= $autoConfirmThreshold")
-                appendLine("- extraction confidence >= $autoConfirmThreshold")
+                appendLine("- classification confidence >= $AUTO_CONFIRM_CONFIDENCE_THRESHOLD")
+                appendLine("- extraction confidence >= $AUTO_CONFIRM_CONFIDENCE_THRESHOLD")
                 appendLine("- validation has no critical issues")
                 appendLine()
                 appendLine("If uncertain, prefer UNKNOWN and nulls over guessing.")
@@ -51,19 +50,14 @@ fun acceptDocumentGraph(
                 val classificationConfidence = result.classification.confidence
                 val extractionConfidence = result.extraction.confidenceScore()
                 val meetsConfidence =
-                    classificationConfidence >= autoConfirmThreshold &&
-                        extractionConfidence >= autoConfirmThreshold
+                    classificationConfidence >= AUTO_CONFIRM_CONFIDENCE_THRESHOLD &&
+                            extractionConfidence >= AUTO_CONFIRM_CONFIDENCE_THRESHOLD
                 val isValid = result.auditReport.isValid
 
                 if (meetsConfidence && isValid) {
                     ConditionResult.Approve
                 } else {
-                    ConditionResult.Reject(
-                        buildRetryFeedback(
-                            result = result,
-                            threshold = autoConfirmThreshold
-                        )
-                    )
+                    ConditionResult.Reject(buildRetryFeedback(result))
                 }
             }
         ) {
@@ -78,7 +72,7 @@ fun acceptDocumentGraph(
 
 private fun buildRetryFeedback(
     result: DocumentAiProcessingResult,
-    threshold: Double
+    threshold: Double = AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 ): String {
     val lines = mutableListOf<String>()
 
@@ -121,5 +115,4 @@ private fun buildRetryFeedback(
     }
 }
 
-private fun formatConfidence(value: Double): String =
-    String.format(Locale.US, "%.2f", value)
+private fun formatConfidence(value: Double): String = String.format(Locale.US, "%.2f", value)

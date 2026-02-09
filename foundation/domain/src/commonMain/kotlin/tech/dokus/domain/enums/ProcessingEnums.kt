@@ -65,7 +65,7 @@ enum class DocumentType(
     // ═══════════════════════════════════════════════════════════════════
 
     @SerialName("BANK_STATEMENT")
-    BankStatement("BANK_STATEMENT", true),
+    BankStatement("BANK_STATEMENT", false),
 
     @SerialName("BANK_FEE")
     BankFee("BANK_FEE", false),
