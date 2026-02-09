@@ -18,7 +18,6 @@ import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.common_bank_account
 import tech.dokus.aura.resources.common_currency
 import tech.dokus.aura.resources.common_notes
-import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_payment_terms
 import tech.dokus.aura.resources.contacts_vat_number
@@ -48,8 +47,8 @@ internal fun InvoiceForm(
 
         PTextFieldStandard(
             fieldName = stringResource(Res.string.cashflow_contact_name),
-            value = fields.clientName,
-            onValueChange = { onFieldUpdate(InvoiceField.CLIENT_NAME, it) },
+            value = fields.customerName,
+            onValueChange = { onFieldUpdate(InvoiceField.CUSTOMER_NAME, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -61,22 +60,15 @@ internal fun InvoiceForm(
 
         PTextFieldStandard(
             fieldName = stringResource(Res.string.contacts_vat_number),
-            value = fields.clientVatNumber,
-            onValueChange = { onFieldUpdate(InvoiceField.CLIENT_VAT_NUMBER, it) },
+            value = fields.customerVatNumber,
+            onValueChange = { onFieldUpdate(InvoiceField.CUSTOMER_VAT_NUMBER, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
             fieldName = stringResource(Res.string.contacts_email),
-            value = fields.clientEmail,
-            onValueChange = { onFieldUpdate(InvoiceField.CLIENT_EMAIL, it) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        PTextFieldStandard(
-            fieldName = stringResource(Res.string.contacts_address),
-            value = fields.clientAddress,
-            onValueChange = { onFieldUpdate(InvoiceField.CLIENT_ADDRESS, it) },
+            value = fields.customerEmail,
+            onValueChange = { onFieldUpdate(InvoiceField.CUSTOMER_EMAIL, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -146,23 +138,23 @@ internal fun InvoiceForm(
         SectionHeader(stringResource(Res.string.cashflow_section_additional_information))
 
         PTextFieldStandard(
-            fieldName = stringResource(Res.string.contacts_payment_terms),
-            value = fields.paymentTerms,
-            onValueChange = { onFieldUpdate(InvoiceField.PAYMENT_TERMS, it) },
+            fieldName = stringResource(Res.string.common_notes),
+            value = fields.notes,
+            onValueChange = { onFieldUpdate(InvoiceField.NOTES, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
             fieldName = stringResource(Res.string.common_bank_account),
-            value = fields.bankAccount,
-            onValueChange = { onFieldUpdate(InvoiceField.BANK_ACCOUNT, it) },
+            value = fields.iban,
+            onValueChange = { onFieldUpdate(InvoiceField.IBAN, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = stringResource(Res.string.common_notes),
-            value = fields.notes,
-            onValueChange = { onFieldUpdate(InvoiceField.NOTES, it) },
+            fieldName = stringResource(Res.string.contacts_payment_terms),
+            value = fields.paymentReference,
+            onValueChange = { onFieldUpdate(InvoiceField.PAYMENT_REFERENCE, it) },
             modifier = Modifier.fillMaxWidth()
         )
     }

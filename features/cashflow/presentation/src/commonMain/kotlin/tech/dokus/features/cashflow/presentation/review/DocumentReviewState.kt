@@ -17,8 +17,8 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 
@@ -41,11 +41,17 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 
     data object Loading : DocumentReviewState
 
+    data class AwaitingExtraction(
+        val documentId: DocumentId,
+        val document: DocumentRecordDto,
+        val previewUrl: String? = null,
+    ) : DocumentReviewState
+
     data class Content(
         val documentId: DocumentId,
         val document: DocumentRecordDto,
         val editableData: EditableExtractedData,
-        val originalData: ExtractedDocumentData?,
+        val originalData: DocumentDraftData?,
         val hasUnsavedChanges: Boolean = false,
         val isSaving: Boolean = false,
         val isConfirming: Boolean = false,
@@ -153,7 +159,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                 // No contact, but required for this document type (Invoice/Bill)
                 editableData.documentType in CONTACT_REQUIRED_TYPES ->
                     ContactMatchStatus.MissingButRequired
-                // No contact, but acceptable (Expense/Receipt)
+                // No contact, but acceptable (Receipt)
                 else ->
                     ContactMatchStatus.NotRequired
             }
@@ -207,11 +213,10 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          */
         val totalAmount: Money?
             get() = when (editableData.documentType) {
-                DocumentType.Invoice -> Money.parse(editableData.invoice?.totalAmount ?: "")
-                DocumentType.Bill -> Money.parse(editableData.bill?.amount ?: "")
-                DocumentType.Receipt -> Money.parse(editableData.receipt?.amount ?: "")
-                DocumentType.ProForma -> Money.parse(editableData.proForma?.totalAmount ?: "")
-                DocumentType.CreditNote -> Money.parse(editableData.creditNote?.totalAmount ?: "")
+                DocumentType.Invoice -> Money.from(editableData.invoice?.totalAmount)
+                DocumentType.Bill -> Money.from(editableData.bill?.totalAmount)
+                DocumentType.Receipt -> Money.from(editableData.receipt?.totalAmount)
+                DocumentType.CreditNote -> Money.from(editableData.creditNote?.totalAmount)
                 else -> null
             }
     }
@@ -229,6 +234,8 @@ private val EditableExtractedData.hasRequiredDates: Boolean
     get() = when (documentType) {
         DocumentType.Invoice -> invoice?.issueDate != null
         DocumentType.Bill -> bill?.issueDate != null
+        DocumentType.Receipt -> receipt?.date != null
+        DocumentType.CreditNote -> creditNote?.issueDate != null
         else -> false
     }
 
@@ -237,9 +244,9 @@ private val EditableExtractedData.hasCoherentAmounts: Boolean
         return when (documentType) {
             DocumentType.Invoice -> {
                 val invoiceData = invoice ?: return false
-                val subtotal = Money.parse(invoiceData.subtotalAmount)
-                val vat = Money.parse(invoiceData.vatAmount)
-                val total = Money.parse(invoiceData.totalAmount)
+                val subtotal = Money.from(invoiceData.subtotalAmount)
+                val vat = Money.from(invoiceData.vatAmount)
+                val total = Money.from(invoiceData.totalAmount)
                 if (subtotal == null) return false
                 if (total == null || vat == null) return true
                 val expected = subtotal + vat
@@ -247,7 +254,21 @@ private val EditableExtractedData.hasCoherentAmounts: Boolean
             }
             DocumentType.Bill -> {
                 val billData = bill ?: return false
-                Money.parse(billData.amount) != null
+                Money.from(billData.totalAmount) != null
+            }
+            DocumentType.Receipt -> {
+                val receiptData = receipt ?: return false
+                Money.from(receiptData.totalAmount) != null
+            }
+            DocumentType.CreditNote -> {
+                val creditData = creditNote ?: return false
+                val subtotal = Money.from(creditData.subtotalAmount)
+                val vat = Money.from(creditData.vatAmount)
+                val total = Money.from(creditData.totalAmount)
+                if (subtotal == null) return false
+                if (total == null || vat == null) return true
+                val expected = subtotal + vat
+                kotlin.math.abs(expected.minor - total.minor) <= 1L
             }
             else -> false
         }
@@ -256,10 +277,9 @@ private val EditableExtractedData.hasCoherentAmounts: Boolean
 /** Counterparty name for description resolution. */
 private val EditableExtractedData.counterpartyName: String?
     get() = when (documentType) {
-        DocumentType.Invoice -> invoice?.clientName?.takeIf { it.isNotBlank() }
+        DocumentType.Invoice -> invoice?.customerName?.takeIf { it.isNotBlank() }
         DocumentType.Bill -> bill?.supplierName?.takeIf { it.isNotBlank() }
-        DocumentType.Receipt -> receipt?.merchant?.takeIf { it.isNotBlank() }
-        DocumentType.ProForma -> proForma?.clientName?.takeIf { it.isNotBlank() }
+        DocumentType.Receipt -> receipt?.merchantName?.takeIf { it.isNotBlank() }
         DocumentType.CreditNote -> creditNote?.counterpartyName?.takeIf { it.isNotBlank() }
         else -> null
     }
@@ -268,9 +288,8 @@ private val EditableExtractedData.counterpartyName: String?
 private val EditableExtractedData.contextDescription: String?
     get() = when (documentType) {
         DocumentType.Invoice -> invoice?.notes?.takeIf { it.isNotBlank() }
-        DocumentType.Bill -> bill?.description?.takeIf { it.isNotBlank() }
-        DocumentType.Receipt -> receipt?.description?.takeIf { it.isNotBlank() }
-        DocumentType.ProForma -> proForma?.notes?.takeIf { it.isNotBlank() }
+        DocumentType.Bill -> bill?.notes?.takeIf { it.isNotBlank() }
+        DocumentType.Receipt -> receipt?.notes?.takeIf { it.isNotBlank() }
         DocumentType.CreditNote -> creditNote?.reason?.takeIf { it.isNotBlank() }
         else -> null
     }
@@ -280,7 +299,6 @@ private val EditableExtractedData.dueDate: kotlinx.datetime.LocalDate?
     get() = when (documentType) {
         DocumentType.Invoice -> invoice?.dueDate
         DocumentType.Bill -> bill?.dueDate
-        DocumentType.ProForma -> proForma?.validUntil
         else -> null
     }
 
@@ -295,7 +313,7 @@ enum class ContactMatchStatus {
     Uncertain,
     /** No contact, and document type requires one (Invoice/Bill). */
     MissingButRequired,
-    /** No contact, but acceptable for this document type (Expense/Receipt). */
+    /** No contact, but acceptable for this document type (Receipt). */
     NotRequired
 }
 

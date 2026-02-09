@@ -58,7 +58,6 @@
     <ID>MaximumLineLength:RAGService.kt$RAGService$ </ID>
     <ID>NestedBlockDepth:ChatAgent.kt$ChatAgent$suspend fun chat( tenantId: TenantId, question: String, documentId: DocumentId? = null, conversationHistory: List&lt;ConversationMessage&gt;? = null, topK: Int = DEFAULT_TOP_K, minSimilarity: Float = DEFAULT_MIN_SIMILARITY ): ChatResponse</ID>
     <ID>NoConsecutiveBlankLines:RAGService.kt$RAGService$ </ID>
-    <ID>NoMultipleSpaces:DocumentProcessingResult.kt$ExtractedDocumentData.Bill$ </ID>
     <ID>NoMultipleSpaces:ExtractedBillData.kt$BillLineItem$ </ID>
     <ID>NoMultipleSpaces:ExtractedBillData.kt$ExtractedBillData$ </ID>
     <ID>NoMultipleSpaces:ExtractedInvoiceData.kt$ExtractedInvoiceData$ </ID>

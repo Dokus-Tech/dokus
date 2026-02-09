@@ -78,6 +78,10 @@ internal fun ReviewContent(
             LoadingContent(contentPadding)
         }
 
+        is DocumentReviewState.AwaitingExtraction -> {
+            AwaitingExtractionContent(state, contentPadding)
+        }
+
         is DocumentReviewState.Content -> {
             val counterparty = remember(state.editableData) { counterpartyInfo(state) }
             if (isLargeScreen) {
@@ -125,6 +129,38 @@ private fun LoadingContent(contentPadding: PaddingValues) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun AwaitingExtractionContent(
+    state: DocumentReviewState.AwaitingExtraction,
+    contentPadding: PaddingValues,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+        ) {
+            CircularProgressIndicator()
+            Text(
+                text = stringResource(Res.string.cashflow_awaiting_extraction),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            state.document.document.filename?.let { filename ->
+                Text(
+                    text = filename,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

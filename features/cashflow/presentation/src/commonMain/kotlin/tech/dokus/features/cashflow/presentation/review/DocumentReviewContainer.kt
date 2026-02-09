@@ -92,15 +92,7 @@ internal class DocumentReviewContainer(
                             intent.value
                         )
                         is DocumentReviewIntent.UpdateBillField -> handleUpdateBillField(intent.field, intent.value)
-                        is DocumentReviewIntent.UpdateExpenseField -> handleUpdateExpenseField(
-                            intent.field,
-                            intent.value
-                        )
                         is DocumentReviewIntent.UpdateReceiptField -> handleUpdateReceiptField(
-                            intent.field,
-                            intent.value
-                        )
-                        is DocumentReviewIntent.UpdateProFormaField -> handleUpdateProFormaField(
                             intent.field,
                             intent.value
                         )

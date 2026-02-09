@@ -9,35 +9,27 @@ import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_bill_details_section
+import tech.dokus.aura.resources.cashflow_contact_information
+import tech.dokus.aura.resources.cashflow_contact_name
 import tech.dokus.aura.resources.cashflow_invoice_number
 import tech.dokus.aura.resources.cashflow_section_additional_information
 import tech.dokus.aura.resources.cashflow_section_amounts
-import tech.dokus.aura.resources.cashflow_select_category
-import tech.dokus.aura.resources.cashflow_contact_information
-import tech.dokus.aura.resources.cashflow_contact_name
 import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.common_bank_account
 import tech.dokus.aura.resources.common_currency
 import tech.dokus.aura.resources.common_notes
-import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_payment_terms
 import tech.dokus.aura.resources.contacts_vat_number
-import tech.dokus.aura.resources.invoice_amount
-import tech.dokus.aura.resources.invoice_category
-import tech.dokus.aura.resources.invoice_description
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
-import tech.dokus.aura.resources.invoice_vat_rate
-import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.aura.resources.invoice_total_amount
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.features.cashflow.presentation.review.BillField
 import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
 import tech.dokus.features.cashflow.presentation.review.EditableBillFields
 import tech.dokus.foundation.aura.components.fields.PDateField
-import tech.dokus.foundation.aura.components.fields.PDropdownField
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.foundation.aura.extensions.localized
 
 @Composable
 internal fun BillForm(
@@ -68,13 +60,6 @@ internal fun BillForm(
             fieldName = stringResource(Res.string.contacts_vat_number),
             value = fields.supplierVatNumber,
             onValueChange = { onFieldUpdate(BillField.SUPPLIER_VAT_NUMBER, it) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        PTextFieldStandard(
-            fieldName = stringResource(Res.string.contacts_address),
-            value = fields.supplierAddress,
-            onValueChange = { onFieldUpdate(BillField.SUPPLIER_ADDRESS, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -110,9 +95,9 @@ internal fun BillForm(
         SectionHeader(stringResource(Res.string.cashflow_section_amounts))
 
         PTextFieldStandard(
-            fieldName = stringResource(Res.string.invoice_amount),
-            value = fields.amount,
-            onValueChange = { onFieldUpdate(BillField.AMOUNT, it) },
+            fieldName = stringResource(Res.string.invoice_total_amount),
+            value = fields.totalAmount,
+            onValueChange = { onFieldUpdate(BillField.TOTAL_AMOUNT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -124,26 +109,9 @@ internal fun BillForm(
         )
 
         PTextFieldStandard(
-            fieldName = stringResource(Res.string.invoice_vat_rate),
-            value = fields.vatRate,
-            onValueChange = { onFieldUpdate(BillField.VAT_RATE, it) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        PTextFieldStandard(
             fieldName = stringResource(Res.string.common_currency),
             value = fields.currency,
             onValueChange = { onFieldUpdate(BillField.CURRENCY, it) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        PDropdownField<ExpenseCategory>(
-            label = stringResource(Res.string.invoice_category),
-            value = fields.category,
-            onValueChange = { onFieldUpdate(BillField.CATEGORY, it) },
-            options = ExpenseCategory.values().toList(),
-            optionLabel = { category -> category.localized },
-            placeholder = stringResource(Res.string.cashflow_select_category),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -154,23 +122,16 @@ internal fun BillForm(
         SectionHeader(stringResource(Res.string.cashflow_section_additional_information))
 
         PTextFieldStandard(
-            fieldName = stringResource(Res.string.invoice_description),
-            value = fields.description,
-            onValueChange = { onFieldUpdate(BillField.DESCRIPTION, it) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        PTextFieldStandard(
             fieldName = stringResource(Res.string.contacts_payment_terms),
-            value = fields.paymentTerms,
-            onValueChange = { onFieldUpdate(BillField.PAYMENT_TERMS, it) },
+            value = fields.paymentReference,
+            onValueChange = { onFieldUpdate(BillField.PAYMENT_REFERENCE, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
             fieldName = stringResource(Res.string.common_bank_account),
-            value = fields.bankAccount,
-            onValueChange = { onFieldUpdate(BillField.BANK_ACCOUNT, it) },
+            value = fields.iban,
+            onValueChange = { onFieldUpdate(BillField.IBAN, it) },
             modifier = Modifier.fillMaxWidth()
         )
 

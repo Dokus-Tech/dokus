@@ -28,6 +28,10 @@ internal class DocumentReviewLoader(
             logger.d { "Refreshing document: $documentId" }
             fetchDocumentProcessing(documentId)
         }
+        withState<DocumentReviewState.AwaitingExtraction, _> {
+            logger.d { "Refreshing document: $documentId" }
+            fetchDocumentProcessing(documentId)
+        }
     }
 
     private suspend fun DocumentReviewCtx.fetchDocumentProcessing(documentId: DocumentId) {
@@ -52,17 +56,28 @@ internal class DocumentReviewLoader(
         documentId: DocumentId,
         document: DocumentRecordDto
     ) {
-        val extractionSnapshot = document.draft?.extractedData
-            ?: document.latestIngestion?.rawExtraction
-        val editableData = EditableExtractedData.fromExtractedData(extractionSnapshot)
-        val documentType = document.draft?.documentType ?: extractionSnapshot?.documentType
+        val draft = document.draft
+        val extractedData = draft?.extractedData
+        if (extractedData == null) {
+            updateState {
+                DocumentReviewState.AwaitingExtraction(
+                    documentId = documentId,
+                    document = document,
+                    previewUrl = document.document.downloadUrl
+                )
+            }
+            return
+        }
 
-        val contactSuggestions = buildContactSuggestions(document)
-        val isContactRequired = documentType == DocumentType.Invoice
-        val documentStatus = document.draft?.documentStatus
+        val editableData = EditableExtractedData.fromDraftData(extractedData)
+        val documentType = draft.documentType ?: editableData.documentType
+
+        val contactSuggestions = emptyList<ContactSuggestion>()
+        val isContactRequired = documentType in listOf(DocumentType.Invoice, DocumentType.Bill)
+        val documentStatus = draft.documentStatus
         val isDocumentConfirmed = documentStatus == DocumentStatus.Confirmed
         val isDocumentRejected = documentStatus == DocumentStatus.Rejected
-        val counterpartyIntent = document.draft?.counterpartyIntent ?: tech.dokus.domain.enums.CounterpartyIntent.None
+        val counterpartyIntent = draft.counterpartyIntent ?: tech.dokus.domain.enums.CounterpartyIntent.None
 
         val (contactSelectionState, selectedContactId, selectedContactSnapshot) =
             buildContactSelectionState(document)
@@ -72,7 +87,7 @@ internal class DocumentReviewLoader(
                 documentId = documentId,
                 document = document,
                 editableData = editableData,
-                originalData = document.draft?.aiDraftData ?: extractionSnapshot,
+                originalData = draft.aiDraftData ?: extractedData,
                 hasUnsavedChanges = false,
                 isSaving = false,
                 isConfirming = false,
@@ -105,35 +120,11 @@ internal class DocumentReviewLoader(
         if (linkedContactId != null) {
             return Triple(ContactSelectionState.Selected, linkedContactId, null)
         }
-
-        val suggestedContactId = draft.suggestedContactId ?: return Triple(
+        return Triple(
             ContactSelectionState.NoContact,
             null,
             null,
         )
-
-        val extractedName = when (draft.documentType) {
-            DocumentType.Invoice -> draft.extractedData?.invoice?.clientName
-            DocumentType.Bill -> draft.extractedData?.bill?.supplierName
-            else -> null
-        }
-        val extractedVat = when (draft.documentType) {
-            DocumentType.Invoice -> draft.extractedData?.invoice?.clientVatNumber
-            DocumentType.Bill -> draft.extractedData?.bill?.supplierVatNumber
-            else -> null
-        }
-
-        val suggested = ContactSelectionState.Suggested(
-            contactId = suggestedContactId,
-            name = extractedName.orEmpty(),
-            vatNumber = extractedVat,
-            confidence = draft.contactSuggestionConfidence ?: 0f,
-            reason = draft.contactSuggestionReason
-                ?.takeIf { it.isNotBlank() }
-                ?.let { ContactSuggestionReason.Custom(it) }
-                ?: ContactSuggestionReason.AiSuggested,
-        )
-        return Triple(suggested, null, null)
     }
 
     private suspend fun DocumentReviewCtx.fetchContactSnapshot(contactId: ContactId) {
@@ -158,32 +149,4 @@ internal class DocumentReviewLoader(
         )
     }
 
-    private fun buildContactSuggestions(document: DocumentRecordDto): List<ContactSuggestion> {
-        val suggestions = mutableListOf<ContactSuggestion>()
-
-        document.draft?.suggestedContactId?.let { contactId ->
-            val extractedName = when (document.draft?.documentType) {
-                DocumentType.Invoice -> document.draft?.extractedData?.invoice?.clientName
-                DocumentType.Bill -> document.draft?.extractedData?.bill?.supplierName
-                else -> null
-            }
-            val extractedVat = when (document.draft?.documentType) {
-                DocumentType.Invoice -> document.draft?.extractedData?.invoice?.clientVatNumber
-                DocumentType.Bill -> document.draft?.extractedData?.bill?.supplierVatNumber
-                else -> null
-            }
-
-            suggestions.add(
-                ContactSuggestion(
-                    contactId = contactId,
-                    name = extractedName.orEmpty(),
-                    vatNumber = extractedVat,
-                    matchConfidence = 0f,
-                    matchReason = ContactSuggestionReason.AiSuggested
-                )
-            )
-        }
-
-        return suggestions
-    }
 }

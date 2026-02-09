@@ -8,14 +8,24 @@ internal fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyI
 
     return when (state.editableData.documentType) {
         DocumentType.Invoice -> CounterpartyInfo(
-            name = clean(state.editableData.invoice?.clientName),
-            vatNumber = clean(state.editableData.invoice?.clientVatNumber),
-            address = clean(state.editableData.invoice?.clientAddress),
+            name = clean(state.editableData.invoice?.customerName),
+            vatNumber = clean(state.editableData.invoice?.customerVatNumber),
+            address = null,
         )
         DocumentType.Bill -> CounterpartyInfo(
             name = clean(state.editableData.bill?.supplierName),
             vatNumber = clean(state.editableData.bill?.supplierVatNumber),
-            address = clean(state.editableData.bill?.supplierAddress),
+            address = null,
+        )
+        DocumentType.Receipt -> CounterpartyInfo(
+            name = clean(state.editableData.receipt?.merchantName),
+            vatNumber = clean(state.editableData.receipt?.merchantVatNumber),
+            address = null,
+        )
+        DocumentType.CreditNote -> CounterpartyInfo(
+            name = clean(state.editableData.creditNote?.counterpartyName),
+            vatNumber = clean(state.editableData.creditNote?.counterpartyVatNumber),
+            address = null,
         )
         else -> CounterpartyInfo(
             name = null,

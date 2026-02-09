@@ -93,39 +93,6 @@ internal class DocumentReviewFieldEditor {
     }
 
     /**
-     * Handle ProForma field updates.
-     * ProForma is informational only - no cashflow impact.
-     */
-    suspend fun DocumentReviewCtx.handleUpdateProFormaField(field: ProFormaField, value: Any?) {
-        withState<DocumentReviewState.Content, _> {
-            val currentProForma = editableData.proForma ?: return@withState
-
-            val updatedProForma = when (field) {
-                ProFormaField.CLIENT_NAME -> currentProForma.copy(clientName = value as? String ?: "")
-                ProFormaField.CLIENT_VAT_NUMBER -> currentProForma.copy(clientVatNumber = value as? String ?: "")
-                ProFormaField.CLIENT_EMAIL -> currentProForma.copy(clientEmail = value as? String ?: "")
-                ProFormaField.CLIENT_ADDRESS -> currentProForma.copy(clientAddress = value as? String ?: "")
-                ProFormaField.PRO_FORMA_NUMBER -> currentProForma.copy(proFormaNumber = value as? String ?: "")
-                ProFormaField.ISSUE_DATE -> currentProForma.copy(issueDate = value as? LocalDate)
-                ProFormaField.VALID_UNTIL -> currentProForma.copy(validUntil = value as? LocalDate)
-                ProFormaField.SUBTOTAL_AMOUNT -> currentProForma.copy(subtotalAmount = value as? String ?: "")
-                ProFormaField.VAT_AMOUNT -> currentProForma.copy(vatAmount = value as? String ?: "")
-                ProFormaField.TOTAL_AMOUNT -> currentProForma.copy(totalAmount = value as? String ?: "")
-                ProFormaField.CURRENCY -> currentProForma.copy(currency = value as? String ?: "EUR")
-                ProFormaField.NOTES -> currentProForma.copy(notes = value as? String ?: "")
-                ProFormaField.TERMS_AND_CONDITIONS -> currentProForma.copy(termsAndConditions = value as? String ?: "")
-            }
-
-            updateState {
-                copy(
-                    editableData = editableData.copy(proForma = updatedProForma),
-                    hasUnsavedChanges = true
-                )
-            }
-        }
-    }
-
-    /**
      * Handle CreditNote field updates.
      * CreditNote creates no cashflow on confirm - only on refund recording.
      */

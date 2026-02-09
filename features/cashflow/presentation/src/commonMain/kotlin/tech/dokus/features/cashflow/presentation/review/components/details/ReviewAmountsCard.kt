@@ -20,8 +20,9 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.EditableBillFields
-import tech.dokus.features.cashflow.presentation.review.EditableExpenseFields
+import tech.dokus.features.cashflow.presentation.review.EditableCreditNoteFields
 import tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields
+import tech.dokus.features.cashflow.presentation.review.EditableReceiptFields
 import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
@@ -50,8 +51,23 @@ internal fun AmountsCard(
             DocumentType.Bill -> {
                 val fields = state.editableData.bill ?: EditableBillFields()
                 BillAmountsDisplay(
-                    total = fields.amount.formatAmountDisplay(),
+                    total = fields.totalAmount.formatAmountDisplay(),
                     vat = fields.vatAmount.formatAmountDisplay()
+                )
+            }
+            DocumentType.Receipt -> {
+                val fields = state.editableData.receipt ?: EditableReceiptFields()
+                ReceiptAmountsDisplay(
+                    total = fields.totalAmount.formatAmountDisplay(),
+                    vat = fields.vatAmount.formatAmountDisplay()
+                )
+            }
+            DocumentType.CreditNote -> {
+                val fields = state.editableData.creditNote ?: EditableCreditNoteFields()
+                CreditNoteAmountsDisplay(
+                    subtotal = fields.subtotalAmount.formatAmountDisplay(),
+                    vat = fields.vatAmount.formatAmountDisplay(),
+                    total = fields.totalAmount.formatAmountDisplay()
                 )
             }
             else -> {
@@ -126,7 +142,7 @@ private fun BillAmountsDisplay(
 }
 
 @Composable
-private fun ExpenseAmountsDisplay(
+private fun ReceiptAmountsDisplay(
     total: String?,
     vat: String?,
     modifier: Modifier = Modifier
@@ -137,6 +153,34 @@ private fun ExpenseAmountsDisplay(
             value = vat
         )
         // Subtle divider before total
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = Constrains.Spacing.xSmall),
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+        AmountRow(
+            label = stringResource(Res.string.invoice_total_amount),
+            value = total,
+            isTotal = true
+        )
+    }
+}
+
+@Composable
+private fun CreditNoteAmountsDisplay(
+    subtotal: String?,
+    vat: String?,
+    total: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        AmountRow(
+            label = stringResource(Res.string.invoice_subtotal),
+            value = subtotal
+        )
+        AmountRow(
+            label = stringResource(Res.string.cashflow_vat_amount),
+            value = vat
+        )
         HorizontalDivider(
             modifier = Modifier.padding(vertical = Constrains.Spacing.xSmall),
             color = MaterialTheme.colorScheme.outlineVariant

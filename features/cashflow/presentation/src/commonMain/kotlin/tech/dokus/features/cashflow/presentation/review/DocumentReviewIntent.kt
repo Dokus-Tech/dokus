@@ -7,7 +7,7 @@ import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.ExtractedLineItem
+import tech.dokus.domain.model.FinancialLineItem
 
 @Immutable
 sealed interface DocumentReviewIntent : MVIIntent {
@@ -29,18 +29,8 @@ sealed interface DocumentReviewIntent : MVIIntent {
         val value: Any?,
     ) : DocumentReviewIntent
 
-    data class UpdateExpenseField(
-        val field: ExpenseField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
     data class UpdateReceiptField(
         val field: ReceiptField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
-    data class UpdateProFormaField(
-        val field: ProFormaField,
         val value: Any?,
     ) : DocumentReviewIntent
 
@@ -64,7 +54,7 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class UpdateContactSheetSearch(val query: String) : DocumentReviewIntent
 
     data object AddLineItem : DocumentReviewIntent
-    data class UpdateLineItem(val index: Int, val item: ExtractedLineItem) : DocumentReviewIntent
+    data class UpdateLineItem(val index: Int, val item: FinancialLineItem) : DocumentReviewIntent
     data class RemoveLineItem(val index: Int) : DocumentReviewIntent
 
     data class SelectFieldForProvenance(val fieldPath: String?) : DocumentReviewIntent

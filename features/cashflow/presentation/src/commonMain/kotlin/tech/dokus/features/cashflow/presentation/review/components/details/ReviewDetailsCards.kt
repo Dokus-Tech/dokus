@@ -12,27 +12,31 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_bill_details_section
 import tech.dokus.aura.resources.cashflow_contact_label
+import tech.dokus.aura.resources.cashflow_credit_note_details_section
+import tech.dokus.aura.resources.cashflow_credit_note_number
 import tech.dokus.aura.resources.cashflow_extracted_name
-import tech.dokus.aura.resources.cashflow_expense_details_section
 import tech.dokus.aura.resources.cashflow_invoice_details_section
 import tech.dokus.aura.resources.cashflow_invoice_number
 import tech.dokus.aura.resources.cashflow_processing_identifying_type
+import tech.dokus.aura.resources.cashflow_receipt_details_section
 import tech.dokus.aura.resources.cashflow_receipt_number
 import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.document_type_bill
-import tech.dokus.aura.resources.document_type_expense
+import tech.dokus.aura.resources.document_type_credit_note
 import tech.dokus.aura.resources.document_type_invoice
+import tech.dokus.aura.resources.document_type_receipt
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.EditableBillFields
-import tech.dokus.features.cashflow.presentation.review.EditableExpenseFields
+import tech.dokus.features.cashflow.presentation.review.EditableCreditNoteFields
 import tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields
+import tech.dokus.features.cashflow.presentation.review.EditableReceiptFields
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.constrains.Constrains
 
@@ -115,6 +119,8 @@ internal fun InvoiceDetailsCard(
     val titleRes = when (state.editableData.documentType) {
         DocumentType.Invoice -> Res.string.cashflow_invoice_details_section
         DocumentType.Bill -> Res.string.cashflow_bill_details_section
+        DocumentType.Receipt -> Res.string.cashflow_receipt_details_section
+        DocumentType.CreditNote -> Res.string.cashflow_credit_note_details_section
         else -> Res.string.cashflow_invoice_details_section
     }
 
@@ -137,6 +143,21 @@ internal fun InvoiceDetailsCard(
                     invoiceNumber = fields.invoiceNumber.takeIf { it.isNotBlank() },
                     issueDate = fields.issueDate?.toString(),
                     dueDate = fields.dueDate?.toString()
+                )
+            }
+            DocumentType.Receipt -> {
+                val fields = state.editableData.receipt ?: EditableReceiptFields()
+                ReceiptDetailsFactDisplay(
+                    receiptNumber = fields.receiptNumber.takeIf { it.isNotBlank() },
+                    date = fields.date?.toString()
+                )
+            }
+            DocumentType.CreditNote -> {
+                val fields = state.editableData.creditNote ?: EditableCreditNoteFields()
+                CreditNoteDetailsFactDisplay(
+                    creditNoteNumber = fields.creditNoteNumber.takeIf { it.isNotBlank() },
+                    issueDate = fields.issueDate?.toString(),
+                    originalInvoiceNumber = fields.originalInvoiceNumber.takeIf { it.isNotBlank() }
                 )
             }
             else -> {
@@ -166,6 +187,23 @@ internal fun InvoiceDetailsCard(
                             text = stringResource(Res.string.document_type_bill),
                             modifier = Modifier.weight(1f),
                             onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Bill)) },
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Constrains.Spacing.small),
+                        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                    ) {
+                        POutlinedButton(
+                            text = stringResource(Res.string.document_type_receipt),
+                            modifier = Modifier.weight(1f),
+                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Receipt)) },
+                        )
+                        POutlinedButton(
+                            text = stringResource(Res.string.document_type_credit_note),
+                            modifier = Modifier.weight(1f),
+                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.CreditNote)) },
                         )
                     }
                 }
@@ -221,7 +259,7 @@ private fun BillDetailsFactDisplay(
 }
 
 @Composable
-private fun ExpenseDetailsFactDisplay(
+private fun ReceiptDetailsFactDisplay(
     receiptNumber: String?,
     date: String?,
     modifier: Modifier = Modifier
@@ -235,5 +273,30 @@ private fun ExpenseDetailsFactDisplay(
             label = stringResource(Res.string.common_date),
             value = date
         )
+    }
+}
+
+@Composable
+private fun CreditNoteDetailsFactDisplay(
+    creditNoteNumber: String?,
+    issueDate: String?,
+    originalInvoiceNumber: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        FactField(
+            label = stringResource(Res.string.cashflow_credit_note_number),
+            value = creditNoteNumber
+        )
+        FactField(
+            label = stringResource(Res.string.invoice_issue_date),
+            value = issueDate
+        )
+        if (!originalInvoiceNumber.isNullOrBlank()) {
+            FactField(
+                label = stringResource(Res.string.cashflow_invoice_number),
+                value = originalInvoiceNumber
+            )
+        }
     }
 }

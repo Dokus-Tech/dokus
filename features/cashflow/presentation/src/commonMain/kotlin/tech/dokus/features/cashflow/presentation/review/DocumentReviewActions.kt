@@ -23,7 +23,7 @@ internal class DocumentReviewActions(
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val getDocumentRecord: GetDocumentRecordUseCase,
-    private val mapper: DocumentReviewExtractedDataMapper,
+    private val mapper: DocumentReviewDraftDataMapper,
     private val logger: Logger,
 ) {
     suspend fun DocumentReviewCtx.handleSaveDraft() {
@@ -34,7 +34,16 @@ internal class DocumentReviewActions(
             updateState { copy(isSaving = true) }
 
             launch {
-                val updatedData = mapper.buildExtractedDataFromEditable(editableData, originalData)
+                val updatedData = mapper.buildDraftDataFromEditable(editableData, originalData)
+                if (updatedData == null) {
+                    updateState { copy(isSaving = false) }
+                    action(
+                        DocumentReviewAction.ShowError(
+                            DokusException.Validation.DocumentMissingFields
+                        )
+                    )
+                    return@launch
+                }
                 updateDocumentDraft(
                     documentId,
                     UpdateDraftRequest(extractedData = updatedData)
@@ -67,7 +76,7 @@ internal class DocumentReviewActions(
 
     suspend fun DocumentReviewCtx.handleConfirmDiscardChanges() {
         withState<DocumentReviewState.Content, _> {
-            val restoredData = EditableExtractedData.fromExtractedData(originalData)
+            val restoredData = EditableExtractedData.fromDraftData(originalData)
             updateState {
                 copy(
                     editableData = restoredData,
@@ -92,7 +101,16 @@ internal class DocumentReviewActions(
             updateState { copy(isConfirming = true) }
 
             launch {
-                val updatedData = mapper.buildExtractedDataFromEditable(editableData, originalData)
+                val updatedData = mapper.buildDraftDataFromEditable(editableData, originalData)
+                if (updatedData == null) {
+                    updateState { copy(isConfirming = false) }
+                    action(
+                        DocumentReviewAction.ShowError(
+                            DokusException.Validation.DocumentMissingFields
+                        )
+                    )
+                    return@launch
+                }
                 if (hasUnsavedChanges) {
                     val updateResult = updateDocumentDraft(
                         documentId,
@@ -111,7 +129,7 @@ internal class DocumentReviewActions(
                     withState<DocumentReviewState.Content, _> {
                         updateState {
                             copy(
-                                editableData = EditableExtractedData.fromExtractedData(savedData),
+                                editableData = EditableExtractedData.fromDraftData(savedData),
                                 originalData = savedData,
                                 hasUnsavedChanges = false
                             )
@@ -130,7 +148,7 @@ internal class DocumentReviewActions(
                             updateState {
                                 copy(
                                     document = record,
-                                    editableData = EditableExtractedData.fromExtractedData(draft?.extractedData),
+                                    editableData = EditableExtractedData.fromDraftData(draft?.extractedData),
                                     originalData = draft?.extractedData,
                                     hasUnsavedChanges = false,
                                     isConfirming = false,
@@ -320,7 +338,7 @@ internal class DocumentReviewActions(
                     updateState {
                         copy(
                             document = record,
-                            editableData = EditableExtractedData.fromExtractedData(draft?.extractedData),
+                            editableData = EditableExtractedData.fromDraftData(draft?.extractedData),
                             originalData = draft?.extractedData,
                             counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
                             isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
