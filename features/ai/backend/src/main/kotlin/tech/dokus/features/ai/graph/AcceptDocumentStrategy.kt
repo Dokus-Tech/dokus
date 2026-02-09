@@ -132,8 +132,7 @@ fun acceptDocumentGraph(
             edge(storeClassification forwardTo prepareExtractionInput)
 
             edge(
-                prepareExtractionInput forwardTo unsupported
-                        onCondition {
+                prepareExtractionInput forwardTo unsupported onCondition {
                     !it.documentType.supported || it.documentType == DocumentType.Unknown
                 }
             )
