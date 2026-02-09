@@ -230,7 +230,6 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     tenantId = tenantId,
     documentStatus = documentStatus,
     documentType = documentType,
-    draftKind = extractedData?.let { resolveDraftKind(it) } ?: aiDraftData?.let { resolveDraftKind(it) },
     extractedData = extractedData,
     aiDraftData = aiDraftData,
     aiDescription = aiDescription,

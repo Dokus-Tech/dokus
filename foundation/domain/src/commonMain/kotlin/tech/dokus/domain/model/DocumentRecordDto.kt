@@ -5,7 +5,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.domain.enums.CounterpartyIntent
-import tech.dokus.domain.enums.DocumentKind
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
@@ -68,7 +67,6 @@ data class DocumentDraftDto(
     val tenantId: TenantId,
     val documentStatus: DocumentStatus,
     val documentType: DocumentType?,
-    val draftKind: DocumentKind? = null,
     val extractedData: DocumentDraftData?,
     val aiDraftData: DocumentDraftData?, // Original immutable AI extraction (for diff display)
     val aiDescription: String? = null,

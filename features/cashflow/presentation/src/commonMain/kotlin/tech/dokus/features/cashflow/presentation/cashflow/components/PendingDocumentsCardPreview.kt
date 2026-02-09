@@ -11,9 +11,8 @@ import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
-import tech.dokus.domain.enums.DocumentKind
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -214,7 +213,6 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 tenantId = tenantId,
                 documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Invoice,
-                draftKind = DocumentKind.Invoice,
                 extractedData = InvoiceDraftData(invoiceNumber = "INV-3006-4400"),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
@@ -247,7 +245,6 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 tenantId = tenantId,
                 documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Bill,
-                draftKind = DocumentKind.Bill,
                 extractedData = BillDraftData(
                     invoiceNumber = "BILL-2024-123",
                     supplierName = "Office Supplies Inc."
@@ -283,7 +280,6 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 tenantId = tenantId,
                 documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Receipt,
-                draftKind = DocumentKind.Receipt,
                 extractedData = ReceiptDraftData(merchantName = "Restaurant ABC"),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
@@ -331,7 +327,6 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 tenantId = tenantId,
                 documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Invoice,
-                draftKind = DocumentKind.Invoice,
                 extractedData = InvoiceDraftData(invoiceNumber = "INV-3006-4401"),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
