@@ -39,7 +39,7 @@ data class BillExtractionResult(
     val currency: Currency,
     val totalAmount: Money?,
     val vatAmount: Money?,
-    val vatRatePercent: VatRate?,
+    val vatRate: VatRate?,
     val iban: String?,
     val paymentReference: String?,
     val confidence: Double,
@@ -56,7 +56,7 @@ data class BillExtractionToolInput(
     val currency: String = "EUR",
     val totalAmount: String?,
     val vatAmount: String?,
-    val vatRatePercent: String? = null,
+    val vatRate: String? = null,
     val iban: String? = null,
     val paymentReference: String? = null,
     val confidence: Double,
@@ -80,7 +80,7 @@ private class BillExtractionFinishTool : Tool<BillExtractionToolInput, Financial
                 currency = Currency.from(args.currency),
                 totalAmount = Money.from(args.totalAmount),
                 vatAmount = Money.from(args.vatAmount),
-                vatRatePercent = VatRate.from(args.vatRatePercent),
+                vatRate = VatRate.from(args.vatRate),
                 iban = args.iban,
                 paymentReference = args.paymentReference,
                 confidence = args.confidence,
@@ -102,7 +102,7 @@ private val ExtractDocumentInput.billPrompt: String
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
     - totalAmount = gross total payable (final total).
     - vatAmount = total VAT amount, if present.
-    - vatRatePercent: if there is a single clear VAT rate, return it like "21". If multiple rates or unclear, return null.
+    - vatRate: if there is a single clear VAT rate, return it like "21". If multiple rates or unclear, return null.
 
     ## PARTY DETECTION
     BILL means:

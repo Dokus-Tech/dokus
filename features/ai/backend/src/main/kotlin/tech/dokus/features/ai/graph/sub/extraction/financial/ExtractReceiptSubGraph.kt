@@ -26,7 +26,7 @@ data class ReceiptExtractionResult(
     val currency: Currency,
     val totalAmount: Money?,
     val vatAmount: Money?,
-    val vatRatePercent: VatRate?,
+    val vatRate: VatRate?,
     val receiptNumber: String?,
     val paymentMethod: PaymentMethod?,
     val confidence: Double,
@@ -58,7 +58,7 @@ data class ReceiptExtractionToolInput(
     @property:LLMDescription("VAT amount if shown separately. Use plain number string. Null if not present.")
     val vatAmount: String?,
     @property:LLMDescription("VAT rate percentage if visible (e.g. '6', '12', '21'). Null if unclear or not shown.")
-    val vatRatePercent: String?,
+    val vatRate: String?,
     @property:LLMDescription("Receipt/ticket number for identification. Null if not visible.")
     val receiptNumber: String?,
     @property:LLMDescription("Payment method if visible on receipt.")
@@ -83,7 +83,7 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
                 currency = Currency.from(args.currency),
                 totalAmount = Money.from(args.totalAmount),
                 vatAmount = Money.from(args.vatAmount),
-                vatRatePercent = VatRate.from(args.vatRatePercent),
+                vatRate = VatRate.from(args.vatRate),
                 receiptNumber = args.receiptNumber,
                 paymentMethod = args.paymentMethod,
                 confidence = args.confidence,
@@ -114,9 +114,9 @@ private val ExtractDocumentInput.receiptPrompt
     - Often appears near top or bottom with a timestamp.
 
     ## VAT
-    - If VAT breakdown is shown, extract vatAmount and vatRatePercent.
+    - If VAT breakdown is shown, extract vatAmount and vatRate.
     - Belgian receipts often show "BTW" with 6%, 12%, or 21% rates.
-    - If multiple VAT rates shown, return null for vatRatePercent.
+    - If multiple VAT rates shown, return null for vatRate.
 
     ## RECEIPT NUMBER
     - Look for ticket/receipt number, transaction ID, or similar identifier.
