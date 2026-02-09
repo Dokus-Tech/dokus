@@ -15,6 +15,9 @@ import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.CanonicalPayment
 
 @Serializable
 @SerialName("InvoiceExtractionResult")
@@ -38,7 +41,7 @@ data class InvoiceExtractionResult(
 
     // Payment hints
     val iban: String? = null,
-    val paymentReference: String? = null,
+    val payment: CanonicalPayment? = null,
 
     // Evidence/quality
     val confidence: Double,
@@ -106,10 +109,10 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
                 customerName = args.customerName,
-                customerVat = args.customerVat,
+                customerVat = VatNumber.from(args.customerVat)?.value,
                 customerEmail = args.customerEmail,
-                iban = args.iban,
-                paymentReference = args.paymentReference,
+                iban = Iban.from(args.iban)?.value,
+                payment = CanonicalPayment.from(args.paymentReference),
                 confidence = args.confidence,
                 reasoning = args.reasoning
             )

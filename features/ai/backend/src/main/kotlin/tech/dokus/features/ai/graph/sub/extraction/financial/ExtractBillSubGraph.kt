@@ -11,6 +11,9 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -41,7 +44,7 @@ data class BillExtractionResult(
     val vatAmount: Money?,
     val vatRate: VatRate?,
     val iban: String?,
-    val paymentReference: String?,
+    val payment: CanonicalPayment?,
     val confidence: Double,
     val reasoning: String?,
 )
@@ -73,7 +76,7 @@ private class BillExtractionFinishTool : Tool<BillExtractionToolInput, Financial
         return FinancialExtractionResult.Bill(
             BillExtractionResult(
                 supplierName = args.supplierName,
-                supplierVat = args.supplierVat,
+                supplierVat = VatNumber.from(args.supplierVat)?.value,
                 invoiceNumber = args.invoiceNumber,
                 issueDate = args.issueDate,
                 dueDate = args.dueDate,
@@ -81,8 +84,8 @@ private class BillExtractionFinishTool : Tool<BillExtractionToolInput, Financial
                 totalAmount = Money.from(args.totalAmount),
                 vatAmount = Money.from(args.vatAmount),
                 vatRate = VatRate.from(args.vatRate),
-                iban = args.iban,
-                paymentReference = args.paymentReference,
+                iban = Iban.from(args.iban)?.value,
+                payment = CanonicalPayment.from(args.paymentReference),
                 confidence = args.confidence,
                 reasoning = args.reasoning,
             )

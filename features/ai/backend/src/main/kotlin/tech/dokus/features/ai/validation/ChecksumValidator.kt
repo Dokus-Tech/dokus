@@ -18,33 +18,33 @@ object ChecksumValidator {
     /**
      * Validates a Belgian OGM (Structured Communication) and returns an AuditCheck.
      *
-     * @param paymentReference The payment reference to validate (may be null)
+     * @param structuredComm The structured communication to validate (may be null)
      * @return AuditCheck with validation result and retry hints if failed
      */
-    fun auditOgm(paymentReference: String?): AuditCheck {
-        if (paymentReference.isNullOrBlank()) {
+    fun auditOgm(structuredComm: String?): AuditCheck {
+        if (structuredComm.isNullOrBlank()) {
             return AuditCheck.incomplete(
                 type = CheckType.CHECKSUM_OGM,
-                field = "paymentReference",
-                message = "No payment reference to validate"
+                field = "structuredComm",
+                message = "No structured communication to validate"
             )
         }
 
         // Check if it looks like an OGM at all
-        if (!ValidateOgmUseCase.looksLikeOgm(paymentReference)) {
+        if (!ValidateOgmUseCase.looksLikeOgm(structuredComm)) {
             // Not an OGM format - this is INFO, not a failure
             return AuditCheck.incomplete(
                 type = CheckType.CHECKSUM_OGM,
-                field = "paymentReference",
-                message = "Payment reference is not in OGM format (free-form reference)"
+                field = "structuredComm",
+                message = "Structured communication is not in OGM format"
             )
         }
 
-        return when (val result = ValidateOgmUseCase.validate(paymentReference)) {
+        return when (val result = ValidateOgmUseCase.validate(structuredComm)) {
             is OgmValidationResult.Valid -> {
                 AuditCheck.passed(
                     type = CheckType.CHECKSUM_OGM,
-                    field = "paymentReference",
+                    field = "structuredComm",
                     message = "OGM checksum verified: ${result.normalized}"
                 )
             }
@@ -53,7 +53,7 @@ object ChecksumValidator {
                 // Valid after OCR correction - pass but note the correction
                 AuditCheck(
                     type = CheckType.CHECKSUM_OGM,
-                    field = "paymentReference",
+                    field = "structuredComm",
                     passed = true,
                     severity = Severity.INFO,
                     message = "OGM validated after OCR correction: ${result.normalized}",
@@ -66,20 +66,20 @@ object ChecksumValidator {
             is OgmValidationResult.InvalidFormat -> {
                 AuditCheck.warning(
                     type = CheckType.CHECKSUM_OGM,
-                    field = "paymentReference",
+                    field = "structuredComm",
                     message = "Invalid OGM format: ${result.message}",
-                    hint = buildOgmFormatHint(paymentReference, result.hint),
+                    hint = buildOgmFormatHint(structuredComm, result.hint),
                     expected = "+++XXX/XXXX/XXXXX+++",
-                    actual = paymentReference
+                    actual = structuredComm
                 )
             }
 
             is OgmValidationResult.InvalidChecksum -> {
                 AuditCheck.criticalFailure(
                     type = CheckType.CHECKSUM_OGM,
-                    field = "paymentReference",
+                    field = "structuredComm",
                     message = "OGM checksum failed: expected ${result.expected}, got ${result.actual}",
-                    hint = buildOgmChecksumHint(paymentReference, result.expected, result.actual),
+                    hint = buildOgmChecksumHint(structuredComm, result.expected, result.actual),
                     expected = "Check digit: ${result.expected.toString().padStart(2, '0')}",
                     actual = "Check digit: ${result.actual.toString().padStart(2, '0')}"
                 )

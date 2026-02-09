@@ -38,7 +38,7 @@ object FinancialExtractionAuditor {
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
         add(ChecksumValidator.auditIban(data.iban))
-        add(ChecksumValidator.auditOgm(data.paymentReference))
+        add(ChecksumValidator.auditOgm(data.payment?.structuredComm))
     }
 
     private fun auditBill(data: BillExtractionResult): List<AuditCheck> = buildList {
@@ -48,7 +48,7 @@ object FinancialExtractionAuditor {
 
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
         add(ChecksumValidator.auditIban(data.iban))
-        add(ChecksumValidator.auditOgm(data.paymentReference))
+        add(ChecksumValidator.auditOgm(data.payment?.structuredComm))
     }
 
     private fun auditReceipt(data: ReceiptExtractionResult): List<AuditCheck> = buildList {
@@ -76,7 +76,7 @@ object FinancialExtractionAuditor {
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
         add(ChecksumValidator.auditIban(data.iban))
-        add(ChecksumValidator.auditOgm(data.paymentReference))
+        add(ChecksumValidator.auditOgm(data.payment?.structuredComm))
     }
 
     private fun auditProForma(data: ProFormaExtractionResult): List<AuditCheck> = buildList {
@@ -96,7 +96,7 @@ object FinancialExtractionAuditor {
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.orderDate, null))
         add(ChecksumValidator.auditIban(data.iban))
-        add(ChecksumValidator.auditOgm(data.paymentReference))
+        add(ChecksumValidator.auditOgm(data.payment?.structuredComm))
     }
 
     private fun derivedSubtotal(total: Money?, vat: Money?): Money? {

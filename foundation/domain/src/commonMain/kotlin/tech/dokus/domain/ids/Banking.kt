@@ -54,6 +54,24 @@ value class Iban(override val value: String) : ValueClass<String>, Validatable<I
 
     override val validOrThrows: Iban
         get() = if (isValid) this else throw DokusException.Validation.InvalidIban
+
+    companion object {
+        /**
+         * Normalize raw IBAN input into canonical form.
+         *
+         * Rules:
+         * - Uppercase
+         * - Remove spaces and dashes
+         * - Keep cleaned value even if invalid
+         */
+        fun from(raw: String?): Iban? {
+            if (raw == null) return null
+            val cleaned = raw.trim()
+                .replace(Regex("[\\s-]"), "")
+                .uppercase()
+            return Iban(cleaned)
+        }
+    }
 }
 
 @Serializable

@@ -10,6 +10,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -92,7 +93,7 @@ private class CreditNoteExtractionFinishTool :
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
                 counterpartyName = args.counterpartyName,
-                counterpartyVat = args.counterpartyVat,
+                counterpartyVat = VatNumber.from(args.counterpartyVat)?.value,
                 originalInvoiceNumber = args.originalInvoiceNumber,
                 reason = args.reason,
                 confidence = args.confidence,

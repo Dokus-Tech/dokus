@@ -10,6 +10,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -44,7 +47,7 @@ data class PurchaseOrderExtractionResult(
     val totalAmount: Money?,
 
     val iban: String?,
-    val paymentReference: String?,
+    val payment: CanonicalPayment?,
 
     val confidence: Double,
     val reasoning: String?,
@@ -82,14 +85,14 @@ private class PurchaseOrderExtractionFinishTool :
                 orderDate = args.orderDate,
                 expectedDeliveryDate = args.expectedDeliveryDate,
                 supplierName = args.supplierName,
-                supplierVat = args.supplierVat,
+                supplierVat = VatNumber.from(args.supplierVat)?.value,
                 supplierEmail = args.supplierEmail,
                 currency = Currency.from(args.currency),
                 subtotalAmount = Money.from(args.subtotalAmount),
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
-                iban = args.iban,
-                paymentReference = args.paymentReference,
+                iban = Iban.from(args.iban)?.value,
+                payment = CanonicalPayment.from(args.paymentReference),
                 confidence = args.confidence,
                 reasoning = args.reasoning,
             )
