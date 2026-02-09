@@ -18,7 +18,7 @@ import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.confidenceScore
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.foundation.backend.config.AIConfig
-import java.util.Locale
+import java.util.*
 
 @Serializable
 data class AcceptDocumentInput(
