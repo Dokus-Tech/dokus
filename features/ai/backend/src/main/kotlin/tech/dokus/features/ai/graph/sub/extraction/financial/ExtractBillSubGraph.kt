@@ -3,6 +3,7 @@ package tech.dokus.features.ai.graph.sub.extraction.financial
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.tools.Tool
+import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
@@ -17,6 +18,7 @@ import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.LineItemToolInput
 import tech.dokus.features.ai.models.VatBreakdownToolInput
@@ -56,19 +58,33 @@ data class BillExtractionResult(
 
 @Serializable
 data class BillExtractionToolInput(
+    @property:LLMDescription(ExtractionToolDescriptions.SupplierName)
     val supplierName: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.SupplierVat)
     val supplierVat: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.InvoiceNumber)
     val invoiceNumber: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.IssueDate)
     val issueDate: LocalDate?,
+    @property:LLMDescription(ExtractionToolDescriptions.DueDate)
     val dueDate: LocalDate?,
+    @property:LLMDescription(ExtractionToolDescriptions.Currency)
     val currency: String = "EUR",
+    @property:LLMDescription(ExtractionToolDescriptions.TotalAmount)
     val totalAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.VatAmount)
     val vatAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.LineItems)
     val lineItems: List<LineItemToolInput>? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.VatBreakdown)
     val vatBreakdown: List<VatBreakdownToolInput>? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.Iban)
     val iban: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.PaymentReference)
     val paymentReference: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
+    @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
     val reasoning: String? = null,
 )
 
@@ -110,19 +126,15 @@ private val ExtractDocumentInput.billPrompt: String
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
-    - totalAmount = gross total payable (final total).
-    - vatAmount = total VAT amount, if present.
     - If VAT breakdown is shown, extract it as vatBreakdown (rate/base/amount).
 
     ## PARTY DETECTION
     BILL means:
     - Supplier/vendor is the ISSUER (header/logo).
     - We are the customer (often in "Klant/Client" section).
-    Extract SUPPLIER fields only (supplierName, supplierVat).
 
     ## DATE RULES
-    - issueDate: invoice issue date ("Factuurdatum", "Date de facture", "Invoice date")
-    - dueDate: payment due ("Vervaldatum", "Échéance", "Due date")
+    Identify issue date ("Factuurdatum", "Date de facture", "Invoice date") and due date ("Vervaldatum", "Échéance", "Due date").
     If due date is not present, keep null.
 
     ## PAYMENT

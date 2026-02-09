@@ -19,6 +19,7 @@ import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.LineItemToolInput
 import tech.dokus.features.ai.models.VatBreakdownToolInput
@@ -72,37 +73,37 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractInvoiceSubGraph(
 
 @Serializable
 data class InvoiceExtractionToolInput(
-    @property:LLMDescription("Invoice number (e.g. 2025-001). Null if not visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.InvoiceNumber)
     val invoiceNumber: String?,
-    @property:LLMDescription("Issue date. Null if not visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.IssueDate)
     val issueDate: LocalDate?,
-    @property:LLMDescription("Due date. Null if not visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.DueDate)
     val dueDate: LocalDate?,
-    @property:LLMDescription("Currency code like EUR. If symbol only, infer best guess.")
+    @property:LLMDescription(ExtractionToolDescriptions.Currency)
     val currency: String = "EUR",
-    @property:LLMDescription("Subtotal/net amount as it appears. Use plain number string (e.g. 1234.56). Null if not present.")
+    @property:LLMDescription(ExtractionToolDescriptions.SubtotalAmount)
     val subtotalAmount: String?,
-    @property:LLMDescription("Total VAT amount. Use plain number string. Null if not present.")
+    @property:LLMDescription(ExtractionToolDescriptions.VatAmount)
     val vatAmount: String?,
-    @property:LLMDescription("Total/gross amount. Use plain number string. Null if not present.")
+    @property:LLMDescription(ExtractionToolDescriptions.TotalAmount)
     val totalAmount: String?,
-    @property:LLMDescription("Line items table. Leave empty if not itemized.")
+    @property:LLMDescription(ExtractionToolDescriptions.LineItems)
     val lineItems: List<LineItemToolInput>? = null,
-    @property:LLMDescription("VAT breakdown rows per rate (rate/base/amount). Leave empty if not shown.")
+    @property:LLMDescription(ExtractionToolDescriptions.VatBreakdown)
     val vatBreakdown: List<VatBreakdownToolInput>? = null,
-    @property:LLMDescription("Customer name (the billed-to party). Null if unclear.")
+    @property:LLMDescription(ExtractionToolDescriptions.CustomerName)
     val customerName: String?,
-    @property:LLMDescription("Customer VAT number if shown (e.g. BE0123456789). Null if not visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.CustomerVat)
     val customerVat: String?,
-    @property:LLMDescription("Customer email if visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.CustomerEmail)
     val customerEmail: String? = null,
-    @property:LLMDescription("IBAN for payment if visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.Iban)
     val iban: String? = null,
-    @property:LLMDescription("Payment reference / structured communication if visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.PaymentReference)
     val paymentReference: String? = null,
-    @property:LLMDescription("Confidence score 0.0-1.0 for the extraction quality.")
+    @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
-    @property:LLMDescription("Short reasoning: what you used to extract totals/dates/number.")
+    @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
     val reasoning: String? = null
 )
 
@@ -146,20 +147,15 @@ private val ExtractDocumentInput.prompt
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
-    - totalAmount = gross total payable (not subtotal).
-    - subtotalAmount = net total before VAT (if shown).
-    - vatAmount = total VAT amount (if shown).
     - If multiple totals exist, prefer the "Total" / "Totaal" / "Total TTC" style final payable amount.
 
     ## PARTY DETECTION
     OUTGOING INVOICE means:
     - Issuer is the tenant (your company) in header/logo area.
     - Customer is the billed-to party ("Client", "Klant", "Bill to", etc).
-    Extract CUSTOMER fields only (customerName, customerVat, customerEmail).
 
     ## DATE RULES
-    - issueDate: date of invoice issuance ("Factuurdatum", "Date de facture", "Invoice date")
-    - dueDate: payment due ("Vervaldatum", "Échéance", "Due date")
+    Identify issue date ("Factuurdatum", "Date de facture", "Invoice date") and due date ("Vervaldatum", "Échéance", "Due date").
     If only one date is present and it clearly is the invoice date, set issueDate and leave dueDate null.
 
     ## PAYMENT FIELDS

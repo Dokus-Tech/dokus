@@ -10,25 +10,25 @@ import kotlin.math.abs
 
 @Serializable
 data class LineItemToolInput(
-    @property:LLMDescription("Line item description. Required when providing a line item.")
+    @property:LLMDescription(ExtractionToolDescriptions.LineItemDescription)
     val description: String?,
-    @property:LLMDescription("Quantity as a whole number string (e.g., '2'). Null if not shown.")
+    @property:LLMDescription(ExtractionToolDescriptions.LineItemQuantity)
     val quantity: String? = null,
-    @property:LLMDescription("Unit price (excl VAT) as plain number string (e.g., '12.50'). Null if not shown.")
+    @property:LLMDescription(ExtractionToolDescriptions.LineItemUnitPrice)
     val unitPrice: String? = null,
-    @property:LLMDescription("VAT rate percentage for this line (e.g., '21'). Null if not shown.")
+    @property:LLMDescription(ExtractionToolDescriptions.LineItemVatRate)
     val vatRate: String? = null,
-    @property:LLMDescription("Line total excl VAT as plain number string. Null if not shown.")
+    @property:LLMDescription(ExtractionToolDescriptions.LineItemNetAmount)
     val netAmount: String? = null
 )
 
 @Serializable
 data class VatBreakdownToolInput(
-    @property:LLMDescription("VAT rate percentage for this row (e.g., '6', '12', '21').")
+    @property:LLMDescription(ExtractionToolDescriptions.VatBreakdownRate)
     val rate: String?,
-    @property:LLMDescription("Taxable base (excl VAT) for this rate as plain number string.")
+    @property:LLMDescription(ExtractionToolDescriptions.VatBreakdownBase)
     val base: String?,
-    @property:LLMDescription("VAT amount for this rate as plain number string.")
+    @property:LLMDescription(ExtractionToolDescriptions.VatBreakdownAmount)
     val amount: String?
 )
 

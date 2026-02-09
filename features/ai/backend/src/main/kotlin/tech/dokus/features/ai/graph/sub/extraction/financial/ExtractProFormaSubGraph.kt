@@ -3,6 +3,7 @@ package tech.dokus.features.ai.graph.sub.extraction.financial
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.tools.Tool
+import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
@@ -14,6 +15,7 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 
@@ -50,16 +52,27 @@ data class ProFormaExtractionResult(
 
 @Serializable
 data class ProFormaExtractionToolInput(
+    @property:LLMDescription(ExtractionToolDescriptions.ProFormaNumber)
     val proFormaNumber: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.IssueDate)
     val issueDate: LocalDate?,
+    @property:LLMDescription(ExtractionToolDescriptions.Currency)
     val currency: String = "EUR",
+    @property:LLMDescription(ExtractionToolDescriptions.SubtotalAmount)
     val subtotalAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.VatAmount)
     val vatAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.TotalAmount)
     val totalAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.CustomerName)
     val customerName: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.CustomerVat)
     val customerVat: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.CustomerEmail)
     val customerEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
+    @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
     val reasoning: String? = null,
 )
 
@@ -98,7 +111,6 @@ private val ExtractDocumentInput.proFormaPrompt: String
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
-    - totalAmount = gross total if present.
     - Pro forma is informational; still extract number/date/totals as shown.
 
     ## IDENTIFIERS
@@ -106,7 +118,6 @@ private val ExtractDocumentInput.proFormaPrompt: String
 
     ## CUSTOMER
     For outgoing pro forma, issuer is the tenant; customer is billed-to/recipient party.
-    Extract customerName/customerVat/customerEmail if present.
 
     Language hint: $language
     """.trimIndent()

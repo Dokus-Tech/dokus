@@ -3,6 +3,7 @@ package tech.dokus.features.ai.graph.sub.extraction.financial
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.tools.Tool
+import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
@@ -16,6 +17,7 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 
@@ -56,19 +58,33 @@ data class QuoteExtractionResult(
 
 @Serializable
 data class QuoteExtractionToolInput(
+    @property:LLMDescription(ExtractionToolDescriptions.QuoteNumber)
     val quoteNumber: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.IssueDate)
     val issueDate: LocalDate?,
+    @property:LLMDescription(ExtractionToolDescriptions.ValidUntil)
     val validUntil: LocalDate?,
+    @property:LLMDescription(ExtractionToolDescriptions.Currency)
     val currency: String = "EUR",
+    @property:LLMDescription(ExtractionToolDescriptions.SubtotalAmount)
     val subtotalAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.VatAmount)
     val vatAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.TotalAmount)
     val totalAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.CustomerName)
     val customerName: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.CustomerVat)
     val customerVat: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.CustomerEmail)
     val customerEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.Iban)
     val iban: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.PaymentReference)
     val paymentReference: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
+    @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
     val reasoning: String? = null,
 )
 
@@ -110,18 +126,15 @@ private val ExtractDocumentInput.quotePrompt: String
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
-    - totalAmount = gross total (if present). If only subtotal is shown, set totalAmount null.
 
     ## IDENTIFIERS
     Extract quoteNumber ("Offerte nr", "Devis N°", "Quotation #") if visible.
 
     ## DATE RULES
-    - issueDate: date of quote
-    - validUntil: expiration/validity date ("Geldig tot", "Valable jusqu'au", "Valid until")
+    Identify quote date and validity/expiration date ("Geldig tot", "Valable jusqu'au", "Valid until").
 
     ## CUSTOMER
     For outgoing quotes, issuer is the tenant; customer is billed-to/recipient party.
-    Extract customerName/customerVat/customerEmail if present.
 
     Language hint: $language
     """.trimIndent()

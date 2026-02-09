@@ -16,6 +16,7 @@ import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.LineItemToolInput
 import tech.dokus.features.ai.models.VatBreakdownToolInput
@@ -52,27 +53,27 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractReceiptSubGraph(
 
 @Serializable
 data class ReceiptExtractionToolInput(
-    @property:LLMDescription("Merchant/store name from the receipt header. Null if not visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.MerchantName)
     val merchantName: String?,
-    @property:LLMDescription("Transaction date. Null if not visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.ReceiptDate)
     val date: LocalDate?,
-    @property:LLMDescription("Currency code like EUR. If symbol only, infer best guess.")
+    @property:LLMDescription(ExtractionToolDescriptions.Currency)
     val currency: String = "EUR",
-    @property:LLMDescription("Total amount paid. Use plain number string (e.g. 12.50). Null if not present.")
+    @property:LLMDescription(ExtractionToolDescriptions.TotalAmount)
     val totalAmount: String?,
-    @property:LLMDescription("VAT amount if shown separately. Use plain number string. Null if not present.")
+    @property:LLMDescription(ExtractionToolDescriptions.VatAmount)
     val vatAmount: String?,
-    @property:LLMDescription("Line items if the receipt is clearly itemized.")
+    @property:LLMDescription(ExtractionToolDescriptions.LineItems)
     val lineItems: List<LineItemToolInput>? = null,
-    @property:LLMDescription("VAT breakdown rows if explicitly printed.")
+    @property:LLMDescription(ExtractionToolDescriptions.VatBreakdown)
     val vatBreakdown: List<VatBreakdownToolInput>? = null,
-    @property:LLMDescription("Receipt/ticket number for identification. Null if not visible.")
+    @property:LLMDescription(ExtractionToolDescriptions.ReceiptNumber)
     val receiptNumber: String?,
-    @property:LLMDescription("Payment method if visible on receipt.")
+    @property:LLMDescription(ExtractionToolDescriptions.PaymentMethod)
     val paymentMethod: PaymentMethod? = null,
-    @property:LLMDescription("Confidence score 0.0-1.0 for the extraction quality.")
+    @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
-    @property:LLMDescription("Short reasoning: what you used to extract the total/date/merchant.")
+    @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
     val reasoning: String? = null
 )
 
@@ -111,7 +112,6 @@ private val ExtractDocumentInput.receiptPrompt
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "12.50").
-    - totalAmount = final amount paid (the largest total, often at bottom).
 
     ## MERCHANT
     - Look for the store/merchant name at the TOP of the receipt (header/logo area).

@@ -3,6 +3,7 @@ package tech.dokus.features.ai.graph.sub.extraction.financial
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.tools.Tool
+import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
@@ -16,6 +17,7 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
+import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
 
@@ -56,19 +58,33 @@ data class PurchaseOrderExtractionResult(
 
 @Serializable
 data class PurchaseOrderExtractionToolInput(
+    @property:LLMDescription(ExtractionToolDescriptions.PurchaseOrderNumber)
     val poNumber: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.OrderDate)
     val orderDate: LocalDate?,
+    @property:LLMDescription(ExtractionToolDescriptions.ExpectedDeliveryDate)
     val expectedDeliveryDate: LocalDate? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.SupplierName)
     val supplierName: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.SupplierVat)
     val supplierVat: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.SupplierEmail)
     val supplierEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.Currency)
     val currency: String = "EUR",
+    @property:LLMDescription(ExtractionToolDescriptions.SubtotalAmount)
     val subtotalAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.VatAmount)
     val vatAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.TotalAmount)
     val totalAmount: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.Iban)
     val iban: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.PaymentReference)
     val paymentReference: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
+    @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
     val reasoning: String? = null,
 )
 
@@ -111,19 +127,15 @@ private val ExtractDocumentInput.purchaseOrderPrompt: String
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
-    - subtotalAmount = net total before VAT (if shown).
-    - vatAmount = total VAT amount (if shown).
-    - totalAmount = gross total (if shown). If no totals exist, keep amounts null.
 
     ## IDENTIFIERS
     Extract poNumber ("PO", "Bestelbon nr", "Bon de commande N°") if visible.
 
     ## DATES
-    - orderDate: order date ("Orderdatum", "Date de commande")
-    - expectedDeliveryDate: delivery/expected date if stated
+    Identify order date ("Orderdatum", "Date de commande") and expected delivery date if stated.
 
     ## SUPPLIER
-    Supplier/vendor is usually the recipient/supplier party. Extract supplierName/supplierVat if present.
+    Supplier/vendor is usually the recipient/supplier party.
 
     Language hint: $language
     """.trimIndent()
