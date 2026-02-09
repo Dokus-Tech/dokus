@@ -179,6 +179,12 @@ sealed class DokusException(
         )
 
         @Serializable
+        @SerialName("DokusException.Validation.InvalidStructuredCommunication")
+        data object InvalidStructuredCommunication : Validation(
+            message = "Invalid structured communication",
+        )
+
+        @Serializable
         @SerialName("DokusException.Validation.InvalidBic")
         data object InvalidBic : Validation(
             message = "Invalid BIC/SWIFT code",

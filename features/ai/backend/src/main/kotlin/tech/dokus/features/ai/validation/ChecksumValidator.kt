@@ -1,9 +1,7 @@
 package tech.dokus.features.ai.validation
 
 import tech.dokus.domain.ids.Iban
-import tech.dokus.domain.validators.OgmValidationResult
-import tech.dokus.domain.validators.ValidateIbanUseCase
-import tech.dokus.domain.validators.ValidateOgmUseCase
+import tech.dokus.domain.ids.StructuredCommunication
 
 /**
  * Wraps checksum validators (OGM, IBAN) and produces AuditCheck results.
@@ -11,7 +9,6 @@ import tech.dokus.domain.validators.ValidateOgmUseCase
  * This validator provides:
  * - Validation result as AuditCheck
  * - Specific hints for Layer 4 retry prompts
- * - OCR correction awareness (for OGM)
  */
 object ChecksumValidator {
 
@@ -19,10 +16,11 @@ object ChecksumValidator {
      * Validates a Belgian OGM (Structured Communication) and returns an AuditCheck.
      *
      * @param structuredComm The structured communication to validate (may be null)
-     * @return AuditCheck with validation result and retry hints if failed
+     * @return AuditCheck with validation result
      */
-    fun auditOgm(structuredComm: String?): AuditCheck {
-        if (structuredComm.isNullOrBlank()) {
+    fun auditOgm(structuredComm: StructuredCommunication?): AuditCheck {
+        val raw = structuredComm?.value
+        if (raw.isNullOrBlank()) {
             return AuditCheck.incomplete(
                 type = CheckType.CHECKSUM_OGM,
                 field = "structuredComm",
@@ -30,60 +28,21 @@ object ChecksumValidator {
             )
         }
 
-        // Check if it looks like an OGM at all
-        if (!ValidateOgmUseCase.looksLikeOgm(structuredComm)) {
-            // Not an OGM format - this is INFO, not a failure
-            return AuditCheck.incomplete(
+        return if (structuredComm.isValid) {
+            AuditCheck.passed(
                 type = CheckType.CHECKSUM_OGM,
                 field = "structuredComm",
-                message = "Structured communication is not in OGM format"
+                message = "OGM checksum verified: $raw"
             )
-        }
-
-        return when (val result = ValidateOgmUseCase.validate(structuredComm)) {
-            is OgmValidationResult.Valid -> {
-                AuditCheck.passed(
-                    type = CheckType.CHECKSUM_OGM,
-                    field = "structuredComm",
-                    message = "OGM checksum verified: ${result.normalized}"
-                )
-            }
-
-            is OgmValidationResult.CorrectedValid -> {
-                // Valid after OCR correction - pass but note the correction
-                AuditCheck(
-                    type = CheckType.CHECKSUM_OGM,
-                    field = "structuredComm",
-                    passed = true,
-                    severity = Severity.INFO,
-                    message = "OGM validated after OCR correction: ${result.normalized}",
-                    hint = result.corrections,
-                    expected = result.normalized,
-                    actual = result.original
-                )
-            }
-
-            is OgmValidationResult.InvalidFormat -> {
-                AuditCheck.warning(
-                    type = CheckType.CHECKSUM_OGM,
-                    field = "structuredComm",
-                    message = "Invalid OGM format: ${result.message}",
-                    hint = buildOgmFormatHint(structuredComm, result.hint),
-                    expected = "+++XXX/XXXX/XXXXX+++",
-                    actual = structuredComm
-                )
-            }
-
-            is OgmValidationResult.InvalidChecksum -> {
-                AuditCheck.criticalFailure(
-                    type = CheckType.CHECKSUM_OGM,
-                    field = "structuredComm",
-                    message = "OGM checksum failed: expected ${result.expected}, got ${result.actual}",
-                    hint = buildOgmChecksumHint(structuredComm, result.expected, result.actual),
-                    expected = "Check digit: ${result.expected.toString().padStart(2, '0')}",
-                    actual = "Check digit: ${result.actual.toString().padStart(2, '0')}"
-                )
-            }
+        } else {
+            AuditCheck.criticalFailure(
+                type = CheckType.CHECKSUM_OGM,
+                field = "structuredComm",
+                message = "OGM checksum failed",
+                hint = "Re-read the PAYMENT SECTION of the document and verify the structured communication.",
+                expected = "Valid OGM (mod-97 check)",
+                actual = raw
+            )
         }
     }
 
@@ -103,14 +62,11 @@ object ChecksumValidator {
             )
         }
 
-        val isValid = ValidateIbanUseCase(iban)
-
-        return if (isValid) {
-            val normalized = normalizeIban(raw)
+        return if (iban.isValid) {
             AuditCheck.passed(
                 type = CheckType.CHECKSUM_IBAN,
                 field = "iban",
-                message = "IBAN checksum verified: $normalized"
+                message = "IBAN checksum verified: ${iban.value}"
             )
         } else {
             AuditCheck.criticalFailure(
@@ -122,53 +78,6 @@ object ChecksumValidator {
                 actual = raw
             )
         }
-    }
-
-    /**
-     * Builds a helpful hint for OGM format errors.
-     */
-    private fun buildOgmFormatHint(input: String, validatorHint: String): String = buildString {
-        append("Re-read the PAYMENT SECTION of the document. ")
-        append(validatorHint)
-        append(" ")
-
-        // Check for specific format issues
-        val digitCount = input.count { it.isDigit() }
-        if (digitCount < 12) {
-            append("Found only $digitCount digits, need exactly 12. ")
-        } else if (digitCount > 12) {
-            append("Found $digitCount digits, should be exactly 12. ")
-        }
-
-        if (!input.contains("/")) {
-            append("Missing slash separators (format: XXX/XXXX/XXXXX). ")
-        }
-    }
-
-    /**
-     * Builds a specific hint for OGM checksum failures.
-     */
-    private fun buildOgmChecksumHint(input: String, expected: Int, actual: Int): String = buildString {
-        append("Re-read the payment reference number carefully. ")
-        append("The Mod-97 checksum failed. ")
-        append("Expected check digits: ${expected.toString().padStart(2, '0')}, ")
-        append("found: ${actual.toString().padStart(2, '0')}. ")
-        appendLine()
-        appendLine()
-        append("Common OCR character substitutions to check:")
-        appendLine()
-        append("  - 0 (zero) ↔ O (letter O)")
-        appendLine()
-        append("  - 1 (one) ↔ I (letter I) ↔ l (lowercase L)")
-        appendLine()
-        append("  - 8 ↔ B")
-        appendLine()
-        append("  - 5 ↔ S")
-        appendLine()
-        append("  - 6 ↔ G")
-        appendLine()
-        appendLine()
-        append("Look at each digit in the payment section and verify it matches what you extracted.")
     }
 
     /**
