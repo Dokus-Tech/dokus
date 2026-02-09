@@ -8,6 +8,8 @@ import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -31,10 +33,10 @@ data class ProFormaExtractionResult(
     val proFormaNumber: String?,
     val issueDate: LocalDate?,
 
-    val currency: String,
-    val subtotalAmount: String?,
-    val vatAmount: String?,
-    val totalAmount: String?,
+    val currency: Currency,
+    val subtotalAmount: Money?,
+    val vatAmount: Money?,
+    val totalAmount: Money?,
 
     val customerName: String?,
     val customerVat: String?,
@@ -70,10 +72,10 @@ private class ProFormaExtractionFinishTool : Tool<ProFormaExtractionToolInput, F
             ProFormaExtractionResult(
                 proFormaNumber = args.proFormaNumber,
                 issueDate = args.issueDate,
-                currency = args.currency,
-                subtotalAmount = args.subtotalAmount,
-                vatAmount = args.vatAmount,
-                totalAmount = args.totalAmount,
+                currency = Currency.from(args.currency),
+                subtotalAmount = Money.from(args.subtotalAmount),
+                vatAmount = Money.from(args.vatAmount),
+                totalAmount = Money.from(args.totalAmount),
                 customerName = args.customerName,
                 customerVat = args.customerVat,
                 customerEmail = args.customerEmail,

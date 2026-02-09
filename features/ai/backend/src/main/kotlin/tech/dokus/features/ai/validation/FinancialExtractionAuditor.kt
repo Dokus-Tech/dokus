@@ -31,9 +31,9 @@ object FinancialExtractionAuditor {
     }
 
     private fun auditInvoice(data: InvoiceExtractionResult): List<AuditCheck> = buildList {
-        val subtotal = money(data.subtotalAmount)
-        val vat = money(data.vatAmount)
-        val total = money(data.totalAmount)
+        val subtotal = data.subtotalAmount
+        val vat = data.vatAmount
+        val total = data.totalAmount
 
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
@@ -42,8 +42,8 @@ object FinancialExtractionAuditor {
     }
 
     private fun auditBill(data: BillExtractionResult): List<AuditCheck> = buildList {
-        val total = money(data.totalAmount)
-        val vat = money(data.vatAmount)
+        val total = data.totalAmount
+        val vat = data.vatAmount
         val subtotal = derivedSubtotal(total, vat)
 
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
@@ -52,26 +52,26 @@ object FinancialExtractionAuditor {
     }
 
     private fun auditReceipt(data: ReceiptExtractionResult): List<AuditCheck> = buildList {
-        val total = money(data.totalAmount)
-        val vat = money(data.vatAmount)
+        val total = data.totalAmount
+        val vat = data.vatAmount
         val subtotal = derivedSubtotal(total, vat)
 
         add(BelgianVatRateValidator.verify(subtotal, vat, data.date, null))
     }
 
     private fun auditCreditNote(data: CreditNoteExtractionResult): List<AuditCheck> = buildList {
-        val subtotal = money(data.subtotalAmount)
-        val vat = money(data.vatAmount)
-        val total = money(data.totalAmount)
+        val subtotal = data.subtotalAmount
+        val vat = data.vatAmount
+        val total = data.totalAmount
 
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
     }
 
     private fun auditQuote(data: QuoteExtractionResult): List<AuditCheck> = buildList {
-        val subtotal = money(data.subtotalAmount)
-        val vat = money(data.vatAmount)
-        val total = money(data.totalAmount)
+        val subtotal = data.subtotalAmount
+        val vat = data.vatAmount
+        val total = data.totalAmount
 
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
@@ -80,26 +80,24 @@ object FinancialExtractionAuditor {
     }
 
     private fun auditProForma(data: ProFormaExtractionResult): List<AuditCheck> = buildList {
-        val subtotal = money(data.subtotalAmount)
-        val vat = money(data.vatAmount)
-        val total = money(data.totalAmount)
+        val subtotal = data.subtotalAmount
+        val vat = data.vatAmount
+        val total = data.totalAmount
 
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
     }
 
     private fun auditPurchaseOrder(data: PurchaseOrderExtractionResult): List<AuditCheck> = buildList {
-        val subtotal = money(data.subtotalAmount)
-        val vat = money(data.vatAmount)
-        val total = money(data.totalAmount)
+        val subtotal = data.subtotalAmount
+        val vat = data.vatAmount
+        val total = data.totalAmount
 
         add(MathValidator.verifyTotals(subtotal, vat, total))
         add(BelgianVatRateValidator.verify(subtotal, vat, data.orderDate, null))
         add(ChecksumValidator.auditIban(data.iban))
         add(ChecksumValidator.auditOgm(data.paymentReference))
     }
-
-    private fun money(value: String?): Money? = value?.let { Money.parse(it) }
 
     private fun derivedSubtotal(total: Money?, vat: Money?): Money? {
         if (total == null || vat == null) return null

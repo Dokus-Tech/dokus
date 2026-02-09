@@ -86,6 +86,21 @@ value class Money(val minor: Long) : Comparable<Money> {
         val ZERO = Money(0L)
 
         /**
+         * Parse a human-entered money string into [Money].
+         *
+         * Supports:
+         * - "1234.56"
+         * - "1,234.56"
+         * - "1.234,56"
+         * - "1234"
+         * - Optional currency symbols and spaces
+         */
+        fun from(value: String?): Money? {
+            val normalized = normalizeMoneyInput(value) ?: return null
+            return parse(normalized)
+        }
+
+        /**
          * Parse a display string like "123.45" or "-50.00" into Money.
          * Returns null if the string is not a valid money format.
          *
@@ -165,6 +180,53 @@ value class Money(val minor: Long) : Comparable<Money> {
         fun parseOrThrow(value: String): Money {
             return parse(value) ?: throw DokusException.Validation.InvalidMoney
         }
+
+        private fun normalizeMoneyInput(value: String?): String? {
+            if (value.isNullOrBlank()) return null
+
+            val trimmed = value.trim()
+            if (trimmed.isEmpty()) return null
+
+            val sign = if (trimmed.startsWith("-")) "-" else ""
+            val unsigned = trimmed
+                .removePrefix("-")
+                .replace("€", "")
+                .replace("$", "")
+                .replace("£", "")
+                .replace(" ", "")
+
+            if (unsigned.isEmpty()) return null
+
+            val lastDot = unsigned.lastIndexOf('.')
+            val lastComma = unsigned.lastIndexOf(',')
+            val lastSep = maxOf(lastDot, lastComma)
+            val sepCount = unsigned.count { it == '.' || it == ',' }
+
+            if (lastSep < 0) {
+                return sign + unsigned.replace(".", "").replace(",", "")
+            }
+
+            val integerPart = unsigned.substring(0, lastSep)
+                .replace(".", "")
+                .replace(",", "")
+            val fractionPart = unsigned.substring(lastSep + 1)
+                .replace(".", "")
+                .replace(",", "")
+
+            if (fractionPart.isEmpty()) {
+                return sign + integerPart
+            }
+
+            if (fractionPart.length <= DecimalPlaces) {
+                return "$sign$integerPart.$fractionPart"
+            }
+
+            if (sepCount == 1 && fractionPart.length > DecimalPlaces) {
+                return sign + (integerPart + fractionPart)
+            }
+
+            return sign + (integerPart + fractionPart)
+        }
     }
 }
 
@@ -227,6 +289,15 @@ value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
         val ZERO = VatRate(0)
         val STANDARD_BE = VatRate(2100) // Belgium standard rate 21%
         val REDUCED_BE = VatRate(600) // Belgium reduced rate 6%
+
+        /**
+         * Parse a nullable percent string into [VatRate].
+         * Examples: "21", "21.00", "21%", "6,00".
+         */
+        fun from(value: String?): VatRate? {
+            if (value.isNullOrBlank()) return null
+            return parse(value)
+        }
 
         /**
          * Parse a display string like "21.00" or "21" into VatRate.

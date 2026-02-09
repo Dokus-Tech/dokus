@@ -8,6 +8,8 @@ import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -40,10 +42,10 @@ data class CreditNoteExtractionResult(
 
     val issueDate: LocalDate?,
 
-    val currency: String,
-    val subtotalAmount: String?,
-    val vatAmount: String?,
-    val totalAmount: String?,
+    val currency: Currency,
+    val subtotalAmount: Money?,
+    val vatAmount: Money?,
+    val totalAmount: Money?,
 
     val counterpartyName: String?,        // customer or supplier depending on direction
     val counterpartyVat: String?,
@@ -85,10 +87,10 @@ private class CreditNoteExtractionFinishTool :
                 creditNoteNumber = args.creditNoteNumber,
                 direction = args.direction,
                 issueDate = args.issueDate,
-                currency = args.currency,
-                subtotalAmount = args.subtotalAmount,
-                vatAmount = args.vatAmount,
-                totalAmount = args.totalAmount,
+                currency = Currency.from(args.currency),
+                subtotalAmount = Money.from(args.subtotalAmount),
+                vatAmount = Money.from(args.vatAmount),
+                totalAmount = Money.from(args.totalAmount),
                 counterpartyName = args.counterpartyName,
                 counterpartyVat = args.counterpartyVat,
                 originalInvoiceNumber = args.originalInvoiceNumber,

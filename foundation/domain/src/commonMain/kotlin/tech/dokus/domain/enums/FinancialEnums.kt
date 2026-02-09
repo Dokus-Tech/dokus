@@ -323,6 +323,20 @@ enum class Currency(
 
         fun fromDisplayOrDefault(displayValue: String?): Currency =
             fromDisplay(displayValue) ?: default
+
+        fun from(value: String?): Currency {
+            if (value.isNullOrBlank()) return default
+
+            val trimmed = value.trim()
+            val upper = trimmed.uppercase()
+            fromDbValue(upper)?.let { return it }
+
+            val lower = trimmed.lowercase()
+            fromDisplay(lower)?.let { return it }
+            fromDisplay(trimmed)?.let { return it }
+
+            return default
+        }
     }
 }
 

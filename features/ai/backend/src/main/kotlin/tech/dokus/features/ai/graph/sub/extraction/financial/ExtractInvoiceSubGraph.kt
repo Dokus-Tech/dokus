@@ -13,6 +13,8 @@ import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 
 @Serializable
 @SerialName("InvoiceExtractionResult")
@@ -24,10 +26,10 @@ data class InvoiceExtractionResult(
     val dueDate: LocalDate?,
 
     // Amounts
-    val currency: String,              // "EUR" etc; validate in code
-    val subtotalAmount: String?,       // as string to avoid parse hallucinations
-    val vatAmount: String?,
-    val totalAmount: String?,
+    val currency: Currency,
+    val subtotalAmount: Money?,
+    val vatAmount: Money?,
+    val totalAmount: Money?,
 
     // Parties (facts only)
     val customerName: String?,
@@ -99,10 +101,10 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
                 invoiceNumber = args.invoiceNumber,
                 issueDate = args.issueDate,
                 dueDate = args.dueDate,
-                currency = args.currency,
-                subtotalAmount = args.subtotalAmount,
-                vatAmount = args.vatAmount,
-                totalAmount = args.totalAmount,
+                currency = Currency.from(args.currency),
+                subtotalAmount = Money.from(args.subtotalAmount),
+                vatAmount = Money.from(args.vatAmount),
+                totalAmount = Money.from(args.totalAmount),
                 customerName = args.customerName,
                 customerVat = args.customerVat,
                 customerEmail = args.customerEmail,

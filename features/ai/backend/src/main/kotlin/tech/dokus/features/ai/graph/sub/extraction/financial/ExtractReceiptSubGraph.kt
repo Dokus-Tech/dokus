@@ -9,6 +9,9 @@ import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
@@ -20,10 +23,10 @@ import tech.dokus.foundation.backend.config.AIConfig
 data class ReceiptExtractionResult(
     val merchantName: String?,
     val date: LocalDate?,
-    val currency: String,
-    val totalAmount: String?,
-    val vatAmount: String?,
-    val vatRatePercent: String?,
+    val currency: Currency,
+    val totalAmount: Money?,
+    val vatAmount: Money?,
+    val vatRatePercent: VatRate?,
     val receiptNumber: String?,
     val paymentMethod: PaymentMethod?,
     val confidence: Double,
@@ -77,10 +80,10 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
             ReceiptExtractionResult(
                 merchantName = args.merchantName,
                 date = args.date,
-                currency = args.currency,
-                totalAmount = args.totalAmount,
-                vatAmount = args.vatAmount,
-                vatRatePercent = args.vatRatePercent,
+                currency = Currency.from(args.currency),
+                totalAmount = Money.from(args.totalAmount),
+                vatAmount = Money.from(args.vatAmount),
+                vatRatePercent = VatRate.from(args.vatRatePercent),
                 receiptNumber = args.receiptNumber,
                 paymentMethod = args.paymentMethod,
                 confidence = args.confidence,

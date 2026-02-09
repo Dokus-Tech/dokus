@@ -8,6 +8,9 @@ import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.Currency
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -33,10 +36,10 @@ data class BillExtractionResult(
     val invoiceNumber: String?,
     val issueDate: LocalDate?,
     val dueDate: LocalDate?,
-    val currency: String,          // "EUR"
-    val totalAmount: String?,      // gross total payable
-    val vatAmount: String?,        // total VAT, if present
-    val vatRatePercent: String?,   // e.g. "21", "6", or null if unclear/mixed
+    val currency: Currency,
+    val totalAmount: Money?,
+    val vatAmount: Money?,
+    val vatRatePercent: VatRate?,
     val iban: String?,
     val paymentReference: String?,
     val confidence: Double,
@@ -74,10 +77,10 @@ private class BillExtractionFinishTool : Tool<BillExtractionToolInput, Financial
                 invoiceNumber = args.invoiceNumber,
                 issueDate = args.issueDate,
                 dueDate = args.dueDate,
-                currency = args.currency,
-                totalAmount = args.totalAmount,
-                vatAmount = args.vatAmount,
-                vatRatePercent = args.vatRatePercent,
+                currency = Currency.from(args.currency),
+                totalAmount = Money.from(args.totalAmount),
+                vatAmount = Money.from(args.vatAmount),
+                vatRatePercent = VatRate.from(args.vatRatePercent),
                 iban = args.iban,
                 paymentReference = args.paymentReference,
                 confidence = args.confidence,

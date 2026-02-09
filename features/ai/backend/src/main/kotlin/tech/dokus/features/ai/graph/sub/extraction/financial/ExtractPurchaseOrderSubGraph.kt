@@ -8,6 +8,8 @@ import ai.koog.prompt.params.LLMParams
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -36,10 +38,10 @@ data class PurchaseOrderExtractionResult(
     val supplierVat: String?,
     val supplierEmail: String?,
 
-    val currency: String,
-    val subtotalAmount: String?,
-    val vatAmount: String?,
-    val totalAmount: String?,
+    val currency: Currency,
+    val subtotalAmount: Money?,
+    val vatAmount: Money?,
+    val totalAmount: Money?,
 
     val iban: String?,
     val paymentReference: String?,
@@ -82,10 +84,10 @@ private class PurchaseOrderExtractionFinishTool :
                 supplierName = args.supplierName,
                 supplierVat = args.supplierVat,
                 supplierEmail = args.supplierEmail,
-                currency = args.currency,
-                subtotalAmount = args.subtotalAmount,
-                vatAmount = args.vatAmount,
-                totalAmount = args.totalAmount,
+                currency = Currency.from(args.currency),
+                subtotalAmount = Money.from(args.subtotalAmount),
+                vatAmount = Money.from(args.vatAmount),
+                totalAmount = Money.from(args.totalAmount),
                 iban = args.iban,
                 paymentReference = args.paymentReference,
                 confidence = args.confidence,
