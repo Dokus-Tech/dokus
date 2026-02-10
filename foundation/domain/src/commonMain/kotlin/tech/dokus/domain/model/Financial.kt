@@ -314,7 +314,10 @@ data class CreateInvoiceRequest(
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
     val notes: String? = null,
-    val documentId: DocumentId? = null
+    val documentId: DocumentId? = null,
+    val subtotalAmount: Money? = null,
+    val vatAmount: Money? = null,
+    val totalAmount: Money? = null
 )
 
 @Serializable
@@ -343,6 +346,7 @@ data class CreateExpenseRequest(
     val category: ExpenseCategory,
     val description: String? = null,
     val documentId: DocumentId? = null,
+    val contactId: ContactId? = null,
     val isDeductible: Boolean? = null,
     val deductiblePercentage: Percentage? = null,
     val isRecurring: Boolean? = null,
@@ -393,7 +397,9 @@ data class CreateBillRequest(
     val category: ExpenseCategory,
     val description: String? = null,
     val notes: String? = null,
-    val documentId: DocumentId? = null
+    val documentId: DocumentId? = null,
+    val contactId: ContactId? = null,
+    val currency: Currency = Currency.default
 )
 
 @Serializable

@@ -14,35 +14,25 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.slf4j.MDC
+import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
-import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentStatus
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.models.confidenceScore
 import tech.dokus.features.ai.models.toDraftData
 import tech.dokus.features.ai.models.toProcessingOutcome
-import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.utils.loggerFor
-import tech.dokus.backend.services.documents.ContactResolutionService
-import tech.dokus.backend.services.documents.AutoConfirmPolicy
-import tech.dokus.backend.services.documents.confirmation.BillConfirmationService
-import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
-import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationService
-import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
-import tech.dokus.domain.model.BillDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.ReceiptDraftData
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -67,12 +57,8 @@ class DocumentProcessingWorker(
     private val draftRepository: DocumentDraftRepository,
     private val documentRepository: DocumentRepository,
     private val autoConfirmPolicy: AutoConfirmPolicy,
-    private val invoiceConfirmationService: InvoiceConfirmationService,
-    private val billConfirmationService: BillConfirmationService,
-    private val receiptConfirmationService: ReceiptConfirmationService,
-    private val creditNoteConfirmationService: CreditNoteConfirmationService,
+    private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val config: ProcessorConfig,
-    private val mode: IntelligenceMode,
     private val tenantRepository: TenantRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 ) {
@@ -234,7 +220,7 @@ class DocumentProcessingWorker(
                 val resolution = contactResolutionService.resolve(parsedTenantId, draftData)
                 var linkedContactId: tech.dokus.domain.ids.ContactId? = null
                 when (val decision = resolution.resolution) {
-                    is tech.dokus.domain.model.contact.ContactResolution.Matched -> {
+                    is ContactResolution.Matched -> {
                         linkedContactId = decision.contactId
                         draftRepository.updateContactResolution(
                             documentId = documentId,
@@ -246,7 +232,8 @@ class DocumentProcessingWorker(
                             linkedContactSource = ContactLinkSource.AI
                         )
                     }
-                    is tech.dokus.domain.model.contact.ContactResolution.AutoCreate -> {
+
+                    is ContactResolution.AutoCreate -> {
                         val contactId = contactResolutionService.createContactFromResolution(
                             tenantId = parsedTenantId,
                             resolution = decision
@@ -262,7 +249,8 @@ class DocumentProcessingWorker(
                             linkedContactSource = if (contactId != null) ContactLinkSource.AI else null
                         )
                     }
-                    is tech.dokus.domain.model.contact.ContactResolution.Suggested -> {
+
+                    is ContactResolution.Suggested -> {
                         draftRepository.updateContactResolution(
                             documentId = documentId,
                             tenantId = parsedTenantId,
@@ -273,7 +261,8 @@ class DocumentProcessingWorker(
                             linkedContactSource = null
                         )
                     }
-                    is tech.dokus.domain.model.contact.ContactResolution.PendingReview -> {
+
+                    is ContactResolution.PendingReview -> {
                         draftRepository.updateContactResolution(
                             documentId = documentId,
                             tenantId = parsedTenantId,
@@ -301,20 +290,7 @@ class DocumentProcessingWorker(
 
                     if (canAutoConfirm) {
                         try {
-                            when (draftData) {
-                                is InvoiceDraftData -> invoiceConfirmationService.confirm(
-                                    parsedTenantId, documentId, draftData, linkedContactId
-                                )
-                                is BillDraftData -> billConfirmationService.confirm(
-                                    parsedTenantId, documentId, draftData, linkedContactId
-                                )
-                                is ReceiptDraftData -> receiptConfirmationService.confirm(
-                                    parsedTenantId, documentId, draftData, linkedContactId
-                                )
-                                is CreditNoteDraftData -> creditNoteConfirmationService.confirm(
-                                    parsedTenantId, documentId, draftData, linkedContactId
-                                )
-                            }.getOrThrow()
+                            confirmationDispatcher.confirm(parsedTenantId, documentId, draftData, linkedContactId).getOrThrow()
                         } catch (e: Exception) {
                             logger.error("Auto-confirm failed for document $documentId", e)
                             draftRepository.updateDocumentStatus(

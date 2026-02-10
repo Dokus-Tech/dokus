@@ -1,16 +1,12 @@
 package tech.dokus.backend.config
 
 import com.typesafe.config.Config
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.logging.SIMPLE
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
@@ -40,6 +36,7 @@ import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.confirmation.BillConfirmationService
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
+import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationService
 import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
@@ -54,19 +51,17 @@ import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
-import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
-import tech.dokus.features.ai.aiModule
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
+import tech.dokus.features.ai.aiModule
 import tech.dokus.features.ai.config.AIProviderFactory
+import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
-import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.RedisDocumentImageCache
@@ -81,7 +76,6 @@ import tech.dokus.foundation.backend.config.DatabaseConfig
 import tech.dokus.foundation.backend.config.FlywayConfig
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.config.MinioConfig
-import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.config.StorageConfig
 import tech.dokus.foundation.backend.crypto.AesGcmCredentialCryptoService
 import tech.dokus.foundation.backend.crypto.CredentialCryptoService
@@ -274,10 +268,11 @@ private fun cashflowModule() = module {
     single { CreditNoteService(get(), get(), get()) }
     single { CashflowEntriesService(get()) }
     single { CashflowOverviewService(get(), get(), get(), get()) }
-    single { InvoiceConfirmationService(get(), get()) }
-    single { BillConfirmationService(get()) }
-    single { ReceiptConfirmationService(get()) }
-    single { CreditNoteConfirmationService(get()) }
+    single { InvoiceConfirmationService(get(), get(), get()) }
+    single { BillConfirmationService(get(), get(), get()) }
+    single { ReceiptConfirmationService(get(), get(), get()) }
+    single { CreditNoteConfirmationService(get(), get()) }
+    single { DocumentConfirmationDispatcher(get(), get(), get(), get()) }
 
     // PDF Preview
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
@@ -305,20 +300,7 @@ private fun cashflowModule() = module {
     single { PeppolTransferPollingService(get(), get()) }
 
     // Peppol Polling Worker
-    single {
-        PeppolPollingWorker(
-            peppolSettingsRepository = get(),
-            peppolService = get(),
-            documentRepository = get(),
-            draftRepository = get(),
-            ingestionRunRepository = get(),
-            confirmationPolicy = get(),
-            billConfirmationService = get(),
-            documentStorageService = get(),
-            contactRepository = get()
-        )
-    }
-
+    singleOf(::PeppolPollingWorker)
 }
 
 private val contactsModule = module {
@@ -376,24 +358,7 @@ private fun processorModule() = module {
     }
 
     // Koog document processing agent
-    single { DocumentProcessingAgent(get(), get(), get()) }
-
+    singleOf(::DocumentProcessingAgent)
     // Document Processing Worker
-    single {
-        DocumentProcessingWorker(
-            ingestionRepository = get(),
-            processingAgent = get(),
-            contactResolutionService = get(),
-            draftRepository = get(),
-            documentRepository = get(),
-            autoConfirmPolicy = get(),
-            invoiceConfirmationService = get(),
-            billConfirmationService = get(),
-            receiptConfirmationService = get(),
-            creditNoteConfirmationService = get(),
-            config = get<ProcessorConfig>(),
-            mode = get<AIConfig>().mode,
-            tenantRepository = get()
-        )
-    }
+    singleOf(::DocumentProcessingWorker)
 }

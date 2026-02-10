@@ -78,13 +78,14 @@ class InvoiceRepository(
                     .toLocalDateTime(TimeZone.UTC).date
                 it[issueDate] = request.issueDate ?: today
                 it[dueDate] = request.dueDate ?: today.plus(DatePeriod(days = 30))
-                it[subtotalAmount] =
-                    request.items.sumOf { item -> item.lineTotal.toDbDecimal() }
-                it[vatAmount] =
-                    request.items.sumOf { item -> item.vatAmount.toDbDecimal() }
-                it[totalAmount] = request.items.sumOf { item ->
-                    item.lineTotal.toDbDecimal() + item.vatAmount.toDbDecimal()
-                }
+                it[subtotalAmount] = request.subtotalAmount?.toDbDecimal()
+                    ?: request.items.sumOf { item -> item.lineTotal.toDbDecimal() }
+                it[vatAmount] = request.vatAmount?.toDbDecimal()
+                    ?: request.items.sumOf { item -> item.vatAmount.toDbDecimal() }
+                it[totalAmount] = request.totalAmount?.toDbDecimal()
+                    ?: request.items.sumOf { item ->
+                        item.lineTotal.toDbDecimal() + item.vatAmount.toDbDecimal()
+                    }
                 it[paidAmount] = BigDecimal.ZERO
                 it[status] = InvoiceStatus.Draft
                 it[notes] = request.notes

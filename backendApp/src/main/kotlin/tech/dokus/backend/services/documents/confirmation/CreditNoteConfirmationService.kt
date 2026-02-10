@@ -1,8 +1,11 @@
 package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.backend.services.cashflow.CreditNoteService
+import tech.dokus.backend.util.runSuspendCatching
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.domain.enums.CreditNoteDirection
 import tech.dokus.domain.enums.CreditNoteType
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.SettlementIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -10,7 +13,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateCreditNoteRequest
 import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
@@ -22,6 +24,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
  */
 class CreditNoteConfirmationService(
     private val creditNoteService: CreditNoteService,
+    private val draftRepository: DocumentDraftRepository,
 ) {
     private val logger = loggerFor()
 
@@ -31,10 +34,10 @@ class CreditNoteConfirmationService(
         documentId: DocumentId,
         draftData: CreditNoteDraftData,
         linkedContactId: ContactId?
-    ): Result<ConfirmationResult> = runCatching {
+    ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming credit note document: $documentId for tenant: $tenantId")
 
-        dbQuery { ensureDraftConfirmable(tenantId, documentId) }
+        ensureDraftConfirmable(draftRepository, tenantId, documentId)
 
         val contactId = linkedContactId
             ?: throw DokusException.BadRequest("Credit note requires a linked contact")
@@ -73,7 +76,8 @@ class CreditNoteConfirmationService(
         ).getOrThrow()
 
         val confirmed = creditNoteService.confirmCreditNote(created.id, tenantId).getOrThrow()
-        dbQuery { markDraftConfirmed(tenantId, documentId) }
+
+        draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 
         logger.info("Credit note confirmed: $documentId -> creditNoteId=${created.id}")
         ConfirmationResult(entity = confirmed, cashflowEntryId = null, documentId = documentId)

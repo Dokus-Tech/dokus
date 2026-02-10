@@ -11,6 +11,7 @@ import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.tables.documents.DocumentDraftsTable
@@ -102,8 +103,7 @@ class DocumentRepository {
     suspend fun getContentHash(tenantId: TenantId, documentId: DocumentId): String? =
         newSuspendedTransaction {
             DocumentsTable
-                .slice(DocumentsTable.contentHash)
-                .selectAll()
+                .select(DocumentsTable.contentHash)
                 .where {
                     (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                         (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))

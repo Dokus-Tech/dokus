@@ -307,20 +307,23 @@ class PeppolPollingWorker(
                     )
 
                     // Auto-confirm if policy allows (PEPPOL documents are always auto-confirmed)
-                    if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, draftData, tid)) {
+                    val billDraftData = draftData as? BillDraftData
+                    if (billDraftData != null && confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, draftData, tid)) {
                         // Find or create contact from Peppol data
                         val linkedContactId = findOrCreateContactForPeppol(
                             tenantId = tid,
-                            supplierName = (draftData as? BillDraftData)?.supplierName,
-                            supplierVatNumber = (draftData as? BillDraftData)?.supplierVat?.value
+                            supplierName = billDraftData.supplierName,
+                            supplierVatNumber = billDraftData.supplierVat?.value
                         )
 
                         billConfirmationService.confirm(
                             tenantId = tid,
                             documentId = documentId,
-                            draftData = draftData as BillDraftData,
+                            draftData = billDraftData,
                             linkedContactId = linkedContactId
                         ).getOrThrow()
+                    } else if (billDraftData == null) {
+                        logger.warn("Peppol document is not a bill, skipping auto-confirm: documentId=$documentId")
                     }
 
                     documentId

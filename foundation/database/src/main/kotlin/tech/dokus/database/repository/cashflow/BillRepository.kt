@@ -60,6 +60,8 @@ class BillRepository {
                 it[description] = request.description
                 it[notes] = request.notes
                 it[documentId] = request.documentId?.let { id -> UUID.fromString(id.toString()) }
+                it[contactId] = request.contactId?.let { id -> UUID.fromString(id.toString()) }
+                it[currency] = request.currency
             }
 
             // Fetch and return the created bill
