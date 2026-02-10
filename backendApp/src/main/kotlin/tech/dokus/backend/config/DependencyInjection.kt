@@ -1,5 +1,6 @@
 package tech.dokus.backend.config
 
+import ai.koog.prompt.executor.model.PromptExecutor
 import com.typesafe.config.Config
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -334,7 +335,7 @@ private fun processorModule() = module {
     single<ExampleRepository> { DocumentExamplesRepository() }
 
     // Koog prompt executor (shared across AI features)
-    single<ai.koog.prompt.executor.model.PromptExecutor> {
+    single<PromptExecutor> {
         AIProviderFactory.createOllamaExecutor(get<AIConfig>())
     }
 

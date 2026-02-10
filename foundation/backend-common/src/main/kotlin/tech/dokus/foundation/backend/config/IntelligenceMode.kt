@@ -92,7 +92,12 @@ enum class IntelligenceMode(
 
     companion object {
         fun fromDbValue(value: String): IntelligenceMode {
-            return requireNotNull(entries.find { it.dbValue == value }) { "Unknown IntelligenceMode: $value" }
+            return requireNotNull(entries.find {
+                it.dbValue.equals(
+                    value,
+                    ignoreCase = true
+                )
+            }) { "Unknown IntelligenceMode: $value" }
         }
     }
 }

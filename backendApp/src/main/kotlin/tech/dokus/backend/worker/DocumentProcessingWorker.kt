@@ -60,8 +60,9 @@ class DocumentProcessingWorker(
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val config: ProcessorConfig,
     private val tenantRepository: TenantRepository,
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 ) {
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     private val logger = loggerFor()
     private var pollingJob: Job? = null
     private val isRunning = AtomicBoolean(false)
