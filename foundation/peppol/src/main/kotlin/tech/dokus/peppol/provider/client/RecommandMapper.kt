@@ -4,12 +4,11 @@ import java.util.Locale
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
-import tech.dokus.domain.enums.PeppolDocumentType as DomainPeppolDocumentType
+import tech.dokus.domain.enums.PeppolDocumentType
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.utils.json
-import tech.dokus.peppol.model.PeppolDirection
 import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolDocumentSummary
-import tech.dokus.peppol.model.PeppolDocumentType
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolLineItem
 import tech.dokus.peppol.model.PeppolMonetaryTotals
@@ -145,12 +144,11 @@ object RecommandMapper {
     private fun Double.asDecimalString(scale: Int = 2): String = "%.${scale}f".format(Locale.ROOT, this)
 
     private fun toRecommandDocumentType(type: PeppolDocumentType): RecommandDocumentType = when (type) {
-        PeppolDocumentType.INVOICE -> RecommandDocumentType.Invoice
-        PeppolDocumentType.DEBIT_NOTE -> RecommandDocumentType.Invoice
-        PeppolDocumentType.CREDIT_NOTE ->
-            error("PeppolDocumentType.CREDIT_NOTE is not supported by the current PeppolSendRequest model")
-        PeppolDocumentType.ORDER ->
-            error("PeppolDocumentType.ORDER is not supported by the current PeppolSendRequest model")
+        PeppolDocumentType.Invoice -> RecommandDocumentType.Invoice
+        PeppolDocumentType.CreditNote -> RecommandDocumentType.CreditNote
+        PeppolDocumentType.SelfBillingInvoice -> RecommandDocumentType.SelfBillingInvoice
+        PeppolDocumentType.SelfBillingCreditNote -> RecommandDocumentType.SelfBillingCreditNote
+        PeppolDocumentType.Xml -> RecommandDocumentType.Xml
     }
 
     // ========================================================================
@@ -184,7 +182,7 @@ object RecommandMapper {
     fun fromRecommandInboxItem(item: RecommandInboxDocument): PeppolInboxItem {
         return PeppolInboxItem(
             id = item.id,
-            documentType = item.type.toApiValue(),
+            documentType = recommandToDocumentType(item.type),
             senderPeppolId = item.senderId,
             receiverPeppolId = item.receiverId,
             receivedAt = item.createdAt,
@@ -382,10 +380,10 @@ object RecommandMapper {
 
             PeppolDocumentSummary(
                 id = doc.id,
-                documentType = doc.type.toApiValue(),
+                documentType = recommandToDocumentType(doc.type),
                 direction = when (doc.direction) {
-                    RecommandDocumentDirection.Incoming -> PeppolDirection.INBOUND
-                    RecommandDocumentDirection.Outgoing -> PeppolDirection.OUTBOUND
+                    RecommandDocumentDirection.Incoming -> PeppolTransmissionDirection.Inbound
+                    RecommandDocumentDirection.Outgoing -> PeppolTransmissionDirection.Outbound
                 },
                 counterpartyPeppolId = counterparty,
                 status = doc.validation.result.name.lowercase(),
@@ -458,21 +456,12 @@ object RecommandMapper {
         }
     }
 
-    private fun recommandToDocumentType(type: RecommandDocumentType): DomainPeppolDocumentType = when (type) {
-        RecommandDocumentType.Invoice -> DomainPeppolDocumentType.Invoice
-        RecommandDocumentType.CreditNote -> DomainPeppolDocumentType.CreditNote
-        RecommandDocumentType.SelfBillingInvoice -> DomainPeppolDocumentType.SelfBillingInvoice
-        RecommandDocumentType.SelfBillingCreditNote -> DomainPeppolDocumentType.SelfBillingCreditNote
-        RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml -> DomainPeppolDocumentType.Xml
-    }
-
-    private fun RecommandDocumentType.toApiValue(): String = when (this) {
-        RecommandDocumentType.Invoice -> "invoice"
-        RecommandDocumentType.CreditNote -> "creditNote"
-        RecommandDocumentType.SelfBillingInvoice -> "selfBillingInvoice"
-        RecommandDocumentType.SelfBillingCreditNote -> "selfBillingCreditNote"
-        RecommandDocumentType.MessageLevelResponse -> "messageLevelResponse"
-        RecommandDocumentType.Xml -> "xml"
+    private fun recommandToDocumentType(type: RecommandDocumentType): PeppolDocumentType = when (type) {
+        RecommandDocumentType.Invoice -> PeppolDocumentType.Invoice
+        RecommandDocumentType.CreditNote -> PeppolDocumentType.CreditNote
+        RecommandDocumentType.SelfBillingInvoice -> PeppolDocumentType.SelfBillingInvoice
+        RecommandDocumentType.SelfBillingCreditNote -> PeppolDocumentType.SelfBillingCreditNote
+        RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml -> PeppolDocumentType.Xml
     }
 }
 

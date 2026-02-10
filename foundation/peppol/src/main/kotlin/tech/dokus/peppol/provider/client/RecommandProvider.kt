@@ -14,7 +14,7 @@ import io.ktor.http.isSuccess
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolProviderConfig
-import tech.dokus.peppol.model.PeppolDirection
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolReceivedDocument
@@ -244,7 +244,7 @@ class RecommandProvider(
      * GET /api/v1/documents?companyId={}&direction={}&page={}&limit={}&isUnread={}
      */
     override suspend fun listDocuments(
-        direction: PeppolDirection?,
+        direction: PeppolTransmissionDirection?,
         limit: Int,
         offset: Int,
         isUnread: Boolean?
@@ -270,8 +270,8 @@ class RecommandProvider(
                 parameter(
                     "direction",
                     when (it) {
-                        PeppolDirection.INBOUND -> "incoming"
-                        PeppolDirection.OUTBOUND -> "outgoing"
+                        PeppolTransmissionDirection.Inbound -> "incoming"
+                        PeppolTransmissionDirection.Outbound -> "outgoing"
                     }
                 )
             }

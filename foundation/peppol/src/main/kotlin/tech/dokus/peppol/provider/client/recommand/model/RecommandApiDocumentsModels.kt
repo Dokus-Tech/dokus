@@ -53,30 +53,6 @@ enum class RecommandDocumentType {
 }
 
 /**
- * Document type filter used in `GET /api/v1/documents` query param `type`.
- */
-@Serializable
-enum class RecommandDocumentsTypeFilter {
-    @SerialName("invoice")
-    Invoice,
-
-    @SerialName("creditNote")
-    CreditNote,
-
-    @SerialName("selfBillingInvoice")
-    SelfBillingInvoice,
-
-    @SerialName("selfBillingCreditNote")
-    SelfBillingCreditNote,
-
-    @SerialName("messageLevelResponse")
-    MessageLevelResponse,
-
-    @SerialName("unknown")
-    Unknown,
-}
-
-/**
  * Document validation result.
  *
  * Used in:
@@ -242,7 +218,7 @@ data class RecommandGetDocumentsRequest(
     val companyId: List<String>? = null,
     val direction: RecommandDocumentDirection? = null,
     val search: String? = null,
-    val type: RecommandDocumentsTypeFilter? = null,
+    val type: RecommandDocumentType? = null,
     val from: String? = null,
     val to: String? = null,
     val isUnread: Boolean? = null,

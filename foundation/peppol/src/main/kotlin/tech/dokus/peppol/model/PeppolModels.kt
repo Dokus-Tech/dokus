@@ -2,7 +2,8 @@ package tech.dokus.peppol.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.enums.PeppolDocumentType as DomainPeppolDocumentType
+import tech.dokus.domain.enums.PeppolDocumentType
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 
 /**
  * Provider-agnostic Peppol models.
@@ -10,22 +11,6 @@ import tech.dokus.domain.enums.PeppolDocumentType as DomainPeppolDocumentType
  * These models are used by PeppolService and converted to/from
  * provider-specific formats by each provider implementation.
  */
-
-// ============================================================================
-// ENUMS
-// ============================================================================
-
-enum class PeppolDirection {
-    INBOUND,
-    OUTBOUND
-}
-
-enum class PeppolDocumentType {
-    INVOICE,
-    CREDIT_NOTE,
-    DEBIT_NOTE,
-    ORDER
-}
 
 // ============================================================================
 // SEND REQUEST MODELS
@@ -126,7 +111,7 @@ data class PeppolVerifyResponse(
 @Serializable
 data class PeppolInboxItem(
     val id: String,
-    val documentType: String,
+    val documentType: PeppolDocumentType,
     val senderPeppolId: String,
     val receiverPeppolId: String,
     val receivedAt: String,
@@ -136,7 +121,7 @@ data class PeppolInboxItem(
 @Serializable
 data class PeppolReceivedDocument(
     val id: String,
-    val documentType: DomainPeppolDocumentType,
+    val documentType: PeppolDocumentType,
     val senderPeppolId: String,
     val invoiceNumber: String?,
     val issueDate: String?,
@@ -199,8 +184,8 @@ data class PeppolDocumentList(
 @Serializable
 data class PeppolDocumentSummary(
     val id: String,
-    val documentType: String,
-    val direction: PeppolDirection,
+    val documentType: PeppolDocumentType,
+    val direction: PeppolTransmissionDirection,
     val counterpartyPeppolId: String,
     val status: String,
     val createdAt: String,

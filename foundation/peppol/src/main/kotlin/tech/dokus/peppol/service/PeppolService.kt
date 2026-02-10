@@ -29,7 +29,6 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.mapper.PeppolMapper
-import tech.dokus.peppol.model.PeppolDirection
 import tech.dokus.peppol.model.PeppolDocumentSummary
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolVerifyResponse
@@ -310,7 +309,7 @@ class PeppolService(
                         ?.getOrNull()
 
                     // Create transmission record
-                    val peppolDocumentType = PeppolDocumentType.fromApiValue(inboxItem.documentType)
+                    val peppolDocumentType = inboxItem.documentType
                     val transmission = transmissionRepository.createTransmission(
                         tenantId = tenantId,
                         direction = PeppolTransmissionDirection.Inbound,
@@ -396,7 +395,7 @@ class PeppolService(
 
         do {
             val batch = provider.listDocuments(
-                direction = PeppolDirection.INBOUND,
+                direction = PeppolTransmissionDirection.Inbound,
                 limit = limit,
                 offset = offset,
                 isUnread = null // Get ALL documents (both read and unread)

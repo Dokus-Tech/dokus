@@ -22,8 +22,7 @@ import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.backend.utils.loggerFor
-import tech.dokus.domain.enums.PeppolDocumentType as DomainPeppolDocumentType
-import tech.dokus.peppol.model.PeppolDocumentType
+import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.peppol.model.PeppolInvoiceData
 import tech.dokus.peppol.model.PeppolLineItem
 import tech.dokus.peppol.model.PeppolParty
@@ -56,7 +55,7 @@ class PeppolMapper {
     ): PeppolSendRequest {
         return PeppolSendRequest(
             recipientPeppolId = recipientPeppolId,
-            documentType = PeppolDocumentType.INVOICE,
+            documentType = PeppolDocumentType.Invoice,
             invoice = PeppolInvoiceData(
                 invoiceNumber = invoice.invoiceNumber.value,
                 issueDate = invoice.issueDate,
@@ -263,7 +262,7 @@ class PeppolMapper {
         val notes = document.note ?: "Received via Peppol from $senderPeppolId"
 
         return when (document.documentType) {
-            DomainPeppolDocumentType.CreditNote -> CreditNoteDraftData(
+            PeppolDocumentType.CreditNote -> CreditNoteDraftData(
                 creditNoteNumber = document.invoiceNumber,
                 direction = CreditNoteDirection.Purchase,
                 issueDate = issueDate,
@@ -280,7 +279,7 @@ class PeppolMapper {
                 notes = notes
             )
 
-            DomainPeppolDocumentType.SelfBillingInvoice -> InvoiceDraftData(
+            PeppolDocumentType.SelfBillingInvoice -> InvoiceDraftData(
                 invoiceNumber = document.invoiceNumber,
                 issueDate = issueDate,
                 dueDate = dueDate,
@@ -295,7 +294,7 @@ class PeppolMapper {
                 notes = notes
             )
 
-            DomainPeppolDocumentType.SelfBillingCreditNote -> CreditNoteDraftData(
+            PeppolDocumentType.SelfBillingCreditNote -> CreditNoteDraftData(
                 creditNoteNumber = document.invoiceNumber,
                 direction = CreditNoteDirection.Sales,
                 issueDate = issueDate,
