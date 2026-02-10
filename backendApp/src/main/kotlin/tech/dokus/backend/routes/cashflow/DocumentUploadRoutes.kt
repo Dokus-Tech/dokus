@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -53,6 +54,7 @@ internal fun Route.documentUploadRoutes() {
     val invoiceRepository by inject<InvoiceRepository>()
     val billRepository by inject<BillRepository>()
     val expenseRepository by inject<ExpenseRepository>()
+    val creditNoteRepository by inject<CreditNoteRepository>()
     val uploadValidator by inject<DocumentUploadValidator>()
     val logger = LoggerFactory.getLogger("DocumentUploadRoutes")
     val context = DocumentUploadContext(
@@ -63,6 +65,7 @@ internal fun Route.documentUploadRoutes() {
         invoiceRepository = invoiceRepository,
         billRepository = billRepository,
         expenseRepository = expenseRepository,
+        creditNoteRepository = creditNoteRepository,
         logger = logger
     )
 
@@ -127,6 +130,7 @@ private data class DocumentUploadContext(
     val invoiceRepository: InvoiceRepository,
     val billRepository: BillRepository,
     val expenseRepository: ExpenseRepository,
+    val creditNoteRepository: CreditNoteRepository,
     val logger: Logger
 )
 
@@ -210,7 +214,8 @@ private suspend fun buildExistingDocumentRecord(
             tenantId,
             context.invoiceRepository,
             context.billRepository,
-            context.expenseRepository
+            context.expenseRepository,
+            context.creditNoteRepository
         )
     } else {
         null

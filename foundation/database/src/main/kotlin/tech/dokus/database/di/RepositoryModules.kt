@@ -14,12 +14,14 @@ import tech.dokus.database.repository.banking.BankingRepository
 import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
+import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.cashflow.RefundClaimRepository
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactNoteRepository
 import tech.dokus.database.repository.contacts.ContactRepository
@@ -58,6 +60,8 @@ val repositoryModuleCashflow = module {
     single { InvoiceRepository(get()) }
     single { ExpenseRepository() }
     single { BillRepository() }
+    single { CreditNoteRepository() }
+    single { RefundClaimRepository() }
     single { CashflowEntriesRepository() }
     single { CashflowRepository(get(), get()) }
 }

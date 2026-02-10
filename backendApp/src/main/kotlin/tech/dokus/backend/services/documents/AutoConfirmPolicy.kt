@@ -30,8 +30,7 @@ class AutoConfirmPolicy(
 
         val draftType = draftData.toDocumentType()
         if (documentType == DocumentType.Unknown || draftType != documentType) return false
-        // Credit note confirmation is handled via CreditNoteService, not DocumentConfirmationService.
-        if (draftData is CreditNoteDraftData) return false
+        if (draftData is CreditNoteDraftData && linkedContactId == null) return false
         if (!isDirectionValid(draftData)) return false
         if (!isAmountPositive(draftData)) return false
         if (!auditPassed) return false

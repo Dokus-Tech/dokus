@@ -1,6 +1,7 @@
 package tech.dokus.backend.routes.cashflow.documents
 
 import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
@@ -40,7 +41,7 @@ internal suspend fun addDownloadUrl(
 }
 
 /**
- * Find confirmed financial entity by document ID.
+ * Find a confirmed financial entity by document ID.
  */
 @Suppress("LongParameterList")
 internal suspend fun findConfirmedEntity(
@@ -49,16 +50,19 @@ internal suspend fun findConfirmedEntity(
     tenantId: TenantId,
     invoiceRepository: InvoiceRepository,
     billRepository: BillRepository,
-    expenseRepository: ExpenseRepository
+    expenseRepository: ExpenseRepository,
+    creditNoteRepository: CreditNoteRepository
 ): FinancialDocumentDto? {
     return when (documentType) {
         DocumentType.Invoice -> invoiceRepository.findByDocumentId(tenantId, documentId)
         DocumentType.Bill -> billRepository.findByDocumentId(tenantId, documentId)
+        DocumentType.CreditNote -> creditNoteRepository.findByDocumentId(tenantId, documentId)
         else -> {
             // Try all types
             invoiceRepository.findByDocumentId(tenantId, documentId)
                 ?: billRepository.findByDocumentId(tenantId, documentId)
                 ?: expenseRepository.findByDocumentId(tenantId, documentId)
+                ?: creditNoteRepository.findByDocumentId(tenantId, documentId)
         }
     }
 }

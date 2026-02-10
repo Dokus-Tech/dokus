@@ -11,6 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
@@ -85,6 +86,7 @@ class DocumentConfirmationService(
     private val invoiceRepository: InvoiceRepository,
     private val billRepository: BillRepository,
     private val expenseRepository: ExpenseRepository,
+    private val creditNoteService: CreditNoteService,
 ) {
     private val logger = loggerFor()
 
@@ -117,6 +119,64 @@ class DocumentConfirmationService(
         val invoiceNumber: String? = when (documentType) {
             DocumentType.Invoice -> invoiceNumberGenerator.generateInvoiceNumber(tenantId).getOrThrow()
             else -> null
+        }
+
+        if (draftData is CreditNoteDraftData) {
+            // Credit notes use a dedicated service and do not create cashflow entries on confirmation.
+            dbQuery { ensureDraftConfirmable(tenantId = tenantId, documentId = documentId) }
+            if (documentType != DocumentType.CreditNote) {
+                throw DokusException.BadRequest(
+                    "Draft data type CreditNote does not match document type $documentType"
+                )
+            }
+
+            val contactId = linkedContactId
+                ?: throw DokusException.BadRequest("Credit note requires a linked contact")
+            val creditNoteType = when (draftData.direction) {
+                tech.dokus.domain.enums.CreditNoteDirection.Sales ->
+                    tech.dokus.domain.enums.CreditNoteType.Sales
+                tech.dokus.domain.enums.CreditNoteDirection.Purchase ->
+                    tech.dokus.domain.enums.CreditNoteType.Purchase
+                tech.dokus.domain.enums.CreditNoteDirection.Unknown ->
+                    throw DokusException.BadRequest("Credit note direction is unknown")
+            }
+            val creditNoteNumber = draftData.creditNoteNumber
+                ?: throw DokusException.BadRequest("Credit note number is required")
+            val issueDate = draftData.issueDate
+                ?: throw DokusException.BadRequest("Credit note issue date is required")
+            val subtotalAmount = draftData.subtotalAmount
+                ?: throw DokusException.BadRequest("Credit note subtotal amount is required")
+            val vatAmount = draftData.vatAmount
+                ?: throw DokusException.BadRequest("Credit note VAT amount is required")
+            val totalAmount = draftData.totalAmount
+                ?: throw DokusException.BadRequest("Credit note total amount is required")
+
+            val created = creditNoteService.createCreditNote(
+                tenantId = tenantId,
+                request = tech.dokus.domain.model.CreateCreditNoteRequest(
+                    contactId = contactId,
+                    creditNoteType = creditNoteType,
+                    creditNoteNumber = creditNoteNumber,
+                    issueDate = issueDate,
+                    subtotalAmount = subtotalAmount,
+                    vatAmount = vatAmount,
+                    totalAmount = totalAmount,
+                    currency = draftData.currency,
+                    settlementIntent = tech.dokus.domain.enums.SettlementIntent.Unknown,
+                    reason = draftData.reason,
+                    notes = draftData.notes,
+                    documentId = documentId
+                )
+            ).getOrThrow()
+
+            val confirmed = creditNoteService.confirmCreditNote(created.id, tenantId).getOrThrow()
+            dbQuery { markDraftConfirmed(tenantId = tenantId, documentId = documentId) }
+
+            return@runCatching ConfirmationResult(
+                entity = confirmed,
+                cashflowEntryId = null,
+                documentId = documentId
+            )
         }
 
         val created = dbQuery {
@@ -158,8 +218,8 @@ class DocumentConfirmationService(
                     linkedContactId = linkedContactId
                 )
 
-                is CreditNoteDraftData -> throw DokusException.BadRequest(
-                    "CreditNote confirmation is handled via CreditNoteService"
+                is CreditNoteDraftData -> throw DokusException.InternalError(
+                    "Credit note confirmation should be handled before transactional confirmation"
                 )
             }
         }

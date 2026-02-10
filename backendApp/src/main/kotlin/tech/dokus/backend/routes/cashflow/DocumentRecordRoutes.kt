@@ -19,6 +19,7 @@ import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
 import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
+import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
@@ -62,6 +63,7 @@ internal fun Route.documentRecordRoutes() {
     val invoiceRepository by inject<InvoiceRepository>()
     val expenseRepository by inject<ExpenseRepository>()
     val billRepository by inject<BillRepository>()
+    val creditNoteRepository by inject<CreditNoteRepository>()
     val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentConfirmationService by inject<DocumentConfirmationService>()
@@ -102,7 +104,8 @@ internal fun Route.documentRecordRoutes() {
                         tenantId,
                         invoiceRepository,
                         billRepository,
-                        expenseRepository
+                        expenseRepository,
+                        creditNoteRepository
                     )
                 } else {
                     null
@@ -150,7 +153,8 @@ internal fun Route.documentRecordRoutes() {
                     tenantId,
                     invoiceRepository,
                     billRepository,
-                    expenseRepository
+                    expenseRepository,
+                    creditNoteRepository
                 )
             } else {
                 null
@@ -382,7 +386,8 @@ internal fun Route.documentRecordRoutes() {
                     tenantId,
                     invoiceRepository,
                     billRepository,
-                    expenseRepository
+                    expenseRepository,
+                    creditNoteRepository
                 )
 
                 if (confirmedEntity != null) {
@@ -440,7 +445,8 @@ internal fun Route.documentRecordRoutes() {
                 tenantId,
                 invoiceRepository,
                 billRepository,
-                expenseRepository
+                expenseRepository,
+                creditNoteRepository
             )
             if (existingEntity != null) {
                 throw DokusException.BadRequest("Entity already exists for this document")
