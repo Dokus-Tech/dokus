@@ -41,7 +41,7 @@ fun aiModule() = module {
 
     // Koog prompt executor (shared across AI features)
     single<PromptExecutor> {
-        AIProviderFactory.createOllamaExecutor(get<AIConfig>())
+        AIProviderFactory.createOpenAiExecutor(get<AIConfig>())
     }
 
     // Model set derived from AI config

@@ -66,7 +66,7 @@ class TenantRepository {
             it[TenantTable.type] = type
             it[TenantTable.legalName] = legalName.value
             it[TenantTable.displayName] = displayName.value
-            it[TenantTable.plan] = plan
+            it[TenantTable.plan] = subscription
             it[TenantTable.language] = language
             it[TenantTable.vatNumber] = vatNumber.value
             it[status] = TenantStatus.Active

@@ -46,7 +46,7 @@ enum class IntelligenceMode(
         orchestratorModel = "qwen/qwen3-32b",
         visionModel = "qwen/qwen3-vl-8b",
         chatModel = "qwen/qwen3-32b",
-        maxIterations = 8,
+        maxIterations = 48,
     ),
 
     /**
@@ -66,7 +66,7 @@ enum class IntelligenceMode(
         orchestratorModel = "qwen/qwen3-32b",
         visionModel = "qwen/qwen3-vl-8b",
         chatModel = "qwen/qwen3-32b",
-        maxIterations = 12,
+        maxIterations = 64,
     ),
 
     /**
@@ -87,7 +87,7 @@ enum class IntelligenceMode(
         orchestratorModel = "openai/gpt-oss-20b",
         visionModel = "qwen/qwen3-vl-30b",
         chatModel = "openai/gpt-oss-20b",
-        maxIterations = 32,
+        maxIterations = 128,
     );
 
     companion object {
