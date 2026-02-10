@@ -37,8 +37,11 @@ import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
-import tech.dokus.backend.services.documents.DocumentConfirmationService
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.confirmation.BillConfirmationService
+import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
+import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationService
+import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.DocumentProcessingWorker
@@ -271,7 +274,10 @@ private fun cashflowModule() = module {
     single { CreditNoteService(get(), get(), get()) }
     single { CashflowEntriesService(get()) }
     single { CashflowOverviewService(get(), get(), get(), get()) }
-    single { DocumentConfirmationService(get(), get(), get(), get(), get()) }
+    single { InvoiceConfirmationService(get(), get()) }
+    single { BillConfirmationService(get()) }
+    single { ReceiptConfirmationService(get()) }
+    single { CreditNoteConfirmationService(get()) }
 
     // PDF Preview
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
@@ -307,7 +313,7 @@ private fun cashflowModule() = module {
             draftRepository = get(),
             ingestionRunRepository = get(),
             confirmationPolicy = get(),
-            confirmationService = get(),
+            billConfirmationService = get(),
             documentStorageService = get(),
             contactRepository = get()
         )
@@ -381,7 +387,10 @@ private fun processorModule() = module {
             draftRepository = get(),
             documentRepository = get(),
             autoConfirmPolicy = get(),
-            confirmationService = get(),
+            invoiceConfirmationService = get(),
+            billConfirmationService = get(),
+            receiptConfirmationService = get(),
+            creditNoteConfirmationService = get(),
             config = get<ProcessorConfig>(),
             mode = get<AIConfig>().mode,
             tenantRepository = get()

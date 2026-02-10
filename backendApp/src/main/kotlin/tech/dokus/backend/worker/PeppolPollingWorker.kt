@@ -13,7 +13,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
-import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.backend.services.documents.confirmation.BillConfirmationService
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -63,7 +63,7 @@ class PeppolPollingWorker(
     private val draftRepository: DocumentDraftRepository,
     private val ingestionRunRepository: DocumentIngestionRunRepository,
     private val confirmationPolicy: DocumentConfirmationPolicy,
-    private val confirmationService: DocumentConfirmationService,
+    private val billConfirmationService: BillConfirmationService,
     private val documentStorageService: DocumentStorageService,
     private val contactRepository: ContactRepository
 ) {
@@ -315,11 +315,10 @@ class PeppolPollingWorker(
                             supplierVatNumber = (draftData as? BillDraftData)?.supplierVat?.value
                         )
 
-                        confirmationService.confirmDocument(
+                        billConfirmationService.confirm(
                             tenantId = tid,
                             documentId = documentId,
-                            documentType = DocumentType.Bill,
-                            draftData = draftData,
+                            draftData = draftData as BillDraftData,
                             linkedContactId = linkedContactId
                         ).getOrThrow()
                     }

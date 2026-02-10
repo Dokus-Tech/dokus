@@ -16,7 +16,10 @@ import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
-import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.backend.services.documents.confirmation.BillConfirmationService
+import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
+import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationService
+import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
 import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
@@ -31,7 +34,11 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.BillDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
@@ -66,7 +73,10 @@ internal fun Route.documentRecordRoutes() {
     val creditNoteRepository by inject<CreditNoteRepository>()
     val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
     val minioStorage by inject<MinioDocumentStorageService>()
-    val documentConfirmationService by inject<DocumentConfirmationService>()
+    val invoiceConfirmationService by inject<InvoiceConfirmationService>()
+    val billConfirmationService by inject<BillConfirmationService>()
+    val receiptConfirmationService by inject<ReceiptConfirmationService>()
+    val creditNoteConfirmationService by inject<CreditNoteConfirmationService>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
 
     authenticateJwt {
@@ -453,13 +463,20 @@ internal fun Route.documentRecordRoutes() {
             }
 
             // Confirm document: creates entity + cashflow entry + marks draft confirmed
-            val confirmationResult = documentConfirmationService.confirmDocument(
-                tenantId = tenantId,
-                documentId = documentId,
-                documentType = draftType,
-                draftData = draftData,
-                linkedContactId = draft.linkedContactId
-            ).getOrThrow()
+            val confirmationResult = when (draftData) {
+                is InvoiceDraftData -> invoiceConfirmationService.confirm(
+                    tenantId, documentId, draftData, draft.linkedContactId
+                )
+                is BillDraftData -> billConfirmationService.confirm(
+                    tenantId, documentId, draftData, draft.linkedContactId
+                )
+                is ReceiptDraftData -> receiptConfirmationService.confirm(
+                    tenantId, documentId, draftData, draft.linkedContactId
+                )
+                is CreditNoteDraftData -> creditNoteConfirmationService.confirm(
+                    tenantId, documentId, draftData, draft.linkedContactId
+                )
+            }.getOrThrow()
 
             val entryId = confirmationResult.cashflowEntryId
             logger.info("Document confirmed: $documentId -> $draftType, cashflowEntryId=$entryId")

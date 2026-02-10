@@ -35,7 +35,14 @@ import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
-import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.backend.services.documents.confirmation.BillConfirmationService
+import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
+import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationService
+import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
+import tech.dokus.domain.model.BillDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -60,7 +67,10 @@ class DocumentProcessingWorker(
     private val draftRepository: DocumentDraftRepository,
     private val documentRepository: DocumentRepository,
     private val autoConfirmPolicy: AutoConfirmPolicy,
-    private val confirmationService: DocumentConfirmationService,
+    private val invoiceConfirmationService: InvoiceConfirmationService,
+    private val billConfirmationService: BillConfirmationService,
+    private val receiptConfirmationService: ReceiptConfirmationService,
+    private val creditNoteConfirmationService: CreditNoteConfirmationService,
     private val config: ProcessorConfig,
     private val mode: IntelligenceMode,
     private val tenantRepository: TenantRepository,
@@ -291,13 +301,20 @@ class DocumentProcessingWorker(
 
                     if (canAutoConfirm) {
                         try {
-                            confirmationService.confirmDocument(
-                                tenantId = parsedTenantId,
-                                documentId = documentId,
-                                documentType = documentType,
-                                draftData = draftData,
-                                linkedContactId = linkedContactId
-                            ).getOrThrow()
+                            when (draftData) {
+                                is InvoiceDraftData -> invoiceConfirmationService.confirm(
+                                    parsedTenantId, documentId, draftData, linkedContactId
+                                )
+                                is BillDraftData -> billConfirmationService.confirm(
+                                    parsedTenantId, documentId, draftData, linkedContactId
+                                )
+                                is ReceiptDraftData -> receiptConfirmationService.confirm(
+                                    parsedTenantId, documentId, draftData, linkedContactId
+                                )
+                                is CreditNoteDraftData -> creditNoteConfirmationService.confirm(
+                                    parsedTenantId, documentId, draftData, linkedContactId
+                                )
+                            }.getOrThrow()
                         } catch (e: Exception) {
                             logger.error("Auto-confirm failed for document $documentId", e)
                             draftRepository.updateDocumentStatus(
