@@ -312,6 +312,4 @@ class DocumentProcessingWorker(
             MDC.remove("tenantId")
         }
     }
-
-    // Orchestrator-based processing removed; Koog graph is now the production path.
 }

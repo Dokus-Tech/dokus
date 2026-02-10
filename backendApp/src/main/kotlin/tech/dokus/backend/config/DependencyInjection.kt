@@ -1,6 +1,5 @@
 package tech.dokus.backend.config
 
-import ai.koog.prompt.executor.model.PromptExecutor
 import com.typesafe.config.Config
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -35,6 +34,7 @@ import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.StorageDocumentFetcher
 import tech.dokus.backend.services.documents.confirmation.BillConfirmationService
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
@@ -47,29 +47,16 @@ import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.database.DokusSchema
 import tech.dokus.database.di.repositoryModules
-import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.domain.utils.json
-import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.aiModule
-import tech.dokus.features.ai.config.AIProviderFactory
-import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentFetcher
-import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
-import tech.dokus.features.ai.services.DocumentImageCache
-import tech.dokus.features.ai.services.EmbeddingService
-import tech.dokus.features.ai.services.RedisDocumentImageCache
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
-import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
 import tech.dokus.foundation.backend.config.AuthConfig
 import tech.dokus.foundation.backend.config.CachingConfig
@@ -136,7 +123,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             authModule(),
             cashflowModule(),
             contactsModule,
-            processorModule(),
+            documentProcessingModule(),
             aiModule()
         )
     }
@@ -311,55 +298,14 @@ private val contactsModule = module {
     single { ContactMatchingService(get()) }
 }
 
-@Suppress("LongMethod", "CyclomaticComplexMethod", "ComplexCondition")
-private fun processorModule() = module {
-    // =========================================================================
-    // Document Processing Services
-    // =========================================================================
-
-    // Document Image Service (converts PDFs/images to PNG for vision processing)
-    single<RedisClient>(named("ai-cache")) {
-        val cachingConfig = get<CachingConfig>()
-        redis {
-            config = cachingConfig.redis
-            namespace = RedisNamespace.Ai
-        }
-    }
-    single<DocumentImageCache> { RedisDocumentImageCache(get(named("ai-cache"))) }
-
-    // RAG services
-    single { ChunkingService() }
-    single { EmbeddingService(get(), get<AIConfig>()) }
-
-    // Example repository for few-shot learning (legacy orchestrator use)
-    single<ExampleRepository> { DocumentExamplesRepository() }
-
-    // Koog prompt executor (shared across AI features)
-    single<PromptExecutor> {
-        AIProviderFactory.createOllamaExecutor(get<AIConfig>())
-    }
+private fun documentProcessingModule() = module {
+    // Bridge: backendApp's DocumentFetcher implementation for the AI module
+    single<DocumentFetcher> { StorageDocumentFetcher(get(), get()) }
 
     // Contact resolution (deterministic post-processing)
-    single { ContactResolutionService(get(), get()) }
-    single { AutoConfirmPolicy(get()) }
+    singleOf(::ContactResolutionService)
+    singleOf(::AutoConfirmPolicy)
 
-    single<DocumentFetcher> {
-        val documentRepository = get<DocumentRepository>()
-        val storageService = get<DocumentStorageService>()
-        object : DocumentFetcher {
-            override suspend fun invoke(tenantId: TenantId, documentId: DocumentId): Result<FetchedDocumentData> {
-                return runCatching {
-                    val doc = documentRepository.getById(tenantId, documentId)
-                    requireNotNull(doc)
-                    val bytes = storageService.downloadDocument(doc.storageKey)
-                    FetchedDocumentData(bytes = bytes, mimeType = doc.contentType)
-                }
-            }
-        }
-    }
-
-    // Koog document processing agent
-    singleOf(::DocumentProcessingAgent)
     // Document Processing Worker
     singleOf(::DocumentProcessingWorker)
 }

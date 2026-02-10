@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.koog.prompt.executor.model.PromptExecutor
-import io.ktor.client.HttpClient
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
@@ -31,14 +29,10 @@ import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionListResponse
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.domain.repository.ChatRepository
-import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.routes.Chat
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.ConversationMessage
-import tech.dokus.features.ai.config.AIModels
-import tech.dokus.features.ai.services.EmbeddingService
-import tech.dokus.features.ai.services.RAGService
-import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.features.ai.config.ModelSet
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.features.ai.agents.MessageRole as AgentMessageRole
@@ -59,23 +53,10 @@ import tech.dokus.features.ai.agents.MessageRole as AgentMessageRole
  */
 internal fun Route.chatRoutes() {
     val chatRepository by inject<ChatRepository>()
-    val chunksRepository by inject<ChunkRepository>()
     val documentRepository by inject<DocumentRepository>()
-    val httpClient by inject<HttpClient>()
-    val aiConfig by inject<AIConfig>()
-    val executor by inject<PromptExecutor>()
+    val models by inject<ModelSet>()
+    val chatAgent by inject<ChatAgent>()
     val logger = LoggerFactory.getLogger("ChatRoutes")
-
-    // Create AI services for RAG and chat
-    val embeddingService = EmbeddingService(httpClient, aiConfig)
-    val ragService = RAGService(embeddingService, chunksRepository)
-    val models = AIModels.forMode(aiConfig.mode)
-    val chatAgent = ChatAgent(
-        executor,
-        models.chat,
-        ragService,
-        tech.dokus.features.ai.prompts.ChatPrompt
-    )
 
     authenticateJwt {
         // =========================================================================
@@ -116,7 +97,7 @@ internal fun Route.chatRoutes() {
                 documentId = null,
                 chatAgent = chatAgent,
                 chatRepository = chatRepository,
-                aiConfig = aiConfig,
+                models = models,
                 logger = logger
             )
 
@@ -180,7 +161,7 @@ internal fun Route.chatRoutes() {
                 documentId = documentId,
                 chatAgent = chatAgent,
                 chatRepository = chatRepository,
-                aiConfig = aiConfig,
+                models = models,
                 logger = logger
             )
 
@@ -326,10 +307,10 @@ private suspend fun processChat(
     documentId: DocumentId?,
     chatAgent: ChatAgent,
     chatRepository: ChatRepository,
-    aiConfig: AIConfig,
+    models: ModelSet,
     logger: org.slf4j.Logger
 ): ChatResponse {
-    val chatModelId = AIModels.forMode(aiConfig.mode).chat.id
+    val chatModelId = models.chat.id
     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
     // Determine session

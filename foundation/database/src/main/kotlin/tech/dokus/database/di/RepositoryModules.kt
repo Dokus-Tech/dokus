@@ -4,6 +4,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import tech.dokus.database.repository.ai.ChatRepositoryImpl
 import tech.dokus.database.repository.ai.DocumentChunksRepository
+import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.InvitationRepository
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
@@ -33,6 +34,7 @@ import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ExampleRepository
 
 /**
  * Auth repositories module.
@@ -126,6 +128,7 @@ val repositoryModuleContacts = module {
 val repositoryModuleAI = module {
     single { DocumentChunksRepository() } bind ChunkRepository::class
     single { ChatRepositoryImpl() } bind ChatRepository::class
+    single { DocumentExamplesRepository() } bind ExampleRepository::class
 }
 
 /**
