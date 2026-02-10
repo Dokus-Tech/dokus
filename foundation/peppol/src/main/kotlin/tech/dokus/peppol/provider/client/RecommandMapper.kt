@@ -4,6 +4,7 @@ import java.util.Locale
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
+import tech.dokus.domain.enums.PeppolDocumentType as DomainPeppolDocumentType
 import tech.dokus.domain.utils.json
 import tech.dokus.peppol.model.PeppolDirection
 import tech.dokus.peppol.model.PeppolDocumentList
@@ -198,7 +199,7 @@ object RecommandMapper {
     fun fromRecommandDocumentDetail(detail: RecommandDocumentDetail): PeppolReceivedDocument {
         val parsed = detail.parsed ?: return PeppolReceivedDocument(
             id = detail.id,
-            documentType = detail.type.toApiValue(),
+            documentType = recommandToDocumentType(detail.type),
             senderPeppolId = detail.senderId,
             invoiceNumber = null,
             issueDate = null,
@@ -221,7 +222,7 @@ object RecommandMapper {
                 fromParsedSelfBillingCreditNote(detail, json.decodeFromJsonElement<RecommandSelfBillingCreditNote>(parsed))
             RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml -> PeppolReceivedDocument(
                 id = detail.id,
-                documentType = detail.type.toApiValue(),
+                documentType = recommandToDocumentType(detail.type),
                 senderPeppolId = detail.senderId,
                 invoiceNumber = null,
                 issueDate = null,
@@ -240,7 +241,7 @@ object RecommandMapper {
     private fun fromParsedInvoice(detail: RecommandDocumentDetail, invoice: RecommandInvoice): PeppolReceivedDocument {
         return PeppolReceivedDocument(
             id = detail.id,
-            documentType = detail.type.toApiValue(),
+            documentType = recommandToDocumentType(detail.type),
             senderPeppolId = detail.senderId,
             invoiceNumber = invoice.invoiceNumber,
             issueDate = invoice.issueDate.toString(),
@@ -258,7 +259,7 @@ object RecommandMapper {
     private fun fromParsedCreditNote(detail: RecommandDocumentDetail, creditNote: RecommandCreditNote): PeppolReceivedDocument {
         return PeppolReceivedDocument(
             id = detail.id,
-            documentType = detail.type.toApiValue(),
+            documentType = recommandToDocumentType(detail.type),
             senderPeppolId = detail.senderId,
             invoiceNumber = creditNote.creditNoteNumber,
             issueDate = creditNote.issueDate.toString(),
@@ -279,7 +280,7 @@ object RecommandMapper {
     ): PeppolReceivedDocument {
         return PeppolReceivedDocument(
             id = detail.id,
-            documentType = detail.type.toApiValue(),
+            documentType = recommandToDocumentType(detail.type),
             senderPeppolId = detail.senderId,
             invoiceNumber = invoice.invoiceNumber,
             issueDate = invoice.issueDate.toString(),
@@ -300,7 +301,7 @@ object RecommandMapper {
     ): PeppolReceivedDocument {
         return PeppolReceivedDocument(
             id = detail.id,
-            documentType = detail.type.toApiValue(),
+            documentType = recommandToDocumentType(detail.type),
             senderPeppolId = detail.senderId,
             invoiceNumber = creditNote.creditNoteNumber,
             issueDate = creditNote.issueDate.toString(),
@@ -455,6 +456,14 @@ object RecommandMapper {
             RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml ->
                 ParsedSummary(invoiceNumber = null, totalAmount = null, currency = null)
         }
+    }
+
+    private fun recommandToDocumentType(type: RecommandDocumentType): DomainPeppolDocumentType = when (type) {
+        RecommandDocumentType.Invoice -> DomainPeppolDocumentType.Invoice
+        RecommandDocumentType.CreditNote -> DomainPeppolDocumentType.CreditNote
+        RecommandDocumentType.SelfBillingInvoice -> DomainPeppolDocumentType.SelfBillingInvoice
+        RecommandDocumentType.SelfBillingCreditNote -> DomainPeppolDocumentType.SelfBillingCreditNote
+        RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml -> DomainPeppolDocumentType.Xml
     }
 
     private fun RecommandDocumentType.toApiValue(): String = when (this) {

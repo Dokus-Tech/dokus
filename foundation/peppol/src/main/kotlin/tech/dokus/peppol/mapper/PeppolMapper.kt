@@ -7,8 +7,12 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
+import tech.dokus.domain.enums.CreditNoteDirection
 import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceItemDto
@@ -18,6 +22,7 @@ import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.domain.enums.PeppolDocumentType as DomainPeppolDocumentType
 import tech.dokus.peppol.model.PeppolDocumentType
 import tech.dokus.peppol.model.PeppolInvoiceData
 import tech.dokus.peppol.model.PeppolLineItem
@@ -199,12 +204,20 @@ class PeppolMapper {
     /**
      * Convert a received Peppol document to normalized draft data.
      * Used when creating Documents+Drafts from Peppol inbox (architectural boundary).
+     *
+     * Maps by document type:
+     * - invoice -> BillDraftData (supplier sent us an invoice)
+     * - creditNote -> CreditNoteDraftData(Purchase) (supplier crediting us)
+     * - selfBillingInvoice -> InvoiceDraftData (client created invoice on our behalf)
+     * - selfBillingCreditNote -> CreditNoteDraftData(Sales) (client corrects self-billing)
      */
+    @Suppress("CyclomaticComplexMethod")
     fun toDraftData(
         document: PeppolReceivedDocument,
         senderPeppolId: String
-    ): BillDraftData {
+    ): DocumentDraftData {
         val seller = document.seller
+        val buyer = document.buyer
         val totals = document.totals
         val taxTotal = document.taxTotal
 
@@ -246,22 +259,77 @@ class PeppolMapper {
             )
         }
 
-        return BillDraftData(
-            supplierName = seller?.name,
-            supplierVat = VatNumber.from(seller?.vatNumber),
-            invoiceNumber = document.invoiceNumber,
-            issueDate = issueDate,
-            dueDate = dueDate,
-            currency = Currency.from(document.currencyCode),
-            subtotalAmount = subtotalAmount,
-            vatAmount = vatAmount,
-            totalAmount = totalAmount,
-            lineItems = lineItems,
-            vatBreakdown = vatBreakdown,
-            iban = null,
-            payment = null,
-            notes = document.note ?: "Received via Peppol from $senderPeppolId"
-        )
+        val currency = Currency.from(document.currencyCode)
+        val notes = document.note ?: "Received via Peppol from $senderPeppolId"
+
+        return when (document.documentType) {
+            DomainPeppolDocumentType.CreditNote -> CreditNoteDraftData(
+                creditNoteNumber = document.invoiceNumber,
+                direction = CreditNoteDirection.Purchase,
+                issueDate = issueDate,
+                currency = currency,
+                subtotalAmount = subtotalAmount,
+                vatAmount = vatAmount,
+                totalAmount = totalAmount,
+                lineItems = lineItems,
+                vatBreakdown = vatBreakdown,
+                counterpartyName = seller?.name,
+                counterpartyVat = VatNumber.from(seller?.vatNumber),
+                originalInvoiceNumber = null,
+                reason = document.note,
+                notes = notes
+            )
+
+            DomainPeppolDocumentType.SelfBillingInvoice -> InvoiceDraftData(
+                invoiceNumber = document.invoiceNumber,
+                issueDate = issueDate,
+                dueDate = dueDate,
+                currency = currency,
+                subtotalAmount = subtotalAmount,
+                vatAmount = vatAmount,
+                totalAmount = totalAmount,
+                lineItems = lineItems,
+                vatBreakdown = vatBreakdown,
+                customerName = buyer?.name,
+                customerVat = VatNumber.from(buyer?.vatNumber),
+                notes = notes
+            )
+
+            DomainPeppolDocumentType.SelfBillingCreditNote -> CreditNoteDraftData(
+                creditNoteNumber = document.invoiceNumber,
+                direction = CreditNoteDirection.Sales,
+                issueDate = issueDate,
+                currency = currency,
+                subtotalAmount = subtotalAmount,
+                vatAmount = vatAmount,
+                totalAmount = totalAmount,
+                lineItems = lineItems,
+                vatBreakdown = vatBreakdown,
+                counterpartyName = buyer?.name,
+                counterpartyVat = VatNumber.from(buyer?.vatNumber),
+                originalInvoiceNumber = null,
+                reason = document.note,
+                notes = notes
+            )
+
+            // Invoice, Xml — default to bill
+            else -> BillDraftData(
+                supplierName = seller?.name,
+                supplierVat = VatNumber.from(seller?.vatNumber),
+                invoiceNumber = document.invoiceNumber,
+                issueDate = issueDate,
+                dueDate = dueDate,
+                currency = currency,
+                subtotalAmount = subtotalAmount,
+                vatAmount = vatAmount,
+                totalAmount = totalAmount,
+                lineItems = lineItems,
+                vatBreakdown = vatBreakdown,
+                iban = null,
+                payment = null,
+                notes = notes
+            )
+        }
     }
 
     /**

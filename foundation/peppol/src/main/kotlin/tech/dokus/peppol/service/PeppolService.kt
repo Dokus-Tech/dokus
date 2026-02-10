@@ -1,6 +1,7 @@
 package tech.dokus.peppol.service
 
 import kotlinx.datetime.Clock
+import tech.dokus.domain.Money
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -348,8 +349,9 @@ class PeppolService(
                             transmissionId = transmission.id,
                             documentId = documentId,
                             senderPeppolId = PeppolId(inboxItem.senderPeppolId),
-                            invoiceNumber = draftData.invoiceNumber,
-                            totalAmount = draftData.totalAmount,
+                            invoiceNumber = fullDocument.invoiceNumber,
+                            totalAmount = fullDocument.totals?.payableAmount?.let { Money.fromDouble(it) }
+                                ?: fullDocument.totals?.taxInclusiveAmount?.let { Money.fromDouble(it) },
                             receivedAt = now
                         )
                     )

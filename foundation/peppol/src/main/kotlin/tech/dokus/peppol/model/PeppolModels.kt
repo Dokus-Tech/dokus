@@ -2,6 +2,7 @@ package tech.dokus.peppol.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.PeppolDocumentType as DomainPeppolDocumentType
 
 /**
  * Provider-agnostic Peppol models.
@@ -135,7 +136,7 @@ data class PeppolInboxItem(
 @Serializable
 data class PeppolReceivedDocument(
     val id: String,
-    val documentType: String,
+    val documentType: DomainPeppolDocumentType,
     val senderPeppolId: String,
     val invoiceNumber: String?,
     val issueDate: String?,
