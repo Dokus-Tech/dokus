@@ -40,6 +40,9 @@ import tech.dokus.aura.resources.document_type_bill
 import tech.dokus.aura.resources.document_type_credit_note
 import tech.dokus.aura.resources.document_type_expense
 import tech.dokus.aura.resources.document_type_invoice
+import tech.dokus.aura.resources.document_type_pro_forma
+import tech.dokus.aura.resources.document_type_purchase_order
+import tech.dokus.aura.resources.document_type_quote
 import tech.dokus.aura.resources.invoice_status_cancelled
 import tech.dokus.aura.resources.invoice_status_draft
 import tech.dokus.aura.resources.invoice_status_overdue
@@ -168,6 +171,9 @@ private fun CashflowDocumentItem(
             document.id.value
         )
         is FinancialDocumentDto.CreditNoteDto -> document.creditNoteNumber
+        is FinancialDocumentDto.ProFormaDto -> document.proFormaNumber
+        is FinancialDocumentDto.QuoteDto -> document.quoteNumber
+        is FinancialDocumentDto.PurchaseOrderDto -> document.poNumber
     }
 
     Row(
@@ -227,6 +233,18 @@ private fun DocumentStatusBadge(
         is FinancialDocumentDto.CreditNoteDto -> Pair(
             MaterialTheme.colorScheme.tertiary,
             stringResource(Res.string.document_type_credit_note)
+        )
+        is FinancialDocumentDto.ProFormaDto -> Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            stringResource(Res.string.document_type_pro_forma)
+        )
+        is FinancialDocumentDto.QuoteDto -> Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            stringResource(Res.string.document_type_quote)
+        )
+        is FinancialDocumentDto.PurchaseOrderDto -> Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            stringResource(Res.string.document_type_purchase_order)
         )
     }
 
@@ -296,6 +314,9 @@ private fun FinancialDocumentDto.typeIcon(): String = when (this) {
     is FinancialDocumentDto.ExpenseDto -> stringResource(Res.string.document_type_expense)
     is FinancialDocumentDto.BillDto -> stringResource(Res.string.document_type_bill)
     is FinancialDocumentDto.CreditNoteDto -> stringResource(Res.string.document_type_credit_note)
+    is FinancialDocumentDto.ProFormaDto -> stringResource(Res.string.document_type_pro_forma)
+    is FinancialDocumentDto.QuoteDto -> stringResource(Res.string.document_type_quote)
+    is FinancialDocumentDto.PurchaseOrderDto -> stringResource(Res.string.document_type_purchase_order)
 }
 
 @Composable

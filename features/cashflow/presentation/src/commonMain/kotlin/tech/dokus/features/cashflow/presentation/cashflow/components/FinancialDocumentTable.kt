@@ -86,7 +86,10 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
         is FinancialDocumentDto.InvoiceDto -> CashflowType.CashIn
         is FinancialDocumentDto.ExpenseDto -> CashflowType.CashOut
         is FinancialDocumentDto.BillDto -> CashflowType.CashOut
-        is FinancialDocumentDto.CreditNoteDto -> CashflowType.CashOut // Neutral until refund, but show as out for UI
+        is FinancialDocumentDto.CreditNoteDto -> CashflowType.CashOut
+        is FinancialDocumentDto.ProFormaDto -> CashflowType.CashIn
+        is FinancialDocumentDto.QuoteDto -> CashflowType.CashIn
+        is FinancialDocumentDto.PurchaseOrderDto -> CashflowType.CashOut
     }
 
     val contactName = when (this) {
@@ -94,6 +97,9 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
         is FinancialDocumentDto.ExpenseDto -> this.merchant
         is FinancialDocumentDto.BillDto -> this.supplierName
         is FinancialDocumentDto.CreditNoteDto -> ""
+        is FinancialDocumentDto.ProFormaDto -> ""
+        is FinancialDocumentDto.QuoteDto -> ""
+        is FinancialDocumentDto.PurchaseOrderDto -> ""
     }
 
     val contactEmail = when (this) {
@@ -101,6 +107,9 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
         is FinancialDocumentDto.ExpenseDto -> ""
         is FinancialDocumentDto.BillDto -> ""
         is FinancialDocumentDto.CreditNoteDto -> ""
+        is FinancialDocumentDto.ProFormaDto -> ""
+        is FinancialDocumentDto.QuoteDto -> ""
+        is FinancialDocumentDto.PurchaseOrderDto -> ""
     }
 
     val documentNumber = when (this) {
@@ -114,13 +123,19 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
             id.value
         )
         is FinancialDocumentDto.CreditNoteDto -> creditNoteNumber
+        is FinancialDocumentDto.ProFormaDto -> proFormaNumber
+        is FinancialDocumentDto.QuoteDto -> quoteNumber
+        is FinancialDocumentDto.PurchaseOrderDto -> poNumber
     }
 
     val hasAlert = when (this) {
         is FinancialDocumentDto.InvoiceDto -> status == InvoiceStatus.Sent || status == InvoiceStatus.Overdue
-        is FinancialDocumentDto.ExpenseDto -> false // Expenses don't have a status requiring confirmation
-        is FinancialDocumentDto.BillDto -> false // Bills don't have a status requiring confirmation (yet)
-        is FinancialDocumentDto.CreditNoteDto -> false // Credit notes don't have alerts
+        is FinancialDocumentDto.ExpenseDto -> false
+        is FinancialDocumentDto.BillDto -> false
+        is FinancialDocumentDto.CreditNoteDto -> false
+        is FinancialDocumentDto.ProFormaDto -> false
+        is FinancialDocumentDto.QuoteDto -> false
+        is FinancialDocumentDto.PurchaseOrderDto -> false
     }
 
     // Format amount with comma separator (fallback to display string on parse failure)

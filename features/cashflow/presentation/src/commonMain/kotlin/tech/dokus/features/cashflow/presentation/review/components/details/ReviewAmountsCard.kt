@@ -16,13 +16,12 @@ import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total_amount
-import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.model.BillDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.review.EditableBillFields
-import tech.dokus.features.cashflow.presentation.review.EditableCreditNoteFields
-import tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields
-import tech.dokus.features.cashflow.presentation.review.EditableReceiptFields
 import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
@@ -39,38 +38,34 @@ internal fun AmountsCard(
         // Subtle micro-label
         MicroLabel(text = stringResource(Res.string.cashflow_section_amounts))
 
-        when (state.editableData.documentType) {
-            DocumentType.Invoice -> {
-                val fields = state.editableData.invoice ?: EditableInvoiceFields()
+        when (val draft = state.draftData) {
+            is InvoiceDraftData -> {
                 InvoiceAmountsDisplay(
-                    subtotal = fields.subtotalAmount.formatAmountDisplay(),
-                    vat = fields.vatAmount.formatAmountDisplay(),
-                    total = fields.totalAmount.formatAmountDisplay()
+                    subtotal = draft.subtotalAmount?.toString(),
+                    vat = draft.vatAmount?.toString(),
+                    total = draft.totalAmount?.toString()
                 )
             }
-            DocumentType.Bill -> {
-                val fields = state.editableData.bill ?: EditableBillFields()
+            is BillDraftData -> {
                 BillAmountsDisplay(
-                    total = fields.totalAmount.formatAmountDisplay(),
-                    vat = fields.vatAmount.formatAmountDisplay()
+                    total = draft.totalAmount?.toString(),
+                    vat = draft.vatAmount?.toString()
                 )
             }
-            DocumentType.Receipt -> {
-                val fields = state.editableData.receipt ?: EditableReceiptFields()
+            is ReceiptDraftData -> {
                 ReceiptAmountsDisplay(
-                    total = fields.totalAmount.formatAmountDisplay(),
-                    vat = fields.vatAmount.formatAmountDisplay()
+                    total = draft.totalAmount?.toString(),
+                    vat = draft.vatAmount?.toString()
                 )
             }
-            DocumentType.CreditNote -> {
-                val fields = state.editableData.creditNote ?: EditableCreditNoteFields()
+            is CreditNoteDraftData -> {
                 CreditNoteAmountsDisplay(
-                    subtotal = fields.subtotalAmount.formatAmountDisplay(),
-                    vat = fields.vatAmount.formatAmountDisplay(),
-                    total = fields.totalAmount.formatAmountDisplay()
+                    subtotal = draft.subtotalAmount?.toString(),
+                    vat = draft.vatAmount?.toString(),
+                    total = draft.totalAmount?.toString()
                 )
             }
-            else -> {
+            null -> {
                 // Show neutral placeholder during processing, hint when type not selected
                 Text(
                     text = stringResource(
@@ -193,10 +188,3 @@ private fun CreditNoteAmountsDisplay(
     }
 }
 
-/**
- * Formats amount string for display.
- * Returns null if blank (shows as "—" in AmountRow).
- */
-private fun String.formatAmountDisplay(): String? {
-    return takeIf { it.isNotBlank() }
-}

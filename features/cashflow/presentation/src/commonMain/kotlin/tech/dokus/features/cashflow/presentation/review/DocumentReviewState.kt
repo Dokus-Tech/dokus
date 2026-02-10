@@ -17,8 +17,12 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.BillDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 
@@ -47,7 +51,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
     data class Content(
         val documentId: DocumentId,
         val document: DocumentRecordDto,
-        val editableData: EditableExtractedData,
+        val draftData: DocumentDraftData?,
         val originalData: DocumentDraftData?,
         val hasUnsavedChanges: Boolean = false,
         val isSaving: Boolean = false,
@@ -109,12 +113,12 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val confirmBlockedReason: StringResource?
             get() = when {
                 isDocumentConfirmed || isDocumentRejected -> null
-                editableData.documentType.isUnknown -> Res.string.cashflow_confirm_missing_fields
-                !editableData.hasRequiredDates -> Res.string.cashflow_confirm_missing_fields
-                !editableData.hasCoherentAmounts -> Res.string.cashflow_confirm_missing_fields
+                draftData == null -> Res.string.cashflow_confirm_missing_fields
+                !draftData.hasRequiredDates -> Res.string.cashflow_confirm_missing_fields
+                !draftData.hasCoherentAmounts -> Res.string.cashflow_confirm_missing_fields
                 counterpartyIntent == CounterpartyIntent.Pending -> Res.string.cashflow_confirm_select_contact
                 isContactRequired && selectedContactId == null -> Res.string.cashflow_confirm_select_contact
-                !editableData.isValid -> Res.string.cashflow_confirm_missing_fields
+                !draftData.isReviewValid -> Res.string.cashflow_confirm_missing_fields
                 else -> null
             }
 
@@ -136,10 +140,10 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                     ContactMatchStatus.Matched
                 // Suggested contact exists for required types, but needs user confirmation
                 contactSelectionState is ContactSelectionState.Suggested &&
-                    editableData.documentType in CONTACT_REQUIRED_TYPES ->
+                    draftData.isContactRequired ->
                     ContactMatchStatus.Uncertain
-                // No contact, but required for this document type (Invoice/Bill)
-                editableData.documentType in CONTACT_REQUIRED_TYPES ->
+                // No contact, but required for this document type (Invoice/Bill/CreditNote)
+                draftData.isContactRequired ->
                     ContactMatchStatus.MissingButRequired
                 // No contact, but acceptable (Receipt)
                 else ->
@@ -165,11 +169,9 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                     contactMatchStatus == ContactMatchStatus.MissingButRequired) return true
 
                 // Due date missing for invoices/bills (only when not confirmed)
-                val needsDueDate = editableData.documentType in listOf(
-                    DocumentType.Invoice,
-                    DocumentType.Bill
-                ) && !isDocumentConfirmed
-                if (needsDueDate && editableData.dueDate == null) return true
+                val needsDueDate = (draftData is InvoiceDraftData || draftData is BillDraftData) &&
+                    !isDocumentConfirmed
+                if (needsDueDate && draftData.dueDate == null) return true
 
                 return false
             }
@@ -180,8 +182,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          */
         val description: String
             get() {
-                val counterparty = editableData.counterpartyName
-                val context = editableData.contextDescription
+                val counterparty = draftData.displayCounterpartyName
+                val context = draftData.displayContextDescription
 
                 return when {
                     counterparty != null && context != null -> "$counterparty — $context"
@@ -196,12 +198,12 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          * Total amount for the understanding line (currency-formatted).
          */
         val totalAmount: Money?
-            get() = when (editableData.documentType) {
-                DocumentType.Invoice -> Money.from(editableData.invoice?.totalAmount)
-                DocumentType.Bill -> Money.from(editableData.bill?.totalAmount)
-                DocumentType.Receipt -> Money.from(editableData.receipt?.totalAmount)
-                DocumentType.CreditNote -> Money.from(editableData.creditNote?.totalAmount)
-                else -> null
+            get() = when (draftData) {
+                is InvoiceDraftData -> draftData.totalAmount
+                is BillDraftData -> draftData.totalAmount
+                is ReceiptDraftData -> draftData.totalAmount
+                is CreditNoteDraftData -> draftData.totalAmount
+                null -> null
             }
     }
 
@@ -211,79 +213,91 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
     ) : DocumentReviewState, DokusState.Error<Nothing>
 }
 
-private val DocumentType.isUnknown: Boolean
-    get() = this == DocumentType.Unknown
+// =========================================================================
+// DocumentDraftData extension properties for review state
+// =========================================================================
 
-private val EditableExtractedData.hasRequiredDates: Boolean
-    get() = when (documentType) {
-        DocumentType.Invoice -> invoice?.issueDate != null
-        DocumentType.Bill -> bill?.issueDate != null
-        DocumentType.Receipt -> receipt?.date != null
-        DocumentType.CreditNote -> creditNote?.issueDate != null
-        else -> false
+/** Whether the draft has the minimum required dates for its type. */
+private val DocumentDraftData.hasRequiredDates: Boolean
+    get() = when (this) {
+        is InvoiceDraftData -> issueDate != null
+        is BillDraftData -> issueDate != null
+        is ReceiptDraftData -> date != null
+        is CreditNoteDraftData -> issueDate != null
     }
 
-private val EditableExtractedData.hasCoherentAmounts: Boolean
+/** Whether amounts are coherent (subtotal + vat ≈ total where applicable). */
+private val DocumentDraftData.hasCoherentAmounts: Boolean
     get() {
-        return when (documentType) {
-            DocumentType.Invoice -> {
-                val invoiceData = invoice ?: return false
-                val subtotal = Money.from(invoiceData.subtotalAmount)
-                val vat = Money.from(invoiceData.vatAmount)
-                val total = Money.from(invoiceData.totalAmount)
-                if (subtotal == null) return false
-                if (total == null || vat == null) return true
-                val expected = subtotal + vat
-                kotlin.math.abs(expected.minor - total.minor) <= 1L
+        return when (this) {
+            is InvoiceDraftData -> {
+                val subtotal = subtotalAmount ?: return false
+                if (totalAmount == null || vatAmount == null) return true
+                val expected = subtotal + vatAmount!!
+                kotlin.math.abs(expected.minor - totalAmount!!.minor) <= 1L
             }
-            DocumentType.Bill -> {
-                val billData = bill ?: return false
-                Money.from(billData.totalAmount) != null
+            is BillDraftData -> totalAmount != null
+            is ReceiptDraftData -> totalAmount != null
+            is CreditNoteDraftData -> {
+                val subtotal = subtotalAmount ?: return false
+                if (totalAmount == null || vatAmount == null) return true
+                val expected = subtotal + vatAmount!!
+                kotlin.math.abs(expected.minor - totalAmount!!.minor) <= 1L
             }
-            DocumentType.Receipt -> {
-                val receiptData = receipt ?: return false
-                Money.from(receiptData.totalAmount) != null
-            }
-            DocumentType.CreditNote -> {
-                val creditData = creditNote ?: return false
-                val subtotal = Money.from(creditData.subtotalAmount)
-                val vat = Money.from(creditData.vatAmount)
-                val total = Money.from(creditData.totalAmount)
-                if (subtotal == null) return false
-                if (total == null || vat == null) return true
-                val expected = subtotal + vat
-                kotlin.math.abs(expected.minor - total.minor) <= 1L
-            }
-            else -> false
         }
     }
 
+/** Whether the draft passes basic review validation. */
+val DocumentDraftData.isReviewValid: Boolean
+    get() = when (this) {
+        is InvoiceDraftData -> issueDate != null && subtotalAmount != null
+        is BillDraftData -> supplierName != null && issueDate != null && totalAmount != null
+        is ReceiptDraftData -> merchantName != null && date != null && totalAmount != null
+        is CreditNoteDraftData -> counterpartyName != null && issueDate != null && subtotalAmount != null
+    }
+
+/** Whether a contact is required for this document type. */
+internal val DocumentDraftData?.isContactRequired: Boolean
+    get() = this is InvoiceDraftData || this is BillDraftData || this is CreditNoteDraftData
+
+/** Derive DocumentType from sealed subtype. */
+internal val DocumentDraftData?.documentType: DocumentType
+    get() = when (this) {
+        is InvoiceDraftData -> DocumentType.Invoice
+        is BillDraftData -> DocumentType.Bill
+        is CreditNoteDraftData -> DocumentType.CreditNote
+        is ReceiptDraftData -> DocumentType.Receipt
+        null -> DocumentType.Unknown
+    }
+
 /** Counterparty name for description resolution. */
-private val EditableExtractedData.counterpartyName: String?
-    get() = when (documentType) {
-        DocumentType.Invoice -> invoice?.customerName?.takeIf { it.isNotBlank() }
-        DocumentType.Bill -> bill?.supplierName?.takeIf { it.isNotBlank() }
-        DocumentType.Receipt -> receipt?.merchantName?.takeIf { it.isNotBlank() }
-        DocumentType.CreditNote -> creditNote?.counterpartyName?.takeIf { it.isNotBlank() }
-        else -> null
+private val DocumentDraftData?.displayCounterpartyName: String?
+    get() = when (this) {
+        is InvoiceDraftData -> customerName?.takeIf { it.isNotBlank() }
+        is BillDraftData -> supplierName?.takeIf { it.isNotBlank() }
+        is ReceiptDraftData -> merchantName?.takeIf { it.isNotBlank() }
+        is CreditNoteDraftData -> counterpartyName?.takeIf { it.isNotBlank() }
+        null -> null
     }
 
 /** Context/description text for understanding line. */
-private val EditableExtractedData.contextDescription: String?
-    get() = when (documentType) {
-        DocumentType.Invoice -> invoice?.notes?.takeIf { it.isNotBlank() }
-        DocumentType.Bill -> bill?.notes?.takeIf { it.isNotBlank() }
-        DocumentType.Receipt -> receipt?.notes?.takeIf { it.isNotBlank() }
-        DocumentType.CreditNote -> creditNote?.reason?.takeIf { it.isNotBlank() }
-        else -> null
+private val DocumentDraftData?.displayContextDescription: String?
+    get() = when (this) {
+        is InvoiceDraftData -> notes?.takeIf { it.isNotBlank() }
+        is BillDraftData -> notes?.takeIf { it.isNotBlank() }
+        is ReceiptDraftData -> notes?.takeIf { it.isNotBlank() }
+        is CreditNoteDraftData -> reason?.takeIf { it.isNotBlank() }
+        null -> null
     }
 
 /** Due date for attention signal. */
-private val EditableExtractedData.dueDate: kotlinx.datetime.LocalDate?
-    get() = when (documentType) {
-        DocumentType.Invoice -> invoice?.dueDate
-        DocumentType.Bill -> bill?.dueDate
-        else -> null
+private val DocumentDraftData?.dueDate: kotlinx.datetime.LocalDate?
+    get() = when (this) {
+        is InvoiceDraftData -> dueDate
+        is BillDraftData -> dueDate
+        is ReceiptDraftData -> null
+        is CreditNoteDraftData -> null
+        null -> null
     }
 
 /**
@@ -300,10 +314,3 @@ enum class ContactMatchStatus {
     /** No contact, but acceptable for this document type (Receipt). */
     NotRequired
 }
-
-/** Document types that require a contact (for VAT/accounting purposes). */
-private val CONTACT_REQUIRED_TYPES = listOf(
-    DocumentType.Invoice,
-    DocumentType.Bill,
-    DocumentType.CreditNote
-)

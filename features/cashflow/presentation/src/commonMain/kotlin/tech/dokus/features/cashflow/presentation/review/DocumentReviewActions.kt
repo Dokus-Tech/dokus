@@ -23,27 +23,22 @@ internal class DocumentReviewActions(
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val getDocumentRecord: GetDocumentRecordUseCase,
-    private val mapper: DocumentReviewDraftDataMapper,
     private val logger: Logger,
 ) {
     suspend fun DocumentReviewCtx.handleSaveDraft() {
         withState<DocumentReviewState.Content, _> {
             if (!hasUnsavedChanges) return@withState
 
+            val updatedData = draftData
+            if (updatedData == null) {
+                action(DocumentReviewAction.ShowError(DokusException.Validation.DocumentMissingFields))
+                return@withState
+            }
+
             logger.d { "Saving draft for document: $documentId" }
             updateState { copy(isSaving = true) }
 
             launch {
-                val updatedData = mapper.buildDraftDataFromEditable(editableData, originalData)
-                if (updatedData == null) {
-                    updateState { copy(isSaving = false) }
-                    action(
-                        DocumentReviewAction.ShowError(
-                            DokusException.Validation.DocumentMissingFields
-                        )
-                    )
-                    return@launch
-                }
                 updateDocumentDraft(
                     documentId,
                     UpdateDraftRequest(extractedData = updatedData)
@@ -76,10 +71,9 @@ internal class DocumentReviewActions(
 
     suspend fun DocumentReviewCtx.handleConfirmDiscardChanges() {
         withState<DocumentReviewState.Content, _> {
-            val restoredData = EditableExtractedData.fromDraftData(originalData)
             updateState {
                 copy(
-                    editableData = restoredData,
+                    draftData = originalData,
                     hasUnsavedChanges = false
                 )
             }
@@ -97,20 +91,16 @@ internal class DocumentReviewActions(
                 return@withState
             }
 
+            val updatedData = draftData
+            if (updatedData == null) {
+                action(DocumentReviewAction.ShowError(DokusException.Validation.DocumentMissingFields))
+                return@withState
+            }
+
             logger.d { "Confirming document: $documentId" }
             updateState { copy(isConfirming = true) }
 
             launch {
-                val updatedData = mapper.buildDraftDataFromEditable(editableData, originalData)
-                if (updatedData == null) {
-                    updateState { copy(isConfirming = false) }
-                    action(
-                        DocumentReviewAction.ShowError(
-                            DokusException.Validation.DocumentMissingFields
-                        )
-                    )
-                    return@launch
-                }
                 if (hasUnsavedChanges) {
                     val updateResult = updateDocumentDraft(
                         documentId,
@@ -129,7 +119,7 @@ internal class DocumentReviewActions(
                     withState<DocumentReviewState.Content, _> {
                         updateState {
                             copy(
-                                editableData = EditableExtractedData.fromDraftData(savedData),
+                                draftData = savedData,
                                 originalData = savedData,
                                 hasUnsavedChanges = false
                             )
@@ -148,7 +138,7 @@ internal class DocumentReviewActions(
                             updateState {
                                 copy(
                                     document = record,
-                                    editableData = EditableExtractedData.fromDraftData(draft?.extractedData),
+                                    draftData = draft?.extractedData,
                                     originalData = draft?.extractedData,
                                     hasUnsavedChanges = false,
                                     isConfirming = false,
@@ -288,13 +278,16 @@ internal class DocumentReviewActions(
                     is FinancialDocumentDto.BillDto -> entity.id.toString()
                     is FinancialDocumentDto.ExpenseDto -> entity.id.toString()
                     is FinancialDocumentDto.CreditNoteDto -> entity.id.toString()
+                    is FinancialDocumentDto.ProFormaDto -> entity.id.toString()
+                    is FinancialDocumentDto.QuoteDto -> entity.id.toString()
+                    is FinancialDocumentDto.PurchaseOrderDto -> entity.id.toString()
                 }
             }
             if (confirmedEntityId != null) {
                 action(
                     DocumentReviewAction.NavigateToEntity(
                         entityId = confirmedEntityId,
-                        entityType = editableData.documentType
+                        entityType = draftData.documentType
                     )
                 )
             }
@@ -338,7 +331,7 @@ internal class DocumentReviewActions(
                     updateState {
                         copy(
                             document = record,
-                            editableData = EditableExtractedData.fromDraftData(draft?.extractedData),
+                            draftData = draft?.extractedData,
                             originalData = draft?.extractedData,
                             counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
                             isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,

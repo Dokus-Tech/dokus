@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_awaiting_extraction
 import tech.dokus.aura.resources.cashflow_contact_details_title
 import tech.dokus.aura.resources.cashflow_loading_document
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
@@ -84,7 +85,7 @@ internal fun ReviewContent(
         }
 
         is DocumentReviewState.Content -> {
-            val counterparty = remember(state.editableData) { counterpartyInfo(state) }
+            val counterparty = remember(state.draftData) { counterpartyInfo(state) }
             if (isLargeScreen) {
                 DesktopReviewContent(
                     state = state,

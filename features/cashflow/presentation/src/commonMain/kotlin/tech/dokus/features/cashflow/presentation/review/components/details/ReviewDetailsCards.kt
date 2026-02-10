@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,13 +39,13 @@ import tech.dokus.aura.resources.document_type_receipt
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.model.BillDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ContactSelectionState
-import tech.dokus.features.cashflow.presentation.review.EditableBillFields
-import tech.dokus.features.cashflow.presentation.review.EditableCreditNoteFields
-import tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields
-import tech.dokus.features.cashflow.presentation.review.EditableReceiptFields
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constrains
@@ -228,51 +229,47 @@ internal fun InvoiceDetailsCard(
     onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val titleRes = when (state.editableData.documentType) {
-        DocumentType.Invoice -> Res.string.cashflow_invoice_details_section
-        DocumentType.Bill -> Res.string.cashflow_bill_details_section
-        DocumentType.Receipt -> Res.string.cashflow_receipt_details_section
-        DocumentType.CreditNote -> Res.string.cashflow_credit_note_details_section
-        else -> Res.string.cashflow_invoice_details_section
+    val titleRes = when (state.draftData) {
+        is InvoiceDraftData -> Res.string.cashflow_invoice_details_section
+        is BillDraftData -> Res.string.cashflow_bill_details_section
+        is ReceiptDraftData -> Res.string.cashflow_receipt_details_section
+        is CreditNoteDraftData -> Res.string.cashflow_credit_note_details_section
+        null -> Res.string.cashflow_invoice_details_section
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Subtle micro-label
         MicroLabel(text = stringResource(titleRes))
 
-        when (state.editableData.documentType) {
-            DocumentType.Invoice -> {
-                val fields = state.editableData.invoice ?: EditableInvoiceFields()
+        when (val draft = state.draftData) {
+            is InvoiceDraftData -> {
                 InvoiceDetailsFactDisplay(
-                    invoiceNumber = fields.invoiceNumber.takeIf { it.isNotBlank() },
-                    issueDate = fields.issueDate?.toString(),
-                    dueDate = fields.dueDate?.toString()
+                    invoiceNumber = draft.invoiceNumber?.takeIf { it.isNotBlank() },
+                    issueDate = draft.issueDate?.toString(),
+                    dueDate = draft.dueDate?.toString()
                 )
             }
-            DocumentType.Bill -> {
-                val fields = state.editableData.bill ?: EditableBillFields()
+            is BillDraftData -> {
                 BillDetailsFactDisplay(
-                    invoiceNumber = fields.invoiceNumber.takeIf { it.isNotBlank() },
-                    issueDate = fields.issueDate?.toString(),
-                    dueDate = fields.dueDate?.toString()
+                    invoiceNumber = draft.invoiceNumber?.takeIf { it.isNotBlank() },
+                    issueDate = draft.issueDate?.toString(),
+                    dueDate = draft.dueDate?.toString()
                 )
             }
-            DocumentType.Receipt -> {
-                val fields = state.editableData.receipt ?: EditableReceiptFields()
+            is ReceiptDraftData -> {
                 ReceiptDetailsFactDisplay(
-                    receiptNumber = fields.receiptNumber.takeIf { it.isNotBlank() },
-                    date = fields.date?.toString()
+                    receiptNumber = draft.receiptNumber?.takeIf { it.isNotBlank() },
+                    date = draft.date?.toString()
                 )
             }
-            DocumentType.CreditNote -> {
-                val fields = state.editableData.creditNote ?: EditableCreditNoteFields()
+            is CreditNoteDraftData -> {
                 CreditNoteDetailsFactDisplay(
-                    creditNoteNumber = fields.creditNoteNumber.takeIf { it.isNotBlank() },
-                    issueDate = fields.issueDate?.toString(),
-                    originalInvoiceNumber = fields.originalInvoiceNumber.takeIf { it.isNotBlank() }
+                    creditNoteNumber = draft.creditNoteNumber?.takeIf { it.isNotBlank() },
+                    issueDate = draft.issueDate?.toString(),
+                    originalInvoiceNumber = draft.originalInvoiceNumber?.takeIf { it.isNotBlank() }
                 )
             }
-            else -> {
+            null -> {
                 // Document type selector - only show when type is unknown and not processing
                 if (state.isProcessing) {
                     Text(

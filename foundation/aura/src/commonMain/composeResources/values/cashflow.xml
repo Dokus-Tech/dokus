@@ -80,6 +80,8 @@
     <string name="document_type_bill">Bill</string>
     <string name="document_type_receipt">Receipt</string>
     <string name="document_type_pro_forma">Pro Forma</string>
+    <string name="document_type_quote">Quote</string>
+    <string name="document_type_purchase_order">Purchase Order</string>
     <string name="document_type_credit_note">Credit Note</string>
     <string name="document_type_document">Document</string>
     <string name="document_type_unknown">Unknown</string>

@@ -19,26 +19,6 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class LoadMorePages(val maxPages: Int) : DocumentReviewIntent
     data object RetryLoadPreview : DocumentReviewIntent
 
-    data class UpdateInvoiceField(
-        val field: InvoiceField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
-    data class UpdateBillField(
-        val field: BillField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
-    data class UpdateReceiptField(
-        val field: ReceiptField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
-    data class UpdateCreditNoteField(
-        val field: CreditNoteField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
     data class SelectContact(val contactId: ContactId) : DocumentReviewIntent
     data object AcceptSuggestedContact : DocumentReviewIntent
     data object ClearSelectedContact : DocumentReviewIntent
@@ -82,61 +62,3 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class SelectDocumentType(val type: DocumentType) : DocumentReviewIntent
 }
 
-enum class InvoiceField {
-    CUSTOMER_NAME,
-    CUSTOMER_VAT_NUMBER,
-    CUSTOMER_EMAIL,
-    INVOICE_NUMBER,
-    ISSUE_DATE,
-    DUE_DATE,
-    SUBTOTAL_AMOUNT,
-    VAT_AMOUNT,
-    TOTAL_AMOUNT,
-    CURRENCY,
-    NOTES,
-    IBAN,
-    PAYMENT_REFERENCE,
-}
-
-enum class BillField {
-    SUPPLIER_NAME,
-    SUPPLIER_VAT_NUMBER,
-    INVOICE_NUMBER,
-    ISSUE_DATE,
-    DUE_DATE,
-    TOTAL_AMOUNT,
-    VAT_AMOUNT,
-    CURRENCY,
-    NOTES,
-    IBAN,
-    PAYMENT_REFERENCE,
-}
-
-enum class ReceiptField {
-    MERCHANT_NAME,
-    MERCHANT_VAT_NUMBER,
-    DATE,
-    TOTAL_AMOUNT,
-    VAT_AMOUNT,
-    CURRENCY,
-    RECEIPT_NUMBER,
-    PAYMENT_METHOD,
-    NOTES,
-}
-
-/**
- * CreditNote fields - no cashflow on confirm, only on refund recording.
- */
-enum class CreditNoteField {
-    COUNTERPARTY_NAME,
-    COUNTERPARTY_VAT_NUMBER,
-    CREDIT_NOTE_NUMBER,
-    ORIGINAL_INVOICE_NUMBER,
-    ISSUE_DATE,
-    SUBTOTAL_AMOUNT,
-    VAT_AMOUNT,
-    TOTAL_AMOUNT,
-    CURRENCY,
-    REASON,
-    NOTES,
-}

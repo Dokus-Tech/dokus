@@ -1,7 +1,6 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import pro.respawn.flowmvi.dsl.withState
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
@@ -69,9 +68,6 @@ internal class DocumentReviewLoader(
             return
         }
 
-        val editableData = EditableExtractedData.fromDraftData(extractedData)
-        val documentType = draft.documentType ?: editableData.documentType
-
         val contactSuggestions = draft.contactSuggestions.map { suggestion ->
             ContactSuggestion(
                 contactId = suggestion.contactId,
@@ -79,11 +75,6 @@ internal class DocumentReviewLoader(
                 vatNumber = suggestion.vatNumber?.value
             )
         }
-        val isContactRequired = documentType in listOf(
-            DocumentType.Invoice,
-            DocumentType.Bill,
-            DocumentType.CreditNote
-        )
         val documentStatus = draft.documentStatus
         val isDocumentConfirmed = documentStatus == DocumentStatus.Confirmed
         val isDocumentRejected = documentStatus == DocumentStatus.Rejected
@@ -96,7 +87,7 @@ internal class DocumentReviewLoader(
             DocumentReviewState.Content(
                 documentId = documentId,
                 document = document,
-                editableData = editableData,
+                draftData = extractedData,
                 originalData = draft.aiDraftData ?: extractedData,
                 hasUnsavedChanges = false,
                 isSaving = false,
@@ -108,7 +99,7 @@ internal class DocumentReviewLoader(
                 selectedContactId = selectedContactId,
                 selectedContactSnapshot = selectedContactSnapshot,
                 contactSelectionState = contactSelectionState,
-                isContactRequired = isContactRequired,
+                isContactRequired = extractedData.isContactRequired,
                 isDocumentConfirmed = isDocumentConfirmed,
                 isDocumentRejected = isDocumentRejected,
                 counterpartyIntent = counterpartyIntent,

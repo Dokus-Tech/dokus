@@ -1,37 +1,38 @@
 package tech.dokus.features.cashflow.presentation.review.models
 
-import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.model.BillDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 
 internal fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyInfo {
-    fun clean(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }
-
-    return when (state.editableData.documentType) {
-        DocumentType.Invoice -> CounterpartyInfo(
-            name = clean(state.editableData.invoice?.customerName),
-            vatNumber = clean(state.editableData.invoice?.customerVatNumber),
-            iban = clean(state.editableData.invoice?.iban),
+    return when (val draft = state.draftData) {
+        is InvoiceDraftData -> CounterpartyInfo(
+            name = draft.customerName?.trim()?.takeIf { it.isNotEmpty() },
+            vatNumber = draft.customerVat?.value,
+            iban = draft.iban?.value,
             address = null,
         )
-        DocumentType.Bill -> CounterpartyInfo(
-            name = clean(state.editableData.bill?.supplierName),
-            vatNumber = clean(state.editableData.bill?.supplierVatNumber),
-            iban = clean(state.editableData.bill?.iban),
+        is BillDraftData -> CounterpartyInfo(
+            name = draft.supplierName?.trim()?.takeIf { it.isNotEmpty() },
+            vatNumber = draft.supplierVat?.value,
+            iban = draft.iban?.value,
             address = null,
         )
-        DocumentType.Receipt -> CounterpartyInfo(
-            name = clean(state.editableData.receipt?.merchantName),
-            vatNumber = clean(state.editableData.receipt?.merchantVatNumber),
+        is ReceiptDraftData -> CounterpartyInfo(
+            name = draft.merchantName?.trim()?.takeIf { it.isNotEmpty() },
+            vatNumber = draft.merchantVat?.value,
             iban = null,
             address = null,
         )
-        DocumentType.CreditNote -> CounterpartyInfo(
-            name = clean(state.editableData.creditNote?.counterpartyName),
-            vatNumber = clean(state.editableData.creditNote?.counterpartyVatNumber),
+        is CreditNoteDraftData -> CounterpartyInfo(
+            name = draft.counterpartyName?.trim()?.takeIf { it.isNotEmpty() },
+            vatNumber = draft.counterpartyVat?.value,
             iban = null,
             address = null,
         )
-        else -> CounterpartyInfo(
+        null -> CounterpartyInfo(
             name = null,
             vatNumber = null,
             iban = null,

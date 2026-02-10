@@ -16,8 +16,7 @@ import tech.dokus.domain.ids.VatNumber
  * This is deliberately AI-agnostic: no prompt/tool metadata, no token usage.
  */
 @Serializable
-sealed interface DocumentDraftData {
-}
+sealed interface DocumentDraftData
 
 @Serializable
 @SerialName("invoice_draft")

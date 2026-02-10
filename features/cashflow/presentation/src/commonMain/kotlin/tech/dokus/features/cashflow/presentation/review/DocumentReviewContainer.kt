@@ -86,21 +86,6 @@ internal class DocumentReviewContainer(
                         is DocumentReviewIntent.CloseContactSheet -> handleCloseContactSheet()
                         is DocumentReviewIntent.UpdateContactSheetSearch -> handleUpdateContactSheetSearch(intent.query)
 
-                        // === Field Editing ===
-                        is DocumentReviewIntent.UpdateInvoiceField -> handleUpdateInvoiceField(
-                            intent.field,
-                            intent.value
-                        )
-                        is DocumentReviewIntent.UpdateBillField -> handleUpdateBillField(intent.field, intent.value)
-                        is DocumentReviewIntent.UpdateReceiptField -> handleUpdateReceiptField(
-                            intent.field,
-                            intent.value
-                        )
-                        is DocumentReviewIntent.UpdateCreditNoteField -> handleUpdateCreditNoteField(
-                            intent.field,
-                            intent.value
-                        )
-
                         // === Contact Selection (with backend persist) ===
                         is DocumentReviewIntent.SelectContact -> handleSelectContact(intent.contactId)
                         is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
