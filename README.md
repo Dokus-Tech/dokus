@@ -117,6 +117,26 @@ cd dokus
 
 **One codebase, all platforms.**
 
+### Option 3: Web Deployment to Vercel (GitHub Actions)
+
+The repository includes a dedicated Vercel workflow for the web app:
+
+- Pull requests: create **Preview** deployments
+- Pushes to `main`: create **Production** deployments
+- Manual runs: trigger via GitHub Actions (`workflow_dispatch`) and choose target
+
+Required GitHub repository secrets:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+SPA routing and build settings are versioned in `vercel.json`:
+
+- Build command: `./gradlew :composeApp:wasmJsBrowserDistribution -x test`
+- Output directory: `composeApp/build/dist/wasmJs/productionExecutable`
+- Rewrites: app routes fallback to `index.html`, while static assets (e.g. `.js`, `.css`, `.wasm`) stay direct
+
 ---
 
 ## ⚡ Features
