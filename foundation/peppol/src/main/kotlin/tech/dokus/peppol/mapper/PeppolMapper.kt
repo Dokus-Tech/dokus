@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
@@ -16,6 +17,7 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
@@ -280,6 +282,7 @@ class PeppolMapper {
             )
 
             PeppolDocumentType.SelfBillingInvoice -> InvoiceDraftData(
+                direction = DocumentDirection.Outbound,
                 invoiceNumber = document.invoiceNumber,
                 issueDate = issueDate,
                 dueDate = dueDate,
@@ -291,7 +294,15 @@ class PeppolMapper {
                 vatBreakdown = vatBreakdown,
                 customerName = buyer?.name,
                 customerVat = VatNumber.from(buyer?.vatNumber),
-                notes = notes
+                notes = notes,
+                seller = PartyDraft(
+                    name = seller?.name,
+                    vat = VatNumber.from(seller?.vatNumber),
+                ),
+                buyer = PartyDraft(
+                    name = buyer?.name,
+                    vat = VatNumber.from(buyer?.vatNumber),
+                )
             )
 
             PeppolDocumentType.SelfBillingCreditNote -> CreditNoteDraftData(
@@ -313,6 +324,7 @@ class PeppolMapper {
 
             // Invoice, Xml — default to bill
             else -> BillDraftData(
+                direction = DocumentDirection.Inbound,
                 supplierName = seller?.name,
                 supplierVat = VatNumber.from(seller?.vatNumber),
                 invoiceNumber = document.invoiceNumber,
@@ -326,7 +338,15 @@ class PeppolMapper {
                 vatBreakdown = vatBreakdown,
                 iban = null,
                 payment = null,
-                notes = notes
+                notes = notes,
+                seller = PartyDraft(
+                    name = seller?.name,
+                    vat = VatNumber.from(seller?.vatNumber),
+                ),
+                buyer = PartyDraft(
+                    name = buyer?.name,
+                    vat = VatNumber.from(buyer?.vatNumber),
+                )
             )
         }
     }

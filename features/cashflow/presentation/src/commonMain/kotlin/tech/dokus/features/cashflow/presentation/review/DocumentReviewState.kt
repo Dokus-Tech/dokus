@@ -11,6 +11,7 @@ import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
@@ -285,8 +286,14 @@ internal val DocumentDraftData?.documentType: DocumentType
 /** Counterparty name for description resolution. */
 private val DocumentDraftData?.displayCounterpartyName: String?
     get() = when (this) {
-        is InvoiceDraftData -> customerName?.takeIf { it.isNotBlank() }
-        is BillDraftData -> supplierName?.takeIf { it.isNotBlank() }
+        is InvoiceDraftData -> when (direction) {
+            DocumentDirection.Inbound -> seller.name?.takeIf { it.isNotBlank() } ?: customerName?.takeIf { it.isNotBlank() }
+            DocumentDirection.Outbound -> buyer.name?.takeIf { it.isNotBlank() } ?: customerName?.takeIf { it.isNotBlank() }
+            DocumentDirection.Unknown -> customerName?.takeIf { it.isNotBlank() }
+                ?: buyer.name?.takeIf { it.isNotBlank() }
+                ?: seller.name?.takeIf { it.isNotBlank() }
+        }
+        is BillDraftData -> (supplierName ?: seller.name)?.takeIf { it.isNotBlank() }
         is ReceiptDraftData -> merchantName?.takeIf { it.isNotBlank() }
         is CreditNoteDraftData -> counterpartyName?.takeIf { it.isNotBlank() }
         null -> null

@@ -8,16 +8,22 @@ import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.BillDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentProcessingStepDto
 import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.utils.parseSafe
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
@@ -76,6 +82,7 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     tenantId = tenantId,
     documentStatus = documentStatus,
     documentType = documentType,
+    direction = extractedData.directionOrUnknown(),
     extractedData = extractedData,
     aiDraftData = aiDraftData,
     aiDescription = aiDescription,
@@ -95,6 +102,18 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     createdAt = createdAt,
     updatedAt = updatedAt
 )
+
+private fun DocumentDraftData?.directionOrUnknown(): DocumentDirection = when (this) {
+    is InvoiceDraftData -> this.direction
+    is BillDraftData -> this.direction
+    is ReceiptDraftData -> this.direction
+    is CreditNoteDraftData -> when (this.direction) {
+        tech.dokus.domain.enums.CreditNoteDirection.Sales -> DocumentDirection.Outbound
+        tech.dokus.domain.enums.CreditNoteDirection.Purchase -> DocumentDirection.Inbound
+        tech.dokus.domain.enums.CreditNoteDirection.Unknown -> DocumentDirection.Unknown
+    }
+    null -> DocumentDirection.Unknown
+}
 
 
 /**

@@ -47,10 +47,21 @@ data class InvoiceExtractionResult(
     val lineItems: List<FinancialLineItem> = emptyList(),
     val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
 
-    // Parties (facts only)
-    val customerName: String?,
-    val customerVat: VatNumber?,
-    val customerEmail: Email? = null,
+    // Parties (facts only, neutral roles)
+    val sellerName: String?,
+    val sellerVat: VatNumber?,
+    val sellerEmail: Email? = null,
+    val sellerStreet: String? = null,
+    val sellerPostalCode: String? = null,
+    val sellerCity: String? = null,
+    val sellerCountry: String? = null,
+    val buyerName: String?,
+    val buyerVat: VatNumber?,
+    val buyerEmail: Email? = null,
+    val buyerStreet: String? = null,
+    val buyerPostalCode: String? = null,
+    val buyerCity: String? = null,
+    val buyerCountry: String? = null,
 
     // Payment hints
     val iban: Iban? = null,
@@ -95,12 +106,34 @@ data class InvoiceExtractionToolInput(
     val lineItems: List<LineItemToolInput>? = null,
     @property:LLMDescription(ExtractionToolDescriptions.VatBreakdown)
     val vatBreakdown: List<VatBreakdownToolInput>? = null,
-    @property:LLMDescription(ExtractionToolDescriptions.CustomerName)
-    val customerName: String?,
-    @property:LLMDescription(ExtractionToolDescriptions.CustomerVat)
-    val customerVat: String?,
-    @property:LLMDescription(ExtractionToolDescriptions.CustomerEmail)
-    val customerEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.SellerName)
+    val sellerName: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.SellerVat)
+    val sellerVat: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.SellerEmail)
+    val sellerEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.SellerStreet)
+    val sellerStreet: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.SellerPostalCode)
+    val sellerPostalCode: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.SellerCity)
+    val sellerCity: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.SellerCountry)
+    val sellerCountry: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BuyerName)
+    val buyerName: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.BuyerVat)
+    val buyerVat: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.BuyerEmail)
+    val buyerEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BuyerStreet)
+    val buyerStreet: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BuyerPostalCode)
+    val buyerPostalCode: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BuyerCity)
+    val buyerCity: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BuyerCountry)
+    val buyerCountry: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.Iban)
     val iban: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.PaymentReference)
@@ -129,9 +162,20 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
                 totalAmount = Money.from(args.totalAmount),
                 lineItems = args.lineItems.orEmpty().mapNotNull { it.toDomain() },
                 vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
-                customerName = args.customerName,
-                customerVat = VatNumber.from(args.customerVat),
-                customerEmail = Email.from(args.customerEmail),
+                sellerName = args.sellerName,
+                sellerVat = VatNumber.from(args.sellerVat),
+                sellerEmail = Email.from(args.sellerEmail),
+                sellerStreet = args.sellerStreet,
+                sellerPostalCode = args.sellerPostalCode,
+                sellerCity = args.sellerCity,
+                sellerCountry = args.sellerCountry,
+                buyerName = args.buyerName,
+                buyerVat = VatNumber.from(args.buyerVat),
+                buyerEmail = Email.from(args.buyerEmail),
+                buyerStreet = args.buyerStreet,
+                buyerPostalCode = args.buyerPostalCode,
+                buyerCity = args.buyerCity,
+                buyerCountry = args.buyerCountry,
                 iban = Iban.from(args.iban),
                 payment = CanonicalPayment.from(args.paymentReference),
                 confidence = args.confidence,
@@ -145,7 +189,8 @@ private val ExtractDocumentInput.prompt
     get() = """
     You will receive invoice pages as images in context.
 
-    Task: extract invoice fields for an OUTGOING INVOICE (issued by the tenant).
+    Task: extract invoice fields as neutral facts from the document.
+    Do NOT decide incoming/outgoing business direction here.
     Output MUST be submitted via tool: submit_invoice_extraction.
 
     ## HARD RULES
@@ -153,10 +198,11 @@ private val ExtractDocumentInput.prompt
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
     - If multiple totals exist, prefer the "Total" / "Totaal" / "Total TTC" style final payable amount.
 
-    ## PARTY DETECTION
-    OUTGOING INVOICE means:
-    - Issuer is the tenant (your company) in header/logo area.
-    - Customer is the billed-to party ("Client", "Klant", "Bill to", etc).
+    ## PARTY EXTRACTION (CRITICAL)
+    - `seller*`: entity that ISSUED the invoice (header/logo issuer area).
+    - `buyer*`: billed-to/recipient entity ("Bill to", "Client", "Klant", etc).
+    - Always extract both seller and buyer when visible.
+    - Do not swap seller/buyer based on tenant context.
 
     ## DATE RULES
     Identify issue date ("Factuurdatum", "Date de facture", "Invoice date") and due date ("Vervaldatum", "Échéance", "Due date").

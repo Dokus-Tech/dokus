@@ -8,6 +8,7 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.CashflowEntryId
@@ -67,6 +68,7 @@ data class DocumentDraftDto(
     val tenantId: TenantId,
     val documentStatus: DocumentStatus,
     val documentType: DocumentType?,
+    val direction: DocumentDirection = DocumentDirection.Unknown,
     val extractedData: DocumentDraftData?,
     val aiDraftData: DocumentDraftData?, // Original immutable AI extraction (for diff display)
     val aiDescription: String? = null,

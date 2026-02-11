@@ -5,7 +5,6 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.tools.Tool
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.features.ai.graph.sub.extraction.financial.extractBillSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractCreditNoteSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractInvoiceSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractProFormaSubGraph
@@ -22,7 +21,6 @@ fun AIAgentSubgraphBuilderBase<*, *>.financialExtractionSubGraph(
 ): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult> {
     return subgraph(name = "financial-extraction") {
         val extractInvoice by extractInvoiceSubGraph(aiConfig, tools)
-        val extractBill by extractBillSubGraph(aiConfig)
         val extractCreditNote by extractCreditNoteSubGraph(aiConfig)
         val extractQuote by extractQuoteSubGraph(aiConfig)
         val extractProForma by extractProFormaSubGraph(aiConfig)
@@ -43,7 +41,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.financialExtractionSubGraph(
         edge(unsupported forwardTo nodeFinish)
 
         edge(nodeStart forwardTo extractInvoice onCondition { it.documentType == DocumentType.Invoice })
-        edge(nodeStart forwardTo extractBill onCondition { it.documentType == DocumentType.Bill })
+        // BILL is treated as invoice semantics with inbound direction resolved deterministically later.
+        edge(nodeStart forwardTo extractInvoice onCondition { it.documentType == DocumentType.Bill })
         edge(nodeStart forwardTo extractCreditNote onCondition { it.documentType == DocumentType.CreditNote })
         edge(nodeStart forwardTo extractQuote onCondition { it.documentType == DocumentType.Quote })
         edge(nodeStart forwardTo extractProForma onCondition { it.documentType == DocumentType.ProForma })
@@ -51,7 +50,6 @@ fun AIAgentSubgraphBuilderBase<*, *>.financialExtractionSubGraph(
         edge(nodeStart forwardTo extractReceipt onCondition { it.documentType == DocumentType.Receipt })
 
         edge(extractInvoice forwardTo nodeFinish)
-        edge(extractBill forwardTo nodeFinish)
         edge(extractCreditNote forwardTo nodeFinish)
         edge(extractQuote forwardTo nodeFinish)
         edge(extractProForma forwardTo nodeFinish)

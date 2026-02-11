@@ -104,13 +104,12 @@ private val ClassifyDocumentInput.prompt
 
     ## KEY DISTINCTIONS
 
-    INVOICE vs BILL:
-    - INVOICE: Issued BY "${tenant.legalName.value}". The document header/seller area shows "${tenant.legalName.value}" (or a variation) or VAT "${tenant.vatNumber.value}".
-    - BILL: Received FROM a supplier. Another company (NOT "${tenant.legalName.value}") appears in the document header/seller area.
+    INVOICE vs BILL (legacy compatibility):
+    - Classify regular invoices as INVOICE regardless of whether tenant is seller or buyer.
+    - BILL is a legacy label and should only be used when the document is clearly a supplier invoice and classification confidence for INVOICE is low.
+    - Direction (incoming/outgoing) is resolved later by deterministic business logic, not classification.
 
     NAME MATCHING: Names on documents may differ from official names — ignore casing, dots vs spaces, domain-style names (e.g., "invoid.vision" = "Invoid Vision"). Use VAT number as the strongest identifier.
-
-    CRITICAL: If the document header/seller shows a DIFFERENT company than "${tenant.legalName.value}", it is a BILL — even if the word "Invoice" appears in the title.
 
     RECEIPT vs BILL:
     - RECEIPT: Small thermal ticket proving payment already made (retail/restaurant)

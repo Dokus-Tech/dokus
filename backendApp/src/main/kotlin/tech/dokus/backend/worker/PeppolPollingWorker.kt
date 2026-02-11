@@ -22,6 +22,7 @@ import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
@@ -353,9 +354,25 @@ class PeppolPollingWorker(
     private data class CounterpartyInfo(val name: String?, val vatNumber: VatNumber?)
 
     private fun extractCounterparty(draftData: DocumentDraftData): CounterpartyInfo = when (draftData) {
-        is BillDraftData -> CounterpartyInfo(draftData.supplierName, draftData.supplierVat)
+        is BillDraftData -> CounterpartyInfo(
+            draftData.supplierName ?: draftData.seller.name,
+            draftData.supplierVat ?: draftData.seller.vat
+        )
         is CreditNoteDraftData -> CounterpartyInfo(draftData.counterpartyName, draftData.counterpartyVat)
-        is InvoiceDraftData -> CounterpartyInfo(draftData.customerName, draftData.customerVat)
+        is InvoiceDraftData -> when (draftData.direction) {
+            DocumentDirection.Inbound -> CounterpartyInfo(
+                draftData.seller.name ?: draftData.customerName,
+                draftData.seller.vat ?: draftData.customerVat
+            )
+            DocumentDirection.Outbound -> CounterpartyInfo(
+                draftData.buyer.name ?: draftData.customerName,
+                draftData.buyer.vat ?: draftData.customerVat
+            )
+            DocumentDirection.Unknown -> CounterpartyInfo(
+                draftData.customerName ?: draftData.buyer.name ?: draftData.seller.name,
+                draftData.customerVat ?: draftData.buyer.vat ?: draftData.seller.vat
+            )
+        }
         is ReceiptDraftData -> CounterpartyInfo(draftData.merchantName, draftData.merchantVat)
     }
 

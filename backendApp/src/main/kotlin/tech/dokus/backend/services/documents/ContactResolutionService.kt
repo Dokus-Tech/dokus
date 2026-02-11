@@ -4,6 +4,7 @@ import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.CreditNoteDirection
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
@@ -263,16 +264,45 @@ class ContactResolutionService(
     }
 
     private fun buildSnapshot(draftData: DocumentDraftData): CounterpartySnapshot = when (draftData) {
-        is InvoiceDraftData -> CounterpartySnapshot(
-            name = draftData.customerName,
-            vatNumber = draftData.customerVat,
-            iban = null,
-            email = draftData.customerEmail,
-        )
+        is InvoiceDraftData -> when (draftData.direction) {
+            DocumentDirection.Inbound -> CounterpartySnapshot(
+                name = draftData.seller.name ?: draftData.customerName,
+                vatNumber = draftData.seller.vat ?: draftData.customerVat,
+                iban = draftData.seller.iban ?: draftData.iban,
+                email = draftData.seller.email ?: draftData.customerEmail,
+                streetLine1 = draftData.seller.streetLine1,
+                streetLine2 = draftData.seller.streetLine2,
+                postalCode = draftData.seller.postalCode,
+                city = draftData.seller.city,
+                country = null
+            )
+            DocumentDirection.Outbound -> CounterpartySnapshot(
+                name = draftData.buyer.name ?: draftData.customerName,
+                vatNumber = draftData.buyer.vat ?: draftData.customerVat,
+                iban = draftData.buyer.iban,
+                email = draftData.buyer.email ?: draftData.customerEmail,
+                streetLine1 = draftData.buyer.streetLine1,
+                streetLine2 = draftData.buyer.streetLine2,
+                postalCode = draftData.buyer.postalCode,
+                city = draftData.buyer.city,
+                country = null
+            )
+            DocumentDirection.Unknown -> CounterpartySnapshot(
+                name = draftData.customerName ?: draftData.buyer.name ?: draftData.seller.name,
+                vatNumber = draftData.customerVat ?: draftData.buyer.vat ?: draftData.seller.vat,
+                iban = draftData.iban ?: draftData.buyer.iban ?: draftData.seller.iban,
+                email = draftData.customerEmail ?: draftData.buyer.email ?: draftData.seller.email,
+                streetLine1 = draftData.buyer.streetLine1 ?: draftData.seller.streetLine1,
+                streetLine2 = draftData.buyer.streetLine2 ?: draftData.seller.streetLine2,
+                postalCode = draftData.buyer.postalCode ?: draftData.seller.postalCode,
+                city = draftData.buyer.city ?: draftData.seller.city,
+                country = null
+            )
+        }
         is BillDraftData -> CounterpartySnapshot(
-            name = draftData.supplierName,
-            vatNumber = draftData.supplierVat,
-            iban = draftData.iban,
+            name = draftData.supplierName ?: draftData.seller.name,
+            vatNumber = draftData.supplierVat ?: draftData.seller.vat,
+            iban = draftData.iban ?: draftData.seller.iban,
             email = null,
         )
         is CreditNoteDraftData -> CounterpartySnapshot(

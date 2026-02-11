@@ -43,6 +43,7 @@ import tech.dokus.aura.resources.documents_table_counterparty
 import tech.dokus.aura.resources.documents_table_description
 import tech.dokus.aura.resources.documents_view_details
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.BillDraftData
@@ -387,7 +388,12 @@ private fun resolveDescription(document: DocumentRecordDto): String {
 
     // Get counterparty name
     val counterparty = when (extractedData) {
-        is InvoiceDraftData -> extractedData.customerName.nonBlank()
+        is InvoiceDraftData -> when (extractedData.direction) {
+            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.customerName).nonBlank()
+            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.customerName).nonBlank()
+            DocumentDirection.Unknown ->
+                (extractedData.customerName ?: extractedData.buyer.name ?: extractedData.seller.name).nonBlank()
+        }
         is BillDraftData -> extractedData.supplierName.nonBlank()
         is ReceiptDraftData -> extractedData.merchantName.nonBlank()
         is CreditNoteDraftData -> extractedData.counterpartyName.nonBlank()
@@ -417,7 +423,12 @@ private fun resolveDescription(document: DocumentRecordDto): String {
 private fun resolveCounterparty(document: DocumentRecordDto): String {
     val extractedData = document.draft?.extractedData
     return when (extractedData) {
-        is InvoiceDraftData -> extractedData.customerName.nonBlank()
+        is InvoiceDraftData -> when (extractedData.direction) {
+            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.customerName).nonBlank()
+            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.customerName).nonBlank()
+            DocumentDirection.Unknown ->
+                (extractedData.customerName ?: extractedData.buyer.name ?: extractedData.seller.name).nonBlank()
+        }
         is BillDraftData -> extractedData.supplierName.nonBlank()
         is ReceiptDraftData -> extractedData.merchantName.nonBlank()
         is CreditNoteDraftData -> extractedData.counterpartyName.nonBlank()

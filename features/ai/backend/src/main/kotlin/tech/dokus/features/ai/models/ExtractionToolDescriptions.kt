@@ -32,6 +32,22 @@ object ExtractionToolDescriptions {
     const val SupplierVat = "Supplier VAT number if shown. Null if not visible."
     const val SupplierEmail = "Supplier email if visible."
 
+    const val SellerName = "Seller/issuer legal or trading name (header/logo area). Null if unclear."
+    const val SellerVat = "Seller VAT number if shown. Null if not visible."
+    const val SellerEmail = "Seller email if visible."
+    const val SellerStreet = "Seller street and number if visible."
+    const val SellerPostalCode = "Seller postal code if visible."
+    const val SellerCity = "Seller city if visible."
+    const val SellerCountry = "Seller country code or name if visible."
+
+    const val BuyerName = "Buyer/customer billed-to name. Null if unclear."
+    const val BuyerVat = "Buyer VAT number if shown. Null if not visible."
+    const val BuyerEmail = "Buyer email if visible."
+    const val BuyerStreet = "Buyer street and number if visible."
+    const val BuyerPostalCode = "Buyer postal code if visible."
+    const val BuyerCity = "Buyer city if visible."
+    const val BuyerCountry = "Buyer country code or name if visible."
+
     const val CounterpartyName = "Counterparty name (customer or supplier depending on direction). Null if unclear."
     const val CounterpartyVat = "Counterparty VAT number if shown. Null if not visible."
 

@@ -15,6 +15,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.slf4j.MDC
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.services.documents.DocumentDirectionResolver
 import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
@@ -56,6 +57,7 @@ class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val processingAgent: DocumentProcessingAgent,
     private val contactResolutionService: ContactResolutionService,
+    private val directionResolver: DocumentDirectionResolver,
     private val draftRepository: DocumentDraftRepository,
     private val documentRepository: DocumentRepository,
     private val autoConfirmPolicy: AutoConfirmPolicy,
@@ -207,12 +209,18 @@ class DocumentProcessingWorker(
             )
 
             val processingOutcome = result.toProcessingOutcome()
-            val documentType = result.classification.documentType
+            val normalizedDraft = directionResolver.normalize(
+                classifiedType = result.classification.documentType,
+                draftData = result.extraction.toDraftData(),
+                tenant = tenant,
+                associatedPersonNames = personNames
+            )
+            val documentType = normalizedDraft.documentType
             val confidence = minOf(
                 result.classification.confidence,
                 result.extraction.confidenceScore()
             )
-            val draftData = result.extraction.toDraftData()
+            val draftData = normalizedDraft.draftData
 
             val rawExtractionJson = json.encodeToString(result)
 

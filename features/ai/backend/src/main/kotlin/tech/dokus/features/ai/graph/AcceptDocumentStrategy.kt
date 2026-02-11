@@ -86,7 +86,7 @@ private fun buildRetryFeedback(
     val classificationConfidence = result.classification.confidence
     if (classificationConfidence < threshold) {
         lines += "Classification confidence ${formatConfidence(classificationConfidence)} below $threshold."
-        lines += "Re-check whether the tenant is seller (INVOICE) or buyer (BILL)."
+        lines += "Re-check the legal document type only (Invoice/CreditNote/etc); direction is resolved later."
     }
 
     val extractionConfidence = result.extraction.confidenceScore()

@@ -322,6 +322,29 @@ enum class CounterpartyIntent(override val dbValue: String) : DbEnum {
 }
 
 /**
+ * Business direction of a document relative to the tenant.
+ *
+ * - Inbound: received by tenant (tenant is buyer/recipient)
+ * - Outbound: issued by tenant (tenant is seller/sender)
+ * - Unknown: not deterministically resolved yet
+ */
+@Serializable
+enum class DocumentDirection(override val dbValue: String) : DbEnum {
+    @SerialName("INBOUND")
+    Inbound("INBOUND"),
+
+    @SerialName("OUTBOUND")
+    Outbound("OUTBOUND"),
+
+    @SerialName("UNKNOWN")
+    Unknown("UNKNOWN");
+
+    companion object {
+        fun fromDbValue(value: String): DocumentDirection = entries.find { it.dbValue == value }!!
+    }
+}
+
+/**
  * Reason for rejecting a document during confirmation.
  */
 @Serializable

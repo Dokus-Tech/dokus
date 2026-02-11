@@ -54,8 +54,8 @@ class BillConfirmationService(
         }
 
         val request = CreateBillRequest(
-            supplierName = draftData.supplierName ?: "Unknown Supplier",
-            supplierVatNumber = draftData.supplierVat?.value,
+            supplierName = draftData.supplierName ?: draftData.seller.name ?: "Unknown Supplier",
+            supplierVatNumber = (draftData.supplierVat ?: draftData.seller.vat)?.value,
             invoiceNumber = draftData.invoiceNumber,
             issueDate = issueDate,
             dueDate = dueDate,
