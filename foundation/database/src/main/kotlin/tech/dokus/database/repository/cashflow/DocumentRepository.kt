@@ -16,7 +16,6 @@ import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.core.or
-import org.jetbrains.exposed.v1.core.slice
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
@@ -217,8 +216,8 @@ class DocumentRepository {
         // Processing > latest Succeeded/Failed (by finishedAt) > latest Queued (by queuedAt).
         val maxProcessingStartedAt = DocumentIngestionRunsTable.startedAt.max().alias("max_started_at")
         val processingMaxStartedAt = DocumentIngestionRunsTable
-            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, maxProcessingStartedAt)
-            .select {
+            .select(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, maxProcessingStartedAt)
+            .where {
                 (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
                     (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             }
@@ -233,16 +232,15 @@ class DocumentRepository {
                     (DocumentIngestionRunsTable.startedAt eq processingMaxStartedAt[maxProcessingStartedAt]) and
                     (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             })
-            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, processingRunId)
-            .selectAll()
+            .select(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, processingRunId)
             .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
             .alias("processing_selected")
 
         val finishedStatuses = listOf(IngestionStatus.Succeeded, IngestionStatus.Failed)
         val maxFinishedAt = DocumentIngestionRunsTable.finishedAt.max().alias("max_finished_at")
         val finishedMaxFinishedAt = DocumentIngestionRunsTable
-            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, maxFinishedAt)
-            .select {
+            .select(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, maxFinishedAt)
+            .where {
                 (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
                     (DocumentIngestionRunsTable.status inList finishedStatuses)
             }
@@ -257,15 +255,14 @@ class DocumentRepository {
                     (DocumentIngestionRunsTable.finishedAt eq finishedMaxFinishedAt[maxFinishedAt]) and
                     (DocumentIngestionRunsTable.status inList finishedStatuses)
             })
-            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, finishedRunId)
-            .selectAll()
+            .select(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, finishedRunId)
             .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
             .alias("finished_selected")
 
         val maxQueuedAt = DocumentIngestionRunsTable.queuedAt.max().alias("max_queued_at")
         val queuedMaxQueuedAt = DocumentIngestionRunsTable
-            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, maxQueuedAt)
-            .select {
+            .select(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, maxQueuedAt)
+            .where {
                 (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
                     (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
             }
@@ -280,8 +277,7 @@ class DocumentRepository {
                     (DocumentIngestionRunsTable.queuedAt eq queuedMaxQueuedAt[maxQueuedAt]) and
                     (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
             })
-            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, queuedRunId)
-            .selectAll()
+            .select(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, queuedRunId)
             .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
             .alias("queued_selected")
 
@@ -313,19 +309,19 @@ class DocumentRepository {
         val finishedRunStatusExpr = finishedRun[DocumentIngestionRunsTable.status]
 
         val invoiceExists = exists(
-            InvoicesTable.slice(InvoicesTable.id).select {
+            InvoicesTable.select(InvoicesTable.id).where {
                 (InvoicesTable.tenantId eq DocumentsTable.tenantId) and
                     (InvoicesTable.documentId eq DocumentsTable.id)
             }
         )
         val expenseExists = exists(
-            ExpensesTable.slice(ExpensesTable.id).select {
+            ExpensesTable.select(ExpensesTable.id).where {
                 (ExpensesTable.tenantId eq DocumentsTable.tenantId) and
                     (ExpensesTable.documentId eq DocumentsTable.id)
             }
         )
         val creditNoteExists = exists(
-            CreditNotesTable.slice(CreditNotesTable.id).select {
+            CreditNotesTable.select(CreditNotesTable.id).where {
                 (CreditNotesTable.tenantId eq DocumentsTable.tenantId) and
                     (CreditNotesTable.documentId eq DocumentsTable.id)
             }
@@ -402,13 +398,12 @@ class DocumentRepository {
         }
 
         val baseQuery = join
-            .slice(
+            .select(
                 DocumentsTable.id,
                 processingRunIdExpr,
                 finishedRunIdExpr,
                 queuedRunIdExpr
             )
-            .selectAll()
             .where { whereOp }
 
         val total = baseQuery.count()
