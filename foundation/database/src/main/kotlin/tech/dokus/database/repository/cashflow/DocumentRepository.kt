@@ -1,19 +1,30 @@
 package tech.dokus.database.repository.cashflow
 
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.exists
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.like
+import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.core.not
+import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.core.or
-import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.core.slice
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.tables.cashflow.CreditNotesTable
+import tech.dokus.database.tables.cashflow.ExpensesTable
+import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -196,141 +207,277 @@ class DocumentRepository {
         limit: Int = 20
     ): Pair<List<DocumentWithDraftAndIngestion>, Long> = newSuspendedTransaction {
         val tenantIdUuid = UUID.fromString(tenantId.toString())
+        val trimmedSearch = search?.trim()?.takeIf { it.isNotEmpty() }
 
-        // Step 1: Query documents with optional LEFT JOIN to drafts
-        // We use a subquery approach since Exposed doesn't support complex LEFT JOINs well
-        val documentsQuery = DocumentsTable
-            .leftJoin(DocumentDraftsTable)
+        // Precedence: when using the high-level filter, ignore lower-level status filters.
+        val effectiveDocumentStatus = if (filter != null) null else documentStatus
+        val effectiveIngestionStatus = if (filter != null) null else ingestionStatus
+
+        // Latest ingestion selection is deterministic and DB-driven:
+        // Processing > latest Succeeded/Failed (by finishedAt) > latest Queued (by queuedAt).
+        val maxProcessingStartedAt = DocumentIngestionRunsTable.startedAt.max().alias("max_started_at")
+        val processingMaxStartedAt = DocumentIngestionRunsTable
+            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, maxProcessingStartedAt)
+            .select {
+                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
+            }
+            .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
+            .alias("processing_max_started_at")
+
+        val processingRunId = DocumentIngestionRunsTable.id.max().alias("processing_run_id")
+        val processingSelected = DocumentIngestionRunsTable
+            .join(processingMaxStartedAt, joinType = JoinType.INNER, additionalConstraint = {
+                (DocumentIngestionRunsTable.documentId eq processingMaxStartedAt[DocumentIngestionRunsTable.documentId]) and
+                    (DocumentIngestionRunsTable.tenantId eq processingMaxStartedAt[DocumentIngestionRunsTable.tenantId]) and
+                    (DocumentIngestionRunsTable.startedAt eq processingMaxStartedAt[maxProcessingStartedAt]) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
+            })
+            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, processingRunId)
             .selectAll()
-            .where { DocumentsTable.tenantId eq tenantIdUuid }
+            .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
+            .alias("processing_selected")
 
-        // Apply search filter on filename (case-insensitive)
-        val filteredQuery = if (!search.isNullOrBlank()) {
-            documentsQuery.andWhere {
-                DocumentsTable.filename like "%$search%"
+        val finishedStatuses = listOf(IngestionStatus.Succeeded, IngestionStatus.Failed)
+        val maxFinishedAt = DocumentIngestionRunsTable.finishedAt.max().alias("max_finished_at")
+        val finishedMaxFinishedAt = DocumentIngestionRunsTable
+            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, maxFinishedAt)
+            .select {
+                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status inList finishedStatuses)
             }
-        } else {
-            documentsQuery
+            .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
+            .alias("finished_max_finished_at")
+
+        val finishedRunId = DocumentIngestionRunsTable.id.max().alias("finished_run_id")
+        val finishedSelected = DocumentIngestionRunsTable
+            .join(finishedMaxFinishedAt, joinType = JoinType.INNER, additionalConstraint = {
+                (DocumentIngestionRunsTable.documentId eq finishedMaxFinishedAt[DocumentIngestionRunsTable.documentId]) and
+                    (DocumentIngestionRunsTable.tenantId eq finishedMaxFinishedAt[DocumentIngestionRunsTable.tenantId]) and
+                    (DocumentIngestionRunsTable.finishedAt eq finishedMaxFinishedAt[maxFinishedAt]) and
+                    (DocumentIngestionRunsTable.status inList finishedStatuses)
+            })
+            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, finishedRunId)
+            .selectAll()
+            .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
+            .alias("finished_selected")
+
+        val maxQueuedAt = DocumentIngestionRunsTable.queuedAt.max().alias("max_queued_at")
+        val queuedMaxQueuedAt = DocumentIngestionRunsTable
+            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, maxQueuedAt)
+            .select {
+                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
+            }
+            .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
+            .alias("queued_max_queued_at")
+
+        val queuedRunId = DocumentIngestionRunsTable.id.max().alias("queued_run_id")
+        val queuedSelected = DocumentIngestionRunsTable
+            .join(queuedMaxQueuedAt, joinType = JoinType.INNER, additionalConstraint = {
+                (DocumentIngestionRunsTable.documentId eq queuedMaxQueuedAt[DocumentIngestionRunsTable.documentId]) and
+                    (DocumentIngestionRunsTable.tenantId eq queuedMaxQueuedAt[DocumentIngestionRunsTable.tenantId]) and
+                    (DocumentIngestionRunsTable.queuedAt eq queuedMaxQueuedAt[maxQueuedAt]) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
+            })
+            .slice(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, queuedRunId)
+            .selectAll()
+            .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
+            .alias("queued_selected")
+
+        val finishedRun = DocumentIngestionRunsTable.alias("finished_run")
+
+        val join = DocumentsTable
+            .join(DocumentDraftsTable, joinType = JoinType.LEFT, onColumn = DocumentsTable.id, otherColumn = DocumentDraftsTable.documentId) {
+                DocumentDraftsTable.tenantId eq DocumentsTable.tenantId
+            }
+            .join(processingSelected, joinType = JoinType.LEFT, additionalConstraint = {
+                (processingSelected[DocumentIngestionRunsTable.documentId] eq DocumentsTable.id) and
+                    (processingSelected[DocumentIngestionRunsTable.tenantId] eq DocumentsTable.tenantId)
+            })
+            .join(finishedSelected, joinType = JoinType.LEFT, additionalConstraint = {
+                (finishedSelected[DocumentIngestionRunsTable.documentId] eq DocumentsTable.id) and
+                    (finishedSelected[DocumentIngestionRunsTable.tenantId] eq DocumentsTable.tenantId)
+            })
+            .join(queuedSelected, joinType = JoinType.LEFT, additionalConstraint = {
+                (queuedSelected[DocumentIngestionRunsTable.documentId] eq DocumentsTable.id) and
+                    (queuedSelected[DocumentIngestionRunsTable.tenantId] eq DocumentsTable.tenantId)
+            })
+            .join(finishedRun, joinType = JoinType.LEFT, additionalConstraint = {
+                finishedRun[DocumentIngestionRunsTable.id] eq finishedSelected[finishedRunId]
+            })
+
+        val processingRunIdExpr = processingSelected[processingRunId]
+        val finishedRunIdExpr = finishedSelected[finishedRunId]
+        val queuedRunIdExpr = queuedSelected[queuedRunId]
+        val finishedRunStatusExpr = finishedRun[DocumentIngestionRunsTable.status]
+
+        val invoiceExists = exists(
+            InvoicesTable.slice(InvoicesTable.id).select {
+                (InvoicesTable.tenantId eq DocumentsTable.tenantId) and
+                    (InvoicesTable.documentId eq DocumentsTable.id)
+            }
+        )
+        val expenseExists = exists(
+            ExpensesTable.slice(ExpensesTable.id).select {
+                (ExpensesTable.tenantId eq DocumentsTable.tenantId) and
+                    (ExpensesTable.documentId eq DocumentsTable.id)
+            }
+        )
+        val creditNoteExists = exists(
+            CreditNotesTable.slice(CreditNotesTable.id).select {
+                (CreditNotesTable.tenantId eq DocumentsTable.tenantId) and
+                    (CreditNotesTable.documentId eq DocumentsTable.id)
+            }
+        )
+        val entityExists = invoiceExists or expenseExists or creditNoteExists
+
+        val confirmedStrict = (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and entityExists
+        val confirmedButNoEntity = (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and not(entityExists)
+
+        val draftMissing = DocumentDraftsTable.documentId.isNull()
+        val draftNotRejected = DocumentDraftsTable.documentStatus.isNull() or
+            (DocumentDraftsTable.documentStatus neq DocumentStatus.Rejected)
+
+        val latestIsProcessing = processingRunIdExpr.isNotNull()
+        val latestIsQueued = processingRunIdExpr.isNull() and finishedRunIdExpr.isNull() and queuedRunIdExpr.isNotNull()
+        val latestIsFailed = processingRunIdExpr.isNull() and finishedRunIdExpr.isNotNull() and
+            (finishedRunStatusExpr eq IngestionStatus.Failed)
+        val latestIsSucceeded = processingRunIdExpr.isNull() and finishedRunIdExpr.isNotNull() and
+            (finishedRunStatusExpr eq IngestionStatus.Succeeded)
+
+        var whereOp = (DocumentsTable.tenantId eq tenantIdUuid) and draftNotRejected
+
+        if (trimmedSearch != null) {
+            whereOp = whereOp and (LowerCase(DocumentsTable.filename) like "%${trimmedSearch.lowercase()}%")
         }
 
-        // Apply draft status filter (null-safe: documents without drafts pass)
-        // When draft doesn't exist (LEFT JOIN null), the document should still be included
-        val statusFilteredQuery = if (documentStatus != null) {
-            filteredQuery.andWhere {
-                DocumentDraftsTable.tenantId.isNull() or
-                    (DocumentDraftsTable.documentStatus eq documentStatus)
-            }
-        } else {
-            filteredQuery
+        val requiresDraft = effectiveDocumentStatus != null || documentType != null
+        if (requiresDraft) {
+            whereOp = whereOp and DocumentDraftsTable.documentId.isNotNull()
         }
 
-        // Apply document type filter (null-safe: documents without drafts pass)
-        val typeFilteredQuery = if (documentType != null) {
-            statusFilteredQuery.andWhere {
-                DocumentDraftsTable.tenantId.isNull() or
-                    (DocumentDraftsTable.documentType eq documentType)
-            }
-        } else {
-            statusFilteredQuery
+        if (effectiveDocumentStatus != null) {
+            whereOp = whereOp and (DocumentDraftsTable.documentStatus eq effectiveDocumentStatus)
         }
 
-        // Get total count before pagination
-        val total = typeFilteredQuery.count()
+        if (documentType != null) {
+            whereOp = whereOp and (DocumentDraftsTable.documentType eq documentType)
+        }
 
-        // Get paginated results
-        val rows = typeFilteredQuery
-            .orderBy(DocumentsTable.uploadedAt, SortOrder.DESC)
+        if (effectiveIngestionStatus != null) {
+            val ingestionFilterOp = when (effectiveIngestionStatus) {
+                IngestionStatus.Processing -> latestIsProcessing
+                IngestionStatus.Queued -> latestIsQueued
+                IngestionStatus.Failed -> latestIsFailed
+                IngestionStatus.Succeeded -> latestIsSucceeded
+            }
+            whereOp = whereOp and ingestionFilterOp
+        }
+
+        when (filter ?: DocumentListFilter.All) {
+            DocumentListFilter.All -> Unit
+
+            DocumentListFilter.Confirmed -> {
+                whereOp = whereOp and confirmedStrict
+            }
+
+            DocumentListFilter.NeedsAttention -> {
+                val isNotConfirmed =
+                    DocumentDraftsTable.documentStatus.isNull() or
+                        (DocumentDraftsTable.documentStatus neq DocumentStatus.Confirmed) or
+                        not(entityExists)
+
+                val ingestionNeedsAttention = latestIsQueued or latestIsProcessing or latestIsFailed
+                val draftNeedsReview = DocumentDraftsTable.documentStatus eq DocumentStatus.NeedsReview
+                val succeededButNoDraft = draftMissing and latestIsSucceeded
+
+                whereOp =
+                    whereOp and
+                        (
+                            confirmedButNoEntity or
+                                (isNotConfirmed and (ingestionNeedsAttention or draftNeedsReview or succeededButNoDraft))
+                            )
+            }
+        }
+
+        val baseQuery = join
+            .slice(
+                DocumentsTable.id,
+                processingRunIdExpr,
+                finishedRunIdExpr,
+                queuedRunIdExpr
+            )
+            .selectAll()
+            .where { whereOp }
+
+        val total = baseQuery.count()
+
+        data class PageRow(
+            val documentId: DocumentId,
+            val latestRunId: IngestionRunId?
+        )
+
+        val offset = (page * limit).toLong()
+        val pageRows = baseQuery
+            .orderBy(DocumentsTable.uploadedAt to SortOrder.DESC, DocumentsTable.id to SortOrder.DESC)
             .limit(limit)
-            .offset((page * limit).toLong())
-            .toList()
-
-        // Step 2: For each document, get the latest ingestion run
-        // We need to do this as separate queries due to the priority logic
-        val documentIds = rows.map { UUID.fromString(it[DocumentsTable.id].toString()) }
-
-        // Build result list
-        val results = rows.mapNotNull { row ->
-            val documentId = DocumentId.parse(row[DocumentsTable.id].toString())
-            val document = row.toDocumentDto()
-
-            // Extract draft if present
-            val draft = if (row.getOrNull(DocumentDraftsTable.documentId) != null) {
-                row.toDraftSummary()
-            } else {
-                null
+            .offset(offset)
+            .mapNotNull { row ->
+                val documentId = DocumentId.parse(row[DocumentsTable.id].toString())
+                val processing = row.getOrNull(processingRunIdExpr)
+                val finished = row.getOrNull(finishedRunIdExpr)
+                val queued = row.getOrNull(queuedRunIdExpr)
+                val latest = (processing ?: finished ?: queued)?.let { IngestionRunId.parse(it.toString()) }
+                PageRow(documentId = documentId, latestRunId = latest)
             }
 
-            // Get latest ingestion for this document (using priority logic)
-            val latestIngestion = getLatestIngestionForDocument(documentId, tenantIdUuid)
+        if (pageRows.isEmpty()) {
+            return@newSuspendedTransaction emptyList<DocumentWithDraftAndIngestion>() to total
+        }
 
-            // Apply ingestion status filter
-            if (ingestionStatus != null && latestIngestion?.status != ingestionStatus) {
-                return@mapNotNull null
+        val documentIds = pageRows.map { UUID.fromString(it.documentId.toString()) }
+        val latestRunIds = pageRows.mapNotNull { row -> row.latestRunId?.let { UUID.fromString(it.toString()) } }
+
+        val documentsById = DocumentsTable.selectAll()
+            .where {
+                (DocumentsTable.tenantId eq tenantIdUuid) and
+                    (DocumentsTable.id inList documentIds)
+            }
+            .associate { row -> DocumentId.parse(row[DocumentsTable.id].toString()) to row.toDocumentDto() }
+
+        val draftsByDocumentId = DocumentDraftsTable.selectAll()
+            .where {
+                (DocumentDraftsTable.tenantId eq tenantIdUuid) and
+                    (DocumentDraftsTable.documentId inList documentIds)
+            }
+            .associate { row ->
+                DocumentId.parse(row[DocumentDraftsTable.documentId].toString()) to row.toDraftSummary()
             }
 
+        val latestIngestionsById = if (latestRunIds.isEmpty()) {
+            emptyMap()
+        } else {
+            DocumentIngestionRunsTable.selectAll()
+                .where {
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                        (DocumentIngestionRunsTable.id inList latestRunIds)
+                }
+                .associate { row ->
+                    IngestionRunId.parse(row[DocumentIngestionRunsTable.id].toString()) to row.toIngestionRunSummary()
+                }
+        }
+
+        val results = pageRows.mapNotNull { row ->
+            val document = documentsById[row.documentId] ?: return@mapNotNull null
             DocumentWithDraftAndIngestion(
                 document = document,
-                draft = draft,
-                latestIngestion = latestIngestion
+                draft = draftsByDocumentId[row.documentId],
+                latestIngestion = row.latestRunId?.let { latestIngestionsById[it] }
             )
         }
 
-        // Adjust total count if ingestion filter was applied
-        // (This is a simplification - ideally we'd filter in the query)
-        val adjustedTotal = if (ingestionStatus != null) {
-            results.size.toLong()
-        } else {
-            total
-        }
-
-        results to adjustedTotal
-    }
-
-    /**
-     * Get the latest ingestion run for a document with priority logic.
-     * Priority: Processing > latest Succeeded/Failed (by finishedAt) > latest Queued (by queuedAt)
-     */
-    private fun getLatestIngestionForDocument(
-        documentId: DocumentId,
-        tenantIdUuid: UUID
-    ): IngestionRunSummary? {
-        val docIdUuid = UUID.fromString(documentId.toString())
-
-        // First, check for Processing status
-        val processing = DocumentIngestionRunsTable.selectAll()
-            .where {
-                (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
-            }
-            .map { it.toIngestionRunSummary() }
-            .firstOrNull()
-
-        if (processing != null) return processing
-
-        // Then, check for latest Succeeded/Failed by finishedAt
-        val finished = DocumentIngestionRunsTable.selectAll()
-            .where {
-                (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                    (DocumentIngestionRunsTable.status inList listOf(IngestionStatus.Succeeded, IngestionStatus.Failed))
-            }
-            .orderBy(DocumentIngestionRunsTable.finishedAt, SortOrder.DESC_NULLS_LAST)
-            .map { it.toIngestionRunSummary() }
-            .firstOrNull()
-
-        if (finished != null) return finished
-
-        // Finally, check for latest Queued by queuedAt
-        return DocumentIngestionRunsTable.selectAll()
-            .where {
-                (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                    (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
-            }
-            .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
-            .map { it.toIngestionRunSummary() }
-            .firstOrNull()
+        results to total
     }
 
     private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {
