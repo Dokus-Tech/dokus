@@ -12,19 +12,25 @@ sealed interface ShareImportState : MVIState {
     data object LoadingContext : ShareImportState
 
     data class SelectWorkspace(
-        val fileName: String,
+        val primaryFileName: String,
+        val additionalFileCount: Int,
         val workspaces: List<Tenant>,
         val isSwitchingWorkspace: Boolean = false
     ) : ShareImportState
 
     data class Uploading(
-        val fileName: String,
+        val currentFileName: String,
+        val currentFileIndex: Int,
+        val totalFiles: Int,
         val workspaceName: String,
-        val progress: Float,
+        val currentFileProgress: Float,
+        val overallProgress: Float,
     ) : ShareImportState
 
     data class Success(
-        val fileName: String,
+        val primaryFileName: String,
+        val additionalFileCount: Int,
+        val uploadedCount: Int,
         val documentId: String
     ) : ShareImportState
 
