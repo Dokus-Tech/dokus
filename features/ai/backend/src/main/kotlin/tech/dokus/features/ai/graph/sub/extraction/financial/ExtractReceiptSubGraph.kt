@@ -15,6 +15,7 @@ import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.config.documentProcessing
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -46,7 +47,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractReceiptSubGraph(
         name = "Extract receipt information",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
-        llmParams = LLMParams(temperature = 0.1),
+        llmParams = LLMParams.documentProcessing,
         finishTool = ReceiptExtractionFinishTool()
     ) { it.receiptPrompt }
 }

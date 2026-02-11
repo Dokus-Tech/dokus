@@ -14,6 +14,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.config.documentProcessing
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -26,7 +27,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractProFormaSubGraph(
         name = "Extract pro forma invoice information",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
-        llmParams = LLMParams(temperature = 0.1),
+        llmParams = LLMParams.documentProcessing,
         finishTool = ProFormaExtractionFinishTool(),
     ) { it.proFormaPrompt }
 }

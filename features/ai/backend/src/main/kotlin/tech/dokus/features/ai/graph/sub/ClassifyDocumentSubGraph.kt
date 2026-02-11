@@ -5,12 +5,14 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.tools.Tool
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.ext.agent.subgraphWithTask
+import ai.koog.prompt.params.LLMParams
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.config.documentProcessing
 import tech.dokus.features.ai.extensions.description
 import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
@@ -23,6 +25,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
         name = "Classify document",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
+        llmParams = LLMParams.documentProcessing,
         finishTool = ClassificationFinishTool()
     ) { it.prompt }
 }

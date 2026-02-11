@@ -32,15 +32,16 @@ fun acceptDocumentGraph(
     documentFetcher: DocumentFetcher,
 ): AIAgentGraphStrategy<AcceptDocumentInput, DocumentAiProcessingResult> {
     return strategy<AcceptDocumentInput, DocumentAiProcessingResult>("accept-document-graph") {
+        val confirmThreshold = AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 
         val processWithRetry by subgraphWithRetrySimple<AcceptDocumentInput, DocumentAiProcessingResult>(
             name = "process-document-with-retry",
-            maxRetries = 1,
+            maxRetries = 2,
             strict = false,
             conditionDescription = buildString {
                 appendLine("Auto-confirm only if:")
-                appendLine("- classification confidence >= $AUTO_CONFIRM_CONFIDENCE_THRESHOLD")
-                appendLine("- extraction confidence >= $AUTO_CONFIRM_CONFIDENCE_THRESHOLD")
+                appendLine("- classification confidence >= $confirmThreshold")
+                appendLine("- extraction confidence >= $confirmThreshold")
                 appendLine("- validation has no critical issues")
                 appendLine()
                 appendLine("If uncertain, prefer UNKNOWN and nulls over guessing.")
@@ -49,15 +50,13 @@ fun acceptDocumentGraph(
             condition = { result ->
                 val classificationConfidence = result.classification.confidence
                 val extractionConfidence = result.extraction.confidenceScore()
-                val meetsConfidence =
-                    classificationConfidence >= AUTO_CONFIRM_CONFIDENCE_THRESHOLD &&
-                            extractionConfidence >= AUTO_CONFIRM_CONFIDENCE_THRESHOLD
+                val meetsConfidence = classificationConfidence >= confirmThreshold && extractionConfidence >= confirmThreshold
                 val isValid = result.auditReport.isValid
 
                 if (meetsConfidence && isValid) {
                     ConditionResult.Approve
                 } else {
-                    ConditionResult.Reject(buildRetryFeedback(result))
+                    ConditionResult.Reject(buildRetryFeedback(result, confirmThreshold))
                 }
             }
         ) {
@@ -72,7 +71,7 @@ fun acceptDocumentGraph(
 
 private fun buildRetryFeedback(
     result: DocumentAiProcessingResult,
-    threshold: Double = AUTO_CONFIRM_CONFIDENCE_THRESHOLD
+    threshold: Double
 ): String {
     val lines = mutableListOf<String>()
 

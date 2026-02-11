@@ -16,6 +16,7 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.config.documentProcessing
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -28,7 +29,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractQuoteSubGraph(
         name = "Extract quote information",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
-        llmParams = LLMParams(temperature = 0.1),
+        llmParams = LLMParams.documentProcessing,
         finishTool = QuoteExtractionFinishTool(),
     ) { it.quotePrompt }
 }
