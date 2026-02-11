@@ -77,12 +77,18 @@ internal fun Route.documentRecordRoutes() {
             val tenantId = dokusPrincipal.requireTenantId()
             val page = route.page.coerceAtLeast(0)
             val limit = route.limit.coerceIn(1, 100)
+            val filter = route.filter
 
-            logger.info("Listing documents: tenant=$tenantId, page=$page, limit=$limit")
+            logger.info("Listing documents: tenant=$tenantId, filter=$filter, page=$page, limit=$limit")
+
+            if (filter != null && (route.documentStatus != null || route.ingestionStatus != null)) {
+                throw DokusException.BadRequest("Do not combine 'filter' with 'documentStatus' or 'ingestionStatus'")
+            }
 
             // Query documents with optional drafts and ingestion info
             val (documentsWithInfo, total) = documentRepository.listWithDraftsAndIngestion(
                 tenantId = tenantId,
+                filter = filter,
                 documentStatus = route.documentStatus,
                 documentType = route.documentType,
                 ingestionStatus = route.ingestionStatus,
