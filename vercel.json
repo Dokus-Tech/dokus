@@ -5,7 +5,7 @@
   "outputDirectory": "composeApp/build/dist/wasmJs/productionExecutable",
   "rewrites": [
     {
-      "source": "/((?!.*\\.[^/]+$).*)",
+      "source": "/((?!_vercel/)(?!.*\\.[^/]+$).*)",
       "destination": "/index.html"
     }
   ]
