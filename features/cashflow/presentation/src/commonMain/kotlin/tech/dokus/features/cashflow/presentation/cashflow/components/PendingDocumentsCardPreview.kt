@@ -11,18 +11,18 @@ import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.ExtractedBillFields
-import tech.dokus.domain.model.ExtractedDocumentData
-import tech.dokus.domain.model.ExtractedExpenseFields
-import tech.dokus.domain.model.ExtractedInvoiceFields
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -48,7 +48,7 @@ private const val PreviewNanosecond = 0
 
 // Preview mock data file size constants (in bytes)
 private const val InvoiceSizeBytes = 125000L
-private const val BillSizeBytes = 98000L
+private const val InboundInvoiceSizeBytes = 98000L
 private const val ExpenseSizeBytes = 45000L
 private const val ScanSizeBytes = 200000L
 private const val ClientInvoiceSizeBytes = 150000L
@@ -212,19 +212,14 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             draft = DocumentDraftDto(
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
-                draftStatus = DraftStatus.NeedsReview,
+                documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Invoice,
-                extractedData = ExtractedDocumentData(
-                    invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4400")
-                ),
+                extractedData = InvoiceDraftData(invoiceNumber = "INV-3006-4400"),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
                 draftVersion = InitialDraftVersion,
                 draftEditedAt = null,
                 draftEditedBy = null,
-                suggestedContactId = null,
-                contactSuggestionConfidence = null,
-                contactSuggestionReason = null,
                 linkedContactId = null,
                 counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
                 rejectReason = null,
@@ -235,36 +230,32 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             latestIngestion = null,
             confirmedEntity = null
         ),
-        // Bill with extraction data - NeedsReview status
+        // Inbound invoice with extraction data - NeedsReview status
         DocumentRecordDto(
             document = DocumentDto(
                 id = DocumentId.generate(),
                 tenantId = tenantId,
-                filename = "supplier-bill.pdf",
+                filename = "supplier-inbound-invoice.pdf",
                 contentType = "application/pdf",
-                sizeBytes = BillSizeBytes,
-                storageKey = "documents/supplier-bill.pdf",
+                sizeBytes = InboundInvoiceSizeBytes,
+                storageKey = "documents/supplier-inbound-invoice.pdf",
                 uploadedAt = now
             ),
             draft = DocumentDraftDto(
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
-                draftStatus = DraftStatus.NeedsReview,
-                documentType = DocumentType.Bill,
-                extractedData = ExtractedDocumentData(
-                    bill = ExtractedBillFields(
-                        invoiceNumber = "BILL-2024-123",
-                        supplierName = "Office Supplies Inc."
-                    )
+                documentStatus = DocumentStatus.NeedsReview,
+                documentType = DocumentType.Invoice,
+                extractedData = InvoiceDraftData(
+                    direction = DocumentDirection.Inbound,
+                    invoiceNumber = "INV-2024-123",
+                    seller = PartyDraft(name = "Office Supplies Inc.")
                 ),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
                 draftVersion = InitialDraftVersion,
                 draftEditedAt = null,
                 draftEditedBy = null,
-                suggestedContactId = null,
-                contactSuggestionConfidence = null,
-                contactSuggestionReason = null,
                 linkedContactId = null,
                 counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
                 rejectReason = null,
@@ -275,7 +266,7 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             latestIngestion = null,
             confirmedEntity = null
         ),
-        // Expense - NeedsReview status
+        // Receipt - NeedsReview status
         DocumentRecordDto(
             document = DocumentDto(
                 id = DocumentId.generate(),
@@ -289,19 +280,14 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             draft = DocumentDraftDto(
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
-                draftStatus = DraftStatus.NeedsReview,
-                documentType = DocumentType.Expense,
-                extractedData = ExtractedDocumentData(
-                    expense = ExtractedExpenseFields(merchant = "Restaurant ABC")
-                ),
+                documentStatus = DocumentStatus.NeedsReview,
+                documentType = DocumentType.Receipt,
+                extractedData = ReceiptDraftData(merchantName = "Restaurant ABC"),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
                 draftVersion = InitialDraftVersion,
                 draftEditedAt = null,
                 draftEditedBy = null,
-                suggestedContactId = null,
-                contactSuggestionConfidence = null,
-                contactSuggestionReason = null,
                 linkedContactId = null,
                 counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
                 rejectReason = null,
@@ -341,19 +327,14 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             draft = DocumentDraftDto(
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
-                draftStatus = DraftStatus.NeedsReview,
+                documentStatus = DocumentStatus.NeedsReview,
                 documentType = DocumentType.Invoice,
-                extractedData = ExtractedDocumentData(
-                    invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4401")
-                ),
+                extractedData = InvoiceDraftData(invoiceNumber = "INV-3006-4401"),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,
                 draftVersion = InitialDraftVersion,
                 draftEditedAt = null,
                 draftEditedBy = null,
-                suggestedContactId = null,
-                contactSuggestionConfidence = null,
-                contactSuggestionReason = null,
                 linkedContactId = null,
                 counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
                 rejectReason = null,

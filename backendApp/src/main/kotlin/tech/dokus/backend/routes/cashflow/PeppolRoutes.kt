@@ -271,7 +271,7 @@ internal fun Route.peppolRoutes() {
          *
          * Polls the Peppol provider's inbox for new documents and:
          * - Creates Document+Draft records
-         * - Auto-confirms PEPPOL documents (creates Bills immediately)
+         * - Auto-confirms PEPPOL documents (creates Inbound Invoices immediately)
          */
         post<Peppol.Inbox.Syncs> {
             val tenantId = dokusPrincipal.requireTenantId()

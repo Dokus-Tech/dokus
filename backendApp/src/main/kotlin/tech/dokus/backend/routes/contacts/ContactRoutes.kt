@@ -222,7 +222,7 @@ fun Route.contactRoutes() {
 
         /**
          * GET /api/v1/contacts/{id}/activity
-         * Get activity summary for a contact (counts and totals of invoices, bills, expenses).
+         * Get activity summary for a contact (counts and totals of invoices, inbound invoices, expenses).
          */
         get<Contacts.Id.Activity> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
@@ -242,7 +242,7 @@ fun Route.contactRoutes() {
          * POST /api/v1/contacts/{id}/merge-into/{targetId}
          * Merge source contact into target contact.
          *
-         * All cashflow items (invoices, bills, expenses) and notes from the source
+         * All cashflow items (invoices, inbound invoices, expenses) and notes from the source
          * contact are reassigned to the target contact. The source contact is archived
          * (deactivated). A system note is added to the target documenting the merge.
          *

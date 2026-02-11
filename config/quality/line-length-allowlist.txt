@@ -26,7 +26,7 @@ features/contacts/presentation/src/commonMain/kotlin/tech/dokus/contacts/viewmod
 features/contacts/presentation/src/commonMain/kotlin/tech/dokus/contacts/viewmodel/ContactsContainer.kt
 features/contacts/presentation/src/commonMain/kotlin/tech/dokus/contacts/viewmodel/CreateContactContainer.kt
 foundation/aura/src/commonMain/kotlin/tech/dokus/foundation/aura/components/background/AnimatedBackground.kt
-foundation/database/src/main/kotlin/tech/dokus/database/repository/cashflow/BillRepository.kt
+foundation/database/src/main/kotlin/tech/dokus/database/repository/cashflow/InboundInvoiceRepository.kt
 foundation/database/src/main/kotlin/tech/dokus/database/repository/cashflow/InvoiceRepository.kt
 foundation/database/src/main/kotlin/tech/dokus/database/repository/contacts/ContactRepository.kt
 foundation/domain/src/commonMain/kotlin/tech/dokus/domain/enums/FinancialEnums.kt

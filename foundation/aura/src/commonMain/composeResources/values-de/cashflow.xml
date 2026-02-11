@@ -10,7 +10,7 @@
     <!-- Document Types -->
     <string name="document_type_invoice">Rechnung</string>
     <string name="document_type_expense">Ausgabe</string>
-    <string name="document_type_bill">Eingangsrechnung</string>
+    <string name="document_type_inbound_invoice">Eingangsrechnung</string>
     <string name="document_type_document">Dokument</string>
     <string name="document_type_unknown">Unbekannt</string>
 
@@ -107,7 +107,7 @@
     <string name="invoice_status_refunded">Erstattet</string>
 
     <!-- Invoice Creation - Sections -->
-    <string name="invoice_bill_to">Rechnungsempfänger</string>
+    <string name="invoice_recipient">Rechnungsempfänger</string>
     <string name="invoice_description">Beschreibung</string>
     <string name="invoice_qty">Menge</string>
     <string name="invoice_price">Preis</string>
@@ -173,7 +173,7 @@
     <string name="cashflow_sort_amount_lowest">Betrag (niedrig nach hoch)</string>
     <string name="cashflow_sort_type">Typ</string>
     <string name="cashflow_document_number_expense">Ausgabe %1$s</string>
-    <string name="cashflow_document_number_bill">Eingangsrechnung %1$s</string>
+    <string name="cashflow_document_number_inbound_invoice">Eingangsrechnung %1$s</string>
     <string name="cashflow_amount_with_currency">%1$s %2$s</string>
     <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
 
@@ -200,7 +200,7 @@
     <string name="cashflow_section_additional_information">Zusätzliche Informationen</string>
     <string name="cashflow_invoice_number">Rechnungsnummer</string>
     <string name="cashflow_vat_amount">MwSt.-Betrag</string>
-    <string name="cashflow_bill_details_section">Eingangsrechnungsdetails</string>
+    <string name="cashflow_inbound_invoice_details_section">Eingangsrechnungsdetails</string>
     <string name="cashflow_supplier_information">Lieferanteninformationen</string>
     <string name="cashflow_supplier_name">Lieferantenname</string>
     <string name="cashflow_merchant_information">Händlerinformationen</string>
@@ -291,13 +291,13 @@
     <string name="upload_status_waiting">Warten...</string>
     <string name="upload_failed_message">Upload fehlgeschlagen</string>
 
-    <!-- Bill Status -->
-    <string name="bill_status_draft">Entwurf</string>
-    <string name="bill_status_pending">Ausstehend</string>
-    <string name="bill_status_scheduled">Geplant</string>
-    <string name="bill_status_paid">Bezahlt</string>
-    <string name="bill_status_overdue">Überfällig</string>
-    <string name="bill_status_cancelled">Storniert</string>
+    <!-- Inbound Invoice Status -->
+    <string name="payable_invoice_status_draft">Entwurf</string>
+    <string name="payable_invoice_status_pending">Ausstehend</string>
+    <string name="payable_invoice_status_scheduled">Geplant</string>
+    <string name="payable_invoice_status_paid">Bezahlt</string>
+    <string name="payable_invoice_status_overdue">Überfällig</string>
+    <string name="payable_invoice_status_cancelled">Storniert</string>
 
     <!-- Business Health -->
     <string name="business_health_description">Leistungsprognose basierend auf jüngster Aktivität</string>

@@ -46,7 +46,7 @@ class Cashflow {
      * - Date range (fromDate, toDate): interpreted based on viewMode
      * - Direction (In/Out)
      * - Statuses: list of statuses (e.g., [Open, Overdue])
-     * - Source type (Invoice/Bill/Expense)
+     * - Source type (Invoice/Expense)
      * - Exact entry ID (entryId) for deep linking
      *
      * Sorting:

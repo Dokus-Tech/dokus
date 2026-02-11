@@ -12,14 +12,14 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
-import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
@@ -32,7 +32,7 @@ import java.security.MessageDigest
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /** Allowed prefixes for document storage */
-private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses", "receipts")
+private val ALLOWED_PREFIXES = setOf("documents", "invoices", "expenses", "receipts")
 
 /**
  * Document upload routes using Ktor Type-Safe Routing.
@@ -51,8 +51,8 @@ internal fun Route.documentUploadRoutes() {
     val ingestionRepository by inject<DocumentIngestionRunRepository>()
     val draftRepository by inject<DocumentDraftRepository>()
     val invoiceRepository by inject<InvoiceRepository>()
-    val billRepository by inject<BillRepository>()
     val expenseRepository by inject<ExpenseRepository>()
+    val creditNoteRepository by inject<CreditNoteRepository>()
     val uploadValidator by inject<DocumentUploadValidator>()
     val logger = LoggerFactory.getLogger("DocumentUploadRoutes")
     val context = DocumentUploadContext(
@@ -61,8 +61,8 @@ internal fun Route.documentUploadRoutes() {
         ingestionRepository = ingestionRepository,
         draftRepository = draftRepository,
         invoiceRepository = invoiceRepository,
-        billRepository = billRepository,
         expenseRepository = expenseRepository,
+        creditNoteRepository = creditNoteRepository,
         logger = logger
     )
 
@@ -73,7 +73,7 @@ internal fun Route.documentUploadRoutes() {
          *
          * Request: multipart/form-data with:
          * - file: The document file
-         * - prefix: (optional) Storage prefix, e.g., "invoices", "bills", "expenses"
+         * - prefix: (optional) Storage prefix, e.g., "invoices", "expenses"
          *
          * Response: DocumentDto with id and fresh download URL
          */
@@ -125,8 +125,8 @@ private data class DocumentUploadContext(
     val ingestionRepository: DocumentIngestionRunRepository,
     val draftRepository: DocumentDraftRepository,
     val invoiceRepository: InvoiceRepository,
-    val billRepository: BillRepository,
     val expenseRepository: ExpenseRepository,
+    val creditNoteRepository: CreditNoteRepository,
     val logger: Logger
 )
 
@@ -203,14 +203,14 @@ private suspend fun buildExistingDocumentRecord(
 
     val draft = context.draftRepository.getByDocumentId(existingDocument.id, tenantId)
     val latestIngestion = context.ingestionRepository.getLatestForDocument(existingDocument.id, tenantId)
-    val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
+    val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
         findConfirmedEntity(
             existingDocument.id,
             draft.documentType,
             tenantId,
             context.invoiceRepository,
-            context.billRepository,
-            context.expenseRepository
+            context.expenseRepository,
+            context.creditNoteRepository
         )
     } else {
         null

@@ -11,7 +11,7 @@ import tech.dokus.domain.model.Address
  * - Chain-of-thought reasoning for classification
  * - Few-shot examples with Belgian document formats
  * - Explicit validation rules (VAT, IBAN, dates, amounts)
- * - Tenant context injection for INVOICE/BILL distinction
+ * - Tenant context injection for direction resolution
  * - Provenance tracking for audit trail
  */
 sealed class AgentPrompt {
@@ -31,7 +31,7 @@ sealed class AgentPrompt {
 
     /**
      * Tenant context for prompt customization.
-     * Injecting user's VAT allows accurate INVOICE vs BILL classification.
+     * Injecting user's VAT allows accurate direction detection for invoices.
      */
     data class TenantContext(
         val vatNumber: VatNumber,
@@ -55,9 +55,9 @@ sealed class AgentPrompt {
         Company address: %s
 
         Use this to determine direction:
-        - If YOUR VAT/name appears as sender → INVOICE (you sent it)
-        - If YOUR VAT/name appears as recipient → BILL (you received it)
-        - If neither matches clearly, use other context clues
+        - If YOUR VAT/name appears as sender → OUTBOUND invoice
+        - If YOUR VAT/name appears as recipient → INBOUND invoice
+        - If neither matches clearly, leave direction uncertain
     """
             )
         }

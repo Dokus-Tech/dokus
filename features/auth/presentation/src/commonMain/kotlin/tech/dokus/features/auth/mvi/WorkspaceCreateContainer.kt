@@ -10,7 +10,7 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
@@ -330,7 +330,7 @@ internal class WorkspaceCreateContainer(
                 type = currentState.tenantType,
                 legalName = effectiveLegalName,
                 displayName = effectiveDisplayName,
-                plan = TenantPlan.Free,
+                plan = SubscriptionTier.default,
                 language = Language.En,
                 vatNumber = currentState.vatNumber,
                 address = addressRequest,

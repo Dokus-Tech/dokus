@@ -18,10 +18,11 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.ids.Iban
 
 /**
  * Main contact DTO representing a customer, vendor, or both.
- * Contacts are used for invoices (customers) and bills/expenses (vendors).
+ * Contacts are used for invoices (customers) and inbound invoices/expenses (vendors).
  */
 @Serializable
 data class ContactDto(
@@ -29,6 +30,7 @@ data class ContactDto(
     val tenantId: TenantId,
     val name: Name,
     val email: Email? = null,
+    val iban: Iban? = null,
     val vatNumber: VatNumber? = null,
     val businessType: ClientType = ClientType.Business,
     val contactPerson: String? = null,
@@ -45,7 +47,7 @@ data class ContactDto(
     val addresses: List<ContactAddressDto> = emptyList(),
     // Aggregated counts for UI (optional, populated by service layer)
     val invoiceCount: Long = 0,
-    val billCount: Long = 0,
+    val inboundInvoiceCount: Long = 0,
     val expenseCount: Long = 0,
     val notesCount: Long = 0,
     // UI Contract: New fields for contacts module extension
@@ -151,6 +153,7 @@ data class ContactAddressInput(
 data class CreateContactRequest(
     val name: Name,
     val email: Email? = null,
+    val iban: Iban? = null,
     val phone: PhoneNumber? = null,
     val vatNumber: VatNumber? = null,
     val businessType: ClientType = ClientType.Business,
@@ -174,6 +177,7 @@ data class CreateContactRequest(
 data class UpdateContactRequest(
     val name: Name? = null,
     val email: Email? = null,
+    val iban: Iban? = null,
     val phone: PhoneNumber? = null,
     val vatNumber: VatNumber? = null,
     val businessType: ClientType? = null,
@@ -240,20 +244,20 @@ enum class ContactRole {
     Customer, // Has outgoing invoices
 
     @SerialName("supplier")
-    Supplier, // Has incoming bills
+    Supplier, // Has incoming inbound invoices
 
     @SerialName("vendor")
     Vendor // Has expenses
 }
 
 /**
- * Derived roles computed from cashflow items (invoices, bills, expenses).
+ * Derived roles computed from cashflow items (invoices, inbound invoices, expenses).
  * Replaces the manual ContactType field.
  */
 @Serializable
 data class DerivedContactRoles(
     val isCustomer: Boolean = false, // Has outgoing invoices
-    val isSupplier: Boolean = false, // Has incoming bills
+    val isSupplier: Boolean = false, // Has incoming inbound invoices
     val isVendor: Boolean = false, // Has expenses
     val primaryRole: ContactRole? = null // Most common role by transaction count
 )
@@ -309,8 +313,8 @@ data class ContactActivitySummary(
     val contactId: ContactId,
     val invoiceCount: Long = 0,
     val invoiceTotal: String = "0.00", // Decimal as string for precision
-    val billCount: Long = 0,
-    val billTotal: String = "0.00",
+    val inboundInvoiceCount: Long = 0,
+    val inboundInvoiceTotal: String = "0.00",
     val expenseCount: Long = 0,
     val expenseTotal: String = "0.00",
     val lastActivityDate: LocalDateTime? = null,
@@ -330,7 +334,7 @@ data class ContactMergeResult(
     val sourceContactId: ContactId,
     val targetContactId: ContactId,
     val invoicesReassigned: Int,
-    val billsReassigned: Int,
+    val inboundInvoicesReassigned: Int,
     val expensesReassigned: Int,
     val notesReassigned: Int,
     val sourceArchived: Boolean

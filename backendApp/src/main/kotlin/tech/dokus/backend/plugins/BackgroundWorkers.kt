@@ -10,12 +10,11 @@ import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.foundation.backend.cache.RedisClient
-import tech.dokus.foundation.backend.config.AppBaseConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 
 private val logger = loggerFor("BackgroundWorkers")
 
-fun Application.configureBackgroundWorkers(appConfig: AppBaseConfig) {
+fun Application.configureBackgroundWorkers() {
     val processingWorker by inject<DocumentProcessingWorker>()
     val rateLimitCleanupWorker by inject<RateLimitCleanupWorker>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()

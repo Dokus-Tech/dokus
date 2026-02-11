@@ -13,7 +13,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
-import tech.dokus.backend.services.documents.DocumentConfirmationService
+import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -22,11 +22,16 @@ import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
@@ -62,7 +67,7 @@ class PeppolPollingWorker(
     private val draftRepository: DocumentDraftRepository,
     private val ingestionRunRepository: DocumentIngestionRunRepository,
     private val confirmationPolicy: DocumentConfirmationPolicy,
-    private val confirmationService: DocumentConfirmationService,
+    private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val documentStorageService: DocumentStorageService,
     private val contactRepository: ContactRepository
 ) {
@@ -231,7 +236,7 @@ class PeppolPollingWorker(
         try {
             logger.debug("Polling Peppol inbox for tenant: {}", tenantId)
 
-            val result = peppolService.pollInbox(tenantId) { extractedData, senderPeppolId, tid, documentDetail ->
+            val result = peppolService.pollInbox(tenantId) { draftData, senderPeppolId, tid, documentDetail ->
                 runCatching {
                     // Find PDF attachment (if any)
                     val pdfAttachment = documentDetail
@@ -245,7 +250,7 @@ class PeppolPollingWorker(
                                 tenantId = tid,
                                 prefix = "peppol",
                                 filename = pdfAttachment.filename.ifBlank {
-                                    "peppol-${extractedData.bill?.invoiceNumber ?: "unknown"}.pdf"
+                                    "peppol-${documentNumberOf(draftData) ?: "unknown"}.pdf"
                                 },
                                 data = pdfBytes,
                                 contentType = "application/pdf"
@@ -291,7 +296,7 @@ class PeppolPollingWorker(
                     ingestionRunRepository.markAsSucceeded(
                         runId = runId,
                         rawText = null,
-                        extractedData = extractedData,
+                        rawExtractionJson = json.encodeToString(draftData),
                         confidence = 1.0 // Peppol data is authoritative
                     )
 
@@ -300,25 +305,24 @@ class PeppolPollingWorker(
                         documentId = documentId,
                         tenantId = tid,
                         runId = runId,
-                        extractedData = extractedData,
-                        documentType = DocumentType.Bill,
+                        extractedData = draftData,
+                        documentType = documentTypeFor(draftData),
                         force = true
                     )
 
                     // Auto-confirm if policy allows (PEPPOL documents are always auto-confirmed)
-                    if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, extractedData, tid)) {
-                        // Find or create contact from Peppol data
+                    if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, draftData, tid)) {
+                        val counterparty = extractCounterparty(draftData)
                         val linkedContactId = findOrCreateContactForPeppol(
                             tenantId = tid,
-                            supplierName = extractedData.bill?.supplierName,
-                            supplierVatNumber = extractedData.bill?.supplierVatNumber
+                            counterpartyName = counterparty.name,
+                            counterpartyVatNumber = counterparty.vatNumber
                         )
 
-                        confirmationService.confirmDocument(
+                        confirmationDispatcher.confirm(
                             tenantId = tid,
                             documentId = documentId,
-                            documentType = DocumentType.Bill,
-                            extractedData = extractedData,
+                            draftData = draftData,
                             linkedContactId = linkedContactId
                         ).getOrThrow()
                     }
@@ -344,31 +348,64 @@ class PeppolPollingWorker(
     }
 
     /**
+     * Counterparty info extracted from any draft data type.
+     */
+    private data class CounterpartyInfo(val name: String?, val vatNumber: VatNumber?)
+
+    private fun extractCounterparty(draftData: DocumentDraftData): CounterpartyInfo = when (draftData) {
+        is CreditNoteDraftData -> CounterpartyInfo(draftData.counterpartyName, draftData.counterpartyVat)
+        is InvoiceDraftData -> when (draftData.direction) {
+            DocumentDirection.Inbound -> CounterpartyInfo(
+                draftData.seller.name ?: draftData.customerName,
+                draftData.seller.vat ?: draftData.customerVat
+            )
+            DocumentDirection.Outbound -> CounterpartyInfo(
+                draftData.buyer.name ?: draftData.customerName,
+                draftData.buyer.vat ?: draftData.customerVat
+            )
+            DocumentDirection.Unknown -> CounterpartyInfo(
+                draftData.customerName ?: draftData.buyer.name ?: draftData.seller.name,
+                draftData.customerVat ?: draftData.buyer.vat ?: draftData.seller.vat
+            )
+        }
+        is ReceiptDraftData -> CounterpartyInfo(draftData.merchantName, draftData.merchantVat)
+    }
+
+    private fun documentTypeFor(draftData: DocumentDraftData): DocumentType = when (draftData) {
+        is CreditNoteDraftData -> DocumentType.CreditNote
+        is InvoiceDraftData -> DocumentType.Invoice
+        is ReceiptDraftData -> DocumentType.Receipt
+    }
+
+    private fun documentNumberOf(draftData: DocumentDraftData): String? = when (draftData) {
+        is CreditNoteDraftData -> draftData.creditNoteNumber
+        is InvoiceDraftData -> draftData.invoiceNumber
+        is ReceiptDraftData -> draftData.receiptNumber
+    }
+
+    /**
      * Find or create a contact for a Peppol document.
      * Matching priority:
      * 1. VAT number (most reliable)
-     * 2. Peppol ID
-     * 3. Auto-create if we have enough data
+     * 2. Auto-create if we have enough data
      */
     private suspend fun findOrCreateContactForPeppol(
         tenantId: TenantId,
-        supplierName: String?,
-        supplierVatNumber: String?
+        counterpartyName: String?,
+        counterpartyVatNumber: VatNumber?
     ): ContactId? {
         // 1. Try VAT number (most reliable) - already normalized in repository
-        if (!supplierVatNumber.isNullOrBlank()) {
-            contactRepository.findByVatNumber(tenantId, supplierVatNumber)
+        val vatValue = counterpartyVatNumber?.value
+        if (!vatValue.isNullOrBlank()) {
+            contactRepository.findByVatNumber(tenantId, vatValue)
                 .getOrNull()?.let { return it.id }
         }
 
-        // NOTE: PEPPOL ID matching removed - peppolId is now discovery data in PeppolDirectoryCacheTable
-        // We find contacts by VAT/company number instead
-
         // 2. Auto-create if we have enough data
-        if (!supplierName.isNullOrBlank()) {
+        if (!counterpartyName.isNullOrBlank()) {
             val request = CreateContactRequest(
-                name = Name(supplierName),
-                vatNumber = supplierVatNumber?.let { VatNumber(it) },
+                name = Name(counterpartyName),
+                vatNumber = counterpartyVatNumber,
                 source = ContactSource.Peppol
             )
             val newContact = contactRepository.createContact(tenantId, request).getOrNull()

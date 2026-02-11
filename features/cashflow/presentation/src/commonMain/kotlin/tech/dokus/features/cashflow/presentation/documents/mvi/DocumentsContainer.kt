@@ -10,7 +10,7 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.DocumentRecordDto
@@ -64,11 +64,11 @@ internal class DocumentsContainer(
 
         updateState { DocumentsState.Loading }
 
-        val (draftStatus, ingestionStatus) = currentFilter.toApiFilters()
+        val (documentStatus, ingestionStatus) = currentFilter.toApiFilters()
         loadDocumentRecords(
             page = 0,
             pageSize = PAGE_SIZE,
-            draftStatus = draftStatus,
+            documentStatus = documentStatus,
             ingestionStatus = ingestionStatus,
             search = currentSearchQuery.takeIf { it.isNotEmpty() }
         ).fold(
@@ -108,11 +108,11 @@ internal class DocumentsContainer(
             updateState { copy(documents = buildPaginationState()) }
 
             val nextPage = paginationInfo.currentPage + 1
-            val (draftStatus, ingestionStatus) = filter.toApiFilters()
+            val (documentStatus, ingestionStatus) = filter.toApiFilters()
             loadDocumentRecords(
                 page = nextPage,
                 pageSize = PAGE_SIZE,
-                draftStatus = draftStatus,
+                documentStatus = documentStatus,
                 ingestionStatus = ingestionStatus,
                 search = searchQuery.takeIf { it.isNotEmpty() }
             ).fold(
@@ -160,11 +160,11 @@ internal class DocumentsContainer(
             }
 
             searchJob = launch {
-                val (draftStatus, ingestionStatus) = currentFilter.toApiFilters()
+                val (documentStatus, ingestionStatus) = currentFilter.toApiFilters()
                 loadDocumentRecords(
                     page = 0,
                     pageSize = PAGE_SIZE,
-                    draftStatus = draftStatus,
+                    documentStatus = documentStatus,
                     ingestionStatus = ingestionStatus,
                     search = trimmed.takeIf { it.isNotEmpty() }
                 ).fold(
@@ -208,11 +208,11 @@ internal class DocumentsContainer(
                 )
             }
 
-            val (draftStatus, ingestionStatus) = filter.toApiFilters()
+            val (documentStatus, ingestionStatus) = filter.toApiFilters()
             loadDocumentRecords(
                 page = 0,
                 pageSize = PAGE_SIZE,
-                draftStatus = draftStatus,
+                documentStatus = documentStatus,
                 ingestionStatus = ingestionStatus,
                 search = currentSearchQuery.takeIf { it.isNotEmpty() }
             ).fold(
@@ -261,17 +261,17 @@ internal class DocumentsContainer(
 
     /**
      * Maps DocumentFilter to API filter parameters.
-     * Returns a pair of (draftStatus, ingestionStatus) to use in the API call.
+     * Returns a pair of (documentStatus, ingestionStatus) to use in the API call.
      *
      * Note: NeedsAttention filter returns null/null because it's a composite filter
      * that can't be expressed as a single API call. Client-side filtering is applied
      * via computeNeedsAttention() on the returned documents.
      */
-    private fun DocumentFilter.toApiFilters(): Pair<DraftStatus?, IngestionStatus?> {
+    private fun DocumentFilter.toApiFilters(): Pair<DocumentStatus?, IngestionStatus?> {
         return when (this) {
             DocumentFilter.All -> null to null
             DocumentFilter.NeedsAttention -> null to null // Client filters via computeNeedsAttention
-            DocumentFilter.Confirmed -> DraftStatus.Confirmed to null
+            DocumentFilter.Confirmed -> DocumentStatus.Confirmed to null
         }
     }
 

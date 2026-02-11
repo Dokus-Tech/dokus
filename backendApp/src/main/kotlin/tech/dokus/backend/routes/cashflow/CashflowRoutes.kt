@@ -14,9 +14,8 @@ import io.ktor.server.routing.routing
  * Cash-In (Outgoing Invoices):
  * - /api/v1/invoices - Invoice CRUD operations
  *
- * Cash-Out (Expenses & Bills):
+ * Cash-Out (Expenses & inbound invoices):
  * - /api/v1/expenses - Expense CRUD operations
- * - /api/v1/cashflow/cash-out/bills - Bill CRUD operations (supplier invoices)
  *
  * Cashflow Projection Ledger:
  * - /api/v1/cashflow/entries - Cashflow entries (projections from confirmed documents)
@@ -39,7 +38,6 @@ import io.ktor.server.routing.routing
  *
  * @see invoiceRoutes
  * @see expenseRoutes
- * @see billRoutes
  * @see attachmentRoutes
  * @see cashflowEntriesRoutes
  * @see cashflowOverviewRoutes
@@ -54,9 +52,6 @@ fun Application.configureCashflowRoutes() {
 
         // Expense routes (Cash-Out)
         expenseRoutes()
-
-        // Bill routes (Cash-Out - supplier invoices)
-        billRoutes()
 
         // Attachment routes
         attachmentRoutes()

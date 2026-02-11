@@ -9,6 +9,12 @@ enum class CheckType {
     /** Mathematical verification (subtotal + VAT = total) */
     MATH,
 
+    /** Line items verification */
+    LINE_ITEMS,
+
+    /** VAT breakdown verification */
+    VAT_BREAKDOWN,
+
     /** Belgian OGM (Structured Communication) checksum */
     CHECKSUM_OGM,
 
@@ -22,7 +28,10 @@ enum class CheckType {
     COMPANY_EXISTS,
 
     /** Company name matches registry */
-    COMPANY_NAME
+    COMPANY_NAME,
+
+    /** Counterparty integrity check (must not equal tenant identity) */
+    COUNTERPARTY_INTEGRITY
 }
 
 /**

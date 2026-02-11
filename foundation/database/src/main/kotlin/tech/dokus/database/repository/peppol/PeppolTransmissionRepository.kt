@@ -16,7 +16,6 @@ import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
-import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolTransmissionId
@@ -41,7 +40,6 @@ class PeppolTransmissionRepository {
         direction: PeppolTransmissionDirection,
         documentType: PeppolDocumentType,
         invoiceId: InvoiceId? = null,
-        billId: BillId? = null,
         externalDocumentId: String? = null,
         recipientPeppolId: PeppolId? = null,
         senderPeppolId: PeppolId? = null
@@ -57,7 +55,6 @@ class PeppolTransmissionRepository {
                 it[PeppolTransmissionsTable.documentType] = documentType
                 it[status] = PeppolStatus.Pending
                 it[PeppolTransmissionsTable.invoiceId] = invoiceId?.let { inv -> UUID.fromString(inv.toString()) }
-                it[PeppolTransmissionsTable.billId] = billId?.let { b -> UUID.fromString(b.toString()) }
                 it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId
                 it[PeppolTransmissionsTable.recipientPeppolId] = recipientPeppolId?.value
                 it[PeppolTransmissionsTable.senderPeppolId] = senderPeppolId?.value
@@ -194,28 +191,6 @@ class PeppolTransmissionRepository {
         }
     }
 
-    /**
-     * Link a bill to an inbound transmission.
-     */
-    suspend fun linkBillToTransmission(
-        transmissionId: PeppolTransmissionId,
-        tenantId: TenantId,
-        billId: BillId
-    ): Result<Boolean> = runCatching {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        dbQuery {
-            val updated = PeppolTransmissionsTable.update({
-                (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }) {
-                it[PeppolTransmissionsTable.billId] = UUID.fromString(billId.toString())
-                it[updatedAt] = now
-            }
-            updated > 0
-        }
-    }
-
     private fun ResultRow.toDto(): PeppolTransmissionDto = PeppolTransmissionDto(
         id = PeppolTransmissionId.parse(this[PeppolTransmissionsTable.id].value.toString()),
         tenantId = TenantId.parse(this[PeppolTransmissionsTable.tenantId].toString()),
@@ -223,7 +198,6 @@ class PeppolTransmissionRepository {
         documentType = this[PeppolTransmissionsTable.documentType],
         status = this[PeppolTransmissionsTable.status],
         invoiceId = this[PeppolTransmissionsTable.invoiceId]?.let { InvoiceId.parse(it.toString()) },
-        billId = this[PeppolTransmissionsTable.billId]?.let { BillId.parse(it.toString()) },
         externalDocumentId = this[PeppolTransmissionsTable.externalDocumentId],
         recipientPeppolId = this[PeppolTransmissionsTable.recipientPeppolId]?.let { PeppolId(it) },
         senderPeppolId = this[PeppolTransmissionsTable.senderPeppolId]?.let { PeppolId(it) },

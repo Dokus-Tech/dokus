@@ -48,18 +48,6 @@ value class InvoiceNumber(override val value: String) : ValueClass<String>, Vali
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
-value class BillId(val value: Uuid) {
-    override fun toString(): String = value.toString()
-
-    companion object {
-        fun generate(): BillId = BillId(Uuid.random())
-        fun parse(value: String): BillId = BillId(Uuid.parse(value))
-    }
-}
-
-@OptIn(ExperimentalUuidApi::class)
-@Serializable
-@JvmInline
 value class CreditNoteId(val value: Uuid) {
     override fun toString(): String = value.toString()
 
@@ -102,5 +90,41 @@ value class DocumentLinkId(val value: Uuid) {
     companion object {
         fun generate(): DocumentLinkId = DocumentLinkId(Uuid.random())
         fun parse(value: String): DocumentLinkId = DocumentLinkId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class QuoteId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): QuoteId = QuoteId(Uuid.random())
+        fun parse(value: String): QuoteId = QuoteId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class ProFormaId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): ProFormaId = ProFormaId(Uuid.random())
+        fun parse(value: String): ProFormaId = ProFormaId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class PurchaseOrderId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): PurchaseOrderId = PurchaseOrderId(Uuid.random())
+        fun parse(value: String): PurchaseOrderId = PurchaseOrderId(Uuid.parse(value))
     }
 }

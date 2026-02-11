@@ -1,0 +1,118 @@
+package tech.dokus.features.ai.graph.sub
+
+import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
+import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
+import ai.koog.agents.core.tools.Tool
+import ai.koog.agents.core.tools.annotations.LLMDescription
+import ai.koog.agents.ext.agent.subgraphWithTask
+import ai.koog.prompt.params.LLMParams
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.Tenant
+import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.config.assistantResponseRepeatMax
+import tech.dokus.features.ai.config.documentProcessing
+import tech.dokus.features.ai.extensions.description
+import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
+import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
+import tech.dokus.foundation.backend.config.AIConfig
+
+fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
+    aiConfig: AIConfig,
+    tools: List<Tool<*, *>>
+): AIAgentSubgraphDelegate<ClassifyDocumentInput, ClassificationResult> {
+    return subgraphWithTask(
+        name = "Classify document",
+        llmModel = aiConfig.mode.asVisionModel,
+        tools = tools,
+        llmParams = LLMParams.documentProcessing,
+        assistantResponseRepeatMax = assistantResponseRepeatMax,
+        finishTool = ClassificationFinishTool()
+    ) { it.prompt }
+}
+
+private class ClassificationFinishTool : Tool<ClassificationToolInput, ClassificationResult>(
+    argsSerializer = ClassificationToolInput.serializer(),
+    resultSerializer = ClassificationResult.serializer(),
+    name = "submit_classification",
+    description = "Submit the final document classification after analyzing the document"
+) {
+    override suspend fun execute(args: ClassificationToolInput): ClassificationResult {
+        return ClassificationResult(
+            documentType = args.documentType,
+            confidence = args.confidence,
+            language = args.language,
+            reasoning = args.reasoning
+        )
+    }
+}
+
+@Serializable
+data class ClassificationToolInput(
+    @property:LLMDescription("The detected document type")
+    val documentType: DocumentType,
+    @property:LLMDescription("Confidence score from 0.0 to 1.0")
+    val confidence: Double,
+    @property:LLMDescription("Detected language: nl, fr, en, or de")
+    val language: String,
+    @property:LLMDescription("Brief explanation of key indicators")
+    val reasoning: String
+)
+
+@Serializable
+data class ClassifyDocumentInput(
+    override val documentId: DocumentId,
+    override val tenant: Tenant
+) : InputWithTenantContext, InputWithDocumentId
+
+@Serializable
+@SerialName("ClassificationResult")
+@LLMDescription("Classification result for a document")
+data class ClassificationResult(
+    @property:LLMDescription("The detected document type (use exact enum name)")
+    val documentType: DocumentType,
+    @property:LLMDescription("Confidence score from 0.0 to 1.0")
+    val confidence: Double,
+    @property:LLMDescription("Detected language: nl, fr, en, or de")
+    val language: String,
+    @property:LLMDescription("Brief explanation of key indicators that led to this classification")
+    val reasoning: String
+)
+
+private val ClassifyDocumentInput.prompt
+    get() = """
+    You will receive document pages as images in context.
+
+    Task: classify the document type and language.
+    Output MUST be submitted via tool: submit_classification.
+
+    ## DOCUMENT TYPES
+
+    ${
+        DocumentType.entries.joinToString("\n") { type ->
+            "- ${type.name}: ${type.description}"
+        }
+    }
+
+    ## CONFIDENCE GUIDE
+    - 0.95+: Obvious, clear indicators (e.g., "FACTUUR" header with VAT breakdown)
+    - 0.80-0.95: Strong indicators present
+    - 0.60-0.80: Some uncertainty, mixed signals
+    - <0.60: Unclear, use UNKNOWN
+
+    ## KEY DISTINCTIONS
+
+    INVOICE:
+    - Classify every invoice-like document as INVOICE regardless of whether tenant is seller or buyer.
+    - Direction (incoming/outgoing) is resolved later by deterministic business logic, not classification.
+
+    NAME MATCHING: Names on documents may differ from official names — ignore casing, dots vs spaces, domain-style names (e.g., "invoid.vision" = "Invoid Vision"). Use VAT number as the strongest identifier.
+
+    RECEIPT vs INVOICE:
+    - RECEIPT: Small thermal ticket proving payment already made (retail/restaurant)
+    - INVOICE: Formal supplier/customer invoice requesting payment (including recurring utilities)
+
+    CREDIT_NOTE: Look for "Creditnota", "Note de crédit", "Avoir" — references original invoice
+    """.trimIndent()

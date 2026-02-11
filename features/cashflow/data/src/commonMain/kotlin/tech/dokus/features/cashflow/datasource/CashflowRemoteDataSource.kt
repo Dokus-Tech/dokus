@@ -9,21 +9,20 @@ package tech.dokus.features.cashflow.datasource
 import io.ktor.client.HttpClient
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
-import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.AttachmentId
-import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -35,8 +34,6 @@ import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentRequest
-import tech.dokus.domain.model.ConfirmDocumentRequest
-import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
@@ -45,7 +42,6 @@ import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolIdVerificationResult
@@ -97,6 +93,7 @@ interface CashflowRemoteDataSource {
      */
     suspend fun listInvoices(
         status: InvoiceStatus? = null,
+        direction: DocumentDirection? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int = 50,
@@ -151,12 +148,6 @@ interface CashflowRemoteDataSource {
     // ============================================================================
 
     /**
-     * Create a new expense
-     * POST /api/v1/expenses
-     */
-    suspend fun createExpense(request: CreateExpenseRequest): Result<FinancialDocumentDto.ExpenseDto>
-
-    /**
      * Get a single expense by ID
      * GET /api/v1/expenses/{id}
      */
@@ -188,65 +179,6 @@ interface CashflowRemoteDataSource {
      * DELETE /api/v1/expenses/{id}
      */
     suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit>
-
-    // ============================================================================
-    // BILL MANAGEMENT (Supplier Invoices / Cash-Out)
-    // ============================================================================
-
-    /**
-     * Create a new bill (supplier invoice)
-     * POST /api/v1/cashflow/cash-out/bills
-     */
-    suspend fun createBill(request: CreateBillRequest): Result<FinancialDocumentDto.BillDto>
-
-    /**
-     * Get a single bill by ID
-     * GET /api/v1/cashflow/cash-out/bills/{id}
-     */
-    suspend fun getBill(id: BillId): Result<FinancialDocumentDto.BillDto>
-
-    /**
-     * List bills with optional filtering
-     * GET /api/v1/cashflow/cash-out/bills?status={status}&category={category}&fromDate={fromDate}&toDate={toDate}&limit={limit}&offset={offset}
-     */
-    suspend fun listBills(
-        status: BillStatus? = null,
-        category: ExpenseCategory? = null,
-        fromDate: LocalDate? = null,
-        toDate: LocalDate? = null,
-        limit: Int = 50,
-        offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto.BillDto>>
-
-    /**
-     * List all overdue bills
-     * GET /api/v1/cashflow/cash-out/bills/overdue
-     */
-    suspend fun listOverdueBills(): Result<List<FinancialDocumentDto.BillDto>>
-
-    /**
-     * Update an existing bill
-     * PUT /api/v1/cashflow/cash-out/bills/{id}
-     */
-    suspend fun updateBill(
-        billId: BillId,
-        request: CreateBillRequest
-    ): Result<FinancialDocumentDto.BillDto>
-
-    /**
-     * Mark bill as paid
-     * POST /api/v1/bills/{id}/payments
-     */
-    suspend fun markBillPaid(
-        billId: BillId,
-        request: MarkBillPaidRequest
-    ): Result<FinancialDocumentDto.BillDto>
-
-    /**
-     * Delete a bill
-     * DELETE /api/v1/cashflow/cash-out/bills/{id}
-     */
-    suspend fun deleteBill(billId: BillId): Result<Unit>
 
     // ============================================================================
     // DOCUMENT/ATTACHMENT MANAGEMENT
@@ -326,7 +258,7 @@ interface CashflowRemoteDataSource {
      * @param fileContent The file content as ByteArray
      * @param filename Original filename
      * @param contentType MIME type (e.g., "application/pdf", "image/jpeg")
-     * @param prefix Storage prefix (e.g., "invoices", "bills", "expenses")
+     * @param prefix Storage prefix (e.g., "invoices", "expenses")
      * @return DocumentDto with id and downloadUrl
      */
     suspend fun uploadDocument(
@@ -345,7 +277,7 @@ interface CashflowRemoteDataSource {
      * @param fileContent The file content as ByteArray
      * @param filename Original filename
      * @param contentType MIME type (e.g., "application/pdf", "image/jpeg")
-     * @param prefix Storage prefix (e.g., "invoices", "bills", "expenses")
+     * @param prefix Storage prefix (e.g., "invoices", "expenses")
      * @param onProgress Callback with progress from 0.0 to 1.0
      * @return DocumentDto with id and downloadUrl
      */
@@ -415,7 +347,7 @@ interface CashflowRemoteDataSource {
      * @param toDate End of date range (interpreted based on viewMode)
      * @param direction Filter by direction (IN/OUT)
      * @param statuses Multi-status filter (comma-separated in URL)
-     * @param sourceType Filter by source type (INVOICE/BILL/EXPENSE)
+     * @param sourceType Filter by source type (INVOICE/EXPENSE)
      * @param entryId Exact match by entry ID (for deep links)
      * @param limit Items per page
      * @param offset Pagination offset
@@ -462,19 +394,19 @@ interface CashflowRemoteDataSource {
 
     /**
      * List documents with optional filtering.
-     * GET /api/v1/documents?draftStatus={draftStatus}&documentType={documentType}&ingestionStatus={ingestionStatus}&search={search}&page={page}&limit={limit}
+     * GET /api/v1/documents?documentStatus={documentStatus}&documentType={documentType}&ingestionStatus={ingestionStatus}&search={search}&page={page}&limit={limit}
      *
      * Returns DocumentRecordDto envelope containing document, draft, and latest ingestion.
      *
-     * @param draftStatus Filter by draft status (NeedsReview, Ready, Confirmed, Rejected)
-     * @param documentType Filter by document type (Invoice, Bill, Expense)
+     * @param documentStatus Filter by draft status (NeedsReview, Confirmed, Rejected)
+     * @param documentType Filter by document type (Invoice, Expense)
      * @param ingestionStatus Filter by ingestion status (Queued, Processing, Succeeded, Failed)
      * @param search Full-text search query
      * @param page Page number (0-indexed)
      * @param limit Items per page (max 100)
      */
     suspend fun listDocuments(
-        draftStatus: DraftStatus? = null,
+        documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
         search: String? = null,
@@ -530,14 +462,13 @@ interface CashflowRemoteDataSource {
     ): Result<ReprocessResponse>
 
     /**
-     * Confirm a document and create financial entity (Invoice/Bill/Expense).
+     * Confirm a document and create financial entity (Invoice/Expense).
      * POST /api/v1/documents/{id}/confirm
      *
      * TRANSACTIONAL + IDEMPOTENT: Fails if entity already exists for documentId.
      */
     suspend fun confirmDocument(
-        documentId: DocumentId,
-        request: ConfirmDocumentRequest
+        documentId: DocumentId
     ): Result<DocumentRecordDto>
 
     /**
@@ -635,7 +566,7 @@ interface CashflowRemoteDataSource {
      * Poll Peppol inbox for new documents
      * POST /api/v1/peppol/inbox/poll
      *
-     * Creates bills for received invoices
+     * Creates inbound invoices for received invoices
      */
     suspend fun pollPeppolInbox(): Result<PeppolInboxPollResponse>
 

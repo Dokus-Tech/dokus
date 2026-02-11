@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_activity_summary
-import tech.dokus.aura.resources.contacts_bills
+import tech.dokus.aura.resources.contacts_inbound_invoices
 import tech.dokus.aura.resources.contacts_expenses
 import tech.dokus.aura.resources.contacts_invoices
 import tech.dokus.aura.resources.contacts_last_activity_value
@@ -126,9 +126,9 @@ private fun ActivitySummaryContent(
 
             ActivityStatCard(
                 icon = Icons.Default.Receipt,
-                title = stringResource(Res.string.contacts_bills),
-                count = activity.billCount.toString(),
-                total = activity.billTotal,
+                title = stringResource(Res.string.contacts_inbound_invoices),
+                count = activity.inboundInvoiceCount.toString(),
+                total = activity.inboundInvoiceTotal,
                 color = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.weight(1f)
             )

@@ -17,7 +17,7 @@ kotlin {
 
 dependencies {
     // JetBrains Koog AI Framework (api to expose PromptExecutor, LLModel to dependents)
-    implementation(libs.bundles.koog)
+    api(libs.bundles.koog)
 
     // Foundation dependencies
     implementation(projects.foundation.domain)
@@ -54,6 +54,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    maxParallelForks = 1
 }
 
 // =============================================================================

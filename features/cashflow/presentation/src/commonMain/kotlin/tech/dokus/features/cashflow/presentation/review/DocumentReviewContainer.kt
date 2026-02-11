@@ -86,29 +86,6 @@ internal class DocumentReviewContainer(
                         is DocumentReviewIntent.CloseContactSheet -> handleCloseContactSheet()
                         is DocumentReviewIntent.UpdateContactSheetSearch -> handleUpdateContactSheetSearch(intent.query)
 
-                        // === Field Editing ===
-                        is DocumentReviewIntent.UpdateInvoiceField -> handleUpdateInvoiceField(
-                            intent.field,
-                            intent.value
-                        )
-                        is DocumentReviewIntent.UpdateBillField -> handleUpdateBillField(intent.field, intent.value)
-                        is DocumentReviewIntent.UpdateExpenseField -> handleUpdateExpenseField(
-                            intent.field,
-                            intent.value
-                        )
-                        is DocumentReviewIntent.UpdateReceiptField -> handleUpdateReceiptField(
-                            intent.field,
-                            intent.value
-                        )
-                        is DocumentReviewIntent.UpdateProFormaField -> handleUpdateProFormaField(
-                            intent.field,
-                            intent.value
-                        )
-                        is DocumentReviewIntent.UpdateCreditNoteField -> handleUpdateCreditNoteField(
-                            intent.field,
-                            intent.value
-                        )
-
                         // === Contact Selection (with backend persist) ===
                         is DocumentReviewIntent.SelectContact -> handleSelectContact(intent.contactId)
                         is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
@@ -141,6 +118,12 @@ internal class DocumentReviewContainer(
                         is DocumentReviewIntent.SelectRejectReason -> handleSelectRejectReason(intent.reason)
                         is DocumentReviewIntent.UpdateRejectNote -> handleUpdateRejectNote(intent.note)
                         is DocumentReviewIntent.ConfirmReject -> handleConfirmReject()
+
+                        // === Feedback Dialog ===
+                        is DocumentReviewIntent.ShowFeedbackDialog -> handleShowFeedbackDialog()
+                        is DocumentReviewIntent.DismissFeedbackDialog -> handleDismissFeedbackDialog()
+                        is DocumentReviewIntent.UpdateFeedbackText -> handleUpdateFeedbackText(intent.text)
+                        is DocumentReviewIntent.SubmitFeedback -> handleSubmitFeedback()
 
                         // === Failed Analysis ===
                         is DocumentReviewIntent.RetryAnalysis -> handleRetryAnalysis()

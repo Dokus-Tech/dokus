@@ -8,7 +8,7 @@ import tech.dokus.domain.model.ChunkRetrievalResponse
 import tech.dokus.domain.model.DocumentChunkId
 import tech.dokus.domain.model.DocumentChunkSummary
 import tech.dokus.domain.repository.ChunkRepository
-import tech.dokus.domain.repository.DraftStatusChecker
+import tech.dokus.domain.repository.DocumentStatusChecker
 import tech.dokus.domain.repository.IngestionStatusChecker
 import tech.dokus.domain.repository.RetrievedChunk
 import kotlin.uuid.ExperimentalUuidApi
@@ -56,7 +56,7 @@ class RAGService(
     private val embeddingService: EmbeddingService,
     private val chunkRepository: ChunkRepository,
     private val ingestionStatusChecker: IngestionStatusChecker? = null,
-    private val draftStatusChecker: DraftStatusChecker? = null
+    private val documentStatusChecker: DocumentStatusChecker? = null
 ) {
     private val logger = LoggerFactory.getLogger(RAGService::class.java)
 
@@ -112,7 +112,7 @@ class RAGService(
         val startTime = System.currentTimeMillis()
         val effectiveTopK = minOf(topK, MAX_TOP_K)
 
-        logger.debug("RAG retrieval: tenantId=$tenantId, documentId=$documentId, topK=$effectiveTopK")
+        logger.debug("RAG retrieval: tenantId={}, documentId={}, topK={}", tenantId, documentId, effectiveTopK)
 
         // Step 1: Generate embedding for the query
         val queryEmbedding = try {
@@ -336,16 +336,16 @@ class RAGService(
      * Chat is only allowed for Confirmed documents. This method checks the
      * draft status to enforce this policy.
      *
-     * Returns false if no DraftStatusChecker is configured (fail-safe).
+     * Returns false if no DocumentStatusChecker is configured (fail-safe).
      *
      * @param tenantId The tenant ID (REQUIRED for security)
      * @param documentId The document ID to check
      * @return true if document has status=Confirmed, false otherwise
      */
     suspend fun isDocumentConfirmed(tenantId: TenantId, documentId: DocumentId): Boolean {
-        val checker = draftStatusChecker
+        val checker = documentStatusChecker
         if (checker == null) {
-            logger.debug("No DraftStatusChecker configured, assuming document is not confirmed")
+            logger.debug("No DocumentStatusChecker configured, assuming document is not confirmed")
             return false
         }
         return try {

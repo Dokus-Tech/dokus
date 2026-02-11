@@ -32,7 +32,6 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_amount_with_currency
-import tech.dokus.aura.resources.cashflow_document_number_bill
 import tech.dokus.aura.resources.cashflow_document_number_expense
 import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.date_format_long
@@ -54,6 +53,7 @@ import tech.dokus.aura.resources.document_table_date
 import tech.dokus.aura.resources.document_table_invoice
 import tech.dokus.aura.resources.document_table_more_options
 import tech.dokus.aura.resources.document_table_view_details
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.FinancialDocumentDto
@@ -83,24 +83,32 @@ data class FinancialDocumentRow(
 @Composable
 fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
     val cashflowType = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> CashflowType.CashIn
+        is FinancialDocumentDto.InvoiceDto -> {
+            if (this.direction == DocumentDirection.Inbound) CashflowType.CashOut else CashflowType.CashIn
+        }
         is FinancialDocumentDto.ExpenseDto -> CashflowType.CashOut
-        is FinancialDocumentDto.BillDto -> CashflowType.CashOut
-        is FinancialDocumentDto.CreditNoteDto -> CashflowType.CashOut // Neutral until refund, but show as out for UI
+        is FinancialDocumentDto.CreditNoteDto -> CashflowType.CashOut
+        is FinancialDocumentDto.ProFormaDto -> CashflowType.CashIn
+        is FinancialDocumentDto.QuoteDto -> CashflowType.CashIn
+        is FinancialDocumentDto.PurchaseOrderDto -> CashflowType.CashOut
     }
 
     val contactName = when (this) {
         is FinancialDocumentDto.InvoiceDto -> ""
         is FinancialDocumentDto.ExpenseDto -> this.merchant
-        is FinancialDocumentDto.BillDto -> this.supplierName
         is FinancialDocumentDto.CreditNoteDto -> ""
+        is FinancialDocumentDto.ProFormaDto -> ""
+        is FinancialDocumentDto.QuoteDto -> ""
+        is FinancialDocumentDto.PurchaseOrderDto -> ""
     }
 
     val contactEmail = when (this) {
         is FinancialDocumentDto.InvoiceDto -> ""
         is FinancialDocumentDto.ExpenseDto -> ""
-        is FinancialDocumentDto.BillDto -> ""
         is FinancialDocumentDto.CreditNoteDto -> ""
+        is FinancialDocumentDto.ProFormaDto -> ""
+        is FinancialDocumentDto.QuoteDto -> ""
+        is FinancialDocumentDto.PurchaseOrderDto -> ""
     }
 
     val documentNumber = when (this) {
@@ -109,18 +117,19 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
             Res.string.cashflow_document_number_expense,
             id.value
         )
-        is FinancialDocumentDto.BillDto -> invoiceNumber ?: stringResource(
-            Res.string.cashflow_document_number_bill,
-            id.value
-        )
         is FinancialDocumentDto.CreditNoteDto -> creditNoteNumber
+        is FinancialDocumentDto.ProFormaDto -> proFormaNumber
+        is FinancialDocumentDto.QuoteDto -> quoteNumber
+        is FinancialDocumentDto.PurchaseOrderDto -> poNumber
     }
 
     val hasAlert = when (this) {
         is FinancialDocumentDto.InvoiceDto -> status == InvoiceStatus.Sent || status == InvoiceStatus.Overdue
-        is FinancialDocumentDto.ExpenseDto -> false // Expenses don't have a status requiring confirmation
-        is FinancialDocumentDto.BillDto -> false // Bills don't have a status requiring confirmation (yet)
-        is FinancialDocumentDto.CreditNoteDto -> false // Credit notes don't have alerts
+        is FinancialDocumentDto.ExpenseDto -> false
+        is FinancialDocumentDto.CreditNoteDto -> false
+        is FinancialDocumentDto.ProFormaDto -> false
+        is FinancialDocumentDto.QuoteDto -> false
+        is FinancialDocumentDto.PurchaseOrderDto -> false
     }
 
     // Format amount with comma separator (fallback to display string on parse failure)

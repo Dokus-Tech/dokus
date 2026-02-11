@@ -72,27 +72,11 @@ internal class DocumentReviewContactBinder(
             updateDocumentDraftContact(documentId, null, CounterpartyIntent.None)
                 .fold(
                     onSuccess = {
-                        val newState = document.draft?.suggestedContactId?.let { suggestedId ->
-                            ContactSelectionState.Suggested(
-                                contactId = suggestedId,
-                                name = document.draft?.extractedData?.invoice?.clientName
-                                    ?: document.draft?.extractedData?.bill?.supplierName
-                                    ?: "",
-                                vatNumber = document.draft?.extractedData?.invoice?.clientVatNumber
-                                    ?: document.draft?.extractedData?.bill?.supplierVatNumber,
-                                confidence = document.draft?.contactSuggestionConfidence ?: 0f,
-                                reason = document.draft?.contactSuggestionReason
-                                    ?.takeIf { it.isNotBlank() }
-                                    ?.let { ContactSuggestionReason.Custom(it) }
-                                    ?: ContactSuggestionReason.AiSuggested,
-                            )
-                        } ?: ContactSelectionState.NoContact
-
                         updateState {
                             copy(
                                 selectedContactId = null,
                                 selectedContactSnapshot = null,
-                                contactSelectionState = newState,
+                                contactSelectionState = ContactSelectionState.NoContact,
                                 counterpartyIntent = CounterpartyIntent.None,
                                 isBindingContact = false,
                                 contactValidationError = null,

@@ -22,7 +22,6 @@ enum class IntelligenceMode(
     val orchestratorModel: String,
     val visionModel: String,
     val chatModel: String,
-    val maxConcurrentRequests: Int,
     val maxIterations: Int,
 ) : DbEnum {
 
@@ -47,8 +46,7 @@ enum class IntelligenceMode(
         orchestratorModel = "qwen/qwen3-32b",
         visionModel = "qwen/qwen3-vl-8b",
         chatModel = "qwen/qwen3-32b",
-        maxConcurrentRequests = 1,
-        maxIterations = 8,
+        maxIterations = 48,
     ),
 
     /**
@@ -66,10 +64,9 @@ enum class IntelligenceMode(
     Autonomous(
         dbValue = "AUTONOMOUS",
         orchestratorModel = "qwen/qwen3-32b",
-        visionModel = "qwen/qwen3-vl-8b",
+        visionModel = "qwen/qwen3-vl-30b",
         chatModel = "qwen/qwen3-32b",
-        maxConcurrentRequests = 1,
-        maxIterations = 12,
+        maxIterations = 64,
     ),
 
     /**
@@ -90,13 +87,17 @@ enum class IntelligenceMode(
         orchestratorModel = "openai/gpt-oss-20b",
         visionModel = "qwen/qwen3-vl-30b",
         chatModel = "openai/gpt-oss-20b",
-        maxConcurrentRequests = 5,
-        maxIterations = 32,
+        maxIterations = 128,
     );
 
     companion object {
         fun fromDbValue(value: String): IntelligenceMode {
-            return requireNotNull(entries.find { it.dbValue == value }) { "Unknown IntelligenceMode: $value" }
+            return requireNotNull(entries.find {
+                it.dbValue.equals(
+                    value,
+                    ignoreCase = true
+                )
+            }) { "Unknown IntelligenceMode: $value" }
         }
     }
 }

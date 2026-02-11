@@ -1,7 +1,6 @@
 package tech.dokus.backend.services.auth
 
 import com.typesafe.config.Config
-import tech.dokus.foundation.backend.config.AppBaseConfig
 
 /**
  * Configuration for email service.
@@ -84,9 +83,8 @@ data class EmailConfig(
             )
         }
 
-        fun load(baseConfig: AppBaseConfig): EmailConfig {
-            // Reuse already loaded config from baseConfig
-            return fromConfig(baseConfig.config.getConfig("email"))
+        fun load(config: Config): EmailConfig {
+            return fromConfig(config.getConfig("email"))
         }
     }
 }

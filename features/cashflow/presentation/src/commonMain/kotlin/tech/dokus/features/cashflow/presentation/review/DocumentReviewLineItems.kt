@@ -1,65 +1,62 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import pro.respawn.flowmvi.dsl.withState
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.model.ExtractedLineItem
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 
 internal class DocumentReviewLineItems {
     suspend fun DocumentReviewCtx.handleAddLineItem() {
-        withState<DocumentReviewState.Content, _> {
-            if (editableData.documentType != DocumentType.Invoice) return@withState
-
-            val currentInvoice = editableData.invoice ?: return@withState
-            val newItem = ExtractedLineItem(
-                description = "",
-                quantity = 1.0,
-                unitPrice = null,
-                vatRate = null,
-                lineTotal = null,
-                vatAmount = null
-            )
-            val updatedItems = currentInvoice.items + newItem
-            val updatedInvoice = currentInvoice.copy(items = updatedItems)
-
-            updateState {
-                copy(
-                    editableData = editableData.copy(invoice = updatedInvoice),
-                    hasUnsavedChanges = true
-                )
-            }
-        }
+        val newItem = FinancialLineItem(
+            description = "",
+            quantity = 1L,
+            unitPrice = null,
+            vatRate = null,
+            netAmount = null
+        )
+        updateLineItems(newItem, add = true)
     }
 
-    suspend fun DocumentReviewCtx.handleUpdateLineItem(index: Int, item: ExtractedLineItem) {
-        withState<DocumentReviewState.Content, _> {
-            val currentInvoice = editableData.invoice ?: return@withState
-            if (index < 0 || index >= currentInvoice.items.size) return@withState
-
-            val updatedItems = currentInvoice.items.toMutableList()
-            updatedItems[index] = item
-            val updatedInvoice = currentInvoice.copy(items = updatedItems)
-
-            updateState {
-                copy(
-                    editableData = editableData.copy(invoice = updatedInvoice),
-                    hasUnsavedChanges = true
-                )
-            }
-        }
+    suspend fun DocumentReviewCtx.handleUpdateLineItem(index: Int, item: FinancialLineItem) {
+        updateLineItems(item, index)
     }
 
     suspend fun DocumentReviewCtx.handleRemoveLineItem(index: Int) {
-        withState<DocumentReviewState.Content, _> {
-            val currentInvoice = editableData.invoice ?: return@withState
-            if (index < 0 || index >= currentInvoice.items.size) return@withState
+        updateLineItems(null, index)
+    }
 
-            val updatedItems = currentInvoice.items.toMutableList()
-            updatedItems.removeAt(index)
-            val updatedInvoice = currentInvoice.copy(items = updatedItems)
+    private suspend fun DocumentReviewCtx.updateLineItems(
+        item: FinancialLineItem?,
+        index: Int? = null,
+        add: Boolean = false,
+    ) {
+        withState<DocumentReviewState.Content, _> {
+            val currentData = draftData ?: return@withState
+
+            val currentItems = when (currentData) {
+                is InvoiceDraftData -> currentData.lineItems
+                is ReceiptDraftData -> currentData.lineItems
+                is CreditNoteDraftData -> currentData.lineItems
+            }
+
+            val updatedItems = currentItems.toMutableList()
+            when {
+                add -> updatedItems.add(item ?: return@withState)
+                item != null && index != null && index in updatedItems.indices -> updatedItems[index] = item
+                item == null && index != null && index in updatedItems.indices -> updatedItems.removeAt(index)
+                else -> return@withState
+            }
+
+            val updatedDraftData = when (currentData) {
+                is InvoiceDraftData -> currentData.copy(lineItems = updatedItems)
+                is ReceiptDraftData -> currentData.copy(lineItems = updatedItems)
+                is CreditNoteDraftData -> currentData.copy(lineItems = updatedItems)
+            }
 
             updateState {
                 copy(
-                    editableData = editableData.copy(invoice = updatedInvoice),
+                    draftData = updatedDraftData,
                     hasUnsavedChanges = true
                 )
             }

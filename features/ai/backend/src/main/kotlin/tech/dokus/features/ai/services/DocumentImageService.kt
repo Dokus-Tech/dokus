@@ -20,35 +20,25 @@ import javax.imageio.ImageIO
  * - PDF: Renders each page to PNG at the specified DPI
  * - Images (JPEG, PNG, WebP, GIF, BMP, TIFF): Passed through as-is or converted to PNG
  */
-class DocumentImageService {
+object DocumentImageService {
     private val logger = loggerFor()
 
-    companion object {
-        private const val MIN_DPI = 72
-        private const val MAX_DPI = 300
-        private const val DEFAULT_DPI = 150
-        private const val MIN_MAX_PAGES = 1
-        private const val MAX_MAX_PAGES = 50
-        private const val DEFAULT_MAX_PAGES = 10
+    private const val MIN_DPI = 72
+    private const val MAX_DPI = 300
+    private const val DEFAULT_DPI = 150
+    private const val MIN_PAGE_COUNT = 1
+    private const val MAX_PAGE_COUNT = 10
+    private const val DEFAULT_PAGE_COUNT = 6
 
-        // Supported image MIME types
-        private val SUPPORTED_IMAGE_TYPES = setOf(
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/gif",
-            "image/bmp",
-            "image/tiff"
-        )
-    }
+    private val SUPPORTED_IMAGE_TYPES = setOf(
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/bmp",
+        "image/tiff"
+    )
 
-    /**
-     * Represents a single page/image from a document, ready for vision model processing.
-     *
-     * @property pageNumber 1-indexed page number (always 1 for single images)
-     * @property imageBytes PNG image data
-     * @property mimeType MIME type (always "image/png" after processing)
-     */
     data class DocumentImage(
         val pageNumber: Int,
         val imageBytes: ByteArray,
@@ -58,8 +48,8 @@ class DocumentImageService {
             if (this === other) return true
             if (other !is DocumentImage) return false
             return pageNumber == other.pageNumber &&
-                imageBytes.contentEquals(other.imageBytes) &&
-                mimeType == other.mimeType
+                    imageBytes.contentEquals(other.imageBytes) &&
+                    mimeType == other.mimeType
         }
 
         override fun hashCode(): Int {
@@ -71,73 +61,77 @@ class DocumentImageService {
     }
 
     /**
-     * Result of document-to-image conversion.
-     *
-     * @property images List of page images, ordered by page number
-     * @property totalPages Total pages in the source document
-     * @property processedPages Number of pages that were actually converted (may be limited by maxPages)
+     * Result of document-to-image conversion with pagination support.
      */
     data class DocumentImages(
         val images: List<DocumentImage>,
         val totalPages: Int,
-        val processedPages: Int
-    )
+        val startPage: Int,
+        val endPage: Int,
+        val hasMorePages: Boolean,
+        val nextPageStart: Int?
+    ) {
+        val processedPages: Int get() = images.size
+    }
 
     /**
      * Convert a document to a list of images for vision model processing.
      *
      * @param documentBytes Raw document content (PDF or image)
      * @param mimeType MIME type of the document
-     * @param maxPages Maximum number of pages to render (for PDFs)
+     * @param startPage First page to render, 1-indexed (default: 1)
+     * @param pageCount Number of pages to render from startPage (default: 3, max: 10)
      * @param dpi Resolution for PDF rendering (72-300)
-     * @return DocumentImages containing the rendered page images
+     * @return DocumentImages containing the rendered page images with pagination metadata
      * @throws UnsupportedDocumentTypeException if the document type is not supported
      */
     suspend fun getDocumentImages(
         documentBytes: ByteArray,
         mimeType: String,
-        maxPages: Int = DEFAULT_MAX_PAGES,
+        startPage: Int = 1,
+        pageCount: Int = DEFAULT_PAGE_COUNT,
         dpi: Int = DEFAULT_DPI
     ): DocumentImages = withContext(Dispatchers.IO) {
         val clampedDpi = dpi.coerceIn(MIN_DPI, MAX_DPI)
-        val clampedMaxPages = maxPages.coerceIn(MIN_MAX_PAGES, MAX_MAX_PAGES)
+        val clampedPageCount = pageCount.coerceIn(MIN_PAGE_COUNT, MAX_PAGE_COUNT)
 
-        when {
-            mimeType == "application/pdf" -> {
-                logger.debug("Rendering PDF to images (maxPages=$clampedMaxPages, dpi=$clampedDpi)")
-                renderPdfToImages(documentBytes, clampedMaxPages, clampedDpi)
+        when (mimeType) {
+            "application/pdf" -> {
+                logger.debug("Rendering PDF pages (startPage=$startPage, pageCount=$clampedPageCount, dpi=$clampedDpi)")
+                renderPdfToImages(documentBytes, startPage, clampedPageCount, clampedDpi)
             }
-            mimeType in SUPPORTED_IMAGE_TYPES -> {
+
+            in SUPPORTED_IMAGE_TYPES -> {
                 logger.debug("Processing image document (type=$mimeType)")
                 wrapImageAsDocument(documentBytes, mimeType)
             }
+
             else -> {
                 throw UnsupportedDocumentTypeException(
                     "Unsupported document type: $mimeType. " +
-                        "Supported types: application/pdf, ${SUPPORTED_IMAGE_TYPES.joinToString()}"
+                            "Supported types: application/pdf, ${SUPPORTED_IMAGE_TYPES.joinToString()}"
                 )
             }
         }
     }
 
-    /**
-     * Render PDF pages to PNG images.
-     */
     private fun renderPdfToImages(
         pdfBytes: ByteArray,
-        maxPages: Int,
+        startPage: Int,
+        pageCount: Int,
         dpi: Int
     ): DocumentImages {
         return Loader.loadPDF(pdfBytes).use { document ->
             val totalPages = document.numberOfPages
-            val pagesToRender = minOf(totalPages, maxPages)
 
-            if (totalPages > maxPages) {
-                logger.info("PDF has $totalPages pages, limiting to $maxPages for processing")
-            }
+            // Clamp startPage to valid range
+            val actualStartPage = startPage.coerceIn(1, totalPages)
+
+            // Calculate end page
+            val actualEndPage = (actualStartPage + pageCount - 1).coerceAtMost(totalPages)
 
             val renderer = PDFRenderer(document)
-            val images = (1..pagesToRender).map { pageNum ->
+            val images = (actualStartPage..actualEndPage).map { pageNum ->
                 val image = renderer.renderImageWithDPI(pageNum - 1, dpi.toFloat(), ImageType.RGB)
                 val imageBytes = ByteArrayOutputStream().use { baos ->
                     ImageIO.write(image, "PNG", baos)
@@ -146,38 +140,38 @@ class DocumentImageService {
                 DocumentImage(pageNumber = pageNum, imageBytes = imageBytes)
             }
 
-            logger.debug("Rendered $pagesToRender/$totalPages pages from PDF")
+            val hasMorePages = actualEndPage < totalPages
+
+            logger.debug("Rendered pages $actualStartPage-$actualEndPage of $totalPages (hasMore=$hasMorePages)")
 
             DocumentImages(
                 images = images,
                 totalPages = totalPages,
-                processedPages = pagesToRender
+                startPage = actualStartPage,
+                endPage = actualEndPage,
+                hasMorePages = hasMorePages,
+                nextPageStart = if (hasMorePages) actualEndPage + 1 else null
             )
         }
     }
 
-    /**
-     * Wrap a single image as a document with one page.
-     * For non-PNG images, converts to PNG for consistency.
-     */
     private fun wrapImageAsDocument(imageBytes: ByteArray, mimeType: String): DocumentImages {
         val pngBytes = if (mimeType == "image/png") {
             imageBytes
         } else {
-            // Convert to PNG for consistency
             convertToPng(imageBytes)
         }
 
         return DocumentImages(
             images = listOf(DocumentImage(pageNumber = 1, imageBytes = pngBytes)),
             totalPages = 1,
-            processedPages = 1
+            startPage = 1,
+            endPage = 1,
+            hasMorePages = false,
+            nextPageStart = null
         )
     }
 
-    /**
-     * Convert an image to PNG format.
-     */
     private fun convertToPng(imageBytes: ByteArray): ByteArray {
         val image = ImageIO.read(imageBytes.inputStream())
             ?: throw IllegalArgumentException("Could not read image data")
@@ -189,7 +183,4 @@ class DocumentImageService {
     }
 }
 
-/**
- * Exception thrown when a document type is not supported for vision processing.
- */
 class UnsupportedDocumentTypeException(message: String) : RuntimeException(message)

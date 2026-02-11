@@ -2,7 +2,7 @@ package tech.dokus.foundation.aura.model
 
 /**
  * UI-specific status for document processing display.
- * Maps from domain models (IngestionStatus, DraftStatus) to user-facing states.
+ * Maps from domain models (IngestionStatus, DocumentStatus) to user-facing states.
  *
  * Status priority (first matching wins):
  * 1. Failed - ingestion failed or has error message
@@ -26,18 +26,4 @@ enum class DocumentUiStatus {
 
     /** Processing failed */
     Failed
-}
-
-/**
- * Constants for document processing status determination.
- */
-object DocumentProcessingConstants {
-    /**
-     * Confidence threshold for "Ready" status eligibility.
-     * Documents with extraction confidence >= this value AND a linked contact
-     * are marked as "Ready to confirm" rather than "Needs attention".
-     * Note: Documents still require explicit user confirmation - this only
-     * affects the status badge display.
-     */
-    const val READY_STATUS_CONFIDENCE_THRESHOLD = 0.90
 }

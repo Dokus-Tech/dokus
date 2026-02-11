@@ -165,7 +165,7 @@ internal class ContactRemoteDataSourceImpl(
             val contactIdRoute = Contacts.Id(id = contactId.toString())
             httpClient.get(Contacts.Id.Activity(parent = contactIdRoute)).body<ContactActivitySummary>()
         }.onSuccess { activity ->
-            logger.i { "Got contact activity: invoices=${activity.invoiceCount}, bills=${activity.billCount}" }
+            logger.i { "Got contact activity: invoices=${activity.invoiceCount}, inbound invoices=${activity.inboundInvoiceCount}" }
         }.onFailure { error ->
             logger.e(error) { "Failed to get contact activity: $contactId" }
         }
@@ -198,7 +198,7 @@ internal class ContactRemoteDataSourceImpl(
         }.onSuccess { result ->
             logger.i {
                 "Merged contacts: invoices=${result.invoicesReassigned}, " +
-                    "bills=${result.billsReassigned}, expenses=${result.expensesReassigned}"
+                    "inbound invoices=${result.inboundInvoicesReassigned}, expenses=${result.expensesReassigned}"
             }
         }.onFailure { error ->
             logger.e(error) { "Failed to merge contacts" }

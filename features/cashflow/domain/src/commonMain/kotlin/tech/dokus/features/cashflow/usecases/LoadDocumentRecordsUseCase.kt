@@ -1,6 +1,6 @@
 package tech.dokus.features.cashflow.usecases
 
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -12,7 +12,7 @@ interface LoadDocumentRecordsUseCase {
     suspend operator fun invoke(
         page: Int,
         pageSize: Int,
-        draftStatus: DraftStatus? = null,
+        documentStatus: DocumentStatus? = null,
         ingestionStatus: IngestionStatus? = null,
         search: String? = null
     ): Result<PaginatedResponse<DocumentRecordDto>>

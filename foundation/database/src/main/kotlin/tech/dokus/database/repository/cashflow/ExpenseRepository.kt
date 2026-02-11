@@ -57,6 +57,7 @@ class ExpenseRepository {
                 it[category] = request.category
                 it[description] = request.description
                 it[documentId] = request.documentId?.let { docId -> UUID.fromString(docId.toString()) }
+                it[contactId] = request.contactId?.let { id -> UUID.fromString(id.toString()) }
                 it[isDeductible] = request.isDeductible ?: true
                 it[deductiblePercentage] = request.deductiblePercentage?.let { pct -> pct.toDbDecimal() } ?: Percentage.FULL.toDbDecimal()
                 it[paymentMethod] = request.paymentMethod

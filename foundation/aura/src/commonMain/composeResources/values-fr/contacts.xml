@@ -43,7 +43,7 @@
     <string name="contacts_contact_info">Informations du contact</string>
     <string name="contacts_activity_summary">Résumé d'activité</string>
     <string name="contacts_invoices">Factures</string>
-    <string name="contacts_bills">Factures fournisseurs</string>
+    <string name="contacts_inbound_invoices">Factures fournisseurs</string>
     <string name="contacts_expenses">Dépenses</string>
     <string name="contacts_last_activity">Dernière activité</string>
     <string name="contacts_pending_approvals">approbations en attente</string>
@@ -217,7 +217,7 @@
     <string name="contacts_merge_items_to_target">Éléments à réaffecter à %1$s</string>
     <string name="contacts_merge_summary">Résumé</string>
     <string name="contacts_merge_invoices_reassigned">Factures réaffectées</string>
-    <string name="contacts_merge_bills_reassigned">Factures fournisseurs réaffectées</string>
+    <string name="contacts_merge_inbound_invoices_reassigned">Factures fournisseurs réaffectées</string>
     <string name="contacts_merge_expenses_reassigned">Dépenses réaffectées</string>
     <string name="contacts_merge_notes_reassigned">Notes réaffectées</string>
     <string name="contacts_merge_success_message">Fusion terminée</string>

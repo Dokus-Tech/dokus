@@ -32,10 +32,11 @@ import tech.dokus.aura.resources.slogan_line_3
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.auth.mvi.ForgotPasswordState
 import tech.dokus.features.auth.mvi.NewPasswordState
@@ -219,10 +220,11 @@ private fun sampleTenants(): List<Tenant> {
             type = TenantType.Company,
             legalName = LegalName("Acme Corporation"),
             displayName = DisplayName("Acme"),
-            plan = TenantPlan.Starter,
+            subscription = SubscriptionTier.default,
             status = TenantStatus.Active,
             language = Language.En,
             createdAt = now,
+            vatNumber = VatNumber.Empty,
             updatedAt = now
         ),
         Tenant(
@@ -230,8 +232,9 @@ private fun sampleTenants(): List<Tenant> {
             type = TenantType.Company,
             legalName = LegalName("Dokus Labs"),
             displayName = DisplayName("Dokus"),
-            plan = TenantPlan.Professional,
+            subscription = SubscriptionTier.SelfHosted,
             status = TenantStatus.Active,
+            vatNumber = VatNumber.Empty,
             language = Language.En,
             createdAt = now,
             updatedAt = now
@@ -241,7 +244,8 @@ private fun sampleTenants(): List<Tenant> {
             type = TenantType.Freelancer,
             legalName = LegalName("Freelance Studio"),
             displayName = DisplayName("Studio"),
-            plan = TenantPlan.Free,
+            subscription = SubscriptionTier.default,
+            vatNumber = VatNumber.Empty,
             status = TenantStatus.Active,
             language = Language.En,
             createdAt = now,

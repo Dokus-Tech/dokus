@@ -261,7 +261,7 @@ Generated: 2026-01-18 23:43
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/MultipartUpload.kt | (various) | Unknown |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/CashflowRoutes.kt | (various) | Likely |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/CashflowEntriesRoutes.kt | (various) | Likely |
-| backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/BillRoutes.kt | (various) | Likely |
+| backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/InboundInvoiceRoutes.kt | (various) | Likely |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/PeppolWebhookRoutes.kt | (various) | Likely |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/PeppolRoutes.kt | (various) | Likely |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/ChatRoutes.kt | (various) | Likely |
@@ -302,7 +302,7 @@ Not detected via static scan. Use Gradle dependency report to confirm.
 | CreditNotesTable | 16 | Yes | No | Unknown |
 | InvoicesTable | 23 | Yes | No | Unknown |
 | InvoiceItemsTable | 10 | Yes | No | Unknown |
-| BillsTable | 22 | Yes | No | Unknown |
+| InboundInvoicesTable | 22 | Yes | No | Unknown |
 | RefundClaimsTable | 11 | Yes | No | Unknown |
 | InvoiceNumberSequencesTable | 5 | Yes | No | Unknown |
 | ExpensesTable | 17 | Yes | No | Unknown |
@@ -376,7 +376,7 @@ Total Kotlin files: 1077  Total lines of code: 148127  Average file size: 137.54
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/auth/TenantRoutes.kt | 214 | HTTP routes | 5 |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/banking/BankingRoutes.kt | 15 | HTTP routes | 5 |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/AttachmentRoutes.kt | 346 | HTTP routes | 3 |
-| backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/BillRoutes.kt | 149 | HTTP routes | 5 |
+| backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/InboundInvoiceRoutes.kt | 149 | HTTP routes | 5 |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/CashflowEntriesRoutes.kt | 185 | HTTP routes | 5 |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/CashflowOverviewRoutes.kt | 41 | HTTP routes | 5 |
 | backendApp/src/main/kotlin/tech/dokus/backend/routes/cashflow/CashflowRoutes.kt | 88 | HTTP routes | 5 |
@@ -404,7 +404,7 @@ Total Kotlin files: 1077  Total lines of code: 148127  Average file size: 137.54
 | backendApp/src/main/kotlin/tech/dokus/backend/services/auth/RedisRateLimitService.kt | 166 | Source file | 5 |
 | backendApp/src/main/kotlin/tech/dokus/backend/services/auth/SmtpEmailService.kt | 428 | Source file | 4 |
 | backendApp/src/main/kotlin/tech/dokus/backend/services/auth/TeamService.kt | 257 | Source file | 5 |
-| backendApp/src/main/kotlin/tech/dokus/backend/services/cashflow/BillService.kt | 195 | Source file | 5 |
+| backendApp/src/main/kotlin/tech/dokus/backend/services/cashflow/InboundInvoiceService.kt | 195 | Source file | 5 |
 | backendApp/src/main/kotlin/tech/dokus/backend/services/cashflow/CashflowEntriesService.kt | 274 | Source file | 5 |
 | backendApp/src/main/kotlin/tech/dokus/backend/services/cashflow/CashflowOverviewService.kt | 252 | Source file | 5 |
 | backendApp/src/main/kotlin/tech/dokus/backend/services/cashflow/CreditNoteService.kt | 245 | Source file | 5 |
@@ -510,7 +510,7 @@ Total Kotlin files: 1077  Total lines of code: 148127  Average file size: 137.54
 | features/ai/backend/src/main/kotlin/tech/dokus/features/ai/models/DocumentAIResultThresholds.kt | 51 | Source file | 5 |
 | features/ai/backend/src/main/kotlin/tech/dokus/features/ai/models/DocumentClassification.kt | 41 | Source file | 5 |
 | features/ai/backend/src/main/kotlin/tech/dokus/features/ai/models/DocumentProcessingResult.kt | 31 | Source file | 5 |
-| features/ai/backend/src/main/kotlin/tech/dokus/features/ai/models/ExtractedBillData.kt | 103 | Source file | 5 |
+| features/ai/backend/src/main/kotlin/tech/dokus/features/ai/models/ExtractedInvoiceData.kt | 103 | Source file | 5 |
 | features/ai/backend/src/main/kotlin/tech/dokus/features/ai/models/ExtractedExpenseData.kt | 80 | Source file | 5 |
 | features/ai/backend/src/main/kotlin/tech/dokus/features/ai/models/ExtractedInvoiceData.kt | 181 | Source file | 5 |
 | features/ai/backend/src/main/kotlin/tech/dokus/features/ai/models/ExtractedReceiptData.kt | 92 | Source file | 5 |
@@ -849,7 +849,7 @@ Total Kotlin files: 1077  Total lines of code: 148127  Average file size: 137.54
 | features/cashflow/presentation/src/commonMain/kotlin/tech/dokus/features/cashflow/presentation/review/components/details/FactComponents.kt | 385 | UI component | 4 |
 | features/cashflow/presentation/src/commonMain/kotlin/tech/dokus/features/cashflow/presentation/review/components/details/ReviewAmountsCard.kt | 165 | UI component | 5 |
 | features/cashflow/presentation/src/commonMain/kotlin/tech/dokus/features/cashflow/presentation/review/components/details/ReviewDetailsCards.kt | 252 | UI component | 5 |
-| features/cashflow/presentation/src/commonMain/kotlin/tech/dokus/features/cashflow/presentation/review/components/forms/BillForm.kt | 184 | UI component | 5 |
+| features/cashflow/presentation/src/commonMain/kotlin/tech/dokus/features/cashflow/presentation/review/components/forms/InvoiceForm.kt | 184 | UI component | 5 |
 | features/cashflow/presentation/src/commonMain/kotlin/tech/dokus/features/cashflow/presentation/review/components/forms/ExpenseForm.kt | 185 | UI component | 5 |
 | features/cashflow/presentation/src/commonMain/kotlin/tech/dokus/features/cashflow/presentation/review/components/forms/InvoiceForm.kt | 169 | UI component | 5 |
 | features/cashflow/presentation/src/commonMain/kotlin/tech/dokus/features/cashflow/presentation/review/components/forms/ReviewFormCommon.kt | 174 | UI component | 5 |
@@ -1182,7 +1182,7 @@ Total Kotlin files: 1077  Total lines of code: 148127  Average file size: 137.54
 | foundation/database/src/main/kotlin/tech/dokus/database/repository/auth/TenantRepository.kt | 221 | Repository | 5 |
 | foundation/database/src/main/kotlin/tech/dokus/database/repository/auth/UserRepository.kt | 418 | Repository | 4 |
 | foundation/database/src/main/kotlin/tech/dokus/database/repository/banking/BankingRepository.kt | 326 | Repository | 4 |
-| foundation/database/src/main/kotlin/tech/dokus/database/repository/cashflow/BillRepository.kt | 540 | Repository | 3 |
+| foundation/database/src/main/kotlin/tech/dokus/database/repository/cashflow/InboundInvoiceRepository.kt | 540 | Repository | 3 |
 | foundation/database/src/main/kotlin/tech/dokus/database/repository/cashflow/CashflowEntriesRepository.kt | 334 | Repository | 4 |
 | foundation/database/src/main/kotlin/tech/dokus/database/repository/cashflow/CashflowRepository.kt | 55 | Repository | 5 |
 | foundation/database/src/main/kotlin/tech/dokus/database/repository/cashflow/CreditNoteRepository.kt | 259 | Repository | 5 |
@@ -1217,7 +1217,7 @@ Total Kotlin files: 1077  Total lines of code: 148127  Average file size: 137.54
 | foundation/database/src/main/kotlin/tech/dokus/database/tables/auth/UsersTable.kt | 35 | DB table schema | 5 |
 | foundation/database/src/main/kotlin/tech/dokus/database/tables/banking/BankConnectionsTable.kt | 45 | DB table schema | 5 |
 | foundation/database/src/main/kotlin/tech/dokus/database/tables/banking/BankTransactionsTable.kt | 54 | DB table schema | 5 |
-| foundation/database/src/main/kotlin/tech/dokus/database/tables/cashflow/BillsTable.kt | 89 | DB table schema | 5 |
+| foundation/database/src/main/kotlin/tech/dokus/database/tables/cashflow/InboundInvoicesTable.kt | 89 | DB table schema | 5 |
 | foundation/database/src/main/kotlin/tech/dokus/database/tables/cashflow/CashflowEntriesTable.kt | 86 | DB table schema | 5 |
 | foundation/database/src/main/kotlin/tech/dokus/database/tables/cashflow/CreditNotesTable.kt | 87 | DB table schema | 5 |
 | foundation/database/src/main/kotlin/tech/dokus/database/tables/cashflow/ExpensesTable.kt | 74 | DB table schema | 5 |
@@ -1314,7 +1314,7 @@ Total Kotlin files: 1077  Total lines of code: 148127  Average file size: 137.54
 | foundation/domain/src/commonMain/kotlin/tech/dokus/domain/repository/IngestionStatusChecker.kt | 24 | Repository | 5 |
 | foundation/domain/src/commonMain/kotlin/tech/dokus/domain/routes/AccountRoutes.kt | 63 | HTTP routes | 5 |
 | foundation/domain/src/commonMain/kotlin/tech/dokus/domain/routes/AttachmentRoutes.kt | 34 | HTTP routes | 5 |
-| foundation/domain/src/commonMain/kotlin/tech/dokus/domain/routes/BillRoutes.kt | 61 | HTTP routes | 5 |
+| foundation/domain/src/commonMain/kotlin/tech/dokus/domain/routes/InboundInvoiceRoutes.kt | 61 | HTTP routes | 5 |
 | foundation/domain/src/commonMain/kotlin/tech/dokus/domain/routes/CashflowRoutes.kt | 89 | HTTP routes | 5 |
 | foundation/domain/src/commonMain/kotlin/tech/dokus/domain/routes/ChatRoutes.kt | 72 | HTTP routes | 5 |
 | foundation/domain/src/commonMain/kotlin/tech/dokus/domain/routes/ContactRoutes.kt | 113 | HTTP routes | 5 |

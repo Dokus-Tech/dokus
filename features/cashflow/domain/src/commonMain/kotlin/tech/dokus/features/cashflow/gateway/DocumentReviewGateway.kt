@@ -3,7 +3,6 @@ package tech.dokus.features.cashflow.gateway
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.RejectDocumentRequest
@@ -30,8 +29,7 @@ interface DocumentReviewGateway {
     ): Result<Unit>
 
     suspend fun confirmDocument(
-        documentId: DocumentId,
-        request: ConfirmDocumentRequest
+        documentId: DocumentId
     ): Result<DocumentRecordDto>
 
     suspend fun rejectDocument(

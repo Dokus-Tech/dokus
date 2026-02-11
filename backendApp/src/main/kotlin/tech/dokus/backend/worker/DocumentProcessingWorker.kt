@@ -13,31 +13,39 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.serialization.builtins.ListSerializer
-import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.util.runSuspendCatching
+import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
-import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.utils.json
-import tech.dokus.features.ai.orchestrator.DocumentOrchestrator
-import tech.dokus.features.ai.orchestrator.OrchestratorResult
-import tech.dokus.features.ai.orchestrator.ProcessingStep
-import tech.dokus.features.ai.prompts.AgentPrompt
-import tech.dokus.foundation.backend.config.IntelligenceMode
+import tech.dokus.features.ai.agents.DocumentProcessingAgent
+import tech.dokus.features.ai.graph.AcceptDocumentInput
+import tech.dokus.features.ai.models.confidenceScore
+import tech.dokus.features.ai.models.toDraftData
+import tech.dokus.features.ai.models.toProcessingOutcome
+import tech.dokus.features.ai.models.DirectionResolutionSource
+import tech.dokus.features.ai.validation.CheckType
 import tech.dokus.foundation.backend.config.ProcessorConfig
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Background worker that polls for pending documents and processes them with AI extraction.
  *
- * ORCHESTRATOR Architecture:
- * 1. Orchestrator fetches document images via tools
- * 2. Orchestrator classifies, extracts, validates, and enriches
- * 3. Orchestrator persists extraction + RAG indexing via tools
+ * KOOG GRAPH Architecture:
+ * 1. Graph injects tenant context + document images
+ * 2. Classify → Extract → Validate inside graph
+ * 3. Backend persists draft + audit output
  *
  * Features:
  * - Polling-based processing (configurable interval)
@@ -48,14 +56,19 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Suppress("LongParameterList")
 class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
-    private val orchestrator: DocumentOrchestrator,
+    private val processingAgent: DocumentProcessingAgent,
+    private val contactResolutionService: ContactResolutionService,
+    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
+    private val autoConfirmPolicy: AutoConfirmPolicy,
+    private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val config: ProcessorConfig,
-    private val mode: IntelligenceMode,
     private val tenantRepository: TenantRepository,
-    private val addressRepository: tech.dokus.database.repository.auth.AddressRepository
+    private val userRepository: UserRepository,
 ) {
-    private val logger = LoggerFactory.getLogger(DocumentProcessingWorker::class.java)
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    private val logger = loggerFor()
     private var pollingJob: Job? = null
     private val isRunning = AtomicBoolean(false)
 
@@ -68,9 +81,10 @@ class DocumentProcessingWorker(
             return
         }
 
+        val concurrency = config.batchSize.coerceAtLeast(1)
         logger.info(
-            "Starting worker (ORCHESTRATOR-FIRST): interval=${config.pollingInterval}ms, " +
-                "batch=${config.batchSize}, concurrency=${mode.maxConcurrentRequests}"
+            "Starting worker (KOOG-GRAPH): interval=${config.pollingInterval}ms, " +
+                    "batch=${config.batchSize}, concurrency=$concurrency"
         )
 
         pollingJob = scope.launch {
@@ -108,6 +122,16 @@ class DocumentProcessingWorker(
      * Concurrency is limited by mode.maxConcurrentRequests.
      */
     private suspend fun processBatch() {
+        // Recover any runs stuck in Processing from a previous crash
+        runSuspendCatching {
+            val recovered = ingestionRepository.recoverStaleRuns()
+            if (recovered > 0) {
+                logger.warn("Recovered $recovered stale ingestion run(s) (marked as Failed)")
+            }
+        }.onFailure { e ->
+            logger.error("Failed to recover stale runs", e)
+        }
+
         // Find queued ingestion runs
         val pending = ingestionRepository.findPendingForProcessing(
             limit = config.batchSize
@@ -121,7 +145,7 @@ class DocumentProcessingWorker(
         logger.info("Found ${pending.size} pending ingestion runs to process")
 
         // Concurrent processing limited by mode's maxConcurrentRequests
-        val semaphore = Semaphore(mode.maxConcurrentRequests)
+        val semaphore = Semaphore(config.batchSize.coerceAtLeast(1))
 
         supervisorScope {
             pending.map { ingestion ->
@@ -133,7 +157,7 @@ class DocumentProcessingWorker(
                         } catch (e: Exception) {
                             logger.error(
                                 "Failed to process ingestion run ${ingestion.runId} " +
-                                    "for document ${ingestion.documentId}",
+                                        "for document ${ingestion.documentId}",
                                 e
                             )
                         }
@@ -154,134 +178,177 @@ class DocumentProcessingWorker(
         val documentId = ingestion.documentId
         val tenantId = ingestion.tenantId
 
-        MDC.put("runId", runId)
-        MDC.put("documentId", documentId)
-        MDC.put("tenantId", tenantId)
+        MDC.put("runId", runId.toString())
+        MDC.put("documentId", documentId.toString())
+        MDC.put("tenantId", tenantId.toString())
 
         logger.info("Processing ingestion run: $runId for document: $documentId")
 
         // Mark as processing
-        ingestionRepository.markAsProcessing(runId, "5-Layer Autonomous Pipeline")
+        ingestionRepository.markAsProcessing(runId.toString(), "koog-graph")
 
         try {
-            // Fetch tenant context for improved INVOICE vs BILL classification
-            val parsedTenantId = TenantId.parse(tenantId)
+            // Fetch tenant context for improved invoice classification and direction resolution
+            val parsedTenantId = tenantId
             val tenant = tenantRepository.findById(parsedTenantId)
                 ?: error("Tenant not found: $tenantId")
-            val address = addressRepository.getCompanyAddress(parsedTenantId)
-                ?: error("Address not found for tenant: $tenantId")
-            val tenantContext = AgentPrompt.TenantContext(
-                vatNumber = tenant.vatNumber,
-                companyName = tenant.legalName,
-                address = address
-            )
 
-            // Process document through DocumentOrchestrator (tool-calling orchestrator)
-            val processingResult =
-                processDocument(
-                    tenantContext = tenantContext,
-                    runId = runId,
-                    documentId = documentId,
-                    tenantId = tenantId,
-                    maxPages = ingestion.overrideMaxPages,
-                    dpi = ingestion.overrideDpi
-                )
-
-            when (processingResult) {
-                is OrchestratorResult.Success -> {
-                    logger.info(
-                        "Processed doc $documentId: type=${processingResult.documentType}, " +
-                            "conf=${processingResult.confidence}, validated=${processingResult.validationPassed}"
-                    )
-                }
-
-                is OrchestratorResult.NeedsReview -> {
-                    logger.warn(
-                        "Document $documentId needs review: ${processingResult.reason} " +
-                            "(${processingResult.issues.size} issues)"
-                    )
-                }
-
-                is OrchestratorResult.Failed -> {
-                    logger.error("Document $documentId failed: ${processingResult.reason} at ${processingResult.stage}")
-                    val status = ingestionRepository.getRunStatus(runId)
-                    if (status == IngestionStatus.Processing || status == IngestionStatus.Queued) {
-                        ingestionRepository.markAsFailed(runId, "Failed: ${processingResult.reason}")
-                    }
-                    return
-                }
+            val members = userRepository.listByTenant(parsedTenantId, activeOnly = true)
+            val personNames = members.mapNotNull { m ->
+                listOfNotNull(m.user.firstName?.value, m.user.lastName?.value)
+                    .joinToString(" ").ifBlank { null }
             }
 
-            // Guard against runs left in Processing if the orchestrator skipped persistence.
-            val runStatus = ingestionRepository.getRunStatus(runId)
-            if (runStatus == IngestionStatus.Processing) {
-                ingestionRepository.markAsFailed(
-                    runId,
-                    "Orchestrator completed without persisting results"
+            val result = processingAgent.process(
+                AcceptDocumentInput(
+                    documentId = documentId,
+                    tenant = tenant,
+                    associatedPersonNames = personNames,
+                    userFeedback = ingestion.userFeedback
                 )
+            )
+
+            val counterpartyInvariantFailure = result.auditReport.criticalFailures.firstOrNull {
+                it.type == CheckType.COUNTERPARTY_INTEGRITY
+            }
+            if (counterpartyInvariantFailure != null) {
+                val errorMessage = "Counterparty invariant violation: ${counterpartyInvariantFailure.message}"
+                logger.warn(
+                    "Failing ingestion run {} for document {}: {}",
+                    runId,
+                    documentId,
+                    errorMessage
+                )
+                ingestionRepository.markAsFailed(runId.toString(), errorMessage)
+                return
+            }
+
+            val processingOutcome = result.toProcessingOutcome()
+            val documentType = result.classification.documentType
+            val confidence = minOf(
+                result.classification.confidence,
+                result.extraction.confidenceScore()
+            )
+            val draftData = result.toDraftData()
+
+            val rawExtractionJson = json.encodeToString(result)
+
+            ingestionRepository.markAsSucceeded(
+                runId = runId.toString(),
+                tenantId = tenantId.toString(),
+                documentId = documentId.toString(),
+                documentType = documentType,
+                draftData = draftData,
+                rawExtractionJson = rawExtractionJson,
+                confidence = confidence,
+                processingOutcome = processingOutcome,
+                rawText = null,
+                description = null,
+                keywords = emptyList(),
+                force = false
+            )
+
+            if (draftData != null) {
+                // Ensure drafts start in NeedsReview; auto-confirm will set Confirmed explicitly.
+                draftRepository.updateDocumentStatus(
+                    documentId = documentId,
+                    tenantId = parsedTenantId,
+                    status = DocumentStatus.NeedsReview
+                )
+
+                val resolution = contactResolutionService.resolve(parsedTenantId, draftData)
+                var linkedContactId: tech.dokus.domain.ids.ContactId? = null
+                when (val decision = resolution.resolution) {
+                    is ContactResolution.Matched -> {
+                        linkedContactId = decision.contactId
+                        draftRepository.updateContactResolution(
+                            documentId = documentId,
+                            tenantId = parsedTenantId,
+                            contactSuggestions = emptyList(),
+                            counterpartySnapshot = resolution.snapshot,
+                            matchEvidence = decision.evidence,
+                            linkedContactId = decision.contactId,
+                            linkedContactSource = ContactLinkSource.AI
+                        )
+                    }
+
+                    is ContactResolution.AutoCreate -> {
+                        val contactId = contactResolutionService.createContactFromResolution(
+                            tenantId = parsedTenantId,
+                            resolution = decision
+                        )
+                        linkedContactId = contactId
+                        draftRepository.updateContactResolution(
+                            documentId = documentId,
+                            tenantId = parsedTenantId,
+                            contactSuggestions = emptyList(),
+                            counterpartySnapshot = resolution.snapshot,
+                            matchEvidence = decision.evidence,
+                            linkedContactId = contactId,
+                            linkedContactSource = if (contactId != null) ContactLinkSource.AI else null
+                        )
+                    }
+
+                    is ContactResolution.Suggested -> {
+                        draftRepository.updateContactResolution(
+                            documentId = documentId,
+                            tenantId = parsedTenantId,
+                            contactSuggestions = decision.candidates,
+                            counterpartySnapshot = resolution.snapshot,
+                            matchEvidence = null,
+                            linkedContactId = null,
+                            linkedContactSource = null
+                        )
+                    }
+
+                    is ContactResolution.PendingReview -> {
+                        draftRepository.updateContactResolution(
+                            documentId = documentId,
+                            tenantId = parsedTenantId,
+                            contactSuggestions = emptyList(),
+                            counterpartySnapshot = resolution.snapshot,
+                            matchEvidence = null,
+                            linkedContactId = null,
+                            linkedContactSource = null
+                        )
+                    }
+                }
+
+                val document = documentRepository.getById(parsedTenantId, documentId)
+                if (document != null) {
+                    val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
+                        tenantId = parsedTenantId,
+                        documentId = documentId,
+                        source = document.source,
+                        documentType = documentType,
+                        draftData = draftData,
+                        auditPassed = result.auditReport.isValid,
+                        confidence = confidence,
+                        linkedContactId = linkedContactId,
+                        directionResolvedFromAiHintOnly = result.directionResolution.source == DirectionResolutionSource.AiHint
+                    )
+
+                    if (canAutoConfirm) {
+                        try {
+                            confirmationDispatcher.confirm(parsedTenantId, documentId, draftData, linkedContactId).getOrThrow()
+                        } catch (e: Exception) {
+                            logger.error("Auto-confirm failed for document $documentId", e)
+                            draftRepository.updateDocumentStatus(
+                                documentId = documentId,
+                                tenantId = parsedTenantId,
+                                status = DocumentStatus.NeedsReview
+                            )
+                        }
+                    }
+                }
             }
         } catch (e: Exception) {
             logger.error("Unexpected error processing document $documentId", e)
-            ingestionRepository.markAsFailed(runId, "Processing error: ${e.message}")
+            ingestionRepository.markAsFailed(runId.toString(), "Processing error: ${e.message}")
         } finally {
             MDC.remove("runId")
             MDC.remove("documentId")
             MDC.remove("tenantId")
         }
-    }
-
-    // =========================================================================
-    // Processing Methods
-    // =========================================================================
-
-    /**
-     * Process document using the DocumentOrchestrator.
-     */
-    private suspend fun processDocument(
-        tenantContext: AgentPrompt.TenantContext,
-        runId: String,
-        documentId: String,
-        tenantId: String,
-        maxPages: Int?,
-        dpi: Int?
-    ): OrchestratorResult {
-        logger.info("Processing document $documentId with DocumentOrchestrator")
-
-        val result = orchestrator.process(
-            documentId = DocumentId.parse(documentId),
-            tenantId = TenantId.parse(tenantId),
-            tenantContext = tenantContext,
-            runId = runId,
-            maxPages = maxPages,
-            dpi = dpi
-        )
-
-        // Log audit trail
-        val auditTrail = when (result) {
-            is OrchestratorResult.Success -> result.auditTrail
-            is OrchestratorResult.NeedsReview -> result.auditTrail
-            is OrchestratorResult.Failed -> result.auditTrail
-        }
-        auditTrail.forEach { step ->
-            logger.debug("Step ${step.step}: ${step.action} (${step.durationMs}ms)")
-        }
-
-        // Persist processing trace for observability
-        val trace = when (result) {
-            is OrchestratorResult.Success -> result.auditTrail
-            is OrchestratorResult.NeedsReview -> result.auditTrail
-            is OrchestratorResult.Failed -> result.auditTrail
-        }
-        runCatching {
-            val traceJson = json.encodeToString(
-                ListSerializer(ProcessingStep.serializer()),
-                trace
-            )
-            ingestionRepository.updateProcessingTrace(runId, traceJson)
-        }.onFailure { e ->
-            logger.warn("Failed to persist processing trace for runId=$runId", e)
-        }
-
-        return result
     }
 }

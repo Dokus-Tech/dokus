@@ -4,7 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.peppol.policy.DefaultDocumentConfirmationPolicy
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -13,13 +13,13 @@ class DocumentConfirmationPolicyTest {
 
     private val policy = DefaultDocumentConfirmationPolicy()
     private val tenantId = TenantId.generate()
-    private val emptyExtractedData = ExtractedDocumentData()
+    private val emptyDraftData = InvoiceDraftData()
 
     @Test
     fun `PEPPOL source should auto-confirm`() = runBlocking {
         val result = policy.canAutoConfirm(
             source = DocumentSource.Peppol,
-            extractedData = emptyExtractedData,
+            draftData = emptyDraftData,
             tenantId = tenantId
         )
 
@@ -30,7 +30,7 @@ class DocumentConfirmationPolicyTest {
     fun `MANUAL source should auto-confirm`() = runBlocking {
         val result = policy.canAutoConfirm(
             source = DocumentSource.Manual,
-            extractedData = emptyExtractedData,
+            draftData = emptyDraftData,
             tenantId = tenantId
         )
 
@@ -41,7 +41,7 @@ class DocumentConfirmationPolicyTest {
     fun `UPLOAD source should NOT auto-confirm`() = runBlocking {
         val result = policy.canAutoConfirm(
             source = DocumentSource.Upload,
-            extractedData = emptyExtractedData,
+            draftData = emptyDraftData,
             tenantId = tenantId
         )
 
@@ -52,7 +52,7 @@ class DocumentConfirmationPolicyTest {
     fun `EMAIL source should NOT auto-confirm`() = runBlocking {
         val result = policy.canAutoConfirm(
             source = DocumentSource.Email,
-            extractedData = emptyExtractedData,
+            draftData = emptyDraftData,
             tenantId = tenantId
         )
 

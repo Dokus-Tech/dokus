@@ -32,6 +32,14 @@ internal class DocumentReviewPreview(
                 maxPages = PreviewConfig.DEFAULT_MAX_PAGES
             )
         }
+        withState<DocumentReviewState.AwaitingExtraction, _> {
+            loadPreviewPagesForAwaiting(
+                documentId = documentId,
+                contentType = document.document.contentType,
+                dpi = PreviewConfig.dpi.value,
+                maxPages = PreviewConfig.DEFAULT_MAX_PAGES
+            )
+        }
     }
 
     suspend fun DocumentReviewCtx.handleLoadMorePages(maxPages: Int) {
@@ -92,6 +100,66 @@ internal class DocumentReviewPreview(
                         exception
                     }
                     withState<DocumentReviewState.Content, _> {
+                        updateState {
+                            copy(
+                                previewState = DocumentPreviewState.Error(
+                                    exception = displayException,
+                                    retry = { intent(DocumentReviewIntent.RetryLoadPreview) }
+                                ),
+                            )
+                        }
+                    }
+                }
+            )
+    }
+
+    private suspend fun DocumentReviewCtx.loadPreviewPagesForAwaiting(
+        documentId: DocumentId,
+        contentType: String,
+        dpi: Int,
+        maxPages: Int
+    ) {
+        if (!contentType.contains("pdf", ignoreCase = true)) {
+            withState<DocumentReviewState.AwaitingExtraction, _> {
+                updateState { copy(previewState = DocumentPreviewState.NotPdf) }
+            }
+            return
+        }
+
+        withState<DocumentReviewState.AwaitingExtraction, _> {
+            updateState { copy(previewState = DocumentPreviewState.Loading) }
+        }
+
+        getDocumentPages(documentId, dpi, maxPages)
+            .fold(
+                onSuccess = { response ->
+                    withState<DocumentReviewState.AwaitingExtraction, _> {
+                        if (response.pages.isEmpty()) {
+                            updateState { copy(previewState = DocumentPreviewState.NoPreview) }
+                        } else {
+                            updateState {
+                                copy(
+                                    previewState = DocumentPreviewState.Ready(
+                                        pages = response.pages,
+                                        totalPages = response.totalPages,
+                                        renderedPages = response.renderedPages,
+                                        dpi = response.dpi,
+                                        hasMore = response.totalPages > response.renderedPages
+                                    )
+                                )
+                            }
+                        }
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to load preview pages for document: $documentId" }
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.DocumentPreviewLoadFailed
+                    } else {
+                        exception
+                    }
+                    withState<DocumentReviewState.AwaitingExtraction, _> {
                         updateState {
                             copy(
                                 previewState = DocumentPreviewState.Error(

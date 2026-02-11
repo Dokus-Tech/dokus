@@ -77,9 +77,11 @@
     <!-- Document Types -->
     <string name="document_type_invoice">Invoice</string>
     <string name="document_type_expense">Expense</string>
-    <string name="document_type_bill">Bill</string>
+    <string name="document_type_inbound_invoice">Inbound Invoice</string>
     <string name="document_type_receipt">Receipt</string>
     <string name="document_type_pro_forma">Pro Forma</string>
+    <string name="document_type_quote">Quote</string>
+    <string name="document_type_purchase_order">Purchase Order</string>
     <string name="document_type_credit_note">Credit Note</string>
     <string name="document_type_document">Document</string>
     <string name="document_type_unknown">Unknown</string>
@@ -213,7 +215,7 @@
     <string name="draft_status_rejected">Rejected</string>
 
     <!-- Invoice Creation - Sections -->
-    <string name="invoice_bill_to">Bill to</string>
+    <string name="invoice_recipient">Invoice to</string>
     <string name="invoice_description">Description</string>
     <string name="invoice_qty">Qty</string>
     <string name="invoice_price">Price</string>
@@ -272,7 +274,7 @@
     <string name="cashflow_sort_amount_lowest">Amount (low to high)</string>
     <string name="cashflow_sort_type">Type</string>
     <string name="cashflow_document_number_expense">Expense %1$s</string>
-    <string name="cashflow_document_number_bill">Bill %1$s</string>
+    <string name="cashflow_document_number_inbound_invoice">Inbound Invoice %1$s</string>
     <string name="cashflow_amount_with_currency">%1$s %2$s</string>
     <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
 
@@ -289,6 +291,7 @@
     <string name="cashflow_confidence_medium">Medium</string>
     <string name="cashflow_confidence_low">Low</string>
     <string name="cashflow_loading_document">Loading document...</string>
+    <string name="cashflow_awaiting_extraction">Awaiting extraction...</string>
     <string name="cashflow_unknown_document_type">Unknown document type</string>
     <string name="cashflow_select_document_type">What type of document is this?</string>
     <string name="cashflow_processing_identifying_type">Identifying document type...</string>
@@ -315,7 +318,7 @@
     <string name="cashflow_section_additional_information">Additional Information</string>
     <string name="cashflow_invoice_number">Invoice Number</string>
     <string name="cashflow_vat_amount">VAT Amount</string>
-    <string name="cashflow_bill_details_section">Bill Details</string>
+    <string name="cashflow_inbound_invoice_details_section">Inbound Invoice Details</string>
     <string name="cashflow_expense_details_section">Expense Details</string>
     <string name="cashflow_receipt_details_section">Receipt Details</string>
     <string name="cashflow_pro_forma_details_section">Pro Forma Details</string>
@@ -341,6 +344,10 @@
     <string name="cashflow_action_reject_document">Reject Document</string>
     <string name="cashflow_action_keep_reviewing">Keep Reviewing</string>
     <string name="cashflow_reject_note_optional">Additional notes (optional)</string>
+    <string name="cashflow_feedback_title">What needs correction?</string>
+    <string name="cashflow_feedback_placeholder">e.g., This is a Inbound Invoice from Google, not an outgoing invoice</string>
+    <string name="cashflow_feedback_submit">Re-analyze</string>
+    <string name="cashflow_feedback_reject_instead">Reject document instead</string>
     <string name="cashflow_discard_changes_title">Discard changes?</string>
     <string name="cashflow_discard_changes_message">Your edits will be lost.</string>
     <string name="draft_status_unconfirmed">Unconfirmed</string>
@@ -422,13 +429,13 @@
     <string name="upload_status_waiting">Waiting...</string>
     <string name="upload_failed_message">Upload failed</string>
 
-    <!-- Bill Status -->
-    <string name="bill_status_draft">Draft</string>
-    <string name="bill_status_pending">Pending</string>
-    <string name="bill_status_scheduled">Scheduled</string>
-    <string name="bill_status_paid">Paid</string>
-    <string name="bill_status_overdue">Overdue</string>
-    <string name="bill_status_cancelled">Cancelled</string>
+    <!-- Inbound Invoice Status -->
+    <string name="payable_invoice_status_draft">Draft</string>
+    <string name="payable_invoice_status_pending">Pending</string>
+    <string name="payable_invoice_status_scheduled">Scheduled</string>
+    <string name="payable_invoice_status_paid">Paid</string>
+    <string name="payable_invoice_status_overdue">Overdue</string>
+    <string name="payable_invoice_status_cancelled">Cancelled</string>
 
     <!-- Business Health -->
     <string name="business_health_description">Performance forecast based on recent activity</string>

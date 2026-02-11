@@ -15,7 +15,7 @@ A Document is:
 • A file (PDF/XML/etc.)
 • With extracted structured fields (supplier, totals, VAT, dates, references, line items)
 • With a processing/validation status
-• With a link to downstream financial objects (bill, invoice, expense entry, cashflow entry)
+• With a link to downstream financial objects (inbound invoice, invoice, expense entry, cashflow entry)
 
 Core user goals
 • “I received an invoice/receipt → get it into Dokus fast.”
@@ -30,7 +30,7 @@ A) Upload document (PDF)
 2. Document appears in list immediately with a Processing state (not an error)
 3. Dokus extracts data (supplier, totals, VAT, due date, etc.)
 4. Result paths:
-   • High confidence → auto-draft created (e.g., Bill draft) and ready for review
+   • High confidence → auto-draft created (e.g., Inbound Invoice draft) and ready for review
    • Medium/low confidence → user gets a “Review needed” state with a guided fix flow
    • Failed → user sees a clear failure state with options (retry, download original, report)
 
@@ -44,7 +44,7 @@ B) Confirm a document (review + approve)
    • Extracted fields (editable)
    • Suggested contact match (supplier/customer)
 3. User chooses:
-   • Confirm & create (bill/expense/invoice depending on type)
+   • Confirm & create (inbound invoice/expense/invoice depending on type)
    • Fix fields then confirm
 4. Dokus records confirmation and updates downstream cashflow/tax projections.
 
@@ -74,7 +74,7 @@ go out, what’s overdue, what’s already paid.
 
 It is not “bank transactions” (yet). It’s a ledger of expected cash movements derived from:
 • Invoices you sent (expected incoming)
-• Bills/expenses you owe (expected outgoing)
+• Inbound Invoices/expenses you owe (expected outgoing)
 • Payments recorded (actuals)
 
 Core user goals
@@ -101,16 +101,16 @@ Ledger rows should be one-line, scannable:
 • Due date
 • Status
 • Reference (invoice number / supplier ref)
-• Source type (Invoice / Bill / Expense)
+• Source type (Invoice / Inbound Invoice / Expense)
 
-B) From invoice/bill → cashflow entry is created automatically
+B) From invoice/inbound invoice → cashflow entry is created automatically
 • Create an Invoice → Dokus adds an incoming cashflow entry
-• Confirm a Bill → Dokus adds an outgoing cashflow entry
+• Confirm a Inbound Invoice → Dokus adds an outgoing cashflow entry
 • Record a Payment → cashflow entry becomes Paid (and stores paid date/amount)
 
 C) Record payment (manual)
 
-1. User opens an entry (or invoice/bill)
+1. User opens an entry (or invoice/inbound invoice)
 2. Clicks Mark as paid
 3. Enters:
    • paid date
@@ -133,7 +133,7 @@ What “Clients” is
 
 Clients/Contacts is the canonical counterparty directory used everywhere:
 • Invoices are addressed to a client
-• Bills are linked to suppliers
+• Inbound Invoices are linked to suppliers
 • Documents match against contacts for automation
 • PEPPOL needs accurate identifiers (VAT, addresses, endpoints)
 
@@ -166,7 +166,7 @@ A) Create contact manually
 
 B) Create contact from a document
 
-1. User uploads invoice/bill
+1. User uploads invoice/inbound invoice
 2. Dokus suggests “Create new contact” with prefilled fields
 3. User confirms
 4. Document is linked; next documents from same supplier auto-match
@@ -264,7 +264,7 @@ C) Receive invoice via PEPPOL (inbound)
 1. Supplier sends invoice to your PEPPOL ID
 2. Dokus receives it and creates a Document
 3. Document follows the same flow:
-   • Processing → (Review needed or Ready) → Confirmed bill/expense
+   • Processing → (Review needed or Ready) → Confirmed inbound invoice/expense
 4. The system tracks transmission metadata for audit/compliance.
 
 ⸻

@@ -1,6 +1,6 @@
 package tech.dokus.peppol.provider
 
-import tech.dokus.peppol.model.PeppolDirection
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolReceivedDocument
@@ -78,7 +78,7 @@ interface PeppolProvider {
      * @return Result containing paginated document list
      */
     suspend fun listDocuments(
-        direction: PeppolDirection? = null,
+        direction: PeppolTransmissionDirection? = null,
         limit: Int = 50,
         offset: Int = 0,
         isUnread: Boolean? = null

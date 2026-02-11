@@ -9,7 +9,6 @@ import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
@@ -128,10 +127,8 @@ data class PeppolTransmissionDto(
     val direction: PeppolTransmissionDirection,
     val documentType: PeppolDocumentType,
     val status: PeppolStatus,
-    /** Reference to the local invoice (for outbound) */
+    /** Reference to the local invoice entity (inbound or outbound). */
     val invoiceId: InvoiceId? = null,
-    /** Reference to the local bill (for inbound) */
-    val billId: BillId? = null,
     /** Recommand document ID */
     val externalDocumentId: String? = null,
     /** Recipient Peppol ID (for outbound) */

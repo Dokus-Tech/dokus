@@ -226,9 +226,7 @@ class DocumentExamplesRepository : ExampleRepository {
      */
     private fun parseDocumentType(value: String): DocumentType = when (value.uppercase()) {
         "INVOICE" -> DocumentType.Invoice
-        "BILL" -> DocumentType.Bill
         "RECEIPT" -> DocumentType.Receipt
-        "EXPENSE" -> DocumentType.Expense
         "CREDIT_NOTE", "CREDITNOTE" -> DocumentType.CreditNote
         "PRO_FORMA", "PROFORMA" -> DocumentType.ProForma
         else -> DocumentType.Unknown

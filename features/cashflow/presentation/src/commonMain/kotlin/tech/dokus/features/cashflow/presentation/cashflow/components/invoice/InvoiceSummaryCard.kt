@@ -26,7 +26,7 @@ import tech.dokus.aura.resources.cashflow_amount_with_currency
 import tech.dokus.aura.resources.common_empty_value
 import tech.dokus.aura.resources.currency_symbol_eur
 import tech.dokus.aura.resources.invoice_amount
-import tech.dokus.aura.resources.invoice_bill_to
+import tech.dokus.aura.resources.invoice_recipient
 import tech.dokus.aura.resources.invoice_description
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
@@ -101,7 +101,7 @@ fun InvoiceSummaryCard(
                     verticalArrangement = Arrangement.spacedBy(SectionSpacing)
                 ) {
                     Text(
-                        text = stringResource(Res.string.invoice_bill_to).uppercase(),
+                        text = stringResource(Res.string.invoice_recipient).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,

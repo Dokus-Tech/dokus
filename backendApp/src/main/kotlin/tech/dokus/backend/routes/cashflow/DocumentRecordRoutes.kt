@@ -1,12 +1,11 @@
 package tech.dokus.backend.routes.cashflow
 
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
-import io.ktor.server.resources.delete
-import io.ktor.server.resources.get
+import io.ktor.http.*
+import io.ktor.server.request.*
+import io.ktor.server.resources.*
 import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
-import io.ktor.server.response.respond
+import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -14,25 +13,23 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
-import tech.dokus.backend.routes.cashflow.documents.buildCorrections
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
-import tech.dokus.backend.services.documents.DocumentConfirmationService
-import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
+import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
@@ -56,7 +53,7 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
  * - PATCH /api/v1/documents/{id}/draft - Update draft
  * - GET /api/v1/documents/{id}/ingestions - Get ingestion history
  * - POST /api/v1/documents/{id}/reprocess - Reprocess document (idempotent)
- * - POST /api/v1/documents/{id}/confirm - Confirm and create entity (transactional + idempotent)
+ * - POST /api/v1/documents/{id}/confirm - Confirm using latest draft (transactional + idempotent)
  */
 internal fun Route.documentRecordRoutes() {
     val documentRepository by inject<DocumentRepository>()
@@ -64,10 +61,10 @@ internal fun Route.documentRecordRoutes() {
     val ingestionRepository by inject<DocumentIngestionRunRepository>()
     val invoiceRepository by inject<InvoiceRepository>()
     val expenseRepository by inject<ExpenseRepository>()
-    val billRepository by inject<BillRepository>()
+    val creditNoteRepository by inject<CreditNoteRepository>()
     val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
     val minioStorage by inject<MinioDocumentStorageService>()
-    val documentConfirmationService by inject<DocumentConfirmationService>()
+    val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
 
     authenticateJwt {
@@ -86,7 +83,7 @@ internal fun Route.documentRecordRoutes() {
             // Query documents with optional drafts and ingestion info
             val (documentsWithInfo, total) = documentRepository.listWithDraftsAndIngestion(
                 tenantId = tenantId,
-                draftStatus = route.draftStatus,
+                documentStatus = route.documentStatus,
                 documentType = route.documentType,
                 ingestionStatus = route.ingestionStatus,
                 search = route.search,
@@ -98,14 +95,14 @@ internal fun Route.documentRecordRoutes() {
             val records = documentsWithInfo.map { docInfo ->
                 val documentWithUrl = addDownloadUrl(docInfo.document, minioStorage, logger)
                 val draft = docInfo.draft
-                val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
+                val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
                     findConfirmedEntity(
                         docInfo.document.id,
                         draft.documentType,
                         tenantId,
                         invoiceRepository,
-                        billRepository,
-                        expenseRepository
+                        expenseRepository,
+                        creditNoteRepository
                     )
                 } else {
                     null
@@ -146,14 +143,14 @@ internal fun Route.documentRecordRoutes() {
             val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
             val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
-            val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
+            val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
                 findConfirmedEntity(
                     documentId,
                     draft.documentType,
                     tenantId,
                     invoiceRepository,
-                    billRepository,
-                    expenseRepository
+                    expenseRepository,
+                    creditNoteRepository
                 )
             } else {
                 null
@@ -247,23 +244,17 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("No draft changes provided")
             }
 
-            if (draft.draftStatus == DraftStatus.Rejected) {
+            if (draft.documentStatus == DocumentStatus.Rejected) {
                 throw DokusException.BadRequest("Cannot edit rejected draft")
             }
 
             if (hasExtractedData) {
-                val updatedData = requestData ?: throw DokusException.BadRequest("No extracted data provided")
-                // Build tracked corrections
-                val now = kotlinx.datetime.Clock.System.now().toString()
-                val corrections = buildCorrections(draft.extractedData, updatedData, now)
-
                 // Update draft (may transition Confirmed -> NeedsReview)
                 val newVersion = draftRepository.updateDraft(
                     documentId = documentId,
                     tenantId = tenantId,
                     userId = userId,
-                    updatedData = updatedData,
-                    corrections = corrections
+                    updatedData = requestData
                 ) ?: throw DokusException.InternalError("Failed to update draft")
 
                 logger.info("Draft updated: document=$documentId, version=$newVersion")
@@ -277,11 +268,11 @@ internal fun Route.documentRecordRoutes() {
                     UpdateDraftResponse(
                         documentId = documentId,
                         draftVersion = newVersion,
-                        extractedData = updatedData,
+                        extractedData = requestData,
                         updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
                     )
                 )
-            } else if (hasContactUpdate) {
+            } else {
                 updateDraftCounterparty(draftRepository, documentId, tenantId, request)
                 call.respond(HttpStatusCode.NoContent)
             }
@@ -351,9 +342,7 @@ internal fun Route.documentRecordRoutes() {
             val runId = ingestionRepository.createRun(
                 documentId = documentId,
                 tenantId = tenantId,
-                overrideMaxPages = request.maxPages,
-                overrideDpi = request.dpi,
-                overrideTimeoutSeconds = request.timeoutSeconds
+                userFeedback = request.userFeedback,
             )
 
             call.respond(
@@ -369,120 +358,102 @@ internal fun Route.documentRecordRoutes() {
 
         /**
          * POST /api/v1/documents/{id}/confirm
-         * Confirm and create financial entity.
+         * Confirm using the latest draft and create financial entity.
          * TRANSACTIONAL + IDEMPOTENT: fails if entity already exists for documentId.
          */
         post<Documents.Id.Confirm> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
-            val userId = dokusPrincipal.userId
-
-            val request = call.receive<ConfirmDocumentRequest>()
-
-            logger.info("Confirming document: $documentId, type=${request.documentType}, tenant=$tenantId")
+            logger.info("Confirming document: $documentId, tenant=$tenantId")
 
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
-            if (draft.draftStatus == DraftStatus.Rejected) {
+            if (draft.documentStatus == DocumentStatus.Rejected) {
                 throw DokusException.BadRequest("Cannot confirm a rejected document")
             }
 
+            val draftType = draft.documentType ?: DocumentType.Unknown
+
             // Check if already confirmed (idempotent)
-            if (draft.draftStatus == DraftStatus.Confirmed) {
-                // Return existing confirmed entity
+            if (draft.documentStatus == DocumentStatus.Confirmed) {
                 val confirmedEntity = findConfirmedEntity(
                     documentId,
-                    draft.documentType,
+                    draftType,
                     tenantId,
                     invoiceRepository,
-                    billRepository,
-                    expenseRepository
+                    expenseRepository,
+                    creditNoteRepository
                 )
-                    ?: throw DokusException.InternalError("Draft is confirmed but entity not found")
 
-                val document = documentRepository.getById(tenantId, documentId)!!
-                val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
-                val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
+                if (confirmedEntity != null) {
+                    val document = documentRepository.getById(tenantId, documentId)!!
+                    val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
+                    val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
-                // Look up the cashflow entry for this document
-                val cashflowEntry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId)
-                    .getOrNull()
+                    // Look up the cashflow entry for this document
+                    val cashflowEntry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId)
+                        .getOrNull()
 
-                call.respond(
-                    HttpStatusCode.OK,
-                    DocumentRecordDto(
-                        document = documentWithUrl,
-                        draft = draft.toDto(),
-                        latestIngestion = latestIngestion?.toDto(
-                            includeRawExtraction = true,
-                            includeTrace = true
-                        ),
-                        confirmedEntity = confirmedEntity,
-                        cashflowEntryId = cashflowEntry?.id
+                    call.respond(
+                        HttpStatusCode.OK,
+                        DocumentRecordDto(
+                            document = documentWithUrl,
+                            draft = draft.toDto(),
+                            latestIngestion = latestIngestion?.toDto(
+                                includeRawExtraction = true,
+                                includeTrace = true
+                            ),
+                            confirmedEntity = confirmedEntity,
+                            cashflowEntryId = cashflowEntry?.id
+                        )
                     )
+                    return@post
+                }
+
+                logger.warn(
+                    "Draft is confirmed but entity not found; proceeding with confirmation: document=$documentId"
                 )
-                return@post
             }
 
             // Check draft is ready
-            if (draft.draftStatus != DraftStatus.NeedsReview && draft.draftStatus != DraftStatus.Ready) {
-                throw DokusException.BadRequest("Draft is not ready for confirmation: ${draft.draftStatus}")
+            if (draft.documentStatus != DocumentStatus.NeedsReview &&
+                draft.documentStatus != DocumentStatus.Confirmed
+            ) {
+                throw DokusException.BadRequest("Draft is not ready for confirmation: ${draft.documentStatus}")
             }
 
             if (draft.counterpartyIntent == CounterpartyIntent.Pending) {
                 throw DokusException.BadRequest("Counterparty is pending creation")
             }
 
-            val resolvedType = request.documentType
-            if (resolvedType == DocumentType.Unknown) {
+            if (draftType == DocumentType.Unknown) {
                 throw DokusException.BadRequest("Document type must be resolved before confirmation")
             }
-            if (draft.documentType != null && draft.documentType != resolvedType) {
-                throw DokusException.BadRequest("Document type mismatch with draft")
-            }
 
-            val requestData = request.extractedData
-            if (requestData != null && requestData != draft.extractedData) {
-                val now = Clock.System.now().toString()
-                val corrections = buildCorrections(draft.extractedData, requestData, now)
-                val updatedVersion = draftRepository.updateDraft(
-                    documentId = documentId,
-                    tenantId = tenantId,
-                    userId = userId,
-                    updatedData = requestData,
-                    corrections = corrections
-                ) ?: throw DokusException.InternalError("Failed to persist confirmed data")
-                logger.info("Draft updated before confirmation: document=$documentId, version=$updatedVersion")
-            }
-
-            val extractedData = requestData ?: draft.extractedData
-                ?: throw DokusException.BadRequest("No extracted data available for confirmation")
+            val draftData = draft.extractedData
+                ?: throw DokusException.BadRequest("No draft data available for confirmation")
 
             // Check if entity already exists for this document (idempotent check)
             val existingEntity = findConfirmedEntity(
                 documentId,
-                resolvedType,
+                draftType,
                 tenantId,
                 invoiceRepository,
-                billRepository,
-                expenseRepository
+                expenseRepository,
+                creditNoteRepository
             )
             if (existingEntity != null) {
                 throw DokusException.BadRequest("Entity already exists for this document")
             }
 
             // Confirm document: creates entity + cashflow entry + marks draft confirmed
-            val confirmationResult = documentConfirmationService.confirmDocument(
-                tenantId = tenantId,
-                documentId = documentId,
-                documentType = resolvedType,
-                extractedData = extractedData,
-                linkedContactId = draft.linkedContactId
+            val confirmationResult = confirmationDispatcher.confirm(
+                tenantId, documentId, draftData, draft.linkedContactId
             ).getOrThrow()
 
             val entryId = confirmationResult.cashflowEntryId
-            logger.info("Document confirmed: $documentId -> $resolvedType, cashflowEntryId=$entryId")
+            logger.info("Document confirmed: $documentId -> $draftType, cashflowEntryId=$entryId")
 
             // Return full record
             val document = documentRepository.getById(tenantId, documentId)!!
@@ -518,11 +489,11 @@ internal fun Route.documentRecordRoutes() {
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
-            if (draft.draftStatus == DraftStatus.Confirmed) {
+            if (draft.documentStatus == DocumentStatus.Confirmed) {
                 throw DokusException.BadRequest("Cannot reject a confirmed document")
             }
 
-            if (draft.draftStatus != DraftStatus.Rejected) {
+            if (draft.documentStatus != DocumentStatus.Rejected) {
                 draftRepository.rejectDraft(documentId, tenantId, request.reason)
             }
 

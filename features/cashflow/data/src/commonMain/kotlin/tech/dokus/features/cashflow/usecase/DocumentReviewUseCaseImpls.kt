@@ -3,7 +3,6 @@ package tech.dokus.features.cashflow.usecase
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.RejectDocumentRequest
@@ -59,10 +58,9 @@ internal class ConfirmDocumentUseCaseImpl(
     private val documentReviewGateway: DocumentReviewGateway
 ) : ConfirmDocumentUseCase {
     override suspend fun invoke(
-        documentId: DocumentId,
-        request: ConfirmDocumentRequest
+        documentId: DocumentId
     ): Result<DocumentRecordDto> {
-        return documentReviewGateway.confirmDocument(documentId, request)
+        return documentReviewGateway.confirmDocument(documentId)
     }
 }
 

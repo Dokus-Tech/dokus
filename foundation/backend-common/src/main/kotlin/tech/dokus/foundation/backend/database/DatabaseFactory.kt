@@ -10,12 +10,14 @@ import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.DatabaseConfig
+import tech.dokus.foundation.backend.config.FlywayConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import javax.sql.DataSource
 
 class DatabaseFactory(
-    private val appConfig: AppBaseConfig,
+    private val databaseConfig: DatabaseConfig,
+    private val flywayConfig: FlywayConfig,
     private val poolName: String
 ) {
     private val logger = loggerFor()
@@ -29,7 +31,7 @@ class DatabaseFactory(
     fun connect(): Database {
         dataSource = createHikariDataSource()
 
-        if (appConfig.flyway.enabled) {
+        if (flywayConfig.enabled) {
             runMigrations(dataSource!!)
         }
 
@@ -53,8 +55,8 @@ class DatabaseFactory(
     }
 
     private fun createHikariDataSource(): HikariDataSource {
-        val dbConfig = appConfig.database
-        val poolConfig = dbConfig.pool
+        val dbConfig = databaseConfig
+        val poolConfig = databaseConfig.pool
 
         val hikariConfig = HikariConfig().apply {
             jdbcUrl = dbConfig.url
@@ -82,8 +84,6 @@ class DatabaseFactory(
     }
 
     private fun runMigrations(dataSource: DataSource) {
-        val flywayConfig = appConfig.flyway
-
         val flyway = Flyway.configure()
             .dataSource(dataSource)
             .locations(*flywayConfig.locations.toTypedArray())

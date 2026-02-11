@@ -27,19 +27,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.bill_status_cancelled
-import tech.dokus.aura.resources.bill_status_draft
-import tech.dokus.aura.resources.bill_status_overdue
-import tech.dokus.aura.resources.bill_status_paid
-import tech.dokus.aura.resources.bill_status_pending
-import tech.dokus.aura.resources.bill_status_scheduled
 import tech.dokus.aura.resources.cashflow_card_title
-import tech.dokus.aura.resources.cashflow_document_number_bill
 import tech.dokus.aura.resources.cashflow_document_number_expense
-import tech.dokus.aura.resources.document_type_bill
 import tech.dokus.aura.resources.document_type_credit_note
 import tech.dokus.aura.resources.document_type_expense
 import tech.dokus.aura.resources.document_type_invoice
+import tech.dokus.aura.resources.document_type_pro_forma
+import tech.dokus.aura.resources.document_type_purchase_order
+import tech.dokus.aura.resources.document_type_quote
 import tech.dokus.aura.resources.invoice_status_cancelled
 import tech.dokus.aura.resources.invoice_status_draft
 import tech.dokus.aura.resources.invoice_status_overdue
@@ -50,7 +45,6 @@ import tech.dokus.aura.resources.invoice_status_viewed
 import tech.dokus.aura.resources.pending_documents_need_confirmation
 import tech.dokus.aura.resources.pending_documents_next
 import tech.dokus.aura.resources.pending_documents_previous
-import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.foundation.aura.components.DokusCard
@@ -163,11 +157,10 @@ private fun CashflowDocumentItem(
             Res.string.cashflow_document_number_expense,
             document.id.value
         )
-        is FinancialDocumentDto.BillDto -> document.invoiceNumber ?: stringResource(
-            Res.string.cashflow_document_number_bill,
-            document.id.value
-        )
         is FinancialDocumentDto.CreditNoteDto -> document.creditNoteNumber
+        is FinancialDocumentDto.ProFormaDto -> document.proFormaNumber
+        is FinancialDocumentDto.QuoteDto -> document.quoteNumber
+        is FinancialDocumentDto.PurchaseOrderDto -> document.poNumber
     }
 
     Row(
@@ -220,13 +213,21 @@ private fun DocumentStatusBadge(
             MaterialTheme.colorScheme.onSurfaceVariant,
             stringResource(Res.string.document_type_expense)
         )
-        is FinancialDocumentDto.BillDto -> Pair(
-            MaterialTheme.colorScheme.secondary,
-            document.status.toDisplayText()
-        )
         is FinancialDocumentDto.CreditNoteDto -> Pair(
             MaterialTheme.colorScheme.tertiary,
             stringResource(Res.string.document_type_credit_note)
+        )
+        is FinancialDocumentDto.ProFormaDto -> Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            stringResource(Res.string.document_type_pro_forma)
+        )
+        is FinancialDocumentDto.QuoteDto -> Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            stringResource(Res.string.document_type_quote)
+        )
+        is FinancialDocumentDto.PurchaseOrderDto -> Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            stringResource(Res.string.document_type_purchase_order)
         )
     }
 
@@ -294,16 +295,8 @@ private fun getInvoiceStatusStyle(status: InvoiceStatus): Pair<Color, String> {
 private fun FinancialDocumentDto.typeIcon(): String = when (this) {
     is FinancialDocumentDto.InvoiceDto -> stringResource(Res.string.document_type_invoice)
     is FinancialDocumentDto.ExpenseDto -> stringResource(Res.string.document_type_expense)
-    is FinancialDocumentDto.BillDto -> stringResource(Res.string.document_type_bill)
     is FinancialDocumentDto.CreditNoteDto -> stringResource(Res.string.document_type_credit_note)
-}
-
-@Composable
-private fun BillStatus.toDisplayText(): String = when (this) {
-    BillStatus.Draft -> stringResource(Res.string.bill_status_draft)
-    BillStatus.Pending -> stringResource(Res.string.bill_status_pending)
-    BillStatus.Scheduled -> stringResource(Res.string.bill_status_scheduled)
-    BillStatus.Paid -> stringResource(Res.string.bill_status_paid)
-    BillStatus.Overdue -> stringResource(Res.string.bill_status_overdue)
-    BillStatus.Cancelled -> stringResource(Res.string.bill_status_cancelled)
+    is FinancialDocumentDto.ProFormaDto -> stringResource(Res.string.document_type_pro_forma)
+    is FinancialDocumentDto.QuoteDto -> stringResource(Res.string.document_type_quote)
+    is FinancialDocumentDto.PurchaseOrderDto -> stringResource(Res.string.document_type_purchase_order)
 }

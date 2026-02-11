@@ -11,6 +11,7 @@ import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.tables.documents.DocumentDraftsTable
@@ -18,7 +19,7 @@ import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -52,7 +53,7 @@ data class DocumentCreatePayload(
 /**
  * Repository for document CRUD operations.
  * Documents are pure file metadata. Entity linkage is handled by
- * financial entity tables (Invoice, Bill, Expense) which have documentId FK.
+ * financial entity tables (Invoice, Expense) which have documentId FK.
  *
  * CRITICAL: All queries filter by tenantId for security.
  */
@@ -93,6 +94,22 @@ class DocumentRepository {
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
+        }
+
+    /**
+     * Get the content hash for a document by ID.
+     * CRITICAL: Must filter by tenantId.
+     */
+    suspend fun getContentHash(tenantId: TenantId, documentId: DocumentId): String? =
+        newSuspendedTransaction {
+            DocumentsTable
+                .select(DocumentsTable.contentHash)
+                .where {
+                    (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
+                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                }
+                .singleOrNull()
+                ?.get(DocumentsTable.contentHash)
         }
 
     /**
@@ -158,7 +175,7 @@ class DocumentRepository {
      *
      * Documents are returned regardless of whether they have drafts.
      * Filters:
-     * - draftStatus: Only applies when draft exists (documents without drafts pass this filter)
+     * - documentStatus: Only applies when draft exists (documents without drafts pass this filter)
      * - documentType: Only applies when draft exists
      * - ingestionStatus: Filters by latest ingestion status
      * - search: Filters by filename (ILIKE)
@@ -169,7 +186,7 @@ class DocumentRepository {
      */
     suspend fun listWithDraftsAndIngestion(
         tenantId: TenantId,
-        draftStatus: DraftStatus? = null,
+        documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
         search: String? = null,
@@ -196,10 +213,10 @@ class DocumentRepository {
 
         // Apply draft status filter (null-safe: documents without drafts pass)
         // When draft doesn't exist (LEFT JOIN null), the document should still be included
-        val statusFilteredQuery = if (draftStatus != null) {
+        val statusFilteredQuery = if (documentStatus != null) {
             filteredQuery.andWhere {
                 DocumentDraftsTable.tenantId.isNull() or
-                    (DocumentDraftsTable.draftStatus eq draftStatus)
+                    (DocumentDraftsTable.documentStatus eq documentStatus)
             }
         } else {
             filteredQuery
@@ -326,6 +343,7 @@ class DocumentRepository {
             finishedAt = this[DocumentIngestionRunsTable.finishedAt],
             errorMessage = this[DocumentIngestionRunsTable.errorMessage],
             confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble(),
+            processingOutcome = this[DocumentIngestionRunsTable.processingOutcome],
             rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
             processingTrace = this[DocumentIngestionRunsTable.processingTrace]
         )
@@ -335,10 +353,12 @@ class DocumentRepository {
         return DraftSummary(
             documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
             tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),
-            draftStatus = this[DocumentDraftsTable.draftStatus],
+            documentStatus = this[DocumentDraftsTable.documentStatus],
             documentType = this[DocumentDraftsTable.documentType],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
             aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },
+            aiDescription = this[DocumentDraftsTable.aiDescription],
+            aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
             aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]?.let {
                 IngestionRunId.parse(
                     it.toString()
@@ -347,10 +367,15 @@ class DocumentRepository {
             draftVersion = this[DocumentDraftsTable.draftVersion],
             draftEditedAt = this[DocumentDraftsTable.draftEditedAt],
             draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
-            suggestedContactId = this[DocumentDraftsTable.suggestedContactId]?.let { ContactId(it.toKotlinUuid()) },
-            contactSuggestionConfidence = this[DocumentDraftsTable.contactSuggestionConfidence],
-            contactSuggestionReason = this[DocumentDraftsTable.contactSuggestionReason],
+            contactSuggestions = this[DocumentDraftsTable.contactSuggestions]
+                ?.let { json.decodeFromString(it) }
+                ?: emptyList(),
+            counterpartySnapshot = this[DocumentDraftsTable.counterpartySnapshot]
+                ?.let { json.decodeFromString(it) },
+            matchEvidence = this[DocumentDraftsTable.matchEvidence]
+                ?.let { json.decodeFromString(it) },
             linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it.toKotlinUuid()) },
+            linkedContactSource = this[DocumentDraftsTable.linkedContactSource],
             counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
             rejectReason = this[DocumentDraftsTable.rejectReason],
             lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let {

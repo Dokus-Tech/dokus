@@ -43,7 +43,7 @@
     <string name="contacts_contact_info">Contact Information</string>
     <string name="contacts_activity_summary">Activity Summary</string>
     <string name="contacts_invoices">Invoices</string>
-    <string name="contacts_bills">Bills</string>
+    <string name="contacts_inbound_invoices">Inbound Invoices</string>
     <string name="contacts_expenses">Expenses</string>
     <string name="contacts_last_activity">Last activity</string>
     <string name="contacts_pending_approvals">pending approvals</string>
@@ -74,7 +74,7 @@
     <string name="contacts_fill_details_hint">Fill in the contact details below. Required fields are marked with *.</string>
     <string name="contacts_update_mobile_hint">Update contact information.</string>
     <string name="contacts_delete_confirmation">Are you sure you want to delete \"%s\"?</string>
-    <string name="contacts_delete_warning">This action cannot be undone. Any associated invoices, bills, and expenses will lose their contact reference.</string>
+    <string name="contacts_delete_warning">This action cannot be undone. Any associated invoices, inbound invoices, and expenses will lose their contact reference.</string>
     <string name="contacts_duplicate_warning">Potential Duplicates Found</string>
     <string name="contacts_duplicate_match_vat">Matching VAT number</string>
     <string name="contacts_duplicate_match_email">Matching email</string>
@@ -235,7 +235,7 @@
     <string name="contacts_merge_items_to_target">Items to be reassigned to %1$s</string>
     <string name="contacts_merge_summary">Summary</string>
     <string name="contacts_merge_invoices_reassigned">Invoices reassigned</string>
-    <string name="contacts_merge_bills_reassigned">Bills reassigned</string>
+    <string name="contacts_merge_inbound_invoices_reassigned">Inbound Invoices reassigned</string>
     <string name="contacts_merge_expenses_reassigned">Expenses reassigned</string>
     <string name="contacts_merge_notes_reassigned">Notes reassigned</string>
     <string name="contacts_merge_success_message">Merge complete</string>

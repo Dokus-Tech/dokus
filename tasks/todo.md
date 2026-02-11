@@ -1,84 +1,113 @@
-# Company Settings Screen Implementation
+# Fix: INBOUND_INVOICE misclassified as INVOICE — wrong counterparty
 
-**Status:** Complete
-**Date:** 2026-01-18
+## Plan
 
----
+### 1. Add `associatedPersonNames` to `InputWithTenantContext` interface
+- [x] Add `val associatedPersonNames: List<String> get() = emptyList()` to `InputWithTenantContext`
+- [x] Update `tenantContextInjectorNode` prompt to include person names + fuzzy matching guidance
 
-## Summary
+### 2. Add `associatedPersonNames` field to `AcceptDocumentInput`
+- [x] Add `override val associatedPersonNames: List<String> = emptyList()` to `AcceptDocumentInput`
 
-Implemented a redesigned `WorkspaceSettingsScreen` following the Dokus design philosophy of "Infrastructure, not SaaS". The screen has been transformed from a form-based settings page into a status ledger showing legal identity and PEPPOL compliance status.
+### 3. Fetch tenant member names in `DocumentProcessingWorker`
+- [x] Inject `UserRepository` dependency
+- [x] Fetch active member names and pass to `AcceptDocumentInput`
 
----
+### 4. Strengthen classification prompt in `ClassifyDocumentSubGraph`
+- [x] Remove `@Suppress("UnusedReceiverParameter")`, use `tenant` in prompt
+- [x] Add fuzzy name matching guidance
+- [x] Make INVOICE vs INBOUND_INVOICE distinction explicit with tenant name
 
-## Changes Made
-
-### Phase 1: New Aura Components
-- [x] `StatusDot` - Circular status indicator with Confirmed/Warning/Error/Neutral/Empty types
-- [x] `LockIcon` - Lock icon for indicating immutable fields
-- [x] `DataRow` - Label-value pair component with status and lock indicators, responsive layout
-- [x] `SettingsSection` - Collapsible section with edit mode support
-
-### Phase 2: Domain Model
-- [x] `PeppolActivityDto` - Model for PEPPOL activity timestamps
-
-### Phase 3: Use Cases
-- [x] `GetPeppolActivityUseCase` - Fetches latest PEPPOL transmission timestamps
-
-### Phase 4: Contract Updates
-- [x] Added `peppolRegistration` and `peppolActivity` to Content state
-- [x] Added `editingSection` for section-level edit mode
-- [x] Added `isLegalIdentityLocked` computed property
-- [x] Added new intents: `EnterEditMode`, `CancelEditMode`, `SaveSection`
-
-### Phase 5: Container Updates
-- [x] Added PEPPOL use cases to container
-- [x] Fetches PEPPOL data in `handleLoad()`
-- [x] Handles section edit mode intents
-
-### Phase 6: Screen Redesign
-- [x] PEPPOL Connection section (always first, primary visual weight)
-- [x] Legal Identity section (collapsed if verified, fields locked after PEPPOL)
-- [x] Banking Details section (collapsible)
-- [x] Invoice Format section (collapsible)
-- [x] Payment Terms section (collapsible)
-- [x] Section-level edit mode with Save/Cancel actions
+### 5. Verify
+- [x] Compile: `./gradlew :features:ai:backend:compileKotlin` — BUILD SUCCESSFUL
+- [x] Compile: `./gradlew :backendApp:compileKotlin` — BUILD SUCCESSFUL
 
 ---
 
-## Files Changed
+# Feature: "Something's wrong" → Re-analyze with user feedback
+
+## Plan
+
+### Layer 1: Domain model
+- [x] Add `val userFeedback: String? = null` to `ReprocessRequest` in `DocumentRecordDto.kt`
+
+### Layer 2: Database
+- [x] Add `user_feedback` column to `DocumentIngestionRunsTable`
+- [x] Add `userFeedback` field to `IngestionItemEntity`
+- [x] Update `createRun()` to accept and store `userFeedback`
+- [x] Update `findPendingForProcessing()` to read `userFeedback` (both repositories)
+
+### Layer 3: Backend route + worker
+- [x] Pass `request.userFeedback` through route to `createRun()`
+- [x] Read `ingestion.userFeedback` in worker, pass to `AcceptDocumentInput`
+
+### Layer 4: AI pipeline
+- [x] Add `val userFeedback: String? = null` to `AcceptDocumentInput`
+- [x] Add `val userFeedback: String?` to `InputWithTenantContext` interface
+- [x] Inject user feedback into LLM session in `tenantContextInjectorNode()` via `buildUserFeedbackPrompt()`
+
+### Layer 5: Frontend
+- [x] Add `FeedbackDialogState` to `DocumentReviewState.kt`
+- [x] Add intents: `ShowFeedbackDialog`, `DismissFeedbackDialog`, `UpdateFeedbackText`, `SubmitFeedback`
+- [x] Add action handlers in `DocumentReviewActions.kt`
+- [x] Wire intents in `DocumentReviewReducer.kt` + `DocumentReviewContainer.kt`
+- [x] Create `FeedbackDialog.kt` component
+- [x] Update `DocumentReviewRoute.kt` — render feedback dialog, "reject instead" opens reject dialog
+- [x] Change "Something's wrong" in `DocumentReviewScreen.kt`, `ReviewContent.kt` to open feedback dialog
+- [x] Add string resources in `cashflow.xml`
+
+### Layer 6: DB Migration
+- [x] Add Flyway migration `V2__add_user_feedback_to_ingestion_runs.sql`
+
+### Layer 7: Verify
+- [x] Compile: `./gradlew :features:ai:backend:compileKotlin` — BUILD SUCCESSFUL
+- [x] Compile: `./gradlew :backendApp:compileKotlin` — BUILD SUCCESSFUL
+- [x] Compile: `./gradlew :features:cashflow:presentation:compileKotlinWasmJs` — BUILD SUCCESSFUL
+
+---
+
+## Review
+
+### Changes Summary
+
+**13 files modified, 2 files created:**
 
 | File | Change |
 |------|--------|
-| `foundation/aura/.../components/status/StatusDot.kt` | NEW |
-| `foundation/aura/.../components/icons/LockIcon.kt` | NEW |
-| `foundation/aura/.../components/settings/DataRow.kt` | NEW |
-| `foundation/aura/.../components/settings/SettingsSection.kt` | NEW |
-| `foundation/aura/.../composeResources/values/common.xml` | Added `action_edit` string |
-| `foundation/domain/.../model/PeppolActivity.kt` | NEW |
-| `features/cashflow/domain/.../usecases/PeppolRegistrationUseCases.kt` | Added interface |
-| `features/cashflow/data/.../usecase/PeppolRegistrationUseCaseImpls.kt` | Added implementation |
-| `features/cashflow/data/.../di/CashflowDataModule.kt` | Added DI binding |
-| `composeApp/.../viewmodel/WorkspaceSettingsContract.kt` | Added PEPPOL state |
-| `composeApp/.../viewmodel/WorkspaceSettingsContainer.kt` | Added PEPPOL handling |
-| `composeApp/.../screens/settings/WorkspaceSettingsScreen.kt` | Rewritten |
-| `composeApp/.../DiModule.kt` | Added PEPPOL use cases |
+| `DocumentRecordDto.kt` | Added `userFeedback: String? = null` to `ReprocessRequest` |
+| `DocumentIngestionRunsTable.kt` | Added `user_feedback` nullable text column |
+| `IngestionItemEntity.kt` | Added `userFeedback: String? = null` field |
+| `DocumentIngestionRunRepository.kt` | Added `userFeedback` param to `createRun()`, read it in `findPendingForProcessing()` |
+| `ProcessorIngestionRepository.kt` | Read `userFeedback` in `findPendingForProcessing()` |
+| `DocumentRecordRoutes.kt` | Pass `request.userFeedback` to `createRun()` |
+| `DocumentProcessingWorker.kt` | Pass `ingestion.userFeedback` to `AcceptDocumentInput` |
+| `AcceptDocumentStrategy.kt` | Added `userFeedback: String? = null` to `AcceptDocumentInput` |
+| `TenantContextInjectorNode.kt` | Added `userFeedback` to interface + `buildUserFeedbackPrompt()` + inject as user message |
+| `DocumentReviewState.kt` | Added `FeedbackDialogState` data class + `feedbackDialogState` to `Content` |
+| `DocumentReviewIntent.kt` | Added 4 new intents for feedback dialog |
+| `DocumentReviewActions.kt` | Added 4 feedback dialog handlers (show, dismiss, update text, submit) |
+| `DocumentReviewReducer.kt` | Wired 4 new feedback handlers |
+| `DocumentReviewContainer.kt` | Wired 4 new intents to reducer |
+| `DocumentReviewScreen.kt` | Changed top bar "Something's wrong" → `ShowFeedbackDialog` |
+| `ReviewContent.kt` | Changed desktop + mobile footer "Something's wrong" → `ShowFeedbackDialog` |
+| `DocumentReviewRoute.kt` | Added `FeedbackDialog` rendering with "reject instead" secondary link |
+| **New:** `FeedbackDialog.kt` | Correction-first dialog with text field, "Re-analyze" button, "Reject document instead" link |
+| **New:** `V2__add_user_feedback_to_ingestion_runs.sql` | Flyway migration for `user_feedback` column |
+| `cashflow.xml` | Added 4 string resources |
 
----
+### Data flow
 
-## Verification
+1. User clicks "Something's wrong" → `FeedbackDialog` opens
+2. User types correction → clicks "Re-analyze"
+3. `SubmitFeedback` intent → calls `reprocessDocument(id, ReprocessRequest(force=true, userFeedback="..."))`
+4. Route creates ingestion run with `userFeedback` stored in DB
+5. Worker picks up run → reads `userFeedback` → passes to `AcceptDocumentInput`
+6. `tenantContextInjectorNode` injects feedback as `## USER CORRECTION` user message before classification/extraction
+7. LLM sees the correction and adjusts its output accordingly
 
-- Desktop tests pass (`./gradlew desktopTest`)
-- WASM JS build succeeds (`./gradlew :composeApp:compileKotlinWasmJs`)
+### What stays unchanged
 
-Note: Pre-existing test failure in `ValidateOgmUseCaseTest.kt` (unrelated to these changes)
-
----
-
-## Key Design Decisions
-
-1. **Section-level edit mode** - Each section can be edited independently
-2. **Field locking** - Legal Name and VAT Number locked after PEPPOL Active status
-3. **PEPPOL section at top** - Primary visual weight with elevated background
-4. **DataRow for view mode** - Clean label-value display with status indicators
-5. **Responsive layout** - Desktop (horizontal) vs Mobile (stacked) layouts
+- `RejectDocumentDialog.kt` — untouched, accessible via "Reject document instead" link in feedback dialog
+- Existing reject flow — identical behavior
+- `AnalysisFailedBanner` retry flow — still works (calls reprocess without feedback)
+- Auto-polling logic — already exists, reused (UI transitions when re-processing completes)

@@ -19,16 +19,20 @@ import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ContactEvidence
-import tech.dokus.domain.model.ExtractedDocumentData
-import tech.dokus.domain.model.TrackedCorrection
-import tech.dokus.domain.repository.DraftStatusChecker
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.MatchEvidence
+import tech.dokus.domain.model.contact.SuggestedContact
+import tech.dokus.domain.repository.DocumentStatusChecker
 import tech.dokus.domain.utils.json
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
@@ -40,22 +44,21 @@ import kotlin.uuid.toKotlinUuid
 data class DraftSummary(
     val documentId: DocumentId,
     val tenantId: TenantId,
-    val draftStatus: DraftStatus,
+    val documentStatus: DocumentStatus,
     val documentType: DocumentType?,
-    val extractedData: ExtractedDocumentData?,
-    val aiDraftData: ExtractedDocumentData?,
+    val extractedData: DocumentDraftData?,
+    val aiDraftData: DocumentDraftData?,
     val aiDescription: String? = null,
     val aiKeywords: List<String> = emptyList(),
     val aiDraftSourceRunId: IngestionRunId?,
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
     val draftEditedBy: UserId?,
-    val suggestedContactId: ContactId?,
-    val contactSuggestionConfidence: Float?,
-    val contactSuggestionReason: String?,
+    val contactSuggestions: List<SuggestedContact> = emptyList(),
+    val counterpartySnapshot: CounterpartySnapshot? = null,
+    val matchEvidence: MatchEvidence? = null,
     val linkedContactId: ContactId?,
     val linkedContactSource: ContactLinkSource? = null,
-    val contactEvidence: ContactEvidence? = null,
     val counterpartyIntent: CounterpartyIntent,
     val rejectReason: DocumentRejectReason?,
     val lastSuccessfulRunId: IngestionRunId?,
@@ -67,10 +70,10 @@ data class DraftSummary(
  * Repository for document draft operations.
  * CRITICAL: All queries filter by tenantId for security.
  *
- * Implements DraftStatusChecker for chat confirmation checks.
+ * Implements DocumentStatusChecker for chat confirmation checks.
  */
 @OptIn(ExperimentalUuidApi::class)
-class DocumentDraftRepository : DraftStatusChecker {
+class DocumentDraftRepository : DocumentStatusChecker {
 
     /**
      * Create or update a draft from an ingestion run result.
@@ -85,7 +88,7 @@ class DocumentDraftRepository : DraftStatusChecker {
         documentId: DocumentId,
         tenantId: TenantId,
         runId: IngestionRunId,
-        extractedData: ExtractedDocumentData,
+        extractedData: DocumentDraftData,
         documentType: DocumentType,
         aiDescription: String? = null,
         aiKeywords: List<String> = emptyList(),
@@ -110,7 +113,7 @@ class DocumentDraftRepository : DraftStatusChecker {
             DocumentDraftsTable.insert {
                 it[DocumentDraftsTable.documentId] = docIdUuid
                 it[DocumentDraftsTable.tenantId] = tenantIdUuid
-                it[draftStatus] = DraftStatus.NeedsReview
+                it[documentStatus] = DocumentStatus.NeedsReview
                 it[DocumentDraftsTable.documentType] = documentType
                 it[aiDraftData] = json.encodeToString(extractedData)
                 it[DocumentDraftsTable.aiDescription] = aiDescription?.takeIf { value -> value.isNotBlank() }
@@ -144,7 +147,7 @@ class DocumentDraftRepository : DraftStatusChecker {
                 if (shouldUpdateExtracted) {
                     it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
                     it[DocumentDraftsTable.documentType] = documentType
-                    it[draftStatus] = DraftStatus.NeedsReview
+                    it[documentStatus] = DocumentStatus.NeedsReview
                     if (!aiDescription.isNullOrBlank()) {
                         it[DocumentDraftsTable.aiDescription] = aiDescription
                     }
@@ -187,8 +190,7 @@ class DocumentDraftRepository : DraftStatusChecker {
         documentId: DocumentId,
         tenantId: TenantId,
         userId: UserId,
-        updatedData: ExtractedDocumentData,
-        corrections: List<TrackedCorrection>
+        updatedData: DocumentDraftData
     ): Int? = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
@@ -205,16 +207,10 @@ class DocumentDraftRepository : DraftStatusChecker {
         val currentVersion = current[DocumentDraftsTable.draftVersion]
         val newVersion = currentVersion + 1
 
-        // Merge corrections with existing
-        val existingCorrections = current[DocumentDraftsTable.userCorrections]?.let {
-            json.decodeFromString<List<TrackedCorrection>>(it)
-        } ?: emptyList()
-        val allCorrections = existingCorrections + corrections
-
-        val currentStatus = current[DocumentDraftsTable.draftStatus]
-        val nextStatus = if (currentStatus == DraftStatus.Confirmed) {
+        val currentStatus = current[DocumentDraftsTable.documentStatus]
+        val nextStatus = if (currentStatus == DocumentStatus.Confirmed) {
             // If a confirmed draft is edited, require review again.
-            DraftStatus.NeedsReview
+            DocumentStatus.NeedsReview
         } else {
             currentStatus
         }
@@ -223,13 +219,13 @@ class DocumentDraftRepository : DraftStatusChecker {
             (DocumentDraftsTable.documentId eq docIdUuid) and
                 (DocumentDraftsTable.tenantId eq tenantIdUuid)
         }) {
+            it[documentType] = updatedData.toDocumentType()
             it[extractedData] = json.encodeToString(updatedData)
-            it[userCorrections] = json.encodeToString(allCorrections)
             it[draftVersion] = newVersion
             it[draftEditedAt] = now
             it[draftEditedBy] = UUID.fromString(userId.toString())
             if (nextStatus != currentStatus) {
-                it[draftStatus] = nextStatus
+                it[documentStatus] = nextStatus
             }
             it[updatedAt] = now
         }
@@ -238,21 +234,21 @@ class DocumentDraftRepository : DraftStatusChecker {
     }
 
     /**
-     * Update draft status.
+     * Update document status.
      * CRITICAL: Must filter by tenantId.
      */
-    suspend fun updateDraftStatus(
+    suspend fun updateDocumentStatus(
         documentId: DocumentId,
         tenantId: TenantId,
-        status: DraftStatus
+        status: DocumentStatus
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
                 (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[draftStatus] = status
-            if (status != DraftStatus.Rejected) {
+            it[documentStatus] = status
+            if (status != DocumentStatus.Rejected) {
                 it[rejectReason] = null
             }
             it[updatedAt] = now
@@ -269,12 +265,12 @@ class DocumentDraftRepository : DraftStatusChecker {
         contactId: ContactId?,
         intent: CounterpartyIntent?,
         source: ContactLinkSource? = null,
-        contactEvidence: ContactEvidence? = null
+        matchEvidence: MatchEvidence? = null
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
         val tenantIdUuid = UUID.fromString(tenantId.toString())
-        val evidenceJson = contactEvidence?.let { json.encodeToString(it) }
+        val evidenceJson = matchEvidence?.let { json.encodeToString(it) }
 
         val current = DocumentDraftsTable.selectAll()
             .where {
@@ -283,8 +279,8 @@ class DocumentDraftRepository : DraftStatusChecker {
             }
             .singleOrNull() ?: return@newSuspendedTransaction false
 
-        val currentStatus = current[DocumentDraftsTable.draftStatus]
-        val shouldReview = currentStatus == DraftStatus.Confirmed
+        val currentStatus = current[DocumentDraftsTable.documentStatus]
+        val shouldReview = currentStatus == DocumentStatus.Confirmed
 
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq docIdUuid) and
@@ -295,7 +291,7 @@ class DocumentDraftRepository : DraftStatusChecker {
                 it[counterpartyIntent] = CounterpartyIntent.None
                 it[linkedContactSource] = source
                 if (evidenceJson != null) {
-                    it[DocumentDraftsTable.contactEvidence] = evidenceJson
+                    it[DocumentDraftsTable.matchEvidence] = evidenceJson
                 }
             } else if (intent != null) {
                 it[counterpartyIntent] = intent
@@ -305,7 +301,7 @@ class DocumentDraftRepository : DraftStatusChecker {
                 }
             }
             if (shouldReview) {
-                it[draftStatus] = DraftStatus.NeedsReview
+                it[documentStatus] = DocumentStatus.NeedsReview
             }
             it[updatedAt] = now
         } > 0
@@ -325,7 +321,7 @@ class DocumentDraftRepository : DraftStatusChecker {
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
                 (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[draftStatus] = DraftStatus.Rejected
+            it[documentStatus] = DocumentStatus.Rejected
             it[rejectReason] = reason
             it[updatedAt] = now
         } > 0
@@ -339,7 +335,7 @@ class DocumentDraftRepository : DraftStatusChecker {
      */
     suspend fun listByStatus(
         tenantId: TenantId,
-        statuses: List<DraftStatus>,
+        statuses: List<DocumentStatus>,
         documentType: DocumentType? = null,
         page: Int = 0,
         limit: Int = 20
@@ -349,7 +345,7 @@ class DocumentDraftRepository : DraftStatusChecker {
         val baseQuery = DocumentDraftsTable.selectAll()
             .where {
                 val conditions = (DocumentDraftsTable.tenantId eq tenantIdUuid) and
-                    (DocumentDraftsTable.draftStatus inList statuses)
+                    (DocumentDraftsTable.documentStatus inList statuses)
                 if (documentType != null) {
                     conditions and (DocumentDraftsTable.documentType eq documentType)
                 } else {
@@ -369,30 +365,38 @@ class DocumentDraftRepository : DraftStatusChecker {
     }
 
     /**
-     * Update contact suggestion.
+     * Update contact resolution results (suggestions, snapshot, evidence, and optional link).
      * CRITICAL: Must filter by tenantId.
      */
-    suspend fun updateContactSuggestion(
+    suspend fun updateContactResolution(
         documentId: DocumentId,
         tenantId: TenantId,
-        contactId: ContactId?,
-        confidence: Float?,
-        reason: String?,
-        contactEvidence: ContactEvidence? = null
+        contactSuggestions: List<SuggestedContact> = emptyList(),
+        counterpartySnapshot: CounterpartySnapshot? = null,
+        matchEvidence: MatchEvidence? = null,
+        linkedContactId: ContactId? = null,
+        linkedContactSource: ContactLinkSource? = null
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val evidenceJson = contactEvidence?.let { json.encodeToString(it) }
+        val suggestionsJson = json.encodeToString(contactSuggestions)
+        val snapshotJson = counterpartySnapshot?.let { json.encodeToString(it) }
+        val evidenceJson = matchEvidence?.let { json.encodeToString(it) }
+
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
                 (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[suggestedContactId] = contactId?.let { id -> UUID.fromString(id.toString()) }
-            it[contactSuggestionConfidence] = confidence
-            it[contactSuggestionReason] = reason
-            if (evidenceJson != null) {
-                it[DocumentDraftsTable.contactEvidence] = evidenceJson
+            it[DocumentDraftsTable.contactSuggestions] = suggestionsJson
+            it[DocumentDraftsTable.counterpartySnapshot] = snapshotJson
+            it[DocumentDraftsTable.matchEvidence] = evidenceJson
+
+            if (linkedContactId != null) {
+                it[DocumentDraftsTable.linkedContactId] = UUID.fromString(linkedContactId.toString())
+                it[DocumentDraftsTable.linkedContactSource] = linkedContactSource
+                it[DocumentDraftsTable.counterpartyIntent] = CounterpartyIntent.None
             }
-            it[updatedAt] = now
+
+            it[DocumentDraftsTable.updatedAt] = now
         } > 0
     }
 
@@ -411,7 +415,7 @@ class DocumentDraftRepository : DraftStatusChecker {
     }
 
     // =========================================================================
-    // DraftStatusChecker Implementation
+    // DocumentStatusChecker Implementation
     // =========================================================================
 
     /**
@@ -431,14 +435,14 @@ class DocumentDraftRepository : DraftStatusChecker {
             }
             .singleOrNull()
 
-        draft?.get(DocumentDraftsTable.draftStatus) == DraftStatus.Confirmed
+        draft?.get(DocumentDraftsTable.documentStatus) == DocumentStatus.Confirmed
     }
 
     private fun ResultRow.toDraftSummary(): DraftSummary {
         return DraftSummary(
             documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
             tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),
-            draftStatus = this[DocumentDraftsTable.draftStatus],
+            documentStatus = this[DocumentDraftsTable.documentStatus],
             documentType = this[DocumentDraftsTable.documentType],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
             aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },
@@ -449,12 +453,15 @@ class DocumentDraftRepository : DraftStatusChecker {
             draftVersion = this[DocumentDraftsTable.draftVersion],
             draftEditedAt = this[DocumentDraftsTable.draftEditedAt],
             draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
-            suggestedContactId = this[DocumentDraftsTable.suggestedContactId]?.let { ContactId(it.toKotlinUuid()) },
-            contactSuggestionConfidence = this[DocumentDraftsTable.contactSuggestionConfidence],
-            contactSuggestionReason = this[DocumentDraftsTable.contactSuggestionReason],
+            contactSuggestions = this[DocumentDraftsTable.contactSuggestions]
+                ?.let { json.decodeFromString(it) }
+                ?: emptyList(),
+            counterpartySnapshot = this[DocumentDraftsTable.counterpartySnapshot]
+                ?.let { json.decodeFromString(it) },
+            matchEvidence = this[DocumentDraftsTable.matchEvidence]
+                ?.let { json.decodeFromString(it) },
             linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it.toKotlinUuid()) },
             linkedContactSource = this[DocumentDraftsTable.linkedContactSource],
-            contactEvidence = this[DocumentDraftsTable.contactEvidence]?.let { json.decodeFromString(it) },
             counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
             rejectReason = this[DocumentDraftsTable.rejectReason],
             lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]
@@ -463,4 +470,10 @@ class DocumentDraftRepository : DraftStatusChecker {
             updatedAt = this[DocumentDraftsTable.updatedAt]
         )
     }
+}
+
+private fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
+    is InvoiceDraftData -> DocumentType.Invoice
+    is CreditNoteDraftData -> DocumentType.CreditNote
+    is ReceiptDraftData -> DocumentType.Receipt
 }

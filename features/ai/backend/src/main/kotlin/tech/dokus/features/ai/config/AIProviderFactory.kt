@@ -22,18 +22,14 @@ object AIProviderFactory {
      * CRITICAL: Without throttling, parallel agents can overwhelm Ollama
      * causing OOM, timeouts, or model unload/reload thrashing.
      */
-    fun createExecutor(config: AIConfig): PromptExecutor {
-        val baseExecutor = simpleOllamaAIExecutor(config.ollamaHost)
-        val maxConcurrent = config.mode.maxConcurrentRequests
-
-        logger.info(
-            "Creating Ollama executor: {} (max concurrent: {}, mode: {})",
-            config.ollamaHost,
-            maxConcurrent,
-            config.mode.name
-        )
-
-        return wrapWithThrottling(baseExecutor, maxConcurrent)
+    fun createOllamaExecutor(config: AIConfig): PromptExecutor {
+        return simpleOllamaAIExecutor(config.ollamaHost).also {
+            logger.info(
+                "Creating Ollama executor: {} (mode: {})",
+                config.ollamaHost,
+                config.mode.name
+            )
+        }
     }
 
     /**
@@ -42,22 +38,16 @@ object AIProviderFactory {
      * LM Studio exposes an OpenAI-compatible API at http://localhost:1234/v1 by default.
      */
     fun createOpenAiExecutor(config: AIConfig): PromptExecutor {
-        val baseUrl = config.lmStudioHost
-        val maxConcurrent = config.mode.maxConcurrentRequests
-
         logger.info(
-            "Creating LM Studio executor: {} (max concurrent: {}, mode: {})",
-            baseUrl,
-            maxConcurrent,
+            "Creating LM Studio executor: {} (mode: {})",
+            config.lmStudioHost,
             config.mode.name
         )
 
         val client = OpenAILLMClient(
             apiKey = "",
-            settings = OpenAIClientSettings(baseUrl = baseUrl)
+            settings = OpenAIClientSettings(baseUrl = config.lmStudioHost)
         )
-        val baseExecutor = SingleLLMPromptExecutor(client)
-
-        return wrapWithThrottling(baseExecutor, maxConcurrent)
+        return SingleLLMPromptExecutor(client)
     }
 }

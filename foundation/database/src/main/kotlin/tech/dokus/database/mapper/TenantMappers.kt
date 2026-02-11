@@ -27,12 +27,12 @@ object TenantMappers {
         type = this[TenantTable.type],
         legalName = LegalName(this[TenantTable.legalName]),
         displayName = DisplayName(this[TenantTable.displayName]),
-        plan = this[TenantTable.plan],
+        subscription = this[TenantTable.plan],
         status = this[TenantTable.status],
-        trialEndsAt = this[TenantTable.trialEndsAt],
-        subscriptionStartedAt = this[TenantTable.subscriptionStartedAt],
         language = this[TenantTable.language],
         vatNumber = VatNumber(this[TenantTable.vatNumber]),
+        trialEndsAt = this[TenantTable.trialEndsAt],
+        subscriptionStartedAt = this[TenantTable.subscriptionStartedAt],
         createdAt = this[TenantTable.createdAt],
         updatedAt = this[TenantTable.updatedAt]
     )

@@ -4,12 +4,12 @@ import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
+import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
@@ -24,18 +24,22 @@ internal class DocumentReviewActions(
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val getDocumentRecord: GetDocumentRecordUseCase,
-    private val mapper: DocumentReviewExtractedDataMapper,
     private val logger: Logger,
 ) {
     suspend fun DocumentReviewCtx.handleSaveDraft() {
         withState<DocumentReviewState.Content, _> {
             if (!hasUnsavedChanges) return@withState
 
+            val updatedData = draftData
+            if (updatedData == null) {
+                action(DocumentReviewAction.ShowError(DokusException.Validation.DocumentMissingFields))
+                return@withState
+            }
+
             logger.d { "Saving draft for document: $documentId" }
             updateState { copy(isSaving = true) }
 
             launch {
-                val updatedData = mapper.buildExtractedDataFromEditable(editableData, originalData)
                 updateDocumentDraft(
                     documentId,
                     UpdateDraftRequest(extractedData = updatedData)
@@ -68,10 +72,9 @@ internal class DocumentReviewActions(
 
     suspend fun DocumentReviewCtx.handleConfirmDiscardChanges() {
         withState<DocumentReviewState.Content, _> {
-            val restoredData = EditableExtractedData.fromExtractedData(originalData)
             updateState {
                 copy(
-                    editableData = restoredData,
+                    draftData = originalData,
                     hasUnsavedChanges = false
                 )
             }
@@ -89,29 +92,54 @@ internal class DocumentReviewActions(
                 return@withState
             }
 
+            val updatedData = draftData
+            if (updatedData == null) {
+                action(DocumentReviewAction.ShowError(DokusException.Validation.DocumentMissingFields))
+                return@withState
+            }
+
             logger.d { "Confirming document: $documentId" }
             updateState { copy(isConfirming = true) }
 
             launch {
-                val updatedData = mapper.buildExtractedDataFromEditable(editableData, originalData)
-                confirmDocument(
-                    documentId,
-                    ConfirmDocumentRequest(
-                        documentType = editableData.documentType,
-                        extractedData = updatedData
+                if (hasUnsavedChanges) {
+                    val updateResult = updateDocumentDraft(
+                        documentId,
+                        UpdateDraftRequest(extractedData = updatedData)
                     )
-                ).fold(
+                    val updateFailure = updateResult.exceptionOrNull()
+                    if (updateFailure != null) {
+                        logger.e(updateFailure) { "Failed to save draft before confirm: $documentId" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState { copy(isConfirming = false) }
+                        }
+                        action(DocumentReviewAction.ShowError(updateFailure.asDokusException))
+                        return@launch
+                    }
+                    val savedData = updateResult.getOrThrow().extractedData
+                    withState<DocumentReviewState.Content, _> {
+                        updateState {
+                            copy(
+                                draftData = savedData,
+                                originalData = savedData,
+                                hasUnsavedChanges = false
+                            )
+                        }
+                    }
+                }
+
+                confirmDocument(documentId).fold(
                     onSuccess = { record ->
                         val draft = record.draft
-                        val isConfirmed = draft?.draftStatus == DraftStatus.Confirmed
-                        val isRejected = draft?.draftStatus == DraftStatus.Rejected
+                        val isConfirmed = draft?.documentStatus == DocumentStatus.Confirmed
+                        val isRejected = draft?.documentStatus == DocumentStatus.Rejected
                         val cashflowEntryId = record.cashflowEntryId
                         withState<DocumentReviewState.Content, _> {
                             val linkedContactId = draft?.linkedContactId
                             updateState {
                                 copy(
                                     document = record,
-                                    editableData = EditableExtractedData.fromExtractedData(draft?.extractedData),
+                                    draftData = draft?.extractedData,
                                     originalData = draft?.extractedData,
                                     hasUnsavedChanges = false,
                                     isConfirming = false,
@@ -205,8 +233,8 @@ internal class DocumentReviewActions(
                                     copy(
                                         document = record,
                                         isRejecting = false,
-                                        isDocumentRejected = draft?.draftStatus == DraftStatus.Rejected,
-                                        isDocumentConfirmed = draft?.draftStatus == DraftStatus.Confirmed,
+                                        isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
+                                        isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
                                         rejectDialogState = null // Close dialog on success
                                     )
                                 }
@@ -248,17 +276,79 @@ internal class DocumentReviewActions(
             val confirmedEntityId = document.confirmedEntity?.let { entity ->
                 when (entity) {
                     is FinancialDocumentDto.InvoiceDto -> entity.id.toString()
-                    is FinancialDocumentDto.BillDto -> entity.id.toString()
                     is FinancialDocumentDto.ExpenseDto -> entity.id.toString()
                     is FinancialDocumentDto.CreditNoteDto -> entity.id.toString()
+                    is FinancialDocumentDto.ProFormaDto -> entity.id.toString()
+                    is FinancialDocumentDto.QuoteDto -> entity.id.toString()
+                    is FinancialDocumentDto.PurchaseOrderDto -> entity.id.toString()
                 }
             }
             if (confirmedEntityId != null) {
                 action(
                     DocumentReviewAction.NavigateToEntity(
                         entityId = confirmedEntityId,
-                        entityType = editableData.documentType
+                        entityType = draftData.documentType
                     )
+                )
+            }
+        }
+    }
+
+    // === Feedback Dialog Handlers ===
+
+    suspend fun DocumentReviewCtx.handleShowFeedbackDialog() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(feedbackDialogState = FeedbackDialogState()) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleDismissFeedbackDialog() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(feedbackDialogState = null) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleUpdateFeedbackText(text: String) {
+        withState<DocumentReviewState.Content, _> {
+            feedbackDialogState?.let { dialogState ->
+                updateState {
+                    copy(feedbackDialogState = dialogState.copy(feedbackText = text))
+                }
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleSubmitFeedback() {
+        withState<DocumentReviewState.Content, _> {
+            val dialogState = feedbackDialogState ?: return@withState
+            val feedback = dialogState.feedbackText.trim()
+            if (feedback.isBlank()) return@withState
+
+            updateState {
+                copy(feedbackDialogState = dialogState.copy(isSubmitting = true))
+            }
+
+            launch {
+                reprocessDocument(
+                    documentId,
+                    ReprocessRequest(force = true, userFeedback = feedback)
+                ).fold(
+                    onSuccess = { response ->
+                        logger.d { "Reprocess with feedback queued: runId=${response.runId}" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState { copy(feedbackDialogState = null) }
+                        }
+                        refreshAfterDraftUpdate(documentId)
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Failed to reprocess with feedback: $documentId" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState {
+                                copy(feedbackDialogState = feedbackDialogState?.copy(isSubmitting = false))
+                            }
+                        }
+                        action(DocumentReviewAction.ShowError(error.asDokusException))
+                    }
                 )
             }
         }
@@ -301,11 +391,11 @@ internal class DocumentReviewActions(
                     updateState {
                         copy(
                             document = record,
-                            editableData = EditableExtractedData.fromExtractedData(draft?.extractedData),
+                            draftData = draft?.extractedData,
                             originalData = draft?.extractedData,
                             counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
-                            isDocumentConfirmed = draft?.draftStatus == DraftStatus.Confirmed,
-                            isDocumentRejected = draft?.draftStatus == DraftStatus.Rejected
+                            isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
+                            isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected
                         )
                     }
                 }

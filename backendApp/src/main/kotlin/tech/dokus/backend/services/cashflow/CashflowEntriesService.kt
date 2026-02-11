@@ -10,6 +10,7 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -21,7 +22,7 @@ import java.util.UUID
 /**
  * Service for cashflow entry business operations.
  *
- * Cashflow entries are projections of financial facts (Invoice, Bill, Expense).
+ * Cashflow entries are projections of financial facts (Invoice, Expense).
  * They are created during document confirmation and updated when payments are recorded.
  *
  * This is the normalized source of truth for cashflow data.
@@ -33,7 +34,7 @@ class CashflowEntriesService(
     private val logger = loggerFor()
 
     /**
-     * Create a cashflow entry for an invoice (Cash-In).
+     * Create a cashflow entry for an invoice.
      */
     suspend fun createFromInvoice(
         tenantId: TenantId,
@@ -42,6 +43,7 @@ class CashflowEntriesService(
         dueDate: LocalDate,
         amountGross: Money,
         amountVat: Money,
+        direction: DocumentDirection,
         contactId: ContactId?
     ): Result<CashflowEntry> {
         logger.info("Creating cashflow entry for invoice: $invoiceId, tenant: $tenantId")
@@ -50,7 +52,7 @@ class CashflowEntriesService(
             sourceType = CashflowSourceType.Invoice,
             sourceId = invoiceId,
             documentId = documentId,
-            direction = CashflowDirection.In,
+            direction = if (direction == DocumentDirection.Inbound) CashflowDirection.Out else CashflowDirection.In,
             eventDate = dueDate,
             amountGross = amountGross,
             amountVat = amountVat,
@@ -58,34 +60,6 @@ class CashflowEntriesService(
         )
             .onSuccess { logger.info("Cashflow entry created: ${it.id} for invoice: $invoiceId") }
             .onFailure { logger.error("Failed to create cashflow entry for invoice: $invoiceId", it) }
-    }
-
-    /**
-     * Create a cashflow entry for a bill (Cash-Out).
-     */
-    suspend fun createFromBill(
-        tenantId: TenantId,
-        billId: UUID,
-        documentId: DocumentId?,
-        dueDate: LocalDate,
-        amountGross: Money,
-        amountVat: Money,
-        contactId: ContactId?
-    ): Result<CashflowEntry> {
-        logger.info("Creating cashflow entry for bill: $billId, tenant: $tenantId")
-        return cashflowEntriesRepository.createEntry(
-            tenantId = tenantId,
-            sourceType = CashflowSourceType.Bill,
-            sourceId = billId,
-            documentId = documentId,
-            direction = CashflowDirection.Out,
-            eventDate = dueDate,
-            amountGross = amountGross,
-            amountVat = amountVat,
-            contactId = contactId
-        )
-            .onSuccess { logger.info("Cashflow entry created: ${it.id} for bill: $billId") }
-            .onFailure { logger.error("Failed to create cashflow entry for bill: $billId", it) }
     }
 
     /**
@@ -162,7 +136,7 @@ class CashflowEntriesService(
     }
 
     /**
-     * Get cashflow entry by source (Invoice/Bill/Expense ID).
+     * Get cashflow entry by source (Invoice/Expense ID).
      */
     suspend fun getBySource(
         tenantId: TenantId,

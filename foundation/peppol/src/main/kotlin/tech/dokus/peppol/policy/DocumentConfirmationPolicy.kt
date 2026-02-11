@@ -2,7 +2,7 @@ package tech.dokus.peppol.policy
 
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.DocumentDraftData
 
 /**
  * Policy interface for determining if a document can be auto-confirmed.
@@ -16,13 +16,13 @@ interface DocumentConfirmationPolicy {
      * Determine if a document can be automatically confirmed without user review.
      *
      * @param source Where the document came from
-     * @param extractedData The extracted data from the document
+     * @param draftData The normalized draft data from the document
      * @param tenantId The tenant owning the document
      * @return true if the document can be auto-confirmed
      */
     suspend fun canAutoConfirm(
         source: DocumentSource,
-        extractedData: ExtractedDocumentData,
+        draftData: DocumentDraftData,
         tenantId: TenantId
     ): Boolean
 }
@@ -39,7 +39,7 @@ class DefaultDocumentConfirmationPolicy : DocumentConfirmationPolicy {
 
     override suspend fun canAutoConfirm(
         source: DocumentSource,
-        extractedData: ExtractedDocumentData,
+        draftData: DocumentDraftData,
         tenantId: TenantId
     ): Boolean {
         return when (source) {

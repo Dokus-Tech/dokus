@@ -117,7 +117,7 @@ This log tracks all refactoring changes made during the god file splitting effor
 
 **Build Status:** PASS
 **Notes:**
-- Extracted EssentialFieldsValidator with checkInvoice, checkBill, checkReceipt, checkExpense
+- Extracted EssentialFieldsValidator with checkInvoice, checkInboundInvoice, checkReceipt, checkExpense
 - Extracted EssentialFieldsCheck data class and getExtractionConfidence utility
 - Type-specific processing methods kept in main file (tightly coupled to private state)
 - All public APIs preserved

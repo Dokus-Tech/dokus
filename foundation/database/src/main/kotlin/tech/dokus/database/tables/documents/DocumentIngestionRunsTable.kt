@@ -7,6 +7,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
@@ -31,8 +32,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
 object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
 
     // Reference to the document being processed
-    val documentId = uuid("document_id")
-        .references(DocumentsTable.id, onDelete = ReferenceOption.CASCADE)
+    val documentId = uuid("document_id").references(DocumentsTable.id, onDelete = ReferenceOption.CASCADE)
 
     // Multi-tenancy (denormalized for query performance)
     val tenantId = uuid("tenant_id").references(
@@ -53,6 +53,9 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     val startedAt = datetime("started_at").nullable()
     val finishedAt = datetime("finished_at").nullable()
 
+    // User feedback for re-analysis (provided via "Something's wrong" dialog)
+    val userFeedback = text("user_feedback").nullable()
+
     // Error message (for failed runs)
     val errorMessage = text("error_message").nullable()
 
@@ -67,6 +70,9 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
 
     // Confidence score (0.0000 - 1.0000)
     val confidence = decimal("confidence", 5, 4).nullable()
+
+    // Processing outcome derived from confidence threshold
+    val processingOutcome = dbEnumeration<ProcessingOutcome>("processing_outcome").nullable()
 
     // Per-field confidence scores as JSON
     val fieldConfidences = text("field_confidences").nullable()
@@ -84,12 +90,6 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
 
     // Number of chunks created (for diagnostics)
     val chunksCount = integer("chunks_count").nullable()
-
-    // Processing overrides (nullable = use defaults)
-    // These allow per-reprocess customization for debugging/retries
-    val overrideMaxPages = integer("override_max_pages").nullable()
-    val overrideDpi = integer("override_dpi").nullable()
-    val overrideTimeoutSeconds = integer("override_timeout_seconds").nullable()
 
     init {
         // For processor: find runs to process by status

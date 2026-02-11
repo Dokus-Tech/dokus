@@ -23,21 +23,20 @@ import io.ktor.http.contentType
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
-import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.AttachmentId
-import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -49,8 +48,6 @@ import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentRequest
-import tech.dokus.domain.model.ConfirmDocumentRequest
-import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
@@ -59,7 +56,6 @@ import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolIdVerificationResult
@@ -79,7 +75,6 @@ import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Attachments
-import tech.dokus.domain.routes.Bills
 import tech.dokus.domain.routes.Cashflow
 import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Expenses
@@ -120,6 +115,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun listInvoices(
         status: InvoiceStatus?,
+        direction: DocumentDirection?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
         limit: Int,
@@ -129,6 +125,7 @@ internal class CashflowRemoteDataSourceImpl(
             httpClient.get(
                 Invoices(
                     status = status,
+                    direction = direction,
                     fromDate = fromDate,
                     toDate = toDate,
                     limit = limit,
@@ -211,15 +208,6 @@ internal class CashflowRemoteDataSourceImpl(
     // EXPENSE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createExpense(request: CreateExpenseRequest): Result<FinancialDocumentDto.ExpenseDto> {
-        return runCatching {
-            httpClient.post(Expenses()) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body()
-        }
-    }
-
     override suspend fun getExpense(id: ExpenseId): Result<FinancialDocumentDto.ExpenseDto> {
         return runCatching {
             httpClient.get(Expenses.Id(id = id.toString())).body()
@@ -265,84 +253,6 @@ internal class CashflowRemoteDataSourceImpl(
     }
 
     // Note: categorizeExpense was removed - compute client-side or use AI service directly.
-
-    // ============================================================================
-    // BILL MANAGEMENT (Supplier Invoices / Cash-Out)
-    // ============================================================================
-
-    override suspend fun createBill(request: CreateBillRequest): Result<FinancialDocumentDto.BillDto> {
-        return runCatching {
-            httpClient.post(Bills()) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body()
-        }
-    }
-
-    override suspend fun getBill(id: BillId): Result<FinancialDocumentDto.BillDto> {
-        return runCatching {
-            httpClient.get(Bills.Id(id = id.toString())).body()
-        }
-    }
-
-    override suspend fun listBills(
-        status: BillStatus?,
-        category: ExpenseCategory?,
-        fromDate: LocalDate?,
-        toDate: LocalDate?,
-        limit: Int,
-        offset: Int
-    ): Result<PaginatedResponse<FinancialDocumentDto.BillDto>> {
-        return runCatching {
-            httpClient.get(
-                Bills(
-                    status = status,
-                    category = category,
-                    fromDate = fromDate,
-                    toDate = toDate,
-                    limit = limit,
-                    offset = offset
-                )
-            ).body()
-        }
-    }
-
-    override suspend fun listOverdueBills(): Result<List<FinancialDocumentDto.BillDto>> {
-        return runCatching {
-            httpClient.get(Bills.Overdue()).body()
-        }
-    }
-
-    override suspend fun updateBill(
-        billId: BillId,
-        request: CreateBillRequest
-    ): Result<FinancialDocumentDto.BillDto> {
-        return runCatching {
-            httpClient.put(Bills.Id(id = billId.toString())) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body()
-        }
-    }
-
-    override suspend fun markBillPaid(
-        billId: BillId,
-        request: MarkBillPaidRequest
-    ): Result<FinancialDocumentDto.BillDto> {
-        return runCatching {
-            val billIdRoute = Bills.Id(id = billId.toString())
-            httpClient.post(Bills.Id.Payments(parent = billIdRoute)) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body()
-        }
-    }
-
-    override suspend fun deleteBill(billId: BillId): Result<Unit> {
-        return runCatching {
-            httpClient.delete(Bills.Id(id = billId.toString())).body()
-        }
-    }
 
     // ============================================================================
     // DOCUMENT/ATTACHMENT MANAGEMENT
@@ -605,7 +515,7 @@ internal class CashflowRemoteDataSourceImpl(
     // ============================================================================
 
     override suspend fun listDocuments(
-        draftStatus: DraftStatus?,
+        documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,
         search: String?,
@@ -615,7 +525,7 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             httpClient.get(
                 Documents.Paginated(
-                    draftStatus = draftStatus,
+                    documentStatus = documentStatus,
                     documentType = documentType,
                     ingestionStatus = ingestionStatus,
                     search = search,
@@ -686,14 +596,12 @@ internal class CashflowRemoteDataSourceImpl(
     }
 
     override suspend fun confirmDocument(
-        documentId: DocumentId,
-        request: ConfirmDocumentRequest
+        documentId: DocumentId
     ): Result<DocumentRecordDto> {
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.post(Documents.Id.Confirm(parent = docIdRoute)) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
+                // No body; confirm uses latest draft state on the server.
             }.body()
         }
     }

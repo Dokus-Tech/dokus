@@ -42,7 +42,7 @@ internal typealias ContactDetailsCtx = PipelineContext<ContactDetailsState, Cont
  *
  * Features:
  * - Contact information display
- * - Activity summary (invoices, bills, expenses)
+ * - Activity summary (invoices, inbound invoices, expenses)
  * - Notes management (add, edit, delete)
  * - Enrichment suggestions
  * - Contact merge functionality
@@ -244,7 +244,7 @@ internal class ContactDetailsContainer(
     private suspend fun ContactDetailsCtx.loadActivityData(contactId: ContactId) {
         getContactActivity(contactId).fold(
             onSuccess = { activity ->
-                logger.i { "Loaded activity: invoices=${activity.invoiceCount}, bills=${activity.billCount}" }
+                logger.i { "Loaded activity: invoices=${activity.invoiceCount}, inbound invoices=${activity.inboundInvoiceCount}" }
                 withState<ContactDetailsState.Content, _> {
                     updateState {
                         copy(activityState = DokusState.success(activity))

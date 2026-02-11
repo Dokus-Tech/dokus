@@ -1,11 +1,11 @@
 package tech.dokus.backend.routes.auth
 
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
-import io.ktor.server.resources.get
+import io.ktor.http.*
+import io.ktor.server.request.*
+import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.resources.put
-import io.ktor.server.response.respond
+import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.database.repository.auth.AddressRepository
@@ -88,7 +88,7 @@ internal fun Route.tenantRoutes() {
                 type = request.type,
                 legalName = request.legalName,
                 displayName = request.displayName,
-                plan = request.plan,
+                subscription = request.subscription,
                 language = request.language,
                 vatNumber = request.vatNumber,
                 address = request.address,

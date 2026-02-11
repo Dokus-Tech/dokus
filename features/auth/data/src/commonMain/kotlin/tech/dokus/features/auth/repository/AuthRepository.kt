@@ -6,7 +6,7 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
@@ -128,7 +128,7 @@ class AuthRepository(
         type: TenantType,
         legalName: LegalName,
         displayName: DisplayName,
-        plan: TenantPlan,
+        plan: SubscriptionTier,
         language: Language,
         vatNumber: VatNumber,
         address: UpsertTenantAddressRequest,
@@ -138,7 +138,7 @@ class AuthRepository(
             type = type,
             legalName = legalName,
             displayName = displayName,
-            plan = plan,
+            subscription = plan,
             language = language,
             vatNumber = vatNumber,
             address = address,

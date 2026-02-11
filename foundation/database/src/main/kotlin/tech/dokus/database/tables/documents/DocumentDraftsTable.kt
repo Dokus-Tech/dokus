@@ -7,11 +7,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
-import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
@@ -21,15 +21,15 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * CRITICAL: All queries MUST filter by tenant_id for multi-tenant security.
  *
  * This table stores the editable draft state for a document:
- * - Draft status (NeedsReview -> Ready -> Confirmed/Rejected)
+ * - Draft status (NeedsReview -> Confirmed/Rejected)
  * - AI draft data (immutable, from first successful run)
  * - Extracted data (editable current version)
- * - User corrections tracking for audit
+ * - User edits and versioning for audit
  * - Version number for optimistic locking
  * - Contact suggestion from AI matching
  *
- * Note: Confirmation creates Invoice/Bill/Expense with documentId FK.
- * The draft's draftStatus changes to Confirmed, but the linkage is in the
+ * Note: Confirmation creates Invoice/Expense with documentId FK.
+ * The draft's documentStatus changes to Confirmed, but the linkage is in the
  * financial entity tables (single source of truth).
  */
 object DocumentDraftsTable : Table("document_drafts") {
@@ -45,12 +45,10 @@ object DocumentDraftsTable : Table("document_drafts") {
     )
 
     // Draft review status
-    val draftStatus = dbEnumeration<DraftStatus>("draft_status")
-        .default(DraftStatus.NeedsReview)
+    val documentStatus = dbEnumeration<DocumentStatus>("document_status").default(DocumentStatus.NeedsReview)
 
     // Detected document type
-    val documentType = dbEnumeration<DocumentType>("document_type")
-        .nullable()
+    val documentType = dbEnumeration<DocumentType>("document_type").default(DocumentType.Unknown)
 
     // ============================================
     // Extraction Data Fields
@@ -73,10 +71,6 @@ object DocumentDraftsTable : Table("document_drafts") {
 
     // Current extraction data (may include user edits)
     val extractedData = text("extracted_data").nullable()
-
-    // JSON tracking user corrections/edits from the AI draft
-    // Format: [{ "field": "vendorName", "aiValue": "Acme Inc", "userValue": "ACME Corporation", "editedAt": "..." }, ...]
-    val userCorrections = text("user_corrections").nullable()
 
     // JSON linking extracted fields to their source locations in the document
     // Format: { "vendorName": { "page": 1, "bbox": [x1,y1,x2,y2], "text": "..." }, ... }
@@ -101,12 +95,11 @@ object DocumentDraftsTable : Table("document_drafts") {
     // Contact Suggestion Fields
     // ============================================
 
-    // Suggested contact from AI matching (populated after extraction)
-    val suggestedContactId = uuid("suggested_contact_id")
-        .references(ContactsTable.id, onDelete = ReferenceOption.SET_NULL)
-        .nullable()
-    val contactSuggestionConfidence = float("contact_suggestion_confidence").nullable()
-    val contactSuggestionReason = varchar("contact_suggestion_reason", 255).nullable()
+    // Contact suggestions (JSON array of SuggestedContact)
+    val contactSuggestions = text("contact_suggestions").nullable()
+
+    // Counterparty snapshot used for matching (JSON)
+    val counterpartySnapshot = text("counterparty_snapshot").nullable()
 
     // User-linked contact (explicit selection)
     val linkedContactId = uuid("linked_contact_id")
@@ -114,14 +107,14 @@ object DocumentDraftsTable : Table("document_drafts") {
         .nullable()
     val linkedContactSource = dbEnumeration<ContactLinkSource>("linked_contact_source").nullable()
 
-    // Evidence JSON for contact decision (auto-link or suggestion)
-    val contactEvidence = text("contact_evidence").nullable()
+    // Evidence JSON for contact decision (MatchEvidence)
+    val matchEvidence = text("match_evidence").nullable()
 
     // Counterparty intent (NONE/PENDING)
     val counterpartyIntent = dbEnumeration<CounterpartyIntent>("counterparty_intent")
         .default(CounterpartyIntent.None)
 
-    // Rejection reason (if draftStatus == Rejected)
+    // Rejection reason (if documentStatus == Rejected)
     val rejectReason = dbEnumeration<DocumentRejectReason>("reject_reason").nullable()
 
     // ============================================
@@ -144,13 +137,12 @@ object DocumentDraftsTable : Table("document_drafts") {
 
     init {
         // For listing documents by status
-        index(false, tenantId, draftStatus)
+        index(false, tenantId, documentStatus)
 
         // For listing documents by type
         index(false, tenantId, documentType)
 
         // For contact activity queries
-        index(false, tenantId, suggestedContactId)
         index(false, tenantId, linkedContactId)
     }
 }

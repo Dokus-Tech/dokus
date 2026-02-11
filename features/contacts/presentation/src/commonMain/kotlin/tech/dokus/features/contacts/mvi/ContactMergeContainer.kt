@@ -197,7 +197,7 @@ internal class ContactMergeContainer(
                 onSuccess = { result ->
                     logger.i {
                         "Merge successful: ${'$'}{result.invoicesReassigned} invoices, " +
-                            "${'$'}{result.billsReassigned} bills reassigned"
+                            "${'$'}{result.inboundInvoicesReassigned} inbound invoices reassigned"
                     }
                     updateState {
                         copy(

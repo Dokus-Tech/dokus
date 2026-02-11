@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -31,6 +32,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
+import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
@@ -122,6 +124,21 @@ internal fun DocumentReviewRoute(
         container.store.intent(DocumentReviewIntent.LoadDocument(documentId))
     }
 
+    // Auto-poll every 3s while processing so the UI transitions when extraction completes/fails
+    val shouldPoll = when (state) {
+        is DocumentReviewState.AwaitingExtraction -> true
+        is DocumentReviewState.Content -> (state as DocumentReviewState.Content).isProcessing
+        else -> false
+    }
+
+    LaunchedEffect(shouldPoll) {
+        if (!shouldPoll) return@LaunchedEffect
+        while (true) {
+            delay(3_000L)
+            container.store.intent(DocumentReviewIntent.Refresh)
+        }
+    }
+
     val isLargeScreen = LocalScreenSize.isLarge
     val contentState = state as? DocumentReviewState.Content
 
@@ -152,6 +169,17 @@ internal fun DocumentReviewRoute(
         onCorrectContact = { _ ->
             // Open the contact sheet instead of navigating away
             container.store.intent(DocumentReviewIntent.OpenContactSheet)
+        },
+        onCreateContact = { counterparty ->
+            container.store.intent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
+            navController.navigateTo(
+                ContactsDestination.CreateContact(
+                    prefillCompanyName = counterparty.name,
+                    prefillVat = counterparty.vatNumber,
+                    prefillAddress = counterparty.address,
+                    origin = ContactCreateOrigin.DocumentReview.name
+                )
+            )
         },
         snackbarHostState = snackbarHostState,
     )
@@ -211,6 +239,26 @@ internal fun DocumentReviewRoute(
                 text = stringResource(Res.string.action_cancel),
                 onClick = { showDiscardDialog = false }
             )
+        )
+    }
+
+    // Feedback dialog (correction-first "Something's wrong" flow)
+    (state as? DocumentReviewState.Content)?.feedbackDialogState?.let { dialogState ->
+        FeedbackDialog(
+            state = dialogState,
+            onFeedbackChanged = { text ->
+                container.store.intent(DocumentReviewIntent.UpdateFeedbackText(text))
+            },
+            onSubmit = {
+                container.store.intent(DocumentReviewIntent.SubmitFeedback)
+            },
+            onRejectInstead = {
+                container.store.intent(DocumentReviewIntent.DismissFeedbackDialog)
+                container.store.intent(DocumentReviewIntent.ShowRejectDialog)
+            },
+            onDismiss = {
+                container.store.intent(DocumentReviewIntent.DismissFeedbackDialog)
+            }
         )
     }
 

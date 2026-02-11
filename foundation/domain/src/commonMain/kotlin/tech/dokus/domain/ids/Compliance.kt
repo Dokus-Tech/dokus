@@ -81,6 +81,33 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
     companion object {
         val Empty = VatNumber("")
 
+        /**
+         * Normalize raw VAT input into canonical form.
+         *
+         * Rules:
+         * - Strip spaces/dots/dashes and uppercase.
+         * - If digits-only and length is 9 or 10, prepend BE (9-digit gets leading zero).
+         * - Keep cleaned value even if invalid.
+         */
+        fun from(raw: String?): VatNumber? {
+            if (raw == null) return null
+            val cleaned = normalize(raw)
+            if (cleaned.isEmpty()) return VatNumber(cleaned)
+
+            val digitsOnly = cleaned.all { it.isDigit() }
+            val normalized = if (digitsOnly) {
+                when (cleaned.length) {
+                    9 -> "BE0$cleaned"
+                    10 -> "BE$cleaned"
+                    else -> cleaned
+                }
+            } else {
+                cleaned
+            }
+
+            return VatNumber(normalized)
+        }
+
         fun normalize(raw: String): String = raw
             .trim()
             .uppercase()

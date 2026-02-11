@@ -35,7 +35,10 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.pending_documents_empty
 import tech.dokus.aura.resources.pending_documents_title
+import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.aura.components.DocumentStatusBadge
 import tech.dokus.domain.model.common.PaginationState
@@ -350,16 +353,20 @@ private fun PendingDocumentItem(
 
 /**
  * Get a display name for a pending document.
- * Uses extracted invoice/bill number if available, otherwise falls back to filename.
+ * Uses extracted invoice number if available, otherwise falls back to filename.
  */
 @Composable
 private fun getDocumentDisplayName(record: DocumentRecordDto): String {
     val filename = record.document.filename
     val extractedData = record.draft?.extractedData
 
-    // Try to get invoice/bill number from extracted data
-    val documentNumber = extractedData?.invoice?.invoiceNumber
-        ?: extractedData?.bill?.invoiceNumber
+    // Try to get extracted document number from draft data
+    val documentNumber = when (extractedData) {
+        is InvoiceDraftData -> extractedData.invoiceNumber
+        is CreditNoteDraftData -> extractedData.creditNoteNumber
+        is ReceiptDraftData -> extractedData.receiptNumber
+        else -> null
+    }
 
     // Get document type prefix (localizedUppercase is @Composable, call outside remembering)
     val typePrefix = record.draft?.documentType?.localizedUppercase.orEmpty()

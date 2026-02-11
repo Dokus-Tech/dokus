@@ -2,11 +2,14 @@
 
 package tech.dokus.features.cashflow.presentation.review
 
+import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.ExtractedDocumentData
-import tech.dokus.domain.model.ExtractedLineItem
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
@@ -29,9 +32,7 @@ internal class DocumentReviewReducer(
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
-    private val mapper = DocumentReviewExtractedDataMapper()
     private val loader = DocumentReviewLoader(getDocumentRecord, getContact, logger)
-    private val editor = DocumentReviewFieldEditor()
     private val contactBinder = DocumentReviewContactBinder(updateDocumentDraftContact, getContact, logger)
     private val preview = DocumentReviewPreview(getDocumentPages, logger)
     private val lineItems = DocumentReviewLineItems()
@@ -42,7 +43,6 @@ internal class DocumentReviewReducer(
         rejectDocument,
         reprocessDocument,
         getDocumentRecord,
-        mapper,
         logger
     )
 
@@ -52,26 +52,25 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleRefresh() =
         with(loader) { handleRefresh() }
 
-    suspend fun DocumentReviewCtx.handleUpdateInvoiceField(field: InvoiceField, value: Any?) =
-        with(editor) { handleUpdateInvoiceField(field, value) }
+    suspend fun DocumentReviewCtx.handleSelectDocumentType(type: DocumentType) {
+        withState<DocumentReviewState.Content, _> {
+            if (type == DocumentType.Unknown) return@withState
 
-    suspend fun DocumentReviewCtx.handleUpdateBillField(field: BillField, value: Any?) =
-        with(editor) { handleUpdateBillField(field, value) }
+            val newDraftData = when (type) {
+                DocumentType.Invoice -> InvoiceDraftData()
+                DocumentType.Receipt -> ReceiptDraftData()
+                DocumentType.CreditNote -> CreditNoteDraftData()
+                else -> return@withState
+            }
 
-    suspend fun DocumentReviewCtx.handleUpdateExpenseField(field: ExpenseField, value: Any?) =
-        with(editor) { handleUpdateExpenseField(field, value) }
-
-    suspend fun DocumentReviewCtx.handleUpdateReceiptField(field: ReceiptField, value: Any?) =
-        with(editor) { handleUpdateReceiptField(field, value) }
-
-    suspend fun DocumentReviewCtx.handleUpdateProFormaField(field: ProFormaField, value: Any?) =
-        with(editor) { handleUpdateProFormaField(field, value) }
-
-    suspend fun DocumentReviewCtx.handleUpdateCreditNoteField(field: CreditNoteField, value: Any?) =
-        with(editor) { handleUpdateCreditNoteField(field, value) }
-
-    suspend fun DocumentReviewCtx.handleSelectDocumentType(type: DocumentType) =
-        with(editor) { handleSelectDocumentType(type) }
+            updateState {
+                copy(
+                    draftData = newDraftData,
+                    hasUnsavedChanges = true,
+                )
+            }
+        }
+    }
 
     suspend fun DocumentReviewCtx.handleSelectContact(contactId: ContactId) =
         with(contactBinder) { handleSelectContact(contactId) }
@@ -113,7 +112,7 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleAddLineItem() =
         with(lineItems) { handleAddLineItem() }
 
-    suspend fun DocumentReviewCtx.handleUpdateLineItem(index: Int, item: ExtractedLineItem) =
+    suspend fun DocumentReviewCtx.handleUpdateLineItem(index: Int, item: FinancialLineItem) =
         with(lineItems) { handleUpdateLineItem(index, item) }
 
     suspend fun DocumentReviewCtx.handleRemoveLineItem(index: Int) =
@@ -159,15 +158,23 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleViewEntity() =
         with(actions) { handleViewEntity() }
 
+    // Feedback dialog handlers
+    suspend fun DocumentReviewCtx.handleShowFeedbackDialog() =
+        with(actions) { handleShowFeedbackDialog() }
+
+    suspend fun DocumentReviewCtx.handleDismissFeedbackDialog() =
+        with(actions) { handleDismissFeedbackDialog() }
+
+    suspend fun DocumentReviewCtx.handleUpdateFeedbackText(text: String) =
+        with(actions) { handleUpdateFeedbackText(text) }
+
+    suspend fun DocumentReviewCtx.handleSubmitFeedback() =
+        with(actions) { handleSubmitFeedback() }
+
     // Failed analysis handlers
     suspend fun DocumentReviewCtx.handleRetryAnalysis() =
         with(actions) { handleRetryAnalysis() }
 
     suspend fun DocumentReviewCtx.handleDismissFailureBanner() =
         with(actions) { handleDismissFailureBanner() }
-
-    fun buildExtractedDataFromEditable(
-        editable: EditableExtractedData,
-        original: ExtractedDocumentData?
-    ): ExtractedDocumentData = mapper.buildExtractedDataFromEditable(editable, original)
 }

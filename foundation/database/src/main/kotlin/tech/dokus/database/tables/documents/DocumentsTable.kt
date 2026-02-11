@@ -17,7 +17,7 @@ private const val ContentHashLength = 64
  * Documents table - stores metadata for files uploaded to object storage (MinIO).
  *
  * Documents are pure file metadata. Entity linkage is handled by the financial
- * entity tables (Invoice, Bill, Expense) which have a documentId FK.
+ * entity tables (Invoice, Expense) which have a documentId FK.
  *
  * The actual file content is stored in MinIO, referenced by storageKey.
  * Download URLs are generated on-demand (presigned URLs expire).

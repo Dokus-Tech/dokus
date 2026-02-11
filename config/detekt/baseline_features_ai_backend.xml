@@ -8,14 +8,14 @@
     <ID>CyclomaticComplexMethod:DocumentAIResult.kt$fun DocumentAIResult.meetsMinimalThreshold(): Boolean</ID>
     <ID>CyclomaticComplexMethod:DocumentAIResult.kt$private fun InvoiceProvenance.toFieldConfidences(): Map&lt;String, Double&gt;</ID>
     <ID>ImplicitDefaultLocale:RAGService.kt$RAGService$String.format("%.0f%%", chunk.similarityScore * 100)</ID>
-    <ID>ImportOrdering:BillExtractionAgent.kt$import tech.dokus.ai.models.BillProvenance import tech.dokus.ai.models.ExtractedBillData import tech.dokus.ai.models.FieldProvenance import ai.koog.agents.core.agent.AIAgent import ai.koog.agents.core.agent.singleRunStrategy import ai.koog.agents.core.tools.ToolRegistry import ai.koog.prompt.executor.model.PromptExecutor import ai.koog.prompt.llm.LLModel import kotlinx.serialization.json.Json import tech.dokus.foundation.backend.utils.loggerFor</ID>
+    <ID>ImportOrdering:InboundInvoiceExtractionAgent.kt$import tech.dokus.ai.models.InboundInvoiceProvenance import tech.dokus.ai.models.ExtractedInvoiceData import tech.dokus.ai.models.FieldProvenance import ai.koog.agents.core.agent.AIAgent import ai.koog.agents.core.agent.singleRunStrategy import ai.koog.agents.core.tools.ToolRegistry import ai.koog.prompt.executor.model.PromptExecutor import ai.koog.prompt.llm.LLModel import kotlinx.serialization.json.Json import tech.dokus.foundation.backend.utils.loggerFor</ID>
     <ID>ImportOrdering:CategorySuggestionAgent.kt$import tech.dokus.ai.models.CategorySuggestion import ai.koog.agents.core.agent.AIAgent import ai.koog.agents.core.agent.singleRunStrategy import ai.koog.agents.core.tools.ToolRegistry import ai.koog.prompt.executor.model.PromptExecutor import ai.koog.prompt.llm.LLModel import kotlinx.serialization.json.Json import tech.dokus.foundation.backend.utils.loggerFor</ID>
     <ID>ImportOrdering:ChatAgent.kt$import tech.dokus.ai.services.RAGService import tech.dokus.domain.ids.DocumentId import tech.dokus.domain.ids.TenantId import tech.dokus.domain.repository.RetrievedChunk import ai.koog.agents.core.agent.AIAgent import ai.koog.agents.core.agent.singleRunStrategy import ai.koog.agents.core.tools.ToolRegistry import ai.koog.prompt.executor.model.PromptExecutor import ai.koog.prompt.llm.LLModel import kotlinx.serialization.Serializable import kotlinx.serialization.json.Json import org.slf4j.LoggerFactory</ID>
     <ID>ImportOrdering:ChunkingService.kt$import tech.dokus.domain.model.ChunkMetadata import tech.dokus.domain.model.ChunkProvenance import tech.dokus.domain.model.ChunkingConfig import tech.dokus.domain.model.TextOffsets import org.slf4j.LoggerFactory</ID>
     <ID>ImportOrdering:DocumentClassificationAgent.kt$import tech.dokus.ai.models.ClassifiedDocumentType import tech.dokus.ai.models.DocumentClassification import ai.koog.agents.core.agent.AIAgent import ai.koog.agents.core.agent.singleRunStrategy import ai.koog.agents.core.tools.ToolRegistry import ai.koog.prompt.executor.model.PromptExecutor import ai.koog.prompt.llm.LLModel import kotlinx.serialization.json.Json import tech.dokus.foundation.backend.utils.loggerFor</ID>
     <ID>ImportOrdering:EmbeddingService.kt$import tech.dokus.domain.model.ai.AiProvider import tech.dokus.foundation.backend.config.AIConfig import tech.dokus.foundation.backend.utils.loggerFor import io.ktor.client.HttpClient import io.ktor.client.call.body import io.ktor.client.request.header import io.ktor.client.request.post import io.ktor.client.request.setBody import io.ktor.http.ContentType import io.ktor.http.contentType import kotlinx.serialization.SerialName import kotlinx.serialization.Serializable import kotlinx.serialization.json.Json</ID>
     <ID>ImportOrdering:InvoiceExtractionAgent.kt$import tech.dokus.ai.models.ExtractedInvoiceData import tech.dokus.ai.models.FieldProvenance import tech.dokus.ai.models.InvoiceProvenance import ai.koog.agents.core.agent.AIAgent import ai.koog.agents.core.agent.singleRunStrategy import ai.koog.agents.core.tools.ToolRegistry import ai.koog.prompt.executor.model.PromptExecutor import ai.koog.prompt.llm.LLModel import kotlinx.serialization.json.Json import tech.dokus.foundation.backend.utils.loggerFor</ID>
-    <ID>ImportOrdering:RAGService.kt$import tech.dokus.domain.ids.DocumentId import tech.dokus.domain.ids.TenantId import tech.dokus.domain.model.ChunkRetrievalRequest import tech.dokus.domain.model.ChunkRetrievalResponse import tech.dokus.domain.model.DocumentChunkId import tech.dokus.domain.model.DocumentChunkSummary import tech.dokus.domain.repository.ChunkRepository import tech.dokus.domain.repository.DraftStatusChecker import tech.dokus.domain.repository.IngestionStatusChecker import tech.dokus.domain.repository.RetrievedChunk import org.slf4j.LoggerFactory import kotlin.uuid.ExperimentalUuidApi</ID>
+    <ID>ImportOrdering:RAGService.kt$import tech.dokus.domain.ids.DocumentId import tech.dokus.domain.ids.TenantId import tech.dokus.domain.model.ChunkRetrievalRequest import tech.dokus.domain.model.ChunkRetrievalResponse import tech.dokus.domain.model.DocumentChunkId import tech.dokus.domain.model.DocumentChunkSummary import tech.dokus.domain.repository.ChunkRepository import tech.dokus.domain.repository.DocumentStatusChecker import tech.dokus.domain.repository.IngestionStatusChecker import tech.dokus.domain.repository.RetrievedChunk import org.slf4j.LoggerFactory import kotlin.uuid.ExperimentalUuidApi</ID>
     <ID>LongMethod:ChatAgent.kt$ChatAgent$suspend fun chat( tenantId: TenantId, question: String, documentId: DocumentId? = null, conversationHistory: List&lt;ConversationMessage&gt;? = null, topK: Int = DEFAULT_TOP_K, minSimilarity: Float = DEFAULT_MIN_SIMILARITY ): ChatResponse</ID>
     <ID>LongMethod:ChunkingService.kt$ChunkingService$fun chunkSemantic( text: String, config: ChunkingConfig = DEFAULT_CONFIG ): ChunkingResult</ID>
     <ID>LongParameterList:ChatAgent.kt$ChatAgent$( tenantId: TenantId, question: String, documentId: DocumentId? = null, conversationHistory: List&lt;ConversationMessage&gt;? = null, topK: Int = DEFAULT_TOP_K, minSimilarity: Float = DEFAULT_MIN_SIMILARITY )</ID>
@@ -29,8 +29,8 @@
     <ID>MagicNumber:AIProviderFactory.kt$AIProviderFactory$768</ID>
     <ID>MagicNumber:AIProviderFactory.kt$AIProviderFactory$8192L</ID>
     <ID>MagicNumber:AIService.kt$AIService$0.5</ID>
-    <ID>MagicNumber:BillExtractionAgent.kt$BillExtractionAgent$50</ID>
-    <ID>MagicNumber:BillExtractionAgent.kt$BillExtractionAgent$500</ID>
+    <ID>MagicNumber:InboundInvoiceExtractionAgent.kt$InboundInvoiceExtractionAgent$50</ID>
+    <ID>MagicNumber:InboundInvoiceExtractionAgent.kt$InboundInvoiceExtractionAgent$500</ID>
     <ID>MagicNumber:CategorySuggestionAgent.kt$CategorySuggestionAgent$500</ID>
     <ID>MagicNumber:ChatAgent.kt$ChatAgent$0.2f</ID>
     <ID>MagicNumber:ChatAgent.kt$ChatAgent$0.6f</ID>
@@ -58,14 +58,13 @@
     <ID>MaximumLineLength:RAGService.kt$RAGService$ </ID>
     <ID>NestedBlockDepth:ChatAgent.kt$ChatAgent$suspend fun chat( tenantId: TenantId, question: String, documentId: DocumentId? = null, conversationHistory: List&lt;ConversationMessage&gt;? = null, topK: Int = DEFAULT_TOP_K, minSimilarity: Float = DEFAULT_MIN_SIMILARITY ): ChatResponse</ID>
     <ID>NoConsecutiveBlankLines:RAGService.kt$RAGService$ </ID>
-    <ID>NoMultipleSpaces:DocumentProcessingResult.kt$ExtractedDocumentData.Bill$ </ID>
-    <ID>NoMultipleSpaces:ExtractedBillData.kt$BillLineItem$ </ID>
-    <ID>NoMultipleSpaces:ExtractedBillData.kt$ExtractedBillData$ </ID>
+    <ID>NoMultipleSpaces:ExtractedInvoiceData.kt$InboundInvoiceLineItem$ </ID>
+    <ID>NoMultipleSpaces:ExtractedInvoiceData.kt$ExtractedInvoiceData$ </ID>
     <ID>NoMultipleSpaces:ExtractedInvoiceData.kt$ExtractedInvoiceData$ </ID>
     <ID>NoMultipleSpaces:ExtractedInvoiceData.kt$InvoiceLineItem$ </ID>
     <ID>NoMultipleSpaces:ExtractedInvoiceData.kt$VatBreakdown$ </ID>
     <ID>NoMultipleSpaces:ExtractedReceiptData.kt$ExtractedReceiptData$ </ID>
-    <ID>ReturnCount:BillExtractionAgent.kt$BillExtractionAgent$private fun enhanceFieldProvenance( provenance: FieldProvenance?, ocrText: String ): FieldProvenance?</ID>
+    <ID>ReturnCount:InboundInvoiceExtractionAgent.kt$InboundInvoiceExtractionAgent$private fun enhanceFieldProvenance( provenance: FieldProvenance?, ocrText: String ): FieldProvenance?</ID>
     <ID>ReturnCount:InvoiceExtractionAgent.kt$InvoiceExtractionAgent$private fun enhanceFieldProvenance( provenance: FieldProvenance?, ocrText: String ): FieldProvenance?</ID>
     <ID>SpacingBetweenDeclarationsWithComments:ChatAgent.kt$ChatAgent.DocumentState.NOT_CONFIRMED$/** Document has not been confirmed by the user - chat not allowed */</ID>
     <ID>SpacingBetweenDeclarationsWithComments:ChatAgent.kt$ChatAgent.DocumentState.NOT_INDEXED$/** Document is not indexed for chat */</ID>
@@ -74,7 +73,7 @@
     <ID>SwallowedException:DocumentAIResult.kt$e: Exception</ID>
     <ID>ThrowsCount:EmbeddingService.kt$EmbeddingService$private suspend fun generateOllamaEmbedding(text: String, model: String): EmbeddingResult</ID>
     <ID>ThrowsCount:EmbeddingService.kt$EmbeddingService$private suspend fun generateOpenAIEmbeddingsBatch( texts: List&lt;String&gt;, model: String ): List&lt;EmbeddingResult&gt;</ID>
-    <ID>TooGenericExceptionCaught:BillExtractionAgent.kt$BillExtractionAgent$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:InboundInvoiceExtractionAgent.kt$InboundInvoiceExtractionAgent$e: Exception</ID>
     <ID>TooGenericExceptionCaught:CategorySuggestionAgent.kt$CategorySuggestionAgent$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ChatAgent.kt$ChatAgent$e: Exception</ID>
     <ID>TooGenericExceptionCaught:DocumentAIResult.kt$e: Exception</ID>

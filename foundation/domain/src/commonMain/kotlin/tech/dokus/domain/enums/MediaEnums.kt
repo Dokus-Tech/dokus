@@ -24,12 +24,6 @@ enum class MediaDocumentType {
     @SerialName("INVOICE")
     Invoice,
 
-    @SerialName("EXPENSE")
-    Expense,
-
-    @SerialName("BILL")
-    Bill,
-
     @SerialName("UNKNOWN")
     Unknown
 }

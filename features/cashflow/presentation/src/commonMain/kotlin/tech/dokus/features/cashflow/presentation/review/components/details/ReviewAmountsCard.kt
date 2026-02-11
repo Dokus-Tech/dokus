@@ -16,12 +16,11 @@ import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total_amount
-import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.review.EditableBillFields
-import tech.dokus.features.cashflow.presentation.review.EditableExpenseFields
-import tech.dokus.features.cashflow.presentation.review.EditableInvoiceFields
 import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
@@ -38,30 +37,28 @@ internal fun AmountsCard(
         // Subtle micro-label
         MicroLabel(text = stringResource(Res.string.cashflow_section_amounts))
 
-        when (state.editableData.documentType) {
-            DocumentType.Invoice -> {
-                val fields = state.editableData.invoice ?: EditableInvoiceFields()
+        when (val draft = state.draftData) {
+            is InvoiceDraftData -> {
                 InvoiceAmountsDisplay(
-                    subtotal = fields.subtotalAmount.formatAmountDisplay(),
-                    vat = fields.vatAmount.formatAmountDisplay(),
-                    total = fields.totalAmount.formatAmountDisplay()
+                    subtotal = draft.subtotalAmount?.toString(),
+                    vat = draft.vatAmount?.toString(),
+                    total = draft.totalAmount?.toString()
                 )
             }
-            DocumentType.Bill -> {
-                val fields = state.editableData.bill ?: EditableBillFields()
-                BillAmountsDisplay(
-                    total = fields.amount.formatAmountDisplay(),
-                    vat = fields.vatAmount.formatAmountDisplay()
+            is ReceiptDraftData -> {
+                ReceiptAmountsDisplay(
+                    total = draft.totalAmount?.toString(),
+                    vat = draft.vatAmount?.toString()
                 )
             }
-            DocumentType.Expense -> {
-                val fields = state.editableData.expense ?: EditableExpenseFields()
-                ExpenseAmountsDisplay(
-                    total = fields.amount.formatAmountDisplay(),
-                    vat = fields.vatAmount.formatAmountDisplay()
+            is CreditNoteDraftData -> {
+                CreditNoteAmountsDisplay(
+                    subtotal = draft.subtotalAmount?.toString(),
+                    vat = draft.vatAmount?.toString(),
+                    total = draft.totalAmount?.toString()
                 )
             }
-            else -> {
+            null -> {
                 // Show neutral placeholder during processing, hint when type not selected
                 Text(
                     text = stringResource(
@@ -109,7 +106,7 @@ private fun InvoiceAmountsDisplay(
 }
 
 @Composable
-private fun BillAmountsDisplay(
+private fun ReceiptAmountsDisplay(
     total: String?,
     vat: String?,
     modifier: Modifier = Modifier
@@ -133,17 +130,21 @@ private fun BillAmountsDisplay(
 }
 
 @Composable
-private fun ExpenseAmountsDisplay(
-    total: String?,
+private fun CreditNoteAmountsDisplay(
+    subtotal: String?,
     vat: String?,
+    total: String?,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         AmountRow(
+            label = stringResource(Res.string.invoice_subtotal),
+            value = subtotal
+        )
+        AmountRow(
             label = stringResource(Res.string.cashflow_vat_amount),
             value = vat
         )
-        // Subtle divider before total
         HorizontalDivider(
             modifier = Modifier.padding(vertical = Constrains.Spacing.xSmall),
             color = MaterialTheme.colorScheme.outlineVariant
@@ -154,12 +155,4 @@ private fun ExpenseAmountsDisplay(
             isTotal = true
         )
     }
-}
-
-/**
- * Formats amount string for display.
- * Returns null if blank (shows as "—" in AmountRow).
- */
-private fun String.formatAmountDisplay(): String? {
-    return takeIf { it.isNotBlank() }
 }

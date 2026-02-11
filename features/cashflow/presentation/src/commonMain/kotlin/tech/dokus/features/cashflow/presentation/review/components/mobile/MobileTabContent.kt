@@ -41,8 +41,8 @@ import tech.dokus.aura.resources.cashflow_no_preview
 import tech.dokus.aura.resources.cashflow_preview_error
 import tech.dokus.aura.resources.cashflow_preview_page_failed
 import tech.dokus.aura.resources.cashflow_preview_page_label
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.model.DocumentPagePreviewDto
+import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -217,6 +217,7 @@ internal fun DetailsTabContent(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -248,6 +249,7 @@ internal fun DetailsTabContent(
             state = state,
             onIntent = onIntent,
             onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -266,8 +268,8 @@ internal fun DetailsTabContent(
         )
 
         // Line items (if invoice with items)
-        if (state.editableData.documentType == DocumentType.Invoice &&
-            state.editableData.invoice?.items?.isNotEmpty() == true) {
+        if (state.draftData is InvoiceDraftData &&
+            state.draftData.lineItems.isNotEmpty()) {
             // LineItemsSection would go here if needed
         }
 

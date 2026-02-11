@@ -1,10 +1,10 @@
 package tech.dokus.peppol.service
 
 import kotlinx.datetime.Clock
+import tech.dokus.domain.Money
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Duration.Companion.days
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.domain.enums.PeppolDocumentType
@@ -15,7 +15,7 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -29,7 +29,6 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.mapper.PeppolMapper
-import tech.dokus.peppol.model.PeppolDirection
 import tech.dokus.peppol.model.PeppolDocumentSummary
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolVerifyResponse
@@ -38,6 +37,7 @@ import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
 import tech.dokus.peppol.validator.PeppolValidator
+import kotlin.time.Duration.Companion.days
 
 /**
  * Provider-agnostic Peppol service.
@@ -236,7 +236,7 @@ class PeppolService(
      * Poll the Peppol inbox for new documents.
      *
      * Creates Documents with Drafts for user review (architectural boundary).
-     * Bills are created only when the user confirms the draft.
+     * Inbound Invoices are created only when the user confirms the draft.
      *
      * Full sync is performed on first connection (lastFullSyncAt is null) or weekly (> 7 days).
      * Full sync fetches ALL documents via /documents endpoint.
@@ -244,14 +244,14 @@ class PeppolService(
      *
      * @param tenantId The tenant to poll for
      * @param createDocumentCallback Callback to create document with:
-     *   - ExtractedDocumentData: parsed invoice/bill data
+     *   - DocumentDraftData: normalized draft data
      *   - String: sender Peppol ID
      *   - TenantId: tenant ID
      *   - RecommandDocumentDetail?: raw document detail with attachments (Recommand only)
      */
     suspend fun pollInbox(
         tenantId: TenantId,
-        createDocumentCallback: suspend (ExtractedDocumentData, String, TenantId, RecommandDocumentDetail?) -> Result<DocumentId>
+        createDocumentCallback: suspend (DocumentDraftData, String, TenantId, RecommandDocumentDetail?) -> Result<DocumentId>
     ): Result<PeppolInboxPollResponse> {
         logger.info("Polling Peppol inbox for tenant: $tenantId")
 
@@ -309,7 +309,7 @@ class PeppolService(
                         ?.getOrNull()
 
                     // Create transmission record
-                    val peppolDocumentType = PeppolDocumentType.fromApiValue(inboxItem.documentType)
+                    val peppolDocumentType = inboxItem.documentType
                     val transmission = transmissionRepository.createTransmission(
                         tenantId = tenantId,
                         direction = PeppolTransmissionDirection.Inbound,
@@ -318,12 +318,12 @@ class PeppolService(
                         senderPeppolId = PeppolId(inboxItem.senderPeppolId),
                     ).getOrThrow()
 
-                    // Convert to extracted data (for draft)
-                    val extractedData = mapper.toExtractedDocumentData(fullDocument, inboxItem.senderPeppolId)
+                    // Convert to normalized draft data
+                    val draftData = mapper.toDraftData(fullDocument, inboxItem.senderPeppolId)
 
                     // Create document + draft via callback
                     val documentId = createDocumentCallback(
-                        extractedData,
+                        draftData,
                         inboxItem.senderPeppolId,
                         tenantId,
                         rawDetail
@@ -348,8 +348,9 @@ class PeppolService(
                             transmissionId = transmission.id,
                             documentId = documentId,
                             senderPeppolId = PeppolId(inboxItem.senderPeppolId),
-                            invoiceNumber = extractedData.bill?.invoiceNumber,
-                            totalAmount = extractedData.bill?.amount,
+                            invoiceNumber = fullDocument.invoiceNumber,
+                            totalAmount = fullDocument.totals?.payableAmount?.let { Money.fromDouble(it) }
+                                ?: fullDocument.totals?.taxInclusiveAmount?.let { Money.fromDouble(it) },
                             receivedAt = now
                         )
                     )
@@ -394,7 +395,7 @@ class PeppolService(
 
         do {
             val batch = provider.listDocuments(
-                direction = PeppolDirection.INBOUND,
+                direction = PeppolTransmissionDirection.Inbound,
                 limit = limit,
                 offset = offset,
                 isUnread = null // Get ALL documents (both read and unread)

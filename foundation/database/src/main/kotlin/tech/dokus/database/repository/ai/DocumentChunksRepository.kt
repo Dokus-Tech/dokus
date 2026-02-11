@@ -81,7 +81,7 @@ class DocumentChunksRepository : ChunkRepository {
         val totalSearched = countQuery.count()
 
         // Perform vector similarity search using raw SQL for pgvector operators
-        // When confirmedOnly=true, join with document_drafts to filter by draft_status = 'CONFIRMED'
+        // When confirmedOnly=true, join with document_drafts to filter by document_status = 'CONFIRMED'
         val sql = buildString {
             append("SELECT ")
             append("dc.id, dc.document_id, dc.content, dc.chunk_index, ")
@@ -102,7 +102,7 @@ class DocumentChunksRepository : ChunkRepository {
                 append("AND dc.document_id = '${UUID.fromString(documentId.toString())}' ")
             }
             if (confirmedOnly) {
-                append("AND dd.draft_status = 'CONFIRMED' ")
+                append("AND dd.document_status = 'CONFIRMED' ")
             }
             append("AND (1 - (dc.embedding <=> '$vectorString'::vector)) >= $minSimilarity ")
             append("ORDER BY dc.embedding <=> '$vectorString'::vector ")

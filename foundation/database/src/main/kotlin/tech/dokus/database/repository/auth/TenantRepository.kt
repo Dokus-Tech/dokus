@@ -14,7 +14,7 @@ import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.InvoiceNumber
@@ -56,7 +56,7 @@ class TenantRepository {
         type: TenantType,
         legalName: LegalName,
         displayName: DisplayName,
-        plan: TenantPlan = TenantPlan.Free,
+        subscription: SubscriptionTier,
         language: Language,
         vatNumber: VatNumber,
         address: UpsertTenantAddressRequest,
@@ -66,7 +66,7 @@ class TenantRepository {
             it[TenantTable.type] = type
             it[TenantTable.legalName] = legalName.value
             it[TenantTable.displayName] = displayName.value
-            it[TenantTable.plan] = plan
+            it[TenantTable.plan] = subscription
             it[TenantTable.language] = language
             it[TenantTable.vatNumber] = vatNumber.value
             it[status] = TenantStatus.Active

@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_awaiting_extraction
 import tech.dokus.aura.resources.cashflow_contact_details_title
 import tech.dokus.aura.resources.cashflow_loading_document
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
@@ -71,6 +72,7 @@ internal fun ReviewContent(
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: (CounterpartyInfo) -> Unit,
+    onCreateContact: (CounterpartyInfo) -> Unit,
     onBackClick: () -> Unit,
 ) {
     when (state) {
@@ -78,14 +80,19 @@ internal fun ReviewContent(
             LoadingContent(contentPadding)
         }
 
+        is DocumentReviewState.AwaitingExtraction -> {
+            AwaitingExtractionContent(state, contentPadding, isLargeScreen)
+        }
+
         is DocumentReviewState.Content -> {
-            val counterparty = remember(state.editableData) { counterpartyInfo(state) }
+            val counterparty = remember(state.draftData) { counterpartyInfo(state) }
             if (isLargeScreen) {
                 DesktopReviewContent(
                     state = state,
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                     onCorrectContact = { onCorrectContact(counterparty) },
+                    onCreateContact = { onCreateContact(counterparty) },
                 )
             } else {
                 MobileReviewContent(
@@ -93,6 +100,7 @@ internal fun ReviewContent(
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                     onCorrectContact = { onCorrectContact(counterparty) },
+                    onCreateContact = { onCreateContact(counterparty) },
                     onBackClick = onBackClick,
                 )
             }
@@ -130,6 +138,118 @@ private fun LoadingContent(contentPadding: PaddingValues) {
 }
 
 @Composable
+private fun AwaitingExtractionContent(
+    state: DocumentReviewState.AwaitingExtraction,
+    contentPadding: PaddingValues,
+    isLargeScreen: Boolean,
+) {
+    if (isLargeScreen) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding)
+                .padding(Constrains.Spacing.large),
+            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.large)
+        ) {
+            DokusCardSurface(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+            ) {
+                PdfPreviewPane(
+                    state = state.previewState,
+                    selectedFieldPath = null,
+                    onLoadMore = {},
+                    modifier = Modifier.fillMaxSize(),
+                    showScanAnimation = true
+                )
+            }
+
+            AwaitingExtractionStatusPanel(
+                filename = state.document.document.filename,
+                modifier = Modifier
+                    .width(420.dp)
+                    .fillMaxHeight()
+            )
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
+        ) {
+            PreviewTabContent(
+                previewState = state.previewState,
+                showScanAnimation = true,
+            )
+
+            // Gradient overlay with status at bottom
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                MaterialTheme.colorScheme.surface,
+                            ),
+                        )
+                    )
+                    .padding(Constrains.Spacing.large),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+            ) {
+                CircularProgressIndicator()
+                Text(
+                    text = stringResource(Res.string.cashflow_awaiting_extraction),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                state.document.document.filename?.let { filename ->
+                    Text(
+                        text = filename,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AwaitingExtractionStatusPanel(
+    filename: String?,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+        ) {
+            CircularProgressIndicator()
+            Text(
+                text = stringResource(Res.string.cashflow_awaiting_extraction),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            filename?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun ErrorContent(
     error: DocumentReviewState.Error,
     contentPadding: PaddingValues,
@@ -154,6 +274,7 @@ private fun DesktopReviewContent(
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -176,6 +297,7 @@ private fun DesktopReviewContent(
             state = state,
             onIntent = onIntent,
             onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
             modifier = Modifier
                 .width(420.dp)
                 .fillMaxHeight()
@@ -209,6 +331,7 @@ private fun ReviewDetailsPane(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -251,6 +374,7 @@ private fun ReviewDetailsPane(
                     state = state,
                     onIntent = onIntent,
                     onCorrectContact = onCorrectContact,
+                    onCreateContact = onCreateContact,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 InvoiceDetailsCard(
@@ -299,6 +423,7 @@ private fun MobileReviewContent(
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
     onBackClick: () -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -349,7 +474,8 @@ private fun MobileReviewContent(
                 DetailsTabContent(
                     state = state,
                     onIntent = onIntent,
-                    onCorrectContact = onCorrectContact
+                    onCorrectContact = onCorrectContact,
+                    onCreateContact = onCreateContact
                 )
             } else {
                 when (selectedTab) {
@@ -360,7 +486,8 @@ private fun MobileReviewContent(
                     TAB_DETAILS -> DetailsTabContent(
                         state = state,
                         onIntent = onIntent,
-                        onCorrectContact = onCorrectContact
+                        onCorrectContact = onCorrectContact,
+                        onCreateContact = onCreateContact
                     )
                 }
             }
@@ -382,7 +509,7 @@ private fun MobileReviewContent(
                 confirmBlockedReason = state.confirmBlockedReason,
                 onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
                 onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
-                onReject = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
+                onReject = { onIntent(DocumentReviewIntent.ShowFeedbackDialog) },
                 onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
                 onViewEntity = { onIntent(DocumentReviewIntent.ViewEntity) },
                 onViewCashflowEntry = { onIntent(DocumentReviewIntent.ViewCashflowEntry) },
@@ -397,7 +524,7 @@ private fun MobileReviewContent(
                 isConfirming = state.isConfirming,
                 isBindingContact = state.isBindingContact,
                 onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
-                onSomethingsWrong = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
+                onSomethingsWrong = { onIntent(DocumentReviewIntent.ShowFeedbackDialog) },
                 modifier = Modifier
                     .imePadding()
                     .navigationBarsPadding()

@@ -32,21 +32,6 @@ enum class TenantType(
 }
 
 @Serializable
-enum class TenantPlan(override val dbValue: String) : DbEnum {
-    @SerialName("FREE")
-    Free("FREE"),
-
-    @SerialName("STARTER")
-    Starter("STARTER"),
-
-    @SerialName("PROFESSIONAL")
-    Professional("PROFESSIONAL"),
-
-    @SerialName("ENTERPRISE")
-    Enterprise("ENTERPRISE")
-}
-
-@Serializable
 enum class TenantStatus(override val dbValue: String) : DbEnum {
     @SerialName("ACTIVE")
     Active("ACTIVE"),
@@ -79,7 +64,9 @@ enum class Language(override val dbValue: String) : DbEnum {
     Es("ES"),
 
     @SerialName("IT")
-    It("IT")
+    It("IT");
+
+    val code get() = dbValue.lowercase()
 }
 
 @Serializable
@@ -288,27 +275,6 @@ enum class InvoiceStatus(override val dbValue: String) : DbEnum {
 }
 
 @Serializable
-enum class BillStatus(override val dbValue: String) : DbEnum {
-    @SerialName("DRAFT")
-    Draft("DRAFT"),
-
-    @SerialName("PENDING")
-    Pending("PENDING"),
-
-    @SerialName("SCHEDULED")
-    Scheduled("SCHEDULED"),
-
-    @SerialName("PAID")
-    Paid("PAID"),
-
-    @SerialName("OVERDUE")
-    Overdue("OVERDUE"),
-
-    @SerialName("CANCELLED")
-    Cancelled("CANCELLED")
-}
-
-@Serializable
 enum class Currency(
     override val dbValue: String,
     val displayName: String,
@@ -336,6 +302,20 @@ enum class Currency(
 
         fun fromDisplayOrDefault(displayValue: String?): Currency =
             fromDisplay(displayValue) ?: default
+
+        fun from(value: String?): Currency {
+            if (value.isNullOrBlank()) return default
+
+            val trimmed = value.trim()
+            val upper = trimmed.uppercase()
+            fromDbValue(upper)?.let { return it }
+
+            val lower = trimmed.lowercase()
+            fromDisplay(lower)?.let { return it }
+            fromDisplay(trimmed)?.let { return it }
+
+            return default
+        }
     }
 }
 
@@ -363,7 +343,7 @@ enum class PeppolTransmissionDirection(override val dbValue: String) : DbEnum {
     Outbound("OUTBOUND"), // Sending invoices to customers
 
     @SerialName("INBOUND")
-    Inbound("INBOUND") // Receiving bills from suppliers
+    Inbound("INBOUND") // Receiving inbound invoices from suppliers
 }
 
 @Serializable
@@ -440,71 +420,6 @@ enum class PeppolVatCategory(override val dbValue: String) : DbEnum {
     companion object {
         fun fromCode(code: String): PeppolVatCategory =
             entries.find { it.dbValue == code } ?: Standard
-    }
-}
-
-/**
- * Recommand API document direction.
- */
-@Serializable
-enum class RecommandDirection {
-    @SerialName("incoming")
-    Incoming,
-
-    @SerialName("outgoing")
-    Outgoing;
-
-    companion object {
-        fun fromString(value: String): RecommandDirection = when (value.lowercase()) {
-            "incoming", "received", "inbound" -> Incoming
-            "outgoing", "sent", "outbound" -> Outgoing
-            else -> Incoming
-        }
-    }
-
-    fun toPeppolDirection(): PeppolTransmissionDirection = when (this) {
-        Incoming -> PeppolTransmissionDirection.Inbound
-        Outgoing -> PeppolTransmissionDirection.Outbound
-    }
-}
-
-/**
- * Recommand API document/transmission status.
- */
-@Serializable
-enum class RecommandDocumentStatus {
-    @SerialName("pending")
-    Pending,
-
-    @SerialName("processing")
-    Processing,
-
-    @SerialName("delivered")
-    Delivered,
-
-    @SerialName("failed")
-    Failed,
-
-    @SerialName("rejected")
-    Rejected;
-
-    companion object {
-        fun fromString(value: String): RecommandDocumentStatus = when (value.lowercase()) {
-            "pending" -> Pending
-            "processing" -> Processing
-            "delivered", "sent" -> Delivered
-            "failed", "error" -> Failed
-            "rejected" -> Rejected
-            else -> Pending
-        }
-    }
-
-    fun toPeppolStatus(): PeppolStatus = when (this) {
-        Pending -> PeppolStatus.Pending
-        Processing -> PeppolStatus.Pending
-        Delivered -> PeppolStatus.Delivered
-        Failed -> PeppolStatus.Failed
-        Rejected -> PeppolStatus.Rejected
     }
 }
 
@@ -695,9 +610,6 @@ enum class UnitCode(val code: String, val description: String) {
 enum class CashflowSourceType(override val dbValue: String) : DbEnum {
     @SerialName("INVOICE")
     Invoice("INVOICE"),
-
-    @SerialName("BILL")
-    Bill("BILL"),
 
     @SerialName("EXPENSE")
     Expense("EXPENSE"),
@@ -955,22 +867,6 @@ enum class AuditAction(override val dbValue: String) : DbEnum {
     @SerialName("EXPENSE_DELETED")
     ExpenseDeleted("EXPENSE_DELETED"),
 
-    // Bill actions
-    @SerialName("BILL_CREATED")
-    BillCreated("BILL_CREATED"),
-
-    @SerialName("BILL_UPDATED")
-    BillUpdated("BILL_UPDATED"),
-
-    @SerialName("BILL_DELETED")
-    BillDeleted("BILL_DELETED"),
-
-    @SerialName("BILL_PAID")
-    BillPaid("BILL_PAID"),
-
-    @SerialName("BILL_STATUS_CHANGED")
-    BillStatusChanged("BILL_STATUS_CHANGED"),
-
     // Client actions (legacy)
     @SerialName("CLIENT_CREATED")
     ClientCreated("CLIENT_CREATED"),
@@ -1061,9 +957,6 @@ enum class EntityType(override val dbValue: String) : DbEnum {
     @SerialName("EXPENSE")
     Expense("EXPENSE"),
 
-    @SerialName("BILL")
-    Bill("BILL"),
-
     @SerialName("PAYMENT")
     Payment("PAYMENT"),
 
@@ -1131,7 +1024,7 @@ enum class CreditNoteStatus(override val dbValue: String) : DbEnum {
 /**
  * How the credit note is expected to be settled.
  * - RefundExpected: Money will be returned (cashflow entry created on payment)
- * - OffsetExpected: Will be offset against future invoice/bill
+ * - OffsetExpected: Will be offset against a future invoice
  * - Unknown: User hasn't decided yet
  */
 @Serializable
@@ -1159,4 +1052,14 @@ enum class RefundClaimStatus(override val dbValue: String) : DbEnum {
 
     @SerialName("CANCELLED")
     Cancelled("CANCELLED")
+}
+
+@Serializable
+enum class QuoteStatus {
+    DRAFT, SENT, ACCEPTED, REJECTED, EXPIRED, CONVERTED
+}
+
+@Serializable
+enum class PurchaseOrderStatus {
+    DRAFT, SENT, CONFIRMED, PARTIALLY_RECEIVED, RECEIVED, CANCELLED
 }

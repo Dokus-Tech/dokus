@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactMatchReason
-import java.util.UUID
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.uuid.ExperimentalUuidApi
@@ -61,7 +61,7 @@ class ContactMatchingServiceTest {
                 it[type] = TenantType.Company
                 it[legalName] = "Test Company"
                 it[displayName] = "Test Company"
-                it[plan] = TenantPlan.Professional
+                it[plan] = SubscriptionTier.CoreFounder
                 it[status] = TenantStatus.Active
                 it[language] = Language.En
             }

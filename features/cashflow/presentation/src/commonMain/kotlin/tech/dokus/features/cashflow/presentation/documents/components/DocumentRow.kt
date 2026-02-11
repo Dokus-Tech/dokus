@@ -43,9 +43,13 @@ import tech.dokus.aura.resources.documents_table_counterparty
 import tech.dokus.aura.resources.documents_table_description
 import tech.dokus.aura.resources.documents_view_details
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
@@ -327,20 +331,19 @@ private fun StatusDot(
  * Documents need attention if they are:
  * - Processing or queued (temporary state)
  * - Failed ingestion
- * - Needs review or input
+ * - Needs review
  * - Rejected
  */
 internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
-    val draftStatus = document.draft?.draftStatus
+    val documentStatus = document.draft?.documentStatus
 
     return when {
         ingestionStatus == IngestionStatus.Failed -> true
         ingestionStatus == IngestionStatus.Processing ||
             ingestionStatus == IngestionStatus.Queued -> true
-        draftStatus == DraftStatus.NeedsReview ||
-            draftStatus == DraftStatus.NeedsInput -> true
-        draftStatus == DraftStatus.Rejected -> true
+        documentStatus == DocumentStatus.NeedsReview -> true
+        documentStatus == DocumentStatus.Rejected -> true
         else -> false
     }
 }
@@ -369,14 +372,29 @@ private fun resolveDescription(document: DocumentRecordDto): String {
     val ingestionStatus = document.latestIngestion?.status
 
     // Get description from extracted data (invoices use notes field)
-    val context = extractedData?.invoice?.notes?.takeIf { it.isNotBlank() }
-        ?: extractedData?.bill?.description?.takeIf { it.isNotBlank() }
-        ?: extractedData?.expense?.description?.takeIf { it.isNotBlank() }
+    val context = when (extractedData) {
+        is InvoiceDraftData -> extractedData.notes.nonBlank()
+            ?: extractedData.invoiceNumber.nonBlank()
+        is ReceiptDraftData -> extractedData.notes.nonBlank()
+            ?: extractedData.receiptNumber.nonBlank()
+        is CreditNoteDraftData -> extractedData.notes.nonBlank()
+            ?: extractedData.reason.nonBlank()
+            ?: extractedData.creditNoteNumber.nonBlank()
+        else -> null
+    }
 
     // Get counterparty name
-    val counterparty = extractedData?.invoice?.clientName?.takeIf { it.isNotBlank() }
-        ?: extractedData?.bill?.supplierName?.takeIf { it.isNotBlank() }
-        ?: extractedData?.expense?.merchant?.takeIf { it.isNotBlank() }
+    val counterparty = when (extractedData) {
+        is InvoiceDraftData -> when (extractedData.direction) {
+            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.customerName).nonBlank()
+            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.customerName).nonBlank()
+            DocumentDirection.Unknown ->
+                (extractedData.customerName ?: extractedData.buyer.name ?: extractedData.seller.name).nonBlank()
+        }
+        is ReceiptDraftData -> extractedData.merchantName.nonBlank()
+        is CreditNoteDraftData -> extractedData.counterpartyName.nonBlank()
+        else -> null
+    }
 
     return when {
         // If we have both counterparty and context, combine them
@@ -400,21 +418,35 @@ private fun resolveDescription(document: DocumentRecordDto): String {
 @Composable
 private fun resolveCounterparty(document: DocumentRecordDto): String {
     val extractedData = document.draft?.extractedData
-    return extractedData?.invoice?.clientName?.takeIf { it.isNotBlank() }
-        ?: extractedData?.bill?.supplierName?.takeIf { it.isNotBlank() }
-        ?: extractedData?.expense?.merchant?.takeIf { it.isNotBlank() }
+    return when (extractedData) {
+        is InvoiceDraftData -> when (extractedData.direction) {
+            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.customerName).nonBlank()
+            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.customerName).nonBlank()
+            DocumentDirection.Unknown ->
+                (extractedData.customerName ?: extractedData.buyer.name ?: extractedData.seller.name).nonBlank()
+        }
+        is ReceiptDraftData -> extractedData.merchantName.nonBlank()
+        is CreditNoteDraftData -> extractedData.counterpartyName.nonBlank()
+        else -> null
+    }
         ?: "—"
 }
 
 @Composable
 private fun extractAmount(document: DocumentRecordDto): String {
     val extractedData = document.draft?.extractedData
-    val amount = extractedData?.invoice?.totalAmount
-        ?: extractedData?.bill?.amount
-        ?: extractedData?.expense?.amount
-    val currency = extractedData?.invoice?.currency
-        ?: extractedData?.bill?.currency
-        ?: extractedData?.expense?.currency
+    val amount = when (extractedData) {
+        is InvoiceDraftData -> extractedData.totalAmount
+        is ReceiptDraftData -> extractedData.totalAmount
+        is CreditNoteDraftData -> extractedData.totalAmount
+        else -> null
+    }
+    val currency = when (extractedData) {
+        is InvoiceDraftData -> extractedData.currency
+        is ReceiptDraftData -> extractedData.currency
+        is CreditNoteDraftData -> extractedData.currency
+        else -> null
+    }
 
     return if (amount != null) {
         "${currency?.displaySign ?: "\u20AC"}${amount.toDisplayStringSafe()}"
@@ -425,11 +457,16 @@ private fun extractAmount(document: DocumentRecordDto): String {
 
 private fun extractDocumentDate(document: DocumentRecordDto): LocalDate {
     val extractedData = document.draft?.extractedData
-    return extractedData?.invoice?.issueDate
-        ?: extractedData?.bill?.issueDate
-        ?: extractedData?.expense?.date
+    return when (extractedData) {
+        is InvoiceDraftData -> extractedData.issueDate
+        is ReceiptDraftData -> extractedData.date
+        is CreditNoteDraftData -> extractedData.issueDate
+        else -> null
+    }
         ?: document.document.uploadedAt.date
 }
+
+private fun String?.nonBlank(): String? = this?.takeIf { it.isNotBlank() }
 
 private fun Money.toDisplayStringSafe(): String {
     return runCatching { toDisplayString() }.getOrElse { "0.00" }

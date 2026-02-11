@@ -37,7 +37,7 @@ fun CashflowFilters(
         )
 
         // Future filter controls can be added here:
-        // - Document type filter (Invoice, Expense, Bill)
+        // - Document type filter (Invoice, Expense)
         // - Date range picker
         // - Status filter (Paid, Unpaid, Overdue)
         // - Amount range filter

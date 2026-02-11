@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_bill_to
+import tech.dokus.aura.resources.invoice_recipient
 import tech.dokus.aura.resources.invoice_click_to_change
 import tech.dokus.aura.resources.invoice_click_to_select_client
 import tech.dokus.domain.model.contact.ContactDto
@@ -65,7 +65,7 @@ fun InvoiceClientSection(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = stringResource(Res.string.invoice_bill_to).uppercase(),
+            text = stringResource(Res.string.invoice_recipient).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium,

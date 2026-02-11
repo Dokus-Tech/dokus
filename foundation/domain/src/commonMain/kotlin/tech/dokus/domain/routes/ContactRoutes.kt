@@ -63,7 +63,7 @@ class Contacts(
 
         /**
          * GET /api/v1/contacts/{id}/activity
-         * Get activity summary for this contact (counts and totals of invoices, bills, expenses)
+         * Get activity summary for this contact (counts and totals of invoices, inbound invoices, expenses)
          */
         @Serializable
         @Resource("activity")

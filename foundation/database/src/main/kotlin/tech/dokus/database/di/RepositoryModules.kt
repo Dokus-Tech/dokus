@@ -4,6 +4,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import tech.dokus.database.repository.ai.ChatRepositoryImpl
 import tech.dokus.database.repository.ai.DocumentChunksRepository
+import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.InvitationRepository
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
@@ -11,15 +12,16 @@ import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.banking.BankingRepository
-import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
+import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.cashflow.RefundClaimRepository
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactNoteRepository
 import tech.dokus.database.repository.contacts.ContactRepository
@@ -31,6 +33,7 @@ import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ExampleRepository
 
 /**
  * Auth repositories module.
@@ -47,7 +50,7 @@ val repositoryModuleAuth = module {
 
 /**
  * Cashflow repositories module.
- * Provides repositories for invoices, expenses, bills, clients, and documents.
+ * Provides repositories for invoices, expenses, contacts, and documents.
  */
 val repositoryModuleCashflow = module {
     single { DocumentRepository() }
@@ -57,7 +60,8 @@ val repositoryModuleCashflow = module {
     single { InvoiceNumberGenerator(get()) }
     single { InvoiceRepository(get()) }
     single { ExpenseRepository() }
-    single { BillRepository() }
+    single { CreditNoteRepository() }
+    single { RefundClaimRepository() }
     single { CashflowEntriesRepository() }
     single { CashflowRepository(get(), get()) }
 }
@@ -122,6 +126,7 @@ val repositoryModuleContacts = module {
 val repositoryModuleAI = module {
     single { DocumentChunksRepository() } bind ChunkRepository::class
     single { ChatRepositoryImpl() } bind ChatRepository::class
+    single { DocumentExamplesRepository() } bind ExampleRepository::class
 }
 
 /**

@@ -3,9 +3,8 @@ package tech.dokus.features.cashflow.presentation.model
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
@@ -39,14 +38,13 @@ class DocumentUiStatusMapperTest {
     }
 
     @Test
-    fun `returns Review when errorMessage is whitespace-only`() {
+    fun `returns Ready when errorMessage is whitespace-only`() {
         // Whitespace-only is effectively blank, so not treated as error
         val record = createRecord(
             ingestionStatus = IngestionStatus.Succeeded,
             errorMessage = "   ",
-            confidence = 0.95,
-            draftStatus = DraftStatus.Ready,
-            documentType = DocumentType.Bill
+            documentStatus = DocumentStatus.Confirmed,
+            documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Ready, record.toUiStatus())
     }
@@ -73,39 +71,23 @@ class DocumentUiStatusMapperTest {
         assertEquals(DocumentUiStatus.Processing, record.toUiStatus())
     }
 
-    // === READY CASES ===
+    // === CONFIRMED CASES ===
 
     @Test
-    fun `returns Ready when invoice draft is Ready with linked contact and high confidence`() {
+    fun `returns Ready when draft is Confirmed`() {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 0.95,
-            linkedContactId = ContactId.generate(),
-            draftStatus = DraftStatus.Ready,
+            documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Ready, record.toUiStatus())
     }
 
     @Test
-    fun `returns Ready at exact threshold boundary`() {
+    fun `returns Ready when draft is Confirmed`() {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 0.90, // Exactly at threshold
-            linkedContactId = ContactId.generate(),
-            draftStatus = DraftStatus.Ready,
-            documentType = DocumentType.Invoice
-        )
-        assertEquals(DocumentUiStatus.Ready, record.toUiStatus())
-    }
-
-    @Test
-    fun `returns Ready when confidence is 1_0`() {
-        val record = createRecord(
-            ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 1.0,
-            linkedContactId = ContactId.generate(),
-            draftStatus = DraftStatus.Ready,
+            documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Ready, record.toUiStatus())
@@ -114,60 +96,20 @@ class DocumentUiStatusMapperTest {
     // === REVIEW CASES ===
 
     @Test
-    fun `returns Review when invoice draft is Ready but no linked contact`() {
+    fun `returns Review when draft needs review`() {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 0.95,
-            linkedContactId = null,
-            draftStatus = DraftStatus.Ready,
+            documentStatus = DocumentStatus.NeedsReview,
             documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Review, record.toUiStatus())
     }
 
     @Test
-    fun `returns Review when succeeded with linked contact but low confidence`() {
+    fun `returns Review when draft is rejected`() {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 0.89, // Below threshold
-            linkedContactId = ContactId.generate(),
-            draftStatus = DraftStatus.Ready,
-            documentType = DocumentType.Invoice
-        )
-        assertEquals(DocumentUiStatus.Review, record.toUiStatus())
-    }
-
-    @Test
-    fun `returns Ready for bill draft when ready and high confidence without linked contact`() {
-        val record = createRecord(
-            ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 0.95,
-            linkedContactId = null,
-            draftStatus = DraftStatus.Ready,
-            documentType = DocumentType.Bill
-        )
-        assertEquals(DocumentUiStatus.Ready, record.toUiStatus())
-    }
-
-    @Test
-    fun `returns Ready for expense draft when ready and high confidence without linked contact`() {
-        val record = createRecord(
-            ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 0.95,
-            linkedContactId = null,
-            draftStatus = DraftStatus.Ready,
-            documentType = DocumentType.Expense
-        )
-        assertEquals(DocumentUiStatus.Ready, record.toUiStatus())
-    }
-
-    @Test
-    fun `returns Review when draft needs input even if ingestion succeeded`() {
-        val record = createRecord(
-            ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 0.95,
-            linkedContactId = ContactId.generate(),
-            draftStatus = DraftStatus.NeedsInput,
+            documentStatus = DocumentStatus.Rejected,
             documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Review, record.toUiStatus())
@@ -177,32 +119,7 @@ class DocumentUiStatusMapperTest {
     fun `returns Review when succeeded but draft is null`() {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 0.95,
             draft = null
-        )
-        assertEquals(DocumentUiStatus.Review, record.toUiStatus())
-    }
-
-    @Test
-    fun `returns Review when confidence is null`() {
-        val record = createRecord(
-            ingestionStatus = IngestionStatus.Succeeded,
-            confidence = null,
-            linkedContactId = ContactId.generate(),
-            draftStatus = DraftStatus.Ready,
-            documentType = DocumentType.Invoice
-        )
-        assertEquals(DocumentUiStatus.Review, record.toUiStatus())
-    }
-
-    @Test
-    fun `returns Review when confidence is zero`() {
-        val record = createRecord(
-            ingestionStatus = IngestionStatus.Succeeded,
-            confidence = 0.0,
-            linkedContactId = ContactId.generate(),
-            draftStatus = DraftStatus.Ready,
-            documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Review, record.toUiStatus())
     }
@@ -213,9 +130,7 @@ class DocumentUiStatusMapperTest {
     fun `Failed takes priority over Ready conditions`() {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Failed, // Failed status
-            confidence = 0.99, // Would be Ready otherwise
-            linkedContactId = ContactId.generate(),
-            draftStatus = DraftStatus.Ready,
+            documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Failed, record.toUiStatus())
@@ -226,9 +141,7 @@ class DocumentUiStatusMapperTest {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Succeeded,
             errorMessage = "Partial extraction failure",
-            confidence = 0.95,
-            linkedContactId = ContactId.generate(),
-            draftStatus = DraftStatus.Ready,
+            documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Failed, record.toUiStatus())
@@ -241,11 +154,11 @@ class DocumentUiStatusMapperTest {
         errorMessage: String? = null,
         confidence: Double? = null,
         linkedContactId: ContactId? = null,
-        draftStatus: DraftStatus = DraftStatus.NeedsReview,
+        documentStatus: DocumentStatus = DocumentStatus.NeedsReview,
         documentType: DocumentType? = null,
         draft: DocumentDraftDto? = createDraft(
             linkedContactId = linkedContactId,
-            draftStatus = draftStatus,
+            documentStatus = documentStatus,
             documentType = documentType
         ),
         latestIngestion: DocumentIngestionDto? = createIngestion(ingestionStatus, errorMessage, confidence)
@@ -280,14 +193,14 @@ class DocumentUiStatusMapperTest {
 
     private fun createDraft(
         linkedContactId: ContactId?,
-        draftStatus: DraftStatus,
+        documentStatus: DocumentStatus,
         documentType: DocumentType?
     ): DocumentDraftDto {
         val now = LocalDateTime(2024, 1, 1, 12, 0, 0)
         return DocumentDraftDto(
             documentId = DocumentId.generate(),
             tenantId = TenantId.generate(),
-            draftStatus = draftStatus,
+            documentStatus = documentStatus,
             documentType = documentType,
             extractedData = null,
             aiDraftData = null,

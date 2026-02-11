@@ -3,26 +3,31 @@ package tech.dokus.peppol.mapper
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.PeppolDocumentType
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.CreateBillRequest
-import tech.dokus.domain.model.ExtractedBillFields
-import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.backend.utils.loggerFor
-import tech.dokus.peppol.model.PeppolDocumentType
 import tech.dokus.peppol.model.PeppolInvoiceData
 import tech.dokus.peppol.model.PeppolLineItem
 import tech.dokus.peppol.model.PeppolParty
 import tech.dokus.peppol.model.PeppolPaymentInfo
 import tech.dokus.peppol.model.PeppolReceivedDocument
 import tech.dokus.peppol.model.PeppolSendRequest
+import kotlin.math.roundToInt
 
 /**
  * Maps between domain models and provider-agnostic Peppol models.
@@ -48,7 +53,7 @@ class PeppolMapper {
     ): PeppolSendRequest {
         return PeppolSendRequest(
             recipientPeppolId = recipientPeppolId,
-            documentType = PeppolDocumentType.INVOICE,
+            documentType = PeppolDocumentType.Invoice,
             invoice = PeppolInvoiceData(
                 invoiceNumber = invoice.invoiceNumber.value,
                 issueDate = invoice.issueDate,
@@ -148,60 +153,22 @@ class PeppolMapper {
     // ========================================================================
 
     /**
-     * Convert a received Peppol document to a CreateBillRequest.
-     */
-    fun toCreateBillRequest(
-        document: PeppolReceivedDocument,
-        senderPeppolId: String
-    ): CreateBillRequest {
-        val seller = document.seller
-        val totals = document.totals
-        val taxTotal = document.taxTotal
-
-        // Parse dates
-        val issueDate = document.issueDate?.let { parseDate(it) } ?: LocalDate.fromEpochDays(0)
-        val dueDate = document.dueDate?.let { parseDate(it) } ?: issueDate
-
-        // Calculate amounts
-        val amount = totals?.payableAmount?.let { Money.fromDouble(it) }
-            ?: totals?.taxInclusiveAmount?.let { Money.fromDouble(it) }
-            ?: Money.ZERO
-
-        val vatAmount = taxTotal?.taxAmount?.let { Money.fromDouble(it) }
-
-        // Determine VAT rate from tax subtotals (percent is in %, e.g. 21.00 for 21%)
-        val vatRate = taxTotal?.taxSubtotals?.firstOrNull()?.taxPercent?.let { percent ->
-            VatRate.parse(percent.toString())
-        }
-
-        // Infer category from document content
-        val category = inferCategory(document)
-
-        return CreateBillRequest(
-            supplierName = seller?.name ?: "Unknown Supplier",
-            supplierVatNumber = seller?.vatNumber,
-            invoiceNumber = document.invoiceNumber,
-            issueDate = issueDate,
-            dueDate = dueDate,
-            amount = amount,
-            vatAmount = vatAmount,
-            vatRate = vatRate,
-            category = category,
-            description = document.note,
-            notes = "Received via Peppol from $senderPeppolId",
-            documentId = null
-        )
-    }
-
-    /**
-     * Convert a received Peppol document to ExtractedDocumentData.
+     * Convert a received Peppol document to normalized draft data.
      * Used when creating Documents+Drafts from Peppol inbox (architectural boundary).
+     *
+     * Maps by document type:
+     * - invoice -> InvoiceDraftData(direction=Inbound)
+     * - creditNote -> CreditNoteDraftData(direction=Inbound) (supplier crediting us)
+     * - selfBillingInvoice -> InvoiceDraftData (client created invoice on our behalf)
+     * - selfBillingCreditNote -> CreditNoteDraftData(direction=Outbound) (client corrects self-billing)
      */
-    fun toExtractedDocumentData(
+    @Suppress("CyclomaticComplexMethod")
+    fun toDraftData(
         document: PeppolReceivedDocument,
         senderPeppolId: String
-    ): ExtractedDocumentData {
+    ): DocumentDraftData {
         val seller = document.seller
+        val buyer = document.buyer
         val totals = document.totals
         val taxTotal = document.taxTotal
 
@@ -209,36 +176,145 @@ class PeppolMapper {
         val issueDate = document.issueDate?.let { parseDate(it) }
         val dueDate = document.dueDate?.let { parseDate(it) } ?: issueDate
 
-        // Calculate amounts
-        val amount = totals?.payableAmount?.let { Money.fromDouble(it) }
+        // Amounts
+        val totalAmount = totals?.payableAmount?.let { Money.fromDouble(it) }
             ?: totals?.taxInclusiveAmount?.let { Money.fromDouble(it) }
-
         val vatAmount = taxTotal?.taxAmount?.let { Money.fromDouble(it) }
+        val subtotalAmount = totals?.taxExclusiveAmount?.let { Money.fromDouble(it) }
+            ?: if (totalAmount != null && vatAmount != null) totalAmount - vatAmount else null
 
-        // Determine VAT rate from tax subtotals
-        val vatRate = taxTotal?.taxSubtotals?.firstOrNull()?.taxPercent?.let { percent ->
-            VatRate.parse(percent.toString())
+        val lineItems = document.lineItems.orEmpty().mapNotNull { line ->
+            val description = line.description ?: line.name ?: return@mapNotNull null
+            val quantity = line.quantity?.takeIf { it % 1.0 == 0.0 }?.toLong()
+            val unitPrice = line.unitPrice?.let { Money.fromDouble(it).minor }
+            val netAmount = line.lineTotal?.let { Money.fromDouble(it).minor }
+            val vatRate = line.taxPercent?.let { (it * 100).roundToInt() }
+
+            FinancialLineItem(
+                description = description,
+                quantity = quantity,
+                unitPrice = unitPrice,
+                vatRate = vatRate,
+                netAmount = netAmount
+            )
         }
 
-        // Infer category from document content
-        val category = inferCategory(document)
+        val vatBreakdown = taxTotal?.taxSubtotals.orEmpty().mapNotNull { subtotal ->
+            val rate = subtotal.taxPercent?.let { (it * 100).roundToInt() } ?: return@mapNotNull null
+            val base = subtotal.taxableAmount?.let { Money.fromDouble(it).minor } ?: return@mapNotNull null
+            val amount = subtotal.taxAmount?.let { Money.fromDouble(it).minor } ?: return@mapNotNull null
+            VatBreakdownEntry(
+                rate = rate,
+                base = base,
+                amount = amount
+            )
+        }
 
-        return ExtractedDocumentData(
-            documentType = DocumentType.Bill,
-            bill = ExtractedBillFields(
-                supplierName = seller?.name,
-                supplierVatNumber = seller?.vatNumber,
+        val currency = Currency.from(document.currencyCode)
+        val notes = document.note ?: "Received via Peppol from $senderPeppolId"
+
+        return when (document.documentType) {
+            PeppolDocumentType.CreditNote -> CreditNoteDraftData(
+                creditNoteNumber = document.invoiceNumber,
+                direction = DocumentDirection.Inbound,
+                issueDate = issueDate,
+                currency = currency,
+                subtotalAmount = subtotalAmount,
+                vatAmount = vatAmount,
+                totalAmount = totalAmount,
+                lineItems = lineItems,
+                vatBreakdown = vatBreakdown,
+                counterpartyName = seller?.name,
+                counterpartyVat = VatNumber.from(seller?.vatNumber),
+                originalInvoiceNumber = null,
+                reason = document.note,
+                notes = notes,
+                seller = PartyDraft(
+                    name = seller?.name,
+                    vat = VatNumber.from(seller?.vatNumber),
+                ),
+                buyer = PartyDraft(
+                    name = buyer?.name,
+                    vat = VatNumber.from(buyer?.vatNumber),
+                )
+            )
+
+            PeppolDocumentType.SelfBillingInvoice -> InvoiceDraftData(
+                direction = DocumentDirection.Outbound,
                 invoiceNumber = document.invoiceNumber,
                 issueDate = issueDate,
                 dueDate = dueDate,
-                amount = amount,
+                currency = currency,
+                subtotalAmount = subtotalAmount,
                 vatAmount = vatAmount,
-                vatRate = vatRate,
-                category = category,
-                description = document.note,
-                notes = "Received via Peppol from $senderPeppolId"
+                totalAmount = totalAmount,
+                lineItems = lineItems,
+                vatBreakdown = vatBreakdown,
+                customerName = buyer?.name,
+                customerVat = VatNumber.from(buyer?.vatNumber),
+                notes = notes,
+                seller = PartyDraft(
+                    name = seller?.name,
+                    vat = VatNumber.from(seller?.vatNumber),
+                ),
+                buyer = PartyDraft(
+                    name = buyer?.name,
+                    vat = VatNumber.from(buyer?.vatNumber),
+                )
             )
-        )
+
+            PeppolDocumentType.SelfBillingCreditNote -> CreditNoteDraftData(
+                creditNoteNumber = document.invoiceNumber,
+                direction = DocumentDirection.Outbound,
+                issueDate = issueDate,
+                currency = currency,
+                subtotalAmount = subtotalAmount,
+                vatAmount = vatAmount,
+                totalAmount = totalAmount,
+                lineItems = lineItems,
+                vatBreakdown = vatBreakdown,
+                counterpartyName = buyer?.name,
+                counterpartyVat = VatNumber.from(buyer?.vatNumber),
+                originalInvoiceNumber = null,
+                reason = document.note,
+                notes = notes,
+                seller = PartyDraft(
+                    name = seller?.name,
+                    vat = VatNumber.from(seller?.vatNumber),
+                ),
+                buyer = PartyDraft(
+                    name = buyer?.name,
+                    vat = VatNumber.from(buyer?.vatNumber),
+                )
+            )
+
+            // Invoice, Xml — default to inbound invoice
+            else -> InvoiceDraftData(
+                direction = DocumentDirection.Inbound,
+                invoiceNumber = document.invoiceNumber,
+                issueDate = issueDate,
+                dueDate = dueDate,
+                currency = currency,
+                subtotalAmount = subtotalAmount,
+                vatAmount = vatAmount,
+                totalAmount = totalAmount,
+                lineItems = lineItems,
+                vatBreakdown = vatBreakdown,
+                iban = null,
+                payment = null,
+                notes = notes,
+                customerName = buyer?.name,
+                customerVat = VatNumber.from(buyer?.vatNumber),
+                seller = PartyDraft(
+                    name = seller?.name,
+                    vat = VatNumber.from(seller?.vatNumber),
+                ),
+                buyer = PartyDraft(
+                    name = buyer?.name,
+                    vat = VatNumber.from(buyer?.vatNumber),
+                )
+            )
+        }
     }
 
     /**
@@ -253,28 +329,4 @@ class PeppolMapper {
         }
     }
 
-    /**
-     * Infer expense category from document content.
-     */
-    private fun inferCategory(document: PeppolReceivedDocument): ExpenseCategory {
-        val keywords = (document.seller?.name ?: "") +
-            (document.note ?: "") +
-            (document.lineItems?.joinToString(" ") { it.name ?: "" } ?: "")
-
-        val keywordsLower = keywords.lowercase()
-
-        return when {
-            keywordsLower.contains("software") || keywordsLower.contains("license") -> ExpenseCategory.Software
-            keywordsLower.contains("hosting") || keywordsLower.contains("cloud") -> ExpenseCategory.Software
-            keywordsLower.contains("travel") || keywordsLower.contains("flight") || keywordsLower.contains("hotel") -> ExpenseCategory.Travel
-            keywordsLower.contains("telecom") || keywordsLower.contains("phone") || keywordsLower.contains("internet") -> ExpenseCategory.Telecommunications
-            keywordsLower.contains("office") || keywordsLower.contains("supplies") -> ExpenseCategory.OfficeSupplies
-            keywordsLower.contains("hardware") || keywordsLower.contains("computer") || keywordsLower.contains("laptop") -> ExpenseCategory.Hardware
-            keywordsLower.contains("insurance") -> ExpenseCategory.Insurance
-            keywordsLower.contains("rent") || keywordsLower.contains("lease") -> ExpenseCategory.Rent
-            keywordsLower.contains("marketing") || keywordsLower.contains("advertising") -> ExpenseCategory.Marketing
-            keywordsLower.contains("consulting") || keywordsLower.contains("professional") || keywordsLower.contains("legal") || keywordsLower.contains("accounting") -> ExpenseCategory.ProfessionalServices
-            else -> ExpenseCategory.Other
-        }
-    }
 }

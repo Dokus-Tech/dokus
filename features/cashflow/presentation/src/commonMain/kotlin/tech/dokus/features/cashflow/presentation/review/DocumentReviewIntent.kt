@@ -7,7 +7,7 @@ import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.ExtractedLineItem
+import tech.dokus.domain.model.FinancialLineItem
 
 @Immutable
 sealed interface DocumentReviewIntent : MVIIntent {
@@ -18,36 +18,6 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object LoadPreviewPages : DocumentReviewIntent
     data class LoadMorePages(val maxPages: Int) : DocumentReviewIntent
     data object RetryLoadPreview : DocumentReviewIntent
-
-    data class UpdateInvoiceField(
-        val field: InvoiceField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
-    data class UpdateBillField(
-        val field: BillField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
-    data class UpdateExpenseField(
-        val field: ExpenseField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
-    data class UpdateReceiptField(
-        val field: ReceiptField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
-    data class UpdateProFormaField(
-        val field: ProFormaField,
-        val value: Any?,
-    ) : DocumentReviewIntent
-
-    data class UpdateCreditNoteField(
-        val field: CreditNoteField,
-        val value: Any?,
-    ) : DocumentReviewIntent
 
     data class SelectContact(val contactId: ContactId) : DocumentReviewIntent
     data object AcceptSuggestedContact : DocumentReviewIntent
@@ -64,7 +34,7 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class UpdateContactSheetSearch(val query: String) : DocumentReviewIntent
 
     data object AddLineItem : DocumentReviewIntent
-    data class UpdateLineItem(val index: Int, val item: ExtractedLineItem) : DocumentReviewIntent
+    data class UpdateLineItem(val index: Int, val item: FinancialLineItem) : DocumentReviewIntent
     data class RemoveLineItem(val index: Int) : DocumentReviewIntent
 
     data class SelectFieldForProvenance(val fieldPath: String?) : DocumentReviewIntent
@@ -84,6 +54,12 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class UpdateRejectNote(val note: String) : DocumentReviewIntent
     data object ConfirmReject : DocumentReviewIntent
 
+    // Feedback dialog intents (correction-first "Something's wrong" flow)
+    data object ShowFeedbackDialog : DocumentReviewIntent
+    data object DismissFeedbackDialog : DocumentReviewIntent
+    data class UpdateFeedbackText(val text: String) : DocumentReviewIntent
+    data object SubmitFeedback : DocumentReviewIntent
+
     // Failed analysis intents
     data object RetryAnalysis : DocumentReviewIntent
     data object DismissFailureBanner : DocumentReviewIntent
@@ -92,113 +68,3 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class SelectDocumentType(val type: DocumentType) : DocumentReviewIntent
 }
 
-enum class InvoiceField {
-    CLIENT_NAME,
-    CLIENT_VAT_NUMBER,
-    CLIENT_EMAIL,
-    CLIENT_ADDRESS,
-    INVOICE_NUMBER,
-    ISSUE_DATE,
-    DUE_DATE,
-    SUBTOTAL_AMOUNT,
-    VAT_AMOUNT,
-    TOTAL_AMOUNT,
-    CURRENCY,
-    NOTES,
-    PAYMENT_TERMS,
-    BANK_ACCOUNT,
-}
-
-enum class BillField {
-    SUPPLIER_NAME,
-    SUPPLIER_VAT_NUMBER,
-    SUPPLIER_ADDRESS,
-    INVOICE_NUMBER,
-    ISSUE_DATE,
-    DUE_DATE,
-    AMOUNT,
-    VAT_AMOUNT,
-    VAT_RATE,
-    CURRENCY,
-    CATEGORY,
-    DESCRIPTION,
-    NOTES,
-    PAYMENT_TERMS,
-    BANK_ACCOUNT,
-}
-
-enum class ExpenseField {
-    MERCHANT,
-    MERCHANT_ADDRESS,
-    MERCHANT_VAT_NUMBER,
-    DATE,
-    AMOUNT,
-    VAT_AMOUNT,
-    VAT_RATE,
-    CURRENCY,
-    CATEGORY,
-    DESCRIPTION,
-    IS_DEDUCTIBLE,
-    DEDUCTIBLE_PERCENTAGE,
-    PAYMENT_METHOD,
-    NOTES,
-    RECEIPT_NUMBER,
-}
-
-/**
- * Receipt fields - mirrors Expense since Receipt confirms into Expense.
- */
-enum class ReceiptField {
-    MERCHANT,
-    MERCHANT_ADDRESS,
-    MERCHANT_VAT_NUMBER,
-    DATE,
-    AMOUNT,
-    VAT_AMOUNT,
-    VAT_RATE,
-    CURRENCY,
-    CATEGORY,
-    DESCRIPTION,
-    IS_DEDUCTIBLE,
-    DEDUCTIBLE_PERCENTAGE,
-    PAYMENT_METHOD,
-    NOTES,
-    RECEIPT_NUMBER,
-}
-
-/**
- * ProForma fields - informational only, can be converted to Invoice.
- */
-enum class ProFormaField {
-    CLIENT_NAME,
-    CLIENT_VAT_NUMBER,
-    CLIENT_EMAIL,
-    CLIENT_ADDRESS,
-    PRO_FORMA_NUMBER,
-    ISSUE_DATE,
-    VALID_UNTIL,
-    SUBTOTAL_AMOUNT,
-    VAT_AMOUNT,
-    TOTAL_AMOUNT,
-    CURRENCY,
-    NOTES,
-    TERMS_AND_CONDITIONS,
-}
-
-/**
- * CreditNote fields - no cashflow on confirm, only on refund recording.
- */
-enum class CreditNoteField {
-    COUNTERPARTY_NAME,
-    COUNTERPARTY_VAT_NUMBER,
-    COUNTERPARTY_ADDRESS,
-    CREDIT_NOTE_NUMBER,
-    ORIGINAL_INVOICE_NUMBER,
-    ISSUE_DATE,
-    SUBTOTAL_AMOUNT,
-    VAT_AMOUNT,
-    TOTAL_AMOUNT,
-    CURRENCY,
-    REASON,
-    NOTES,
-}
