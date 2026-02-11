@@ -1,77 +1,73 @@
-# Frontend Document Review: Use DocumentDraftData Directly
+# Document Processing: Stuck Documents & UI Improvements
 
-**Status:** Complete
-**Date:** 2026-02-10
+## Investigation Summary
+
+### Current Flow
+1. **Upload**: `POST /documents/upload` -> stores file in MinIO, creates `DocumentDto` + `IngestionRun` (status=Queued)
+2. **Processing**: `DocumentProcessingWorker` polls for Queued runs, processes with AI graph, marks Succeeded/Failed
+3. **Frontend**: `DocumentReviewLoader` fetches `DocumentRecordDto`. If `extractedData == null` -> shows `AwaitingExtraction` state
+
+### Edge Cases Where Documents Get Stuck
+
+#### Backend Issues
+1. **Processing crash mid-flight**: If worker marks run as `Processing` but crashes before `markAsSucceeded`/`markAsFailed`, the run stays in `Processing` forever. There is NO stale run recovery.
+2. **No automatic retry on failure**: When `markAsFailed` is called, the run stays `Failed` permanently. There is NO auto-retry. Only manual `/reprocess` endpoint creates a new run.
+3. **Worker not running**: If `DocumentProcessingWorker.start()` was never called or crashed, Queued runs sit forever.
+
+#### Frontend Issues
+4. **No polling in AwaitingExtraction**: The `AwaitingExtraction` state shows a spinner but NEVER auto-refreshes. User stares at "Awaiting extraction..." forever.
+5. **No polling in Content state when isProcessing**: Even in `Content` state with `isProcessing=true`, there is no auto-refresh.
+6. **No error state in AwaitingExtraction**: If AI fails, frontend stays in `AwaitingExtraction` because `extractedData` remains null. The `AnalysisFailedBanner` only shows in `Content` state. Dead end.
+7. **Generic loading animation**: `AwaitingExtraction` shows a bare `CircularProgressIndicator`. The document is already uploaded and previewable, but not shown. Scan animation exists but unused here.
+
+### Dokus Philosophy Alignment
+- "Every state must be: Explainable, Traceable, Reversible" - violated by stuck state
+- "Deterministic Interaction" - users ask "why is this stuck?"
+- "One alert. One place. One explanation. One required action." - no alert, no action
 
 ---
 
 ## Plan
 
-### 0. Delete dead code files
-- [x] Delete `DocumentReviewModels.kt` (EditableExtractedData + Editable*Fields)
-- [x] Delete `DocumentReviewDraftDataMapper.kt`
-- [x] Delete `components/forms/InvoiceForm.kt` (dead code)
-- [x] Delete `components/forms/BillForm.kt` (dead code)
-- [x] Delete `components/forms/ReviewFormCommon.kt` (dead code)
-- [x] Delete `DocumentReviewFieldEditor.kt` (dead code — all handlers replaced)
+### 1. Backend: Add stale run recovery
+- [x] In `ProcessorIngestionRepository`, add `recoverStaleRuns()` that finds `Processing` runs where `startedAt < now - 5min` and resets them to `Failed` with error message "Processing timed out"
+- [x] Call `recoverStaleRuns()` at the start of each `processBatch()` cycle in `DocumentProcessingWorker`
 
-### 1. Update `DocumentReviewState.kt`
-- [x] Replace `editableData: EditableExtractedData` with `draftData: DocumentDraftData?`
-- [x] Update all extension properties to switch on sealed type
-- [x] Add `documentType` and `isContactRequired` internal extensions
+### 2. Frontend: Add auto-polling when processing
+- [x] In `DocumentReviewRoute.kt`, add a `LaunchedEffect` that fires `Refresh` every 3 seconds when state is `AwaitingExtraction` or `Content` with `isProcessing == true`
 
-### 2. Update reducers/handlers
-- [x] `DocumentReviewLoader.kt` — store draftData directly
-- [x] `DocumentReviewActions.kt` — remove mapper, simplify save/confirm/discard
-- [x] `DocumentReviewReducer.kt` — remove mapper/editor, inline handleSelectDocumentType
-- [x] `DocumentReviewLineItems.kt` — fix suspend + withState + sealed when
+### 3. Frontend: Handle failed extraction in AwaitingExtraction
+- [x] In `DocumentReviewLoader.transitionToContent()`, when `extractedData == null` but `latestIngestion.status == Failed`, transition to `Content` with `draftData = null` (so `AnalysisFailedBanner` shows with retry + continue manually options)
 
-### 3. Update composables
-- [x] `ReviewDetailsCards.kt` — switch on draftData sealed type
-- [x] `ReviewAmountsCard.kt` — switch on draftData, use Money?.toString()
-- [x] `CounterpartyInfoMapper.kt` — switch on draftData, use value classes
-- [x] `MobileTabContent.kt` — fix items→lineItems
-- [x] `ReviewContent.kt` — fix string resource import + editableData→draftData
-
-### 4. Fix FinancialDocumentDto missing branches
-- [x] `CashflowCard.kt` — add ProForma/Quote/PO branches
-- [x] `CashflowExtensions.kt` — add new type branches
-- [x] `FinancialDocumentTable.kt` — add new type branches
-- [x] `DocumentReviewActions.kt` — handleViewEntity branches
-- [x] Added `document_type_quote` and `document_type_purchase_order` string resources
-
-### 5. Clean up intents
-- [x] `DocumentReviewIntent.kt` — remove dead field update intents + enums
-- [x] `DocumentReviewContainer.kt` — remove dead intent dispatches
-
-### 6. Verify compilation
-- [x] `./gradlew :features:cashflow:presentation:compileKotlinWasmJs` — 0 errors
+### 4. Frontend: Replace generic spinner with document preview + scan animation
+- [x] Rewrite `AwaitingExtractionContent` to show the PDF preview with scan animation overlay instead of a centered spinner
+- [x] Desktop: Split layout — PDF preview with scan line (left), processing status (right)
+- [x] Mobile: Full PDF preview with scan animation overlay, status text at bottom
 
 ---
 
 ## Review
 
-### Summary
-Eliminated the `EditableExtractedData` duplicate layer. The document review screen now uses `DocumentDraftData` (sealed interface with 4 subtypes) directly as its state.
+### Changes Summary
 
-### Files deleted (6)
-- `DocumentReviewModels.kt` — EditableExtractedData + 4 Editable*Fields data classes
-- `DocumentReviewDraftDataMapper.kt` — Mapper converting editable↔draft
-- `DocumentReviewFieldEditor.kt` — Field update handlers (dead code, no composable emitted these)
-- `InvoiceForm.kt`, `BillForm.kt`, `ReviewFormCommon.kt` — Dead form composables
+**7 files modified** across backend and frontend:
 
-### Files modified (14)
-- **DocumentReviewState.kt** — `editableData: EditableExtractedData` → `draftData: DocumentDraftData?`; all extensions switch on sealed type
-- **DocumentReviewLoader.kt** — Store draftData directly, removed EditableExtractedData.fromDraftData()
-- **DocumentReviewActions.kt** — Removed mapper, use draftData directly for save/confirm/discard
-- **DocumentReviewReducer.kt** — Removed mapper/editor, inlined handleSelectDocumentType
-- **DocumentReviewLineItems.kt** — Made updateLineItems suspend + withState, switch on sealed type
-- **DocumentReviewIntent.kt** — Removed 4 dead field update intents + 4 field enums
-- **DocumentReviewContainer.kt** — Removed 4 dead intent dispatch cases
-- **ReviewDetailsCards.kt** — Switch on draftData sealed type, added padding import
-- **ReviewAmountsCard.kt** — Switch on draftData, use Money?.toString()
-- **CounterpartyInfoMapper.kt** — Switch on draftData, use value classes (VatNumber.value, Iban.value)
-- **MobileTabContent.kt** — Fixed editableData.invoice?.items → draftData is InvoiceDraftData
-- **ReviewContent.kt** — Fixed editableData → draftData, added missing string import
-- **CashflowCard.kt / CashflowExtensions.kt / FinancialDocumentTable.kt** — Added ProForma/Quote/PO branches
-- **cashflow.xml** — Added document_type_quote and document_type_purchase_order strings
+| File | Change |
+|------|--------|
+| `ProcessorIngestionRepository.kt` | Added `recoverStaleRuns()` — finds runs stuck in `Processing` for >5min and marks them `Failed` |
+| `DocumentProcessingWorker.kt` | Calls `recoverStaleRuns()` at start of each `processBatch()` cycle, wrapped in `runSuspendCatching` |
+| `DocumentReviewLoader.kt` | When `extractedData == null` and ingestion `Failed`, transitions to `Content(draftData=null)` so `AnalysisFailedBanner` shows. Also fires `LoadPreviewPages` for `AwaitingExtraction`. |
+| `DocumentReviewRoute.kt` | Added auto-polling `LaunchedEffect` — fires `Refresh` every 3s when `AwaitingExtraction` or `Content.isProcessing` |
+| `DocumentReviewState.kt` | Added `previewState: DocumentPreviewState` to `AwaitingExtraction` data class |
+| `DocumentReviewPreview.kt` | Added `loadPreviewPagesForAwaiting()` to handle `LoadPreviewPages` intent for `AwaitingExtraction` state |
+| `ReviewContent.kt` | Rewrote `AwaitingExtractionContent`: Desktop shows PDF preview + scan animation (left) with status panel (right); Mobile shows full preview with gradient overlay and status at bottom |
+
+### Edge Cases Now Covered
+1. Stale Processing runs -> recovered by backend, frontend polls and sees Failed status
+2. Failed extraction -> frontend transitions to Content with AnalysisFailedBanner (retry + continue manually)
+3. Slow extraction -> frontend auto-polls every 3s, transitions automatically when done
+4. Generic spinner -> replaced with PDF preview + scan animation
+
+### Build Verification
+- `./gradlew :features:cashflow:presentation:compileKotlinWasmJs` — BUILD SUCCESSFUL
+- `./gradlew :backendApp:compileKotlin` — BUILD SUCCESSFUL

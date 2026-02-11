@@ -81,7 +81,7 @@ internal fun ReviewContent(
         }
 
         is DocumentReviewState.AwaitingExtraction -> {
-            AwaitingExtractionContent(state, contentPadding)
+            AwaitingExtractionContent(state, contentPadding, isLargeScreen)
         }
 
         is DocumentReviewState.Content -> {
@@ -141,11 +141,91 @@ private fun LoadingContent(contentPadding: PaddingValues) {
 private fun AwaitingExtractionContent(
     state: DocumentReviewState.AwaitingExtraction,
     contentPadding: PaddingValues,
+    isLargeScreen: Boolean,
+) {
+    if (isLargeScreen) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding)
+                .padding(Constrains.Spacing.large),
+            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.large)
+        ) {
+            DokusCardSurface(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+            ) {
+                PdfPreviewPane(
+                    state = state.previewState,
+                    selectedFieldPath = null,
+                    onLoadMore = {},
+                    modifier = Modifier.fillMaxSize(),
+                    showScanAnimation = true
+                )
+            }
+
+            AwaitingExtractionStatusPanel(
+                filename = state.document.document.filename,
+                modifier = Modifier
+                    .width(420.dp)
+                    .fillMaxHeight()
+            )
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
+        ) {
+            PreviewTabContent(
+                previewState = state.previewState,
+                showScanAnimation = true,
+            )
+
+            // Gradient overlay with status at bottom
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                MaterialTheme.colorScheme.surface,
+                            ),
+                        )
+                    )
+                    .padding(Constrains.Spacing.large),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+            ) {
+                CircularProgressIndicator()
+                Text(
+                    text = stringResource(Res.string.cashflow_awaiting_extraction),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                state.document.document.filename?.let { filename ->
+                    Text(
+                        text = filename,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AwaitingExtractionStatusPanel(
+    filename: String?,
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -158,9 +238,9 @@ private fun AwaitingExtractionContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            state.document.document.filename?.let { filename ->
+            filename?.let {
                 Text(
-                    text = filename,
+                    text = it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

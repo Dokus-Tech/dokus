@@ -15,6 +15,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.slf4j.MDC
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.entity.IngestionItemEntity
@@ -117,6 +118,16 @@ class DocumentProcessingWorker(
      * Concurrency is limited by mode.maxConcurrentRequests.
      */
     private suspend fun processBatch() {
+        // Recover any runs stuck in Processing from a previous crash
+        runSuspendCatching {
+            val recovered = ingestionRepository.recoverStaleRuns()
+            if (recovered > 0) {
+                logger.warn("Recovered $recovered stale ingestion run(s) (marked as Failed)")
+            }
+        }.onFailure { e ->
+            logger.error("Failed to recover stale runs", e)
+        }
+
         // Find queued ingestion runs
         val pending = ingestionRepository.findPendingForProcessing(
             limit = config.batchSize

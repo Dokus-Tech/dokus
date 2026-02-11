@@ -2,6 +2,7 @@ package tech.dokus.features.cashflow.presentation.review
 
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -58,6 +59,22 @@ internal class DocumentReviewLoader(
         val draft = document.draft
         val extractedData = draft?.extractedData
         if (extractedData == null) {
+            val isFailed = document.latestIngestion?.status == IngestionStatus.Failed
+            if (isFailed) {
+                // Transition to Content with null draftData so AnalysisFailedBanner shows
+                updateState {
+                    DocumentReviewState.Content(
+                        documentId = documentId,
+                        document = document,
+                        draftData = null,
+                        originalData = null,
+                        previewUrl = document.document.downloadUrl,
+                        previewState = DocumentPreviewState.Loading,
+                    )
+                }
+                intent(DocumentReviewIntent.LoadPreviewPages)
+                return
+            }
             updateState {
                 DocumentReviewState.AwaitingExtraction(
                     documentId = documentId,
@@ -65,6 +82,7 @@ internal class DocumentReviewLoader(
                     previewUrl = document.document.downloadUrl
                 )
             }
+            intent(DocumentReviewIntent.LoadPreviewPages)
             return
         }
 

@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -120,6 +121,21 @@ internal fun DocumentReviewRoute(
 
     LaunchedEffect(documentId) {
         container.store.intent(DocumentReviewIntent.LoadDocument(documentId))
+    }
+
+    // Auto-poll every 3s while processing so the UI transitions when extraction completes/fails
+    val shouldPoll = when (state) {
+        is DocumentReviewState.AwaitingExtraction -> true
+        is DocumentReviewState.Content -> (state as DocumentReviewState.Content).isProcessing
+        else -> false
+    }
+
+    LaunchedEffect(shouldPoll) {
+        if (!shouldPoll) return@LaunchedEffect
+        while (true) {
+            delay(3_000L)
+            container.store.intent(DocumentReviewIntent.Refresh)
+        }
     }
 
     val isLargeScreen = LocalScreenSize.isLarge

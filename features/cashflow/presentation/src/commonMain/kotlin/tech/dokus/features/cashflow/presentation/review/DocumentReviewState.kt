@@ -46,6 +46,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val documentId: DocumentId,
         val document: DocumentRecordDto,
         val previewUrl: String? = null,
+        val previewState: DocumentPreviewState = DocumentPreviewState.Loading,
     ) : DocumentReviewState
 
     data class Content(

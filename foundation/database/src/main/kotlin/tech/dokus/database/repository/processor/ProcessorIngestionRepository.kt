@@ -7,6 +7,7 @@ import kotlinx.datetime.toStdlibInstant
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
@@ -27,6 +28,7 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -44,6 +46,11 @@ import kotlin.uuid.toKotlinUuid
  * the /reprocess endpoint which creates new runs.
  */
 class ProcessorIngestionRepository {
+
+    companion object {
+        /** Runs stuck in Processing longer than this are considered stale and marked Failed. */
+        private val STALE_RUN_TIMEOUT = 5.minutes
+    }
 
     /**
      * Find pending ingestion runs ready for processing.
@@ -285,6 +292,32 @@ class ProcessorIngestionRepository {
                 it[finishedAt] = now
                 it[errorMessage] = error
             } > 0
+        }
+
+    /**
+     * Recover ingestion runs stuck in Processing state.
+     *
+     * Finds runs where status=Processing and startedAt is older than [STALE_RUN_TIMEOUT],
+     * then marks them as Failed. This handles worker crashes that leave runs stuck mid-flight.
+     *
+     * @return Number of runs recovered
+     */
+    @OptIn(ExperimentalTime::class)
+    suspend fun recoverStaleRuns(): Int =
+        newSuspendedTransaction {
+            val cutoff = (Clock.System.now() - STALE_RUN_TIMEOUT)
+                .toStdlibInstant()
+                .toLocalDateTime(TimeZone.Companion.UTC)
+            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
+
+            DocumentIngestionRunsTable.update({
+                (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
+                    (DocumentIngestionRunsTable.startedAt lessEq cutoff)
+            }) {
+                it[status] = IngestionStatus.Failed
+                it[finishedAt] = now
+                it[errorMessage] = "Processing timed out"
+            }
         }
 
     /**
