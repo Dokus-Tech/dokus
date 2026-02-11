@@ -133,6 +133,10 @@ class DocumentIngestionRunRepository {
                         (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
                         (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             }
+            .orderBy(
+                DocumentIngestionRunsTable.startedAt to SortOrder.DESC_NULLS_LAST,
+                DocumentIngestionRunsTable.id to SortOrder.DESC
+            )
             .map { it.toIngestionRunSummary() }
             .firstOrNull()
 
@@ -148,7 +152,10 @@ class DocumentIngestionRunRepository {
                             IngestionStatus.Failed
                         ))
             }
-            .orderBy(DocumentIngestionRunsTable.finishedAt, SortOrder.DESC_NULLS_LAST)
+            .orderBy(
+                DocumentIngestionRunsTable.finishedAt to SortOrder.DESC_NULLS_LAST,
+                DocumentIngestionRunsTable.id to SortOrder.DESC
+            )
             .map { it.toIngestionRunSummary() }
             .firstOrNull()
 
@@ -161,7 +168,10 @@ class DocumentIngestionRunRepository {
                         (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
                         (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
             }
-            .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
+            .orderBy(
+                DocumentIngestionRunsTable.queuedAt to SortOrder.DESC,
+                DocumentIngestionRunsTable.id to SortOrder.DESC
+            )
             .map { it.toIngestionRunSummary() }
             .firstOrNull()
     }

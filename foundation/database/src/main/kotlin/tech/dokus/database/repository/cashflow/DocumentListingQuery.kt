@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package tech.dokus.database.repository.cashflow
 
 import org.jetbrains.exposed.v1.core.JoinType
@@ -15,6 +17,7 @@ import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.tables.cashflow.CreditNotesTable
@@ -366,4 +369,3 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toDraftSummary(): DraftSumma
         updatedAt = this[DocumentDraftsTable.updatedAt]
     )
 }
-
