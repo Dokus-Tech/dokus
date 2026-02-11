@@ -13,6 +13,9 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_contact_label
 import tech.dokus.aura.resources.cashflow_contact_create_new
+import tech.dokus.aura.resources.cashflow_direction
+import tech.dokus.aura.resources.cashflow_direction_in
+import tech.dokus.aura.resources.cashflow_direction_out
 import tech.dokus.aura.resources.cashflow_no_contact_selected
 import tech.dokus.aura.resources.cashflow_select_contact
 import tech.dokus.aura.resources.cashflow_suggested_contact
@@ -36,6 +39,7 @@ import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.document_type_receipt
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -240,6 +244,11 @@ internal fun InvoiceDetailsCard(
         when (val draft = state.draftData) {
             is InvoiceDraftData -> {
                 InvoiceDetailsFactDisplay(
+                    direction = draft.direction,
+                    isReadOnly = state.isDocumentConfirmed || state.isDocumentRejected,
+                    onDirectionSelected = { direction ->
+                        onIntent(DocumentReviewIntent.SelectDirection(direction))
+                    },
                     invoiceNumber = draft.invoiceNumber?.takeIf { it.isNotBlank() },
                     issueDate = draft.issueDate?.toString(),
                     dueDate = draft.dueDate?.toString()
@@ -253,6 +262,11 @@ internal fun InvoiceDetailsCard(
             }
             is CreditNoteDraftData -> {
                 CreditNoteDetailsFactDisplay(
+                    direction = draft.direction,
+                    isReadOnly = state.isDocumentConfirmed || state.isDocumentRejected,
+                    onDirectionSelected = { direction ->
+                        onIntent(DocumentReviewIntent.SelectDirection(direction))
+                    },
                     creditNoteNumber = draft.creditNoteNumber?.takeIf { it.isNotBlank() },
                     issueDate = draft.issueDate?.toString(),
                     originalInvoiceNumber = draft.originalInvoiceNumber?.takeIf { it.isNotBlank() }
@@ -307,12 +321,20 @@ internal fun InvoiceDetailsCard(
 
 @Composable
 private fun InvoiceDetailsFactDisplay(
+    direction: DocumentDirection,
+    isReadOnly: Boolean,
+    onDirectionSelected: (DocumentDirection) -> Unit,
     invoiceNumber: String?,
     issueDate: String?,
     dueDate: String?,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
+        DirectionSelector(
+            direction = direction,
+            isReadOnly = isReadOnly,
+            onDirectionSelected = onDirectionSelected
+        )
         FactField(
             label = stringResource(Res.string.cashflow_invoice_number),
             value = invoiceNumber
@@ -348,12 +370,20 @@ private fun ReceiptDetailsFactDisplay(
 
 @Composable
 private fun CreditNoteDetailsFactDisplay(
+    direction: DocumentDirection,
+    isReadOnly: Boolean,
+    onDirectionSelected: (DocumentDirection) -> Unit,
     creditNoteNumber: String?,
     issueDate: String?,
     originalInvoiceNumber: String?,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
+        DirectionSelector(
+            direction = direction,
+            isReadOnly = isReadOnly,
+            onDirectionSelected = onDirectionSelected
+        )
         FactField(
             label = stringResource(Res.string.cashflow_credit_note_number),
             value = creditNoteNumber
@@ -367,6 +397,60 @@ private fun CreditNoteDetailsFactDisplay(
                 label = stringResource(Res.string.cashflow_invoice_number),
                 value = originalInvoiceNumber
             )
+        }
+    }
+}
+
+@Composable
+private fun DirectionSelector(
+    direction: DocumentDirection,
+    isReadOnly: Boolean,
+    onDirectionSelected: (DocumentDirection) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+    ) {
+        MicroLabel(text = stringResource(Res.string.cashflow_direction))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+        ) {
+            val isInbound = direction == DocumentDirection.Inbound
+            val isOutbound = direction == DocumentDirection.Outbound
+
+            if (isInbound) {
+                PPrimaryButton(
+                    text = stringResource(Res.string.cashflow_direction_in),
+                    onClick = { onDirectionSelected(DocumentDirection.Inbound) },
+                    enabled = !isReadOnly,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                POutlinedButton(
+                    text = stringResource(Res.string.cashflow_direction_in),
+                    onClick = { onDirectionSelected(DocumentDirection.Inbound) },
+                    enabled = !isReadOnly,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            if (isOutbound) {
+                PPrimaryButton(
+                    text = stringResource(Res.string.cashflow_direction_out),
+                    onClick = { onDirectionSelected(DocumentDirection.Outbound) },
+                    enabled = !isReadOnly,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                POutlinedButton(
+                    text = stringResource(Res.string.cashflow_direction_out),
+                    onClick = { onDirectionSelected(DocumentDirection.Outbound) },
+                    enabled = !isReadOnly,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }

@@ -210,9 +210,12 @@ private val ExtractDocumentInput.prompt
     - If multiple totals exist, prefer the "Total" / "Totaal" / "Total TTC" style final payable amount.
 
     ## PARTY EXTRACTION (CRITICAL)
-    - `seller*`: entity that ISSUED the invoice (header/logo issuer area).
+    - `seller*`: entity that ISSUED the invoice.
+    - Prioritize issuer evidence from logo/header legal block and footer issuer/contact/VAT block.
     - `buyer*`: billed-to/recipient entity ("Recipient", "Client", "Klant", etc).
-    - Always extract both seller and buyer when visible.
+    - Prioritize billed customer/client block for buyer.
+    - If only one side is visible, keep the missing side null.
+    - Prefer null over duplicating the same party into both seller and buyer.
     - Do not swap seller/buyer based on tenant context.
 
     ## OPTIONAL DIRECTION HINT

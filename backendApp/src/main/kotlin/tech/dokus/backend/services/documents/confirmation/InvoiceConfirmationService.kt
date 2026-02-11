@@ -53,10 +53,14 @@ class InvoiceConfirmationService(
         val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
         val issueDate = draftData.issueDate ?: today
         val dueDate = draftData.dueDate ?: issueDate.plus(DatePeriod(days = 30))
+        val direction = draftData.direction
+        if (direction == DocumentDirection.Unknown) {
+            throw DokusException.BadRequest("Invoice direction is unknown")
+        }
 
         val request = CreateInvoiceRequest(
             contactId = contactId,
-            direction = normalizeDirection(draftData.direction),
+            direction = direction,
             items = items,
             issueDate = issueDate,
             dueDate = dueDate,
@@ -129,7 +133,4 @@ class InvoiceConfirmationService(
             )
         )
     }
-
-    private fun normalizeDirection(direction: DocumentDirection): DocumentDirection =
-        if (direction == DocumentDirection.Unknown) DocumentDirection.Outbound else direction
 }

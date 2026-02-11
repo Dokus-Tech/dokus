@@ -389,10 +389,15 @@ private fun resolveDescription(document: DocumentRecordDto): String {
             DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.customerName).nonBlank()
             DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.customerName).nonBlank()
             DocumentDirection.Unknown ->
-                (extractedData.customerName ?: extractedData.buyer.name ?: extractedData.seller.name).nonBlank()
+                (extractedData.buyer.name ?: extractedData.seller.name ?: extractedData.customerName).nonBlank()
         }
         is ReceiptDraftData -> extractedData.merchantName.nonBlank()
-        is CreditNoteDraftData -> extractedData.counterpartyName.nonBlank()
+        is CreditNoteDraftData -> when (extractedData.direction) {
+            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.counterpartyName).nonBlank()
+            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.counterpartyName).nonBlank()
+            DocumentDirection.Unknown ->
+                (extractedData.buyer.name ?: extractedData.seller.name ?: extractedData.counterpartyName).nonBlank()
+        }
         else -> null
     }
 
@@ -423,10 +428,15 @@ private fun resolveCounterparty(document: DocumentRecordDto): String {
             DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.customerName).nonBlank()
             DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.customerName).nonBlank()
             DocumentDirection.Unknown ->
-                (extractedData.customerName ?: extractedData.buyer.name ?: extractedData.seller.name).nonBlank()
+                (extractedData.buyer.name ?: extractedData.seller.name ?: extractedData.customerName).nonBlank()
         }
         is ReceiptDraftData -> extractedData.merchantName.nonBlank()
-        is CreditNoteDraftData -> extractedData.counterpartyName.nonBlank()
+        is CreditNoteDraftData -> when (extractedData.direction) {
+            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.counterpartyName).nonBlank()
+            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.counterpartyName).nonBlank()
+            DocumentDirection.Unknown ->
+                (extractedData.buyer.name ?: extractedData.seller.name ?: extractedData.counterpartyName).nonBlank()
+        }
         else -> null
     }
         ?: "—"

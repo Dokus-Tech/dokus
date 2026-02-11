@@ -26,7 +26,9 @@ data class AcceptDocumentInput(
     override val documentId: DocumentId,
     override val tenant: Tenant,
     override val associatedPersonNames: List<String> = emptyList(),
-    override val userFeedback: String? = null
+    override val userFeedback: String? = null,
+    override val maxPagesOverride: Int? = null,
+    override val dpiOverride: Int? = null
 ) : InputWithDocumentId, InputWithTenantContext, InputWithUserFeedback
 
 fun acceptDocumentGraph(
@@ -56,8 +58,9 @@ fun acceptDocumentGraph(
                 val meetsConfidence =
                     classificationConfidence >= confirmThreshold && extractionConfidence >= confirmThreshold
                 val isValid = result.auditReport.isValid
+                val hasSameTenantDualPartyAmbiguity = hasSameTenantDualPartyAmbiguity(result)
 
-                if (meetsConfidence && isValid) {
+                if (meetsConfidence && isValid && !hasSameTenantDualPartyAmbiguity) {
                     ConditionResult.Approve
                 } else {
                     ConditionResult.Reject(buildRetryFeedback(result, confirmThreshold))
@@ -111,10 +114,34 @@ private fun buildRetryFeedback(
         }
     }
 
+    if (hasSameTenantDualPartyAmbiguity(result)) {
+        lines += "Seller and buyer both match tenant VAT."
+        lines += "Re-extract parties using issuer block for seller and billed-to/client block for buyer."
+        lines += "If one side cannot be proven, set that party to null instead of duplicating values."
+    }
+
     return if (lines.isEmpty()) {
         "Please re-check the document and correct any uncertain fields."
     } else {
         lines.joinToString("\n")
+    }
+}
+
+private fun hasSameTenantDualPartyAmbiguity(result: DocumentAiProcessingResult): Boolean {
+    val tenantVat = result.directionResolution.tenantVat ?: return false
+
+    return when (val extraction = result.extraction) {
+        is FinancialExtractionResult.Invoice -> {
+            val sellerVat = extraction.data.sellerVat?.normalized
+            val buyerVat = extraction.data.buyerVat?.normalized
+            sellerVat != null && buyerVat != null && sellerVat == tenantVat && buyerVat == tenantVat
+        }
+        is FinancialExtractionResult.CreditNote -> {
+            val sellerVat = extraction.data.sellerVat?.normalized
+            val buyerVat = extraction.data.buyerVat?.normalized
+            sellerVat != null && buyerVat != null && sellerVat == tenantVat && buyerVat == tenantVat
+        }
+        else -> false
     }
 }
 

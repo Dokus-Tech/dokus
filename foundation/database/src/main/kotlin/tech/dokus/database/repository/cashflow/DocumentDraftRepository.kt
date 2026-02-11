@@ -380,7 +380,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val suggestionsJson = json.encodeToString(contactSuggestions)
         val snapshotJson = counterpartySnapshot?.let { json.encodeToString(it) }
-        val evidenceJson = matchEvidence?.let { json.encodeToString(it) }
 
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
@@ -388,12 +387,16 @@ class DocumentDraftRepository : DocumentStatusChecker {
         }) {
             it[DocumentDraftsTable.contactSuggestions] = suggestionsJson
             it[DocumentDraftsTable.counterpartySnapshot] = snapshotJson
-            it[DocumentDraftsTable.matchEvidence] = evidenceJson
 
             if (linkedContactId != null) {
                 it[DocumentDraftsTable.linkedContactId] = UUID.fromString(linkedContactId.toString())
                 it[DocumentDraftsTable.linkedContactSource] = linkedContactSource
                 it[DocumentDraftsTable.counterpartyIntent] = CounterpartyIntent.None
+                it[DocumentDraftsTable.matchEvidence] = matchEvidence?.let { evidence -> json.encodeToString(evidence) }
+            } else {
+                it[DocumentDraftsTable.linkedContactId] = null
+                it[DocumentDraftsTable.linkedContactSource] = null
+                it[DocumentDraftsTable.matchEvidence] = null
             }
 
             it[DocumentDraftsTable.updatedAt] = now

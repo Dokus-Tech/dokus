@@ -3,6 +3,7 @@ package tech.dokus.features.cashflow.presentation.review
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIIntent
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
@@ -66,5 +67,5 @@ sealed interface DocumentReviewIntent : MVIIntent {
 
     // Manual document type selection (when AI fails or type is unknown)
     data class SelectDocumentType(val type: DocumentType) : DocumentReviewIntent
+    data class SelectDirection(val direction: DocumentDirection) : DocumentReviewIntent
 }
-
