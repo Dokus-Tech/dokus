@@ -43,7 +43,7 @@
     <string name="contacts_contact_info">Contactinformatie</string>
     <string name="contacts_activity_summary">Activiteitsoverzicht</string>
     <string name="contacts_invoices">Facturen</string>
-    <string name="contacts_bills">Inkomende facturen</string>
+    <string name="contacts_inbound_invoices">Inkomende facturen</string>
     <string name="contacts_expenses">Uitgaven</string>
     <string name="contacts_last_activity">Laatste activiteit</string>
     <string name="contacts_pending_approvals">openstaande goedkeuringen</string>
@@ -235,7 +235,7 @@
     <string name="contacts_merge_items_to_target">Items die worden toegewezen aan %1$s</string>
     <string name="contacts_merge_summary">Samenvatting</string>
     <string name="contacts_merge_invoices_reassigned">Facturen opnieuw toegewezen</string>
-    <string name="contacts_merge_bills_reassigned">Inkomende facturen opnieuw toegewezen</string>
+    <string name="contacts_merge_inbound_invoices_reassigned">Inkomende facturen opnieuw toegewezen</string>
     <string name="contacts_merge_expenses_reassigned">Uitgaven opnieuw toegewezen</string>
     <string name="contacts_merge_notes_reassigned">Notities opnieuw toegewezen</string>
     <string name="contacts_merge_success_message">Samenvoegen voltooid</string>

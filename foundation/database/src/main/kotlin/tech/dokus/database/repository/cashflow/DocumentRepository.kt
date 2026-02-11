@@ -53,7 +53,7 @@ data class DocumentCreatePayload(
 /**
  * Repository for document CRUD operations.
  * Documents are pure file metadata. Entity linkage is handled by
- * financial entity tables (Invoice, Bill, Expense) which have documentId FK.
+ * financial entity tables (Invoice, Expense) which have documentId FK.
  *
  * CRITICAL: All queries filter by tenantId for security.
  */

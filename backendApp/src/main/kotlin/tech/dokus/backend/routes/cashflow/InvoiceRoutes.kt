@@ -11,6 +11,7 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.exceptions.DokusException
@@ -49,6 +50,7 @@ internal fun Route.invoiceRoutes() {
             val invoices = invoiceService.listInvoices(
                 tenantId = tenantId,
                 status = route.status,
+                direction = route.direction,
                 fromDate = route.fromDate,
                 toDate = route.toDate,
                 limit = route.limit,
@@ -72,10 +74,13 @@ internal fun Route.invoiceRoutes() {
         }
 
         // GET /api/v1/invoices/overdue - List overdue invoices
-        get<Invoices.Overdue> {
+        get<Invoices.Overdue> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
 
-            val invoices = invoiceService.listOverdueInvoices(tenantId)
+            val invoices = invoiceService.listOverdueInvoices(
+                tenantId = tenantId,
+                direction = route.parent.direction ?: DocumentDirection.Outbound
+            )
                 .getOrElse { throw DokusException.InternalError("Failed to list overdue invoices: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, invoices)

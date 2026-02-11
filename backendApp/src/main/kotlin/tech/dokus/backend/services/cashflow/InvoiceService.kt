@@ -5,6 +5,7 @@ import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
@@ -59,6 +60,7 @@ class InvoiceService(
     suspend fun listInvoices(
         tenantId: TenantId,
         status: InvoiceStatus? = null,
+        direction: DocumentDirection? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int = 50,
@@ -71,7 +73,7 @@ class InvoiceService(
             limit,
             offset
         )
-        return invoiceRepository.listInvoices(tenantId, status, fromDate, toDate, limit, offset)
+        return invoiceRepository.listInvoices(tenantId, status, direction, fromDate, toDate, limit, offset)
             .onSuccess { logger.debug("Retrieved ${it.items.size} invoices (total=${it.total})") }
             .onFailure { logger.error("Failed to list invoices for tenant: $tenantId", it) }
     }
@@ -79,9 +81,12 @@ class InvoiceService(
     /**
      * List overdue invoices for a tenant.
      */
-    suspend fun listOverdueInvoices(tenantId: TenantId): Result<List<FinancialDocumentDto.InvoiceDto>> {
+    suspend fun listOverdueInvoices(
+        tenantId: TenantId,
+        direction: DocumentDirection = DocumentDirection.Outbound
+    ): Result<List<FinancialDocumentDto.InvoiceDto>> {
         logger.debug("Listing overdue invoices for tenant: {}", tenantId)
-        return invoiceRepository.listOverdueInvoices(tenantId)
+        return invoiceRepository.listOverdueInvoices(tenantId, direction)
             .onSuccess { logger.debug("Retrieved ${it.size} overdue invoices") }
             .onFailure { logger.error("Failed to list overdue invoices for tenant: $tenantId", it) }
     }

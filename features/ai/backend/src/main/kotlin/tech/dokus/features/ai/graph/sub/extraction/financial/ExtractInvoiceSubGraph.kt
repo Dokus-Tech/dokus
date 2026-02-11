@@ -200,7 +200,7 @@ private val ExtractDocumentInput.prompt
 
     ## PARTY EXTRACTION (CRITICAL)
     - `seller*`: entity that ISSUED the invoice (header/logo issuer area).
-    - `buyer*`: billed-to/recipient entity ("Bill to", "Client", "Klant", etc).
+    - `buyer*`: billed-to/recipient entity ("Recipient", "Client", "Klant", etc).
     - Always extract both seller and buyer when visible.
     - Do not swap seller/buyer based on tenant context.
 

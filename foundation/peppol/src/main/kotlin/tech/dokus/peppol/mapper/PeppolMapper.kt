@@ -5,11 +5,9 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.enums.CreditNoteDirection
-import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -154,52 +152,6 @@ class PeppolMapper {
     // ========================================================================
     // RECEIVED DOCUMENT MAPPING
     // ========================================================================
-
-    /**
-     * Convert a received Peppol document to a CreateBillRequest.
-     */
-    fun toCreateBillRequest(
-        document: PeppolReceivedDocument,
-        senderPeppolId: String
-    ): CreateBillRequest {
-        val seller = document.seller
-        val totals = document.totals
-        val taxTotal = document.taxTotal
-
-        // Parse dates
-        val issueDate = document.issueDate?.let { parseDate(it) } ?: LocalDate.fromEpochDays(0)
-        val dueDate = document.dueDate?.let { parseDate(it) } ?: issueDate
-
-        // Calculate amounts
-        val amount = totals?.payableAmount?.let { Money.fromDouble(it) }
-            ?: totals?.taxInclusiveAmount?.let { Money.fromDouble(it) }
-            ?: Money.ZERO
-
-        val vatAmount = taxTotal?.taxAmount?.let { Money.fromDouble(it) }
-
-        // Determine VAT rate from tax subtotals (percent is in %, e.g. 21.00 for 21%)
-        val vatRate = taxTotal?.taxSubtotals?.firstOrNull()?.taxPercent?.let { percent ->
-            VatRate.parse(percent.toString())
-        }
-
-        // Infer category from document content
-        val category = inferCategory(document)
-
-        return CreateBillRequest(
-            supplierName = seller?.name ?: "Unknown Supplier",
-            supplierVatNumber = seller?.vatNumber,
-            invoiceNumber = document.invoiceNumber,
-            issueDate = issueDate,
-            dueDate = dueDate,
-            amount = amount,
-            vatAmount = vatAmount,
-            vatRate = vatRate,
-            category = category,
-            description = document.note,
-            notes = "Received via Peppol from $senderPeppolId",
-            documentId = null
-        )
-    }
 
     /**
      * Convert a received Peppol document to normalized draft data.
@@ -362,28 +314,4 @@ class PeppolMapper {
         }
     }
 
-    /**
-     * Infer expense category from document content.
-     */
-    private fun inferCategory(document: PeppolReceivedDocument): ExpenseCategory {
-        val keywords = (document.seller?.name ?: "") +
-            (document.note ?: "") +
-            (document.lineItems?.joinToString(" ") { it.name ?: "" } ?: "")
-
-        val keywordsLower = keywords.lowercase()
-
-        return when {
-            keywordsLower.contains("software") || keywordsLower.contains("license") -> ExpenseCategory.Software
-            keywordsLower.contains("hosting") || keywordsLower.contains("cloud") -> ExpenseCategory.Software
-            keywordsLower.contains("travel") || keywordsLower.contains("flight") || keywordsLower.contains("hotel") -> ExpenseCategory.Travel
-            keywordsLower.contains("telecom") || keywordsLower.contains("phone") || keywordsLower.contains("internet") -> ExpenseCategory.Telecommunications
-            keywordsLower.contains("office") || keywordsLower.contains("supplies") -> ExpenseCategory.OfficeSupplies
-            keywordsLower.contains("hardware") || keywordsLower.contains("computer") || keywordsLower.contains("laptop") -> ExpenseCategory.Hardware
-            keywordsLower.contains("insurance") -> ExpenseCategory.Insurance
-            keywordsLower.contains("rent") || keywordsLower.contains("lease") -> ExpenseCategory.Rent
-            keywordsLower.contains("marketing") || keywordsLower.contains("advertising") -> ExpenseCategory.Marketing
-            keywordsLower.contains("consulting") || keywordsLower.contains("professional") || keywordsLower.contains("legal") || keywordsLower.contains("accounting") -> ExpenseCategory.ProfessionalServices
-            else -> ExpenseCategory.Other
-        }
-    }
 }

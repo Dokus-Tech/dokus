@@ -63,7 +63,7 @@ data class CreateDocumentLinkPayload(
  *
  * Links track document-to-document relationships:
  * - ConvertedTo: ProForma → Invoice conversion
- * - OriginalDocument: CreditNote → Original Invoice/Bill reference
+ * - OriginalDocument: CreditNote → Original Invoice reference
  * - RelatedTo: Generic document relationship
  *
  * CRITICAL: All queries MUST filter by tenantId for tenant isolation.

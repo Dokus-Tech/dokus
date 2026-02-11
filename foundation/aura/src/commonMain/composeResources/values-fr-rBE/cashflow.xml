@@ -10,7 +10,7 @@
     <!-- Document Types -->
     <string name="document_type_invoice">Facture</string>
     <string name="document_type_expense">Dépense</string>
-    <string name="document_type_bill">Facture fournisseur</string>
+    <string name="document_type_inbound_invoice">Facture fournisseur</string>
     <string name="document_type_document">Document</string>
     <string name="document_type_unknown">Inconnu</string>
 
@@ -107,7 +107,7 @@
     <string name="invoice_status_refunded">Remboursée</string>
 
     <!-- Invoice Creation - Sections -->
-    <string name="invoice_bill_to">Facturer à</string>
+    <string name="invoice_recipient">Facturer à</string>
     <string name="invoice_description">Description</string>
     <string name="invoice_qty">Qté</string>
     <string name="invoice_price">Prix</string>
@@ -173,7 +173,7 @@
     <string name="cashflow_sort_amount_lowest">Montant (du plus bas au plus élevé)</string>
     <string name="cashflow_sort_type">Type</string>
     <string name="cashflow_document_number_expense">Dépense %1$s</string>
-    <string name="cashflow_document_number_bill">Facture %1$s</string>
+    <string name="cashflow_document_number_inbound_invoice">Facture %1$s</string>
     <string name="cashflow_amount_with_currency">%1$s %2$s</string>
     <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
 
@@ -200,7 +200,7 @@
     <string name="cashflow_section_additional_information">Informations supplémentaires</string>
     <string name="cashflow_invoice_number">Numéro de facture</string>
     <string name="cashflow_vat_amount">Montant de la TVA</string>
-    <string name="cashflow_bill_details_section">Détails de la facture</string>
+    <string name="cashflow_inbound_invoice_details_section">Détails de la facture</string>
     <string name="cashflow_supplier_information">Informations fournisseur</string>
     <string name="cashflow_supplier_name">Nom du fournisseur</string>
     <string name="cashflow_merchant_information">Informations du commerçant</string>
@@ -291,13 +291,13 @@
     <string name="upload_status_waiting">En attente...</string>
     <string name="upload_failed_message">Échec du téléversement</string>
 
-    <!-- Bill Status -->
-    <string name="bill_status_draft">Brouillon</string>
-    <string name="bill_status_pending">En attente</string>
-    <string name="bill_status_scheduled">Planifié</string>
-    <string name="bill_status_paid">Payé</string>
-    <string name="bill_status_overdue">En retard</string>
-    <string name="bill_status_cancelled">Annulé</string>
+    <!-- Inbound Invoice Status -->
+    <string name="payable_invoice_status_draft">Brouillon</string>
+    <string name="payable_invoice_status_pending">En attente</string>
+    <string name="payable_invoice_status_scheduled">Planifié</string>
+    <string name="payable_invoice_status_paid">Payé</string>
+    <string name="payable_invoice_status_overdue">En retard</string>
+    <string name="payable_invoice_status_cancelled">Annulé</string>
 
     <!-- Business Health -->
     <string name="business_health_description">Prévision de performance basée sur l'activité récente</string>

@@ -5,7 +5,6 @@ import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.database.tables.cashflow.BillsTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
@@ -32,11 +31,7 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     val invoiceId = uuid("invoice_id").references(
         InvoicesTable.id,
         onDelete = ReferenceOption.SET_NULL
-    ).nullable().index() // For outbound
-    val billId = uuid("bill_id").references(
-        BillsTable.id,
-        onDelete = ReferenceOption.SET_NULL
-    ).nullable().index() // For inbound
+    ).nullable().index()
 
     // External references
     val externalDocumentId = varchar("external_document_id", 255).nullable().index()

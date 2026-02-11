@@ -25,6 +25,7 @@ import tech.dokus.database.tables.cashflow.InvoiceItemsTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.fromDbDecimal
@@ -88,6 +89,7 @@ class InvoiceRepository(
                     }
                 it[paidAmount] = BigDecimal.ZERO
                 it[status] = InvoiceStatus.Draft
+                it[InvoicesTable.direction] = request.direction
                 it[notes] = request.notes
                 it[documentId] = request.documentId?.let { docId -> UUID.fromString(docId.toString()) }
             }
@@ -132,6 +134,7 @@ class InvoiceRepository(
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                 tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
+                direction = row[InvoicesTable.direction],
                 contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
@@ -195,6 +198,7 @@ class InvoiceRepository(
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                 tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
+                direction = row[InvoicesTable.direction],
                 contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
@@ -229,6 +233,7 @@ class InvoiceRepository(
     suspend fun listInvoices(
         tenantId: TenantId,
         status: InvoiceStatus? = null,
+        direction: DocumentDirection? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int = 50,
@@ -242,6 +247,9 @@ class InvoiceRepository(
             // Apply filters
             if (status != null) {
                 query = query.andWhere { InvoicesTable.status eq status }
+            }
+            if (direction != null) {
+                query = query.andWhere { InvoicesTable.direction eq direction }
             }
             if (fromDate != null) {
                 query = query.andWhere { InvoicesTable.issueDate greaterEq fromDate }
@@ -261,6 +269,7 @@ class InvoiceRepository(
                     FinancialDocumentDto.InvoiceDto(
                         id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                         tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
+                        direction = row[InvoicesTable.direction],
                         contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                         invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                         issueDate = row[InvoicesTable.issueDate],
@@ -301,7 +310,10 @@ class InvoiceRepository(
      * List overdue invoices for a tenant
      * CRITICAL: MUST filter by tenant_id
      */
-    suspend fun listOverdueInvoices(tenantId: TenantId): Result<List<FinancialDocumentDto.InvoiceDto>> =
+    suspend fun listOverdueInvoices(
+        tenantId: TenantId,
+        direction: DocumentDirection = DocumentDirection.Outbound
+    ): Result<List<FinancialDocumentDto.InvoiceDto>> =
         runCatching {
             dbQuery {
                 val today = Clock.System.now()
@@ -309,6 +321,7 @@ class InvoiceRepository(
 
                 InvoicesTable.selectAll().where {
                     (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                        (InvoicesTable.direction eq direction) and
                         (InvoicesTable.dueDate less today) and
                         (
                             InvoicesTable.status inList listOf(
@@ -321,6 +334,7 @@ class InvoiceRepository(
                         FinancialDocumentDto.InvoiceDto(
                             id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                             tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
+                            direction = row[InvoicesTable.direction],
                             contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                             invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                             issueDate = row[InvoicesTable.issueDate],
@@ -530,6 +544,7 @@ class InvoiceRepository(
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                 tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
+                direction = row[InvoicesTable.direction],
                 contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
@@ -654,6 +669,7 @@ class InvoiceRepository(
             FinancialDocumentDto.InvoiceDto(
                 id = invoiceId,
                 tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
+                direction = row[InvoicesTable.direction],
                 contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],

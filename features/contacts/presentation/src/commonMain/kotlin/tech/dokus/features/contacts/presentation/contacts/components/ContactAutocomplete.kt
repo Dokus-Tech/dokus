@@ -41,7 +41,7 @@ import tech.dokus.foundation.platform.Logger
 
 /**
  * Data class representing the auto-fill fields from a selected contact.
- * Use this to populate invoice/bill forms when a contact is selected.
+ * Use this to populate invoice forms when a contact is selected.
  */
 data class ContactAutoFillData(
     val contact: ContactDto,
@@ -56,7 +56,7 @@ data class ContactAutoFillData(
 )
 
 /**
- * Autocomplete component for selecting contacts in invoice/bill forms.
+ * Autocomplete component for selecting contacts in invoice forms.
  *
  * Features:
  * - Debounced search as user types (300ms delay)

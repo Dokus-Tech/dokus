@@ -17,7 +17,6 @@ import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
-import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
@@ -62,7 +61,6 @@ internal fun Route.documentRecordRoutes() {
     val ingestionRepository by inject<DocumentIngestionRunRepository>()
     val invoiceRepository by inject<InvoiceRepository>()
     val expenseRepository by inject<ExpenseRepository>()
-    val billRepository by inject<BillRepository>()
     val creditNoteRepository by inject<CreditNoteRepository>()
     val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
     val minioStorage by inject<MinioDocumentStorageService>()
@@ -103,7 +101,6 @@ internal fun Route.documentRecordRoutes() {
                         draft.documentType,
                         tenantId,
                         invoiceRepository,
-                        billRepository,
                         expenseRepository,
                         creditNoteRepository
                     )
@@ -152,7 +149,6 @@ internal fun Route.documentRecordRoutes() {
                     draft.documentType,
                     tenantId,
                     invoiceRepository,
-                    billRepository,
                     expenseRepository,
                     creditNoteRepository
                 )
@@ -386,7 +382,6 @@ internal fun Route.documentRecordRoutes() {
                     draftType,
                     tenantId,
                     invoiceRepository,
-                    billRepository,
                     expenseRepository,
                     creditNoteRepository
                 )
@@ -445,7 +440,6 @@ internal fun Route.documentRecordRoutes() {
                 draftType,
                 tenantId,
                 invoiceRepository,
-                billRepository,
                 expenseRepository,
                 creditNoteRepository
             )

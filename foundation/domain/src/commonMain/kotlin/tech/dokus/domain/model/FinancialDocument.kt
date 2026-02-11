@@ -7,10 +7,10 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
-import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.CreditNoteStatus
 import tech.dokus.domain.enums.CreditNoteType
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentMethod
@@ -19,7 +19,6 @@ import tech.dokus.domain.enums.PurchaseOrderStatus
 import tech.dokus.domain.enums.QuoteStatus
 import tech.dokus.domain.enums.RefundClaimStatus
 import tech.dokus.domain.enums.SettlementIntent
-import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.CreditNoteId
@@ -35,12 +34,11 @@ import tech.dokus.domain.ids.RefundClaimId
 import tech.dokus.domain.ids.TenantId
 
 /**
- * Sealed interface representing a financial document that can be an Invoice, Expense, or Bill.
+ * Sealed interface representing a financial document such as an invoice or expense.
  * This abstraction allows unified handling of documents in the cashflow system.
  *
- * Use [InvoiceDto] for outgoing invoices (Cash-In: money you expect to receive).
+ * Use [InvoiceDto] for invoices with explicit direction.
  * Use [ExpenseDto] for expenses/receipts (Cash-Out: money you spent).
- * Use [BillDto] for incoming supplier invoices (Cash-Out: money you need to pay).
  */
 @Serializable
 sealed interface FinancialDocumentDto {
@@ -62,6 +60,7 @@ sealed interface FinancialDocumentDto {
     data class InvoiceDto(
         val id: InvoiceId,
         override val tenantId: TenantId,
+        val direction: DocumentDirection = DocumentDirection.Outbound,
         val contactId: ContactId,
         val invoiceNumber: InvoiceNumber,
         val issueDate: LocalDate,
@@ -117,40 +116,6 @@ sealed interface FinancialDocumentDto {
         override val createdAt: LocalDateTime,
         override val updatedAt: LocalDateTime
     ) : FinancialDocumentDto
-
-    /**
-     * Bill DTO - represents an incoming supplier invoice that needs to be paid.
-     * Used for Cash-Out tracking of money owed to suppliers/vendors.
-     */
-    @Serializable
-    @SerialName("Bill")
-    data class BillDto(
-        val id: BillId,
-        override val tenantId: TenantId,
-        val supplierName: String,
-        val supplierVatNumber: String? = null,
-        val invoiceNumber: String? = null,
-        val issueDate: LocalDate,
-        val dueDate: LocalDate,
-        override val amount: Money,
-        val vatAmount: Money? = null,
-        val vatRate: VatRate? = null,
-        val status: BillStatus,
-        val category: ExpenseCategory,
-        val description: String? = null,
-        override val documentId: DocumentId? = null,
-        val contactId: ContactId? = null, // Optional vendor reference
-        val paidAt: LocalDateTime? = null,
-        val paidAmount: Money? = null,
-        val paymentMethod: PaymentMethod? = null,
-        val paymentReference: String? = null,
-        override val currency: Currency = Currency.Eur,
-        override val notes: String? = null,
-        override val createdAt: LocalDateTime,
-        override val updatedAt: LocalDateTime
-    ) : FinancialDocumentDto {
-        override val date: LocalDate get() = issueDate
-    }
 
     /**
      * CreditNote DTO - represents a credit note (sales or purchase).
@@ -260,7 +225,7 @@ sealed interface FinancialDocumentDto {
         override val notes: String? = null,
         val items: List<String> = emptyList(),
         override val documentId: DocumentId? = null,
-        val linkedBillIds: List<BillId> = emptyList(),
+        val linkedInvoiceIds: List<InvoiceId> = emptyList(),
         override val createdAt: LocalDateTime,
         override val updatedAt: LocalDateTime
     ) : FinancialDocumentDto {

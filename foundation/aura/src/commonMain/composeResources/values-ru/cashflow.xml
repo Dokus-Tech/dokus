@@ -10,7 +10,7 @@
     <!-- Document Types -->
     <string name="document_type_invoice">Счёт</string>
     <string name="document_type_expense">Расход</string>
-    <string name="document_type_bill">Входящий счёт</string>
+    <string name="document_type_inbound_invoice">Входящий счёт</string>
     <string name="document_type_document">Документ</string>
     <string name="document_type_unknown">Неизвестно</string>
 
@@ -107,7 +107,7 @@
     <string name="invoice_status_refunded">Возвращён</string>
 
     <!-- Invoice Creation - Sections -->
-    <string name="invoice_bill_to">Получатель</string>
+    <string name="invoice_recipient">Получатель</string>
     <string name="invoice_description">Описание</string>
     <string name="invoice_qty">Кол-во</string>
     <string name="invoice_price">Цена</string>
@@ -173,7 +173,7 @@
     <string name="cashflow_sort_amount_lowest">Сумма (по возрастанию)</string>
     <string name="cashflow_sort_type">Тип</string>
     <string name="cashflow_document_number_expense">Расход %1$s</string>
-    <string name="cashflow_document_number_bill">Счет %1$s</string>
+    <string name="cashflow_document_number_inbound_invoice">Счет %1$s</string>
     <string name="cashflow_amount_with_currency">%1$s %2$s</string>
     <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
 
@@ -200,7 +200,7 @@
     <string name="cashflow_section_additional_information">Дополнительная информация</string>
     <string name="cashflow_invoice_number">Номер счета</string>
     <string name="cashflow_vat_amount">Сумма НДС</string>
-    <string name="cashflow_bill_details_section">Детали счета</string>
+    <string name="cashflow_inbound_invoice_details_section">Детали счета</string>
     <string name="cashflow_supplier_information">Информация о поставщике</string>
     <string name="cashflow_supplier_name">Имя поставщика</string>
     <string name="cashflow_merchant_information">Информация о продавце</string>
@@ -291,13 +291,13 @@
     <string name="upload_status_waiting">Ожидание...</string>
     <string name="upload_failed_message">Не удалось загрузить</string>
 
-    <!-- Bill Status -->
-    <string name="bill_status_draft">Черновик</string>
-    <string name="bill_status_pending">В ожидании</string>
-    <string name="bill_status_scheduled">Запланировано</string>
-    <string name="bill_status_paid">Оплачено</string>
-    <string name="bill_status_overdue">Просрочено</string>
-    <string name="bill_status_cancelled">Отменено</string>
+    <!-- Inbound Invoice Status -->
+    <string name="payable_invoice_status_draft">Черновик</string>
+    <string name="payable_invoice_status_pending">В ожидании</string>
+    <string name="payable_invoice_status_scheduled">Запланировано</string>
+    <string name="payable_invoice_status_paid">Оплачено</string>
+    <string name="payable_invoice_status_overdue">Просрочено</string>
+    <string name="payable_invoice_status_cancelled">Отменено</string>
 
     <!-- Business Health -->
     <string name="business_health_description">Прогноз эффективности на основе недавней активности</string>

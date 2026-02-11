@@ -11,6 +11,7 @@ import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -23,7 +24,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 
 /**
- * Confirms Invoice documents: creates Invoice entity + CashflowEntry (Direction.In).
+ * Confirms invoice documents and projects cashflow from invoice direction.
  *
  * Uses repositories for all persistence — no direct table access.
  */
@@ -55,6 +56,7 @@ class InvoiceConfirmationService(
 
         val request = CreateInvoiceRequest(
             contactId = contactId,
+            direction = normalizeDirection(draftData.direction),
             items = items,
             issueDate = issueDate,
             dueDate = dueDate,
@@ -74,6 +76,7 @@ class InvoiceConfirmationService(
             dueDate = dueDate,
             amountGross = invoice.totalAmount,
             amountVat = invoice.vatAmount,
+            direction = invoice.direction,
             contactId = contactId
         ).getOrThrow()
 
@@ -126,4 +129,7 @@ class InvoiceConfirmationService(
             )
         )
     }
+
+    private fun normalizeDirection(direction: DocumentDirection): DocumentDirection =
+        if (direction == DocumentDirection.Unknown) DocumentDirection.Outbound else direction
 }

@@ -23,10 +23,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_bills
+import tech.dokus.aura.resources.contacts_inbound_invoices
 import tech.dokus.aura.resources.contacts_expenses
 import tech.dokus.aura.resources.contacts_invoices
-import tech.dokus.aura.resources.contacts_merge_bills_reassigned
+import tech.dokus.aura.resources.contacts_merge_inbound_invoices_reassigned
 import tech.dokus.aura.resources.contacts_merge_expenses_reassigned
 import tech.dokus.aura.resources.contacts_merge_invoices_reassigned
 import tech.dokus.aura.resources.contacts_merge_notes_reassigned
@@ -84,8 +84,8 @@ internal fun ContactMergeResultStep(
                     count = result.invoicesReassigned
                 )
                 ContactMergeReassignmentRow(
-                    label = stringResource(Res.string.contacts_bills),
-                    count = result.billsReassigned
+                    label = stringResource(Res.string.contacts_inbound_invoices),
+                    count = result.inboundInvoicesReassigned
                 )
                 ContactMergeReassignmentRow(
                     label = stringResource(Res.string.contacts_expenses),
@@ -98,7 +98,7 @@ internal fun ContactMergeResultStep(
             }
         }
 
-        if (result.invoicesReassigned > 0 || result.billsReassigned > 0 || result.expensesReassigned > 0) {
+        if (result.invoicesReassigned > 0 || result.inboundInvoicesReassigned > 0 || result.expensesReassigned > 0) {
             Spacer(modifier = Modifier.height(12.dp))
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -111,9 +111,9 @@ internal fun ContactMergeResultStep(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (result.billsReassigned > 0) {
+                if (result.inboundInvoicesReassigned > 0) {
                     Text(
-                        text = stringResource(Res.string.contacts_merge_bills_reassigned, result.billsReassigned),
+                        text = stringResource(Res.string.contacts_merge_inbound_invoices_reassigned, result.inboundInvoicesReassigned),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

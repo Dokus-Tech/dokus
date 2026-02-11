@@ -5,7 +5,7 @@ import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactMergeResult
 
 /**
- * Use case for getting contact activity summary (invoices, bills, expenses).
+ * Use case for getting contact activity summary (invoices, inbound invoices, expenses).
  */
 interface GetContactActivityUseCase {
     suspend operator fun invoke(contactId: ContactId): Result<ContactActivitySummary>

@@ -21,7 +21,7 @@ class DocumentStorageService(
      * Upload a document and return the result with a signed URL.
      *
      * @param tenantId The tenant this document belongs to
-     * @param prefix The storage prefix (e.g., "invoices", "bills", "expenses")
+     * @param prefix The storage prefix (e.g., "invoices", "inbound invoices", "expenses")
      * @param filename The original filename
      * @param data The file content
      * @param contentType The MIME type

@@ -12,8 +12,8 @@ import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.BankAccountType
 import tech.dokus.domain.enums.BankProvider
-import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.EntityType
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.InvitationStatus
@@ -29,7 +29,6 @@ import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BankConnectionId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.Bic
-import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
@@ -310,6 +309,7 @@ data class CreateTenantRequest(
 @Serializable
 data class CreateInvoiceRequest(
     val contactId: ContactId,
+    val direction: DocumentDirection = DocumentDirection.Outbound,
     val items: List<InvoiceItemDto>,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
@@ -381,42 +381,6 @@ data class QuarterInfo(
 )
 
 // ============================================================================
-// BILL REQUEST/RESPONSE MODELS
-// ============================================================================
-
-@Serializable
-data class CreateBillRequest(
-    val supplierName: String,
-    val supplierVatNumber: String? = null,
-    val invoiceNumber: String? = null,
-    val issueDate: LocalDate,
-    val dueDate: LocalDate,
-    val amount: Money,
-    val vatAmount: Money? = null,
-    val vatRate: VatRate? = null,
-    val category: ExpenseCategory,
-    val description: String? = null,
-    val notes: String? = null,
-    val documentId: DocumentId? = null,
-    val contactId: ContactId? = null,
-    val currency: Currency = Currency.default
-)
-
-@Serializable
-data class UpdateBillStatusRequest(
-    val billId: BillId,
-    val status: BillStatus
-)
-
-@Serializable
-data class MarkBillPaidRequest(
-    val paidAt: LocalDate,
-    val paidAmount: Money,
-    val paymentMethod: PaymentMethod,
-    val paymentReference: String? = null
-)
-
-// ============================================================================
 // FROM-MEDIA CREATION MODELS
 // ============================================================================
 
@@ -455,29 +419,6 @@ data class ExpenseCorrections(
     val category: ExpenseCategory? = null,
     val isDeductible: Boolean? = null,
     val deductiblePercentage: Percentage? = null,
-    val notes: String? = null
-)
-
-/**
- * Request to create a bill from processed media extraction.
- */
-@Serializable
-data class CreateBillFromMediaRequest(
-    val corrections: BillCorrections? = null
-)
-
-@Serializable
-data class BillCorrections(
-    val supplierName: String? = null,
-    val supplierVatNumber: String? = null,
-    val invoiceNumber: String? = null,
-    val issueDate: LocalDate? = null,
-    val dueDate: LocalDate? = null,
-    val amount: Money? = null,
-    val vatAmount: Money? = null,
-    val vatRate: VatRate? = null,
-    val category: ExpenseCategory? = null,
-    val description: String? = null,
     val notes: String? = null
 )
 

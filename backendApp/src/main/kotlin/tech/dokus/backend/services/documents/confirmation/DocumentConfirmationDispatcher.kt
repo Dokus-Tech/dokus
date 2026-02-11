@@ -3,7 +3,6 @@ package tech.dokus.backend.services.documents.confirmation
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -15,7 +14,6 @@ import tech.dokus.domain.model.ReceiptDraftData
  */
 class DocumentConfirmationDispatcher(
     private val invoiceService: InvoiceConfirmationService,
-    private val billService: BillConfirmationService,
     private val receiptService: ReceiptConfirmationService,
     private val creditNoteService: CreditNoteConfirmationService,
 ) {
@@ -25,11 +23,7 @@ class DocumentConfirmationDispatcher(
         draftData: DocumentDraftData,
         linkedContactId: ContactId?
     ): Result<ConfirmationResult> = when (draftData) {
-        is InvoiceDraftData -> when (draftData.direction) {
-            DocumentDirection.Inbound -> billService.confirm(tenantId, documentId, draftData, linkedContactId)
-            DocumentDirection.Outbound,
-            DocumentDirection.Unknown -> invoiceService.confirm(tenantId, documentId, draftData, linkedContactId)
-        }
+        is InvoiceDraftData -> invoiceService.confirm(tenantId, documentId, draftData, linkedContactId)
         is ReceiptDraftData -> receiptService.confirm(tenantId, documentId, draftData, linkedContactId)
         is CreditNoteDraftData -> creditNoteService.confirm(tenantId, documentId, draftData, linkedContactId)
     }

@@ -23,7 +23,6 @@ import tech.dokus.backend.services.auth.RateLimitServiceInterface
 import tech.dokus.backend.services.auth.RedisRateLimitService
 import tech.dokus.backend.services.auth.SmtpEmailService
 import tech.dokus.backend.services.auth.TeamService
-import tech.dokus.backend.services.cashflow.BillService
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.CreditNoteService
@@ -36,7 +35,6 @@ import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentDirectionResolver
 import tech.dokus.backend.services.documents.StorageDocumentFetcher
-import tech.dokus.backend.services.documents.confirmation.BillConfirmationService
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationService
@@ -253,15 +251,13 @@ private fun authModule() = module {
 private fun cashflowModule() = module {
     single { InvoiceService(get(), get()) }
     single { ExpenseService(get()) }
-    single { BillService(get(), get()) }
     single { CreditNoteService(get(), get(), get()) }
     single { CashflowEntriesService(get()) }
-    single { CashflowOverviewService(get(), get(), get(), get()) }
+    single { CashflowOverviewService(get(), get(), get()) }
     single { InvoiceConfirmationService(get(), get(), get()) }
-    single { BillConfirmationService(get(), get(), get()) }
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get()) }
-    single { DocumentConfirmationDispatcher(get(), get(), get(), get()) }
+    single { DocumentConfirmationDispatcher(get(), get(), get()) }
 
     // PDF Preview
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }

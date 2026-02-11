@@ -236,7 +236,7 @@ class PeppolService(
      * Poll the Peppol inbox for new documents.
      *
      * Creates Documents with Drafts for user review (architectural boundary).
-     * Bills are created only when the user confirms the draft.
+     * Inbound Invoices are created only when the user confirms the draft.
      *
      * Full sync is performed on first connection (lastFullSyncAt is null) or weekly (> 7 days).
      * Full sync fetches ALL documents via /documents endpoint.

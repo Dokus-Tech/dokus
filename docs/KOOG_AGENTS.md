@@ -235,7 +235,7 @@ data class DocumentClassification(
 )
 
 enum class ClassifiedDocumentType {
-    INVOICE, BILL, RECEIPT, CREDIT_NOTE, PRO_FORMA, EXPENSE, UNKNOWN
+    INVOICE, INBOUND_INVOICE, RECEIPT, CREDIT_NOTE, PRO_FORMA, EXPENSE, UNKNOWN
 }
 ```
 
@@ -278,14 +278,14 @@ private val invoiceAgent by lazy {
     )
 }
 
-private val billAgent by lazy {
-    ExtractionAgent<ExtractedBillData>(
+private val inboundInvoiceAgent by lazy {
+    ExtractionAgent<ExtractedInvoiceData>(
         executor = executor,
         model = AIProviderFactory.getModel(config, ModelPurpose.DOCUMENT_EXTRACTION),
-        prompt = AgentPrompt.Extraction.Bill,
-        userPromptPrefix = "Extract bill/supplier invoice data from this",
-        promptId = "bill-extractor",
-        emptyResult = { ExtractedBillData(confidence = 0.0) }
+        prompt = AgentPrompt.Extraction.Inbound Invoice,
+        userPromptPrefix = "Extract inbound invoice/supplier invoice data from this",
+        promptId = "inbound invoice-extractor",
+        emptyResult = { ExtractedInvoiceData(confidence = 0.0) }
     )
 }
 
@@ -306,7 +306,7 @@ private val receiptAgent by lazy {
 | Agent | Data Class | Use Case |
 |-------|------------|----------|
 | Invoice | `ExtractedInvoiceData` | Outbound invoices you sent |
-| Bill | `ExtractedBillData` | Inbound invoices you received |
+| Inbound Invoice | `ExtractedInvoiceData` | Inbound invoices you received |
 | Receipt | `ExtractedReceiptData` | POS receipts |
 | Expense | `ExtractedExpenseData` | Simple expenses |
 | CreditNote | `ExtractedInvoiceData` | Credit notes (reuses invoice schema) |
@@ -316,7 +316,7 @@ private val receiptAgent by lazy {
 
 ### 3.3 CategorySuggestionAgent
 
-**Purpose**: Suggest expense categories for bills and receipts.
+**Purpose**: Suggest expense categories for inbound invoices and receipts.
 
 **Location**: `features/ai/backend/.../agents/CategorySuggestionAgent.kt`
 
@@ -505,9 +505,9 @@ class AIService(private val config: AIConfig) {
                 val data = invoiceAgent.extract(images)
                 DocumentAIResult.Invoice(classification, data)
             }
-            ClassifiedDocumentType.BILL -> {
-                val data = billAgent.extract(images)
-                DocumentAIResult.Bill(classification, data)
+            ClassifiedDocumentType.INBOUND_INVOICE -> {
+                val data = inboundInvoiceAgent.extract(images)
+                DocumentAIResult.Inbound Invoice(classification, data)
             }
             // ... other types
         }
@@ -553,7 +553,7 @@ sealed class AgentPrompt {
     // Extraction prompts
     sealed class Extraction : AgentPrompt() {
         data object Invoice : Extraction() { ... }
-        data object Bill : Extraction() { ... }
+        data object Inbound Invoice : Extraction() { ... }
         data object Receipt : Extraction() { ... }
         data object CreditNote : Extraction() { ... }
         data object ProForma : Extraction() { ... }
@@ -624,7 +624,7 @@ private fun fallbackParse(response: String): DocumentClassification {
     val documentType = when {
         "INVOICE" in upperResponse -> ClassifiedDocumentType.INVOICE
         "RECEIPT" in upperResponse -> ClassifiedDocumentType.RECEIPT
-        "BILL" in upperResponse -> ClassifiedDocumentType.BILL
+        "INBOUND_INVOICE" in upperResponse -> ClassifiedDocumentType.INBOUND_INVOICE
         else -> ClassifiedDocumentType.UNKNOWN
     }
     return DocumentClassification(
@@ -733,7 +733,7 @@ features/ai/backend/src/main/kotlin/tech/dokus/features/ai/
 └── models/
     ├── DocumentClassification.kt       # Classification result
     ├── ExtractedInvoiceData.kt         # Invoice extraction
-    ├── ExtractedBillData.kt            # Bill extraction
+    ├── ExtractedInvoiceData.kt            # Inbound Invoice extraction
     ├── ExtractedReceiptData.kt         # Receipt extraction
     ├── ExtractedExpenseData.kt         # Expense extraction
     ├── CategorySuggestion.kt           # Category suggestion
@@ -789,7 +789,7 @@ val classification = classificationAgent.classify(images, context)
 // Step 2: Extract based on type
 val data = when (classification.documentType) {
     INVOICE -> invoiceAgent.extract(images)
-    BILL -> billAgent.extract(images)
+    INBOUND_INVOICE -> inboundInvoiceAgent.extract(images)
     // ...
 }
 ```

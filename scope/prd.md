@@ -19,7 +19,7 @@ These apply to every feature:
 4. Compliance is invisible
    PEPPOL, VAT, and audit trails exist without user effort.
 5. One source of truth
-   No duplicated concepts (e.g. suppliers vs customers, bills vs documents).
+   No duplicated concepts (e.g. suppliers vs customers, inbound invoices vs documents).
 
 ⸻
 
@@ -30,7 +30,7 @@ These apply to every feature:
 The Documents module is the single intake, processing, and validation layer for all financial
 inputs.
 
-All downstream entities (invoices, bills, expenses, cashflow entries) originate from a Document.
+All downstream entities (invoices, inbound invoices, expenses, cashflow entries) originate from a Document.
 
 ⸻
 
@@ -110,7 +110,7 @@ Acceptance criteria
 1.6 Output of Document Confirmation
 
 Upon confirmation, system creates:
-• Bill / Expense (incoming document)
+• Inbound Invoice / Expense (incoming document)
 • Invoice (outgoing document)
 • Corresponding cashflow entry
 
@@ -132,7 +132,7 @@ It answers:
 
 Included:
 • Expected incoming (invoices)
-• Expected outgoing (bills, expenses)
+• Expected outgoing (inbound invoices, expenses)
 • Paid items
 • Overdue items
 
@@ -211,7 +211,7 @@ Clients is the canonical counterparty registry.
 Used by:
 • Documents
 • Invoices
-• Bills
+• Inbound Invoices
 • Cashflow
 • PEPPOL
 

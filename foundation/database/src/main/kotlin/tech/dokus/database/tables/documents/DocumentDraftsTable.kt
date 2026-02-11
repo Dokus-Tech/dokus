@@ -28,7 +28,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * - Version number for optimistic locking
  * - Contact suggestion from AI matching
  *
- * Note: Confirmation creates Invoice/Bill/Expense with documentId FK.
+ * Note: Confirmation creates Invoice/Expense with documentId FK.
  * The draft's documentStatus changes to Confirmed, but the linkage is in the
  * financial entity tables (single source of truth).
  */

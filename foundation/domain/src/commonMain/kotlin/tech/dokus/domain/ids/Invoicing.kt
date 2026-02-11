@@ -48,18 +48,6 @@ value class InvoiceNumber(override val value: String) : ValueClass<String>, Vali
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
-value class BillId(val value: Uuid) {
-    override fun toString(): String = value.toString()
-
-    companion object {
-        fun generate(): BillId = BillId(Uuid.random())
-        fun parse(value: String): BillId = BillId(Uuid.parse(value))
-    }
-}
-
-@OptIn(ExperimentalUuidApi::class)
-@Serializable
-@JvmInline
 value class CreditNoteId(val value: Uuid) {
     override fun toString(): String = value.toString()
 

@@ -10,7 +10,7 @@
     <!-- Document Types -->
     <string name="document_type_invoice">Fattura</string>
     <string name="document_type_expense">Spesa</string>
-    <string name="document_type_bill">Fattura fornitore</string>
+    <string name="document_type_inbound_invoice">Fattura fornitore</string>
     <string name="document_type_document">Documento</string>
     <string name="document_type_unknown">Sconosciuto</string>
 
@@ -107,7 +107,7 @@
     <string name="invoice_status_refunded">Rimborsata</string>
 
     <!-- Invoice Creation - Sections -->
-    <string name="invoice_bill_to">Fatturare a</string>
+    <string name="invoice_recipient">Fatturare a</string>
     <string name="invoice_description">Descrizione</string>
     <string name="invoice_qty">Qtà</string>
     <string name="invoice_price">Prezzo</string>
@@ -173,7 +173,7 @@
     <string name="cashflow_sort_amount_lowest">Importo (dal più basso al più alto)</string>
     <string name="cashflow_sort_type">Tipo</string>
     <string name="cashflow_document_number_expense">Spesa %1$s</string>
-    <string name="cashflow_document_number_bill">Fattura %1$s</string>
+    <string name="cashflow_document_number_inbound_invoice">Fattura %1$s</string>
     <string name="cashflow_amount_with_currency">%1$s %2$s</string>
     <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
 
@@ -200,7 +200,7 @@
     <string name="cashflow_section_additional_information">Informazioni aggiuntive</string>
     <string name="cashflow_invoice_number">Numero fattura</string>
     <string name="cashflow_vat_amount">Importo IVA</string>
-    <string name="cashflow_bill_details_section">Dettagli fattura</string>
+    <string name="cashflow_inbound_invoice_details_section">Dettagli fattura</string>
     <string name="cashflow_supplier_information">Informazioni fornitore</string>
     <string name="cashflow_supplier_name">Nome fornitore</string>
     <string name="cashflow_merchant_information">Informazioni commerciante</string>
@@ -291,13 +291,13 @@
     <string name="upload_status_waiting">In attesa...</string>
     <string name="upload_failed_message">Caricamento non riuscito</string>
 
-    <!-- Bill Status -->
-    <string name="bill_status_draft">Bozza</string>
-    <string name="bill_status_pending">In sospeso</string>
-    <string name="bill_status_scheduled">Programmato</string>
-    <string name="bill_status_paid">Pagato</string>
-    <string name="bill_status_overdue">Scaduto</string>
-    <string name="bill_status_cancelled">Annullato</string>
+    <!-- Inbound Invoice Status -->
+    <string name="payable_invoice_status_draft">Bozza</string>
+    <string name="payable_invoice_status_pending">In sospeso</string>
+    <string name="payable_invoice_status_scheduled">Programmato</string>
+    <string name="payable_invoice_status_paid">Pagato</string>
+    <string name="payable_invoice_status_overdue">Scaduto</string>
+    <string name="payable_invoice_status_cancelled">Annullato</string>
 
     <!-- Business Health -->
     <string name="business_health_description">Previsione delle prestazioni basata sull'attività recente</string>

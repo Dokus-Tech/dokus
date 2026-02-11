@@ -6,7 +6,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
-import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
@@ -15,6 +14,7 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashInSummary
@@ -26,16 +26,15 @@ import tech.dokus.foundation.backend.utils.loggerFor
 /**
  * Service for cashflow overview calculations.
  *
- * This service aggregates data from invoices, expenses, and bills
+ * This service aggregates data from invoices and expenses
  * to provide a comprehensive view of cash flow for a tenant.
  *
  * Cash-In: Money flowing INTO the business (outgoing invoices to clients)
- * Cash-Out: Money flowing OUT of the business (expenses + bills to pay)
+ * Cash-Out: Money flowing OUT of the business (expenses + inbound invoices)
  */
 class CashflowOverviewService(
     private val invoiceRepository: InvoiceRepository,
     private val expenseRepository: ExpenseRepository,
-    private val billRepository: BillRepository,
     private val cashflowEntriesRepository: CashflowEntriesRepository
 ) {
     private val logger = loggerFor()
@@ -83,13 +82,25 @@ class CashflowOverviewService(
             )
         }
 
-        // Legacy path: aggregate from invoices, expenses, bills directly
+        // Legacy path: aggregate from invoices and expenses directly
         // (used when viewMode is not specified for backward compatibility)
 
-        // Fetch invoices for period
+        // Fetch outbound invoices for period (cash-in)
         val invoicesResult = invoiceRepository.listInvoices(
             tenantId = tenantId,
             status = null,
+            direction = DocumentDirection.Outbound,
+            fromDate = effectiveFromDate,
+            toDate = effectiveToDate,
+            limit = 1000,
+            offset = 0
+        ).getOrThrow()
+
+        // Fetch inbound invoices for period (cash-out)
+        val inboundInvoicesResult = invoiceRepository.listInvoices(
+            tenantId = tenantId,
+            status = null,
+            direction = DocumentDirection.Inbound,
             fromDate = effectiveFromDate,
             toDate = effectiveToDate,
             limit = 1000,
@@ -106,12 +117,7 @@ class CashflowOverviewService(
             offset = 0
         ).getOrThrow()
 
-        // Fetch bill statistics for period
-        val billStats =
-            billRepository.getBillStatistics(tenantId, effectiveFromDate, effectiveToDate)
-                .getOrThrow()
-
-        // Calculate Cash-In (Invoices)
+        // Calculate Cash-In (outbound invoices)
         val invoices = invoicesResult.items
         val cashInTotal = invoices.sumOf { it.totalAmount.minor }
         val cashInPaid = invoices
@@ -139,20 +145,36 @@ class CashflowOverviewService(
             invoiceCount = invoices.size
         )
 
-        // Calculate Cash-Out (Expenses + Bills)
+        // Calculate Cash-Out (Expenses + inbound invoices)
         val expenses = expensesResult.items
         val expenseTotal = expenses.sumOf { it.amount.minor }
+        val inboundInvoices = inboundInvoicesResult.items
+        val inboundInvoiceTotal = inboundInvoices.sumOf { it.totalAmount.minor }
+        val inboundInvoicePaid = inboundInvoices
+            .filter { it.status == InvoiceStatus.Paid }
+            .sumOf { it.totalAmount.minor }
+        val inboundInvoicePending = inboundInvoices
+            .filter {
+                it.status in listOf(
+                    InvoiceStatus.Draft,
+                    InvoiceStatus.Sent,
+                    InvoiceStatus.Viewed,
+                    InvoiceStatus.PartiallyPaid,
+                    InvoiceStatus.Overdue
+                )
+            }
+            .sumOf { it.totalAmount.minor }
 
-        val cashOutTotal = expenseTotal + billStats.total.minor
-        val cashOutPaid = expenseTotal + billStats.paid.minor
-        val cashOutPending = billStats.pending.minor
+        val cashOutTotal = expenseTotal + inboundInvoiceTotal
+        val cashOutPaid = expenseTotal + inboundInvoicePaid
+        val cashOutPending = inboundInvoicePending
 
         val cashOut = CashOutSummary(
             total = Money(cashOutTotal),
             paid = Money(cashOutPaid),
             pending = Money(cashOutPending),
             expenseCount = expenses.size,
-            billCount = billStats.count
+            inboundInvoiceCount = inboundInvoices.size
         )
 
         // Calculate net cashflow
@@ -239,7 +261,7 @@ class CashflowOverviewService(
             paid = Money(cashOutPaid),
             pending = Money(cashOutPending),
             expenseCount = cashOutEntries.count { it.sourceType == tech.dokus.domain.enums.CashflowSourceType.Expense },
-            billCount = cashOutEntries.count { it.sourceType == tech.dokus.domain.enums.CashflowSourceType.Bill }
+            inboundInvoiceCount = cashOutEntries.count { it.sourceType == tech.dokus.domain.enums.CashflowSourceType.Invoice }
         )
 
         // Net cashflow = Cash-In total - Cash-Out total

@@ -10,7 +10,7 @@
     <!-- Document Types -->
     <string name="document_type_invoice">Factuur</string>
     <string name="document_type_expense">Uitgave</string>
-    <string name="document_type_bill">Inkoopfactuur</string>
+    <string name="document_type_inbound_invoice">Inkoopfactuur</string>
     <string name="document_type_document">Document</string>
     <string name="document_type_unknown">Onbekend</string>
 
@@ -107,7 +107,7 @@
     <string name="invoice_status_refunded">Terugbetaald</string>
 
     <!-- Invoice Creation - Sections -->
-    <string name="invoice_bill_to">Factureren aan</string>
+    <string name="invoice_recipient">Factureren aan</string>
     <string name="invoice_description">Omschrijving</string>
     <string name="invoice_qty">Aant</string>
     <string name="invoice_price">Prijs</string>
@@ -173,7 +173,7 @@
     <string name="cashflow_sort_amount_lowest">Bedrag (laag naar hoog)</string>
     <string name="cashflow_sort_type">Type</string>
     <string name="cashflow_document_number_expense">Uitgave %1$s</string>
-    <string name="cashflow_document_number_bill">Factuur %1$s</string>
+    <string name="cashflow_document_number_inbound_invoice">Factuur %1$s</string>
     <string name="cashflow_amount_with_currency">%1$s %2$s</string>
     <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
 
@@ -200,7 +200,7 @@
     <string name="cashflow_section_additional_information">Aanvullende informatie</string>
     <string name="cashflow_invoice_number">Factuurnummer</string>
     <string name="cashflow_vat_amount">Btw-bedrag</string>
-    <string name="cashflow_bill_details_section">Factuurdetails</string>
+    <string name="cashflow_inbound_invoice_details_section">Factuurdetails</string>
     <string name="cashflow_supplier_information">Leveranciersinformatie</string>
     <string name="cashflow_supplier_name">Leveranciersnaam</string>
     <string name="cashflow_merchant_information">Handelaarsinformatie</string>
@@ -291,13 +291,13 @@
     <string name="upload_status_waiting">Wachten...</string>
     <string name="upload_failed_message">Uploaden mislukt</string>
 
-    <!-- Bill Status -->
-    <string name="bill_status_draft">Concept</string>
-    <string name="bill_status_pending">In behandeling</string>
-    <string name="bill_status_scheduled">Gepland</string>
-    <string name="bill_status_paid">Betaald</string>
-    <string name="bill_status_overdue">Achterstallig</string>
-    <string name="bill_status_cancelled">Geannuleerd</string>
+    <!-- Inbound Invoice Status -->
+    <string name="payable_invoice_status_draft">Concept</string>
+    <string name="payable_invoice_status_pending">In behandeling</string>
+    <string name="payable_invoice_status_scheduled">Gepland</string>
+    <string name="payable_invoice_status_paid">Betaald</string>
+    <string name="payable_invoice_status_overdue">Achterstallig</string>
+    <string name="payable_invoice_status_cancelled">Geannuleerd</string>
 
     <!-- Business Health -->
     <string name="business_health_description">Prestatieprognose op basis van recente activiteit</string>

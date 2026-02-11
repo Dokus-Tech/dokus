@@ -32,7 +32,6 @@ fun List<FinancialDocumentDto>.needingConfirmation(): List<FinancialDocumentDto>
             is FinancialDocumentDto.InvoiceDto ->
                 doc.status == InvoiceStatus.Sent || doc.status == InvoiceStatus.Overdue
             is FinancialDocumentDto.ExpenseDto -> false
-            is FinancialDocumentDto.BillDto -> false
             is FinancialDocumentDto.CreditNoteDto -> false
             is FinancialDocumentDto.ProFormaDto -> false
             is FinancialDocumentDto.QuoteDto -> false

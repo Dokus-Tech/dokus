@@ -14,7 +14,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 /**
  * Service for contact business operations.
  *
- * Contacts represent both customers (who receive invoices) and vendors (who send bills).
+ * Contacts represent both customers (who receive invoices) and vendors (who send inbound invoices).
  * This service handles all business logic related to contacts and delegates data access
  * to the repository layer.
  */

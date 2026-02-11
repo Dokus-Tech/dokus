@@ -15,10 +15,10 @@ data class NormalizedDraft(
 )
 
 /**
- * Resolves deterministic business direction and normalizes invoice/bill drafts.
+ * Resolves deterministic business direction for invoice-like drafts.
  *
  * The AI extracts neutral seller/buyer facts. This resolver determines whether the tenant is
- * the seller or buyer using tenant VAT/name matching and then maps to invoice vs bill semantics.
+ * the seller or buyer using tenant VAT/name matching.
  */
 class DocumentDirectionResolver {
 

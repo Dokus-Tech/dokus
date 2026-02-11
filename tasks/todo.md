@@ -1,4 +1,4 @@
-# Fix: BILL misclassified as INVOICE — wrong counterparty
+# Fix: INBOUND_INVOICE misclassified as INVOICE — wrong counterparty
 
 ## Plan
 
@@ -16,7 +16,7 @@
 ### 4. Strengthen classification prompt in `ClassifyDocumentSubGraph`
 - [x] Remove `@Suppress("UnusedReceiverParameter")`, use `tenant` in prompt
 - [x] Add fuzzy name matching guidance
-- [x] Make INVOICE vs BILL distinction explicit with tenant name
+- [x] Make INVOICE vs INBOUND_INVOICE distinction explicit with tenant name
 
 ### 5. Verify
 - [x] Compile: `./gradlew :features:ai:backend:compileKotlin` — BUILD SUCCESSFUL

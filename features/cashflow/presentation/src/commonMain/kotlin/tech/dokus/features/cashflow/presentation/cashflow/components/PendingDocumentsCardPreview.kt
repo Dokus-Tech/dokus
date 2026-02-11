@@ -235,10 +235,10 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             document = DocumentDto(
                 id = DocumentId.generate(),
                 tenantId = tenantId,
-                filename = "supplier-bill.pdf",
+                filename = "supplier-inbound-invoice.pdf",
                 contentType = "application/pdf",
                 sizeBytes = InboundInvoiceSizeBytes,
-                storageKey = "documents/supplier-bill.pdf",
+                storageKey = "documents/supplier-inbound-invoice.pdf",
                 uploadedAt = now
             ),
             draft = DocumentDraftDto(

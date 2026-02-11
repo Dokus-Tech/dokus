@@ -37,7 +37,7 @@ import java.util.UUID
 /**
  * Repository for managing cashflow entries.
  *
- * Cashflow entries are projections of financial facts (Invoice, Bill, Expense).
+ * Cashflow entries are projections of financial facts (Invoice, Expense).
  * They are created during document confirmation and updated when payments are recorded.
  *
  * CRITICAL SECURITY RULES:
@@ -103,7 +103,7 @@ class CashflowEntriesRepository {
     }
 
     /**
-     * Get entry by source (Invoice/Bill/Expense ID).
+     * Get entry by source (Invoice/Expense ID).
      * CRITICAL: MUST filter by tenant_id.
      */
     suspend fun getBySource(

@@ -14,7 +14,6 @@ import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.banking.BankConnectionsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
-import tech.dokus.database.tables.cashflow.BillsTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
@@ -84,7 +83,6 @@ object DokusSchema {
                 InvoiceItemsTable,
                 InvoiceNumberSequencesTable,
                 ExpensesTable,
-                BillsTable,
                 CreditNotesTable,
                 RefundClaimsTable,
                 CashflowEntriesTable,
@@ -97,7 +95,7 @@ object DokusSchema {
                 BankTransactionsTable,
 
                 // ----------------------------
-                // Peppol (depends on invoices/bills)
+                // Peppol (depends on invoices)
                 // ----------------------------
                 PeppolRegistrationTable,
                 PeppolSettingsTable,

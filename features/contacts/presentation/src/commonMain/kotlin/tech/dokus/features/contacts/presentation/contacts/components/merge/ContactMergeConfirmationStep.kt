@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_action_irreversible
-import tech.dokus.aura.resources.contacts_bills
+import tech.dokus.aura.resources.contacts_inbound_invoices
 import tech.dokus.aura.resources.contacts_expenses
 import tech.dokus.aura.resources.contacts_invoices
 import tech.dokus.aura.resources.contacts_merge_items_to_target
@@ -103,8 +103,8 @@ internal fun ContactMergeConfirmationStep(
                         count = sourceActivity.invoiceCount
                     )
                     ContactMergeCountRow(
-                        label = stringResource(Res.string.contacts_bills),
-                        count = sourceActivity.billCount
+                        label = stringResource(Res.string.contacts_inbound_invoices),
+                        count = sourceActivity.inboundInvoiceCount
                     )
                     ContactMergeCountRow(
                         label = stringResource(Res.string.contacts_expenses),

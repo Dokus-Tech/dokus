@@ -3,6 +3,7 @@ package tech.dokus.domain.routes
 import io.ktor.resources.*
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 
 /**
@@ -16,6 +17,7 @@ import tech.dokus.domain.enums.InvoiceStatus
 @Resource("/api/v1/invoices")
 class Invoices(
     val status: InvoiceStatus? = null,
+    val direction: DocumentDirection? = null,
     val fromDate: LocalDate? = null,
     val toDate: LocalDate? = null,
     val limit: Int = 50,

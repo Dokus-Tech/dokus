@@ -97,15 +97,15 @@ functionality across backend APIs, frontend screens, and user flows.
   - `GET /api/v1/expenses/{id}`
   - `PUT /api/v1/expenses/{id}`
   - `DELETE /api/v1/expenses/{id}`
-- Bills (supplier invoices):
-  - `GET /api/v1/bills` (filter by status/category/date, pagination)
-  - `POST /api/v1/bills`
-  - `GET /api/v1/bills/overdue`
-  - `GET /api/v1/bills/{id}`
-  - `PUT /api/v1/bills/{id}`
-  - `DELETE /api/v1/bills/{id}`
-  - `PATCH /api/v1/bills/{id}/status`
-  - `POST /api/v1/bills/{id}/payments` (mark paid)
+- Inbound Invoices (supplier invoices):
+  - `GET /api/v1/inbound invoices` (filter by status/category/date, pagination)
+  - `POST /api/v1/inbound invoices`
+  - `GET /api/v1/inbound invoices/overdue`
+  - `GET /api/v1/inbound invoices/{id}`
+  - `PUT /api/v1/inbound invoices/{id}`
+  - `DELETE /api/v1/inbound invoices/{id}`
+  - `PATCH /api/v1/inbound invoices/{id}/status`
+  - `POST /api/v1/inbound invoices/{id}/payments` (mark paid)
 - Overview:
   - `GET /api/v1/cashflow/overview`
 
@@ -148,7 +148,7 @@ functionality across backend APIs, frontend screens, and user flows.
   - `GET /api/v1/peppol/transmissions`
   - `GET /api/v1/peppol/transmissions/{id}`
 - Inbox:
-  - `POST /api/v1/peppol/inbox/syncs` (poll inbox and create bills)
+  - `POST /api/v1/peppol/inbox/syncs` (poll inbox and create inbound invoices)
 
 ### AI / Chat
 - Cross-document chat:

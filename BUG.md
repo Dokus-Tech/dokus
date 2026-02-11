@@ -36,7 +36,7 @@ It is intentionally high-level and scoped to what is implemented, not roadmap.
 - Cashflow:
   - Invoices CRUD, overdue list, status update.
   - Expenses CRUD.
-  - Bills CRUD, overdue list, status update, mark paid.
+  - Inbound Invoices CRUD, overdue list, status update, mark paid.
   - Cashflow overview aggregation.
 - Documents and attachments:
   - Upload documents to object storage with validation and hash de-duplication.
@@ -48,7 +48,7 @@ It is intentionally high-level and scoped to what is implemented, not roadmap.
   - Provider list, settings save/delete/test/connect.
   - Recipient validation.
   - Invoice validation and transmission.
-  - Inbox polling to create bills.
+  - Inbox polling to create inbound invoices.
   - Transmission history listing and lookup.
 - AI/Chat:
   - Cross-document and per-document chat (RAG).

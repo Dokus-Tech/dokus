@@ -382,7 +382,7 @@ enum class IndexingStatus(override val dbValue: String) : DbEnum {
  *
  * Used in DocumentLinksTable to track document-to-document relationships:
  * - ConvertedTo: ProForma converted to Invoice
- * - OriginalDocument: CreditNote referencing original Invoice/Bill
+ * - OriginalDocument: CreditNote referencing original Invoice
  * - RelatedTo: Generic document relationship
  *
  * No source/target type enums needed - they are derivable from the linked documents.
@@ -393,7 +393,7 @@ enum class DocumentLinkType(override val dbValue: String) : DbEnum {
     @SerialName("CONVERTED_TO")
     ConvertedTo("CONVERTED_TO"),
 
-    /** CreditNote → Original Invoice/Bill reference */
+    /** CreditNote → Original Invoice reference */
     @SerialName("ORIGINAL_DOC")
     OriginalDocument("ORIGINAL_DOC"),
 

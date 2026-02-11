@@ -39,7 +39,7 @@ Full plan: `/Users/voider/.claude/plans/expressive-meandering-ember.md`
 - [ ] Create `nodeUnwrap<T>()` helper for `Result<StructuredResponse<T>> → T`
 - [ ] Implement 7 paths:
   - INVOICE: `extract → unwrap → enrich (customer lookup)`
-  - BILL: `extract → unwrap → enrich (supplier lookup)`
+  - INBOUND_INVOICE: `extract → unwrap → enrich (supplier lookup)`
   - RECEIPT: `extract → unwrap → categorize (AI)`
   - EXPENSE: `extract → unwrap → categorize (rules)`
   - CREDIT_NOTE: `extract → unwrap → enrich (type detection)`

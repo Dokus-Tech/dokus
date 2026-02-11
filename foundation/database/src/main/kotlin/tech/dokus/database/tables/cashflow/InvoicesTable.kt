@@ -9,6 +9,7 @@ import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PeppolStatus
@@ -49,6 +50,7 @@ object InvoicesTable : UUIDTable("invoices") {
 
     // Status
     val status = dbEnumeration<InvoiceStatus>("status").default(InvoiceStatus.Draft).index()
+    val direction = dbEnumeration<DocumentDirection>("direction").default(DocumentDirection.Outbound).index()
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
 
     // Optional fields
@@ -76,6 +78,7 @@ object InvoicesTable : UUIDTable("invoices") {
     init {
         // Composite index for common queries
         index(false, tenantId, status)
+        index(false, tenantId, direction)
         index(false, tenantId, contactId)
         // Per-tenant uniqueness for invoice numbers
         uniqueIndex(tenantId, invoiceNumber)

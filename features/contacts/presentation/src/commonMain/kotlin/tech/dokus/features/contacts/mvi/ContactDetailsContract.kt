@@ -25,7 +25,7 @@ import tech.dokus.foundation.app.state.DokusState
  *
  * Features:
  * - Contact information display
- * - Activity summary (invoices, bills, expenses)
+ * - Activity summary (invoices, inbound invoices, expenses)
  * - Notes management (add, edit, delete)
  * - Enrichment suggestions
  * - Contact merge functionality

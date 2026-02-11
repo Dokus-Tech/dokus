@@ -38,7 +38,7 @@ enum class CashflowViewMode {
 enum class DirectionFilter {
     All, // Show both in and out
     In,  // Only incoming (invoices, refunds)
-    Out  // Only outgoing (bills, expenses)
+    Out  // Only outgoing (inbound invoices, expenses)
 }
 
 /**

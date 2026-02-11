@@ -1,6 +1,5 @@
 package tech.dokus.backend.routes.cashflow.documents
 
-import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
@@ -54,18 +53,15 @@ internal suspend fun findConfirmedEntity(
     documentType: DocumentType?,
     tenantId: TenantId,
     invoiceRepository: InvoiceRepository,
-    billRepository: BillRepository,
     expenseRepository: ExpenseRepository,
     creditNoteRepository: CreditNoteRepository
 ): FinancialDocumentDto? {
     return when (documentType) {
         DocumentType.Invoice -> invoiceRepository.findByDocumentId(tenantId, documentId)
-            ?: billRepository.findByDocumentId(tenantId, documentId)
         DocumentType.CreditNote -> creditNoteRepository.findByDocumentId(tenantId, documentId)
         else -> {
             // Try all types
             invoiceRepository.findByDocumentId(tenantId, documentId)
-                ?: billRepository.findByDocumentId(tenantId, documentId)
                 ?: expenseRepository.findByDocumentId(tenantId, documentId)
                 ?: creditNoteRepository.findByDocumentId(tenantId, documentId)
         }

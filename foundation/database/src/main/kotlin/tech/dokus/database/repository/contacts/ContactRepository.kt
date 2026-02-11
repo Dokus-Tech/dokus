@@ -17,7 +17,6 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.tables.cashflow.BillsTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
@@ -39,6 +38,7 @@ import tech.dokus.domain.model.contact.ContactMergeResult
 import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.foundation.backend.database.dbQuery
 import java.math.BigDecimal
 import java.util.UUID
@@ -173,8 +173,8 @@ class ContactRepository {
     }
 
     /**
-     * List vendors - contacts with incoming bills/expenses.
-     * TODO: Implement proper derived role filtering with JOIN to BillsTable/ExpensesTable
+     * List vendors - contacts with incoming invoices/expenses.
+     * TODO: Implement proper derived role filtering with JOIN to InvoicesTable/ExpensesTable
      * For now, returns all active contacts (caller should filter by derived roles)
      * CRITICAL: MUST filter by tenant_id
      */
@@ -184,7 +184,7 @@ class ContactRepository {
         limit: Int = 50,
         offset: Int = 0
     ): Result<PaginatedResponse<ContactDto>> = runCatching {
-        // TODO: Proper implementation requires JOIN with BillsTable/ExpensesTable
+        // TODO: Proper implementation requires JOIN with InvoicesTable/ExpensesTable
         // For now, delegate to listContacts
         listContacts(tenantId, isActive, null, limit, offset).getOrThrow()
     }
@@ -483,7 +483,7 @@ class ContactRepository {
 
     /**
      * Get activity summary for a specific contact.
-     * Returns counts and totals of invoices, bills, and expenses linked to this contact.
+     * Returns counts and totals of invoices, inbound invoices, and expenses linked to this contact.
      *
      * CRITICAL: MUST filter by tenantId for multi-tenant isolation.
      */
@@ -506,16 +506,18 @@ class ContactRepository {
             }
             val invoiceLastDate = invoices.maxOfOrNull { it[InvoicesTable.createdAt] }
 
-            // Get bill count and total
-            val bills = BillsTable.selectAll().where {
-                (BillsTable.tenantId eq tenantUuid) and (BillsTable.contactId eq contactUuid)
+            // Get inbound invoice count and total
+            val inboundInvoices = InvoicesTable.selectAll().where {
+                (InvoicesTable.tenantId eq tenantUuid) and
+                    (InvoicesTable.contactId eq contactUuid) and
+                    (InvoicesTable.direction eq DocumentDirection.Inbound)
             }.toList()
 
-            val billCount = bills.size.toLong()
-            val billTotal = bills.fold(BigDecimal.ZERO) { acc, row ->
-                acc + (row[BillsTable.amount] ?: BigDecimal.ZERO)
+            val inboundInvoiceCount = inboundInvoices.size.toLong()
+            val inboundInvoiceTotal = inboundInvoices.fold(BigDecimal.ZERO) { acc, row ->
+                acc + row[InvoicesTable.totalAmount]
             }
-            val billLastDate = bills.maxOfOrNull { it[BillsTable.createdAt] }
+            val inboundInvoiceLastDate = inboundInvoices.maxOfOrNull { it[InvoicesTable.createdAt] }
 
             // Get expense count and total
             val expenses = ExpensesTable.selectAll().where {
@@ -529,7 +531,7 @@ class ContactRepository {
             val expenseLastDate = expenses.maxOfOrNull { it[ExpensesTable.createdAt] }
 
             // Find the most recent activity date
-            val lastActivityDate = listOfNotNull(invoiceLastDate, billLastDate, expenseLastDate)
+            val lastActivityDate = listOfNotNull(invoiceLastDate, inboundInvoiceLastDate, expenseLastDate)
                 .maxOrNull()
 
             // TODO: Count pending approval items (documents with this contact as suggested)
@@ -539,8 +541,8 @@ class ContactRepository {
                 contactId = contactId,
                 invoiceCount = invoiceCount,
                 invoiceTotal = invoiceTotal.toPlainString(),
-                billCount = billCount,
-                billTotal = billTotal.toPlainString(),
+                inboundInvoiceCount = inboundInvoiceCount,
+                inboundInvoiceTotal = inboundInvoiceTotal.toPlainString(),
                 expenseCount = expenseCount,
                 expenseTotal = expenseTotal.toPlainString(),
                 lastActivityDate = lastActivityDate,
@@ -559,7 +561,7 @@ class ContactRepository {
      * Process:
      * 1. Validate both contacts exist and belong to tenant
      * 2. Verify no VAT number conflict (both have different non-null VAT)
-     * 3. Reassign all invoices, bills, expenses from source to target
+     * 3. Reassign all invoices, inbound invoices, expenses from source to target
      * 4. Move notes from source to target
      * 5. Add system note documenting the merge
      * 6. Soft-delete (deactivate) source contact
@@ -610,16 +612,20 @@ class ContactRepository {
 
             // 4. Reassign invoices
             val invoicesReassigned = InvoicesTable.update({
-                (InvoicesTable.tenantId eq tenantUuid) and (InvoicesTable.contactId eq sourceUuid)
+                (InvoicesTable.tenantId eq tenantUuid) and
+                    (InvoicesTable.contactId eq sourceUuid) and
+                    (InvoicesTable.direction eq DocumentDirection.Outbound)
             }) {
                 it[InvoicesTable.contactId] = targetUuid
             }
 
-            // 5. Reassign bills
-            val billsReassigned = BillsTable.update({
-                (BillsTable.tenantId eq tenantUuid) and (BillsTable.contactId eq sourceUuid)
+            // 5. Reassign inbound invoices
+            val inboundInvoicesReassigned = InvoicesTable.update({
+                (InvoicesTable.tenantId eq tenantUuid) and
+                    (InvoicesTable.contactId eq sourceUuid) and
+                    (InvoicesTable.direction eq DocumentDirection.Inbound)
             }) {
-                it[BillsTable.contactId] = targetUuid
+                it[InvoicesTable.contactId] = targetUuid
             }
 
             // 6. Reassign expenses
@@ -641,7 +647,7 @@ class ContactRepository {
             val mergeNote = buildString {
                 appendLine("[SYSTEM] Contact merged from \"$sourceName\" (ID: $sourceContactId)")
                 appendLine(
-                    "- Reassigned: $invoicesReassigned invoices, $billsReassigned bills, $expensesReassigned expenses"
+                    "- Reassigned: $invoicesReassigned invoices, $inboundInvoicesReassigned inbound invoices, $expensesReassigned expenses"
                 )
                 appendLine("- Notes moved: $notesReassigned")
                 appendLine("- Merged by: $mergedByEmail at $now")
@@ -668,7 +674,7 @@ class ContactRepository {
                 sourceContactId = sourceContactId,
                 targetContactId = targetContactId,
                 invoicesReassigned = invoicesReassigned,
-                billsReassigned = billsReassigned,
+                inboundInvoicesReassigned = inboundInvoicesReassigned,
                 expensesReassigned = expensesReassigned,
                 notesReassigned = notesReassigned,
                 sourceArchived = true

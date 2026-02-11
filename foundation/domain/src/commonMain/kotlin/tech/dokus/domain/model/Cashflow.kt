@@ -17,7 +17,7 @@ import tech.dokus.domain.ids.TenantId
  * Cashflow overview data with Cash-In / Cash-Out structure.
  *
  * Cash-In: Money flowing INTO the business (outgoing invoices to clients)
- * Cash-Out: Money flowing OUT of the business (expenses, bills to pay)
+ * Cash-Out: Money flowing OUT of the business (expenses, inbound invoices to pay)
  */
 @Serializable
 data class CashflowOverview(
@@ -47,7 +47,7 @@ data class CashInSummary(
 )
 
 /**
- * Summary of Cash-Out (money going out for expenses and bills).
+ * Summary of Cash-Out (money going out for expenses and inbound invoices).
  */
 @Serializable
 data class CashOutSummary(
@@ -55,11 +55,11 @@ data class CashOutSummary(
     val paid: Money,
     val pending: Money,
     val expenseCount: Int,
-    val billCount: Int
+    val inboundInvoiceCount: Int
 )
 
 /**
- * Cashflow entry - projection of a financial fact (Invoice/Bill/Expense).
+ * Cashflow entry - projection of a financial fact (Invoice/Expense).
  *
  * This is the normalized representation used by the cashflow domain.
  * Created when financial facts are confirmed from documents.
@@ -69,7 +69,7 @@ data class CashflowEntry(
     val id: CashflowEntryId,
     val tenantId: TenantId,
     val sourceType: CashflowSourceType,
-    val sourceId: String, // UUID string of Invoice/Bill/Expense
+    val sourceId: String, // UUID string of Invoice/Expense
     val documentId: DocumentId?,
     val direction: CashflowDirection,
     val eventDate: LocalDate,

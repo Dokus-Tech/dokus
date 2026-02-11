@@ -353,7 +353,7 @@ private fun PendingDocumentItem(
 
 /**
  * Get a display name for a pending document.
- * Uses extracted invoice/bill number if available, otherwise falls back to filename.
+ * Uses extracted invoice number if available, otherwise falls back to filename.
  */
 @Composable
 private fun getDocumentDisplayName(record: DocumentRecordDto): String {

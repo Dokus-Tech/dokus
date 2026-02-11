@@ -18,7 +18,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * Cashflow entries table - projection layer for all financial flows.
  *
  * This is the normalized source of truth for cashflow data. Entries are created
- * when financial facts (Invoice, Bill, Expense) are confirmed from documents.
+ * when financial facts (Invoice, Expense) are confirmed from documents.
  *
  * Cashflow is NEVER driven directly by documents or integrations.
  * Financial facts are created ONLY after document confirmation.
@@ -35,7 +35,7 @@ object CashflowEntriesTable : UUIDTable("cashflow_entries") {
 
     // Source tracking - links back to the financial fact
     val sourceType = dbEnumeration<CashflowSourceType>("source_type")
-    val sourceId = uuid("source_id") // Invoice/Bill/Expense ID
+    val sourceId = uuid("source_id") // Invoice/Expense ID
 
     // Document linkage (optional - for traceability)
     val documentId = uuid("document_id")
@@ -45,7 +45,7 @@ object CashflowEntriesTable : UUIDTable("cashflow_entries") {
     // Flow direction
     val direction = dbEnumeration<CashflowDirection>("direction") // IN / OUT
 
-    // Event date (due date for invoices/bills, expense date for expenses)
+    // Event date (due date for invoices/inbound invoices, expense date for expenses)
     val eventDate = date("event_date").index()
 
     // Amounts (NUMERIC for exact decimal arithmetic - NEVER Float!)
@@ -63,7 +63,7 @@ object CashflowEntriesTable : UUIDTable("cashflow_entries") {
     // INVARIANT: If status == PAID, paidAt MUST be non-null
     val paidAt = datetime("paid_at").nullable().index()
 
-    // Counterparty (customer for invoices, vendor for bills/expenses)
+    // Counterparty (customer for invoices, vendor for inbound invoices/expenses)
     val counterpartyId = uuid("counterparty_id")
         .references(ContactsTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable()

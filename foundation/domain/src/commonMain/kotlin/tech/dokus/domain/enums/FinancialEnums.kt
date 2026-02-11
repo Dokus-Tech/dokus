@@ -275,27 +275,6 @@ enum class InvoiceStatus(override val dbValue: String) : DbEnum {
 }
 
 @Serializable
-enum class BillStatus(override val dbValue: String) : DbEnum {
-    @SerialName("DRAFT")
-    Draft("DRAFT"),
-
-    @SerialName("PENDING")
-    Pending("PENDING"),
-
-    @SerialName("SCHEDULED")
-    Scheduled("SCHEDULED"),
-
-    @SerialName("PAID")
-    Paid("PAID"),
-
-    @SerialName("OVERDUE")
-    Overdue("OVERDUE"),
-
-    @SerialName("CANCELLED")
-    Cancelled("CANCELLED")
-}
-
-@Serializable
 enum class Currency(
     override val dbValue: String,
     val displayName: String,
@@ -364,7 +343,7 @@ enum class PeppolTransmissionDirection(override val dbValue: String) : DbEnum {
     Outbound("OUTBOUND"), // Sending invoices to customers
 
     @SerialName("INBOUND")
-    Inbound("INBOUND") // Receiving bills from suppliers
+    Inbound("INBOUND") // Receiving inbound invoices from suppliers
 }
 
 @Serializable
@@ -632,9 +611,6 @@ enum class CashflowSourceType(override val dbValue: String) : DbEnum {
     @SerialName("INVOICE")
     Invoice("INVOICE"),
 
-    @SerialName("BILL")
-    Bill("BILL"),
-
     @SerialName("EXPENSE")
     Expense("EXPENSE"),
 
@@ -891,22 +867,6 @@ enum class AuditAction(override val dbValue: String) : DbEnum {
     @SerialName("EXPENSE_DELETED")
     ExpenseDeleted("EXPENSE_DELETED"),
 
-    // Bill actions
-    @SerialName("BILL_CREATED")
-    BillCreated("BILL_CREATED"),
-
-    @SerialName("BILL_UPDATED")
-    BillUpdated("BILL_UPDATED"),
-
-    @SerialName("BILL_DELETED")
-    BillDeleted("BILL_DELETED"),
-
-    @SerialName("BILL_PAID")
-    BillPaid("BILL_PAID"),
-
-    @SerialName("BILL_STATUS_CHANGED")
-    BillStatusChanged("BILL_STATUS_CHANGED"),
-
     // Client actions (legacy)
     @SerialName("CLIENT_CREATED")
     ClientCreated("CLIENT_CREATED"),
@@ -997,9 +957,6 @@ enum class EntityType(override val dbValue: String) : DbEnum {
     @SerialName("EXPENSE")
     Expense("EXPENSE"),
 
-    @SerialName("BILL")
-    Bill("BILL"),
-
     @SerialName("PAYMENT")
     Payment("PAYMENT"),
 
@@ -1067,7 +1024,7 @@ enum class CreditNoteStatus(override val dbValue: String) : DbEnum {
 /**
  * How the credit note is expected to be settled.
  * - RefundExpected: Money will be returned (cashflow entry created on payment)
- * - OffsetExpected: Will be offset against future invoice/bill
+ * - OffsetExpected: Will be offset against a future invoice
  * - Unknown: User hasn't decided yet
  */
 @Serializable

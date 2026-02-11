@@ -97,7 +97,7 @@ data class DocumentDraftDto(
  * - draft: Editable extraction state (present if document has been processed)
  * - latestIngestion: Current/last ingestion run (present if any runs exist)
  *   - Selection priority: Processing > latest Succeeded/Failed > latest Queued
- * - confirmedEntity: The created Invoice/Bill/Expense (present if confirmed)
+ * - confirmedEntity: The created Invoice/Expense (present if confirmed)
  * - cashflowEntryId: The created cashflow entry ID (present if confirmed)
  */
 @Serializable

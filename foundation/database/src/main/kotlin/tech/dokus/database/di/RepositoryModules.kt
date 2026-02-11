@@ -12,7 +12,6 @@ import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.banking.BankingRepository
-import tech.dokus.database.repository.cashflow.BillRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
@@ -51,7 +50,7 @@ val repositoryModuleAuth = module {
 
 /**
  * Cashflow repositories module.
- * Provides repositories for invoices, expenses, bills, clients, and documents.
+ * Provides repositories for invoices, expenses, contacts, and documents.
  */
 val repositoryModuleCashflow = module {
     single { DocumentRepository() }
@@ -61,7 +60,6 @@ val repositoryModuleCashflow = module {
     single { InvoiceNumberGenerator(get()) }
     single { InvoiceRepository(get()) }
     single { ExpenseRepository() }
-    single { BillRepository() }
     single { CreditNoteRepository() }
     single { RefundClaimRepository() }
     single { CashflowEntriesRepository() }

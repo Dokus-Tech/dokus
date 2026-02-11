@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.TenantId
  * Document DTO - represents a document stored in object storage (MinIO).
  *
  * Documents are pure file metadata. Entity linkage is handled by the
- * financial entity tables (Invoice, Bill, Expense) which have a documentId FK.
+ * financial entity tables (Invoice, Expense) which have a documentId FK.
  * The download URL is generated fresh on each fetch to avoid storing
  * expiring presigned URLs.
  */
