@@ -32,6 +32,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
+import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
@@ -238,6 +239,26 @@ internal fun DocumentReviewRoute(
                 text = stringResource(Res.string.action_cancel),
                 onClick = { showDiscardDialog = false }
             )
+        )
+    }
+
+    // Feedback dialog (correction-first "Something's wrong" flow)
+    (state as? DocumentReviewState.Content)?.feedbackDialogState?.let { dialogState ->
+        FeedbackDialog(
+            state = dialogState,
+            onFeedbackChanged = { text ->
+                container.store.intent(DocumentReviewIntent.UpdateFeedbackText(text))
+            },
+            onSubmit = {
+                container.store.intent(DocumentReviewIntent.SubmitFeedback)
+            },
+            onRejectInstead = {
+                container.store.intent(DocumentReviewIntent.DismissFeedbackDialog)
+                container.store.intent(DocumentReviewIntent.ShowRejectDialog)
+            },
+            onDismiss = {
+                container.store.intent(DocumentReviewIntent.DismissFeedbackDialog)
+            }
         )
     }
 

@@ -344,6 +344,10 @@
     <string name="cashflow_action_reject_document">Reject Document</string>
     <string name="cashflow_action_keep_reviewing">Keep Reviewing</string>
     <string name="cashflow_reject_note_optional">Additional notes (optional)</string>
+    <string name="cashflow_feedback_title">What needs correction?</string>
+    <string name="cashflow_feedback_placeholder">e.g., This is a bill from Google, not an outgoing invoice</string>
+    <string name="cashflow_feedback_submit">Re-analyze</string>
+    <string name="cashflow_feedback_reject_instead">Reject document instead</string>
     <string name="cashflow_discard_changes_title">Discard changes?</string>
     <string name="cashflow_discard_changes_message">Your edits will be lost.</string>
     <string name="draft_status_unconfirmed">Unconfirmed</string>

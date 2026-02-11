@@ -122,7 +122,8 @@ data class ReprocessRequest(
     val preferredProvider: String? = null,
     val maxPages: Int? = null,
     val dpi: Int? = null,
-    val timeoutSeconds: Int? = null
+    val timeoutSeconds: Int? = null,
+    val userFeedback: String? = null
 )
 
 /**

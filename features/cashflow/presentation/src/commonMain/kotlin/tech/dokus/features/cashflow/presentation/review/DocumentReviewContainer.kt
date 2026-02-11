@@ -119,6 +119,12 @@ internal class DocumentReviewContainer(
                         is DocumentReviewIntent.UpdateRejectNote -> handleUpdateRejectNote(intent.note)
                         is DocumentReviewIntent.ConfirmReject -> handleConfirmReject()
 
+                        // === Feedback Dialog ===
+                        is DocumentReviewIntent.ShowFeedbackDialog -> handleShowFeedbackDialog()
+                        is DocumentReviewIntent.DismissFeedbackDialog -> handleDismissFeedbackDialog()
+                        is DocumentReviewIntent.UpdateFeedbackText -> handleUpdateFeedbackText(intent.text)
+                        is DocumentReviewIntent.SubmitFeedback -> handleSubmitFeedback()
+
                         // === Failed Analysis ===
                         is DocumentReviewIntent.RetryAnalysis -> handleRetryAnalysis()
                         is DocumentReviewIntent.DismissFailureBanner -> handleDismissFailureBanner()

@@ -37,6 +37,16 @@ data class RejectDialogState(
     val isConfirming: Boolean = false,
 )
 
+/**
+ * State for the "What needs correction?" feedback dialog.
+ * Shown when user clicks "Something's wrong" — correction-first approach.
+ */
+@Immutable
+data class FeedbackDialogState(
+    val feedbackText: String = "",
+    val isSubmitting: Boolean = false,
+)
+
 @Immutable
 sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 
@@ -74,6 +84,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val confirmedCashflowEntryId: CashflowEntryId? = null,
         val showPreviewSheet: Boolean = false,
         val rejectDialogState: RejectDialogState? = null,
+        val feedbackDialogState: FeedbackDialogState? = null,
         val failureBannerDismissed: Boolean = false,
         // Contact sheet state
         val showContactSheet: Boolean = false,

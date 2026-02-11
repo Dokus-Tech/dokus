@@ -53,6 +53,9 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     val startedAt = datetime("started_at").nullable()
     val finishedAt = datetime("finished_at").nullable()
 
+    // User feedback for re-analysis (provided via "Something's wrong" dialog)
+    val userFeedback = text("user_feedback").nullable()
+
     // Error message (for failed runs)
     val errorMessage = text("error_message").nullable()
 

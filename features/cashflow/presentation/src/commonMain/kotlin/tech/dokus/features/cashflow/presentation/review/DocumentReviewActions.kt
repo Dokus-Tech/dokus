@@ -9,6 +9,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
+import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
@@ -289,6 +290,66 @@ internal class DocumentReviewActions(
                         entityId = confirmedEntityId,
                         entityType = draftData.documentType
                     )
+                )
+            }
+        }
+    }
+
+    // === Feedback Dialog Handlers ===
+
+    suspend fun DocumentReviewCtx.handleShowFeedbackDialog() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(feedbackDialogState = FeedbackDialogState()) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleDismissFeedbackDialog() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(feedbackDialogState = null) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleUpdateFeedbackText(text: String) {
+        withState<DocumentReviewState.Content, _> {
+            feedbackDialogState?.let { dialogState ->
+                updateState {
+                    copy(feedbackDialogState = dialogState.copy(feedbackText = text))
+                }
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleSubmitFeedback() {
+        withState<DocumentReviewState.Content, _> {
+            val dialogState = feedbackDialogState ?: return@withState
+            val feedback = dialogState.feedbackText.trim()
+            if (feedback.isBlank()) return@withState
+
+            updateState {
+                copy(feedbackDialogState = dialogState.copy(isSubmitting = true))
+            }
+
+            launch {
+                reprocessDocument(
+                    documentId,
+                    ReprocessRequest(force = true, userFeedback = feedback)
+                ).fold(
+                    onSuccess = { response ->
+                        logger.d { "Reprocess with feedback queued: runId=${response.runId}" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState { copy(feedbackDialogState = null) }
+                        }
+                        refreshAfterDraftUpdate(documentId)
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Failed to reprocess with feedback: $documentId" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState {
+                                copy(feedbackDialogState = feedbackDialogState?.copy(isSubmitting = false))
+                            }
+                        }
+                        action(DocumentReviewAction.ShowError(error.asDokusException))
+                    }
                 )
             }
         }

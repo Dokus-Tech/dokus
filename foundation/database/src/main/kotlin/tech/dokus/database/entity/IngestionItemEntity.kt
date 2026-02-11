@@ -15,4 +15,5 @@ data class IngestionItemEntity(
     val storageKey: String,
     val filename: String,
     val contentType: String,
+    val userFeedback: String? = null,
 )

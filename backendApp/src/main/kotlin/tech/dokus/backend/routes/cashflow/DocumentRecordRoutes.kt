@@ -346,6 +346,7 @@ internal fun Route.documentRecordRoutes() {
             val runId = ingestionRepository.createRun(
                 documentId = documentId,
                 tenantId = tenantId,
+                userFeedback = request.userFeedback,
             )
 
             call.respond(

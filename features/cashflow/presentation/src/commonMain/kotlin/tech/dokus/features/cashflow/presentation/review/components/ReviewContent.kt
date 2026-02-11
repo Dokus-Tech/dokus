@@ -509,7 +509,7 @@ private fun MobileReviewContent(
                 confirmBlockedReason = state.confirmBlockedReason,
                 onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
                 onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
-                onReject = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
+                onReject = { onIntent(DocumentReviewIntent.ShowFeedbackDialog) },
                 onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
                 onViewEntity = { onIntent(DocumentReviewIntent.ViewEntity) },
                 onViewCashflowEntry = { onIntent(DocumentReviewIntent.ViewCashflowEntry) },
@@ -524,7 +524,7 @@ private fun MobileReviewContent(
                 isConfirming = state.isConfirming,
                 isBindingContact = state.isBindingContact,
                 onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
-                onSomethingsWrong = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
+                onSomethingsWrong = { onIntent(DocumentReviewIntent.ShowFeedbackDialog) },
                 modifier = Modifier
                     .imePadding()
                     .navigationBarsPadding()

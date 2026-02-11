@@ -54,6 +54,12 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class UpdateRejectNote(val note: String) : DocumentReviewIntent
     data object ConfirmReject : DocumentReviewIntent
 
+    // Feedback dialog intents (correction-first "Something's wrong" flow)
+    data object ShowFeedbackDialog : DocumentReviewIntent
+    data object DismissFeedbackDialog : DocumentReviewIntent
+    data class UpdateFeedbackText(val text: String) : DocumentReviewIntent
+    data object SubmitFeedback : DocumentReviewIntent
+
     // Failed analysis intents
     data object RetryAnalysis : DocumentReviewIntent
     data object DismissFailureBanner : DocumentReviewIntent

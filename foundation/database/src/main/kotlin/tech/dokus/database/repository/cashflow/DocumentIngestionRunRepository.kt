@@ -67,6 +67,7 @@ class DocumentIngestionRunRepository {
     suspend fun createRun(
         documentId: DocumentId,
         tenantId: TenantId,
+        userFeedback: String? = null,
     ): IngestionRunId = newSuspendedTransaction {
         return@newSuspendedTransaction IngestionRunId.generate().also { id ->
             DocumentIngestionRunsTable.insert {
@@ -74,6 +75,7 @@ class DocumentIngestionRunRepository {
                 it[DocumentIngestionRunsTable.documentId] = UUID.fromString(documentId.toString())
                 it[DocumentIngestionRunsTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[status] = IngestionStatus.Queued
+                it[DocumentIngestionRunsTable.userFeedback] = userFeedback?.takeIf { fb -> fb.isNotBlank() }
             }
         }
     }
@@ -208,6 +210,7 @@ class DocumentIngestionRunRepository {
                     storageKey = row[DocumentsTable.storageKey],
                     filename = row[DocumentsTable.filename],
                     contentType = row[DocumentsTable.contentType],
+                    userFeedback = row[DocumentIngestionRunsTable.userFeedback],
                 )
             }
     }

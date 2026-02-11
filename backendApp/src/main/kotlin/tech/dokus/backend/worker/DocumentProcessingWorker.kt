@@ -201,7 +201,8 @@ class DocumentProcessingWorker(
                 AcceptDocumentInput(
                     documentId = documentId,
                     tenant = tenant,
-                    associatedPersonNames = personNames
+                    associatedPersonNames = personNames,
+                    userFeedback = ingestion.userFeedback
                 )
             )
 

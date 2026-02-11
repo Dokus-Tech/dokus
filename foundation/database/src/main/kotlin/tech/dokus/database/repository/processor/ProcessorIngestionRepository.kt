@@ -73,7 +73,8 @@ class ProcessorIngestionRepository {
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
                         storageKey = row[DocumentsTable.storageKey],
                         filename = row[DocumentsTable.filename],
-                        contentType = row[DocumentsTable.contentType]
+                        contentType = row[DocumentsTable.contentType],
+                        userFeedback = row[DocumentIngestionRunsTable.userFeedback]
                     )
                 }
         }

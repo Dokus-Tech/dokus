@@ -12,6 +12,7 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
+import tech.dokus.features.ai.graph.nodes.InputWithUserFeedback
 import tech.dokus.features.ai.graph.sub.documentProcessingSubGraph
 import tech.dokus.features.ai.models.DocumentAiProcessingResult
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -24,8 +25,9 @@ import java.util.*
 data class AcceptDocumentInput(
     override val documentId: DocumentId,
     override val tenant: Tenant,
-    override val associatedPersonNames: List<String> = emptyList()
-) : InputWithDocumentId, InputWithTenantContext
+    override val associatedPersonNames: List<String> = emptyList(),
+    override val userFeedback: String? = null
+) : InputWithDocumentId, InputWithTenantContext, InputWithUserFeedback
 
 fun acceptDocumentGraph(
     aiConfig: AIConfig,

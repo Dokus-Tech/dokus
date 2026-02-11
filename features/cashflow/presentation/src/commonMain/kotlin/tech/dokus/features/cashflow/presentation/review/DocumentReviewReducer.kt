@@ -160,6 +160,19 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleViewEntity() =
         with(actions) { handleViewEntity() }
 
+    // Feedback dialog handlers
+    suspend fun DocumentReviewCtx.handleShowFeedbackDialog() =
+        with(actions) { handleShowFeedbackDialog() }
+
+    suspend fun DocumentReviewCtx.handleDismissFeedbackDialog() =
+        with(actions) { handleDismissFeedbackDialog() }
+
+    suspend fun DocumentReviewCtx.handleUpdateFeedbackText(text: String) =
+        with(actions) { handleUpdateFeedbackText(text) }
+
+    suspend fun DocumentReviewCtx.handleSubmitFeedback() =
+        with(actions) { handleSubmitFeedback() }
+
     // Failed analysis handlers
     suspend fun DocumentReviewCtx.handleRetryAnalysis() =
         with(actions) { handleRetryAnalysis() }
