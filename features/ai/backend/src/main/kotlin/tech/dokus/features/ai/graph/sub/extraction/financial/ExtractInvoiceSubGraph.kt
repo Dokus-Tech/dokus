@@ -18,6 +18,7 @@ import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.config.assistantResponseRepeatMax
 import tech.dokus.features.ai.config.documentProcessing
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
@@ -68,6 +69,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractInvoiceSubGraph(
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
         llmParams = LLMParams.documentProcessing,
+        assistantResponseRepeatMax = assistantResponseRepeatMax,
         finishTool = InvoiceExtractionFinishTool()
     ) { it.prompt }
 }

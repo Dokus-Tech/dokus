@@ -12,6 +12,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.config.assistantResponseRepeatMax
 import tech.dokus.features.ai.config.documentProcessing
 import tech.dokus.features.ai.extensions.description
 import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
@@ -26,6 +27,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
         llmParams = LLMParams.documentProcessing,
+        assistantResponseRepeatMax = assistantResponseRepeatMax,
         finishTool = ClassificationFinishTool()
     ) { it.prompt }
 }

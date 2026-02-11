@@ -14,6 +14,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.config.assistantResponseRepeatMax
 import tech.dokus.features.ai.config.documentProcessing
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
@@ -28,6 +29,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractProFormaSubGraph(
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
         llmParams = LLMParams.documentProcessing,
+        assistantResponseRepeatMax = assistantResponseRepeatMax,
         finishTool = ProFormaExtractionFinishTool(),
     ) { it.proFormaPrompt }
 }
