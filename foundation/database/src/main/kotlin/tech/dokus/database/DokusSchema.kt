@@ -16,9 +16,12 @@ import tech.dokus.database.tables.banking.BankConnectionsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.cashflow.BillsTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
+import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoiceItemsTable
+import tech.dokus.database.tables.cashflow.InvoiceNumberSequencesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
+import tech.dokus.database.tables.cashflow.RefundClaimsTable
 import tech.dokus.database.tables.contacts.ContactAddressesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
@@ -79,8 +82,11 @@ object DokusSchema {
                 // ----------------------------
                 InvoicesTable,
                 InvoiceItemsTable,
+                InvoiceNumberSequencesTable,
                 ExpensesTable,
                 BillsTable,
+                CreditNotesTable,
+                RefundClaimsTable,
                 CashflowEntriesTable,
 
                 // ----------------------------
