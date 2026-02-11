@@ -23,7 +23,8 @@ import java.util.*
 @Serializable
 data class AcceptDocumentInput(
     override val documentId: DocumentId,
-    override val tenant: Tenant
+    override val tenant: Tenant,
+    override val associatedPersonNames: List<String> = emptyList()
 ) : InputWithDocumentId, InputWithTenantContext
 
 fun acceptDocumentGraph(

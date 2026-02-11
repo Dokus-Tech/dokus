@@ -20,6 +20,7 @@ import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
@@ -61,6 +62,7 @@ class DocumentProcessingWorker(
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val config: ProcessorConfig,
     private val tenantRepository: TenantRepository,
+    private val userRepository: UserRepository,
 ) {
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -189,10 +191,17 @@ class DocumentProcessingWorker(
             val tenant = tenantRepository.findById(parsedTenantId)
                 ?: error("Tenant not found: $tenantId")
 
+            val members = userRepository.listByTenant(parsedTenantId, activeOnly = true)
+            val personNames = members.mapNotNull { m ->
+                listOfNotNull(m.user.firstName?.value, m.user.lastName?.value)
+                    .joinToString(" ").ifBlank { null }
+            }
+
             val result = processingAgent.process(
                 AcceptDocumentInput(
                     documentId = documentId,
-                    tenant = tenant
+                    tenant = tenant,
+                    associatedPersonNames = personNames
                 )
             )
 

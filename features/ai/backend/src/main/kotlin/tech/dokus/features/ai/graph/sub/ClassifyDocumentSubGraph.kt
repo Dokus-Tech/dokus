@@ -81,37 +81,40 @@ data class ClassificationResult(
     val reasoning: String
 )
 
-@Suppress("UnusedReceiverParameter")
 private val ClassifyDocumentInput.prompt
-    get() = """    
+    get() = """
     You will receive document pages as images in context.
 
     Task: classify the document type and language.
     Output MUST be submitted via tool: submit_classification.
-    
+
     ## DOCUMENT TYPES
-    
+
     ${
         DocumentType.entries.joinToString("\n") { type ->
             "- ${type.name}: ${type.description}"
         }
     }
-    
+
     ## CONFIDENCE GUIDE
     - 0.95+: Obvious, clear indicators (e.g., "FACTUUR" header with VAT breakdown)
     - 0.80-0.95: Strong indicators present
     - 0.60-0.80: Some uncertainty, mixed signals
     - <0.60: Unclear, use UNKNOWN
-    
+
     ## KEY DISTINCTIONS
-    
+
     INVOICE vs BILL:
-    - INVOICE: Issued BY the business (your company logo/header at top)
-    - BILL: Received FROM supplier (supplier's header, you're in "Klant/Client" section)
-    
+    - INVOICE: Issued BY "${tenant.legalName.value}". The document header/seller area shows "${tenant.legalName.value}" (or a variation) or VAT "${tenant.vatNumber.value}".
+    - BILL: Received FROM a supplier. Another company (NOT "${tenant.legalName.value}") appears in the document header/seller area.
+
+    NAME MATCHING: Names on documents may differ from official names — ignore casing, dots vs spaces, domain-style names (e.g., "invoid.vision" = "Invoid Vision"). Use VAT number as the strongest identifier.
+
+    CRITICAL: If the document header/seller shows a DIFFERENT company than "${tenant.legalName.value}", it is a BILL — even if the word "Invoice" appears in the title.
+
     RECEIPT vs BILL:
     - RECEIPT: Small thermal ticket proving payment already made (retail/restaurant)
     - BILL: A4 supplier invoice requesting payment (including recurring utilities)
-    
+
     CREDIT_NOTE: Look for "Creditnota", "Note de crédit", "Avoir" — references original invoice
     """.trimIndent()
