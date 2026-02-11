@@ -24,6 +24,9 @@ permissions:
 
 env:
   NODE_VERSION: "20"
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
   deploy-preview:
@@ -31,9 +34,6 @@ jobs:
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'preview')
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - name: Checkout code
@@ -54,9 +54,9 @@ jobs:
         id: secrets
         run: |
           missing=()
-          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && missing+=("VERCEL_TOKEN")
-          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && missing+=("VERCEL_ORG_ID")
-          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && missing+=("VERCEL_PROJECT_ID")
+          [ -z "$VERCEL_TOKEN" ] && missing+=("VERCEL_TOKEN")
+          [ -z "$VERCEL_ORG_ID" ] && missing+=("VERCEL_ORG_ID")
+          [ -z "$VERCEL_PROJECT_ID" ] && missing+=("VERCEL_PROJECT_ID")
 
           if [ ${#missing[@]} -gt 0 ]; then
             echo "available=false" >> "$GITHUB_OUTPUT"
@@ -89,18 +89,18 @@ jobs:
 
       - name: Pull Vercel project settings (preview)
         if: steps.secrets.outputs.available == 'true'
-        run: vercel pull --yes --environment=preview --token="${{ secrets.VERCEL_TOKEN }}"
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
 
       - name: Build project artifacts (preview)
         if: steps.secrets.outputs.available == 'true'
-        run: vercel build --token="${{ secrets.VERCEL_TOKEN }}"
+        run: vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy to Vercel (preview)
         if: steps.secrets.outputs.available == 'true'
         id: deploy_preview
         run: |
           set -euo pipefail
-          output="$(vercel deploy --prebuilt --yes --token="${{ secrets.VERCEL_TOKEN }}")"
+          output="$(vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")"
           echo "$output"
 
           url="$(echo "$output" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
@@ -124,9 +124,6 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'production')
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - name: Checkout code
@@ -146,9 +143,9 @@ jobs:
       - name: Validate required Vercel secrets
         run: |
           missing=()
-          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && missing+=("VERCEL_TOKEN")
-          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && missing+=("VERCEL_ORG_ID")
-          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && missing+=("VERCEL_PROJECT_ID")
+          [ -z "$VERCEL_TOKEN" ] && missing+=("VERCEL_TOKEN")
+          [ -z "$VERCEL_ORG_ID" ] && missing+=("VERCEL_ORG_ID")
+          [ -z "$VERCEL_PROJECT_ID" ] && missing+=("VERCEL_PROJECT_ID")
 
           if [ ${#missing[@]} -gt 0 ]; then
             echo "::error::Missing required secrets: $(IFS=,; echo "${missing[*]}")"
@@ -156,16 +153,16 @@ jobs:
           fi
 
       - name: Pull Vercel project settings (production)
-        run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
       - name: Build project artifacts (production)
-        run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+        run: vercel build --prod --token="$VERCEL_TOKEN"
 
       - name: Deploy to Vercel (production)
         id: deploy_production
         run: |
           set -euo pipefail
-          output="$(vercel deploy --prebuilt --prod --yes --token="${{ secrets.VERCEL_TOKEN }}")"
+          output="$(vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN")"
           echo "$output"
 
           url="$(echo "$output" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
