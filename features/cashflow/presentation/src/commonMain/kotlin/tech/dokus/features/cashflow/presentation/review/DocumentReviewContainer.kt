@@ -131,6 +131,7 @@ internal class DocumentReviewContainer(
 
                         // === Manual Document Type Selection ===
                         is DocumentReviewIntent.SelectDocumentType -> handleSelectDocumentType(intent.type)
+                        is DocumentReviewIntent.SelectDirection -> handleSelectDirection(intent.direction)
                     }
                 }
             }

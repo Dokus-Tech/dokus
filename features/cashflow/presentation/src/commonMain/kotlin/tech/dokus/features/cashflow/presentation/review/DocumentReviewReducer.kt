@@ -3,6 +3,7 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import pro.respawn.flowmvi.dsl.withState
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -67,6 +68,32 @@ internal class DocumentReviewReducer(
                 copy(
                     draftData = newDraftData,
                     hasUnsavedChanges = true,
+                )
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleSelectDirection(direction: DocumentDirection) {
+        withState<DocumentReviewState.Content, _> {
+            if (direction == DocumentDirection.Unknown) return@withState
+
+            val updatedDraftData = when (val data = draftData) {
+                is InvoiceDraftData -> {
+                    if (data.direction == direction) return@withState
+                    data.copy(direction = direction)
+                }
+                is CreditNoteDraftData -> {
+                    if (data.direction == direction) return@withState
+                    data.copy(direction = direction)
+                }
+                is ReceiptDraftData,
+                null -> return@withState
+            }
+
+            updateState {
+                copy(
+                    draftData = updatedDraftData,
+                    hasUnsavedChanges = true
                 )
             }
         }

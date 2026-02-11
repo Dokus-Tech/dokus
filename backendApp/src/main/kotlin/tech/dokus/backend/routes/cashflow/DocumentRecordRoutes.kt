@@ -343,6 +343,8 @@ internal fun Route.documentRecordRoutes() {
                 documentId = documentId,
                 tenantId = tenantId,
                 userFeedback = request.userFeedback,
+                overrideMaxPages = request.maxPages,
+                overrideDpi = request.dpi,
             )
 
             call.respond(

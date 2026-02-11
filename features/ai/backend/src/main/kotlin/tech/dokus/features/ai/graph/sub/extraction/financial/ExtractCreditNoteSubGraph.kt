@@ -156,9 +156,12 @@ private val ExtractDocumentInput.creditNotePrompt: String
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
 
     ## PARTY EXTRACTION (CRITICAL)
-    - `seller*`: entity that ISSUED the credit note (header/logo issuer area).
+    - `seller*`: entity that ISSUED the credit note.
+    - Prioritize issuer evidence from logo/header legal block and footer issuer/contact/VAT block.
     - `buyer*`: credited-to/recipient entity.
-    - Always extract both seller and buyer when visible.
+    - Prioritize credited-to/client block for buyer.
+    - If one side is not visible, keep it null.
+    - Prefer null over duplicating seller and buyer values.
     - Do not swap seller/buyer based on assumptions.
 
     ## OPTIONAL DIRECTION HINT

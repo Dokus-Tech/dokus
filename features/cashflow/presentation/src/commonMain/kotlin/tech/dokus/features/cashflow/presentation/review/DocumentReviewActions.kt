@@ -331,7 +331,11 @@ internal class DocumentReviewActions(
             launch {
                 reprocessDocument(
                     documentId,
-                    ReprocessRequest(force = true, userFeedback = feedback)
+                    ReprocessRequest(
+                        force = true,
+                        dpi = 220,
+                        userFeedback = feedback
+                    )
                 ).fold(
                     onSuccess = { response ->
                         logger.d { "Reprocess with feedback queued: runId=${response.runId}" }

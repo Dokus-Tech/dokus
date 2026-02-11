@@ -62,13 +62,16 @@ class DocumentIngestionRunRepository {
      * @param tenantId Tenant owning the document
      * @param overrideMaxPages Optional override for max pages (null = use default)
      * @param overrideDpi Optional override for DPI (null = use default)
-     * @param overrideTimeoutSeconds Optional override for timeout (null = use default)
      */
     suspend fun createRun(
         documentId: DocumentId,
         tenantId: TenantId,
         userFeedback: String? = null,
+        overrideMaxPages: Int? = null,
+        overrideDpi: Int? = null,
     ): IngestionRunId = newSuspendedTransaction {
+        val sanitizedMaxPages = overrideMaxPages?.takeIf { it > 0 }
+        val sanitizedDpi = overrideDpi?.takeIf { it > 0 }
         return@newSuspendedTransaction IngestionRunId.generate().also { id ->
             DocumentIngestionRunsTable.insert {
                 it[DocumentIngestionRunsTable.id] = id.value.toJavaUuid()
@@ -76,6 +79,8 @@ class DocumentIngestionRunRepository {
                 it[DocumentIngestionRunsTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[status] = IngestionStatus.Queued
                 it[DocumentIngestionRunsTable.userFeedback] = userFeedback?.takeIf { fb -> fb.isNotBlank() }
+                it[DocumentIngestionRunsTable.overrideMaxPages] = sanitizedMaxPages
+                it[DocumentIngestionRunsTable.overrideDpi] = sanitizedDpi
             }
         }
     }
@@ -211,6 +216,8 @@ class DocumentIngestionRunRepository {
                     filename = row[DocumentsTable.filename],
                     contentType = row[DocumentsTable.contentType],
                     userFeedback = row[DocumentIngestionRunsTable.userFeedback],
+                    overrideMaxPages = row[DocumentIngestionRunsTable.overrideMaxPages],
+                    overrideDpi = row[DocumentIngestionRunsTable.overrideDpi],
                 )
             }
     }

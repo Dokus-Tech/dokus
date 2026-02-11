@@ -39,16 +39,25 @@ class ContactResolutionService(
 
     suspend fun resolve(
         tenantId: TenantId,
-        draftData: DocumentDraftData
+        draftData: DocumentDraftData,
+        tenantVat: VatNumber? = null
     ): ContactResolutionResult {
         val snapshot = buildSnapshot(draftData)
         val name = snapshot.name?.trim().orEmpty().takeIf { it.isNotEmpty() }
         val vat = snapshot.vatNumber
         val iban = snapshot.iban
+        val unknownDirectionInvoiceOrCreditNote = isUnknownDirectionInvoiceOrCreditNote(draftData)
         val strictAutoLink = when (draftData) {
             is InvoiceDraftData -> draftData.direction == DocumentDirection.Unknown
             is ReceiptDraftData -> draftData.direction == DocumentDirection.Unknown
             is CreditNoteDraftData -> draftData.direction == DocumentDirection.Unknown
+        }
+
+        if (unknownDirectionInvoiceOrCreditNote && vat.isSameVat(tenantVat)) {
+            return ContactResolutionResult(
+                snapshot = snapshot,
+                resolution = ContactResolution.PendingReview(snapshot)
+            )
         }
 
         val suggestions = mutableListOf<SuggestedContact>()
@@ -232,6 +241,17 @@ class ContactResolutionService(
             snapshot = snapshot,
             resolution = ContactResolution.PendingReview(snapshot)
         )
+    }
+
+    private fun isUnknownDirectionInvoiceOrCreditNote(draftData: DocumentDraftData): Boolean = when (draftData) {
+        is InvoiceDraftData -> draftData.direction == DocumentDirection.Unknown
+        is CreditNoteDraftData -> draftData.direction == DocumentDirection.Unknown
+        is ReceiptDraftData -> false
+    }
+
+    private fun VatNumber?.isSameVat(other: VatNumber?): Boolean {
+        if (this == null || other == null) return false
+        return this.normalized == other.normalized
     }
 
     suspend fun createContactFromResolution(

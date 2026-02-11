@@ -128,6 +128,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                 draftData == null -> Res.string.cashflow_confirm_missing_fields
                 !draftData.hasRequiredDates -> Res.string.cashflow_confirm_missing_fields
                 !draftData.hasCoherentAmounts -> Res.string.cashflow_confirm_missing_fields
+                !draftData.hasKnownDirectionForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 counterpartyIntent == CounterpartyIntent.Pending -> Res.string.cashflow_confirm_select_contact
                 isContactRequired && selectedContactId == null -> Res.string.cashflow_confirm_select_contact
                 !draftData.isReviewValid -> Res.string.cashflow_confirm_missing_fields
@@ -261,7 +262,14 @@ val DocumentDraftData.isReviewValid: Boolean
     get() = when (this) {
         is InvoiceDraftData -> issueDate != null && subtotalAmount != null
         is ReceiptDraftData -> merchantName != null && date != null && totalAmount != null
-        is CreditNoteDraftData -> counterpartyName != null && issueDate != null && subtotalAmount != null
+        is CreditNoteDraftData -> {
+            val resolvedCounterparty = when (direction) {
+                DocumentDirection.Inbound -> seller.name ?: counterpartyName
+                DocumentDirection.Outbound -> buyer.name ?: counterpartyName
+                DocumentDirection.Unknown -> buyer.name ?: seller.name ?: counterpartyName
+            }
+            resolvedCounterparty != null && issueDate != null && subtotalAmount != null
+        }
     }
 
 /** Whether a contact is required for this document type. */
@@ -283,13 +291,26 @@ private val DocumentDraftData?.displayCounterpartyName: String?
         is InvoiceDraftData -> when (direction) {
             DocumentDirection.Inbound -> seller.name?.takeIf { it.isNotBlank() } ?: customerName?.takeIf { it.isNotBlank() }
             DocumentDirection.Outbound -> buyer.name?.takeIf { it.isNotBlank() } ?: customerName?.takeIf { it.isNotBlank() }
-            DocumentDirection.Unknown -> customerName?.takeIf { it.isNotBlank() }
-                ?: buyer.name?.takeIf { it.isNotBlank() }
+            DocumentDirection.Unknown -> buyer.name?.takeIf { it.isNotBlank() }
                 ?: seller.name?.takeIf { it.isNotBlank() }
+                ?: customerName?.takeIf { it.isNotBlank() }
         }
         is ReceiptDraftData -> merchantName?.takeIf { it.isNotBlank() }
-        is CreditNoteDraftData -> counterpartyName?.takeIf { it.isNotBlank() }
+        is CreditNoteDraftData -> when (direction) {
+            DocumentDirection.Inbound -> seller.name?.takeIf { it.isNotBlank() } ?: counterpartyName?.takeIf { it.isNotBlank() }
+            DocumentDirection.Outbound -> buyer.name?.takeIf { it.isNotBlank() } ?: counterpartyName?.takeIf { it.isNotBlank() }
+            DocumentDirection.Unknown -> buyer.name?.takeIf { it.isNotBlank() }
+                ?: seller.name?.takeIf { it.isNotBlank() }
+                ?: counterpartyName?.takeIf { it.isNotBlank() }
+        }
         null -> null
+    }
+
+private val DocumentDraftData.hasKnownDirectionForConfirmation: Boolean
+    get() = when (this) {
+        is InvoiceDraftData -> direction != DocumentDirection.Unknown
+        is CreditNoteDraftData -> direction != DocumentDirection.Unknown
+        is ReceiptDraftData -> true
     }
 
 /** Context/description text for understanding line. */

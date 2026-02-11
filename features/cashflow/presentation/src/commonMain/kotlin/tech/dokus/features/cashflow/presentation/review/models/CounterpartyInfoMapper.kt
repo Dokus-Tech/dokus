@@ -21,9 +21,9 @@ internal fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyI
                     draft.buyer.iban ?: draft.iban
                 )
                 DocumentDirection.Unknown -> Triple(
-                    draft.customerName ?: draft.buyer.name ?: draft.seller.name,
-                    draft.customerVat ?: draft.buyer.vat ?: draft.seller.vat,
-                    draft.iban ?: draft.buyer.iban ?: draft.seller.iban
+                    draft.buyer.name ?: draft.seller.name ?: draft.customerName,
+                    draft.buyer.vat ?: draft.seller.vat ?: draft.customerVat,
+                    draft.buyer.iban ?: draft.seller.iban ?: draft.iban
                 )
             }
 
@@ -40,12 +40,29 @@ internal fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyI
             iban = null,
             address = null,
         )
-        is CreditNoteDraftData -> CounterpartyInfo(
-            name = draft.counterpartyName?.trim()?.takeIf { it.isNotEmpty() },
-            vatNumber = draft.counterpartyVat?.value,
-            iban = null,
-            address = null,
-        )
+        is CreditNoteDraftData -> {
+            val (name, vat) = when (draft.direction) {
+                DocumentDirection.Inbound -> Pair(
+                    draft.seller.name ?: draft.counterpartyName,
+                    draft.seller.vat ?: draft.counterpartyVat
+                )
+                DocumentDirection.Outbound -> Pair(
+                    draft.buyer.name ?: draft.counterpartyName,
+                    draft.buyer.vat ?: draft.counterpartyVat
+                )
+                DocumentDirection.Unknown -> Pair(
+                    draft.buyer.name ?: draft.seller.name ?: draft.counterpartyName,
+                    draft.buyer.vat ?: draft.seller.vat ?: draft.counterpartyVat
+                )
+            }
+
+            CounterpartyInfo(
+                name = name?.trim()?.takeIf { it.isNotEmpty() },
+                vatNumber = vat?.value,
+                iban = null,
+                address = null,
+            )
+        }
         null -> CounterpartyInfo(
             name = null,
             vatNumber = null,
