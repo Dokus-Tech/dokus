@@ -188,7 +188,7 @@ class DocumentProcessingWorker(
         ingestionRepository.markAsProcessing(runId.toString(), "koog-graph")
 
         try {
-            // Fetch tenant context for improved INVOICE vs BILL classification
+            // Fetch tenant context for improved invoice classification and direction resolution
             val parsedTenantId = tenantId
             val tenant = tenantRepository.findById(parsedTenantId)
                 ?: error("Tenant not found: $tenantId")

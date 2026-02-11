@@ -6,7 +6,6 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -64,7 +63,6 @@ class AutoConfirmPolicy(
     private fun isAmountPositive(draftData: DocumentDraftData): Boolean {
         return when (draftData) {
             is InvoiceDraftData -> draftData.totalAmount?.isPositive == true
-            is BillDraftData -> draftData.totalAmount?.isPositive == true
             is ReceiptDraftData -> draftData.totalAmount?.isPositive == true
             is CreditNoteDraftData -> draftData.totalAmount?.isPositive == true
         }
@@ -72,7 +70,6 @@ class AutoConfirmPolicy(
 
     private fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
         is InvoiceDraftData -> DocumentType.Invoice
-        is BillDraftData -> DocumentType.Bill
         is ReceiptDraftData -> DocumentType.Receipt
         is CreditNoteDraftData -> DocumentType.CreditNote
     }

@@ -42,7 +42,7 @@ val DocumentType.description: String
             - Document shows "Offerte" / "Devis" → QUOTE
             - Document shows "Bestelbon" / "Bon de commande" → ORDER_CONFIRMATION
             - It's a ticket/receipt from a shop → RECEIPT
-            - You RECEIVED this from a supplier for goods YOU bought → BILL (not Invoice)
+            - You RECEIVED this from a supplier for goods YOU bought → INVOICE
             """.trimIndent()
 
         DocumentType.CreditNote ->
@@ -197,7 +197,7 @@ val DocumentType.description: String
             
             NOT THIS TYPE IF:
             - Shows prices and requests payment → INVOICE
-            - Is a transport company's invoice → BILL
+            - Is a transport company's invoice → INVOICE
             - Is from a postal service with tracking → different document
             """.trimIndent()
 
@@ -258,45 +258,6 @@ val DocumentType.description: String
             - Bank account transactions → BANK_STATEMENT
             """.trimIndent()
 
-        // ═══════════════════════════════════════════════════════════════════
-        // PURCHASES (money going out)
-        // ═══════════════════════════════════════════════════════════════════
-
-        DocumentType.Bill ->
-            """
-            PURCHASE INVOICE / BILL — An invoice received FROM a supplier for goods/services YOU purchased.
-            
-            KEYWORDS (same as Invoice, but YOU are the customer):
-            - NL: "Factuur", "Factuurnummer", "Klant:", "Facturatie aan:", "Uw BTW-nummer"
-            - FR: "Facture", "Client:", "Facturation à:", "Votre n° TVA"
-            - DE: "Rechnung", "Kunde:", "Rechnungsempfänger"
-            - EN: "Invoice", "Bill to:", "Customer:", "Your VAT number"
-            
-            VISUAL STRUCTURE:
-            - Same as Invoice, BUT your company appears as the CUSTOMER/BUYER
-            - Supplier's details in header
-            - YOUR company name in "Bill to" / "Factuur aan" / "Client" section
-            - Supplier's bank account for payment
-            
-            DISTINGUISHING FEATURES (how to tell Bill from Invoice):
-            - YOUR company VAT number appears in customer section (not header)
-            - SUPPLIER's bank account is shown (you pay them)
-            - You are the recipient, not the issuer
-            - Document was received, not created by you
-            
-            COMMON ISSUERS:
-            - Suppliers (Proximus, Telenet, bpostbank, Luminus, Engie)
-            - Service providers (accountants, lawyers, consultants)
-            - Wholesale suppliers, raw material providers
-            
-            NOTE: Recurring utilities (Proximus, Luminus, Telenet, etc.) are also BILL.
-            They can be marked as recurring metadata later, but the document type is BILL.
-
-            NOT THIS TYPE IF:
-            - YOUR company is the seller → INVOICE
-            - It's a small receipt/ticket → RECEIPT
-            """.trimIndent()
-
         DocumentType.Receipt ->
             """
             RECEIPT / TICKET — Proof of payment already made, typically small retail purchases.
@@ -330,8 +291,8 @@ val DocumentType.description: String
             - Retail stores, electronics, office supplies
             
             NOT THIS TYPE IF:
-            - Requests future payment → INVOICE or BILL
-            - Formal A4 document with company letterhead → BILL
+            - Requests future payment → INVOICE
+            - Formal A4 document with company letterhead → INVOICE
             - Employee expense form → EXPENSE_CLAIM
             """.trimIndent()
 
@@ -362,7 +323,7 @@ val DocumentType.description: String
             
             NOT THIS TYPE IF:
             - Supplier confirming YOUR order → that's their ORDER_CONFIRMATION to you
-            - Supplier invoicing you → BILL
+            - Supplier invoicing you → INVOICE
             - Your customer ordering from you → their PURCHASE_ORDER (your incoming order)
             """.trimIndent()
 
@@ -393,7 +354,7 @@ val DocumentType.description: String
             - References attached receipts as proof
             
             NOT THIS TYPE IF:
-            - External supplier invoice → BILL
+            - External supplier invoice → INVOICE
             - Single receipt from store → RECEIPT
             - Company credit card statement → different type
             """.trimIndent()
@@ -530,7 +491,7 @@ val DocumentType.description: String
             
             NOT THIS TYPE IF:
             - Multiple transactions over period → BANK_STATEMENT
-            - Request to pay → INVOICE / BILL
+            - Request to pay → INVOICE
             - Receipt from purchase → RECEIPT
             """.trimIndent()
 
@@ -1241,7 +1202,7 @@ val DocumentType.description: String
             TYPES: Property lease, car lease, equipment lease
             
             NOT THIS TYPE IF:
-            - Monthly rent invoice → BILL
+            - Monthly rent invoice → INVOICE
             - Loan agreement → LOAN
             - Service contract → CONTRACT
             """.trimIndent()
@@ -1616,7 +1577,7 @@ val DocumentType.description: String
             
             NOT THIS TYPE IF:
             - EU goods movement → INTRASTAT
-            - Regular invoice from foreign supplier → BILL
+            - Regular invoice from foreign supplier → INVOICE
             - Shipping document → DELIVERY_NOTE
             """.trimIndent()
 
@@ -1647,7 +1608,7 @@ val DocumentType.description: String
             NOT THIS TYPE IF:
             - IC Listing (VAT) → IC_LISTING
             - Customs (non-EU) → CUSTOMS_DECLARATION
-            - Invoice → INVOICE or BILL
+            - Invoice → INVOICE
             """.trimIndent()
 
         // ═══════════════════════════════════════════════════════════════════
@@ -1680,7 +1641,7 @@ val DocumentType.description: String
             - For tax/accounting purposes
             
             NOT THIS TYPE IF:
-            - Purchase invoice for asset → BILL
+            - Purchase invoice for asset → INVOICE
             - Annual accounts → ANNUAL_ACCOUNTS
             - Inventory list → INVENTORY
             """.trimIndent()
@@ -1712,7 +1673,7 @@ val DocumentType.description: String
             
             NOT THIS TYPE IF:
             - Fixed assets list → DEPRECIATION_SCHEDULE
-            - Purchase invoice → BILL
+            - Purchase invoice → INVOICE
             - Delivery note → DELIVERY_NOTE
             """.trimIndent()
 

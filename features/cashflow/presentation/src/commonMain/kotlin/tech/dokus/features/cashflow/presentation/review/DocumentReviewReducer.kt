@@ -6,7 +6,6 @@ import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
@@ -59,7 +58,6 @@ internal class DocumentReviewReducer(
 
             val newDraftData = when (type) {
                 DocumentType.Invoice -> InvoiceDraftData()
-                DocumentType.Bill -> BillDraftData()
                 DocumentType.Receipt -> ReceiptDraftData()
                 DocumentType.CreditNote -> CreditNoteDraftData()
                 else -> return@withState

@@ -41,8 +41,6 @@ fun AIAgentSubgraphBuilderBase<*, *>.financialExtractionSubGraph(
         edge(unsupported forwardTo nodeFinish)
 
         edge(nodeStart forwardTo extractInvoice onCondition { it.documentType == DocumentType.Invoice })
-        // BILL is treated as invoice semantics with inbound direction resolved deterministically later.
-        edge(nodeStart forwardTo extractInvoice onCondition { it.documentType == DocumentType.Bill })
         edge(nodeStart forwardTo extractCreditNote onCondition { it.documentType == DocumentType.CreditNote })
         edge(nodeStart forwardTo extractQuote onCondition { it.documentType == DocumentType.Quote })
         edge(nodeStart forwardTo extractProForma onCondition { it.documentType == DocumentType.ProForma })

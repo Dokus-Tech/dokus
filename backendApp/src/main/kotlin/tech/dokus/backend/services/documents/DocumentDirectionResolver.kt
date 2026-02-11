@@ -2,7 +2,6 @@ package tech.dokus.backend.services.documents
 
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -32,11 +31,7 @@ class DocumentDirectionResolver {
         if (draftData == null) return NormalizedDraft(classifiedType, null)
 
         return when (draftData) {
-            is InvoiceDraftData -> normalizeInvoice(classifiedType, draftData, tenant, associatedPersonNames)
-            is BillDraftData -> NormalizedDraft(
-                documentType = DocumentType.Bill,
-                draftData = draftData.copy(direction = draftData.direction.takeUnless { it == DocumentDirection.Unknown } ?: DocumentDirection.Inbound)
-            )
+            is InvoiceDraftData -> normalizeInvoice(draftData, tenant, associatedPersonNames)
             is ReceiptDraftData -> {
                 val direction = resolveReceiptDirection(draftData, tenant, associatedPersonNames)
                 NormalizedDraft(
@@ -52,7 +47,6 @@ class DocumentDirectionResolver {
     }
 
     private fun normalizeInvoice(
-        classifiedType: DocumentType,
         draftData: InvoiceDraftData,
         tenant: Tenant,
         associatedPersonNames: List<String>
@@ -65,60 +59,7 @@ class DocumentDirectionResolver {
             customerVat = draftData.buyer.vat ?: draftData.customerVat,
             customerEmail = draftData.buyer.email ?: draftData.customerEmail
         )
-
-        return when (direction) {
-            DocumentDirection.Outbound -> NormalizedDraft(DocumentType.Invoice, invoice)
-            DocumentDirection.Inbound -> NormalizedDraft(
-                DocumentType.Bill,
-                BillDraftData(
-                    direction = DocumentDirection.Inbound,
-                    supplierName = invoice.seller.name,
-                    supplierVat = invoice.seller.vat,
-                    invoiceNumber = invoice.invoiceNumber,
-                    issueDate = invoice.issueDate,
-                    dueDate = invoice.dueDate,
-                    currency = invoice.currency,
-                    subtotalAmount = invoice.subtotalAmount,
-                    vatAmount = invoice.vatAmount,
-                    totalAmount = invoice.totalAmount,
-                    lineItems = invoice.lineItems,
-                    vatBreakdown = invoice.vatBreakdown,
-                    iban = invoice.iban ?: invoice.seller.iban,
-                    payment = invoice.payment,
-                    notes = invoice.notes,
-                    seller = invoice.seller,
-                    buyer = invoice.buyer
-                )
-            )
-            DocumentDirection.Unknown -> {
-                if (classifiedType == DocumentType.Bill) {
-                    NormalizedDraft(
-                        DocumentType.Bill,
-                        BillDraftData(
-                            direction = DocumentDirection.Unknown,
-                            supplierName = invoice.seller.name,
-                            supplierVat = invoice.seller.vat,
-                            invoiceNumber = invoice.invoiceNumber,
-                            issueDate = invoice.issueDate,
-                            dueDate = invoice.dueDate,
-                            currency = invoice.currency,
-                            subtotalAmount = invoice.subtotalAmount,
-                            vatAmount = invoice.vatAmount,
-                            totalAmount = invoice.totalAmount,
-                            lineItems = invoice.lineItems,
-                            vatBreakdown = invoice.vatBreakdown,
-                            iban = invoice.iban ?: invoice.seller.iban,
-                            payment = invoice.payment,
-                            notes = invoice.notes,
-                            seller = invoice.seller,
-                            buyer = invoice.buyer
-                        )
-                    )
-                } else {
-                    NormalizedDraft(DocumentType.Invoice, invoice)
-                }
-            }
-        }
+        return NormalizedDraft(DocumentType.Invoice, invoice)
     }
 
     private fun resolveInvoiceDirection(

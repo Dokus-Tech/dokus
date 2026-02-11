@@ -35,7 +35,6 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.pending_documents_empty
 import tech.dokus.aura.resources.pending_documents_title
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
@@ -361,10 +360,9 @@ private fun getDocumentDisplayName(record: DocumentRecordDto): String {
     val filename = record.document.filename
     val extractedData = record.draft?.extractedData
 
-    // Try to get invoice/bill number from extracted data
+    // Try to get extracted document number from draft data
     val documentNumber = when (extractedData) {
         is InvoiceDraftData -> extractedData.invoiceNumber
-        is BillDraftData -> extractedData.invoiceNumber
         is CreditNoteDraftData -> extractedData.creditNoteNumber
         is ReceiptDraftData -> extractedData.receiptNumber
         else -> null

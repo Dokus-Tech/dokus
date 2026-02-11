@@ -2,7 +2,6 @@ package tech.dokus.features.ai.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import tech.dokus.features.ai.graph.sub.extraction.financial.BillExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.CreditNoteExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.InvoiceExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.ProFormaExtractionResult
@@ -27,12 +26,6 @@ sealed interface FinancialExtractionResult : ExtractionResult {
     @SerialName("InvoiceExtraction")
     data class Invoice(
         val data: InvoiceExtractionResult
-    ) : FinancialExtractionResult
-
-    @Serializable
-    @SerialName("BillExtraction")
-    data class Bill(
-        val data: BillExtractionResult
     ) : FinancialExtractionResult
 
     @Serializable

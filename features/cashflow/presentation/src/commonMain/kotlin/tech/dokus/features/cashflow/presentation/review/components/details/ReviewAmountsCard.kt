@@ -16,7 +16,6 @@ import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total_amount
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -44,12 +43,6 @@ internal fun AmountsCard(
                     subtotal = draft.subtotalAmount?.toString(),
                     vat = draft.vatAmount?.toString(),
                     total = draft.totalAmount?.toString()
-                )
-            }
-            is BillDraftData -> {
-                BillAmountsDisplay(
-                    total = draft.totalAmount?.toString(),
-                    vat = draft.vatAmount?.toString()
                 )
             }
             is ReceiptDraftData -> {
@@ -95,30 +88,6 @@ private fun InvoiceAmountsDisplay(
             label = stringResource(Res.string.invoice_subtotal),
             value = subtotal
         )
-        AmountRow(
-            label = stringResource(Res.string.cashflow_vat_amount),
-            value = vat
-        )
-        // Subtle divider before total
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = Constrains.Spacing.xSmall),
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
-        AmountRow(
-            label = stringResource(Res.string.invoice_total_amount),
-            value = total,
-            isTotal = true
-        )
-    }
-}
-
-@Composable
-private fun BillAmountsDisplay(
-    total: String?,
-    vat: String?,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
         AmountRow(
             label = stringResource(Res.string.cashflow_vat_amount),
             value = vat
@@ -187,4 +156,3 @@ private fun CreditNoteAmountsDisplay(
         )
     }
 }
-

@@ -1,7 +1,6 @@
 package tech.dokus.features.ai.validation
 
 import tech.dokus.domain.Money
-import tech.dokus.features.ai.graph.sub.extraction.financial.BillExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.CreditNoteExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.InvoiceExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.ProFormaExtractionResult
@@ -14,7 +13,6 @@ object FinancialExtractionAuditor {
     fun audit(extraction: FinancialExtractionResult): AuditReport {
         val checks = when (extraction) {
             is FinancialExtractionResult.Invoice -> auditInvoice(extraction.data)
-            is FinancialExtractionResult.Bill -> auditBill(extraction.data)
             is FinancialExtractionResult.CreditNote -> auditCreditNote(extraction.data)
             is FinancialExtractionResult.Quote -> auditQuote(extraction.data)
             is FinancialExtractionResult.ProForma -> auditProForma(extraction.data)
@@ -36,26 +34,6 @@ object FinancialExtractionAuditor {
         val total = data.totalAmount
 
         add(MathValidator.verifyTotals(subtotal, vat, total))
-        add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
-        addAll(LineItemsValidator.verify(data.lineItems, subtotal, required = true))
-        addAll(
-            VatBreakdownValidator.verify(
-                vatBreakdown = data.vatBreakdown,
-                subtotal = subtotal,
-                vatAmount = vat,
-                documentDate = data.issueDate,
-                required = true
-            )
-        )
-        add(ChecksumValidator.auditIban(data.iban))
-        add(ChecksumValidator.auditOgm(data.payment?.structuredComm))
-    }
-
-    private fun auditBill(data: BillExtractionResult): List<AuditCheck> = buildList {
-        val total = data.totalAmount
-        val vat = data.vatAmount
-        val subtotal = derivedSubtotal(total, vat)
-
         add(BelgianVatRateValidator.verify(subtotal, vat, data.issueDate, null))
         addAll(LineItemsValidator.verify(data.lineItems, subtotal, required = true))
         addAll(

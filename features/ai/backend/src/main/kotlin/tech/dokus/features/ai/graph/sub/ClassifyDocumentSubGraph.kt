@@ -104,16 +104,15 @@ private val ClassifyDocumentInput.prompt
 
     ## KEY DISTINCTIONS
 
-    INVOICE vs BILL (legacy compatibility):
-    - Classify regular invoices as INVOICE regardless of whether tenant is seller or buyer.
-    - BILL is a legacy label and should only be used when the document is clearly a supplier invoice and classification confidence for INVOICE is low.
+    INVOICE:
+    - Classify every invoice-like document as INVOICE regardless of whether tenant is seller or buyer.
     - Direction (incoming/outgoing) is resolved later by deterministic business logic, not classification.
 
     NAME MATCHING: Names on documents may differ from official names — ignore casing, dots vs spaces, domain-style names (e.g., "invoid.vision" = "Invoid Vision"). Use VAT number as the strongest identifier.
 
-    RECEIPT vs BILL:
+    RECEIPT vs INVOICE:
     - RECEIPT: Small thermal ticket proving payment already made (retail/restaurant)
-    - BILL: A4 supplier invoice requesting payment (including recurring utilities)
+    - INVOICE: Formal supplier/customer invoice requesting payment (including recurring utilities)
 
     CREDIT_NOTE: Look for "Creditnota", "Note de crédit", "Avoir" — references original invoice
     """.trimIndent()

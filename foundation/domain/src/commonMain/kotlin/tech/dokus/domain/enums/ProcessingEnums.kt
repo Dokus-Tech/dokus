@@ -17,7 +17,7 @@ enum class DocumentType(
 ) : DbEnum {
 
     // ═══════════════════════════════════════════════════════════════════
-    // SALES (money coming in)
+    // FINANCIAL
     // ═══════════════════════════════════════════════════════════════════
 
     @SerialName("INVOICE")
@@ -43,13 +43,6 @@ enum class DocumentType(
 
     @SerialName("STATEMENT_OF_ACCOUNT")
     StatementOfAccount("STATEMENT_OF_ACCOUNT", false),
-
-    // ═══════════════════════════════════════════════════════════════════
-    // PURCHASES (money going out)
-    // ═══════════════════════════════════════════════════════════════════
-
-    @SerialName("BILL")
-    Bill("BILL", true),
 
     @SerialName("RECEIPT")
     Receipt("RECEIPT", true),
@@ -410,7 +403,7 @@ enum class DocumentLinkType(override val dbValue: String) : DbEnum {
 }
 
 enum class DocumentTypeCategory {
-    FINANCIAL,  // Invoices, bills, quotes, orders, assets, financial statements
+    FINANCIAL,  // Invoices, quotes, orders, assets, financial statements
     BANKING,    // Bank statements, fees, payment confirmations
     TAX,        // VAT, corporate/personal tax, social contributions, trade reports
     PAYROLL,    // Payroll/HR documents
@@ -427,7 +420,6 @@ val DocumentType.category: DocumentTypeCategory
         DocumentType.DeliveryNote,
         DocumentType.Reminder,
         DocumentType.StatementOfAccount,
-        DocumentType.Bill,
         DocumentType.Receipt,
         DocumentType.PurchaseOrder,
         DocumentType.ExpenseClaim,

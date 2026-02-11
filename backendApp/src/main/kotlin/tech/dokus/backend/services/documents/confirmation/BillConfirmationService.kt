@@ -12,8 +12,8 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 
@@ -33,7 +33,7 @@ class BillConfirmationService(
     suspend fun confirm(
         tenantId: TenantId,
         documentId: DocumentId,
-        draftData: BillDraftData,
+        draftData: InvoiceDraftData,
         linkedContactId: ContactId?
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming bill document: $documentId for tenant: $tenantId")
@@ -54,8 +54,8 @@ class BillConfirmationService(
         }
 
         val request = CreateBillRequest(
-            supplierName = draftData.supplierName ?: draftData.seller.name ?: "Unknown Supplier",
-            supplierVatNumber = (draftData.supplierVat ?: draftData.seller.vat)?.value,
+            supplierName = draftData.seller.name ?: draftData.customerName ?: "Unknown Supplier",
+            supplierVatNumber = (draftData.seller.vat ?: draftData.customerVat)?.value,
             invoiceNumber = draftData.invoiceNumber,
             issueDate = issueDate,
             dueDate = dueDate,

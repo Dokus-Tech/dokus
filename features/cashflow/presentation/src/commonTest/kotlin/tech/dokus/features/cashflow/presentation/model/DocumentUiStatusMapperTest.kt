@@ -44,7 +44,7 @@ class DocumentUiStatusMapperTest {
             ingestionStatus = IngestionStatus.Succeeded,
             errorMessage = "   ",
             documentStatus = DocumentStatus.Confirmed,
-            documentType = DocumentType.Bill
+            documentType = DocumentType.Invoice
         )
         assertEquals(DocumentUiStatus.Ready, record.toUiStatus())
     }

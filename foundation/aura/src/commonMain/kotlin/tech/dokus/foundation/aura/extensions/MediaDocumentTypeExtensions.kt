@@ -3,9 +3,7 @@ package tech.dokus.foundation.aura.extensions
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.document_type_bill
 import tech.dokus.aura.resources.document_type_document
-import tech.dokus.aura.resources.document_type_expense
 import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.document_type_unknown
 import tech.dokus.domain.enums.DocumentType
@@ -25,7 +23,6 @@ import tech.dokus.domain.enums.MediaDocumentType
 val MediaDocumentType.localized: String
     @Composable get() = when (this) {
         MediaDocumentType.Invoice -> stringResource(Res.string.document_type_invoice)
-        MediaDocumentType.Bill -> stringResource(Res.string.document_type_bill)
         MediaDocumentType.Unknown -> stringResource(Res.string.document_type_unknown)
     }
 
@@ -61,7 +58,6 @@ val MediaDocumentType.localizedUppercase: String
 val DocumentType.localized: String
     @Composable get() = when (this) {
         DocumentType.Invoice -> stringResource(Res.string.document_type_invoice)
-        DocumentType.Bill -> stringResource(Res.string.document_type_bill)
         DocumentType.CreditNote -> stringResource(Res.string.document_type_document) // TODO: Add specific string resource
         DocumentType.Receipt -> stringResource(Res.string.document_type_document) // TODO: Add specific string resource
         DocumentType.ProForma -> stringResource(Res.string.document_type_document) // TODO: Add specific string resource

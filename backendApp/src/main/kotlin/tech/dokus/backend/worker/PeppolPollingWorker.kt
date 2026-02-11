@@ -28,7 +28,6 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -354,10 +353,6 @@ class PeppolPollingWorker(
     private data class CounterpartyInfo(val name: String?, val vatNumber: VatNumber?)
 
     private fun extractCounterparty(draftData: DocumentDraftData): CounterpartyInfo = when (draftData) {
-        is BillDraftData -> CounterpartyInfo(
-            draftData.supplierName ?: draftData.seller.name,
-            draftData.supplierVat ?: draftData.seller.vat
-        )
         is CreditNoteDraftData -> CounterpartyInfo(draftData.counterpartyName, draftData.counterpartyVat)
         is InvoiceDraftData -> when (draftData.direction) {
             DocumentDirection.Inbound -> CounterpartyInfo(
@@ -377,14 +372,12 @@ class PeppolPollingWorker(
     }
 
     private fun documentTypeFor(draftData: DocumentDraftData): DocumentType = when (draftData) {
-        is BillDraftData -> DocumentType.Bill
         is CreditNoteDraftData -> DocumentType.CreditNote
         is InvoiceDraftData -> DocumentType.Invoice
         is ReceiptDraftData -> DocumentType.Receipt
     }
 
     private fun documentNumberOf(draftData: DocumentDraftData): String? = when (draftData) {
-        is BillDraftData -> draftData.invoiceNumber
         is CreditNoteDraftData -> draftData.creditNoteNumber
         is InvoiceDraftData -> draftData.invoiceNumber
         is ReceiptDraftData -> draftData.receiptNumber

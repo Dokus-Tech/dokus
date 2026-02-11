@@ -9,7 +9,6 @@ import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.enums.CreditNoteDirection
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
@@ -207,7 +206,7 @@ class PeppolMapper {
      * Used when creating Documents+Drafts from Peppol inbox (architectural boundary).
      *
      * Maps by document type:
-     * - invoice -> BillDraftData (supplier sent us an invoice)
+     * - invoice -> InvoiceDraftData(direction=Inbound)
      * - creditNote -> CreditNoteDraftData(Purchase) (supplier crediting us)
      * - selfBillingInvoice -> InvoiceDraftData (client created invoice on our behalf)
      * - selfBillingCreditNote -> CreditNoteDraftData(Sales) (client corrects self-billing)
@@ -322,11 +321,9 @@ class PeppolMapper {
                 notes = notes
             )
 
-            // Invoice, Xml — default to bill
-            else -> BillDraftData(
+            // Invoice, Xml — default to inbound invoice
+            else -> InvoiceDraftData(
                 direction = DocumentDirection.Inbound,
-                supplierName = seller?.name,
-                supplierVat = VatNumber.from(seller?.vatNumber),
                 invoiceNumber = document.invoiceNumber,
                 issueDate = issueDate,
                 dueDate = dueDate,
@@ -339,6 +336,8 @@ class PeppolMapper {
                 iban = null,
                 payment = null,
                 notes = notes,
+                customerName = buyer?.name,
+                customerVat = VatNumber.from(buyer?.vatNumber),
                 seller = PartyDraft(
                     name = seller?.name,
                     vat = VatNumber.from(seller?.vatNumber),

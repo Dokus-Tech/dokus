@@ -11,16 +11,17 @@ import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
@@ -47,7 +48,7 @@ private const val PreviewNanosecond = 0
 
 // Preview mock data file size constants (in bytes)
 private const val InvoiceSizeBytes = 125000L
-private const val BillSizeBytes = 98000L
+private const val InboundInvoiceSizeBytes = 98000L
 private const val ExpenseSizeBytes = 45000L
 private const val ScanSizeBytes = 200000L
 private const val ClientInvoiceSizeBytes = 150000L
@@ -229,14 +230,14 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
             latestIngestion = null,
             confirmedEntity = null
         ),
-        // Bill with extraction data - NeedsReview status
+        // Inbound invoice with extraction data - NeedsReview status
         DocumentRecordDto(
             document = DocumentDto(
                 id = DocumentId.generate(),
                 tenantId = tenantId,
                 filename = "supplier-bill.pdf",
                 contentType = "application/pdf",
-                sizeBytes = BillSizeBytes,
+                sizeBytes = InboundInvoiceSizeBytes,
                 storageKey = "documents/supplier-bill.pdf",
                 uploadedAt = now
             ),
@@ -244,10 +245,11 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 documentId = DocumentId.generate(),
                 tenantId = tenantId,
                 documentStatus = DocumentStatus.NeedsReview,
-                documentType = DocumentType.Bill,
-                extractedData = BillDraftData(
-                    invoiceNumber = "BILL-2024-123",
-                    supplierName = "Office Supplies Inc."
+                documentType = DocumentType.Invoice,
+                extractedData = InvoiceDraftData(
+                    direction = DocumentDirection.Inbound,
+                    invoiceNumber = "INV-2024-123",
+                    seller = PartyDraft(name = "Office Supplies Inc.")
                 ),
                 aiDraftData = null,
                 aiDraftSourceRunId = null,

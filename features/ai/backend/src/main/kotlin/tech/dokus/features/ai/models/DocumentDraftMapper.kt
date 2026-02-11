@@ -2,7 +2,6 @@ package tech.dokus.features.ai.models
 
 import tech.dokus.domain.enums.CreditNoteDirection as DomainCreditNoteDirection
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -46,28 +45,6 @@ fun FinancialExtractionResult.toDraftData(): DocumentDraftData? = when (this) {
             postalCode = data.buyerPostalCode,
             city = data.buyerCity,
             country = data.buyerCountry,
-        ),
-    )
-
-    is FinancialExtractionResult.Bill -> BillDraftData(
-        direction = DocumentDirection.Inbound,
-        supplierName = data.supplierName,
-        supplierVat = data.supplierVat,
-        invoiceNumber = data.invoiceNumber,
-        issueDate = data.issueDate,
-        dueDate = data.dueDate,
-        currency = data.currency,
-        subtotalAmount = null,
-        vatAmount = data.vatAmount,
-        totalAmount = data.totalAmount,
-        lineItems = data.lineItems,
-        vatBreakdown = data.vatBreakdown,
-        iban = data.iban,
-        payment = data.payment,
-        notes = null,
-        seller = PartyDraft(
-            name = data.supplierName,
-            vat = data.supplierVat,
         ),
     )
 

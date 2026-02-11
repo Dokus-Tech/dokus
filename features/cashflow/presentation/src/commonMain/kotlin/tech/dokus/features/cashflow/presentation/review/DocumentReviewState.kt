@@ -18,7 +18,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentRecordDto
@@ -155,7 +154,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                 contactSelectionState is ContactSelectionState.Suggested &&
                     draftData.isContactRequired ->
                     ContactMatchStatus.Uncertain
-                // No contact, but required for this document type (Invoice/Bill/CreditNote)
+                // No contact, but required for this document type (Invoice/CreditNote)
                 draftData.isContactRequired ->
                     ContactMatchStatus.MissingButRequired
                 // No contact, but acceptable (Receipt)
@@ -170,7 +169,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          * Attention rules:
          * 1. Always attention if confirmBlockedReason != null (hard issues are also soft)
          * 2. Attention if contact is Uncertain or MissingButRequired
-         * 3. Attention if due date missing AND (Invoice OR Bill) AND not yet confirmed
+         * 3. Attention if due date missing AND Invoice AND not yet confirmed
          */
         val hasAttention: Boolean
             get() {
@@ -181,8 +180,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                 if (contactMatchStatus == ContactMatchStatus.Uncertain ||
                     contactMatchStatus == ContactMatchStatus.MissingButRequired) return true
 
-                // Due date missing for invoices/bills (only when not confirmed)
-                val needsDueDate = (draftData is InvoiceDraftData || draftData is BillDraftData) &&
+                // Due date missing for invoices (only when not confirmed)
+                val needsDueDate = (draftData is InvoiceDraftData) &&
                     !isDocumentConfirmed
                 if (needsDueDate && draftData.dueDate == null) return true
 
@@ -213,7 +212,6 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val totalAmount: Money?
             get() = when (draftData) {
                 is InvoiceDraftData -> draftData.totalAmount
-                is BillDraftData -> draftData.totalAmount
                 is ReceiptDraftData -> draftData.totalAmount
                 is CreditNoteDraftData -> draftData.totalAmount
                 null -> null
@@ -234,7 +232,6 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 private val DocumentDraftData.hasRequiredDates: Boolean
     get() = when (this) {
         is InvoiceDraftData -> issueDate != null
-        is BillDraftData -> issueDate != null
         is ReceiptDraftData -> date != null
         is CreditNoteDraftData -> issueDate != null
     }
@@ -249,7 +246,6 @@ private val DocumentDraftData.hasCoherentAmounts: Boolean
                 val expected = subtotal + vatAmount!!
                 kotlin.math.abs(expected.minor - totalAmount!!.minor) <= 1L
             }
-            is BillDraftData -> totalAmount != null
             is ReceiptDraftData -> totalAmount != null
             is CreditNoteDraftData -> {
                 val subtotal = subtotalAmount ?: return false
@@ -264,20 +260,18 @@ private val DocumentDraftData.hasCoherentAmounts: Boolean
 val DocumentDraftData.isReviewValid: Boolean
     get() = when (this) {
         is InvoiceDraftData -> issueDate != null && subtotalAmount != null
-        is BillDraftData -> supplierName != null && issueDate != null && totalAmount != null
         is ReceiptDraftData -> merchantName != null && date != null && totalAmount != null
         is CreditNoteDraftData -> counterpartyName != null && issueDate != null && subtotalAmount != null
     }
 
 /** Whether a contact is required for this document type. */
 internal val DocumentDraftData?.isContactRequired: Boolean
-    get() = this is InvoiceDraftData || this is BillDraftData || this is CreditNoteDraftData
+    get() = this is InvoiceDraftData || this is CreditNoteDraftData
 
 /** Derive DocumentType from sealed subtype. */
 internal val DocumentDraftData?.documentType: DocumentType
     get() = when (this) {
         is InvoiceDraftData -> DocumentType.Invoice
-        is BillDraftData -> DocumentType.Bill
         is CreditNoteDraftData -> DocumentType.CreditNote
         is ReceiptDraftData -> DocumentType.Receipt
         null -> DocumentType.Unknown
@@ -293,7 +287,6 @@ private val DocumentDraftData?.displayCounterpartyName: String?
                 ?: buyer.name?.takeIf { it.isNotBlank() }
                 ?: seller.name?.takeIf { it.isNotBlank() }
         }
-        is BillDraftData -> (supplierName ?: seller.name)?.takeIf { it.isNotBlank() }
         is ReceiptDraftData -> merchantName?.takeIf { it.isNotBlank() }
         is CreditNoteDraftData -> counterpartyName?.takeIf { it.isNotBlank() }
         null -> null
@@ -303,7 +296,6 @@ private val DocumentDraftData?.displayCounterpartyName: String?
 private val DocumentDraftData?.displayContextDescription: String?
     get() = when (this) {
         is InvoiceDraftData -> notes?.takeIf { it.isNotBlank() }
-        is BillDraftData -> notes?.takeIf { it.isNotBlank() }
         is ReceiptDraftData -> notes?.takeIf { it.isNotBlank() }
         is CreditNoteDraftData -> reason?.takeIf { it.isNotBlank() }
         null -> null
@@ -313,7 +305,6 @@ private val DocumentDraftData?.displayContextDescription: String?
 private val DocumentDraftData?.dueDate: kotlinx.datetime.LocalDate?
     get() = when (this) {
         is InvoiceDraftData -> dueDate
-        is BillDraftData -> dueDate
         is ReceiptDraftData -> null
         is CreditNoteDraftData -> null
         null -> null
@@ -328,7 +319,7 @@ enum class ContactMatchStatus {
     Matched,
     /** Suggested but not yet confirmed. */
     Uncertain,
-    /** No contact, and document type requires one (Invoice/Bill/CreditNote). */
+    /** No contact, and document type requires one (Invoice/CreditNote). */
     MissingButRequired,
     /** No contact, but acceptable for this document type (Receipt). */
     NotRequired

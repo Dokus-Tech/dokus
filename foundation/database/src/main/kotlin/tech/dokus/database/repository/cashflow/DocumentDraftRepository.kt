@@ -27,7 +27,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.CounterpartySnapshot
@@ -475,7 +474,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
 
 private fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
     is InvoiceDraftData -> DocumentType.Invoice
-    is BillDraftData -> DocumentType.Bill
     is CreditNoteDraftData -> DocumentType.CreditNote
     is ReceiptDraftData -> DocumentType.Receipt
 }

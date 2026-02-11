@@ -14,7 +14,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
@@ -61,7 +60,7 @@ internal suspend fun findConfirmedEntity(
 ): FinancialDocumentDto? {
     return when (documentType) {
         DocumentType.Invoice -> invoiceRepository.findByDocumentId(tenantId, documentId)
-        DocumentType.Bill -> billRepository.findByDocumentId(tenantId, documentId)
+            ?: billRepository.findByDocumentId(tenantId, documentId)
         DocumentType.CreditNote -> creditNoteRepository.findByDocumentId(tenantId, documentId)
         else -> {
             // Try all types
@@ -105,7 +104,6 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
 
 private fun DocumentDraftData?.directionOrUnknown(): DocumentDirection = when (this) {
     is InvoiceDraftData -> this.direction
-    is BillDraftData -> this.direction
     is ReceiptDraftData -> this.direction
     is CreditNoteDraftData -> when (this.direction) {
         tech.dokus.domain.enums.CreditNoteDirection.Sales -> DocumentDirection.Outbound

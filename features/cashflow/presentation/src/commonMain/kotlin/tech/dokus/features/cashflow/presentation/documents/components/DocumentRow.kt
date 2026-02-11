@@ -46,7 +46,6 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
@@ -376,8 +375,6 @@ private fun resolveDescription(document: DocumentRecordDto): String {
     val context = when (extractedData) {
         is InvoiceDraftData -> extractedData.notes.nonBlank()
             ?: extractedData.invoiceNumber.nonBlank()
-        is BillDraftData -> extractedData.notes.nonBlank()
-            ?: extractedData.invoiceNumber.nonBlank()
         is ReceiptDraftData -> extractedData.notes.nonBlank()
             ?: extractedData.receiptNumber.nonBlank()
         is CreditNoteDraftData -> extractedData.notes.nonBlank()
@@ -394,7 +391,6 @@ private fun resolveDescription(document: DocumentRecordDto): String {
             DocumentDirection.Unknown ->
                 (extractedData.customerName ?: extractedData.buyer.name ?: extractedData.seller.name).nonBlank()
         }
-        is BillDraftData -> extractedData.supplierName.nonBlank()
         is ReceiptDraftData -> extractedData.merchantName.nonBlank()
         is CreditNoteDraftData -> extractedData.counterpartyName.nonBlank()
         else -> null
@@ -429,7 +425,6 @@ private fun resolveCounterparty(document: DocumentRecordDto): String {
             DocumentDirection.Unknown ->
                 (extractedData.customerName ?: extractedData.buyer.name ?: extractedData.seller.name).nonBlank()
         }
-        is BillDraftData -> extractedData.supplierName.nonBlank()
         is ReceiptDraftData -> extractedData.merchantName.nonBlank()
         is CreditNoteDraftData -> extractedData.counterpartyName.nonBlank()
         else -> null
@@ -442,14 +437,12 @@ private fun extractAmount(document: DocumentRecordDto): String {
     val extractedData = document.draft?.extractedData
     val amount = when (extractedData) {
         is InvoiceDraftData -> extractedData.totalAmount
-        is BillDraftData -> extractedData.totalAmount
         is ReceiptDraftData -> extractedData.totalAmount
         is CreditNoteDraftData -> extractedData.totalAmount
         else -> null
     }
     val currency = when (extractedData) {
         is InvoiceDraftData -> extractedData.currency
-        is BillDraftData -> extractedData.currency
         is ReceiptDraftData -> extractedData.currency
         is CreditNoteDraftData -> extractedData.currency
         else -> null
@@ -466,7 +459,6 @@ private fun extractDocumentDate(document: DocumentRecordDto): LocalDate {
     val extractedData = document.draft?.extractedData
     return when (extractedData) {
         is InvoiceDraftData -> extractedData.issueDate
-        is BillDraftData -> extractedData.issueDate
         is ReceiptDraftData -> extractedData.date
         is CreditNoteDraftData -> extractedData.issueDate
         else -> null

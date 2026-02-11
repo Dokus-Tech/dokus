@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_bill_details_section
 import tech.dokus.aura.resources.cashflow_contact_label
 import tech.dokus.aura.resources.cashflow_contact_create_new
 import tech.dokus.aura.resources.cashflow_no_contact_selected
@@ -32,14 +31,12 @@ import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.workspace_iban
-import tech.dokus.aura.resources.document_type_bill
 import tech.dokus.aura.resources.document_type_credit_note
 import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.document_type_receipt
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -231,7 +228,6 @@ internal fun InvoiceDetailsCard(
 ) {
     val titleRes = when (state.draftData) {
         is InvoiceDraftData -> Res.string.cashflow_invoice_details_section
-        is BillDraftData -> Res.string.cashflow_bill_details_section
         is ReceiptDraftData -> Res.string.cashflow_receipt_details_section
         is CreditNoteDraftData -> Res.string.cashflow_credit_note_details_section
         null -> Res.string.cashflow_invoice_details_section
@@ -244,13 +240,6 @@ internal fun InvoiceDetailsCard(
         when (val draft = state.draftData) {
             is InvoiceDraftData -> {
                 InvoiceDetailsFactDisplay(
-                    invoiceNumber = draft.invoiceNumber?.takeIf { it.isNotBlank() },
-                    issueDate = draft.issueDate?.toString(),
-                    dueDate = draft.dueDate?.toString()
-                )
-            }
-            is BillDraftData -> {
-                BillDetailsFactDisplay(
                     invoiceNumber = draft.invoiceNumber?.takeIf { it.isNotBlank() },
                     issueDate = draft.issueDate?.toString(),
                     dueDate = draft.dueDate?.toString()
@@ -292,11 +281,6 @@ internal fun InvoiceDetailsCard(
                             modifier = Modifier.weight(1f),
                             onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Invoice)) },
                         )
-                        POutlinedButton(
-                            text = stringResource(Res.string.document_type_bill),
-                            modifier = Modifier.weight(1f),
-                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Bill)) },
-                        )
                     }
                     Row(
                         modifier = Modifier
@@ -323,29 +307,6 @@ internal fun InvoiceDetailsCard(
 
 @Composable
 private fun InvoiceDetailsFactDisplay(
-    invoiceNumber: String?,
-    issueDate: String?,
-    dueDate: String?,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        FactField(
-            label = stringResource(Res.string.cashflow_invoice_number),
-            value = invoiceNumber
-        )
-        FactField(
-            label = stringResource(Res.string.invoice_issue_date),
-            value = issueDate
-        )
-        FactField(
-            label = stringResource(Res.string.invoice_due_date),
-            value = dueDate
-        )
-    }
-}
-
-@Composable
-private fun BillDetailsFactDisplay(
     invoiceNumber: String?,
     issueDate: String?,
     dueDate: String?,

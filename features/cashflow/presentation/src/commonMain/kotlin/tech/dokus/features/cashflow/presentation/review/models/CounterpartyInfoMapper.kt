@@ -1,6 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review.models
 
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -35,12 +34,6 @@ internal fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyI
                 address = null,
             )
         }
-        is BillDraftData -> CounterpartyInfo(
-            name = (draft.supplierName ?: draft.seller.name)?.trim()?.takeIf { it.isNotEmpty() },
-            vatNumber = (draft.supplierVat ?: draft.seller.vat)?.value,
-            iban = (draft.iban ?: draft.seller.iban)?.value,
-            address = null,
-        )
         is ReceiptDraftData -> CounterpartyInfo(
             name = draft.merchantName?.trim()?.takeIf { it.isNotEmpty() },
             vatNumber = draft.merchantVat?.value,

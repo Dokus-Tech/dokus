@@ -64,47 +64,47 @@ class InvoiceExtractionGoldenTest {
         }
 
         assertEquals(
-            DocumentType.Bill,
+            DocumentType.Invoice,
             result.classification.documentType,
-            "Expected bill classification for supplier invoice"
+            "Expected invoice classification for supplier invoice"
         )
         assertTrue(
-            result.extraction is FinancialExtractionResult.Bill,
-            "Expected bill extraction, got ${result.extraction::class.simpleName}"
+            result.extraction is FinancialExtractionResult.Invoice,
+            "Expected invoice extraction, got ${result.extraction::class.simpleName}"
         )
 
-        val bill = result.extraction.data
+        val invoice = result.extraction.data
 
-        assertEquals(bill.invoiceNumber?.contains("7647894"), true, "Expected invoice number 7647894")
-        assertEquals(523L, bill.vatAmount?.minor, "Expected VAT amount 5.23")
-        assertWithinCents(16397L, bill.totalAmount?.minor, 2L, "Expected total amount ~163.97")
+        assertEquals(invoice.invoiceNumber?.contains("7647894"), true, "Expected invoice number 7647894")
+        assertEquals(523L, invoice.vatAmount?.minor, "Expected VAT amount 5.23")
+        assertWithinCents(16397L, invoice.totalAmount?.minor, 2L, "Expected total amount ~163.97")
 
-        assertEquals(2, bill.lineItems.size, "Expected 2 line items")
+        assertEquals(2, invoice.lineItems.size, "Expected 2 line items")
 
-        val charging = bill.lineItems.firstOrNull { it.description.contains("Charging costs", ignoreCase = true) }
+        val charging = invoice.lineItems.firstOrNull { it.description.contains("Charging costs", ignoreCase = true) }
         assertNotNull(charging, "Expected Charging costs line item")
         assertEquals(15606L, charging.netAmount, "Expected Charging costs net amount 156.06")
 
-        val pricePerPeriod = bill.lineItems.firstOrNull { it.description.contains("Price per Period", ignoreCase = true) }
+        val pricePerPeriod = invoice.lineItems.firstOrNull { it.description.contains("Price per Period", ignoreCase = true) }
         assertNotNull(pricePerPeriod, "Expected Price per Period line item")
         assertEquals(1L, pricePerPeriod.quantity, "Expected quantity 1")
         assertEquals(267L, pricePerPeriod.unitPrice, "Expected unit price 2.67")
         assertEquals(267L, pricePerPeriod.netAmount, "Expected net amount 2.67")
 
-        val lineItemsNetSum = bill.lineItems.sumOf { it.netAmount ?: 0L }
+        val lineItemsNetSum = invoice.lineItems.sumOf { it.netAmount ?: 0L }
         assertEquals(15873L, lineItemsNetSum, "Expected line items net sum 158.73")
 
         assertTrue(
-            bill.vatBreakdown.isNotEmpty(),
+            invoice.vatBreakdown.isNotEmpty(),
             "Expected VAT breakdown rows"
         )
 
-        val rate21 = bill.vatBreakdown.firstOrNull { it.rate == 2100 }
+        val rate21 = invoice.vatBreakdown.firstOrNull { it.rate == 2100 }
         assertNotNull(rate21, "Expected 21% VAT breakdown")
         assertEquals(2491L, rate21.base, "Expected 21% base 24.91")
         assertEquals(523L, rate21.amount, "Expected 21% VAT amount 5.23")
 
-        val reverseChargeEntries = bill.vatBreakdown.filter { it.rate == 0 }
+        val reverseChargeEntries = invoice.vatBreakdown.filter { it.rate == 0 }
         assertTrue(reverseChargeEntries.isNotEmpty(), "Expected reverse charge entries with 0% rate")
         val reverseChargeBaseSum = reverseChargeEntries.sumOf { it.base }
         val reverseChargeAmountSum = reverseChargeEntries.sumOf { it.amount }

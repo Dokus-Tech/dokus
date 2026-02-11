@@ -8,7 +8,6 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.BillDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -299,12 +298,6 @@ class ContactResolutionService(
                 country = null
             )
         }
-        is BillDraftData -> CounterpartySnapshot(
-            name = draftData.supplierName ?: draftData.seller.name,
-            vatNumber = draftData.supplierVat ?: draftData.seller.vat,
-            iban = draftData.iban ?: draftData.seller.iban,
-            email = null,
-        )
         is CreditNoteDraftData -> CounterpartySnapshot(
             name = draftData.counterpartyName,
             vatNumber = draftData.counterpartyVat,

@@ -58,29 +58,6 @@ data class InvoiceDraftData(
 }
 
 @Serializable
-@SerialName("bill_draft")
-data class BillDraftData(
-    val direction: DocumentDirection = DocumentDirection.Inbound,
-    val supplierName: String? = null,
-    val supplierVat: VatNumber? = null,
-    val invoiceNumber: String? = null,
-    val issueDate: LocalDate? = null,
-    val dueDate: LocalDate? = null,
-    val currency: Currency = Currency.default,
-    val subtotalAmount: Money? = null,
-    val vatAmount: Money? = null,
-    val totalAmount: Money? = null,
-    val lineItems: List<FinancialLineItem> = emptyList(),
-    val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
-    val iban: Iban? = null,
-    val payment: CanonicalPayment? = null,
-    val notes: String? = null,
-    val seller: PartyDraft = PartyDraft(),
-    val buyer: PartyDraft = PartyDraft(),
-) : DocumentDraftData {
-}
-
-@Serializable
 @SerialName("credit_note_draft")
 data class CreditNoteDraftData(
     val creditNoteNumber: String? = null,
