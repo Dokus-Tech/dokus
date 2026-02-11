@@ -5,6 +5,10 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import tech.dokus.app.infrastructure.ServerConfigManagerImpl
 import tech.dokus.app.local.DefaultLocalDatabaseCleaner
+import tech.dokus.app.share.ShareImportAction
+import tech.dokus.app.share.ShareImportContainer
+import tech.dokus.app.share.ShareImportIntent
+import tech.dokus.app.share.ShareImportState
 import tech.dokus.app.viewmodel.BootstrapAction
 import tech.dokus.app.viewmodel.BootstrapContainer
 import tech.dokus.app.viewmodel.BootstrapIntent
@@ -94,6 +98,14 @@ internal val diModuleApp = module {
                 removeTeamMember = get(),
                 transferWorkspaceOwnership = get(),
             )
+        )
+    }
+    container<ShareImportContainer, ShareImportState, ShareImportIntent, ShareImportAction> {
+        ShareImportContainer(
+            tokenManager = get(),
+            listMyTenantsUseCase = get(),
+            selectTenantUseCase = get(),
+            uploadDocumentUseCase = get()
         )
     }
 

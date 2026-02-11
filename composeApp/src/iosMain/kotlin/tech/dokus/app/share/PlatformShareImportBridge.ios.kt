@@ -9,6 +9,8 @@ import platform.Foundation.NSData
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
+import platform.Foundation.create
+import platform.Foundation.dataWithContentsOfFile
 import platform.posix.memcpy
 
 private const val AppGroupIdentifier = "group.vision.invoid.dokus.share"
@@ -16,7 +18,7 @@ private const val SharedImportsDirectory = "SharedImports"
 private const val PdfExtension = "pdf"
 private const val NameExtension = "name"
 
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 actual object PlatformShareImportBridge {
     actual suspend fun consumeBatch(batchId: String?): Result<SharedImportFile?> = runCatching {
         val resolvedBatchId = batchId?.takeIf { it.isNotBlank() } ?: return@runCatching null
@@ -47,7 +49,7 @@ actual object PlatformShareImportBridge {
     private fun readFileName(basePath: String, batchId: String): String? {
         val namePath = "$basePath/$batchId.$NameExtension"
         val nameData = NSData.dataWithContentsOfFile(namePath) ?: return null
-        val name = NSString.create(data = nameData, encoding = NSUTF8StringEncoding)?.toString()
+        val name = NSString.create(nameData, NSUTF8StringEncoding)?.toString()
         return name?.takeIf { it.isNotBlank() }
     }
 }
