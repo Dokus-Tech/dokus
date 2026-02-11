@@ -1,0 +1,184 @@
+name: Deploy Web to Vercel
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Deployment target"
+        required: true
+        default: "preview"
+        type: choice
+        options:
+          - preview
+          - production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  deploy-preview:
+    name: Deploy Preview
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'preview')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/job-set-up
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Check Vercel secrets
+        id: secrets
+        run: |
+          missing=()
+          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && missing+=("VERCEL_TOKEN")
+          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && missing+=("VERCEL_ORG_ID")
+          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && missing+=("VERCEL_PROJECT_ID")
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "missing=$(IFS=,; echo "${missing[*]}")" >> "$GITHUB_OUTPUT"
+            echo "Detected missing secrets: $(IFS=,; echo "${missing[*]}")"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Preview skipped summary
+        if: steps.secrets.outputs.available != 'true'
+        run: |
+          echo "## Vercel Preview Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          is_fork_pr="false"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            head_repo="$(jq -r '.pull_request.head.repo.full_name // ""' "$GITHUB_EVENT_PATH")"
+            if [ "$head_repo" != "${{ github.repository }}" ]; then
+              is_fork_pr="true"
+            fi
+          fi
+
+          if [ "$is_fork_pr" = "true" ]; then
+            echo "- Mode: preview" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Status: skipped (fork pull request; repository secrets are unavailable)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Mode: preview" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Status: skipped (missing required secrets: ${{ steps.secrets.outputs.missing }})." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Pull Vercel project settings (preview)
+        if: steps.secrets.outputs.available == 'true'
+        run: vercel pull --yes --environment=preview --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Build project artifacts (preview)
+        if: steps.secrets.outputs.available == 'true'
+        run: vercel build --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Deploy to Vercel (preview)
+        if: steps.secrets.outputs.available == 'true'
+        id: deploy_preview
+        run: |
+          set -euo pipefail
+          output="$(vercel deploy --prebuilt --yes --token="${{ secrets.VERCEL_TOKEN }}")"
+          echo "$output"
+
+          url="$(echo "$output" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
+          if [ -z "$url" ]; then
+            echo "::error::Could not parse preview deployment URL from Vercel output."
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Preview deployment summary
+        if: steps.secrets.outputs.available == 'true'
+        run: |
+          echo "## Vercel Preview Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: preview" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Status: success" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: ${{ steps.deploy_preview.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-production:
+    name: Deploy Production
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/job-set-up
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Validate required Vercel secrets
+        run: |
+          missing=()
+          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && missing+=("VERCEL_TOKEN")
+          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && missing+=("VERCEL_ORG_ID")
+          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && missing+=("VERCEL_PROJECT_ID")
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: $(IFS=,; echo "${missing[*]}")"
+            exit 1
+          fi
+
+      - name: Pull Vercel project settings (production)
+        run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Build project artifacts (production)
+        run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Deploy to Vercel (production)
+        id: deploy_production
+        run: |
+          set -euo pipefail
+          output="$(vercel deploy --prebuilt --prod --yes --token="${{ secrets.VERCEL_TOKEN }}")"
+          echo "$output"
+
+          url="$(echo "$output" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
+          if [ -z "$url" ]; then
+            echo "::error::Could not parse production deployment URL from Vercel output."
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Production deployment summary
+        run: |
+          echo "## Vercel Production Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: production" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Status: success" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: ${{ steps.deploy_production.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"

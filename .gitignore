@@ -25,6 +25,7 @@ captures
 .auto-claude/
 .worktrees
 .auto-claude-status
+.vercel/
 
 backendApp/logs/
 /deployment/.env
