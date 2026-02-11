@@ -121,6 +121,43 @@ class CashflowEntriesRepository {
     }
 
     /**
+     * Update an entry projection by source (Invoice/Expense).
+     * This is used for safe "re-confirm" flows to update the projection from the latest draft.
+     *
+     * CRITICAL: MUST filter by tenant_id.
+     */
+    suspend fun updateProjectionBySource(
+        tenantId: TenantId,
+        sourceType: CashflowSourceType,
+        sourceId: UUID,
+        documentId: DocumentId?,
+        direction: CashflowDirection,
+        eventDate: LocalDate,
+        amountGross: Money,
+        amountVat: Money,
+        contactId: ContactId?
+    ): Result<Boolean> = runCatching {
+        dbQuery {
+            val updated = CashflowEntriesTable.update({
+                (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (CashflowEntriesTable.sourceType eq sourceType) and
+                    (CashflowEntriesTable.sourceId eq sourceId)
+            }) {
+                it[CashflowEntriesTable.direction] = direction
+                it[CashflowEntriesTable.eventDate] = eventDate
+                it[CashflowEntriesTable.amountGross] = amountGross.toDbDecimal()
+                it[CashflowEntriesTable.amountVat] = amountVat.toDbDecimal()
+                it[CashflowEntriesTable.remainingAmount] = amountGross.toDbDecimal()
+                if (documentId != null) {
+                    it[CashflowEntriesTable.documentId] = UUID.fromString(documentId.toString())
+                }
+                it[CashflowEntriesTable.counterpartyId] = contactId?.let { id -> UUID.fromString(id.toString()) }
+            }
+            updated > 0
+        }
+    }
+
+    /**
      * Get entry by document ID.
      * CRITICAL: MUST filter by tenant_id.
      */

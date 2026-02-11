@@ -484,6 +484,7 @@ class InvoiceRepository(
                     (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[contactId] = UUID.fromString(request.contactId.toString())
+                it[direction] = request.direction
                 it[subtotalAmount] =
                     request.items.sumOf { item -> item.lineTotal.toDbDecimal() }
                 it[vatAmount] =

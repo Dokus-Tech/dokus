@@ -147,6 +147,54 @@ class CreditNoteRepository {
     }
 
     /**
+     * Update credit note details.
+     * CRITICAL: MUST filter by tenant_id.
+     *
+     * Does NOT update status; status transitions are handled separately.
+     */
+    suspend fun updateCreditNote(
+        creditNoteId: CreditNoteId,
+        tenantId: TenantId,
+        request: CreateCreditNoteRequest
+    ): Result<FinancialDocumentDto.CreditNoteDto> = runCatching {
+        dbQuery {
+            val exists = CreditNotesTable.selectAll().where {
+                (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
+                    (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+            }.count() > 0
+
+            if (!exists) {
+                throw IllegalArgumentException("Credit note not found or access denied")
+            }
+
+            CreditNotesTable.update({
+                (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
+                    (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+            }) {
+                it[contactId] = UUID.fromString(request.contactId.toString())
+                it[creditNoteType] = request.creditNoteType
+                it[creditNoteNumber] = request.creditNoteNumber
+                it[issueDate] = request.issueDate
+                it[subtotalAmount] = request.subtotalAmount.toDbDecimal()
+                it[vatAmount] = request.vatAmount.toDbDecimal()
+                it[totalAmount] = request.totalAmount.toDbDecimal()
+                it[currency] = request.currency
+                it[settlementIntent] = request.settlementIntent
+                it[reason] = request.reason
+                it[notes] = request.notes
+                it[documentId] = request.documentId?.let { id -> UUID.fromString(id.toString()) }
+            }
+
+            CreditNotesTable.selectAll().where {
+                (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
+                    (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
+            }.single().let { row ->
+                mapRowToDto(row)
+            }
+        }
+    }
+
+    /**
      * Update credit note status.
      * CRITICAL: MUST filter by tenant_id
      */

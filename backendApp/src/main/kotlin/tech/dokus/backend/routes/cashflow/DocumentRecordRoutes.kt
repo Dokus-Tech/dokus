@@ -365,7 +365,9 @@ internal fun Route.documentRecordRoutes() {
         /**
          * POST /api/v1/documents/{id}/confirm
          * Confirm using the latest draft and create financial entity.
-         * TRANSACTIONAL + IDEMPOTENT: fails if entity already exists for documentId.
+         * IDEMPOTENT + RECONFIRM-SAFE:
+         * - If already confirmed and entity exists, returns existing record.
+         * - If draft was edited after confirmation, re-confirm updates the existing entity + projection (when allowed).
          */
         post<Documents.Id.Confirm> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
@@ -440,8 +442,8 @@ internal fun Route.documentRecordRoutes() {
             val draftData = draft.extractedData
                 ?: throw DokusException.BadRequest("No draft data available for confirmation")
 
-            // Check if entity already exists for this document (idempotent check)
-            val existingEntity = findConfirmedEntity(
+            // Determine if an entity already exists (re-confirm path)
+            val existingEntityBeforeConfirm = findConfirmedEntity(
                 documentId,
                 draftType,
                 tenantId,
@@ -449,9 +451,6 @@ internal fun Route.documentRecordRoutes() {
                 expenseRepository,
                 creditNoteRepository
             )
-            if (existingEntity != null) {
-                throw DokusException.BadRequest("Entity already exists for this document")
-            }
 
             // Confirm document: creates entity + cashflow entry + marks draft confirmed
             val confirmationResult = confirmationDispatcher.confirm(
@@ -468,7 +467,7 @@ internal fun Route.documentRecordRoutes() {
             val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
             call.respond(
-                HttpStatusCode.Created,
+                if (existingEntityBeforeConfirm != null) HttpStatusCode.OK else HttpStatusCode.Created,
                 DocumentRecordDto(
                     document = documentWithUrl,
                     draft = updatedDraft.toDto(),

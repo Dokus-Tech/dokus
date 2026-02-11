@@ -31,6 +31,7 @@ class AutoConfirmPolicy(
 
         val draftType = draftData.toDocumentType()
         if (documentType == DocumentType.Unknown || draftType != documentType) return false
+        if (draftData is InvoiceDraftData && linkedContactId == null) return false
         if (draftData is CreditNoteDraftData && linkedContactId == null) return false
         if (directionResolvedFromAiHintOnly && draftData.requiresDirection()) return false
         if (!isDirectionValid(draftData)) return false

@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import tech.dokus.backend.util.isUniqueViolation
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
@@ -11,6 +12,7 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -33,6 +35,12 @@ class CashflowEntriesService(
 ) {
     private val logger = loggerFor()
 
+    private suspend fun getBySourceOrNull(
+        tenantId: TenantId,
+        sourceType: CashflowSourceType,
+        sourceId: UUID
+    ): CashflowEntry? = cashflowEntriesRepository.getBySource(tenantId, sourceType, sourceId).getOrThrow()
+
     /**
      * Create a cashflow entry for an invoice.
      */
@@ -47,7 +55,71 @@ class CashflowEntriesService(
         contactId: ContactId?
     ): Result<CashflowEntry> {
         logger.info("Creating cashflow entry for invoice: $invoiceId, tenant: $tenantId")
-        return cashflowEntriesRepository.createEntry(
+        return runCatching {
+            val existing = getBySourceOrNull(tenantId, CashflowSourceType.Invoice, invoiceId)
+            if (existing != null) return@runCatching existing
+
+            try {
+                cashflowEntriesRepository.createEntry(
+                    tenantId = tenantId,
+                    sourceType = CashflowSourceType.Invoice,
+                    sourceId = invoiceId,
+                    documentId = documentId,
+                    direction = if (direction == DocumentDirection.Inbound) CashflowDirection.Out else CashflowDirection.In,
+                    eventDate = dueDate,
+                    amountGross = amountGross,
+                    amountVat = amountVat,
+                    contactId = contactId
+                ).getOrThrow()
+            } catch (t: Throwable) {
+                if (t.isUniqueViolation()) {
+                    getBySourceOrNull(tenantId, CashflowSourceType.Invoice, invoiceId) ?: throw t
+                } else {
+                    throw t
+                }
+            }
+        }
+            .onSuccess { logger.info("Cashflow entry ready: ${it.id} for invoice: $invoiceId") }
+            .onFailure { logger.error("Failed to ensure cashflow entry for invoice: $invoiceId", it) }
+    }
+
+    /**
+     * Update an invoice cashflow projection from the latest draft.
+     *
+     * Safety rules (MVP):
+     * - Only allowed when entry is OPEN and unpaid (remaining == gross, paidAt == null).
+     * - Creates the entry if missing (invariant repair).
+     */
+    suspend fun updateFromInvoice(
+        tenantId: TenantId,
+        invoiceId: UUID,
+        documentId: DocumentId?,
+        dueDate: LocalDate,
+        amountGross: Money,
+        amountVat: Money,
+        direction: DocumentDirection,
+        contactId: ContactId?
+    ): Result<CashflowEntry> = runCatching {
+        val existing = getBySourceOrNull(tenantId, CashflowSourceType.Invoice, invoiceId)
+            ?: return@runCatching createFromInvoice(
+                tenantId = tenantId,
+                invoiceId = invoiceId,
+                documentId = documentId,
+                dueDate = dueDate,
+                amountGross = amountGross,
+                amountVat = amountVat,
+                direction = direction,
+                contactId = contactId
+            ).getOrThrow()
+
+        if (existing.status != CashflowEntryStatus.Open) {
+            throw DokusException.BadRequest("Cashflow entry is not editable: status=${existing.status}")
+        }
+        if (existing.paidAt != null || existing.remainingAmount != existing.amountGross) {
+            throw DokusException.BadRequest("Cashflow entry has payments recorded and cannot be updated")
+        }
+
+        cashflowEntriesRepository.updateProjectionBySource(
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,
             sourceId = invoiceId,
@@ -57,9 +129,10 @@ class CashflowEntriesService(
             amountGross = amountGross,
             amountVat = amountVat,
             contactId = contactId
-        )
-            .onSuccess { logger.info("Cashflow entry created: ${it.id} for invoice: $invoiceId") }
-            .onFailure { logger.error("Failed to create cashflow entry for invoice: $invoiceId", it) }
+        ).getOrThrow()
+
+        getBySourceOrNull(tenantId, CashflowSourceType.Invoice, invoiceId)
+            ?: error("Cashflow entry not found after update: invoiceId=$invoiceId")
     }
 
     /**
@@ -75,7 +148,69 @@ class CashflowEntriesService(
         contactId: ContactId?
     ): Result<CashflowEntry> {
         logger.info("Creating cashflow entry for expense: $expenseId, tenant: $tenantId")
-        return cashflowEntriesRepository.createEntry(
+        return runCatching {
+            val existing = getBySourceOrNull(tenantId, CashflowSourceType.Expense, expenseId)
+            if (existing != null) return@runCatching existing
+
+            try {
+                cashflowEntriesRepository.createEntry(
+                    tenantId = tenantId,
+                    sourceType = CashflowSourceType.Expense,
+                    sourceId = expenseId,
+                    documentId = documentId,
+                    direction = CashflowDirection.Out,
+                    eventDate = expenseDate,
+                    amountGross = amountGross,
+                    amountVat = amountVat,
+                    contactId = contactId
+                ).getOrThrow()
+            } catch (t: Throwable) {
+                if (t.isUniqueViolation()) {
+                    getBySourceOrNull(tenantId, CashflowSourceType.Expense, expenseId) ?: throw t
+                } else {
+                    throw t
+                }
+            }
+        }
+            .onSuccess { logger.info("Cashflow entry ready: ${it.id} for expense: $expenseId") }
+            .onFailure { logger.error("Failed to ensure cashflow entry for expense: $expenseId", it) }
+    }
+
+    /**
+     * Update an expense cashflow projection from the latest draft.
+     *
+     * Safety rules (MVP):
+     * - Only allowed when entry is OPEN and unpaid (remaining == gross, paidAt == null).
+     * - Creates the entry if missing (invariant repair).
+     */
+    suspend fun updateFromExpense(
+        tenantId: TenantId,
+        expenseId: UUID,
+        documentId: DocumentId?,
+        expenseDate: LocalDate,
+        amountGross: Money,
+        amountVat: Money,
+        contactId: ContactId?
+    ): Result<CashflowEntry> = runCatching {
+        val existing = getBySourceOrNull(tenantId, CashflowSourceType.Expense, expenseId)
+            ?: return@runCatching createFromExpense(
+                tenantId = tenantId,
+                expenseId = expenseId,
+                documentId = documentId,
+                expenseDate = expenseDate,
+                amountGross = amountGross,
+                amountVat = amountVat,
+                contactId = contactId
+            ).getOrThrow()
+
+        if (existing.status != CashflowEntryStatus.Open) {
+            throw DokusException.BadRequest("Cashflow entry is not editable: status=${existing.status}")
+        }
+        if (existing.paidAt != null || existing.remainingAmount != existing.amountGross) {
+            throw DokusException.BadRequest("Cashflow entry has payments recorded and cannot be updated")
+        }
+
+        cashflowEntriesRepository.updateProjectionBySource(
             tenantId = tenantId,
             sourceType = CashflowSourceType.Expense,
             sourceId = expenseId,
@@ -85,9 +220,10 @@ class CashflowEntriesService(
             amountGross = amountGross,
             amountVat = amountVat,
             contactId = contactId
-        )
-            .onSuccess { logger.info("Cashflow entry created: ${it.id} for expense: $expenseId") }
-            .onFailure { logger.error("Failed to create cashflow entry for expense: $expenseId", it) }
+        ).getOrThrow()
+
+        getBySourceOrNull(tenantId, CashflowSourceType.Expense, expenseId)
+            ?: error("Cashflow entry not found after update: expenseId=$expenseId")
     }
 
     /**
@@ -108,19 +244,32 @@ class CashflowEntriesService(
         contactId: ContactId?
     ): Result<CashflowEntry> {
         logger.info("Creating cashflow entry for refund: creditNote=$creditNoteId, direction=$direction")
-        return cashflowEntriesRepository.createEntry(
-            tenantId = tenantId,
-            sourceType = CashflowSourceType.Refund,
-            sourceId = creditNoteId,
-            documentId = documentId,
-            direction = direction,
-            eventDate = refundDate,
-            amountGross = amountGross,
-            amountVat = amountVat,
-            contactId = contactId
-        )
-            .onSuccess { logger.info("Cashflow entry created: ${it.id} for refund: $creditNoteId") }
-            .onFailure { logger.error("Failed to create cashflow entry for refund: $creditNoteId", it) }
+        return runCatching {
+            val existing = getBySourceOrNull(tenantId, CashflowSourceType.Refund, creditNoteId)
+            if (existing != null) return@runCatching existing
+
+            try {
+                cashflowEntriesRepository.createEntry(
+                    tenantId = tenantId,
+                    sourceType = CashflowSourceType.Refund,
+                    sourceId = creditNoteId,
+                    documentId = documentId,
+                    direction = direction,
+                    eventDate = refundDate,
+                    amountGross = amountGross,
+                    amountVat = amountVat,
+                    contactId = contactId
+                ).getOrThrow()
+            } catch (t: Throwable) {
+                if (t.isUniqueViolation()) {
+                    getBySourceOrNull(tenantId, CashflowSourceType.Refund, creditNoteId) ?: throw t
+                } else {
+                    throw t
+                }
+            }
+        }
+            .onSuccess { logger.info("Cashflow entry ready: ${it.id} for refund: $creditNoteId") }
+            .onFailure { logger.error("Failed to ensure cashflow entry for refund: $creditNoteId", it) }
     }
 
     /**

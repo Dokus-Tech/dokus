@@ -280,23 +280,52 @@ class PeppolService(
             val processedDocuments = mutableListOf<ProcessedPeppolDocument>()
 
             for (inboxItem in inboxItems) {
+                var transmissionId: PeppolTransmissionId? = null
                 try {
-                    // Dedupe: avoid re-importing documents during weekly/full sync.
-                    // Use the provider document id as stable externalDocumentId.
-                    val alreadyImported = transmissionRepository
-                        .existsByExternalDocumentId(tenantId, inboxItem.id)
+                    // Dedupe + retry safety:
+                    // - Delivered/Rejected: skip (best-effort mark as read)
+                    // - Pending/Failed: retry processing (no poisoning)
+                    val existingTransmission = transmissionRepository
+                        .getByExternalDocumentId(tenantId, inboxItem.id)
                         .getOrThrow()
-                    if (alreadyImported) {
-                        logger.debug("Skipping already-imported Peppol document {}", inboxItem.id)
+
+                    if (existingTransmission != null &&
+                        existingTransmission.status in setOf(PeppolStatus.Delivered, PeppolStatus.Rejected)
+                    ) {
+                        logger.debug(
+                            "Skipping already-processed Peppol document {} (status={})",
+                            inboxItem.id,
+                            existingTransmission.status
+                        )
                         provider.markAsRead(inboxItem.id).getOrNull() // Best-effort
                         continue
                     }
+
+                    // Create/reuse transmission record early so failures are visible + retryable.
+                    val peppolDocumentType = inboxItem.documentType
+                    val transmission = existingTransmission ?: transmissionRepository.createTransmission(
+                        tenantId = tenantId,
+                        direction = PeppolTransmissionDirection.Inbound,
+                        documentType = peppolDocumentType,
+                        externalDocumentId = inboxItem.id,
+                        senderPeppolId = PeppolId(inboxItem.senderPeppolId),
+                    ).getOrThrow()
+                    transmissionId = transmission.id
 
                     // Validate incoming document
                     val validationResult =
                         validator.validateIncoming(inboxItem.id, inboxItem.senderPeppolId)
                     if (!validationResult.isValid) {
-                        logger.warn("Skipping invalid incoming document ${inboxItem.id}: ${validationResult.errors}")
+                        val message = "Validation failed: ${validationResult.errors.joinToString("; ")}"
+                        logger.warn("Rejecting invalid incoming document ${inboxItem.id}: ${validationResult.errors}")
+                        transmissionRepository.updateTransmissionResult(
+                            transmissionId = transmission.id,
+                            tenantId = tenantId,
+                            status = PeppolStatus.Rejected,
+                            externalDocumentId = inboxItem.id,
+                            errorMessage = message
+                        ).getOrThrow()
+                        provider.markAsRead(inboxItem.id).getOrNull() // Best-effort
                         continue
                     }
 
@@ -307,16 +336,6 @@ class PeppolService(
                     val rawDetail = (provider as? RecommandProvider)
                         ?.getDocumentDetail(inboxItem.id)
                         ?.getOrNull()
-
-                    // Create transmission record
-                    val peppolDocumentType = inboxItem.documentType
-                    val transmission = transmissionRepository.createTransmission(
-                        tenantId = tenantId,
-                        direction = PeppolTransmissionDirection.Inbound,
-                        documentType = peppolDocumentType,
-                        externalDocumentId = inboxItem.id,
-                        senderPeppolId = PeppolId(inboxItem.senderPeppolId),
-                    ).getOrThrow()
 
                     // Convert to normalized draft data
                     val draftData = mapper.toDraftData(fullDocument, inboxItem.senderPeppolId)
@@ -360,6 +379,17 @@ class PeppolService(
                     )
                 } catch (e: Exception) {
                     logger.error("Failed to process incoming document ${inboxItem.id}", e)
+                    // Mark transmission as failed (retryable) and do NOT mark as read.
+                    val tid = transmissionId
+                    if (tid != null) {
+                        transmissionRepository.updateTransmissionResult(
+                            transmissionId = tid,
+                            tenantId = tenantId,
+                            status = PeppolStatus.Failed,
+                            externalDocumentId = inboxItem.id,
+                            errorMessage = e.message
+                        ).getOrNull()
+                    }
                     // Continue processing other documents
                 }
             }

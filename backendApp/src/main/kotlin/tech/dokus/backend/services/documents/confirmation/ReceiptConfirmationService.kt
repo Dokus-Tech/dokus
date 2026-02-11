@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.documents.confirmation
 
+import tech.dokus.backend.util.isUniqueViolation
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
@@ -41,7 +42,8 @@ class ReceiptConfirmationService(
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming receipt document: $documentId for tenant: $tenantId")
 
-        ensureDraftConfirmable(draftRepository, tenantId, documentId)
+        val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
+        val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
         val date = draftData.date ?: throw DokusException.BadRequest("Date is required")
         val merchant = draftData.merchantName ?: throw DokusException.BadRequest("Merchant is required")
@@ -74,17 +76,43 @@ class ReceiptConfirmationService(
             notes = draftData.notes
         )
 
-        val expense = expenseRepository.createExpense(tenantId, request).getOrThrow()
+        val existingExpense = expenseRepository.findByDocumentId(tenantId, documentId)
+        val expense = when {
+            existingExpense == null -> {
+                expenseRepository.createExpense(tenantId, request).getOrElse { t ->
+                    if (!t.isUniqueViolation()) throw t
+                    expenseRepository.findByDocumentId(tenantId, documentId) ?: throw t
+                }
+            }
 
-        val cashflowEntry = cashflowEntriesService.createFromExpense(
-            tenantId = tenantId,
-            expenseId = expense.id.value.toJavaUuid(),
-            documentId = documentId,
-            expenseDate = date,
-            amountGross = expense.amount,
-            amountVat = expense.vatAmount ?: Money.ZERO,
-            contactId = linkedContactId
-        ).getOrThrow()
+            isReconfirm -> {
+                expenseRepository.updateExpense(existingExpense.id, tenantId, request).getOrThrow()
+            }
+
+            else -> existingExpense
+        }
+
+        val cashflowEntry = if (existingExpense != null && isReconfirm) {
+            cashflowEntriesService.updateFromExpense(
+                tenantId = tenantId,
+                expenseId = expense.id.value.toJavaUuid(),
+                documentId = documentId,
+                expenseDate = date,
+                amountGross = expense.amount,
+                amountVat = expense.vatAmount ?: Money.ZERO,
+                contactId = linkedContactId
+            ).getOrThrow()
+        } else {
+            cashflowEntriesService.createFromExpense(
+                tenantId = tenantId,
+                expenseId = expense.id.value.toJavaUuid(),
+                documentId = documentId,
+                expenseDate = date,
+                amountGross = expense.amount,
+                amountVat = expense.vatAmount ?: Money.ZERO,
+                contactId = linkedContactId
+            ).getOrThrow()
+        }
 
         draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 

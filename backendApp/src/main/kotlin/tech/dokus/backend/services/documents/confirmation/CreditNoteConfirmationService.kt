@@ -1,10 +1,12 @@
 package tech.dokus.backend.services.documents.confirmation
 
+import tech.dokus.backend.util.isUniqueViolation
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.CreditNoteType
+import tech.dokus.domain.enums.CreditNoteStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.SettlementIntent
 import tech.dokus.domain.exceptions.DokusException
@@ -37,9 +39,10 @@ class CreditNoteConfirmationService(
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming credit note document: $documentId for tenant: $tenantId")
 
-        ensureDraftConfirmable(draftRepository, tenantId, documentId)
+        val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
+        val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
-        val contactId = linkedContactId
+        val contactId = linkedContactId ?: draft.linkedContactId
             ?: throw DokusException.BadRequest("Credit note requires a linked contact")
         val creditNoteType = when (draftData.direction) {
             DocumentDirection.Outbound -> CreditNoteType.Sales
@@ -57,29 +60,54 @@ class CreditNoteConfirmationService(
         val totalAmount = draftData.totalAmount
             ?: throw DokusException.BadRequest("Credit note total amount is required")
 
-        val created = creditNoteService.createCreditNote(
-            tenantId = tenantId,
-            request = CreateCreditNoteRequest(
-                contactId = contactId,
-                creditNoteType = creditNoteType,
-                creditNoteNumber = creditNoteNumber,
-                issueDate = issueDate,
-                subtotalAmount = subtotalAmount,
-                vatAmount = vatAmount,
-                totalAmount = totalAmount,
-                currency = draftData.currency,
-                settlementIntent = SettlementIntent.Unknown,
-                reason = draftData.reason,
-                notes = draftData.notes,
-                documentId = documentId
-            )
-        ).getOrThrow()
+        val existingCreditNote = creditNoteService.findByDocumentId(tenantId, documentId)
+        val requestBase = CreateCreditNoteRequest(
+            contactId = contactId,
+            creditNoteType = creditNoteType,
+            creditNoteNumber = creditNoteNumber,
+            issueDate = issueDate,
+            subtotalAmount = subtotalAmount,
+            vatAmount = vatAmount,
+            totalAmount = totalAmount,
+            currency = draftData.currency,
+            settlementIntent = SettlementIntent.Unknown,
+            reason = draftData.reason,
+            notes = draftData.notes,
+            documentId = documentId
+        )
 
-        val confirmed = creditNoteService.confirmCreditNote(created.id, tenantId).getOrThrow()
+        val updatedOrCreated = when {
+            existingCreditNote == null -> {
+                creditNoteService.createCreditNote(
+                    tenantId = tenantId,
+                    request = requestBase
+                ).getOrElse { t ->
+                    if (!t.isUniqueViolation()) throw t
+                    creditNoteService.findByDocumentId(tenantId, documentId) ?: throw t
+                }
+            }
+
+            isReconfirm -> {
+                if (existingCreditNote.status !in setOf(CreditNoteStatus.Draft, CreditNoteStatus.Confirmed)) {
+                    throw DokusException.BadRequest("Cannot re-confirm credit note in status: ${existingCreditNote.status}")
+                }
+
+                val request = requestBase.copy(settlementIntent = existingCreditNote.settlementIntent)
+                creditNoteService.updateCreditNote(existingCreditNote.id, tenantId, request).getOrThrow()
+            }
+
+            else -> existingCreditNote
+        }
+
+        val confirmed = if (updatedOrCreated.status == CreditNoteStatus.Draft) {
+            creditNoteService.confirmCreditNote(updatedOrCreated.id, tenantId).getOrThrow()
+        } else {
+            updatedOrCreated
+        }
 
         draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 
-        logger.info("Credit note confirmed: $documentId -> creditNoteId=${created.id}")
+        logger.info("Credit note confirmed: $documentId -> creditNoteId=${confirmed.id}")
         ConfirmationResult(entity = confirmed, cashflowEntryId = null, documentId = documentId)
     }
 }
