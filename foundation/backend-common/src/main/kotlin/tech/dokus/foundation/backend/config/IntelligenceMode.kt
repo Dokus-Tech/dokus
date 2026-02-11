@@ -64,7 +64,7 @@ enum class IntelligenceMode(
     Autonomous(
         dbValue = "AUTONOMOUS",
         orchestratorModel = "qwen/qwen3-32b",
-        visionModel = "qwen/qwen3-vl-8b",
+        visionModel = "qwen/qwen3-vl-30b",
         chatModel = "qwen/qwen3-32b",
         maxIterations = 64,
     ),
