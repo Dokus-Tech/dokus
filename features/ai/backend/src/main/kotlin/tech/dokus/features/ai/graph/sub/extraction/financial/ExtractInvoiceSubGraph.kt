@@ -63,11 +63,12 @@ data class InvoiceExtractionResult(
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractInvoiceSubGraph(
     aiConfig: AIConfig,
+    tools: List<Tool<*, *>>
 ): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult.Invoice> {
     return subgraphWithTask(
         name = "Extract invoice information",
         llmModel = aiConfig.mode.asVisionModel,
-        tools = emptyList(),
+        tools = tools,
         llmParams = LLMParams.documentProcessing,
         assistantResponseRepeatMax = assistantResponseRepeatMax,
         finishTool = InvoiceExtractionFinishTool()

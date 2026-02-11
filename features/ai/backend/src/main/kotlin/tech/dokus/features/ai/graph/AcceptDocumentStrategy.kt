@@ -28,7 +28,7 @@ data class AcceptDocumentInput(
 
 fun acceptDocumentGraph(
     aiConfig: AIConfig,
-    _registries: List<ToolRegistry>,
+    registry: ToolRegistry,
     documentFetcher: DocumentFetcher,
 ): AIAgentGraphStrategy<AcceptDocumentInput, DocumentAiProcessingResult> {
     return strategy<AcceptDocumentInput, DocumentAiProcessingResult>("accept-document-graph") {
@@ -50,7 +50,8 @@ fun acceptDocumentGraph(
             condition = { result ->
                 val classificationConfidence = result.classification.confidence
                 val extractionConfidence = result.extraction.confidenceScore()
-                val meetsConfidence = classificationConfidence >= confirmThreshold && extractionConfidence >= confirmThreshold
+                val meetsConfidence =
+                    classificationConfidence >= confirmThreshold && extractionConfidence >= confirmThreshold
                 val isValid = result.auditReport.isValid
 
                 if (meetsConfidence && isValid) {
@@ -60,7 +61,7 @@ fun acceptDocumentGraph(
                 }
             }
         ) {
-            val process by documentProcessingSubGraph(aiConfig, documentFetcher)
+            val process by documentProcessingSubGraph(aiConfig, documentFetcher, registry.tools)
             nodeStart then process then nodeFinish
         }
 

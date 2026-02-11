@@ -12,7 +12,6 @@ import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.ModelSet
 import tech.dokus.features.ai.prompts.ChatPrompt
 import tech.dokus.features.ai.services.ChunkingService
-import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.RAGService
@@ -23,6 +22,7 @@ import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.CachingConfig
+import tech.dokus.foundation.backend.lookup.CbeApiClient
 
 fun aiModule() = module {
     // =========================================================================
@@ -73,7 +73,7 @@ fun aiModule() = module {
     factory<ToolRegistry>(named<TenantDocumentsRegistry>()) { (args: TenantDocumentsRegistry.Args) ->
         TenantDocumentsRegistry(
             tenantId = args.tenantId,
-            documentFetcher = get<DocumentFetcher>(),
+            cbeApiClient = get<CbeApiClient>(),
         )
     }
 }

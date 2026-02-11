@@ -33,20 +33,16 @@ class LegalEntitiesTools(
     suspend fun lookupCompany(
         @LLMDescription("The Belgian VAT number to look up. Can include 'BE' prefix, spaces, or dots. Examples: 'BE0123456789', '0123.456.789', 'BE 0123 456 789'")
         vatNumber: String
-    ): Result<EntityLookup> {
+    ): EntityLookup? {
         // Create and normalize the VAT number
         val vatNumber = VatNumber(vatNumber).also {
             // Check if input looks valid enough to process
-            if (it.normalized.isBlank()) {
-                return Result.failure(IllegalArgumentException("ERROR: Could not parse VAT number '${vatNumber}'"))
-            }
-            if (!it.isBelgian) {
-                return Result.failure(IllegalArgumentException("ERROR: Not Belgian number"))
-            }
+            if (it.normalized.isBlank()) return null
+            if (!it.isBelgian) return null
         }
 
         // Look up in CBE
-        return cbeApiClient.searchByVat(vatNumber)
+        return cbeApiClient.searchByVat(vatNumber).getOrNull()
     }
 
     @Tool

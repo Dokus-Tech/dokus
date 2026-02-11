@@ -3,6 +3,7 @@ package tech.dokus.features.ai.graph.sub
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.dsl.builder.forwardTo
+import ai.koog.agents.core.tools.Tool
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractBillSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractCreditNoteSubGraph
@@ -17,9 +18,10 @@ import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.financialExtractionSubGraph(
     aiConfig: AIConfig,
+    tools: List<Tool<*, *>>
 ): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult> {
     return subgraph(name = "financial-extraction") {
-        val extractInvoice by extractInvoiceSubGraph(aiConfig)
+        val extractInvoice by extractInvoiceSubGraph(aiConfig, tools)
         val extractBill by extractBillSubGraph(aiConfig)
         val extractCreditNote by extractCreditNoteSubGraph(aiConfig)
         val extractQuote by extractQuoteSubGraph(aiConfig)
