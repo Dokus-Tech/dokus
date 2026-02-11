@@ -48,6 +48,11 @@ object ExtractionToolDescriptions {
     const val BuyerCity = "Buyer city if visible."
     const val BuyerCountry = "Buyer country code or name if visible."
 
+    const val MerchantVat = "Merchant VAT number if visible on receipt. Null if not visible."
+
+    const val DirectionHint = "Optional business direction hint relative to tenant: INBOUND, OUTBOUND, or UNKNOWN."
+    const val DirectionHintConfidence = "Optional confidence score (0.0-1.0) for directionHint."
+
     const val CounterpartyName = "Counterparty name (customer or supplier depending on direction). Null if unclear."
     const val CounterpartyVat = "Counterparty VAT number if shown. Null if not visible."
 
@@ -69,7 +74,6 @@ object ExtractionToolDescriptions {
     const val VatBreakdownBase = "Taxable base (excl VAT) for this rate as plain number string."
     const val VatBreakdownAmount = "VAT amount for this rate as plain number string."
 
-    const val CreditNoteDirection = "Direction: SALES (we issued) or PURCHASE (we received). UNKNOWN if unclear."
     const val OriginalInvoiceNumber = "Original invoice number if referenced. Null if not visible."
     const val CreditNoteReason = "Reason for credit note if explicitly stated. Null if not visible."
 

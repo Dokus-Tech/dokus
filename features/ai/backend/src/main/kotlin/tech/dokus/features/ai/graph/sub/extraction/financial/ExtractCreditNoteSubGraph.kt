@@ -11,6 +11,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
@@ -18,8 +19,8 @@ import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.config.assistantResponseRepeatMax
 import tech.dokus.features.ai.config.documentProcessing
 import tech.dokus.features.ai.models.ExtractDocumentInput
-import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
+import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.LineItemToolInput
 import tech.dokus.features.ai.models.VatBreakdownToolInput
 import tech.dokus.features.ai.models.toDomain
@@ -39,17 +40,9 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractCreditNoteSubGraph(
 }
 
 @Serializable
-enum class CreditNoteDirection {
-    SALES,     // we issued it to a customer
-    PURCHASE,  // supplier issued it to us
-    UNKNOWN
-}
-
-@Serializable
 @SerialName("CreditNoteExtractionResult")
 data class CreditNoteExtractionResult(
     val creditNoteNumber: String?,
-    val direction: CreditNoteDirection,   // SALES / PURCHASE / UNKNOWN
 
     val issueDate: LocalDate?,
 
@@ -61,8 +54,15 @@ data class CreditNoteExtractionResult(
     val lineItems: List<FinancialLineItem> = emptyList(),
     val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
 
-    val counterpartyName: String?,        // customer or supplier depending on direction
-    val counterpartyVat: VatNumber?,
+    // Neutral parties (facts only)
+    val sellerName: String?,
+    val sellerVat: VatNumber?,
+    val buyerName: String?,
+    val buyerVat: VatNumber?,
+
+    // Optional tie-breaker hint (never overrides VAT evidence)
+    val directionHint: DocumentDirection = DocumentDirection.Unknown,
+    val directionHintConfidence: Double? = null,
 
     val originalInvoiceNumber: String?,   // if referenced
     val reason: String?,                  // if explicit (e.g. "Remboursement", "Retour")
@@ -75,8 +75,6 @@ data class CreditNoteExtractionResult(
 data class CreditNoteExtractionToolInput(
     @property:LLMDescription(ExtractionToolDescriptions.CreditNoteNumber)
     val creditNoteNumber: String?,
-    @property:LLMDescription(ExtractionToolDescriptions.CreditNoteDirection)
-    val direction: CreditNoteDirection = CreditNoteDirection.UNKNOWN,
     @property:LLMDescription(ExtractionToolDescriptions.IssueDate)
     val issueDate: LocalDate?,
     @property:LLMDescription(ExtractionToolDescriptions.Currency)
@@ -91,10 +89,18 @@ data class CreditNoteExtractionToolInput(
     val lineItems: List<LineItemToolInput>? = null,
     @property:LLMDescription(ExtractionToolDescriptions.VatBreakdown)
     val vatBreakdown: List<VatBreakdownToolInput>? = null,
-    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyName)
-    val counterpartyName: String?,
-    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyVat)
-    val counterpartyVat: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.SellerName)
+    val sellerName: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.SellerVat)
+    val sellerVat: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.BuyerName)
+    val buyerName: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.BuyerVat)
+    val buyerVat: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.DirectionHint)
+    val directionHint: DocumentDirection = DocumentDirection.Unknown,
+    @property:LLMDescription(ExtractionToolDescriptions.DirectionHintConfidence)
+    val directionHintConfidence: Double? = null,
     @property:LLMDescription(ExtractionToolDescriptions.OriginalInvoiceNumber)
     val originalInvoiceNumber: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.CreditNoteReason)
@@ -116,7 +122,6 @@ private class CreditNoteExtractionFinishTool :
         return FinancialExtractionResult.CreditNote(
             CreditNoteExtractionResult(
                 creditNoteNumber = args.creditNoteNumber,
-                direction = args.direction,
                 issueDate = args.issueDate,
                 currency = Currency.from(args.currency),
                 subtotalAmount = Money.from(args.subtotalAmount),
@@ -124,8 +129,12 @@ private class CreditNoteExtractionFinishTool :
                 totalAmount = Money.from(args.totalAmount),
                 lineItems = args.lineItems.orEmpty().mapNotNull { it.toDomain() },
                 vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
-                counterpartyName = args.counterpartyName,
-                counterpartyVat = VatNumber.from(args.counterpartyVat),
+                sellerName = args.sellerName,
+                sellerVat = VatNumber.from(args.sellerVat),
+                buyerName = args.buyerName,
+                buyerVat = VatNumber.from(args.buyerVat),
+                directionHint = args.directionHint,
+                directionHintConfidence = args.directionHintConfidence,
                 originalInvoiceNumber = args.originalInvoiceNumber,
                 reason = args.reason,
                 confidence = args.confidence,
@@ -146,11 +155,16 @@ private val ExtractDocumentInput.creditNotePrompt: String
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
 
-    ## DIRECTION (SALES vs PURCHASE)
-    Determine direction if possible:
-    - SALES: we are the issuer (our company in header/logo), crediting a customer
-    - PURCHASE: supplier is issuer, crediting us
-    If unclear, set direction = UNKNOWN.
+    ## PARTY EXTRACTION (CRITICAL)
+    - `seller*`: entity that ISSUED the credit note (header/logo issuer area).
+    - `buyer*`: credited-to/recipient entity.
+    - Always extract both seller and buyer when visible.
+    - Do not swap seller/buyer based on assumptions.
+
+    ## OPTIONAL DIRECTION HINT
+    - Provide `directionHint` only when explicit from the paper.
+    - Use UNKNOWN when unsure.
+    - If you provide `directionHint`, provide `directionHintConfidence` in range 0.0-1.0.
 
     ## REFERENCES
     If the credit note references an original invoice number/date, extract originalInvoiceNumber.

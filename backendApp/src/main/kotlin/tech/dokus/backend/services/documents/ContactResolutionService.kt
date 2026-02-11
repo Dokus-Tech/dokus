@@ -3,7 +3,6 @@ package tech.dokus.backend.services.documents
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
-import tech.dokus.domain.enums.CreditNoteDirection
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
@@ -17,8 +16,8 @@ import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
-import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.ContactAddressInput
+import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.entity.EntityStatus
 import tech.dokus.domain.util.JaroWinkler
@@ -46,7 +45,11 @@ class ContactResolutionService(
         val name = snapshot.name?.trim().orEmpty().takeIf { it.isNotEmpty() }
         val vat = snapshot.vatNumber
         val iban = snapshot.iban
-        val strictAutoLink = draftData is CreditNoteDraftData && draftData.direction == CreditNoteDirection.Unknown
+        val strictAutoLink = when (draftData) {
+            is InvoiceDraftData -> draftData.direction == DocumentDirection.Unknown
+            is ReceiptDraftData -> draftData.direction == DocumentDirection.Unknown
+            is CreditNoteDraftData -> draftData.direction == DocumentDirection.Unknown
+        }
 
         val suggestions = mutableListOf<SuggestedContact>()
 
@@ -299,17 +302,64 @@ class ContactResolutionService(
             )
         }
         is CreditNoteDraftData -> CounterpartySnapshot(
-            name = draftData.counterpartyName,
-            vatNumber = draftData.counterpartyVat,
+            name = when (draftData.direction) {
+                DocumentDirection.Inbound -> draftData.seller.name ?: draftData.counterpartyName
+                DocumentDirection.Outbound -> draftData.buyer.name ?: draftData.counterpartyName
+                DocumentDirection.Unknown -> draftData.counterpartyName
+                    ?: draftData.buyer.name
+                    ?: draftData.seller.name
+            },
+            vatNumber = when (draftData.direction) {
+                DocumentDirection.Inbound -> draftData.seller.vat ?: draftData.counterpartyVat
+                DocumentDirection.Outbound -> draftData.buyer.vat ?: draftData.counterpartyVat
+                DocumentDirection.Unknown -> draftData.counterpartyVat
+                    ?: draftData.buyer.vat
+                    ?: draftData.seller.vat
+            },
             iban = null,
             email = null,
+            streetLine1 = when (draftData.direction) {
+                DocumentDirection.Inbound -> draftData.seller.streetLine1
+                DocumentDirection.Outbound -> draftData.buyer.streetLine1
+                DocumentDirection.Unknown -> draftData.buyer.streetLine1 ?: draftData.seller.streetLine1
+            },
+            streetLine2 = when (draftData.direction) {
+                DocumentDirection.Inbound -> draftData.seller.streetLine2
+                DocumentDirection.Outbound -> draftData.buyer.streetLine2
+                DocumentDirection.Unknown -> draftData.buyer.streetLine2 ?: draftData.seller.streetLine2
+            },
+            postalCode = when (draftData.direction) {
+                DocumentDirection.Inbound -> draftData.seller.postalCode
+                DocumentDirection.Outbound -> draftData.buyer.postalCode
+                DocumentDirection.Unknown -> draftData.buyer.postalCode ?: draftData.seller.postalCode
+            },
+            city = when (draftData.direction) {
+                DocumentDirection.Inbound -> draftData.seller.city
+                DocumentDirection.Outbound -> draftData.buyer.city
+                DocumentDirection.Unknown -> draftData.buyer.city ?: draftData.seller.city
+            },
+            country = null
         )
-        is ReceiptDraftData -> CounterpartySnapshot(
-            name = draftData.merchantName,
-            vatNumber = draftData.merchantVat,
-            iban = null,
-            email = null,
-        )
+        is ReceiptDraftData -> when (draftData.direction) {
+            DocumentDirection.Inbound -> CounterpartySnapshot(
+                name = draftData.merchantName,
+                vatNumber = draftData.merchantVat,
+                iban = null,
+                email = null,
+            )
+            DocumentDirection.Outbound -> CounterpartySnapshot(
+                name = null,
+                vatNumber = null,
+                iban = null,
+                email = null,
+            )
+            DocumentDirection.Unknown -> CounterpartySnapshot(
+                name = draftData.merchantName,
+                vatNumber = draftData.merchantVat,
+                iban = null,
+                email = null,
+            )
+        }
     }
 
     private suspend fun resolveCbeStatus(vat: VatNumber): EntityStatus? {

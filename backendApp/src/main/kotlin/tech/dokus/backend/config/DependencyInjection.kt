@@ -33,7 +33,6 @@ import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
-import tech.dokus.backend.services.documents.DocumentDirectionResolver
 import tech.dokus.backend.services.documents.StorageDocumentFetcher
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
@@ -301,7 +300,6 @@ private fun documentProcessingModule() = module {
 
     // Contact resolution (deterministic post-processing)
     singleOf(::ContactResolutionService)
-    singleOf(::DocumentDirectionResolver)
     singleOf(::AutoConfirmPolicy)
 
     // Document Processing Worker

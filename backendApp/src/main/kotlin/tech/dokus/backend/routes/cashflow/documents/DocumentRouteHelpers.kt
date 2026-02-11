@@ -101,11 +101,7 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
 private fun DocumentDraftData?.directionOrUnknown(): DocumentDirection = when (this) {
     is InvoiceDraftData -> this.direction
     is ReceiptDraftData -> this.direction
-    is CreditNoteDraftData -> when (this.direction) {
-        tech.dokus.domain.enums.CreditNoteDirection.Sales -> DocumentDirection.Outbound
-        tech.dokus.domain.enums.CreditNoteDirection.Purchase -> DocumentDirection.Inbound
-        tech.dokus.domain.enums.CreditNoteDirection.Unknown -> DocumentDirection.Unknown
-    }
+    is CreditNoteDraftData -> this.direction
     null -> DocumentDirection.Unknown
 }
 

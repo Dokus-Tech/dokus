@@ -5,6 +5,7 @@ import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.annotation.ExperimentalAgentsApi
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.tools.ToolRegistry
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.DynamicTest
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestFactory
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.graph.sub.ClassificationResult
@@ -20,7 +20,6 @@ import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
 import tech.dokus.features.ai.graph.sub.documentPreparationSubGraph
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
-import tech.dokus.features.ai.tools.TenantDocumentsRegistry
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -76,11 +75,10 @@ class ClassificationGraphTest {
             Result.success(FetchedDocumentData(documentBytes, "application/pdf"))
         }
 
-        val tenantId = TenantId.generate()
-        val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher)
+        val toolRegistry = ToolRegistry { }
 
         val strategy = strategy<AcceptDocumentInput, ClassificationResult>("test") {
-            val classify by classifyDocumentSubGraph(TestAiFixtures.aiConfig)
+            val classify by classifyDocumentSubGraph(TestAiFixtures.aiConfig, emptyList())
             val prepare by documentPreparationSubGraph<AcceptDocumentInput>(mockFetcher)
 
             // Classification

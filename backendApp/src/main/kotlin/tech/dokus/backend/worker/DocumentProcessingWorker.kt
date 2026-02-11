@@ -15,7 +15,6 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.slf4j.MDC
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
-import tech.dokus.backend.services.documents.DocumentDirectionResolver
 import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
@@ -34,6 +33,8 @@ import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.models.confidenceScore
 import tech.dokus.features.ai.models.toDraftData
 import tech.dokus.features.ai.models.toProcessingOutcome
+import tech.dokus.features.ai.models.DirectionResolutionSource
+import tech.dokus.features.ai.validation.CheckType
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.concurrent.atomic.AtomicBoolean
@@ -57,7 +58,6 @@ class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val processingAgent: DocumentProcessingAgent,
     private val contactResolutionService: ContactResolutionService,
-    private val directionResolver: DocumentDirectionResolver,
     private val draftRepository: DocumentDraftRepository,
     private val documentRepository: DocumentRepository,
     private val autoConfirmPolicy: AutoConfirmPolicy,
@@ -208,19 +208,28 @@ class DocumentProcessingWorker(
                 )
             )
 
+            val counterpartyInvariantFailure = result.auditReport.criticalFailures.firstOrNull {
+                it.type == CheckType.COUNTERPARTY_INTEGRITY
+            }
+            if (counterpartyInvariantFailure != null) {
+                val errorMessage = "Counterparty invariant violation: ${counterpartyInvariantFailure.message}"
+                logger.warn(
+                    "Failing ingestion run {} for document {}: {}",
+                    runId,
+                    documentId,
+                    errorMessage
+                )
+                ingestionRepository.markAsFailed(runId.toString(), errorMessage)
+                return
+            }
+
             val processingOutcome = result.toProcessingOutcome()
-            val normalizedDraft = directionResolver.normalize(
-                classifiedType = result.classification.documentType,
-                draftData = result.extraction.toDraftData(),
-                tenant = tenant,
-                associatedPersonNames = personNames
-            )
-            val documentType = normalizedDraft.documentType
+            val documentType = result.classification.documentType
             val confidence = minOf(
                 result.classification.confidence,
                 result.extraction.confidenceScore()
             )
-            val draftData = normalizedDraft.draftData
+            val draftData = result.toDraftData()
 
             val rawExtractionJson = json.encodeToString(result)
 
@@ -315,7 +324,8 @@ class DocumentProcessingWorker(
                         draftData = draftData,
                         auditPassed = result.auditReport.isValid,
                         confidence = confidence,
-                        linkedContactId = linkedContactId
+                        linkedContactId = linkedContactId,
+                        directionResolvedFromAiHintOnly = result.directionResolution.source == DirectionResolutionSource.AiHint
                     )
 
                     if (canAutoConfirm) {

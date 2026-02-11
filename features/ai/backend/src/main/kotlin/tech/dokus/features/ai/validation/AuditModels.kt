@@ -28,7 +28,10 @@ enum class CheckType {
     COMPANY_EXISTS,
 
     /** Company name matches registry */
-    COMPANY_NAME
+    COMPANY_NAME,
+
+    /** Counterparty integrity check (must not equal tenant identity) */
+    COUNTERPARTY_INTEGRITY
 }
 
 /**

@@ -3,7 +3,7 @@ package tech.dokus.backend.services.documents.confirmation
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
-import tech.dokus.domain.enums.CreditNoteDirection
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.CreditNoteType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.SettlementIntent
@@ -42,9 +42,9 @@ class CreditNoteConfirmationService(
         val contactId = linkedContactId
             ?: throw DokusException.BadRequest("Credit note requires a linked contact")
         val creditNoteType = when (draftData.direction) {
-            CreditNoteDirection.Sales -> CreditNoteType.Sales
-            CreditNoteDirection.Purchase -> CreditNoteType.Purchase
-            CreditNoteDirection.Unknown -> throw DokusException.BadRequest("Credit note direction is unknown")
+            DocumentDirection.Outbound -> CreditNoteType.Sales
+            DocumentDirection.Inbound -> CreditNoteType.Purchase
+            DocumentDirection.Unknown -> throw DokusException.BadRequest("Credit note direction is unknown")
         }
         val creditNoteNumber = draftData.creditNoteNumber
             ?: throw DokusException.BadRequest("Credit note number is required")

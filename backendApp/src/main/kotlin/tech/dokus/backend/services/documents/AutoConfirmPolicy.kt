@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.documents
 
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
@@ -23,13 +24,15 @@ class AutoConfirmPolicy(
         draftData: DocumentDraftData,
         auditPassed: Boolean,
         confidence: Double,
-        linkedContactId: ContactId?
+        linkedContactId: ContactId?,
+        directionResolvedFromAiHintOnly: Boolean
     ): Boolean {
         if (source == DocumentSource.Manual) return false
 
         val draftType = draftData.toDocumentType()
         if (documentType == DocumentType.Unknown || draftType != documentType) return false
         if (draftData is CreditNoteDraftData && linkedContactId == null) return false
+        if (directionResolvedFromAiHintOnly && draftData.requiresDirection()) return false
         if (!isDirectionValid(draftData)) return false
         if (!isAmountPositive(draftData)) return false
         if (!auditPassed) return false
@@ -55,8 +58,9 @@ class AutoConfirmPolicy(
 
     private fun isDirectionValid(draftData: DocumentDraftData): Boolean {
         return when (draftData) {
-            is CreditNoteDraftData -> draftData.direction != tech.dokus.domain.enums.CreditNoteDirection.Unknown
-            else -> true
+            is InvoiceDraftData -> draftData.direction != DocumentDirection.Unknown
+            is ReceiptDraftData -> draftData.direction != DocumentDirection.Unknown
+            is CreditNoteDraftData -> draftData.direction != DocumentDirection.Unknown
         }
     }
 
@@ -72,5 +76,11 @@ class AutoConfirmPolicy(
         is InvoiceDraftData -> DocumentType.Invoice
         is ReceiptDraftData -> DocumentType.Receipt
         is CreditNoteDraftData -> DocumentType.CreditNote
+    }
+
+    private fun DocumentDraftData.requiresDirection(): Boolean = when (this) {
+        is InvoiceDraftData -> true
+        is ReceiptDraftData -> true
+        is CreditNoteDraftData -> true
     }
 }

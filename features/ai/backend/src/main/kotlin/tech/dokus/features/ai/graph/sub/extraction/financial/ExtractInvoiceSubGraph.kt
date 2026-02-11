@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.Email
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CanonicalPayment
@@ -66,6 +67,10 @@ data class InvoiceExtractionResult(
     // Payment hints
     val iban: Iban? = null,
     val payment: CanonicalPayment? = null,
+
+    // Optional hint used only as tie-breaker after deterministic matching.
+    val directionHint: DocumentDirection = DocumentDirection.Unknown,
+    val directionHintConfidence: Double? = null,
 
     // Evidence/quality
     val confidence: Double,
@@ -138,6 +143,10 @@ data class InvoiceExtractionToolInput(
     val iban: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.PaymentReference)
     val paymentReference: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.DirectionHint)
+    val directionHint: DocumentDirection = DocumentDirection.Unknown,
+    @property:LLMDescription(ExtractionToolDescriptions.DirectionHintConfidence)
+    val directionHintConfidence: Double? = null,
     @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
     @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
@@ -178,6 +187,8 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
                 buyerCountry = args.buyerCountry,
                 iban = Iban.from(args.iban),
                 payment = CanonicalPayment.from(args.paymentReference),
+                directionHint = args.directionHint,
+                directionHintConfidence = args.directionHintConfidence,
                 confidence = args.confidence,
                 reasoning = args.reasoning
             )
@@ -203,6 +214,11 @@ private val ExtractDocumentInput.prompt
     - `buyer*`: billed-to/recipient entity ("Recipient", "Client", "Klant", etc).
     - Always extract both seller and buyer when visible.
     - Do not swap seller/buyer based on tenant context.
+
+    ## OPTIONAL DIRECTION HINT
+    - Provide `directionHint` only if direction is explicit from the paper (e.g., clear billed-to vs issuer roles).
+    - Do not infer from assumptions; use UNKNOWN when unsure.
+    - If you provide `directionHint`, provide `directionHintConfidence` in range 0.0-1.0.
 
     ## DATE RULES
     Identify issue date ("Factuurdatum", "Date de facture", "Invoice date") and due date ("Vervaldatum", "Échéance", "Due date").

@@ -11,7 +11,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
@@ -29,6 +31,7 @@ import tech.dokus.foundation.backend.config.AIConfig
 @SerialName("ReceiptExtractionResult")
 data class ReceiptExtractionResult(
     val merchantName: String?,
+    val merchantVat: VatNumber?,
     val date: LocalDate?,
     val currency: Currency,
     val totalAmount: Money?,
@@ -37,6 +40,8 @@ data class ReceiptExtractionResult(
     val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
     val receiptNumber: String?,
     val paymentMethod: PaymentMethod?,
+    val directionHint: DocumentDirection = DocumentDirection.Unknown,
+    val directionHintConfidence: Double? = null,
     val confidence: Double,
     val reasoning: String?
 )
@@ -58,6 +63,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractReceiptSubGraph(
 data class ReceiptExtractionToolInput(
     @property:LLMDescription(ExtractionToolDescriptions.MerchantName)
     val merchantName: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.MerchantVat)
+    val merchantVat: String?,
     @property:LLMDescription(ExtractionToolDescriptions.ReceiptDate)
     val date: LocalDate?,
     @property:LLMDescription(ExtractionToolDescriptions.Currency)
@@ -74,6 +81,10 @@ data class ReceiptExtractionToolInput(
     val receiptNumber: String?,
     @property:LLMDescription(ExtractionToolDescriptions.PaymentMethod)
     val paymentMethod: PaymentMethod? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.DirectionHint)
+    val directionHint: DocumentDirection = DocumentDirection.Unknown,
+    @property:LLMDescription(ExtractionToolDescriptions.DirectionHintConfidence)
+    val directionHintConfidence: Double? = null,
     @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
     @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
@@ -90,6 +101,7 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
         return FinancialExtractionResult.Receipt(
             ReceiptExtractionResult(
                 merchantName = args.merchantName,
+                merchantVat = VatNumber.from(args.merchantVat),
                 date = args.date,
                 currency = Currency.from(args.currency),
                 totalAmount = Money.from(args.totalAmount),
@@ -98,6 +110,8 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
                 vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
                 receiptNumber = args.receiptNumber,
                 paymentMethod = args.paymentMethod,
+                directionHint = args.directionHint,
+                directionHintConfidence = args.directionHintConfidence,
                 confidence = args.confidence,
                 reasoning = args.reasoning
             )
@@ -119,6 +133,7 @@ private val ExtractDocumentInput.receiptPrompt
     ## MERCHANT
     - Look for the store/merchant name at the TOP of the receipt (header/logo area).
     - Extract the actual business name, not taglines or slogans.
+    - If visible, extract merchant VAT number.
 
     ## DATE
     - Extract transaction date if printed on receipt.
@@ -138,6 +153,11 @@ private val ExtractDocumentInput.receiptPrompt
 
     ## LINE ITEMS
     - Only extract lineItems if the receipt is clearly itemized; otherwise return an empty list.
+
+    ## OPTIONAL DIRECTION HINT
+    - Provide `directionHint` only when the receipt clearly indicates whether tenant is merchant or buyer.
+    - Use UNKNOWN if not explicit.
+    - If you provide `directionHint`, provide `directionHintConfidence` in range 0.0-1.0.
 
     ## LANGUAGE HINT
     Detected language hint: $language

@@ -5,7 +5,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Email
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CreditNoteDirection
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.PaymentMethod
@@ -61,7 +60,7 @@ data class InvoiceDraftData(
 @SerialName("credit_note_draft")
 data class CreditNoteDraftData(
     val creditNoteNumber: String? = null,
-    val direction: CreditNoteDirection = CreditNoteDirection.Unknown,
+    val direction: DocumentDirection = DocumentDirection.Unknown,
     val issueDate: LocalDate? = null,
     val currency: Currency = Currency.default,
     val subtotalAmount: Money? = null,
@@ -73,7 +72,10 @@ data class CreditNoteDraftData(
     val counterpartyVat: VatNumber? = null,
     val originalInvoiceNumber: String? = null,
     val reason: String? = null,
-    val notes: String? = null
+    val notes: String? = null,
+    // Neutral party model used for deterministic direction and counterparty resolution.
+    val seller: PartyDraft = PartyDraft(),
+    val buyer: PartyDraft = PartyDraft(),
 ) : DocumentDraftData {
 }
 

@@ -5,14 +5,14 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.enums.CreditNoteDirection
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -21,7 +21,6 @@ import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.backend.utils.loggerFor
-import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.peppol.model.PeppolInvoiceData
 import tech.dokus.peppol.model.PeppolLineItem
 import tech.dokus.peppol.model.PeppolParty
@@ -159,9 +158,9 @@ class PeppolMapper {
      *
      * Maps by document type:
      * - invoice -> InvoiceDraftData(direction=Inbound)
-     * - creditNote -> CreditNoteDraftData(Purchase) (supplier crediting us)
+     * - creditNote -> CreditNoteDraftData(direction=Inbound) (supplier crediting us)
      * - selfBillingInvoice -> InvoiceDraftData (client created invoice on our behalf)
-     * - selfBillingCreditNote -> CreditNoteDraftData(Sales) (client corrects self-billing)
+     * - selfBillingCreditNote -> CreditNoteDraftData(direction=Outbound) (client corrects self-billing)
      */
     @Suppress("CyclomaticComplexMethod")
     fun toDraftData(
@@ -217,7 +216,7 @@ class PeppolMapper {
         return when (document.documentType) {
             PeppolDocumentType.CreditNote -> CreditNoteDraftData(
                 creditNoteNumber = document.invoiceNumber,
-                direction = CreditNoteDirection.Purchase,
+                direction = DocumentDirection.Inbound,
                 issueDate = issueDate,
                 currency = currency,
                 subtotalAmount = subtotalAmount,
@@ -229,7 +228,15 @@ class PeppolMapper {
                 counterpartyVat = VatNumber.from(seller?.vatNumber),
                 originalInvoiceNumber = null,
                 reason = document.note,
-                notes = notes
+                notes = notes,
+                seller = PartyDraft(
+                    name = seller?.name,
+                    vat = VatNumber.from(seller?.vatNumber),
+                ),
+                buyer = PartyDraft(
+                    name = buyer?.name,
+                    vat = VatNumber.from(buyer?.vatNumber),
+                )
             )
 
             PeppolDocumentType.SelfBillingInvoice -> InvoiceDraftData(
@@ -258,7 +265,7 @@ class PeppolMapper {
 
             PeppolDocumentType.SelfBillingCreditNote -> CreditNoteDraftData(
                 creditNoteNumber = document.invoiceNumber,
-                direction = CreditNoteDirection.Sales,
+                direction = DocumentDirection.Outbound,
                 issueDate = issueDate,
                 currency = currency,
                 subtotalAmount = subtotalAmount,
@@ -270,7 +277,15 @@ class PeppolMapper {
                 counterpartyVat = VatNumber.from(buyer?.vatNumber),
                 originalInvoiceNumber = null,
                 reason = document.note,
-                notes = notes
+                notes = notes,
+                seller = PartyDraft(
+                    name = seller?.name,
+                    vat = VatNumber.from(seller?.vatNumber),
+                ),
+                buyer = PartyDraft(
+                    name = buyer?.name,
+                    vat = VatNumber.from(buyer?.vatNumber),
+                )
             )
 
             // Invoice, Xml — default to inbound invoice

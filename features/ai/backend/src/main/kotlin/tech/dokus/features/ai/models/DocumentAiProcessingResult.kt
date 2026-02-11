@@ -8,5 +8,6 @@ import tech.dokus.features.ai.validation.AuditReport
 data class DocumentAiProcessingResult(
     val classification: ClassificationResult,
     val extraction: FinancialExtractionResult,
+    val directionResolution: DirectionResolution,
     val auditReport: AuditReport
 )

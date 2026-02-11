@@ -3,19 +3,18 @@ package tech.dokus.features.ai.graph
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.annotation.ExperimentalAgentsApi
+import ai.koog.agents.core.tools.ToolRegistry
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
-import tech.dokus.features.ai.tools.TenantDocumentsRegistry
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
@@ -34,12 +33,11 @@ class AcceptDocumentGraphTest {
             Result.success(FetchedDocumentData(documentBytes, "application/pdf"))
         }
 
-        val tenantId = TenantId.generate()
-        val toolRegistry = TenantDocumentsRegistry(tenantId, mockFetcher)
+        val toolRegistry = ToolRegistry { }
 
         val strategy = acceptDocumentGraph(
             aiConfig = TestAiFixtures.aiConfig,
-            _registries = listOf(toolRegistry),
+            registry = toolRegistry,
             documentFetcher = mockFetcher
         )
 
