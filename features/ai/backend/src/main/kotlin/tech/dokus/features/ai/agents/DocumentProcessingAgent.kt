@@ -4,7 +4,9 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.annotation.ExperimentalAgentsApi
 import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.processor.ManualToolCallFixProcessor
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
@@ -32,18 +34,19 @@ class DocumentProcessingAgent(
 
         val strategy = acceptDocumentGraph(
             aiConfig = aiConfig,
-            registry = toolRegistry,
+            registry = ToolRegistry.EMPTY,
             documentFetcher = documentFetcher
         )
 
         val agent = AIAgent(
             promptExecutor = executor,
-            toolRegistry = toolRegistry,
+            toolRegistry = ToolRegistry.EMPTY,
             strategy = strategy,
-            agentConfig = AIAgentConfig.withSystemPrompt(
-                prompt = "You are a document processor.",
-                llm = aiConfig.mode.asVisionModel,
-                maxAgentIterations = aiConfig.mode.maxIterations
+            agentConfig = AIAgentConfig(
+                prompt = prompt("koog-agents") { system("You are a document processor.") },
+                model = aiConfig.mode.asVisionModel,
+                maxAgentIterations = aiConfig.mode.maxIterations,
+                responseProcessor = ManualToolCallFixProcessor(ToolRegistry.EMPTY)
             )
         )
 
