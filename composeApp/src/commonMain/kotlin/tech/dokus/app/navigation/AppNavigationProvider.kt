@@ -9,6 +9,7 @@ import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
+import tech.dokus.app.share.ShareImportRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.AppDestination
 import tech.dokus.navigation.destinations.CoreDestination
@@ -27,6 +28,9 @@ internal object AppNavigationProvider : NavigationProvider {
         }
         composable<AppDestination.Empty> {
             EmptyScreen()
+        }
+        composable<AppDestination.ShareImport> {
+            ShareImportRoute()
         }
         composable<SettingsDestination.WorkspaceSettings> {
             WorkspaceSettingsRoute()

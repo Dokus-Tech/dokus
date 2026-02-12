@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dokus</title>
     <link type="text/css" rel="stylesheet" href="styles.css">
+    <script>
+        (function () {
+            function queue(name, queueName) {
+                window[name] = window[name] || function () {
+                    (window[queueName] = window[queueName] || []).push(arguments);
+                };
+            }
+
+            function loadIfAvailable(path) {
+                fetch(path, { method: "HEAD", cache: "no-store" })
+                    .then(function (response) {
+                        if (!response.ok) return;
+                        var script = document.createElement("script");
+                        script.defer = true;
+                        script.src = path;
+                        document.head.appendChild(script);
+                    })
+                    .catch(function () {
+                        // Observability endpoint is unavailable (disabled or not routed).
+                    });
+            }
+
+            queue("va", "vaq");
+            loadIfAvailable("/_vercel/insights/script.js");
+            queue("si", "siq");
+            loadIfAvailable("/_vercel/speed-insights/script.js");
+        })();
+    </script>
     <script type="application/javascript" src="composeApp.js"></script>
 </head>
 <body>

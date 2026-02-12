@@ -204,7 +204,9 @@ class DocumentProcessingWorker(
                     documentId = documentId,
                     tenant = tenant,
                     associatedPersonNames = personNames,
-                    userFeedback = ingestion.userFeedback
+                    userFeedback = ingestion.userFeedback,
+                    maxPagesOverride = ingestion.overrideMaxPages,
+                    dpiOverride = ingestion.overrideDpi
                 )
             )
 
@@ -256,7 +258,11 @@ class DocumentProcessingWorker(
                     status = DocumentStatus.NeedsReview
                 )
 
-                val resolution = contactResolutionService.resolve(parsedTenantId, draftData)
+                val resolution = contactResolutionService.resolve(
+                    tenantId = parsedTenantId,
+                    draftData = draftData,
+                    tenantVat = tenant.vatNumber
+                )
                 var linkedContactId: tech.dokus.domain.ids.ContactId? = null
                 when (val decision = resolution.resolution) {
                     is ContactResolution.Matched -> {

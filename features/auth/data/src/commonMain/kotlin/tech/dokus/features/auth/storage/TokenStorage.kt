@@ -1,6 +1,7 @@
 package tech.dokus.features.auth.storage
 
 import kotlinx.coroutines.flow.Flow
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.sstorage.SecureStorage
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -16,6 +17,7 @@ class TokenStorage(
         private const val KEY_ACCESS_TOKEN = "auth.access_token"
         private const val KEY_REFRESH_TOKEN = "auth.refresh_token"
         private const val KEY_TOKEN_EXPIRY = "auth.token_expiry"
+        private const val KEY_LAST_SELECTED_TENANT_ID = "auth.last_selected_tenant_id"
     }
 
     /**
@@ -81,6 +83,7 @@ class TokenStorage(
         secureStorage.remove(KEY_ACCESS_TOKEN)
         secureStorage.remove(KEY_REFRESH_TOKEN)
         secureStorage.remove(KEY_TOKEN_EXPIRY)
+        secureStorage.remove(KEY_LAST_SELECTED_TENANT_ID)
     }
 
     /**
@@ -102,5 +105,15 @@ class TokenStorage(
         val currentTime = Clock.System.now().epochSeconds
         val expiryTime = currentTime + expiresIn
         saveTokenExpiry(expiryTime)
+    }
+
+    suspend fun saveLastSelectedTenantId(tenantId: TenantId) {
+        secureStorage.set(KEY_LAST_SELECTED_TENANT_ID, tenantId.toString())
+    }
+
+    suspend fun getLastSelectedTenantId(): TenantId? {
+        val rawValue = secureStorage.get<String>(KEY_LAST_SELECTED_TENANT_ID)
+            ?: return null
+        return runCatching { TenantId.parse(rawValue) }.getOrNull()
     }
 }

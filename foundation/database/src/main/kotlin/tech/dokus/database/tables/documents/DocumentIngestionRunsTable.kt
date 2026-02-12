@@ -56,6 +56,10 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     // User feedback for re-analysis (provided via "Something's wrong" dialog)
     val userFeedback = text("user_feedback").nullable()
 
+    // Optional processing overrides provided when reprocessing a document.
+    val overrideMaxPages = integer("override_max_pages").nullable()
+    val overrideDpi = integer("override_dpi").nullable()
+
     // Error message (for failed runs)
     val errorMessage = text("error_message").nullable()
 

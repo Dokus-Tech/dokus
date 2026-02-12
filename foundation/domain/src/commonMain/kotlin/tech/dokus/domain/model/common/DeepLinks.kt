@@ -48,7 +48,8 @@ value class DeepLink(val value: String) {
 
 enum class KnownDeepLinks(val path: DeepLink, val pattern: DeepLink) {
     QrDecision(DeepLink("auth/qr/decision"), DeepLink("auth/qr/decision?s={sessionId}&t={token}")),
-    ServerConnect(DeepLink("connect"), DeepLink("connect?host={host}&port={port}&protocol={protocol}"))
+    ServerConnect(DeepLink("connect"), DeepLink("connect?host={host}&port={port}&protocol={protocol}")),
+    ShareImport(DeepLink("share/import"), DeepLink("share/import?batch={batchId}"))
 }
 
 object DeepLinks {
@@ -103,5 +104,22 @@ object DeepLinks {
         val port = portStr.toIntOrNull() ?: return null
         val protocol = params.firstOrNull { it.startsWith("protocol=") }?.substringAfter("protocol=") ?: "https"
         return Triple(host, port, protocol)
+    }
+
+    /**
+     * Extracts an optional iOS share-import batch ID from a deep link.
+     *
+     * Example: dokus://share/import?batch=abc123
+     */
+    fun extractShareImportBatchId(deepLink: DeepLink): String? {
+        val path = deepLink.path
+        if (!path.startsWith(KnownDeepLinks.ShareImport.path.path)) return null
+        val query = path.substringAfter("?", "")
+        if (query.isEmpty()) return null
+        val params = query.split("&")
+        return params
+            .firstOrNull { it.startsWith("batch=") }
+            ?.substringAfter("batch=")
+            ?.takeIf { it.isNotBlank() }
     }
 }

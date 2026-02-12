@@ -16,4 +16,6 @@ data class IngestionItemEntity(
     val filename: String,
     val contentType: String,
     val userFeedback: String? = null,
+    val overrideMaxPages: Int? = null,
+    val overrideDpi: Int? = null,
 )

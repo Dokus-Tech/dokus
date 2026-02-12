@@ -64,5 +64,9 @@
             <string>UIInterfaceOrientationLandscapeLeft</string>
             <string>UIInterfaceOrientationLandscapeRight</string>
         </array>
+        <key>DokusShareAppGroupIdentifier</key>
+        <string>group.vision.invoid.dokus.share</string>
+        <key>DokusSharedKeychainAccessGroup</key>
+        <string>$(AppIdentifierPrefix)vision.invoid.dokus.shared</string>
     </dict>
 </plist>
