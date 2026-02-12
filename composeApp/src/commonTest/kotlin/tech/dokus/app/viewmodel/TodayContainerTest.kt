@@ -76,7 +76,8 @@ class TodayContainerTest {
             getCurrentTenantUseCase = FakeGetCurrentTenantUseCase(),
             watchPendingDocuments = FakeWatchPendingDocumentsUseCase(),
             notificationRemoteDataSource = notificationDataSource,
-            invoiceLookupDataSource = invoiceLookup
+            invoiceLookupDataSource = invoiceLookup,
+            unreadPollingIntervalMs = 0L
         )
 
         container.store.subscribeAndTest {
@@ -132,7 +133,8 @@ class TodayContainerTest {
             getCurrentTenantUseCase = FakeGetCurrentTenantUseCase(),
             watchPendingDocuments = FakeWatchPendingDocumentsUseCase(),
             notificationRemoteDataSource = notificationDataSource,
-            invoiceLookupDataSource = FakeInvoiceLookupDataSource()
+            invoiceLookupDataSource = FakeInvoiceLookupDataSource(),
+            unreadPollingIntervalMs = 0L
         )
 
         container.store.subscribeAndTest {
@@ -271,4 +273,3 @@ private fun testInvoice(
         updatedAt = now
     )
 }
-

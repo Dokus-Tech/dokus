@@ -156,6 +156,7 @@ tasks.register("clearScreenshots") {
     description = "Delete all screenshot baseline images."
     doLast {
         val snapshotDirs = listOf(
+            "composeApp/src/test/snapshots/images",
             "foundation/aura/src/test/snapshots/images",
             "features/auth/presentation/src/test/snapshots/images",
             "features/cashflow/presentation/src/test/snapshots/images",
@@ -175,6 +176,7 @@ tasks.register("recordScreenshots") {
     group = "verification"
     description = "Record new baseline screenshots for all modules."
     dependsOn(
+        ":composeApp:recordPaparazziDebug",
         ":foundation:aura:recordPaparazziDebug",
         ":features:auth:presentation:recordPaparazziDebug",
         ":features:cashflow:presentation:recordPaparazziDebug",
@@ -186,6 +188,7 @@ tasks.register("verifyScreenshots") {
     group = "verification"
     description = "Verify screenshots against baselines for all modules."
     dependsOn(
+        ":composeApp:verifyPaparazziDebug",
         ":foundation:aura:verifyPaparazziDebug",
         ":features:auth:presentation:verifyPaparazziDebug",
         ":features:cashflow:presentation:verifyPaparazziDebug",
@@ -197,6 +200,7 @@ tasks.register("screenshotTests") {
     group = "verification"
     description = "Run all Paparazzi screenshot tests across modules."
     dependsOn(
+        ":composeApp:testDebugUnitTest",
         ":foundation:aura:testDebugUnitTest",
         ":features:auth:presentation:testDebugUnitTest",
         ":features:cashflow:presentation:testDebugUnitTest",

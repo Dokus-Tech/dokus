@@ -37,6 +37,7 @@ internal class TodayContainer(
     private val watchPendingDocuments: WatchPendingDocumentsUseCase,
     private val notificationRemoteDataSource: NotificationRemoteDataSource,
     private val invoiceLookupDataSource: InvoiceLookupDataSource,
+    private val unreadPollingIntervalMs: Long = 30_000L,
 ) : Container<TodayState, TodayIntent, TodayAction> {
 
     private val logger = Logger.forClass<TodayContainer>()
@@ -49,7 +50,9 @@ internal class TodayContainer(
         store(TodayState.Content()) {
             init {
                 launchWatchPendingDocuments()
-                launchUnreadCountPolling()
+                if (unreadPollingIntervalMs > 0) {
+                    launchUnreadCountPolling()
+                }
                 launch {
                     intent(TodayIntent.LoadNotifications())
                     intent(TodayIntent.RefreshUnreadNotifications)
@@ -113,7 +116,7 @@ internal class TodayContainer(
         launch {
             while (true) {
                 intent(TodayIntent.RefreshUnreadNotifications)
-                delay(30_000)
+                delay(unreadPollingIntervalMs)
             }
         }
     }
