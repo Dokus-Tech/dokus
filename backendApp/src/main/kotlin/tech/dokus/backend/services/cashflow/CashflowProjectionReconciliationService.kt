@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.cashflow
 
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -27,16 +28,40 @@ class CashflowProjectionReconciliationService(
         if (existingEntryId != null) return@runCatching existingEntryId
 
         when (entity) {
-            is FinancialDocumentDto.InvoiceDto -> cashflowEntriesService.createFromInvoice(
-                tenantId = tenantId,
-                invoiceId = UUID.fromString(entity.id.toString()),
-                documentId = documentId,
-                dueDate = entity.dueDate,
-                amountGross = entity.totalAmount,
-                amountVat = entity.vatAmount,
-                direction = entity.direction,
-                contactId = entity.contactId
-            ).getOrThrow().id
+            is FinancialDocumentDto.InvoiceDto -> {
+                val ensuredEntry = cashflowEntriesService.createFromInvoice(
+                    tenantId = tenantId,
+                    invoiceId = UUID.fromString(entity.id.toString()),
+                    documentId = documentId,
+                    dueDate = entity.dueDate,
+                    amountGross = entity.totalAmount,
+                    amountVat = entity.vatAmount,
+                    direction = entity.direction,
+                    contactId = entity.contactId
+                ).getOrThrow()
+
+                val remainingAmount = entity.totalAmount.minus(entity.paidAmount).let {
+                    if (it.isNegative) Money.ZERO else it
+                }
+                val status = if (remainingAmount.isZero) CashflowEntryStatus.Paid else CashflowEntryStatus.Open
+                val paidAt = if (status == CashflowEntryStatus.Paid) entity.paidAt else null
+
+                val needsSync = ensuredEntry.remainingAmount != remainingAmount ||
+                    ensuredEntry.status != status ||
+                    ensuredEntry.paidAt != paidAt
+
+                if (needsSync) {
+                    cashflowEntriesRepository.updateRemainingAmountAndStatus(
+                        entryId = ensuredEntry.id,
+                        tenantId = tenantId,
+                        newRemainingAmount = remainingAmount,
+                        newStatus = status,
+                        paidAt = paidAt
+                    ).getOrThrow()
+                }
+
+                ensuredEntry.id
+            }
 
             is FinancialDocumentDto.ExpenseDto -> cashflowEntriesService.createFromExpense(
                 tenantId = tenantId,

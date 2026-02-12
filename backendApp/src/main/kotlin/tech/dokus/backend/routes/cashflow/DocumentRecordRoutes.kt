@@ -32,6 +32,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
@@ -414,6 +415,18 @@ internal fun Route.documentRecordRoutes() {
                     val document = documentRepository.getById(tenantId, documentId)!!
                     val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
                     val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
+
+                    if (confirmedEntity is FinancialDocumentDto.InvoiceDto &&
+                        confirmedEntity.paidAmount.minor >= confirmedEntity.totalAmount.minor &&
+                        confirmedEntity.paidAt == null
+                    ) {
+                        logger.warn(
+                            "Detected paid invoice without paidAt during confirm-path reconciliation: tenant={}, document={}, invoice={}",
+                            tenantId,
+                            documentId,
+                            confirmedEntity.id
+                        )
+                    }
 
                     val repairedEntryId = projectionReconciliationService
                         .ensureProjectionIfMissing(tenantId, documentId, confirmedEntity)

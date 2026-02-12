@@ -358,13 +358,30 @@ class CashflowEntriesService(
             entry.paidAt
         }
 
-        return cashflowEntriesRepository.updateRemainingAmountAndStatus(
-            entryId = entryId,
-            tenantId = tenantId,
-            newRemainingAmount = if (newRemaining.isNegative) Money.ZERO else newRemaining,
-            newStatus = newStatus,
-            paidAt = paidAt
-        )
+        val normalizedRemaining = if (newRemaining.isNegative) Money.ZERO else newRemaining
+        return runCatching {
+            val remainingUpdated = cashflowEntriesRepository.updateRemainingAmount(
+                entryId = entryId,
+                tenantId = tenantId,
+                newRemainingAmount = normalizedRemaining
+            ).getOrThrow()
+            if (!remainingUpdated) {
+                return@runCatching false
+            }
+
+            val needsStatusUpdate = newStatus != entry.status ||
+                (newStatus == CashflowEntryStatus.Paid && paidAt != entry.paidAt)
+            if (!needsStatusUpdate) {
+                return@runCatching true
+            }
+
+            cashflowEntriesRepository.updateStatus(
+                entryId = entryId,
+                tenantId = tenantId,
+                newStatus = newStatus,
+                paidAt = paidAt
+            ).getOrThrow()
+        }
             .onSuccess { logger.info("Payment recorded for cashflow entry: $entryId, new status: $newStatus") }
             .onFailure { logger.error("Failed to record payment for cashflow entry: $entryId", it) }
     }

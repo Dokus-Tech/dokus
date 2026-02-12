@@ -2,6 +2,7 @@ package tech.dokus.backend.cashflow
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -35,6 +36,7 @@ import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
@@ -51,10 +53,12 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.toDbDecimal
 import java.math.BigDecimal
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
@@ -158,8 +162,14 @@ class CashflowProjectionReconciliationTest {
     }
 
     @Test
-    fun `ensureProjectionIfMissing creates missing invoice projection once`() = runBlocking {
-        val (documentId, invoiceEntity) = seedConfirmedInvoice()
+    fun `ensureProjectionIfMissing preserves fully paid invoice state with paidAt and is idempotent`() = runBlocking {
+        val paidAt = LocalDateTime(2024, 2, 10, 12, 0, 0)
+        val total = Money.from("121.00")!!
+        val (documentId, invoiceEntity) = seedConfirmedInvoice(
+            totalAmount = total,
+            paidAmount = total,
+            paidAt = paidAt
+        )
 
         val firstEntryId = reconciliationService
             .ensureProjectionIfMissing(tenantId, documentId, invoiceEntity)
@@ -170,27 +180,68 @@ class CashflowProjectionReconciliationTest {
 
         assertNotNull(firstEntryId)
         assertEquals(firstEntryId, secondEntryId)
+        val entry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrThrow()
+        assertNotNull(entry)
+        assertEquals(Money.ZERO, entry.remainingAmount)
+        assertEquals(CashflowEntryStatus.Paid, entry.status)
+        assertEquals(paidAt, entry.paidAt)
         transaction(database) {
             assertEquals(1L, CashflowEntriesTable.selectAll().count())
         }
     }
 
     @Test
-    fun `startup sweep repairs dormant missing projections idempotently`() = runBlocking {
-        val (documentId, _) = seedConfirmedInvoice()
+    fun `ensureProjectionIfMissing preserves partially paid invoice state`() = runBlocking {
+        val total = Money.from("121.00")!!
+        val paidAmount = Money.from("21.00")!!
+        val (documentId, invoiceEntity) = seedConfirmedInvoice(
+            totalAmount = total,
+            paidAmount = paidAmount,
+            paidAt = null
+        )
+
+        val entryId = reconciliationService
+            .ensureProjectionIfMissing(tenantId, documentId, invoiceEntity)
+            .getOrThrow()
+
+        assertNotNull(entryId)
+        val entry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrThrow()
+        assertNotNull(entry)
+        assertEquals(Money.from("100.00")!!, entry.remainingAmount)
+        assertEquals(CashflowEntryStatus.Open, entry.status)
+        assertNull(entry.paidAt)
+    }
+
+    @Test
+    fun `startup sweep repairs dormant missing projections and counts paid-without-paidAt anomalies`() = runBlocking {
+        val total = Money.from("121.00")!!
+        val (documentId, _) = seedConfirmedInvoice(
+            totalAmount = total,
+            paidAmount = total,
+            paidAt = null
+        )
         assertEquals(null, cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrThrow())
 
-        reconciliationWorker.runSweepOnce()
-        reconciliationWorker.runSweepOnce()
+        val firstReport = reconciliationWorker.runSweepOnce()
+        val secondReport = reconciliationWorker.runSweepOnce()
 
         val repaired = cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrThrow()
         assertNotNull(repaired)
+        assertEquals(Money.ZERO, repaired.remainingAmount)
+        assertEquals(CashflowEntryStatus.Paid, repaired.status)
+        assertNull(repaired.paidAt)
+        assertEquals(1, firstReport.paidWithoutPaidAtDetected)
+        assertEquals(1, secondReport.paidWithoutPaidAtDetected)
         transaction(database) {
             assertEquals(1L, CashflowEntriesTable.selectAll().count())
         }
     }
 
-    private suspend fun seedConfirmedInvoice(): Pair<DocumentId, FinancialDocumentDto.InvoiceDto> {
+    private suspend fun seedConfirmedInvoice(
+        totalAmount: Money,
+        paidAmount: Money,
+        paidAt: LocalDateTime?
+    ): Pair<DocumentId, FinancialDocumentDto.InvoiceDto> {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = DocumentCreatePayload(
@@ -225,6 +276,11 @@ class CashflowProjectionReconciliationTest {
 
         val invoiceId = UUID.randomUUID()
         val invoiceNumber = "INV-RECON-${UUID.randomUUID().toString().take(8)}"
+        val invoiceStatus = when {
+            paidAmount.minor <= 0L -> InvoiceStatus.Draft
+            paidAmount.minor >= totalAmount.minor -> InvoiceStatus.Paid
+            else -> InvoiceStatus.PartiallyPaid
+        }
         transaction(database) {
             InvoicesTable.insert {
                 it[id] = invoiceId
@@ -235,11 +291,12 @@ class CashflowProjectionReconciliationTest {
                 it[dueDate] = LocalDate(2024, 1, 31)
                 it[subtotalAmount] = BigDecimal("100.00")
                 it[vatAmount] = BigDecimal("21.00")
-                it[totalAmount] = BigDecimal("121.00")
-                it[paidAmount] = BigDecimal.ZERO
-                it[status] = InvoiceStatus.Draft
+                it[InvoicesTable.totalAmount] = totalAmount.toDbDecimal()
+                it[InvoicesTable.paidAmount] = paidAmount.toDbDecimal()
+                it[status] = invoiceStatus
                 it[direction] = DocumentDirection.Outbound
                 it[InvoicesTable.documentId] = UUID.fromString(documentId.toString())
+                it[InvoicesTable.paidAt] = paidAt
             }
         }
 

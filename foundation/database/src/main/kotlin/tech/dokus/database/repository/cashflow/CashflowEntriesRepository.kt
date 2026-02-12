@@ -367,6 +367,12 @@ class CashflowEntriesRepository {
     /**
      * Update both remaining amount and status atomically.
      * When transitioning to PAID, paidAt MUST be set.
+     *
+     * Allowed callers:
+     * - `InvoiceService.recordPayment` (invoice payment sync projection)
+     * - `CashflowProjectionReconciliationService.ensureProjectionIfMissing` (missing projection repair)
+     *
+     * Keep this narrowly scoped to projection synchronization paths.
      * CRITICAL: MUST filter by tenant_id.
      */
     suspend fun updateRemainingAmountAndStatus(

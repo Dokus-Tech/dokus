@@ -23,6 +23,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Best-effort startup sweep that backfills missing cashflow projections for confirmed documents.
  */
+data class CashflowProjectionReconciliationReport(
+    val scanned: Int,
+    val repaired: Int,
+    val failed: Int,
+    val paidWithoutPaidAtDetected: Int
+)
+
+/**
+ * Best-effort startup sweep that backfills missing cashflow projections for confirmed documents.
+ */
 class CashflowProjectionReconciliationWorker(
     private val tenantRepository: TenantRepository,
     private val documentRepository: DocumentRepository,
@@ -56,10 +66,11 @@ class CashflowProjectionReconciliationWorker(
         job = null
     }
 
-    suspend fun runSweepOnce() {
+    suspend fun runSweepOnce(): CashflowProjectionReconciliationReport {
         var scanned = 0
         var repaired = 0
         var failed = 0
+        var paidWithoutPaidAtDetected = 0
 
         try {
             val tenants = tenantRepository.listActiveTenants()
@@ -93,6 +104,19 @@ class CashflowProjectionReconciliationWorker(
                                 documentType = documentWithInfo.draft?.documentType
                             ) ?: return@runCatching
 
+                            if (entity is FinancialDocumentDto.InvoiceDto &&
+                                entity.paidAmount.minor >= entity.totalAmount.minor &&
+                                entity.paidAt == null
+                            ) {
+                                paidWithoutPaidAtDetected += 1
+                                logger.warn(
+                                    "Detected paid invoice without paidAt during projection reconciliation: tenant={}, document={}, invoice={}",
+                                    tenantId,
+                                    documentId,
+                                    entity.id
+                                )
+                            }
+
                             val reconciledEntryId = reconciliationService
                                 .ensureProjectionIfMissing(tenantId, documentId, entity)
                                 .getOrThrow()
@@ -117,14 +141,22 @@ class CashflowProjectionReconciliationWorker(
             }
         } catch (throwable: Throwable) {
             logger.warn("Cashflow projection startup sweep failed", throwable)
-        } finally {
-            logger.info(
-                "Cashflow projection startup sweep finished: scanned={}, repaired={}, failed={}",
-                scanned,
-                repaired,
-                failed
-            )
         }
+
+        logger.info(
+            "Cashflow projection startup sweep finished: scanned={}, repaired={}, failed={}, paidWithoutPaidAtDetected={}",
+            scanned,
+            repaired,
+            failed,
+            paidWithoutPaidAtDetected
+        )
+
+        return CashflowProjectionReconciliationReport(
+            scanned = scanned,
+            repaired = repaired,
+            failed = failed,
+            paidWithoutPaidAtDetected = paidWithoutPaidAtDetected
+        )
     }
 
     private suspend fun resolveConfirmedEntity(
