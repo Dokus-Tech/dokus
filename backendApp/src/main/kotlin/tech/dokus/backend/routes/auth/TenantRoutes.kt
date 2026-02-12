@@ -17,8 +17,10 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateTenantRequest
 import tech.dokus.domain.model.InvoiceNumberPreviewResponse
+import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.routes.Tenants
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
@@ -69,7 +71,7 @@ internal fun Route.tenantRoutes() {
                         null
                     }
 
-                    add(tenant.copy(avatar = avatar))
+                    add(projectTenantForMembership(tenant, membership.role, avatar))
                 }
             }
 
@@ -103,7 +105,10 @@ internal fun Route.tenantRoutes() {
             val tenant = tenantRepository.findById(tenantId)
                 ?: throw DokusException.InternalError("Failed to load created tenant")
 
-            call.respond(HttpStatusCode.Created, tenant)
+            call.respond(
+                HttpStatusCode.Created,
+                tenant.copy(role = UserRole.Owner)
+            )
         }
 
         /**
@@ -208,7 +213,16 @@ internal fun Route.tenantRoutes() {
                 null
             }
 
-            call.respond(HttpStatusCode.OK, tenant.copy(avatar = avatar))
+            call.respond(HttpStatusCode.OK, projectTenantForMembership(tenant, membership.role, avatar))
         }
     }
 }
+
+internal fun projectTenantForMembership(
+    tenant: Tenant,
+    role: UserRole,
+    avatar: Thumbnail?
+): Tenant = tenant.copy(
+    role = role,
+    avatar = avatar
+)

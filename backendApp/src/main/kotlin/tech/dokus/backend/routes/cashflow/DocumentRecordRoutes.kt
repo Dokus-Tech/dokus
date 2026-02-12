@@ -208,6 +208,13 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.NotFound("Document not found")
             }
 
+            val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
+            if (!isInboxLifecycle(latestIngestion?.status)) {
+                throw DokusException.BadRequest(
+                    "Only Inbox documents in Queued or Processing state can be deleted"
+                )
+            }
+
             // Get storage key for MinIO cleanup
             val document = documentRepository.getById(tenantId, documentId)
             val storageKey = document?.storageKey
@@ -557,4 +564,8 @@ internal fun Route.documentRecordRoutes() {
             )
         }
     }
+}
+
+internal fun isInboxLifecycle(status: IngestionStatus?): Boolean {
+    return status == IngestionStatus.Queued || status == IngestionStatus.Processing
 }

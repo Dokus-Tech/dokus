@@ -1,0 +1,424 @@
+import Foundation
+import UniformTypeIdentifiers
+
+final class DokusFileProviderAPIClient {
+    private let sessionProvider: DokusFileProviderSessionProvider
+    private let session: URLSession
+
+    init(sessionProvider: DokusFileProviderSessionProvider) {
+        self.sessionProvider = sessionProvider
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 60
+        configuration.timeoutIntervalForResource = 300
+        self.session = URLSession(configuration: configuration)
+    }
+
+    func listWorkspaces() async throws -> [DokusWorkspace] {
+        let resolved = try await sessionProvider.resolvedSession(workspaceId: nil)
+        var request = URLRequest(url: resolved.baseURL.appendingPathQuery("/api/v1/tenants"))
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+
+        let data = try await dataForRequest(request)
+        let json = try parseJsonObject(from: data)
+
+        let rows: [[String: Any]]
+        if let array = json as? [[String: Any]] {
+            rows = array
+        } else if
+            let object = json as? [String: Any],
+            let dataRows = object["data"] as? [[String: Any]] {
+            rows = dataRows
+        } else {
+            rows = []
+        }
+
+        return rows.compactMap { row in
+            guard let id = decodeFlexibleString(row["id"]) else { return nil }
+            let name = decodeFlexibleString(row["displayName"])
+                ?? decodeFlexibleString(row["legalName"])
+                ?? "Workspace"
+            let role = DokusWorkspaceRole.from(raw: decodeFlexibleString(row["role"]))
+            return DokusWorkspace(id: id, name: name, role: role)
+        }
+    }
+
+    func listAllDocuments(workspaceId: String) async throws -> [DokusDocumentRecord] {
+        let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
+
+        var page = 0
+        let limit = 200
+        var all: [DokusDocumentRecord] = []
+        var totalExpected = Int.max
+
+        while all.count < totalExpected {
+            var components = URLComponents(url: resolved.baseURL.appendingPathQuery("/api/v1/documents"), resolvingAgainstBaseURL: false)
+            components?.queryItems = [
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "limit", value: "\(limit)")
+            ]
+
+            guard let url = components?.url else {
+                throw DokusFileProviderError.invalidServerResponse
+            }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+
+            let data = try await dataForRequest(request)
+            guard let object = try parseJsonObject(from: data) as? [String: Any] else {
+                throw DokusFileProviderError.invalidServerResponse
+            }
+
+            let items = object["items"] as? [[String: Any]] ?? []
+            totalExpected = decodeFlexibleInt(object["total"]) ?? items.count
+            if items.isEmpty {
+                break
+            }
+
+            let pageRecords = items.compactMap { parseDocumentRecord(workspaceId: workspaceId, row: $0) }
+            all.append(contentsOf: pageRecords)
+
+            if items.count < limit {
+                break
+            }
+            page += 1
+        }
+
+        return all
+    }
+
+    func uploadDocument(
+        workspaceId: String,
+        from fileURL: URL,
+        filename: String,
+        mimeType: String
+    ) async throws -> String {
+        let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
+        let fileData = try Data(contentsOf: fileURL)
+
+        let multipart = buildMultipartPayload(
+            fileName: filename,
+            mimeType: mimeType,
+            fileData: fileData
+        )
+
+        var request = URLRequest(url: resolved.baseURL.appendingPathQuery("/api/v1/documents/upload"))
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue(multipart.contentType, forHTTPHeaderField: "Content-Type")
+        request.httpBody = multipart.body
+
+        let data = try await dataForRequest(request)
+        guard let object = try parseJsonObject(from: data) as? [String: Any] else {
+            throw DokusFileProviderError.invalidServerResponse
+        }
+
+        if let id = decodeFlexibleString(object["id"]) {
+            return id
+        }
+        if
+            let document = object["document"] as? [String: Any],
+            let id = decodeFlexibleString(document["id"]) {
+            return id
+        }
+        throw DokusFileProviderError.invalidServerResponse
+    }
+
+    func deleteDocument(workspaceId: String, documentId: String) async throws {
+        let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
+        let url = resolved.baseURL.appendingPathQuery("/api/v1/documents/\(documentId)")
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+
+        _ = try await dataForRequest(request, allowNoContent: true)
+    }
+
+    func downloadDocument(workspaceId: String, record: DokusDocumentRecord) async throws -> URL {
+        let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
+        let downloadURL = try await resolveDownloadURL(resolved: resolved, record: record)
+
+        var request = URLRequest(url: downloadURL)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+
+        let data = try await dataForRequest(request)
+
+        let suggestedExtension = URL(fileURLWithPath: record.originalFilename).pathExtension
+        let fileExtension = suggestedExtension.isEmpty
+            ? UTType.fromMimeType(record.contentType).preferredFilenameExtension ?? "bin"
+            : suggestedExtension
+
+        let directory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        let destination = directory.appendingPathComponent(UUID().uuidString).appendingPathExtension(fileExtension)
+        try data.write(to: destination, options: .atomic)
+        return destination
+    }
+
+    private func resolveDownloadURL(
+        resolved: DokusResolvedSession,
+        record: DokusDocumentRecord
+    ) async throws -> URL {
+        if let downloadURL = record.downloadURL {
+            return downloadURL
+        }
+
+        var request = URLRequest(url: resolved.baseURL.appendingPathQuery("/api/v1/documents/\(record.documentId)"))
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+
+        let data = try await dataForRequest(request)
+        guard
+            let object = try parseJsonObject(from: data) as? [String: Any],
+            let document = object["document"] as? [String: Any],
+            let rawDownloadURL = decodeFlexibleString(document["downloadUrl"]),
+            let url = URL(string: rawDownloadURL)
+        else {
+            throw DokusFileProviderError.invalidServerResponse
+        }
+
+        return url
+    }
+
+    private func dataForRequest(_ request: URLRequest, allowNoContent: Bool = false) async throws -> Data {
+        let response: (Data, URLResponse)
+        do {
+            response = try await session.data(for: request)
+        } catch {
+            throw DokusFileProviderError.network("Network request failed")
+        }
+
+        guard let httpResponse = response.1 as? HTTPURLResponse else {
+            throw DokusFileProviderError.invalidServerResponse
+        }
+
+        if httpResponse.statusCode == 401 {
+            throw DokusFileProviderError.notAuthenticated
+        }
+
+        if allowNoContent, httpResponse.statusCode == 204 {
+            return Data()
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let message = parseServerMessage(from: response.0) ?? "Server error \(httpResponse.statusCode)"
+            throw DokusFileProviderError.network(message)
+        }
+
+        return response.0
+    }
+
+    private func parseJsonObject(from data: Data) throws -> Any {
+        guard let object = try? JSONSerialization.jsonObject(with: data) else {
+            throw DokusFileProviderError.invalidServerResponse
+        }
+        return object
+    }
+
+    private func parseDocumentRecord(workspaceId: String, row: [String: Any]) -> DokusDocumentRecord? {
+        guard let document = row["document"] as? [String: Any] else {
+            return nil
+        }
+        guard
+            let documentId = decodeFlexibleString(document["id"]),
+            let filename = decodeFlexibleString(document["filename"])
+        else {
+            return nil
+        }
+
+        let contentType = decodeFlexibleString(document["contentType"]) ?? "application/octet-stream"
+        let sizeBytes = Int64(decodeFlexibleInt(document["sizeBytes"]) ?? 0)
+        let uploadedAt = parseDateTime(decodeFlexibleString(document["uploadedAt"]))
+        let downloadURL = decodeFlexibleString(document["downloadUrl"]).flatMap(URL.init(string:))
+
+        let latestIngestion = row["latestIngestion"] as? [String: Any]
+        let ingestionStatus = DokusIngestionStatus(rawValue: decodeFlexibleString(latestIngestion?["status"]) ?? "")
+
+        let draft = row["draft"] as? [String: Any]
+        let draftStatus = DokusDraftStatus(rawValue: decodeFlexibleString(draft?["documentStatus"]) ?? "")
+        let draftType = DokusDocumentType(rawValue: decodeFlexibleString(draft?["documentType"]) ?? "")
+        let draftDirection = DokusDocumentDirection(rawValue: decodeFlexibleString(draft?["direction"]) ?? "") ?? .unknown
+        let extractedData = draft?["extractedData"] as? [String: Any]
+
+        let issueDate = parseIssueDate(from: extractedData, fallbackUploadedAt: uploadedAt)
+        let amountMinor = parseAmountMinor(from: extractedData)
+        let counterparty = parseCounterparty(from: extractedData, direction: draftDirection)
+        let number = parseDocumentNumber(from: extractedData)
+        let updatedAt = parseDateTime(decodeFlexibleString(draft?["updatedAt"]))
+            ?? parseDateTime(decodeFlexibleString(latestIngestion?["finishedAt"]))
+            ?? uploadedAt
+
+        return DokusDocumentRecord(
+            workspaceId: workspaceId,
+            documentId: documentId,
+            originalFilename: filename,
+            contentType: contentType,
+            sizeBytes: sizeBytes,
+            uploadedAt: uploadedAt,
+            updatedAt: updatedAt,
+            downloadURL: downloadURL,
+            latestIngestionStatus: ingestionStatus,
+            draftStatus: draftStatus,
+            draftType: draftType,
+            draftDirection: draftDirection,
+            issueDate: issueDate,
+            amountMinor: amountMinor,
+            counterpartyName: counterparty,
+            documentNumber: number
+        )
+    }
+
+    private func parseIssueDate(from extractedData: [String: Any]?, fallbackUploadedAt: Date?) -> Date? {
+        guard let extractedData else { return fallbackUploadedAt }
+
+        let keys = ["issueDate", "date"]
+        for key in keys {
+            if let value = decodeFlexibleString(extractedData[key]), let date = parseDate(value) {
+                return date
+            }
+        }
+        return fallbackUploadedAt
+    }
+
+    private func parseAmountMinor(from extractedData: [String: Any]?) -> Int64? {
+        guard let extractedData else { return nil }
+        for key in ["totalAmount", "amount", "subtotalAmount"] {
+            if let amount = decodeFlexibleInt64(extractedData[key]) {
+                return amount
+            }
+        }
+        return nil
+    }
+
+    private func parseCounterparty(from extractedData: [String: Any]?, direction: DokusDocumentDirection) -> String? {
+        guard let extractedData else { return nil }
+        if let direct = decodeFlexibleString(extractedData["counterpartyName"]), !direct.isEmpty {
+            return direct
+        }
+        if let merchant = decodeFlexibleString(extractedData["merchantName"]), !merchant.isEmpty {
+            return merchant
+        }
+
+        let sellerName = ((extractedData["seller"] as? [String: Any]).flatMap { decodeFlexibleString($0["name"]) }) ?? ""
+        let buyerName = ((extractedData["buyer"] as? [String: Any]).flatMap { decodeFlexibleString($0["name"]) }) ?? ""
+
+        switch direction {
+        case .inbound:
+            return sellerName.isEmpty ? nil : sellerName
+        case .outbound:
+            return buyerName.isEmpty ? nil : buyerName
+        case .unknown:
+            if !sellerName.isEmpty { return sellerName }
+            if !buyerName.isEmpty { return buyerName }
+            return nil
+        }
+    }
+
+    private func parseDocumentNumber(from extractedData: [String: Any]?) -> String? {
+        guard let extractedData else { return nil }
+        for key in ["invoiceNumber", "creditNoteNumber", "receiptNumber", "quoteNumber", "proFormaNumber"] {
+            if let number = decodeFlexibleString(extractedData[key]), !number.isEmpty {
+                return number
+            }
+        }
+        return nil
+    }
+
+    private func parseDateTime(_ value: String?) -> Date? {
+        guard let value else { return nil }
+        if let withFraction = DateFormatter.dokusISODateTime.date(from: value) {
+            return withFraction
+        }
+        return DateFormatter.dokusISODateTimeNoFraction.date(from: value)
+    }
+
+    private func parseDate(_ value: String?) -> Date? {
+        guard let value else { return nil }
+        if let date = DateFormatter.dokusLocalDate.date(from: value) {
+            return date
+        }
+        return parseDateTime(value)
+    }
+
+    private func parseServerMessage(from data: Data) -> String? {
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        if let message = object["message"] as? String, !message.isEmpty {
+            return message
+        }
+        if let error = object["error"] as? [String: Any], let message = error["message"] as? String, !message.isEmpty {
+            return message
+        }
+        return nil
+    }
+
+    private func decodeFlexibleString(_ value: Any?) -> String? {
+        if let string = value as? String, !string.isEmpty {
+            return string
+        }
+        if let number = value as? NSNumber {
+            return number.stringValue
+        }
+        if let dictionary = value as? [String: Any] {
+            if let nested = dictionary["value"] as? String, !nested.isEmpty {
+                return nested
+            }
+            if let nested = dictionary["id"] as? String, !nested.isEmpty {
+                return nested
+            }
+        }
+        return nil
+    }
+
+    private func decodeFlexibleInt(_ value: Any?) -> Int? {
+        if let int = value as? Int {
+            return int
+        }
+        if let number = value as? NSNumber {
+            return number.intValue
+        }
+        if let string = value as? String {
+            return Int(string)
+        }
+        return nil
+    }
+
+    private func decodeFlexibleInt64(_ value: Any?) -> Int64? {
+        if let int64 = value as? Int64 {
+            return int64
+        }
+        if let int = value as? Int {
+            return Int64(int)
+        }
+        if let number = value as? NSNumber {
+            return number.int64Value
+        }
+        if let string = value as? String {
+            return Int64(string)
+        }
+        if let dictionary = value as? [String: Any], let minor = dictionary["minor"] {
+            return decodeFlexibleInt64(minor)
+        }
+        return nil
+    }
+
+    private func buildMultipartPayload(fileName: String, mimeType: String, fileData: Data) -> (contentType: String, body: Data) {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var body = Data()
+        let lineBreak = "\r\n"
+
+        body.append("--\(boundary)\(lineBreak)".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\(lineBreak)".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\(lineBreak)\(lineBreak)".data(using: .utf8)!)
+        body.append(fileData)
+        body.append(lineBreak.data(using: .utf8)!)
+
+        body.append("--\(boundary)--\(lineBreak)".data(using: .utf8)!)
+        return ("multipart/form-data; boundary=\(boundary)", body)
+    }
+}
