@@ -1,5 +1,9 @@
 package tech.dokus.backend.services.notifications
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
 import tech.dokus.database.repository.auth.UserRepository
@@ -19,7 +23,8 @@ class NotificationService(
     private val userRepository: UserRepository,
     private val preferencesService: NotificationPreferencesService,
     private val emailService: EmailService,
-    private val emailTemplateRenderer: EmailTemplateRenderer
+    private val emailTemplateRenderer: EmailTemplateRenderer,
+    private val emailScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
 
     private val logger = loggerFor()
@@ -80,12 +85,23 @@ class NotificationService(
 
             createdNotifications += notification
 
-            sendEmailIfEnabled(
-                userId = user.id,
-                userEmail = user.email.value,
-                notification = notification,
-                event = event
-            )
+            emailScope.launch {
+                runCatching {
+                    sendEmailIfEnabled(
+                        userId = user.id,
+                        userEmail = user.email.value,
+                        notification = notification,
+                        event = event
+                    )
+                }.onFailure { error ->
+                    logger.error(
+                        "Failed async notification email task for user {} type {}",
+                        user.id,
+                        event.type,
+                        error
+                    )
+                }
+            }
         }
 
         createdNotifications
@@ -108,6 +124,7 @@ class NotificationService(
         }
 
         val recentlySent = notificationRepository.hasRecentEmailFor(
+            tenantId = notification.tenantId,
             userId = userId,
             type = event.type,
             referenceId = event.referenceId
@@ -133,18 +150,40 @@ class NotificationService(
             openPath = event.openPath
         )
 
-        emailService.send(
+        val sendResult = emailService.send(
             to = userEmail,
             subject = template.subject,
             htmlBody = template.htmlBody,
             textBody = template.textBody
-        ).onSuccess {
+        )
+
+        if (sendResult.isSuccess) {
             notificationRepository.markEmailSent(
                 tenantId = notification.tenantId,
                 userId = userId,
                 notificationId = notification.id
-            )
-        }.onFailure { error ->
+            ).onSuccess { updated ->
+                if (!updated) {
+                    logger.warn(
+                        "Notification email sent but markEmailSent updated 0 rows for tenant {} user {} notification {}",
+                        notification.tenantId,
+                        userId,
+                        notification.id
+                    )
+                }
+            }.onFailure { error ->
+                logger.error(
+                    "Notification email sent but failed to persist emailSent=true for tenant {} user {} notification {}",
+                    notification.tenantId,
+                    userId,
+                    notification.id,
+                    error
+                )
+            }
+            return
+        }
+
+        sendResult.onFailure { error ->
             logger.error(
                 "Failed to send notification email for user {} type {}",
                 userId,

@@ -3,6 +3,8 @@ package tech.dokus.backend.notifications
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -40,13 +42,15 @@ class NotificationServiceEmissionTest {
     private val preferencesService = mockk<NotificationPreferencesService>()
     private val emailService = mockk<EmailService>()
     private val templateRenderer = mockk<EmailTemplateRenderer>()
+    private val testEmailScope = CoroutineScope(Dispatchers.Unconfined)
 
     private val service = NotificationService(
         notificationRepository = notificationRepository,
         userRepository = userRepository,
         preferencesService = preferencesService,
         emailService = emailService,
-        emailTemplateRenderer = templateRenderer
+        emailTemplateRenderer = templateRenderer,
+        emailScope = testEmailScope
     )
 
     private val tenantId = TenantId.generate()
@@ -58,7 +62,14 @@ class NotificationServiceEmissionTest {
         coEvery { userRepository.listByTenant(tenantId, true) } returns listOf(userInTenant)
         stubCreateNotification()
         coEvery { preferencesService.isEmailEnabled(userId, NotificationType.PeppolSendFailed) } returns Result.success(true)
-        coEvery { notificationRepository.hasRecentEmailFor(userId, NotificationType.PeppolSendFailed, "inv-42") } returns Result.success(false)
+        coEvery {
+            notificationRepository.hasRecentEmailFor(
+                tenantId,
+                userId,
+                NotificationType.PeppolSendFailed,
+                "inv-42"
+            )
+        } returns Result.success(false)
         coEvery {
             templateRenderer.renderNotification(
                 type = NotificationType.PeppolSendFailed,
@@ -89,8 +100,8 @@ class NotificationServiceEmissionTest {
         assertEquals(1, emitted.size)
         assertEquals(NotificationType.PeppolSendFailed, emitted.single().type)
 
-        coVerify(exactly = 1) { emailService.send("peppol.failed@test.dokus", any(), any(), any()) }
-        coVerify(exactly = 1) { notificationRepository.markEmailSent(tenantId, userId, any()) }
+        coVerify(timeout = 1_000, exactly = 1) { emailService.send("peppol.failed@test.dokus", any(), any(), any()) }
+        coVerify(timeout = 1_000, exactly = 1) { notificationRepository.markEmailSent(tenantId, userId, any()) }
     }
 
     @Test
@@ -99,7 +110,14 @@ class NotificationServiceEmissionTest {
         coEvery { userRepository.listByTenant(tenantId, true) } returns listOf(userInTenant)
         stubCreateNotification()
         coEvery { preferencesService.isEmailEnabled(userId, NotificationType.PeppolSendFailed) } returns Result.success(true)
-        coEvery { notificationRepository.hasRecentEmailFor(userId, NotificationType.PeppolSendFailed, "inv-100") } returns Result.success(true)
+        coEvery {
+            notificationRepository.hasRecentEmailFor(
+                tenantId,
+                userId,
+                NotificationType.PeppolSendFailed,
+                "inv-100"
+            )
+        } returns Result.success(true)
 
         val emitted = service.emit(
             NotificationEmission(

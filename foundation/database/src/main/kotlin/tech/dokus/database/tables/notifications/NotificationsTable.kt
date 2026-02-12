@@ -24,6 +24,6 @@ object NotificationsTable : UUIDTable("user_notifications") {
 
     init {
         index(false, tenantId, userId, isRead, createdAt)
-        index(false, userId, type, referenceId, createdAt)
+        index(false, tenantId, userId, type, referenceId, createdAt)
     }
 }

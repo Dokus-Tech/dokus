@@ -181,6 +181,7 @@ class NotificationRepositoriesTest {
 
         assertFalse(
             notificationRepository.hasRecentEmailFor(
+                tenantId = tenantId,
                 userId = userId,
                 type = NotificationType.PeppolSendFailed,
                 referenceId = "inv-9"
@@ -195,9 +196,61 @@ class NotificationRepositoriesTest {
 
         assertTrue(
             notificationRepository.hasRecentEmailFor(
+                tenantId = tenantId,
                 userId = userId,
                 type = NotificationType.PeppolSendFailed,
                 referenceId = "inv-9"
+            ).getOrThrow()
+        )
+    }
+
+    @Test
+    fun `recent email dedup is tenant-scoped`() = runBlocking {
+        val otherTenantUuid = UUID.randomUUID()
+        val otherTenantId = TenantId(otherTenantUuid.toKotlinUuid())
+        transaction(database) {
+            TenantTable.insert {
+                it[id] = otherTenantUuid
+                it[type] = TenantType.Company
+                it[legalName] = "Other Tenant"
+                it[displayName] = "Other Tenant"
+                it[plan] = SubscriptionTier.Core
+                it[status] = TenantStatus.Active
+                it[language] = Language.En
+                it[vatNumber] = "BE9876543210"
+            }
+        }
+
+        val otherTenantNotification = notificationRepository.create(
+            tenantId = otherTenantId,
+            userId = userId,
+            type = NotificationType.PeppolSendFailed,
+            title = "PEPPOL send failed - Other tenant",
+            referenceType = NotificationReferenceType.Invoice,
+            referenceId = "inv-shared",
+            isRead = false,
+            emailSent = false
+        ).getOrThrow()
+        notificationRepository.markEmailSent(
+            tenantId = otherTenantId,
+            userId = userId,
+            notificationId = otherTenantNotification.id
+        ).getOrThrow()
+
+        assertFalse(
+            notificationRepository.hasRecentEmailFor(
+                tenantId = tenantId,
+                userId = userId,
+                type = NotificationType.PeppolSendFailed,
+                referenceId = "inv-shared"
+            ).getOrThrow()
+        )
+        assertTrue(
+            notificationRepository.hasRecentEmailFor(
+                tenantId = otherTenantId,
+                userId = userId,
+                type = NotificationType.PeppolSendFailed,
+                referenceId = "inv-shared"
             ).getOrThrow()
         )
     }

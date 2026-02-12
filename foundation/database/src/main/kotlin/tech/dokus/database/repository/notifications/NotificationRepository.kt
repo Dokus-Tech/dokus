@@ -170,6 +170,7 @@ class NotificationRepository {
     }
 
     suspend fun hasRecentEmailFor(
+        tenantId: TenantId,
         userId: UserId,
         type: NotificationType,
         referenceId: String
@@ -181,7 +182,8 @@ class NotificationRepository {
         dbQuery {
             NotificationsTable.selectAll()
                 .where {
-                    (NotificationsTable.userId eq UUID.fromString(userId.toString())) and
+                    (NotificationsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                        (NotificationsTable.userId eq UUID.fromString(userId.toString())) and
                         (NotificationsTable.type eq type) and
                         (NotificationsTable.referenceId eq referenceId) and
                         (NotificationsTable.emailSent eq true) and
