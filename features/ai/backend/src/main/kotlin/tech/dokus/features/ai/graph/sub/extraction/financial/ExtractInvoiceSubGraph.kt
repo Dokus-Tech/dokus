@@ -25,6 +25,8 @@ import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.LineItemToolInput
+import tech.dokus.features.ai.models.CounterpartyExtraction
+import tech.dokus.features.ai.models.CounterpartyRole
 import tech.dokus.features.ai.models.VatBreakdownToolInput
 import tech.dokus.features.ai.models.toDomain
 import tech.dokus.foundation.backend.config.AIConfig
@@ -63,6 +65,9 @@ data class InvoiceExtractionResult(
     val buyerPostalCode: String? = null,
     val buyerCity: String? = null,
     val buyerCountry: String? = null,
+
+    // Authoritative counterparty identity (used by deterministic contact resolution)
+    val counterparty: CounterpartyExtraction? = null,
 
     // Payment hints
     val iban: Iban? = null,
@@ -139,6 +144,24 @@ data class InvoiceExtractionToolInput(
     val buyerCity: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.BuyerCountry)
     val buyerCountry: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyName)
+    val counterpartyName: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyVat)
+    val counterpartyVat: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyEmail)
+    val counterpartyEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyStreet)
+    val counterpartyStreet: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyPostalCode)
+    val counterpartyPostalCode: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCity)
+    val counterpartyCity: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCountry)
+    val counterpartyCountry: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyRole)
+    val counterpartyRole: CounterpartyRole = CounterpartyRole.Unknown,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyReasoning)
+    val counterpartyReasoning: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.Iban)
     val iban: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.PaymentReference)
@@ -185,6 +208,7 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
                 buyerPostalCode = args.buyerPostalCode,
                 buyerCity = args.buyerCity,
                 buyerCountry = args.buyerCountry,
+                counterparty = args.toCounterpartyExtraction(),
                 iban = Iban.from(args.iban),
                 payment = CanonicalPayment.from(args.paymentReference),
                 directionHint = args.directionHint,
@@ -194,6 +218,33 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
             )
         )
     }
+}
+
+private fun InvoiceExtractionToolInput.toCounterpartyExtraction(): CounterpartyExtraction? {
+    val hasAnyField = listOf(
+        counterpartyName,
+        counterpartyVat,
+        counterpartyEmail,
+        counterpartyStreet,
+        counterpartyPostalCode,
+        counterpartyCity,
+        counterpartyCountry,
+        counterpartyReasoning
+    ).any { !it.isNullOrBlank() } || counterpartyRole != CounterpartyRole.Unknown
+
+    if (!hasAnyField) return null
+
+    return CounterpartyExtraction(
+        name = counterpartyName,
+        vatNumber = counterpartyVat,
+        email = counterpartyEmail,
+        streetLine1 = counterpartyStreet,
+        postalCode = counterpartyPostalCode,
+        city = counterpartyCity,
+        country = counterpartyCountry,
+        role = counterpartyRole,
+        reasoning = counterpartyReasoning
+    )
 }
 
 private val ExtractDocumentInput.prompt
@@ -217,6 +268,20 @@ private val ExtractDocumentInput.prompt
     - If only one side is visible, keep the missing side null.
     - Prefer null over duplicating the same party into both seller and buyer.
     - Do not swap seller/buyer based on tenant context.
+
+    ## AUTHORITATIVE COUNTERPARTY (CRITICAL)
+    - Provide a single authoritative `counterparty*` block for downstream deterministic matching.
+    - Counterparty = the OTHER business entity in this transaction.
+    - Payment instruments are never counterparties: Visa, Mastercard, Apple Pay, Google Pay, Bancontact, masked card tails.
+    - If a VAT-like token is actually a payment instrument identifier, set `counterpartyVat` to null.
+    - Always provide short `counterpartyReasoning`.
+
+    ### Examples
+    - B2B invoice:
+      - seller = "Google Cloud EMEA Limited", buyer = "Invoid Vision", counterparty = seller, role = SELLER.
+    - Consumer-style invoice:
+      - seller = "Apple Account", buyer contains "Visa .... 9803 (Apple Pay)".
+      - counterparty = "Apple Account", role = SELLER, and do not use "Visa .... 9803 (Apple Pay)" as counterparty.
 
     ## OPTIONAL DIRECTION HINT
     - Provide `directionHint` only if direction is explicit from the paper (e.g., clear billed-to vs issuer roles).

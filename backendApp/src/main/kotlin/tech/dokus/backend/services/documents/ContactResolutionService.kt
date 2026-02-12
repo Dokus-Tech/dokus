@@ -11,6 +11,7 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactMatchScore
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartySnapshot
@@ -18,6 +19,7 @@ import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
 import tech.dokus.domain.model.contact.ContactAddressInput
 import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.entity.EntityStatus
 import tech.dokus.domain.util.JaroWinkler
@@ -35,14 +37,28 @@ class ContactResolutionService(
     companion object {
         private const val StrongNameThreshold = 0.90
         private const val SuggestionThreshold = 0.80
+        private const val PaymentAliasRenameSimilarityThreshold = 0.70
+        private val paymentTokenKeywordPattern = Regex(
+            "\\b(visa|mastercard|apple\\s*pay|google\\s*pay|amex|american\\s*express|bancontact|card)\\b",
+            RegexOption.IGNORE_CASE
+        )
+        private val maskedOrTailPattern = Regex("(\\*{2,}|\\.{2,}|\\b\\d{4}\\b)")
     }
 
     suspend fun resolve(
         tenantId: TenantId,
         draftData: DocumentDraftData,
+        authoritativeSnapshot: CounterpartySnapshot,
         tenantVat: VatNumber? = null
     ): ContactResolutionResult {
-        val snapshot = buildSnapshot(draftData)
+        val snapshot = authoritativeSnapshot.normalized()
+        if (snapshot.isEmptyForResolution()) {
+            return ContactResolutionResult(
+                snapshot = snapshot,
+                resolution = ContactResolution.PendingReview(snapshot)
+            )
+        }
+
         val name = snapshot.name?.trim().orEmpty().takeIf { it.isNotEmpty() }
         val vat = snapshot.vatNumber
         val iban = snapshot.iban
@@ -68,9 +84,14 @@ class ContactResolutionService(
             if (vatMatch != null) {
                 val cbeStatus = resolveCbeStatus(vat)
                 val allowAutoLink = !strictAutoLink || cbeStatus == EntityStatus.Active
-                val nameSimilarity = name?.let { similarity(it, vatMatch.name.value) }
 
                 if (allowAutoLink) {
+                    val healedContact = maybeHealPaymentAliasContact(
+                        tenantId = tenantId,
+                        matchedContact = vatMatch,
+                        authoritativeName = name
+                    )
+                    val nameSimilarity = name?.let { similarity(it, healedContact.name.value) }
                     val evidence = MatchEvidence(
                         vatMatch = true,
                         ibanMatch = false,
@@ -81,12 +102,13 @@ class ContactResolutionService(
                     return ContactResolutionResult(
                         snapshot = snapshot,
                         resolution = ContactResolution.Matched(
-                            contactId = vatMatch.id,
+                            contactId = healedContact.id,
                             evidence = evidence
                         )
                     )
                 }
 
+                val nameSimilarity = name?.let { similarity(it, vatMatch.name.value) }
                 suggestions += vatMatch.toSuggestedContact(
                     vatMatch = true,
                     ibanMatch = false,
@@ -285,106 +307,51 @@ class ContactResolutionService(
         return contactRepository.createContact(tenantId, request).getOrNull()?.id
     }
 
-    private fun buildSnapshot(draftData: DocumentDraftData): CounterpartySnapshot = when (draftData) {
-        is InvoiceDraftData -> when (draftData.direction) {
-            DocumentDirection.Inbound -> CounterpartySnapshot(
-                name = draftData.seller.name ?: draftData.customerName,
-                vatNumber = draftData.seller.vat ?: draftData.customerVat,
-                iban = draftData.seller.iban ?: draftData.iban,
-                email = draftData.seller.email ?: draftData.customerEmail,
-                streetLine1 = draftData.seller.streetLine1,
-                streetLine2 = draftData.seller.streetLine2,
-                postalCode = draftData.seller.postalCode,
-                city = draftData.seller.city,
-                country = null
-            )
-            DocumentDirection.Outbound -> CounterpartySnapshot(
-                name = draftData.buyer.name ?: draftData.customerName,
-                vatNumber = draftData.buyer.vat ?: draftData.customerVat,
-                iban = draftData.buyer.iban,
-                email = draftData.buyer.email ?: draftData.customerEmail,
-                streetLine1 = draftData.buyer.streetLine1,
-                streetLine2 = draftData.buyer.streetLine2,
-                postalCode = draftData.buyer.postalCode,
-                city = draftData.buyer.city,
-                country = null
-            )
-            DocumentDirection.Unknown -> CounterpartySnapshot(
-                name = draftData.customerName ?: draftData.buyer.name ?: draftData.seller.name,
-                vatNumber = draftData.customerVat ?: draftData.buyer.vat ?: draftData.seller.vat,
-                iban = draftData.iban ?: draftData.buyer.iban ?: draftData.seller.iban,
-                email = draftData.customerEmail ?: draftData.buyer.email ?: draftData.seller.email,
-                streetLine1 = draftData.buyer.streetLine1 ?: draftData.seller.streetLine1,
-                streetLine2 = draftData.buyer.streetLine2 ?: draftData.seller.streetLine2,
-                postalCode = draftData.buyer.postalCode ?: draftData.seller.postalCode,
-                city = draftData.buyer.city ?: draftData.seller.city,
-                country = null
-            )
-        }
-        is CreditNoteDraftData -> CounterpartySnapshot(
-            name = when (draftData.direction) {
-                DocumentDirection.Inbound -> draftData.seller.name ?: draftData.counterpartyName
-                DocumentDirection.Outbound -> draftData.buyer.name ?: draftData.counterpartyName
-                DocumentDirection.Unknown -> draftData.counterpartyName
-                    ?: draftData.buyer.name
-                    ?: draftData.seller.name
-            },
-            vatNumber = when (draftData.direction) {
-                DocumentDirection.Inbound -> draftData.seller.vat ?: draftData.counterpartyVat
-                DocumentDirection.Outbound -> draftData.buyer.vat ?: draftData.counterpartyVat
-                DocumentDirection.Unknown -> draftData.counterpartyVat
-                    ?: draftData.buyer.vat
-                    ?: draftData.seller.vat
-            },
-            iban = null,
-            email = null,
-            streetLine1 = when (draftData.direction) {
-                DocumentDirection.Inbound -> draftData.seller.streetLine1
-                DocumentDirection.Outbound -> draftData.buyer.streetLine1
-                DocumentDirection.Unknown -> draftData.buyer.streetLine1 ?: draftData.seller.streetLine1
-            },
-            streetLine2 = when (draftData.direction) {
-                DocumentDirection.Inbound -> draftData.seller.streetLine2
-                DocumentDirection.Outbound -> draftData.buyer.streetLine2
-                DocumentDirection.Unknown -> draftData.buyer.streetLine2 ?: draftData.seller.streetLine2
-            },
-            postalCode = when (draftData.direction) {
-                DocumentDirection.Inbound -> draftData.seller.postalCode
-                DocumentDirection.Outbound -> draftData.buyer.postalCode
-                DocumentDirection.Unknown -> draftData.buyer.postalCode ?: draftData.seller.postalCode
-            },
-            city = when (draftData.direction) {
-                DocumentDirection.Inbound -> draftData.seller.city
-                DocumentDirection.Outbound -> draftData.buyer.city
-                DocumentDirection.Unknown -> draftData.buyer.city ?: draftData.seller.city
-            },
-            country = null
-        )
-        is ReceiptDraftData -> when (draftData.direction) {
-            DocumentDirection.Inbound -> CounterpartySnapshot(
-                name = draftData.merchantName,
-                vatNumber = draftData.merchantVat,
-                iban = null,
-                email = null,
-            )
-            DocumentDirection.Outbound -> CounterpartySnapshot(
-                name = null,
-                vatNumber = null,
-                iban = null,
-                email = null,
-            )
-            DocumentDirection.Unknown -> CounterpartySnapshot(
-                name = draftData.merchantName,
-                vatNumber = draftData.merchantVat,
-                iban = null,
-                email = null,
-            )
-        }
-    }
-
     private suspend fun resolveCbeStatus(vat: VatNumber): EntityStatus? {
         if (!vat.isValid || !vat.isBelgian) return null
         return cbeApiClient.searchByVat(vat).getOrNull()?.status
+    }
+
+    private suspend fun maybeHealPaymentAliasContact(
+        tenantId: TenantId,
+        matchedContact: ContactDto,
+        authoritativeName: String?
+    ): ContactDto {
+        val targetName = authoritativeName?.trim().orEmpty()
+        if (targetName.isEmpty()) return matchedContact
+        if (matchedContact.source != ContactSource.AI) return matchedContact
+
+        val currentName = matchedContact.name.value
+        if (!isPaymentTokenAlias(currentName)) return matchedContact
+        if (isPaymentTokenAlias(targetName)) return matchedContact
+        if (similarity(targetName, currentName) >= PaymentAliasRenameSimilarityThreshold) return matchedContact
+
+        return contactRepository.updateContact(
+            contactId = matchedContact.id,
+            tenantId = tenantId,
+            request = UpdateContactRequest(name = Name(targetName))
+        ).getOrNull() ?: matchedContact
+    }
+
+    private fun isPaymentTokenAlias(value: String): Boolean {
+        return paymentTokenKeywordPattern.containsMatchIn(value) && maskedOrTailPattern.containsMatchIn(value)
+    }
+
+    private fun CounterpartySnapshot.normalized(): CounterpartySnapshot = CounterpartySnapshot(
+        name = name?.trim()?.takeIf { it.isNotEmpty() },
+        vatNumber = vatNumber,
+        iban = iban,
+        email = email,
+        companyNumber = companyNumber?.trim()?.takeIf { it.isNotEmpty() },
+        streetLine1 = streetLine1?.trim()?.takeIf { it.isNotEmpty() },
+        streetLine2 = streetLine2?.trim()?.takeIf { it.isNotEmpty() },
+        postalCode = postalCode?.trim()?.takeIf { it.isNotEmpty() },
+        city = city?.trim()?.takeIf { it.isNotEmpty() },
+        country = country
+    )
+
+    private fun CounterpartySnapshot.isEmptyForResolution(): Boolean {
+        return name == null && vatNumber == null && iban == null
     }
 
     private fun snapshotFromCbe(

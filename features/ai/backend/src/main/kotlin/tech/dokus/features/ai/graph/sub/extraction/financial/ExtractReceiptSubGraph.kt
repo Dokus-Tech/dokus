@@ -23,6 +23,8 @@ import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.LineItemToolInput
+import tech.dokus.features.ai.models.CounterpartyExtraction
+import tech.dokus.features.ai.models.CounterpartyRole
 import tech.dokus.features.ai.models.VatBreakdownToolInput
 import tech.dokus.features.ai.models.toDomain
 import tech.dokus.foundation.backend.config.AIConfig
@@ -40,6 +42,7 @@ data class ReceiptExtractionResult(
     val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
     val receiptNumber: String?,
     val paymentMethod: PaymentMethod?,
+    val counterparty: CounterpartyExtraction? = null,
     val directionHint: DocumentDirection = DocumentDirection.Unknown,
     val directionHintConfidence: Double? = null,
     val confidence: Double,
@@ -81,6 +84,24 @@ data class ReceiptExtractionToolInput(
     val receiptNumber: String?,
     @property:LLMDescription(ExtractionToolDescriptions.PaymentMethod)
     val paymentMethod: PaymentMethod? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyName)
+    val counterpartyName: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyVat)
+    val counterpartyVat: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyEmail)
+    val counterpartyEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyStreet)
+    val counterpartyStreet: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyPostalCode)
+    val counterpartyPostalCode: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCity)
+    val counterpartyCity: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCountry)
+    val counterpartyCountry: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyRole)
+    val counterpartyRole: CounterpartyRole = CounterpartyRole.Unknown,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyReasoning)
+    val counterpartyReasoning: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.DirectionHint)
     val directionHint: DocumentDirection = DocumentDirection.Unknown,
     @property:LLMDescription(ExtractionToolDescriptions.DirectionHintConfidence)
@@ -110,6 +131,7 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
                 vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
                 receiptNumber = args.receiptNumber,
                 paymentMethod = args.paymentMethod,
+                counterparty = args.toCounterpartyExtraction(),
                 directionHint = args.directionHint,
                 directionHintConfidence = args.directionHintConfidence,
                 confidence = args.confidence,
@@ -117,6 +139,33 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
             )
         )
     }
+}
+
+private fun ReceiptExtractionToolInput.toCounterpartyExtraction(): CounterpartyExtraction? {
+    val hasAnyField = listOf(
+        counterpartyName,
+        counterpartyVat,
+        counterpartyEmail,
+        counterpartyStreet,
+        counterpartyPostalCode,
+        counterpartyCity,
+        counterpartyCountry,
+        counterpartyReasoning
+    ).any { !it.isNullOrBlank() } || counterpartyRole != CounterpartyRole.Unknown
+
+    if (!hasAnyField) return null
+
+    return CounterpartyExtraction(
+        name = counterpartyName,
+        vatNumber = counterpartyVat,
+        email = counterpartyEmail,
+        streetLine1 = counterpartyStreet,
+        postalCode = counterpartyPostalCode,
+        city = counterpartyCity,
+        country = counterpartyCountry,
+        role = counterpartyRole,
+        reasoning = counterpartyReasoning
+    )
 }
 
 private val ExtractDocumentInput.receiptPrompt
@@ -134,6 +183,17 @@ private val ExtractDocumentInput.receiptPrompt
     - Look for the store/merchant name at the TOP of the receipt (header/logo area).
     - Extract the actual business name, not taglines or slogans.
     - If visible, extract merchant VAT number.
+
+    ## AUTHORITATIVE COUNTERPARTY (CRITICAL)
+    - For receipts, authoritative counterparty is normally the merchant/store.
+    - Set `counterpartyRole` to MERCHANT when clear.
+    - Payment instruments (Visa/Mastercard/Apple Pay/etc.) are never counterparties.
+    - Always provide short `counterpartyReasoning`.
+
+    ### Example
+    - Store receipt:
+      - merchant = "Albert Heijn", payment method = "Visa".
+      - counterparty = "Albert Heijn", role = MERCHANT. Never use "Visa" as counterparty.
 
     ## DATE
     - Extract transaction date if printed on receipt.

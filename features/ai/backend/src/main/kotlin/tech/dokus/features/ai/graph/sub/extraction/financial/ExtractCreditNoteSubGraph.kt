@@ -22,6 +22,8 @@ import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.LineItemToolInput
+import tech.dokus.features.ai.models.CounterpartyExtraction
+import tech.dokus.features.ai.models.CounterpartyRole
 import tech.dokus.features.ai.models.VatBreakdownToolInput
 import tech.dokus.features.ai.models.toDomain
 import tech.dokus.foundation.backend.config.AIConfig
@@ -60,6 +62,9 @@ data class CreditNoteExtractionResult(
     val buyerName: String?,
     val buyerVat: VatNumber?,
 
+    // Authoritative counterparty identity (used by deterministic contact resolution)
+    val counterparty: CounterpartyExtraction? = null,
+
     // Optional tie-breaker hint (never overrides VAT evidence)
     val directionHint: DocumentDirection = DocumentDirection.Unknown,
     val directionHintConfidence: Double? = null,
@@ -97,6 +102,24 @@ data class CreditNoteExtractionToolInput(
     val buyerName: String?,
     @property:LLMDescription(ExtractionToolDescriptions.BuyerVat)
     val buyerVat: String?,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyName)
+    val counterpartyName: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyVat)
+    val counterpartyVat: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyEmail)
+    val counterpartyEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyStreet)
+    val counterpartyStreet: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyPostalCode)
+    val counterpartyPostalCode: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCity)
+    val counterpartyCity: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCountry)
+    val counterpartyCountry: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyRole)
+    val counterpartyRole: CounterpartyRole = CounterpartyRole.Unknown,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyReasoning)
+    val counterpartyReasoning: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.DirectionHint)
     val directionHint: DocumentDirection = DocumentDirection.Unknown,
     @property:LLMDescription(ExtractionToolDescriptions.DirectionHintConfidence)
@@ -133,6 +156,7 @@ private class CreditNoteExtractionFinishTool :
                 sellerVat = VatNumber.from(args.sellerVat),
                 buyerName = args.buyerName,
                 buyerVat = VatNumber.from(args.buyerVat),
+                counterparty = args.toCounterpartyExtraction(),
                 directionHint = args.directionHint,
                 directionHintConfidence = args.directionHintConfidence,
                 originalInvoiceNumber = args.originalInvoiceNumber,
@@ -142,6 +166,33 @@ private class CreditNoteExtractionFinishTool :
             )
         )
     }
+}
+
+private fun CreditNoteExtractionToolInput.toCounterpartyExtraction(): CounterpartyExtraction? {
+    val hasAnyField = listOf(
+        counterpartyName,
+        counterpartyVat,
+        counterpartyEmail,
+        counterpartyStreet,
+        counterpartyPostalCode,
+        counterpartyCity,
+        counterpartyCountry,
+        counterpartyReasoning
+    ).any { !it.isNullOrBlank() } || counterpartyRole != CounterpartyRole.Unknown
+
+    if (!hasAnyField) return null
+
+    return CounterpartyExtraction(
+        name = counterpartyName,
+        vatNumber = counterpartyVat,
+        email = counterpartyEmail,
+        streetLine1 = counterpartyStreet,
+        postalCode = counterpartyPostalCode,
+        city = counterpartyCity,
+        country = counterpartyCountry,
+        role = counterpartyRole,
+        reasoning = counterpartyReasoning
+    )
 }
 
 private val ExtractDocumentInput.creditNotePrompt: String
@@ -163,6 +214,17 @@ private val ExtractDocumentInput.creditNotePrompt: String
     - If one side is not visible, keep it null.
     - Prefer null over duplicating seller and buyer values.
     - Do not swap seller/buyer based on assumptions.
+
+    ## AUTHORITATIVE COUNTERPARTY (CRITICAL)
+    - Provide a single authoritative `counterparty*` block for downstream deterministic matching.
+    - Counterparty is the other business party of this credit note.
+    - Payment instruments (Visa/Mastercard/Apple Pay/etc.) are never counterparties.
+    - If VAT-like text is a payment token, set `counterpartyVat` to null.
+    - Always provide short `counterpartyReasoning`.
+
+    ### Example
+    - Credit note issued by seller to the buyer:
+      - seller = issuer, buyer = credited customer, counterparty = seller, role = SELLER.
 
     ## OPTIONAL DIRECTION HINT
     - Provide `directionHint` only when explicit from the paper.
