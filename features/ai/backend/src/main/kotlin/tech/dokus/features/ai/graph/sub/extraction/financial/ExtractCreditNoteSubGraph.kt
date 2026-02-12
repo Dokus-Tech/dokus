@@ -197,6 +197,14 @@ private val ExtractDocumentInput.creditNotePrompt: String
     - If VAT-like text is a payment token, set `counterpartyVat` to null.
     - Always provide short `counterpartyReasoning`.
 
+    ## ENTITY NAME RULES (for counterpartyName)
+    - Always use the legal/registered entity name when visible on the document.
+    - Look for legal suffixes: Ltd, Limited, BVBA, BV, NV, SRL, SA, GmbH, AG, S.à r.l., Inc., Corp., LLC, Pty.
+    - Footer, copyright, registration and legal contact blocks often contain the legal entity.
+    - Example: "Copyright © 2025 Apple Distribution International Ltd." -> counterpartyName = "Apple Distribution International Ltd."
+    - Do NOT use branding/account/product labels when legal entity is visible.
+    - If no legal entity name is visible, use the most formal complete business name shown.
+
     ### Example
     - Credit note issued by seller to the buyer:
       - seller = issuer, buyer = credited customer, counterparty = seller, role = SELLER.

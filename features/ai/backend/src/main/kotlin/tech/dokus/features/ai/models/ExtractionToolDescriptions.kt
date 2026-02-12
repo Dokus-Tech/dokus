@@ -54,7 +54,7 @@ object ExtractionToolDescriptions {
     const val DirectionHintConfidence = "Optional confidence score (0.0-1.0) for directionHint."
 
     const val CounterpartyName =
-        "Authoritative counterparty legal/trading name for this document. Null if unclear."
+        "Authoritative counterparty legal/registered name for this document. Prefer footer/legal registration names over branding (e.g., use legal entity if visible). Null if unclear."
     const val CounterpartyVat =
         "Authoritative counterparty VAT number in canonical form if shown. Null if invalid or not visible."
     const val CounterpartyEmail = "Authoritative counterparty email if visible and clearly business-related."

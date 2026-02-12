@@ -250,8 +250,6 @@ class PeppolMapper {
                 totalAmount = totalAmount,
                 lineItems = lineItems,
                 vatBreakdown = vatBreakdown,
-                customerName = buyer?.name,
-                customerVat = VatNumber.from(buyer?.vatNumber),
                 notes = notes,
                 seller = PartyDraft(
                     name = seller?.name,
@@ -303,8 +301,6 @@ class PeppolMapper {
                 iban = null,
                 payment = null,
                 notes = notes,
-                customerName = buyer?.name,
-                customerVat = VatNumber.from(buyer?.vatNumber),
                 seller = PartyDraft(
                     name = seller?.name,
                     vat = VatNumber.from(seller?.vatNumber),

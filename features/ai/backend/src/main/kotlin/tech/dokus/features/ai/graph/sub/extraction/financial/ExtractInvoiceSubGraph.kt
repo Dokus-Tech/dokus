@@ -251,12 +251,20 @@ private val ExtractDocumentInput.prompt
     - If a VAT-like token is actually a payment instrument identifier, set `counterpartyVat` to null.
     - Always provide short `counterpartyReasoning`.
 
+    ## ENTITY NAME RULES (for counterpartyName)
+    - Always use the legal/registered entity name when visible on the document.
+    - Look for legal suffixes: Ltd, Limited, BVBA, BV, NV, SRL, SA, GmbH, AG, S.à r.l., Inc., Corp., LLC, Pty.
+    - Footer, copyright, registration and legal contact blocks often contain the legal entity.
+    - Example: "Copyright © 2025 Apple Distribution International Ltd." -> counterpartyName = "Apple Distribution International Ltd."
+    - Do NOT use branding/account/product labels when legal entity is visible (e.g. "Apple Account" is branding).
+    - If no legal entity name is visible, use the most formal complete business name shown.
+
     ### Examples
     - B2B invoice:
       - seller = "Google Cloud EMEA Limited", buyer = "Invoid Vision", counterparty = seller, role = SELLER.
     - Consumer-style invoice:
-      - seller = "Apple Account", buyer contains "Visa .... 9803 (Apple Pay)".
-      - counterparty = "Apple Account", role = SELLER, and do not use "Visa .... 9803 (Apple Pay)" as counterparty.
+      - seller = "Apple Account", footer shows "Apple Distribution International Ltd.", buyer contains "Visa .... 9803 (Apple Pay)".
+      - counterparty = "Apple Distribution International Ltd.", role = SELLER, and never use "Visa .... 9803 (Apple Pay)" as counterparty.
 
     ## OPTIONAL DIRECTION HINT
     - Provide `directionHint` only if direction is explicit from the paper (e.g., clear billed-to vs issuer roles).
