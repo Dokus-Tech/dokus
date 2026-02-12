@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 final class ShareViewController: UIViewController {
     private let appGroupIdentifier = "group.vision.invoid.dokus.share"
     private let sharedImportsDirectory = "SharedImports"
+    private let latestBatchMarker = "latest.batch"
     private var hasProcessed = false
 
     override func viewDidAppear(_ animated: Bool) {
@@ -70,6 +71,10 @@ final class ShareViewController: UIViewController {
                             expectedCount: providers.count,
                             directoryUrl: directoryUrl
                         )
+                        try self.writeLatestBatchMarker(
+                            batchId: batchId,
+                            directoryUrl: directoryUrl
+                        )
                         self.openHostApp(batchId: batchId)
                     } catch {
                         self.cleanupBatch(
@@ -77,6 +82,7 @@ final class ShareViewController: UIViewController {
                             expectedCount: providers.count,
                             directoryUrl: directoryUrl
                         )
+                        self.finishRequest()
                     }
                 } else {
                     self.cleanupBatch(
@@ -84,9 +90,8 @@ final class ShareViewController: UIViewController {
                         expectedCount: providers.count,
                         directoryUrl: directoryUrl
                     )
+                    self.finishRequest()
                 }
-
-                self.finishRequest()
             }
         } catch {
             finishRequest()
@@ -155,6 +160,17 @@ final class ShareViewController: UIViewController {
         try countData.write(to: countUrl, options: .atomic)
     }
 
+    private func writeLatestBatchMarker(
+        batchId: String,
+        directoryUrl: URL
+    ) throws {
+        let markerUrl = directoryUrl.appendingPathComponent(latestBatchMarker)
+        guard let markerData = batchId.data(using: .utf8) else {
+            throw NSError(domain: "ShareExtension", code: 3)
+        }
+        try markerData.write(to: markerUrl, options: .atomic)
+    }
+
     private func cleanupBatch(batchId: String, expectedCount: Int, directoryUrl: URL) {
         let fileManager = FileManager.default
 
@@ -173,11 +189,35 @@ final class ShareViewController: UIViewController {
         if fileManager.fileExists(atPath: countUrl.path) {
             try? fileManager.removeItem(at: countUrl)
         }
+
+        clearLatestBatchMarkerIfMatches(batchId: batchId, directoryUrl: directoryUrl)
     }
 
     private func openHostApp(batchId: String) {
-        guard let url = URL(string: "dokus://share/import?batch=\(batchId)") else { return }
+        guard let url = URL(string: "dokus://share/import?batch=\(batchId)") else {
+            finishRequest()
+            return
+        }
 
+        guard let extensionContext else {
+            openHostAppViaResponder(url: url)
+            finishRequest()
+            return
+        }
+
+        extensionContext.open(url) { [weak self] success in
+            guard let self else { return }
+            if !success {
+                self.openHostAppViaResponder(url: url)
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.finishRequest()
+            }
+        }
+    }
+
+    private func openHostAppViaResponder(url: URL) {
         DispatchQueue.main.async {
             var responder: UIResponder? = self
             let selector = Selector(("openURL:"))
@@ -185,11 +225,22 @@ final class ShareViewController: UIViewController {
             while let currentResponder = responder {
                 if currentResponder.responds(to: selector) {
                     _ = currentResponder.perform(selector, with: url)
-                    return
+                    break
                 }
                 responder = currentResponder.next
             }
         }
+    }
+
+    private func clearLatestBatchMarkerIfMatches(batchId: String, directoryUrl: URL) {
+        let markerUrl = directoryUrl.appendingPathComponent(latestBatchMarker)
+        guard let markerData = try? Data(contentsOf: markerUrl),
+              let markerBatchId = String(data: markerData, encoding: .utf8),
+              markerBatchId == batchId else {
+            return
+        }
+
+        try? FileManager.default.removeItem(at: markerUrl)
     }
 
     private func finishRequest() {

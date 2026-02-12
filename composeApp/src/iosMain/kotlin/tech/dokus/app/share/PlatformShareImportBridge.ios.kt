@@ -18,15 +18,19 @@ private const val SharedImportsDirectory = "SharedImports"
 private const val PdfExtension = "pdf"
 private const val NameExtension = "name"
 private const val CountExtension = "count"
+private const val LatestBatchMarker = "latest.batch"
 
 @OptIn(ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 actual object PlatformShareImportBridge {
     actual suspend fun consumeBatch(batchId: String?): Result<List<SharedImportFile>> = runCatching {
-        val resolvedBatchId = batchId?.takeIf { it.isNotBlank() } ?: return@runCatching emptyList()
         val fileManager = NSFileManager.defaultManager
         val appGroupUrl = fileManager.containerURLForSecurityApplicationGroupIdentifier(AppGroupIdentifier)
             ?: return@runCatching emptyList()
         val basePath = "${appGroupUrl.path}/$SharedImportsDirectory"
+        val resolvedBatchId = batchId
+            ?.takeIf { it.isNotBlank() }
+            ?: readLatestBatchMarker(basePath)
+            ?: return@runCatching emptyList()
 
         val indexedBatchCount = readBatchCount(basePath, resolvedBatchId)
         if (indexedBatchCount != null) {
@@ -46,17 +50,38 @@ actual object PlatformShareImportBridge {
                     error = null
                 )
             }
+            clearLatestBatchMarkerIfMatches(fileManager, basePath, resolvedBatchId)
             if (indexedFiles.isNotEmpty()) {
                 return@runCatching indexedFiles
             }
         }
 
         val legacyFile = readLegacySharedFile(fileManager, basePath, resolvedBatchId)
+        clearLatestBatchMarkerIfMatches(fileManager, basePath, resolvedBatchId)
         if (legacyFile != null) {
             listOf(legacyFile)
         } else {
             emptyList()
         }
+    }
+
+    private fun readLatestBatchMarker(basePath: String): String? {
+        val markerPath = "$basePath/$LatestBatchMarker"
+        val markerData = NSData.dataWithContentsOfFile(markerPath) ?: return null
+        val marker = NSString.create(markerData, NSUTF8StringEncoding)?.toString()?.trim()
+        return marker?.takeIf { it.isNotBlank() }
+    }
+
+    private fun clearLatestBatchMarkerIfMatches(
+        fileManager: NSFileManager,
+        basePath: String,
+        batchId: String
+    ) {
+        val markerPath = "$basePath/$LatestBatchMarker"
+        val markerData = NSData.dataWithContentsOfFile(markerPath) ?: return
+        val markerBatchId = NSString.create(markerData, NSUTF8StringEncoding)?.toString()?.trim() ?: return
+        if (markerBatchId != batchId) return
+        runCatching { fileManager.removeItemAtPath(markerPath, error = null) }
     }
 
     private fun readBatchCount(basePath: String, batchId: String): Int? {

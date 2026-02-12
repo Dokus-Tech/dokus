@@ -64,6 +64,18 @@ fun DokusNavHost(
         }
 
         launch {
+            PlatformShareImportBridge.consumeBatch(batchId = null)
+                .onSuccess { files ->
+                    if (files.isNotEmpty()) {
+                        ExternalShareImportHandler.onNewSharedFiles(files)
+                    }
+                }
+                .onFailure { error ->
+                    logger.e(error) { "Failed to consume pending share batch on startup" }
+                }
+        }
+
+        launch {
             ExternalUriHandler.deeplinkState.collect { deepLink ->
                 if (deepLink != null) {
                     logger.d { "Collecting deeplink state: $deepLink" }
