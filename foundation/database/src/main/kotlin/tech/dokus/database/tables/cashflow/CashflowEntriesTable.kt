@@ -82,5 +82,7 @@ object CashflowEntriesTable : UUIDTable("cashflow_entries") {
         index(false, tenantId, direction, status)
         // History queries filter by paidAt
         index(false, tenantId, paidAt)
+        // Document lookups (getByDocumentId, getIdsByDocumentIds)
+        index(false, tenantId, documentId)
     }
 }

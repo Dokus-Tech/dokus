@@ -83,5 +83,8 @@ object CreditNotesTable : UUIDTable("credit_notes") {
 
         // Avoid duplicate credit note numbers per tenant
         uniqueIndex(tenantId, creditNoteNumber)
+
+        // Idempotent document confirmation: only one credit note per document per tenant
+        uniqueIndex("ux_credit_notes_tenant_document_id", tenantId, documentId)
     }
 }

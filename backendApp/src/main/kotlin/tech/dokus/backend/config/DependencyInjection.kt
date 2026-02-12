@@ -25,6 +25,7 @@ import tech.dokus.backend.services.auth.SmtpEmailService
 import tech.dokus.backend.services.auth.TeamService
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
+import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceService
@@ -40,6 +41,7 @@ import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationSer
 import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
+import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
@@ -81,8 +83,6 @@ import tech.dokus.foundation.backend.storage.ObjectStorage
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.mapper.PeppolMapper
-import tech.dokus.peppol.policy.DefaultDocumentConfirmationPolicy
-import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
 import tech.dokus.peppol.provider.client.RecommandProvider
@@ -252,11 +252,13 @@ private fun cashflowModule() = module {
     single { ExpenseService(get()) }
     single { CreditNoteService(get(), get(), get()) }
     single { CashflowEntriesService(get()) }
+    single { CashflowProjectionReconciliationService(get(), get()) }
     single { CashflowOverviewService(get(), get(), get()) }
     single { InvoiceConfirmationService(get(), get(), get()) }
     single { ReceiptConfirmationService(get(), get(), get()) }
-    single { CreditNoteConfirmationService(get(), get()) }
+    single { CreditNoteConfirmationService(get(), get(), get(), get()) }
     single { DocumentConfirmationDispatcher(get(), get(), get()) }
+    singleOf(::CashflowProjectionReconciliationWorker)
 
     // PDF Preview
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
@@ -275,7 +277,6 @@ private fun cashflowModule() = module {
 
     // PEPPOL Directory Cache - resolves recipients via cache-first lookup
     single { PeppolRecipientResolver(get(), get(), get(), get()) }
-    single<DocumentConfirmationPolicy> { DefaultDocumentConfirmationPolicy() }
 
     // PEPPOL Registration State Machine (Phase B)
     single { PeppolRegistrationRepository() }

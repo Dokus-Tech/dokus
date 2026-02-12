@@ -13,6 +13,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
@@ -20,6 +21,7 @@ import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
+import tech.dokus.domain.Money
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.DocumentDirection
@@ -35,7 +37,6 @@ import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
-import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.provider.client.recommand.model.RecommandAttachment
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCreditNote
 import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
@@ -66,7 +67,7 @@ class PeppolPollingWorker(
     private val documentRepository: DocumentRepository,
     private val draftRepository: DocumentDraftRepository,
     private val ingestionRunRepository: DocumentIngestionRunRepository,
-    private val confirmationPolicy: DocumentConfirmationPolicy,
+    private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val documentStorageService: DocumentStorageService,
     private val contactRepository: ContactRepository
@@ -301,24 +302,37 @@ class PeppolPollingWorker(
                     )
 
                     // Create draft with extracted data
+                    val documentType = documentTypeFor(draftData)
                     draftRepository.createOrUpdateFromIngestion(
                         documentId = documentId,
                         tenantId = tid,
                         runId = runId,
                         extractedData = draftData,
-                        documentType = documentTypeFor(draftData),
+                        documentType = documentType,
                         force = true
                     )
 
-                    // Auto-confirm if policy allows (PEPPOL documents are always auto-confirmed)
-                    if (confirmationPolicy.canAutoConfirm(DocumentSource.Peppol, draftData, tid)) {
-                        val counterparty = extractCounterparty(draftData)
-                        val linkedContactId = findOrCreateContactForPeppol(
-                            tenantId = tid,
-                            counterpartyName = counterparty.name,
-                            counterpartyVatNumber = counterparty.vatNumber
-                        )
+                    val counterparty = extractCounterparty(draftData)
+                    val linkedContactId = findOrCreateContactForPeppol(
+                        tenantId = tid,
+                        counterpartyName = counterparty.name,
+                        counterpartyVatNumber = counterparty.vatNumber
+                    )
 
+                    // Auto-confirm if origin policy allows (PEPPOL is eligible only when base checks pass)
+                    val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
+                        tenantId = tid,
+                        documentId = documentId,
+                        source = DocumentSource.Peppol,
+                        documentType = documentType,
+                        draftData = draftData,
+                        auditPassed = peppolAuditPassed(draftData),
+                        confidence = 1.0,
+                        linkedContactId = linkedContactId,
+                        directionResolvedFromAiHintOnly = false
+                    )
+
+                    if (canAutoConfirm) {
                         confirmationDispatcher.confirm(
                             tenantId = tid,
                             documentId = documentId,
@@ -381,6 +395,18 @@ class PeppolPollingWorker(
         is CreditNoteDraftData -> draftData.creditNoteNumber
         is InvoiceDraftData -> draftData.invoiceNumber
         is ReceiptDraftData -> draftData.receiptNumber
+    }
+
+    private fun peppolAuditPassed(draftData: DocumentDraftData): Boolean = when (draftData) {
+        is InvoiceDraftData -> vatMathOk(draftData.subtotalAmount, draftData.vatAmount, draftData.totalAmount)
+        is CreditNoteDraftData -> vatMathOk(draftData.subtotalAmount, draftData.vatAmount, draftData.totalAmount)
+        is ReceiptDraftData -> true // Receipts typically don't provide a subtotal; keep audit deterministic and minimal
+    }
+
+    private fun vatMathOk(subtotal: Money?, vat: Money?, total: Money?): Boolean {
+        if (subtotal == null || vat == null || total == null) return true
+        val diffMinor = (subtotal + vat - total).minor
+        return kotlin.math.abs(diffMinor) <= 1L // tolerate rounding differences up to 1 cent
     }
 
     /**

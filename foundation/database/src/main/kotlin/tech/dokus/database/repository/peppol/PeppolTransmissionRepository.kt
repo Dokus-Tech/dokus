@@ -89,6 +89,25 @@ class PeppolTransmissionRepository {
     }
 
     /**
+     * Get a transmission by external provider document ID.
+     * Useful for inbound dedupe and safe retry logic.
+     */
+    suspend fun getByExternalDocumentId(
+        tenantId: TenantId,
+        externalDocumentId: String
+    ): Result<PeppolTransmissionDto?> = runCatching {
+        dbQuery {
+            PeppolTransmissionsTable.selectAll()
+                .where {
+                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                        (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
+                }
+                .map { it.toDto() }
+                .singleOrNull()
+        }
+    }
+
+    /**
      * Get a transmission by ID.
      */
     suspend fun getTransmission(

@@ -25,6 +25,7 @@ import tech.dokus.database.repository.cashflow.RefundClaimRepository
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactNoteRepository
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.database.repository.documents.DocumentLinkRepository
 import tech.dokus.database.repository.payment.PaymentRepository
 import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
@@ -64,6 +65,7 @@ val repositoryModuleCashflow = module {
     single { RefundClaimRepository() }
     single { CashflowEntriesRepository() }
     single { CashflowRepository(get(), get()) }
+    single { DocumentLinkRepository() }
 }
 
 /**

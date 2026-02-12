@@ -63,6 +63,22 @@ class CreditNoteService(
     }
 
     /**
+     * Update credit note details.
+     *
+     * Status transitions are handled separately (confirm/refund/cancel flows).
+     */
+    suspend fun updateCreditNote(
+        creditNoteId: CreditNoteId,
+        tenantId: TenantId,
+        request: CreateCreditNoteRequest
+    ): Result<FinancialDocumentDto.CreditNoteDto> {
+        logger.info("Updating credit note: $creditNoteId, tenant=$tenantId")
+        return creditNoteRepository.updateCreditNote(creditNoteId, tenantId, request)
+            .onSuccess { logger.info("Credit note updated: $creditNoteId") }
+            .onFailure { logger.error("Failed to update credit note: $creditNoteId", it) }
+    }
+
+    /**
      * List credit notes with optional filters.
      */
     @Suppress("LongParameterList")

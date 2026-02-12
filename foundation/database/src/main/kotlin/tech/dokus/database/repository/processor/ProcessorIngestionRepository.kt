@@ -145,9 +145,7 @@ class ProcessorIngestionRepository {
      *
      * Draft creation rules:
      * - Always create a draft (including Unknown type)
-     * - Unknown type → DocumentStatus.NeedsReview
-     * - processingOutcome == AutoConfirmEligible → DocumentStatus.Confirmed
-     * - otherwise → DocumentStatus.NeedsReview
+     * - Always set DocumentStatus.NeedsReview (ingestion never confirms)
      *
      * @param runId The ingestion run ID
      * @param tenantId The tenant ID (required for draft operations)
@@ -186,13 +184,7 @@ class ProcessorIngestionRepository {
             val tenantUuid = UUID.fromString(tenantId)
             val draftJson = draftData?.let { json.encodeToString(it) }
             val keywordsJson = keywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
-            val calculatedStatus = if (documentType == DocumentType.Unknown) {
-                DocumentStatus.NeedsReview
-            } else if (processingOutcome == ProcessingOutcome.AutoConfirmEligible) {
-                DocumentStatus.Confirmed
-            } else {
-                DocumentStatus.NeedsReview
-            }
+            val calculatedStatus = DocumentStatus.NeedsReview
 
             // Update the ingestion run (always, regardless of draft creation)
             val runUpdated = DocumentIngestionRunsTable.update({

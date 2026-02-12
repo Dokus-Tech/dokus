@@ -44,6 +44,9 @@ import tech.dokus.aura.resources.cashflow_action_view_document
 import tech.dokus.aura.resources.cashflow_empty_history
 import tech.dokus.aura.resources.cashflow_empty_history_in
 import tech.dokus.aura.resources.cashflow_empty_history_out
+import tech.dokus.aura.resources.cashflow_empty_overdue
+import tech.dokus.aura.resources.cashflow_empty_overdue_in
+import tech.dokus.aura.resources.cashflow_empty_overdue_out
 import tech.dokus.aura.resources.cashflow_empty_upcoming
 import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
@@ -295,7 +298,7 @@ private fun CashflowLedgerContent(
                         .padding(bottom = 24.dp)
                 ) {
                     // Payment actions only in Upcoming mode
-                    if (state.filters.viewMode == CashflowViewMode.Upcoming) {
+                    if (state.filters.viewMode != CashflowViewMode.History) {
                         // Record payment
                         MobileActionItem(
                             icon = Icons.Default.Payment,
@@ -361,6 +364,11 @@ private fun getEmptyStateTitle(
         DirectionFilter.All -> stringResource(Res.string.cashflow_empty_upcoming)
         DirectionFilter.In -> stringResource(Res.string.cashflow_empty_upcoming_in)
         DirectionFilter.Out -> stringResource(Res.string.cashflow_empty_upcoming_out)
+    }
+    CashflowViewMode.Overdue -> when (direction) {
+        DirectionFilter.All -> stringResource(Res.string.cashflow_empty_overdue)
+        DirectionFilter.In -> stringResource(Res.string.cashflow_empty_overdue_in)
+        DirectionFilter.Out -> stringResource(Res.string.cashflow_empty_overdue_out)
     }
     CashflowViewMode.History -> when (direction) {
         DirectionFilter.All -> stringResource(Res.string.cashflow_empty_history)

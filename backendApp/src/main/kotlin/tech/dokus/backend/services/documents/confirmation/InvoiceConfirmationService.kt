@@ -5,6 +5,7 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import tech.dokus.backend.util.isUniqueViolation
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
@@ -13,6 +14,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -44,9 +46,10 @@ class InvoiceConfirmationService(
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming invoice document: $documentId for tenant: $tenantId")
 
-        ensureDraftConfirmable(draftRepository, tenantId, documentId)
+        val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
+        val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
-        val contactId = linkedContactId
+        val contactId = linkedContactId ?: draft.linkedContactId
             ?: throw DokusException.BadRequest("Invoice requires a linked contact")
 
         val items = buildInvoiceItems(draftData)
@@ -71,18 +74,48 @@ class InvoiceConfirmationService(
             totalAmount = draftData.totalAmount
         )
 
-        val invoice = invoiceRepository.createInvoice(tenantId, request).getOrThrow()
+        val existingInvoice = invoiceRepository.findByDocumentId(tenantId, documentId)
+        val invoice = when {
+            existingInvoice == null -> {
+                invoiceRepository.createInvoice(tenantId, request).getOrElse { t ->
+                    if (!t.isUniqueViolation()) throw t
+                    invoiceRepository.findByDocumentId(tenantId, documentId) ?: throw t
+                }
+            }
 
-        val cashflowEntry = cashflowEntriesService.createFromInvoice(
-            tenantId = tenantId,
-            invoiceId = UUID.fromString(invoice.id.toString()),
-            documentId = documentId,
-            dueDate = dueDate,
-            amountGross = invoice.totalAmount,
-            amountVat = invoice.vatAmount,
-            direction = invoice.direction,
-            contactId = contactId
-        ).getOrThrow()
+            isReconfirm -> {
+                if (existingInvoice.status != InvoiceStatus.Draft) {
+                    throw DokusException.BadRequest("Cannot re-confirm invoice in status: ${existingInvoice.status}")
+                }
+                invoiceRepository.updateInvoice(existingInvoice.id, tenantId, request).getOrThrow()
+            }
+
+            else -> existingInvoice
+        }
+
+        val cashflowEntry = if (existingInvoice != null && isReconfirm) {
+            cashflowEntriesService.updateFromInvoice(
+                tenantId = tenantId,
+                invoiceId = UUID.fromString(invoice.id.toString()),
+                documentId = documentId,
+                dueDate = dueDate,
+                amountGross = invoice.totalAmount,
+                amountVat = invoice.vatAmount,
+                direction = invoice.direction,
+                contactId = contactId
+            ).getOrThrow()
+        } else {
+            cashflowEntriesService.createFromInvoice(
+                tenantId = tenantId,
+                invoiceId = UUID.fromString(invoice.id.toString()),
+                documentId = documentId,
+                dueDate = dueDate,
+                amountGross = invoice.totalAmount,
+                amountVat = invoice.vatAmount,
+                direction = invoice.direction,
+                contactId = contactId
+            ).getOrThrow()
+        }
 
         draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 

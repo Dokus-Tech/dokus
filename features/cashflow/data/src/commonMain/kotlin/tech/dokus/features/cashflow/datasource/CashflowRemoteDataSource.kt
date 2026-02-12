@@ -15,6 +15,7 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.ExpenseCategory
@@ -406,6 +407,7 @@ interface CashflowRemoteDataSource {
      * @param limit Items per page (max 100)
      */
     suspend fun listDocuments(
+        filter: DocumentListFilter? = null,
         documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,

@@ -64,6 +64,7 @@ class ContactMatchingServiceTest {
                 it[plan] = SubscriptionTier.CoreFounder
                 it[status] = TenantStatus.Active
                 it[language] = Language.En
+                it[vatNumber] = "BE0123456789"
             }
         }
 

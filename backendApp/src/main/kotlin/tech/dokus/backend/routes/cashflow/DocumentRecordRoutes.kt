@@ -16,6 +16,7 @@ import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
+import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
@@ -31,6 +32,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
@@ -63,6 +65,7 @@ internal fun Route.documentRecordRoutes() {
     val expenseRepository by inject<ExpenseRepository>()
     val creditNoteRepository by inject<CreditNoteRepository>()
     val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
+    val projectionReconciliationService by inject<CashflowProjectionReconciliationService>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
@@ -77,12 +80,18 @@ internal fun Route.documentRecordRoutes() {
             val tenantId = dokusPrincipal.requireTenantId()
             val page = route.page.coerceAtLeast(0)
             val limit = route.limit.coerceIn(1, 100)
+            val filter = route.filter
 
-            logger.info("Listing documents: tenant=$tenantId, page=$page, limit=$limit")
+            logger.info("Listing documents: tenant=$tenantId, filter=$filter, page=$page, limit=$limit")
+
+            if (filter != null && (route.documentStatus != null || route.ingestionStatus != null)) {
+                throw DokusException.BadRequest("Do not combine 'filter' with 'documentStatus' or 'ingestionStatus'")
+            }
 
             // Query documents with optional drafts and ingestion info
             val (documentsWithInfo, total) = documentRepository.listWithDraftsAndIngestion(
                 tenantId = tenantId,
+                filter = filter,
                 documentStatus = route.documentStatus,
                 documentType = route.documentType,
                 ingestionStatus = route.ingestionStatus,
@@ -90,6 +99,13 @@ internal fun Route.documentRecordRoutes() {
                 page = page,
                 limit = limit
             )
+
+            val confirmedDocumentIds = documentsWithInfo
+                .filter { it.draft?.documentStatus == DocumentStatus.Confirmed }
+                .map { it.document.id }
+            val cashflowEntryIdsByDocumentId = cashflowEntriesRepository
+                .getIdsByDocumentIds(tenantId, confirmedDocumentIds)
+                .getOrThrow()
 
             // Build full records
             val records = documentsWithInfo.map { docInfo ->
@@ -112,7 +128,8 @@ internal fun Route.documentRecordRoutes() {
                     document = documentWithUrl,
                     draft = draft?.toDto(),
                     latestIngestion = docInfo.latestIngestion?.toDto(),
-                    confirmedEntity = confirmedEntity
+                    confirmedEntity = confirmedEntity,
+                    cashflowEntryId = cashflowEntryIdsByDocumentId[docInfo.document.id]
                 )
             }
 
@@ -155,6 +172,11 @@ internal fun Route.documentRecordRoutes() {
             } else {
                 null
             }
+            val cashflowEntryId = if (draft?.documentStatus == DocumentStatus.Confirmed) {
+                cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrNull()?.id
+            } else {
+                null
+            }
 
             call.respond(
                 HttpStatusCode.OK,
@@ -165,7 +187,8 @@ internal fun Route.documentRecordRoutes() {
                         includeRawExtraction = true,
                         includeTrace = true
                     ),
-                    confirmedEntity = confirmedEntity
+                    confirmedEntity = confirmedEntity,
+                    cashflowEntryId = cashflowEntryId
                 )
             )
         }
@@ -361,7 +384,9 @@ internal fun Route.documentRecordRoutes() {
         /**
          * POST /api/v1/documents/{id}/confirm
          * Confirm using the latest draft and create financial entity.
-         * TRANSACTIONAL + IDEMPOTENT: fails if entity already exists for documentId.
+         * IDEMPOTENT + RECONFIRM-SAFE:
+         * - If already confirmed and entity exists, returns existing record.
+         * - If draft was edited after confirmation, re-confirm updates the existing entity + projection (when allowed).
          */
         post<Documents.Id.Confirm> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
@@ -393,9 +418,25 @@ internal fun Route.documentRecordRoutes() {
                     val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
                     val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
-                    // Look up the cashflow entry for this document
-                    val cashflowEntry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId)
-                        .getOrNull()
+                    if (confirmedEntity is FinancialDocumentDto.InvoiceDto &&
+                        confirmedEntity.paidAmount.minor >= confirmedEntity.totalAmount.minor &&
+                        confirmedEntity.paidAt == null
+                    ) {
+                        logger.warn(
+                            "Detected paid invoice without paidAt during confirm-path reconciliation: tenant={}, document={}, invoice={}",
+                            tenantId,
+                            documentId,
+                            confirmedEntity.id
+                        )
+                    }
+
+                    val repairedEntryId = projectionReconciliationService
+                        .ensureProjectionIfMissing(tenantId, documentId, confirmedEntity)
+                        .getOrElse {
+                            throw DokusException.InternalError(
+                                "Failed to repair missing cashflow projection: ${it.message}"
+                            )
+                        }
 
                     call.respond(
                         HttpStatusCode.OK,
@@ -407,7 +448,7 @@ internal fun Route.documentRecordRoutes() {
                                 includeTrace = true
                             ),
                             confirmedEntity = confirmedEntity,
-                            cashflowEntryId = cashflowEntry?.id
+                            cashflowEntryId = repairedEntryId
                         )
                     )
                     return@post
@@ -436,8 +477,8 @@ internal fun Route.documentRecordRoutes() {
             val draftData = draft.extractedData
                 ?: throw DokusException.BadRequest("No draft data available for confirmation")
 
-            // Check if entity already exists for this document (idempotent check)
-            val existingEntity = findConfirmedEntity(
+            // Determine if an entity already exists (re-confirm path)
+            val existingEntityBeforeConfirm = findConfirmedEntity(
                 documentId,
                 draftType,
                 tenantId,
@@ -445,9 +486,6 @@ internal fun Route.documentRecordRoutes() {
                 expenseRepository,
                 creditNoteRepository
             )
-            if (existingEntity != null) {
-                throw DokusException.BadRequest("Entity already exists for this document")
-            }
 
             // Confirm document: creates entity + cashflow entry + marks draft confirmed
             val confirmationResult = confirmationDispatcher.confirm(
@@ -464,7 +502,7 @@ internal fun Route.documentRecordRoutes() {
             val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
             call.respond(
-                HttpStatusCode.Created,
+                if (existingEntityBeforeConfirm != null) HttpStatusCode.OK else HttpStatusCode.Created,
                 DocumentRecordDto(
                     document = documentWithUrl,
                     draft = updatedDraft.toDto(),

@@ -262,8 +262,8 @@ internal fun CashflowLedgerTableRow(
                     expanded = showActionsMenu,
                     onDismissRequest = onHideActions
                 ) {
-                    // Upcoming mode: payment actions available
-                    if (viewMode == CashflowViewMode.Upcoming) {
+                    // Upcoming and Overdue modes: payment actions available
+                    if (viewMode != CashflowViewMode.History) {
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.cashflow_action_record_payment)) },
                             onClick = onRecordPayment

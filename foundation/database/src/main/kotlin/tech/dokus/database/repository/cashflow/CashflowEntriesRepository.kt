@@ -1,9 +1,12 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -15,6 +18,7 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
@@ -121,6 +125,51 @@ class CashflowEntriesRepository {
     }
 
     /**
+     * Update an entry projection by source (Invoice/Expense).
+     * This is used for safe "re-confirm" flows to update the projection from the latest draft.
+     *
+     * CAS guard: only updates entries that are still Open with no partial payments
+     * (remainingAmount == amountGross). This prevents overwriting payment state
+     * if a concurrent payment is recorded between the caller's read and this write.
+     *
+     * Returns false if the CAS condition is not met (entry was modified concurrently).
+     *
+     * CRITICAL: MUST filter by tenant_id.
+     */
+    suspend fun updateProjectionBySource(
+        tenantId: TenantId,
+        sourceType: CashflowSourceType,
+        sourceId: UUID,
+        documentId: DocumentId?,
+        direction: CashflowDirection,
+        eventDate: LocalDate,
+        amountGross: Money,
+        amountVat: Money,
+        contactId: ContactId?
+    ): Result<Boolean> = runCatching {
+        dbQuery {
+            val updated = CashflowEntriesTable.update({
+                (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (CashflowEntriesTable.sourceType eq sourceType) and
+                    (CashflowEntriesTable.sourceId eq sourceId) and
+                    (CashflowEntriesTable.status eq CashflowEntryStatus.Open) and
+                    (CashflowEntriesTable.remainingAmount eq CashflowEntriesTable.amountGross)
+            }) {
+                it[CashflowEntriesTable.direction] = direction
+                it[CashflowEntriesTable.eventDate] = eventDate
+                it[CashflowEntriesTable.amountGross] = amountGross.toDbDecimal()
+                it[CashflowEntriesTable.amountVat] = amountVat.toDbDecimal()
+                it[CashflowEntriesTable.remainingAmount] = amountGross.toDbDecimal()
+                if (documentId != null) {
+                    it[CashflowEntriesTable.documentId] = UUID.fromString(documentId.toString())
+                }
+                it[CashflowEntriesTable.counterpartyId] = contactId?.let { id -> UUID.fromString(id.toString()) }
+            }
+            updated > 0
+        }
+    }
+
+    /**
      * Get entry by document ID.
      * CRITICAL: MUST filter by tenant_id.
      */
@@ -137,11 +186,40 @@ class CashflowEntriesRepository {
     }
 
     /**
+     * Bulk lookup: map document IDs to cashflow entry IDs.
+     * CRITICAL: MUST filter by tenant_id.
+     */
+    suspend fun getIdsByDocumentIds(
+        tenantId: TenantId,
+        documentIds: List<DocumentId>
+    ): Result<Map<DocumentId, CashflowEntryId>> = runCatching {
+        if (documentIds.isEmpty()) return@runCatching emptyMap()
+
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val documentUuids = documentIds.map { id -> UUID.fromString(id.toString()) }
+
+        dbQuery {
+            CashflowEntriesTable
+                .select(CashflowEntriesTable.documentId, CashflowEntriesTable.id)
+                .where {
+                    (CashflowEntriesTable.tenantId eq tenantUuid) and
+                        (CashflowEntriesTable.documentId inList documentUuids)
+                }
+                .associate { row ->
+                    val documentIdUuid = requireNotNull(row[CashflowEntriesTable.documentId])
+                    val entryIdUuid = row[CashflowEntriesTable.id].value
+                    DocumentId.parse(documentIdUuid.toString()) to CashflowEntryId.parse(entryIdUuid.toString())
+                }
+        }
+    }
+
+    /**
      * List entries for a tenant with optional filters.
      * Includes LEFT JOIN to contacts to fetch counterparty name.
      *
      * @param viewMode Determines date field filtering and sorting:
      *                 - Upcoming: filter by eventDate, sort ASC
+     *                 - Overdue: filter by eventDate < today, sort ASC
      *                 - History: filter by paidAt, sort DESC
      * @param statuses Multi-status filter (e.g., [Open, Overdue])
      *
@@ -157,6 +235,17 @@ class CashflowEntriesRepository {
         statuses: List<CashflowEntryStatus>? = null
     ): Result<List<CashflowEntry>> = runCatching {
         dbQuery {
+            val effectiveStatuses = if (!statuses.isNullOrEmpty()) {
+                statuses
+            } else {
+                when (viewMode) {
+                    CashflowViewMode.Upcoming,
+                    CashflowViewMode.Overdue -> listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)
+                    CashflowViewMode.History -> listOf(CashflowEntryStatus.Paid)
+                    null -> null
+                }
+            }
+
             var query = CashflowEntriesTable
                 .join(
                     ContactsTable,
@@ -170,7 +259,7 @@ class CashflowEntriesRepository {
                 }
 
             // Exclude Cancelled by default (unless explicitly included in statuses)
-            if (statuses == null || CashflowEntryStatus.Cancelled !in statuses) {
+            if (effectiveStatuses == null || CashflowEntryStatus.Cancelled !in effectiveStatuses) {
                 query = query.andWhere { CashflowEntriesTable.status neq CashflowEntryStatus.Cancelled }
             }
 
@@ -184,6 +273,10 @@ class CashflowEntriesRepository {
                     if (toDate != null) {
                         query = query.andWhere { CashflowEntriesTable.eventDate lessEq toDate }
                     }
+                }
+                CashflowViewMode.Overdue -> {
+                    val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+                    query = query.andWhere { CashflowEntriesTable.eventDate less today }
                 }
                 CashflowViewMode.History -> {
                     // Filter by paidAt (using LocalDate as start/end of day in UTC)
@@ -210,8 +303,8 @@ class CashflowEntriesRepository {
             }
 
             // Multi-status filtering
-            if (!statuses.isNullOrEmpty()) {
-                query = query.andWhere { CashflowEntriesTable.status inList statuses }
+            if (!effectiveStatuses.isNullOrEmpty()) {
+                query = query.andWhere { CashflowEntriesTable.status inList effectiveStatuses }
             }
 
             if (direction != null) {
@@ -282,6 +375,12 @@ class CashflowEntriesRepository {
     /**
      * Update both remaining amount and status atomically.
      * When transitioning to PAID, paidAt MUST be set.
+     *
+     * Allowed callers:
+     * - `InvoiceService.recordPayment` (invoice payment sync projection)
+     * - `CashflowProjectionReconciliationService.ensureProjectionIfMissing` (missing projection repair)
+     *
+     * Keep this narrowly scoped to projection synchronization paths.
      * CRITICAL: MUST filter by tenant_id.
      */
     suspend fun updateRemainingAmountAndStatus(

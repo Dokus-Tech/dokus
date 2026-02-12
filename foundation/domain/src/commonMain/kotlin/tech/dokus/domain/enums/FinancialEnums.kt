@@ -654,12 +654,16 @@ enum class CashflowEntryStatus(override val dbValue: String) : DbEnum {
  * View mode for cashflow ledger - determines which date field is used for filtering.
  *
  * - Upcoming: Filters by eventDate (due date), shows OPEN/OVERDUE entries
+ * - Overdue: Filters by eventDate < today, shows unpaid overdue entries
  * - History: Filters by paidAt (payment date), shows PAID entries
  */
 @Serializable
 enum class CashflowViewMode {
     @SerialName("UPCOMING")
     Upcoming,
+
+    @SerialName("OVERDUE")
+    Overdue,
 
     @SerialName("HISTORY")
     History

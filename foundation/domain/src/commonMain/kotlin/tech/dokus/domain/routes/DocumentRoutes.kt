@@ -3,6 +3,7 @@ package tech.dokus.domain.routes
 import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 
@@ -44,6 +45,7 @@ class Documents {
     @Suppress("LongParameterList") // Query parameters for document filtering
     class Paginated(
         val parent: Documents = Documents(),
+        val filter: DocumentListFilter? = null,
         val documentStatus: DocumentStatus? = null,
         val documentType: DocumentType? = null,
         val ingestionStatus: IngestionStatus? = null,
@@ -55,7 +57,7 @@ class Documents {
     /**
      * POST /api/v1/documents/upload
      * Upload a new document
-     * Returns DocumentRecordDto (document + draft with status=NeedsReview + ingestion with status=Queued)
+     * Returns DocumentRecordDto (document + ingestion with status=Queued; draft is created after processing)
      */
     @Serializable
     @Resource("upload")
@@ -97,7 +99,9 @@ class Documents {
         /**
          * POST /api/v1/documents/{id}/confirm
          * Confirm extraction and create financial entity
-         * TRANSACTIONAL + IDEMPOTENT: Fails if entity already exists for documentId
+         * TRANSACTIONAL + IDEMPOTENT:
+         * - If entity does not exist yet, creates it.
+         * - If entity exists, confirmation is idempotent and may re-confirm after edits (if allowed by cashflow rules).
          */
         @Serializable
         @Resource("confirm")

@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.CashflowEntryStatus
@@ -168,12 +169,25 @@ class InvoiceService(
         val remaining = update.totalAmount - update.paidAmount
         val newRemaining = if (remaining.isNegative) tech.dokus.domain.Money.ZERO else remaining
         val newStatus = if (newRemaining.minor <= 0) CashflowEntryStatus.Paid else entry.status
+        val paidAt = if (newStatus == CashflowEntryStatus.Paid && entry.status != CashflowEntryStatus.Paid) {
+            LocalDateTime(
+                request.paymentDate.year,
+                request.paymentDate.monthNumber,
+                request.paymentDate.dayOfMonth,
+                12,
+                0,
+                0
+            )
+        } else {
+            entry.paidAt
+        }
 
         cashflowEntriesRepository.updateRemainingAmountAndStatus(
             entryId = entry.id,
             tenantId = tenantId,
             newRemainingAmount = newRemaining,
-            newStatus = newStatus
+            newStatus = newStatus,
+            paidAt = paidAt
         ).getOrThrow()
     }
 }

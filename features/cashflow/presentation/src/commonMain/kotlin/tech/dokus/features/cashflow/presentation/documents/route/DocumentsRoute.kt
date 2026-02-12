@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.currentBackStackEntryAsState
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.domain.exceptions.DokusException
@@ -35,6 +36,7 @@ internal fun DocumentsRoute(
     uploadContainer: AddDocumentContainer = container(),
 ) {
     val navController = LocalNavController.current
+    val backStackEntry by navController.currentBackStackEntryAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var isUploadSidebarVisible by remember { mutableStateOf(false) }
@@ -68,6 +70,16 @@ internal fun DocumentsRoute(
     ConnectionSnackbarEffect(snackbarHostState)
 
     LaunchedEffect(Unit) {
+        documentsContainer.store.intent(DocumentsIntent.Refresh)
+    }
+
+    val refreshRequired = backStackEntry
+        ?.savedStateHandle
+        ?.get<Boolean>(DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY) == true
+
+    LaunchedEffect(refreshRequired) {
+        if (!refreshRequired) return@LaunchedEffect
+        backStackEntry?.savedStateHandle?.remove<Boolean>(DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY)
         documentsContainer.store.intent(DocumentsIntent.Refresh)
     }
 
