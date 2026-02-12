@@ -42,7 +42,7 @@ class DocumentReviewStateDirectionTest {
     fun `header description prefers snapshot name over extracted payment token name`() {
         val state = contentState(
             direction = DocumentDirection.Inbound,
-            customerName = "Visa .... 9803 (Apple Pay)",
+            sellerName = "Visa .... 9803 (Apple Pay)",
             counterpartySnapshotName = "Apple Distribution International Ltd."
         )
 
@@ -51,7 +51,7 @@ class DocumentReviewStateDirectionTest {
 
     private fun contentState(
         direction: DocumentDirection,
-        customerName: String? = null,
+        sellerName: String? = null,
         counterpartySnapshotName: String? = null,
     ): DocumentReviewState.Content {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
@@ -63,7 +63,7 @@ class DocumentReviewStateDirectionTest {
             direction = direction,
             issueDate = LocalDate(2026, 2, 10),
             subtotalAmount = Money.from("100.00"),
-            customerName = customerName
+            seller = tech.dokus.domain.model.PartyDraft(name = sellerName)
         )
 
         val draft = DocumentDraftDto(

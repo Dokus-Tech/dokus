@@ -64,8 +64,7 @@ class DocumentRowResolutionTest {
             direction = DocumentDirection.Inbound,
             invoiceNumber = invoiceNumber,
             issueDate = LocalDate(2026, 2, 10),
-            subtotalAmount = Money.from("100.00"),
-            customerName = "Visa .... 9803 (Apple Pay)"
+            subtotalAmount = Money.from("100.00")
         )
 
         val draft = DocumentDraftDto(
