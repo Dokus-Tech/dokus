@@ -6,5 +6,9 @@
     <array>
         <string>group.vision.invoid.dokus.share</string>
     </array>
+    <key>keychain-access-groups</key>
+    <array>
+        <string>$(AppIdentifierPrefix)vision.invoid.dokus.shared</string>
+    </array>
 </dict>
 </plist>

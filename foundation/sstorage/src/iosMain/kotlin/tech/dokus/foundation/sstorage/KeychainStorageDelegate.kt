@@ -32,6 +32,7 @@ import platform.Security.errSecSuccess
 import platform.Security.kSecAttrAccessible
 import platform.Security.kSecAttrAccessibleWhenUnlockedThisDeviceOnly
 import platform.Security.kSecAttrAccount
+import platform.Security.kSecAttrAccessGroup
 import platform.Security.kSecAttrService
 import platform.Security.kSecClass
 import platform.Security.kSecClassGenericPassword
@@ -46,18 +47,23 @@ import platform.Security.kSecValueData
  * Keychain-based storage delegate using iOS Keychain Services.
  * Provides hardware-backed secure storage on iOS devices.
  */
-internal class KeychainStorageDelegate(private val serviceName: String) : IOSStorageDelegate {
+internal class KeychainStorageDelegate(
+    private val serviceName: String,
+    private val accessGroup: String? = null
+) : IOSStorageDelegate {
 
     @OptIn(ExperimentalForeignApi::class)
     override fun store(key: String, value: String): Boolean {
         val data = value.encodeToByteArray().toNSData()
         val serviceString = serviceName.toCFString()
         val keyString = key.toCFString()
+        val accessGroupString = accessGroup?.toCFString()
 
         val query = CFDictionaryCreateMutable(null, 0, null, null)!!
         CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword)
         CFDictionaryAddValue(query, kSecAttrService, serviceString)
         CFDictionaryAddValue(query, kSecAttrAccount, keyString)
+        accessGroupString?.let { CFDictionaryAddValue(query, kSecAttrAccessGroup, it) }
 
         val attributes = CFDictionaryCreateMutable(null, 0, null, null)!!
         CFDictionaryAddValue(attributes, kSecValueData, CFBridgingRetain(data))
@@ -76,6 +82,7 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
         // Clean up CF strings
         CFRelease(serviceString)
         CFRelease(keyString)
+        accessGroupString?.let { CFRelease(it) }
         CFRelease(query)
         CFRelease(attributes)
 
@@ -86,11 +93,13 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
     override fun retrieve(key: String): String? {
         val serviceString = serviceName.toCFString()
         val keyString = key.toCFString()
+        val accessGroupString = accessGroup?.toCFString()
         val query = CFDictionaryCreateMutable(null, 0, null, null)!!
 
         CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword)
         CFDictionaryAddValue(query, kSecAttrService, serviceString)
         CFDictionaryAddValue(query, kSecAttrAccount, keyString)
+        accessGroupString?.let { CFDictionaryAddValue(query, kSecAttrAccessGroup, it) }
         CFDictionaryAddValue(query, kSecReturnData, kCFBooleanTrue)
         CFDictionaryAddValue(query, kSecMatchLimit, kSecMatchLimitOne)
 
@@ -116,6 +125,7 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
         // Clean up
         CFRelease(serviceString)
         CFRelease(keyString)
+        accessGroupString?.let { CFRelease(it) }
         CFRelease(query)
 
         return result
@@ -125,17 +135,20 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
     override fun remove(key: String): Boolean {
         val serviceString = serviceName.toCFString()
         val keyString = key.toCFString()
+        val accessGroupString = accessGroup?.toCFString()
         val query = CFDictionaryCreateMutable(null, 0, null, null)!!
 
         CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword)
         CFDictionaryAddValue(query, kSecAttrService, serviceString)
         CFDictionaryAddValue(query, kSecAttrAccount, keyString)
+        accessGroupString?.let { CFDictionaryAddValue(query, kSecAttrAccessGroup, it) }
 
         val status = SecItemDelete(query)
 
         // Clean up
         CFRelease(serviceString)
         CFRelease(keyString)
+        accessGroupString?.let { CFRelease(it) }
         CFRelease(query)
 
         return status == errSecSuccess
@@ -144,15 +157,18 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
     @OptIn(ExperimentalForeignApi::class)
     override fun clear(): Boolean {
         val serviceString = serviceName.toCFString()
+        val accessGroupString = accessGroup?.toCFString()
         val query = CFDictionaryCreateMutable(null, 0, null, null)!!
 
         CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword)
         CFDictionaryAddValue(query, kSecAttrService, serviceString)
+        accessGroupString?.let { CFDictionaryAddValue(query, kSecAttrAccessGroup, it) }
 
         val status = SecItemDelete(query)
 
         // Clean up
         CFRelease(serviceString)
+        accessGroupString?.let { CFRelease(it) }
         CFRelease(query)
 
         return status == errSecSuccess
@@ -165,10 +181,12 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
     @OptIn(ExperimentalForeignApi::class)
     override fun getAllKeys(): Set<String> {
         val serviceString = serviceName.toCFString()
+        val accessGroupString = accessGroup?.toCFString()
         val query = CFDictionaryCreateMutable(null, 0, null, null)!!
 
         CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword)
         CFDictionaryAddValue(query, kSecAttrService, serviceString)
+        accessGroupString?.let { CFDictionaryAddValue(query, kSecAttrAccessGroup, it) }
         CFDictionaryAddValue(query, kSecReturnAttributes, kCFBooleanTrue)
         CFDictionaryAddValue(query, kSecMatchLimit, kSecMatchLimitAll)
 
@@ -191,6 +209,7 @@ internal class KeychainStorageDelegate(private val serviceName: String) : IOSSto
 
         // Clean up
         CFRelease(serviceString)
+        accessGroupString?.let { CFRelease(it) }
         CFRelease(query)
 
         return keys

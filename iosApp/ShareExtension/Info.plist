@@ -24,6 +24,8 @@
     <dict>
         <key>NSExtensionAttributes</key>
         <dict>
+            <key>NSExtensionActionWantsFullScreenPresentation</key>
+            <true/>
             <key>NSExtensionActivationRule</key>
             <dict>
                 <key>NSExtensionActivationSupportsFileWithMaxCount</key>
@@ -39,5 +41,9 @@
         <key>NSExtensionPrincipalClass</key>
         <string>$(PRODUCT_MODULE_NAME).ShareViewController</string>
     </dict>
+    <key>DokusShareAppGroupIdentifier</key>
+    <string>group.vision.invoid.dokus.share</string>
+    <key>DokusSharedKeychainAccessGroup</key>
+    <string>$(AppIdentifierPrefix)vision.invoid.dokus.shared</string>
 </dict>
 </plist>
