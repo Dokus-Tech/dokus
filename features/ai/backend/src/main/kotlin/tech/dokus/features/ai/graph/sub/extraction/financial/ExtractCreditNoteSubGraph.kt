@@ -22,6 +22,7 @@ import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.LineItemToolInput
+import tech.dokus.features.ai.models.CounterpartyExtraction
 import tech.dokus.features.ai.models.CounterpartyFields
 import tech.dokus.features.ai.models.CounterpartyRole
 import tech.dokus.features.ai.models.toCounterpartyExtraction
