@@ -14,7 +14,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import tech.dokus.backend.services.auth.AuthService
-import tech.dokus.backend.services.auth.EmailConfig
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
 import tech.dokus.backend.services.auth.EmailVerificationService

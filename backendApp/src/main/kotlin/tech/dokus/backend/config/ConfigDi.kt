@@ -3,12 +3,12 @@ package tech.dokus.backend.config
 import com.typesafe.config.Config
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import tech.dokus.backend.services.auth.EmailConfig
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
 import tech.dokus.foundation.backend.config.AuthConfig
 import tech.dokus.foundation.backend.config.CachingConfig
 import tech.dokus.foundation.backend.config.DatabaseConfig
+import tech.dokus.foundation.backend.config.EmailConfig
 import tech.dokus.foundation.backend.config.FlywayConfig
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.config.KtorConfig
@@ -34,8 +34,8 @@ internal fun configureConfigDi(appConfig: AppBaseConfig) = module {
     single { appConfig.storage } bind StorageConfig::class
     single { appConfig.ai } bind AIConfig::class
     single { appConfig.processor } bind ProcessorConfig::class
+    single { appConfig.email } bind EmailConfig::class
     single { appConfig.config } bind Config::class
-    single { EmailConfig.load(appConfig.config) }
     single {
         MinioConfig.loadOrNull(appConfig.config)
             ?: error("MinIO config missing. Ensure 'minio { ... }' exists in application config.")

@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.auth
 
 import tech.dokus.domain.enums.NotificationType
+import tech.dokus.foundation.backend.config.EmailConfig
 
 data class EmailTemplate(
     val subject: String,

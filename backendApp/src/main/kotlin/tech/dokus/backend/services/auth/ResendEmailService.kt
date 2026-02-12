@@ -4,6 +4,7 @@ import com.resend.Resend
 import com.resend.services.emails.model.CreateEmailOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import tech.dokus.foundation.backend.config.EmailConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 
 class ResendEmailService(
