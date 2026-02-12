@@ -39,6 +39,7 @@ import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.Duration
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TodayContainerTest {
@@ -77,7 +78,7 @@ class TodayContainerTest {
             watchPendingDocuments = FakeWatchPendingDocumentsUseCase(),
             notificationRemoteDataSource = notificationDataSource,
             invoiceLookupDataSource = invoiceLookup,
-            unreadPollingIntervalMs = 0L
+            unreadPollingInterval = Duration.ZERO
         )
 
         container.store.subscribeAndTest {
@@ -134,7 +135,7 @@ class TodayContainerTest {
             watchPendingDocuments = FakeWatchPendingDocumentsUseCase(),
             notificationRemoteDataSource = notificationDataSource,
             invoiceLookupDataSource = FakeInvoiceLookupDataSource(),
-            unreadPollingIntervalMs = 0L
+            unreadPollingInterval = Duration.ZERO
         )
 
         container.store.subscribeAndTest {

@@ -21,6 +21,8 @@ import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 internal typealias TodayCtx = PipelineContext<TodayState, TodayIntent, TodayAction>
 
@@ -37,7 +39,7 @@ internal class TodayContainer(
     private val watchPendingDocuments: WatchPendingDocumentsUseCase,
     private val notificationRemoteDataSource: NotificationRemoteDataSource,
     private val invoiceLookupDataSource: InvoiceLookupDataSource,
-    private val unreadPollingIntervalMs: Long = 30_000L,
+    private val unreadPollingInterval: Duration = 30.seconds,
 ) : Container<TodayState, TodayIntent, TodayAction> {
 
     private val logger = Logger.forClass<TodayContainer>()
@@ -50,7 +52,7 @@ internal class TodayContainer(
         store(TodayState.Content()) {
             init {
                 launchWatchPendingDocuments()
-                if (unreadPollingIntervalMs > 0) {
+                if (unreadPollingInterval > Duration.ZERO) {
                     launchUnreadCountPolling()
                 }
                 launch {
@@ -116,7 +118,7 @@ internal class TodayContainer(
         launch {
             while (true) {
                 intent(TodayIntent.RefreshUnreadNotifications)
-                delay(unreadPollingIntervalMs)
+                delay(unreadPollingInterval)
             }
         }
     }
