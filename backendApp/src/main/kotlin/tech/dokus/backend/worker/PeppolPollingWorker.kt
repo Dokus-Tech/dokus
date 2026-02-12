@@ -370,16 +370,16 @@ class PeppolPollingWorker(
         is CreditNoteDraftData -> CounterpartyInfo(draftData.counterpartyName, draftData.counterpartyVat)
         is InvoiceDraftData -> when (draftData.direction) {
             DocumentDirection.Inbound -> CounterpartyInfo(
-                draftData.seller.name ?: draftData.customerName,
-                draftData.seller.vat ?: draftData.customerVat
+                draftData.seller.name,
+                draftData.seller.vat
             )
             DocumentDirection.Outbound -> CounterpartyInfo(
-                draftData.buyer.name ?: draftData.customerName,
-                draftData.buyer.vat ?: draftData.customerVat
+                draftData.buyer.name,
+                draftData.buyer.vat
             )
             DocumentDirection.Unknown -> CounterpartyInfo(
-                draftData.customerName ?: draftData.buyer.name ?: draftData.seller.name,
-                draftData.customerVat ?: draftData.buyer.vat ?: draftData.seller.vat
+                draftData.buyer.name ?: draftData.seller.name,
+                draftData.buyer.vat ?: draftData.seller.vat
             )
         }
         is ReceiptDraftData -> CounterpartyInfo(draftData.merchantName, draftData.merchantVat)

@@ -5,6 +5,7 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
@@ -74,7 +75,7 @@ class DocumentUiStatusMapperTest {
     // === CONFIRMED CASES ===
 
     @Test
-    fun `returns Ready when draft is Confirmed`() {
+    fun `returns Ready when draft is Confirmed with invoice type`() {
         val record = createRecord(
             ingestionStatus = IngestionStatus.Succeeded,
             documentStatus = DocumentStatus.Confirmed,
@@ -208,9 +209,6 @@ class DocumentUiStatusMapperTest {
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            suggestedContactId = null,
-            contactSuggestionConfidence = null,
-            contactSuggestionReason = null,
             linkedContactId = linkedContactId,
             counterpartyIntent = CounterpartyIntent.None,
             rejectReason = null,

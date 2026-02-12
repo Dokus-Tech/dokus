@@ -43,7 +43,6 @@ import tech.dokus.aura.resources.documents_table_counterparty
 import tech.dokus.aura.resources.documents_table_description
 import tech.dokus.aura.resources.documents_view_details
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.CreditNoteDraftData
@@ -127,7 +126,7 @@ internal fun DocumentTableRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val description = resolveDescription(document)
+    val description = resolveDescription(document, stringResource(Res.string.common_unknown))
     val counterparty = resolveCounterparty(document)
     val amount = extractAmount(document)
     val dateLabel = formatShortDate(extractDocumentDate(document))
@@ -223,7 +222,7 @@ internal fun DocumentMobileRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val description = resolveDescription(document)
+    val description = resolveDescription(document, stringResource(Res.string.common_unknown))
     val counterparty = resolveCounterparty(document)
     val amount = extractAmount(document)
     val dateLabel = formatShortDate(extractDocumentDate(document))
@@ -372,85 +371,37 @@ internal fun computeIsProcessing(document: DocumentRecordDto): Boolean {
 
 /**
  * Resolves the primary description for a document.
- * Priority: AI-generated description > counterparty > filename
+ * Priority: counterparty snapshot + document number > filename + number > counterparty > filename.
  */
-@Composable
-private fun resolveDescription(document: DocumentRecordDto): String {
+internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: String): String {
     val extractedData = document.draft?.extractedData
     val ingestionStatus = document.latestIngestion?.status
-
-    val aiDescription = document.draft?.aiDescription.nonBlank()
-    if (aiDescription != null) return aiDescription
-
-    // Get description from extracted data (invoices use notes field)
-    val context = when (extractedData) {
-        is InvoiceDraftData -> extractedData.notes.nonBlank()
-            ?: extractedData.invoiceNumber.nonBlank()
-        is ReceiptDraftData -> extractedData.notes.nonBlank()
-            ?: extractedData.receiptNumber.nonBlank()
-        is CreditNoteDraftData -> extractedData.notes.nonBlank()
-            ?: extractedData.reason.nonBlank()
-            ?: extractedData.creditNoteNumber.nonBlank()
+    val documentNumber = when (extractedData) {
+        is InvoiceDraftData -> extractedData.invoiceNumber.nonBlank()
+        is ReceiptDraftData -> extractedData.receiptNumber.nonBlank()
+        is CreditNoteDraftData -> extractedData.creditNoteNumber.nonBlank()
         else -> null
     }
-
-    // Get counterparty name
-    val counterparty = when (extractedData) {
-        is InvoiceDraftData -> when (extractedData.direction) {
-            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.customerName).nonBlank()
-            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.customerName).nonBlank()
-            DocumentDirection.Unknown ->
-                (extractedData.buyer.name ?: extractedData.seller.name ?: extractedData.customerName).nonBlank()
-        }
-        is ReceiptDraftData -> extractedData.merchantName.nonBlank()
-        is CreditNoteDraftData -> when (extractedData.direction) {
-            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.counterpartyName).nonBlank()
-            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.counterpartyName).nonBlank()
-            DocumentDirection.Unknown ->
-                (extractedData.buyer.name ?: extractedData.seller.name ?: extractedData.counterpartyName).nonBlank()
-        }
-        else -> null
-    }
+    val counterparty = document.draft?.counterpartySnapshot?.name.nonBlank()
+    val filename = document.document.filename.nonBlank()
 
     return when {
-        // If we have both counterparty and context, combine them
-        counterparty != null && context != null -> "$counterparty — $context"
-        // If we have context but no counterparty
-        context != null -> context
-        // If we have counterparty but no context
+        counterparty != null && documentNumber != null -> "$counterparty — $documentNumber"
+        counterparty == null && documentNumber != null && filename != null -> "$filename — $documentNumber"
+        counterparty == null && documentNumber != null -> "Document — $documentNumber"
         counterparty != null -> counterparty
-        // Processing state placeholder
         ingestionStatus == IngestionStatus.Processing ||
             ingestionStatus == IngestionStatus.Queued -> "Processing document…"
-        // Fallback to filename
-        else -> document.document.filename?.takeIf { it.isNotBlank() }
-            ?: stringResource(Res.string.common_unknown)
+        else -> filename
+            ?: unknownLabel
     }
 }
 
 /**
  * Resolves the counterparty name for display in secondary column.
  */
-@Composable
-private fun resolveCounterparty(document: DocumentRecordDto): String {
-    val extractedData = document.draft?.extractedData
-    return when (extractedData) {
-        is InvoiceDraftData -> when (extractedData.direction) {
-            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.customerName).nonBlank()
-            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.customerName).nonBlank()
-            DocumentDirection.Unknown ->
-                (extractedData.buyer.name ?: extractedData.seller.name ?: extractedData.customerName).nonBlank()
-        }
-        is ReceiptDraftData -> extractedData.merchantName.nonBlank()
-        is CreditNoteDraftData -> when (extractedData.direction) {
-            DocumentDirection.Inbound -> (extractedData.seller.name ?: extractedData.counterpartyName).nonBlank()
-            DocumentDirection.Outbound -> (extractedData.buyer.name ?: extractedData.counterpartyName).nonBlank()
-            DocumentDirection.Unknown ->
-                (extractedData.buyer.name ?: extractedData.seller.name ?: extractedData.counterpartyName).nonBlank()
-        }
-        else -> null
-    }
-        ?: "—"
+internal fun resolveCounterparty(document: DocumentRecordDto, emptyLabel: String = "—"): String {
+    return document.draft?.counterpartySnapshot?.name.nonBlank() ?: emptyLabel
 }
 
 @Composable

@@ -31,6 +31,7 @@ import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.models.confidenceScore
+import tech.dokus.features.ai.models.toAuthoritativeCounterpartySnapshot
 import tech.dokus.features.ai.models.toDraftData
 import tech.dokus.features.ai.models.toProcessingOutcome
 import tech.dokus.features.ai.models.DirectionResolutionSource
@@ -258,65 +259,84 @@ class DocumentProcessingWorker(
                     status = DocumentStatus.NeedsReview
                 )
 
-                val resolution = contactResolutionService.resolve(
-                    tenantId = parsedTenantId,
-                    draftData = draftData,
-                    tenantVat = tenant.vatNumber
-                )
                 var linkedContactId: tech.dokus.domain.ids.ContactId? = null
-                when (val decision = resolution.resolution) {
-                    is ContactResolution.Matched -> {
-                        linkedContactId = decision.contactId
-                        draftRepository.updateContactResolution(
-                            documentId = documentId,
-                            tenantId = parsedTenantId,
-                            contactSuggestions = emptyList(),
-                            counterpartySnapshot = resolution.snapshot,
-                            matchEvidence = decision.evidence,
-                            linkedContactId = decision.contactId,
-                            linkedContactSource = ContactLinkSource.AI
-                        )
-                    }
+                val authoritativeSnapshot = result.extraction.toAuthoritativeCounterpartySnapshot()
+                if (authoritativeSnapshot == null) {
+                    logger.warn(
+                        "Missing authoritative counterparty snapshot for document {} in run {}; forcing PendingReview",
+                        documentId,
+                        runId
+                    )
+                    draftRepository.updateContactResolution(
+                        documentId = documentId,
+                        tenantId = parsedTenantId,
+                        contactSuggestions = emptyList(),
+                        counterpartySnapshot = null,
+                        matchEvidence = null,
+                        linkedContactId = null,
+                        linkedContactSource = null
+                    )
+                } else {
+                    val resolution = contactResolutionService.resolve(
+                        tenantId = parsedTenantId,
+                        draftData = draftData,
+                        authoritativeSnapshot = authoritativeSnapshot,
+                        tenantVat = tenant.vatNumber
+                    )
+                    when (val decision = resolution.resolution) {
+                        is ContactResolution.Matched -> {
+                            linkedContactId = decision.contactId
+                            draftRepository.updateContactResolution(
+                                documentId = documentId,
+                                tenantId = parsedTenantId,
+                                contactSuggestions = emptyList(),
+                                counterpartySnapshot = resolution.snapshot,
+                                matchEvidence = decision.evidence,
+                                linkedContactId = decision.contactId,
+                                linkedContactSource = ContactLinkSource.AI
+                            )
+                        }
 
-                    is ContactResolution.AutoCreate -> {
-                        val contactId = contactResolutionService.createContactFromResolution(
-                            tenantId = parsedTenantId,
-                            resolution = decision
-                        )
-                        linkedContactId = contactId
-                        draftRepository.updateContactResolution(
-                            documentId = documentId,
-                            tenantId = parsedTenantId,
-                            contactSuggestions = emptyList(),
-                            counterpartySnapshot = resolution.snapshot,
-                            matchEvidence = decision.evidence,
-                            linkedContactId = contactId,
-                            linkedContactSource = if (contactId != null) ContactLinkSource.AI else null
-                        )
-                    }
+                        is ContactResolution.AutoCreate -> {
+                            val contactId = contactResolutionService.createContactFromResolution(
+                                tenantId = parsedTenantId,
+                                resolution = decision
+                            )
+                            linkedContactId = contactId
+                            draftRepository.updateContactResolution(
+                                documentId = documentId,
+                                tenantId = parsedTenantId,
+                                contactSuggestions = emptyList(),
+                                counterpartySnapshot = resolution.snapshot,
+                                matchEvidence = decision.evidence,
+                                linkedContactId = contactId,
+                                linkedContactSource = if (contactId != null) ContactLinkSource.AI else null
+                            )
+                        }
 
-                    is ContactResolution.Suggested -> {
-                        draftRepository.updateContactResolution(
-                            documentId = documentId,
-                            tenantId = parsedTenantId,
-                            contactSuggestions = decision.candidates,
-                            counterpartySnapshot = resolution.snapshot,
-                            matchEvidence = null,
-                            linkedContactId = null,
-                            linkedContactSource = null
-                        )
-                    }
+                        is ContactResolution.Suggested -> {
+                            draftRepository.updateContactResolution(
+                                documentId = documentId,
+                                tenantId = parsedTenantId,
+                                contactSuggestions = decision.candidates,
+                                counterpartySnapshot = resolution.snapshot,
+                                matchEvidence = null,
+                                linkedContactId = null,
+                                linkedContactSource = null
+                            )
+                        }
 
-                    is ContactResolution.PendingReview -> {
-                        draftRepository.updateContactResolution(
-                            documentId = documentId,
-                            tenantId = parsedTenantId,
-                            contactSuggestions = emptyList(),
-                            counterpartySnapshot = resolution.snapshot,
-                            matchEvidence = null,
-                            linkedContactId = null,
-                            linkedContactSource = null
-                        )
+                        is ContactResolution.PendingReview -> {
+                            draftRepository.updateContactResolution(
+                                documentId = documentId,
+                                tenantId = parsedTenantId,
+                                contactSuggestions = emptyList(),
+                                counterpartySnapshot = resolution.snapshot,
+                                matchEvidence = null,
+                                linkedContactId = null,
+                                linkedContactSource = null
+                            )
+                        }
                     }
                 }
 

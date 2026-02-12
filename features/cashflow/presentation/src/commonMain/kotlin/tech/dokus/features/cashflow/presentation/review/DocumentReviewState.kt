@@ -195,7 +195,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          */
         val description: String
             get() {
-                val counterparty = draftData.displayCounterpartyName
+                val counterparty = document.draft?.counterpartySnapshot?.name?.takeIf { it.isNotBlank() }
+                    ?: selectedContactSnapshot?.name?.takeIf { it.isNotBlank() }
                 val context = draftData.displayContextDescription
 
                 return when {
@@ -283,27 +284,6 @@ internal val DocumentDraftData?.documentType: DocumentType
         is CreditNoteDraftData -> DocumentType.CreditNote
         is ReceiptDraftData -> DocumentType.Receipt
         null -> DocumentType.Unknown
-    }
-
-/** Counterparty name for description resolution. */
-private val DocumentDraftData?.displayCounterpartyName: String?
-    get() = when (this) {
-        is InvoiceDraftData -> when (direction) {
-            DocumentDirection.Inbound -> seller.name?.takeIf { it.isNotBlank() } ?: customerName?.takeIf { it.isNotBlank() }
-            DocumentDirection.Outbound -> buyer.name?.takeIf { it.isNotBlank() } ?: customerName?.takeIf { it.isNotBlank() }
-            DocumentDirection.Unknown -> buyer.name?.takeIf { it.isNotBlank() }
-                ?: seller.name?.takeIf { it.isNotBlank() }
-                ?: customerName?.takeIf { it.isNotBlank() }
-        }
-        is ReceiptDraftData -> merchantName?.takeIf { it.isNotBlank() }
-        is CreditNoteDraftData -> when (direction) {
-            DocumentDirection.Inbound -> seller.name?.takeIf { it.isNotBlank() } ?: counterpartyName?.takeIf { it.isNotBlank() }
-            DocumentDirection.Outbound -> buyer.name?.takeIf { it.isNotBlank() } ?: counterpartyName?.takeIf { it.isNotBlank() }
-            DocumentDirection.Unknown -> buyer.name?.takeIf { it.isNotBlank() }
-                ?: seller.name?.takeIf { it.isNotBlank() }
-                ?: counterpartyName?.takeIf { it.isNotBlank() }
-        }
-        null -> null
     }
 
 private val DocumentDraftData.hasKnownDirectionForConfirmation: Boolean

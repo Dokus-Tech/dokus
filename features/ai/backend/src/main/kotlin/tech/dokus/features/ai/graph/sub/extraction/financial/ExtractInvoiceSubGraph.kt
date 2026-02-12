@@ -25,6 +25,10 @@ import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.LineItemToolInput
+import tech.dokus.features.ai.models.CounterpartyExtraction
+import tech.dokus.features.ai.models.CounterpartyFields
+import tech.dokus.features.ai.models.CounterpartyRole
+import tech.dokus.features.ai.models.toCounterpartyExtraction
 import tech.dokus.features.ai.models.VatBreakdownToolInput
 import tech.dokus.features.ai.models.toDomain
 import tech.dokus.foundation.backend.config.AIConfig
@@ -63,6 +67,9 @@ data class InvoiceExtractionResult(
     val buyerPostalCode: String? = null,
     val buyerCity: String? = null,
     val buyerCountry: String? = null,
+
+    // Authoritative counterparty identity (used by deterministic contact resolution)
+    val counterparty: CounterpartyExtraction? = null,
 
     // Payment hints
     val iban: Iban? = null,
@@ -139,6 +146,24 @@ data class InvoiceExtractionToolInput(
     val buyerCity: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.BuyerCountry)
     val buyerCountry: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyName)
+    override val counterpartyName: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyVat)
+    override val counterpartyVat: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyEmail)
+    override val counterpartyEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyStreet)
+    override val counterpartyStreet: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyPostalCode)
+    override val counterpartyPostalCode: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCity)
+    override val counterpartyCity: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCountry)
+    override val counterpartyCountry: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyRole)
+    override val counterpartyRole: CounterpartyRole = CounterpartyRole.Unknown,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyReasoning)
+    override val counterpartyReasoning: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.Iban)
     val iban: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.PaymentReference)
@@ -151,7 +176,7 @@ data class InvoiceExtractionToolInput(
     val confidence: Double,
     @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
     val reasoning: String? = null
-)
+) : CounterpartyFields
 
 private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, FinancialExtractionResult.Invoice>(
     argsSerializer = InvoiceExtractionToolInput.serializer(),
@@ -185,6 +210,7 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
                 buyerPostalCode = args.buyerPostalCode,
                 buyerCity = args.buyerCity,
                 buyerCountry = args.buyerCountry,
+                counterparty = args.toCounterpartyExtraction(),
                 iban = Iban.from(args.iban),
                 payment = CanonicalPayment.from(args.paymentReference),
                 directionHint = args.directionHint,
@@ -217,6 +243,28 @@ private val ExtractDocumentInput.prompt
     - If only one side is visible, keep the missing side null.
     - Prefer null over duplicating the same party into both seller and buyer.
     - Do not swap seller/buyer based on tenant context.
+
+    ## AUTHORITATIVE COUNTERPARTY (CRITICAL)
+    - Provide a single authoritative `counterparty*` block for downstream deterministic matching.
+    - Counterparty = the OTHER business entity in this transaction.
+    - Payment instruments are never counterparties: Visa, Mastercard, Apple Pay, Google Pay, Bancontact, masked card tails.
+    - If a VAT-like token is actually a payment instrument identifier, set `counterpartyVat` to null.
+    - Always provide short `counterpartyReasoning`.
+
+    ## ENTITY NAME RULES (for counterpartyName)
+    - Always use the legal/registered entity name when visible on the document.
+    - Look for legal suffixes: Ltd, Limited, BVBA, BV, NV, SRL, SA, GmbH, AG, S.à r.l., Inc., Corp., LLC, Pty.
+    - Footer, copyright, registration and legal contact blocks often contain the legal entity.
+    - Example: "Copyright © 2025 Example Distribution International Ltd." -> counterpartyName = "Example Distribution International Ltd."
+    - Do NOT use branding/account/product labels when legal entity is visible (e.g. "Example Account" is branding).
+    - If no legal entity name is visible, use the most formal complete business name shown.
+
+    ### Examples
+    - B2B invoice:
+      - seller = "Google Cloud EMEA Limited", buyer = "Invoid Vision", counterparty = seller, role = SELLER.
+    - Consumer-style invoice:
+      - seller = "Example Account", footer shows "Example Distribution International Ltd.", buyer contains "Card .... 1234 (Digital Wallet)".
+      - counterparty = "Example Distribution International Ltd.", role = SELLER, and never use "Card .... 1234 (Digital Wallet)" as counterparty.
 
     ## OPTIONAL DIRECTION HINT
     - Provide `directionHint` only if direction is explicit from the paper (e.g., clear billed-to vs issuer roles).

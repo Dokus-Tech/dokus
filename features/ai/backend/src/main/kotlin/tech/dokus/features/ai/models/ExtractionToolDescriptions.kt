@@ -53,8 +53,19 @@ object ExtractionToolDescriptions {
     const val DirectionHint = "Optional business direction hint relative to tenant: INBOUND, OUTBOUND, or UNKNOWN."
     const val DirectionHintConfidence = "Optional confidence score (0.0-1.0) for directionHint."
 
-    const val CounterpartyName = "Counterparty name (customer or supplier depending on direction). Null if unclear."
-    const val CounterpartyVat = "Counterparty VAT number if shown. Null if not visible."
+    const val CounterpartyName =
+        "Authoritative counterparty legal/registered name for this document. Prefer footer/legal registration names over branding (e.g., use legal entity if visible). Null if unclear."
+    const val CounterpartyVat =
+        "Authoritative counterparty VAT number in canonical form if shown. Null if invalid or not visible."
+    const val CounterpartyEmail = "Authoritative counterparty email if visible and clearly business-related."
+    const val CounterpartyStreet = "Authoritative counterparty street and number if visible."
+    const val CounterpartyPostalCode = "Authoritative counterparty postal code if visible."
+    const val CounterpartyCity = "Authoritative counterparty city if visible."
+    const val CounterpartyCountry = "Authoritative counterparty country code or name if visible."
+    const val CounterpartyRole =
+        "Role selected for authoritative counterparty: SELLER, BUYER, MERCHANT, or UNKNOWN."
+    const val CounterpartyReasoning =
+        "One short reason why this entity is the counterparty and why payment tokens are excluded."
 
     const val MerchantName = "Merchant/store name from the receipt header. Null if not visible."
 
