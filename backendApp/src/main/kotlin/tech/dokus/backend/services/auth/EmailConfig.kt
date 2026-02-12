@@ -17,10 +17,13 @@ data class EmailConfig(
             val emailConfig = if (config.hasPath("email")) config.getConfig("email") else config
             val templatesConfig = emailConfig.getConfig("templates")
 
-            val resendApiKey = System.getenv("RESEND_API_KEY")
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
-                ?: error("RESEND_API_KEY must be set")
+            if (!emailConfig.hasPath("resend.apiKey")) {
+                error("email.resend.apiKey is required. Set RESEND_API_KEY environment variable.")
+            }
+            val resendApiKey = emailConfig.getString("resend.apiKey")
+                .trim()
+                .takeIf { it.isNotBlank() }
+                ?: error("email.resend.apiKey is blank. Set RESEND_API_KEY environment variable.")
 
             val fromAddress = if (emailConfig.hasPath("fromAddress")) {
                 emailConfig.getString("fromAddress")
