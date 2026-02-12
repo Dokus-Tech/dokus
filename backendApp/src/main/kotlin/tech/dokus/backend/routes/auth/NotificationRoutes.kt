@@ -10,6 +10,7 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.notifications.NotificationPreferencesService
 import tech.dokus.backend.services.notifications.NotificationService
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.NotificationId
 import tech.dokus.domain.model.UnreadCountResponse
 import tech.dokus.domain.model.UpdateNotificationPreferenceRequest
@@ -25,6 +26,13 @@ internal fun Route.notificationRoutes() {
         get<Notifications> { route ->
             val principal = dokusPrincipal
             val tenantId = principal.requireTenantId()
+
+            if (route.limit < 1 || route.limit > 200) {
+                throw DokusException.BadRequest("Limit must be between 1 and 200")
+            }
+            if (route.offset < 0) {
+                throw DokusException.BadRequest("Offset must be non-negative")
+            }
 
             val response = notificationService.list(
                 tenantId = tenantId,
