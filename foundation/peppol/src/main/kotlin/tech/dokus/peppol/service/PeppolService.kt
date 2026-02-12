@@ -13,6 +13,7 @@ import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
+import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.DocumentDraftData

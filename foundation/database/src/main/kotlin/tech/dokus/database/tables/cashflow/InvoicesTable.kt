@@ -82,5 +82,7 @@ object InvoicesTable : UUIDTable("invoices") {
         index(false, tenantId, contactId)
         // Per-tenant uniqueness for invoice numbers
         uniqueIndex(tenantId, invoiceNumber)
+        // Idempotent document confirmation: only one invoice per document per tenant
+        uniqueIndex("ux_invoices_tenant_document_id", tenantId, documentId)
     }
 }

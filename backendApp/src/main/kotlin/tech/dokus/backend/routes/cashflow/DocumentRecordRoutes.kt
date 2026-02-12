@@ -97,6 +97,13 @@ internal fun Route.documentRecordRoutes() {
                 limit = limit
             )
 
+            val confirmedDocumentIds = documentsWithInfo
+                .filter { it.draft?.documentStatus == DocumentStatus.Confirmed }
+                .map { it.document.id }
+            val cashflowEntryIdsByDocumentId = cashflowEntriesRepository
+                .getIdsByDocumentIds(tenantId, confirmedDocumentIds)
+                .getOrThrow()
+
             // Build full records
             val records = documentsWithInfo.map { docInfo ->
                 val documentWithUrl = addDownloadUrl(docInfo.document, minioStorage, logger)
@@ -118,7 +125,8 @@ internal fun Route.documentRecordRoutes() {
                     document = documentWithUrl,
                     draft = draft?.toDto(),
                     latestIngestion = docInfo.latestIngestion?.toDto(),
-                    confirmedEntity = confirmedEntity
+                    confirmedEntity = confirmedEntity,
+                    cashflowEntryId = cashflowEntryIdsByDocumentId[docInfo.document.id]
                 )
             }
 
@@ -161,6 +169,11 @@ internal fun Route.documentRecordRoutes() {
             } else {
                 null
             }
+            val cashflowEntryId = if (draft?.documentStatus == DocumentStatus.Confirmed) {
+                cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrNull()?.id
+            } else {
+                null
+            }
 
             call.respond(
                 HttpStatusCode.OK,
@@ -171,7 +184,8 @@ internal fun Route.documentRecordRoutes() {
                         includeRawExtraction = true,
                         includeTrace = true
                     ),
-                    confirmedEntity = confirmedEntity
+                    confirmedEntity = confirmedEntity,
+                    cashflowEntryId = cashflowEntryId
                 )
             )
         }

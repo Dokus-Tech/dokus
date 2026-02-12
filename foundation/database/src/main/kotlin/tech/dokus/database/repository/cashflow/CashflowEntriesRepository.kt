@@ -15,6 +15,7 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
@@ -170,6 +171,34 @@ class CashflowEntriesRepository {
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (CashflowEntriesTable.documentId eq UUID.fromString(documentId.toString()))
             }.singleOrNull()?.let { mapRowToEntry(it) }
+        }
+    }
+
+    /**
+     * Bulk lookup: map document IDs to cashflow entry IDs.
+     * CRITICAL: MUST filter by tenant_id.
+     */
+    suspend fun getIdsByDocumentIds(
+        tenantId: TenantId,
+        documentIds: List<DocumentId>
+    ): Result<Map<DocumentId, CashflowEntryId>> = runCatching {
+        if (documentIds.isEmpty()) return@runCatching emptyMap()
+
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val documentUuids = documentIds.map { id -> UUID.fromString(id.toString()) }
+
+        dbQuery {
+            CashflowEntriesTable
+                .select(CashflowEntriesTable.documentId, CashflowEntriesTable.id)
+                .where {
+                    (CashflowEntriesTable.tenantId eq tenantUuid) and
+                        (CashflowEntriesTable.documentId inList documentUuids)
+                }
+                .associate { row ->
+                    val documentIdUuid = requireNotNull(row[CashflowEntriesTable.documentId])
+                    val entryIdUuid = row[CashflowEntriesTable.id].value
+                    DocumentId.parse(documentIdUuid.toString()) to CashflowEntryId.parse(entryIdUuid.toString())
+                }
         }
     }
 

@@ -96,14 +96,16 @@ class Documents {
         @Resource("reprocess")
         class Reprocess(val parent: Id)
 
-        /**
-         * POST /api/v1/documents/{id}/confirm
-         * Confirm extraction and create financial entity
-         * TRANSACTIONAL + IDEMPOTENT: Fails if entity already exists for documentId
-         */
-        @Serializable
-        @Resource("confirm")
-        class Confirm(val parent: Id)
+	        /**
+	         * POST /api/v1/documents/{id}/confirm
+	         * Confirm extraction and create financial entity
+	         * TRANSACTIONAL + IDEMPOTENT:
+	         * - If entity does not exist yet, creates it.
+	         * - If entity exists, confirmation is idempotent and may re-confirm after edits (if allowed by cashflow rules).
+	         */
+	        @Serializable
+	        @Resource("confirm")
+	        class Confirm(val parent: Id)
 
         /**
          * POST /api/v1/documents/{id}/reject

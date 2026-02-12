@@ -86,6 +86,7 @@ class InvoiceNumberConcurrencyTest {
                 it[plan] = SubscriptionTier.Core
                 it[status] = TenantStatus.Active
                 it[language] = Language.En
+                it[vatNumber] = "BE0123456789"
             }
 
             // Insert tenant settings with invoice configuration
@@ -232,6 +233,7 @@ class InvoiceNumberConcurrencyTest {
                 it[plan] = SubscriptionTier.default
                 it[status] = TenantStatus.Active
                 it[language] = Language.En
+                it[vatNumber] = "BE9876543210"
             }
 
             TenantSettingsTable.insert {

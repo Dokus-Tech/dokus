@@ -332,7 +332,6 @@ private fun StatusDot(
  * - Processing or queued (temporary state)
  * - Failed ingestion
  * - Needs review
- * - Rejected
  */
 internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
@@ -343,7 +342,6 @@ internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
         ingestionStatus == IngestionStatus.Processing ||
             ingestionStatus == IngestionStatus.Queued -> true
         documentStatus == DocumentStatus.NeedsReview -> true
-        documentStatus == DocumentStatus.Rejected -> true
         else -> false
     }
 }
@@ -370,6 +368,9 @@ internal fun computeIsProcessing(document: DocumentRecordDto): Boolean {
 private fun resolveDescription(document: DocumentRecordDto): String {
     val extractedData = document.draft?.extractedData
     val ingestionStatus = document.latestIngestion?.status
+
+    val aiDescription = document.draft?.aiDescription.nonBlank()
+    if (aiDescription != null) return aiDescription
 
     // Get description from extracted data (invoices use notes field)
     val context = when (extractedData) {

@@ -81,8 +81,6 @@ import tech.dokus.foundation.backend.storage.ObjectStorage
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.mapper.PeppolMapper
-import tech.dokus.peppol.policy.DefaultDocumentConfirmationPolicy
-import tech.dokus.peppol.policy.DocumentConfirmationPolicy
 import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
 import tech.dokus.peppol.provider.client.RecommandProvider
@@ -275,7 +273,6 @@ private fun cashflowModule() = module {
 
     // PEPPOL Directory Cache - resolves recipients via cache-first lookup
     single { PeppolRecipientResolver(get(), get(), get(), get()) }
-    single<DocumentConfirmationPolicy> { DefaultDocumentConfirmationPolicy() }
 
     // PEPPOL Registration State Machine (Phase B)
     single { PeppolRegistrationRepository() }

@@ -10,12 +10,10 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.domain.enums.DocumentStatus
-import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.features.cashflow.presentation.documents.components.computeNeedsAttention
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -41,6 +39,7 @@ internal class DocumentsContainer(
     private var paginationInfo = PaginationInfo()
     private var currentFilter: DocumentFilter = DocumentFilter.All
     private var currentSearchQuery: String = ""
+    private var needsAttentionCount: Int = 0
 
     override val store: Store<DocumentsState, DocumentsIntent, DocumentsAction> =
         store(DocumentsState.Loading) {
@@ -64,12 +63,11 @@ internal class DocumentsContainer(
 
         updateState { DocumentsState.Loading }
 
-        val (documentStatus, ingestionStatus) = currentFilter.toApiFilters()
+        needsAttentionCount = loadNeedsAttentionCount()
         loadDocumentRecords(
             page = 0,
             pageSize = PAGE_SIZE,
-            documentStatus = documentStatus,
-            ingestionStatus = ingestionStatus,
+            filter = currentFilter.toListFilter(),
             search = currentSearchQuery.takeIf { it.isNotEmpty() }
         ).fold(
             onSuccess = { response ->
@@ -84,7 +82,7 @@ internal class DocumentsContainer(
                         documents = buildPaginationState(),
                         filter = currentFilter,
                         searchQuery = currentSearchQuery,
-                        needsAttentionCount = loadedDocuments.count { computeNeedsAttention(it) }
+                        needsAttentionCount = this@DocumentsContainer.needsAttentionCount
                     )
                 }
             },
@@ -108,12 +106,10 @@ internal class DocumentsContainer(
             updateState { copy(documents = buildPaginationState()) }
 
             val nextPage = paginationInfo.currentPage + 1
-            val (documentStatus, ingestionStatus) = filter.toApiFilters()
             loadDocumentRecords(
                 page = nextPage,
                 pageSize = PAGE_SIZE,
-                documentStatus = documentStatus,
-                ingestionStatus = ingestionStatus,
+                filter = filter.toListFilter(),
                 search = searchQuery.takeIf { it.isNotEmpty() }
             ).fold(
                 onSuccess = { response ->
@@ -126,7 +122,7 @@ internal class DocumentsContainer(
                     updateState {
                         copy(
                             documents = buildPaginationState(),
-                            needsAttentionCount = loadedDocuments.count { computeNeedsAttention(it) }
+                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount
                         )
                     }
                 },
@@ -160,12 +156,10 @@ internal class DocumentsContainer(
             }
 
             searchJob = launch {
-                val (documentStatus, ingestionStatus) = currentFilter.toApiFilters()
                 loadDocumentRecords(
                     page = 0,
                     pageSize = PAGE_SIZE,
-                    documentStatus = documentStatus,
-                    ingestionStatus = ingestionStatus,
+                    filter = currentFilter.toListFilter(),
                     search = trimmed.takeIf { it.isNotEmpty() }
                 ).fold(
                     onSuccess = { response ->
@@ -180,7 +174,7 @@ internal class DocumentsContainer(
                                 documents = buildPaginationState(),
                                 searchQuery = trimmed,
                                 filter = currentFilter,
-                                needsAttentionCount = loadedDocuments.count { computeNeedsAttention(it) }
+                                needsAttentionCount = this@DocumentsContainer.needsAttentionCount
                             )
                         }
                     },
@@ -208,12 +202,11 @@ internal class DocumentsContainer(
                 )
             }
 
-            val (documentStatus, ingestionStatus) = filter.toApiFilters()
+            this@DocumentsContainer.needsAttentionCount = loadNeedsAttentionCount()
             loadDocumentRecords(
                 page = 0,
                 pageSize = PAGE_SIZE,
-                documentStatus = documentStatus,
-                ingestionStatus = ingestionStatus,
+                filter = filter.toListFilter(),
                 search = currentSearchQuery.takeIf { it.isNotEmpty() }
             ).fold(
                 onSuccess = { response ->
@@ -228,7 +221,7 @@ internal class DocumentsContainer(
                             documents = buildPaginationState(),
                             searchQuery = currentSearchQuery,
                             filter = filter,
-                            needsAttentionCount = loadedDocuments.count { computeNeedsAttention(it) }
+                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount
                         )
                     }
                 },
@@ -259,20 +252,20 @@ internal class DocumentsContainer(
         val hasMorePages: Boolean = true
     )
 
-    /**
-     * Maps DocumentFilter to API filter parameters.
-     * Returns a pair of (documentStatus, ingestionStatus) to use in the API call.
-     *
-     * Note: NeedsAttention filter returns null/null because it's a composite filter
-     * that can't be expressed as a single API call. Client-side filtering is applied
-     * via computeNeedsAttention() on the returned documents.
-     */
-    private fun DocumentFilter.toApiFilters(): Pair<DocumentStatus?, IngestionStatus?> {
-        return when (this) {
-            DocumentFilter.All -> null to null
-            DocumentFilter.NeedsAttention -> null to null // Client filters via computeNeedsAttention
-            DocumentFilter.Confirmed -> DocumentStatus.Confirmed to null
-        }
+    private fun DocumentFilter.toListFilter(): DocumentListFilter = when (this) {
+        DocumentFilter.All -> DocumentListFilter.All
+        DocumentFilter.NeedsAttention -> DocumentListFilter.NeedsAttention
+        DocumentFilter.Confirmed -> DocumentListFilter.Confirmed
+    }
+
+    private suspend fun loadNeedsAttentionCount(): Int {
+        val response = loadDocumentRecords(
+            page = 0,
+            pageSize = 1,
+            filter = DocumentListFilter.NeedsAttention
+        ).getOrNull() ?: return needsAttentionCount
+
+        return response.total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 
     companion object {
