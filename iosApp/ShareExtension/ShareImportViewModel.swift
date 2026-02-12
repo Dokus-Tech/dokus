@@ -7,6 +7,7 @@ final class ShareImportViewModel: ObservableObject {
     @Published private(set) var state: ShareImportState = .loadingPayload
 
     var onUploadingStateChanged: ((Bool) -> Void)?
+    var onStateChanged: ((ShareImportState) -> Void)?
 
     private let uploader: ShareImportUploader
     private var sharedFiles: [SharedImportFile] = []
@@ -181,6 +182,7 @@ final class ShareImportViewModel: ObservableObject {
 
     private func transition(to newState: ShareImportState) {
         state = newState
+        onStateChanged?(newState)
         switch newState {
         case .uploading:
             onUploadingStateChanged?(true)
@@ -529,21 +531,11 @@ struct ShareImportRootView: View {
             .font(.footnote)
             .foregroundStyle(ShareImportTheme.textSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
-
-        VStack(spacing: 12) {
-            Button(action: onOpenApp) {
-                Text("Open Dokus")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(SharePrimaryButtonStyle())
-
-            Button(action: onDone) {
-                Text("Done")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(ShareSecondaryButtonStyle())
-        }
-        .padding(.top, 4)
+        
+        Text("Closing automatically...")
+            .font(.footnote)
+            .foregroundStyle(ShareImportTheme.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder

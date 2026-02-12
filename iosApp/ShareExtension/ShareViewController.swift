@@ -15,6 +15,8 @@ final class ShareViewController: UIViewController {
 
     private var hostingController: UIHostingController<ShareImportRootView>?
     private var didStart = false
+    private var didCompleteRequest = false
+    private var autoDismissWorkItem: DispatchWorkItem?
 
     private var appGroupIdentifier: String {
         (Bundle.main.object(forInfoDictionaryKey: "DokusShareAppGroupIdentifier") as? String)
@@ -60,6 +62,16 @@ final class ShareViewController: UIViewController {
         viewModel.onUploadingStateChanged = { [weak self] isUploading in
             DispatchQueue.main.async {
                 self?.isModalInPresentation = isUploading
+            }
+        }
+        viewModel.onStateChanged = { [weak self] state in
+            guard let self else { return }
+            switch state {
+            case .success:
+                self.scheduleAutoDismiss()
+            case .loadingPayload, .resolvingSession, .uploading, .error:
+                self.autoDismissWorkItem?.cancel()
+                self.autoDismissWorkItem = nil
             }
         }
     }
@@ -135,7 +147,20 @@ final class ShareViewController: UIViewController {
     }
 
     private func completeRequest() {
+        guard !didCompleteRequest else { return }
+        didCompleteRequest = true
+        autoDismissWorkItem?.cancel()
+        autoDismissWorkItem = nil
         viewModel.cleanupTemporaryFiles()
         extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
+    }
+
+    private func scheduleAutoDismiss() {
+        guard autoDismissWorkItem == nil else { return }
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.completeRequest()
+        }
+        autoDismissWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: workItem)
     }
 }
