@@ -209,26 +209,39 @@ final class ShareImportViewModel: ObservableObject {
     }
 
     private func loadPdf(from provider: NSItemProvider, index: Int) async -> SharedImportFile? {
+        let suggestedName = provider.suggestedName
+
         if provider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
             if let file = await loadFileRepresentation(
                 provider: provider,
                 typeIdentifier: UTType.pdf.identifier,
-                fallbackIndex: index
+                fallbackIndex: index,
+                suggestedName: suggestedName
             ) {
                 return file
             }
 
             if let data = await loadDataRepresentation(provider: provider, typeIdentifier: UTType.pdf.identifier) {
-                return persistData(
+                let fileName = Self.resolveFileName(
+                    suggestedName: suggestedName,
+                    fallback: suggestedName,
+                    index: index
+                )
+                return Self.persistData(
                     data: data,
-                    fileName: resolveFileName(provider: provider, fallback: provider.suggestedName, index: index)
+                    fileName: fileName
                 )
             }
         }
 
         if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-            if let url = await loadFileURL(provider: provider), isLikelyPdf(url: url, provider: provider) {
-                return copyIntoLocalFile(url: url, provider: provider, index: index)
+            if let url = await loadFileURL(provider: provider), Self.isLikelyPdf(url: url, suggestedName: suggestedName) {
+                let fileName = Self.resolveFileName(
+                    suggestedName: suggestedName,
+                    fallback: url.lastPathComponent,
+                    index: index
+                )
+                return Self.copyIntoLocalFile(url: url, fileName: fileName, index: index)
             }
         }
 
@@ -238,20 +251,33 @@ final class ShareImportViewModel: ObservableObject {
     private func loadFileRepresentation(
         provider: NSItemProvider,
         typeIdentifier: String,
-        fallbackIndex: Int
+        fallbackIndex: Int,
+        suggestedName: String?
     ) async -> SharedImportFile? {
         await withCheckedContinuation { continuation in
-            provider.loadFileRepresentation(forTypeIdentifier: typeIdentifier) { [weak self] fileURL, _ in
-                guard
-                    let self,
-                    let fileURL,
-                    self.isLikelyPdf(url: fileURL, provider: provider)
-                else {
+            provider.loadFileRepresentation(forTypeIdentifier: typeIdentifier) { fileURL, _ in
+                guard let fileURL else {
                     continuation.resume(returning: nil)
                     return
                 }
 
-                continuation.resume(returning: self.copyIntoLocalFile(url: fileURL, provider: provider, index: fallbackIndex))
+                guard Self.isLikelyPdf(url: fileURL, suggestedName: suggestedName) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                let fileName = Self.resolveFileName(
+                    suggestedName: suggestedName,
+                    fallback: fileURL.lastPathComponent,
+                    index: fallbackIndex
+                )
+                continuation.resume(
+                    returning: Self.copyIntoLocalFile(
+                        url: fileURL,
+                        fileName: fileName,
+                        index: fallbackIndex
+                    )
+                )
             }
         }
     }
@@ -292,7 +318,7 @@ final class ShareImportViewModel: ObservableObject {
         }
     }
 
-    private func copyIntoLocalFile(url: URL, provider: NSItemProvider, index: Int) -> SharedImportFile? {
+    private nonisolated static func copyIntoLocalFile(url: URL, fileName: String, index: Int) -> SharedImportFile? {
         let fileManager = FileManager.default
         let destinationURL = temporaryDirectory().appendingPathComponent("\(UUID().uuidString)-\(index).pdf")
 
@@ -308,7 +334,7 @@ final class ShareImportViewModel: ObservableObject {
                 let data = try? Data(contentsOf: url),
                 let fallbackFile = persistData(
                     data: data,
-                    fileName: resolveFileName(provider: provider, fallback: url.lastPathComponent, index: index)
+                    fileName: fileName
                 )
             else {
                 return nil
@@ -317,13 +343,13 @@ final class ShareImportViewModel: ObservableObject {
         }
 
         return SharedImportFile(
-            name: resolveFileName(provider: provider, fallback: url.lastPathComponent, index: index),
+            name: fileName,
             mimeType: "application/pdf",
             fileURL: destinationURL
         )
     }
 
-    private func persistData(data: Data, fileName: String) -> SharedImportFile? {
+    private nonisolated static func persistData(data: Data, fileName: String) -> SharedImportFile? {
         let destinationURL = temporaryDirectory().appendingPathComponent("\(UUID().uuidString)-\(fileName)")
 
         do {
@@ -338,18 +364,22 @@ final class ShareImportViewModel: ObservableObject {
         }
     }
 
-    private func temporaryDirectory() -> URL {
+    private nonisolated static func temporaryDirectory() -> URL {
         let tempDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("ShareImport", isDirectory: true)
         try? FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
         return tempDirectory
     }
 
-    private func resolveFileName(provider: NSItemProvider, fallback: String?, index: Int) -> String {
-        let rawName = provider.suggestedName?.trimmingCharacters(in: .whitespacesAndNewlines)
-            .flatMap { $0.isEmpty ? nil : $0 }
-            ?? fallback?.trimmingCharacters(in: .whitespacesAndNewlines)
-                .flatMap { $0.isEmpty ? nil : $0 }
-            ?? "shared-\(index + 1).pdf"
+    private nonisolated static func resolveFileName(
+        suggestedName: String?,
+        fallback: String?,
+        index: Int
+    ) -> String {
+        let trimmedSuggested = suggestedName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let suggestedCandidate = trimmedSuggested.flatMap { $0.isEmpty ? nil : $0 }
+        let trimmedFallback = fallback?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let fallbackCandidate = trimmedFallback.flatMap { $0.isEmpty ? nil : $0 }
+        let rawName = suggestedCandidate ?? fallbackCandidate ?? "shared-\(index + 1).pdf"
 
         let sanitized = rawName.replacingOccurrences(of: "/", with: "-")
         if sanitized.lowercased().hasSuffix(".pdf") {
@@ -358,11 +388,11 @@ final class ShareImportViewModel: ObservableObject {
         return "\(sanitized).pdf"
     }
 
-    private func isLikelyPdf(url: URL, provider: NSItemProvider) -> Bool {
+    private nonisolated static func isLikelyPdf(url: URL, suggestedName: String?) -> Bool {
         if url.pathExtension.lowercased() == "pdf" {
             return true
         }
-        if let suggestedName = provider.suggestedName?.lowercased(), suggestedName.hasSuffix(".pdf") {
+        if let suggestedName = suggestedName?.lowercased(), suggestedName.hasSuffix(".pdf") {
             return true
         }
         return false
