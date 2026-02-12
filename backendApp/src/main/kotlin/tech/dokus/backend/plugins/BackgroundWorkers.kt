@@ -6,6 +6,7 @@ import io.ktor.server.application.ApplicationStopping
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
@@ -18,6 +19,7 @@ fun Application.configureBackgroundWorkers() {
     val processingWorker by inject<DocumentProcessingWorker>()
     val rateLimitCleanupWorker by inject<RateLimitCleanupWorker>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()
+    val cashflowProjectionReconciliationWorker by inject<CashflowProjectionReconciliationWorker>()
 
     monitor.subscribe(ApplicationStarted) {
         rateLimitCleanupWorker.start()
@@ -25,11 +27,14 @@ fun Application.configureBackgroundWorkers() {
         processingWorker.start()
         logger.info("Starting Peppol polling worker")
         peppolPollingWorker.start()
+        logger.info("Starting cashflow projection reconciliation worker")
+        cashflowProjectionReconciliationWorker.start()
     }
 
     monitor.subscribe(ApplicationStopping) {
         processingWorker.stop()
         peppolPollingWorker.stop()
+        cashflowProjectionReconciliationWorker.stop()
 
         // Close optional Redis connection if present.
         val redisClient = runCatching { getKoin().getOrNull<RedisClient>() }.getOrNull()

@@ -97,6 +97,66 @@ class DocumentLinkRepository {
     }
 
     /**
+     * Upsert an OriginalDocument link for a source document.
+     *
+     * Guarantees one canonical OriginalDocument link per source document.
+     * - If the same semantic link already exists, returns the existing link ID.
+     * - Otherwise, replaces existing OriginalDocument links and creates one canonical link.
+     */
+    suspend fun upsertOriginalDocumentLink(
+        tenantId: TenantId,
+        sourceDocumentId: DocumentId,
+        targetDocumentId: DocumentId?,
+        externalReference: String?
+    ): DocumentLinkId = newSuspendedTransaction {
+        val normalizedExternalReference = externalReference?.trim()?.takeIf { it.isNotEmpty() }
+        require(targetDocumentId != null || normalizedExternalReference != null) {
+            "OriginalDocument link requires targetDocumentId or externalReference"
+        }
+
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val sourceDocumentUuid = UUID.fromString(sourceDocumentId.toString())
+        val targetDocumentUuid = targetDocumentId?.let { UUID.fromString(it.toString()) }
+
+        val baseWhere = (DocumentLinksTable.tenantId eq tenantUuid) and
+            (DocumentLinksTable.sourceDocumentId eq sourceDocumentUuid) and
+            (DocumentLinksTable.linkType eq DocumentLinkType.OriginalDocument)
+
+        val existing = DocumentLinksTable
+            .selectAll()
+            .where { baseWhere }
+            .toList()
+
+        val matching = existing.firstOrNull { row ->
+            row[DocumentLinksTable.targetDocumentId] == targetDocumentUuid &&
+                row[DocumentLinksTable.externalReference] == normalizedExternalReference
+        }
+
+        if (matching != null) {
+            return@newSuspendedTransaction DocumentLinkId.parse(matching[DocumentLinksTable.id].toString())
+        }
+
+        if (existing.isNotEmpty()) {
+            DocumentLinksTable.deleteWhere { baseWhere }
+        }
+
+        val linkId = DocumentLinkId.generate()
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        DocumentLinksTable.insert {
+            it[DocumentLinksTable.id] = UUID.fromString(linkId.toString())
+            it[DocumentLinksTable.tenantId] = tenantUuid
+            it[DocumentLinksTable.sourceDocumentId] = sourceDocumentUuid
+            it[DocumentLinksTable.targetDocumentId] = targetDocumentUuid
+            it[DocumentLinksTable.externalReference] = normalizedExternalReference
+            it[DocumentLinksTable.linkType] = DocumentLinkType.OriginalDocument
+            it[DocumentLinksTable.createdAt] = now
+        }
+
+        linkId
+    }
+
+    /**
      * Get a link by ID.
      * CRITICAL: Must filter by tenantId.
      */

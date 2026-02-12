@@ -328,56 +328,6 @@ class CashflowEntriesService(
     }
 
     /**
-     * Apply a credit-note offset to an unpaid expected cashflow entry.
-     *
-     * Rules:
-     * - Only applies when entry is unpaid and untouched (paidAt == null, remaining == gross)
-     * - Partial offset decreases gross + remaining
-     * - Full/over offset sets entry to Cancelled with zero amounts
-     *
-     * @return Updated entry when offset was applied, null when skipped.
-     */
-    suspend fun applyOffsetToUnpaidExpectedEntry(
-        entryId: CashflowEntryId,
-        tenantId: TenantId,
-        offsetAmount: Money
-    ): Result<CashflowEntry?> = runCatching {
-        if (offsetAmount.minor <= 0L) return@runCatching null
-
-        val entry = cashflowEntriesRepository.getEntry(entryId, tenantId).getOrThrow()
-            ?: return@runCatching null
-
-        val isEditable = entry.paidAt == null &&
-            entry.remainingAmount == entry.amountGross &&
-            (entry.status == CashflowEntryStatus.Open || entry.status == CashflowEntryStatus.Overdue)
-        if (!isEditable) {
-            return@runCatching null
-        }
-
-        val boundedOffsetMinor = minOf(offsetAmount.minor, entry.remainingAmount.minor)
-        val newGrossMinor = (entry.amountGross.minor - boundedOffsetMinor).coerceAtLeast(0L)
-        val newRemainingMinor = (entry.remainingAmount.minor - boundedOffsetMinor).coerceAtLeast(0L)
-        val newStatus = if (newRemainingMinor == 0L) CashflowEntryStatus.Cancelled else entry.status
-
-        val newVatMinor = if (entry.amountGross.minor > 0L) {
-            (entry.amountVat.minor * newGrossMinor) / entry.amountGross.minor
-        } else {
-            0L
-        }
-
-        cashflowEntriesRepository.updateAmountsAndStatus(
-            entryId = entryId,
-            tenantId = tenantId,
-            amountGross = Money(newGrossMinor),
-            amountVat = Money(newVatMinor.coerceAtLeast(0L)),
-            remainingAmount = Money(newRemainingMinor),
-            newStatus = newStatus
-        ).getOrThrow()
-
-        cashflowEntriesRepository.getEntry(entryId, tenantId).getOrThrow()
-    }
-
-    /**
      * Record a payment against a cashflow entry.
      * Updates the remaining amount and status accordingly.
      *

@@ -36,7 +36,6 @@ import tech.dokus.domain.ids.TenantId
 import java.math.BigDecimal
 import java.util.UUID
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -233,41 +232,6 @@ class CashflowEntriesViewModeTest {
             setOf(CashflowEntryId.parse(overduePaid.toString())),
             history.map { it.id }.toSet()
         )
-    }
-
-    @Test
-    fun `Credit offset updates unpaid entry and cancels on full offset`() = runBlocking {
-        val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
-        val entryUuid = insertCashflowEntry(
-            eventDate = today.plus(DatePeriod(days = 7)),
-            status = CashflowEntryStatus.Open,
-            amountGrossMinor = 100_000L,
-            amountVatMinor = 21_000L,
-            remainingMinor = 100_000L
-        )
-        val entryId = CashflowEntryId.parse(entryUuid.toString())
-
-        val partial = service.applyOffsetToUnpaidExpectedEntry(
-            entryId = entryId,
-            tenantId = tenantId,
-            offsetAmount = Money(30_000L)
-        ).getOrThrow()
-
-        assertNotNull(partial)
-        assertEquals(Money(70_000L), partial.amountGross)
-        assertEquals(Money(70_000L), partial.remainingAmount)
-        assertEquals(CashflowEntryStatus.Open, partial.status)
-
-        val full = service.applyOffsetToUnpaidExpectedEntry(
-            entryId = entryId,
-            tenantId = tenantId,
-            offsetAmount = Money(90_000L)
-        ).getOrThrow()
-
-        assertNotNull(full)
-        assertEquals(Money.ZERO, full.amountGross)
-        assertEquals(Money.ZERO, full.remainingAmount)
-        assertEquals(CashflowEntryStatus.Cancelled, full.status)
     }
 
     @Suppress("LongParameterList")

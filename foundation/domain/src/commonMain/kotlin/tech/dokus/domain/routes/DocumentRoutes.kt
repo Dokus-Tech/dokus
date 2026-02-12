@@ -64,14 +64,6 @@ class Documents {
     class Upload(val parent: Documents = Documents())
 
     /**
-     * POST /api/v1/documents/repair-cashflow
-     * Owner-only admin action to repair missing cashflow projections for confirmed documents.
-     */
-    @Serializable
-    @Resource("repair-cashflow")
-    class RepairCashflow(val parent: Documents = Documents())
-
-    /**
      * /api/v1/documents/{id} - Single document operations
      * GET - Retrieve full DocumentRecordDto
      * DELETE - Delete document (cascades to drafts, ingestion runs, chunks)

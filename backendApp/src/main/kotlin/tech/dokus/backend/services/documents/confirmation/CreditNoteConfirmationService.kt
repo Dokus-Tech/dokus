@@ -1,29 +1,23 @@
 package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.util.runSuspendCatching
-import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.documents.DocumentLinkRepository
-import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.CreditNoteType
 import tech.dokus.domain.enums.CreditNoteStatus
-import tech.dokus.domain.enums.DocumentLinkType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.SettlementIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateCreditNoteRequest
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.foundation.backend.utils.loggerFor
-import java.util.UUID
 
 /**
  * Confirms CreditNote documents via the dedicated [CreditNoteService].
@@ -36,9 +30,7 @@ class CreditNoteConfirmationService(
     private val creditNoteService: CreditNoteService,
     private val draftRepository: DocumentDraftRepository,
     private val documentLinkRepository: DocumentLinkRepository,
-    private val invoiceRepository: InvoiceRepository,
-    private val cashflowEntriesRepository: CashflowEntriesRepository,
-    private val cashflowEntriesService: CashflowEntriesService
+    private val invoiceRepository: InvoiceRepository
 ) {
     private val logger = loggerFor()
 
@@ -118,7 +110,7 @@ class CreditNoteConfirmationService(
         }
 
         draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
-        applyOffsetToLinkedObligation(
+        upsertOriginalReferenceLink(
             tenantId = tenantId,
             creditNoteDocumentId = documentId,
             draftData = draftData
@@ -128,71 +120,25 @@ class CreditNoteConfirmationService(
         ConfirmationResult(entity = confirmed, cashflowEntryId = null, documentId = documentId)
     }
 
-    private suspend fun applyOffsetToLinkedObligation(
+    private suspend fun upsertOriginalReferenceLink(
         tenantId: TenantId,
         creditNoteDocumentId: DocumentId,
         draftData: CreditNoteDraftData
     ) {
-        val offsetAmount = draftData.totalAmount ?: return
-        if (offsetAmount.minor <= 0L) return
+        val originalInvoiceNumber = draftData.originalInvoiceNumber
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: return
 
-        val targetEntryId = resolveTargetEntryId(tenantId, creditNoteDocumentId, draftData)
-        if (targetEntryId == null) {
-            logger.info(
-                "Credit note $creditNoteDocumentId has no resolvable target obligation for offset"
-            )
-            return
-        }
+        val targetDocumentId = invoiceRepository
+            .findByInvoiceNumber(tenantId, originalInvoiceNumber)
+            ?.documentId
 
-        cashflowEntriesService.applyOffsetToUnpaidExpectedEntry(
-            entryId = targetEntryId,
-            tenantId = tenantId,
-            offsetAmount = offsetAmount
-        ).fold(
-            onSuccess = { updatedEntry ->
-                if (updatedEntry == null) {
-                    logger.info(
-                        "Credit note $creditNoteDocumentId offset skipped: target entry is not editable"
-                    )
-                } else {
-                    logger.info(
-                        "Applied credit-note offset from $creditNoteDocumentId to entry ${updatedEntry.id}"
-                    )
-                }
-            },
-            onFailure = { throwable ->
-                logger.warn(
-                    "Credit note $creditNoteDocumentId offset failed: ${throwable.message}",
-                    throwable
-                )
-            }
-        )
-    }
-
-    private suspend fun resolveTargetEntryId(
-        tenantId: TenantId,
-        creditNoteDocumentId: DocumentId,
-        draftData: CreditNoteDraftData
-    ): CashflowEntryId? {
-        // 1) Prefer explicit document links (credit note -> original document).
-        val links = documentLinkRepository.getBySourceAndType(
+        documentLinkRepository.upsertOriginalDocumentLink(
             tenantId = tenantId,
             sourceDocumentId = creditNoteDocumentId,
-            linkType = DocumentLinkType.OriginalDocument
+            targetDocumentId = targetDocumentId,
+            externalReference = if (targetDocumentId == null) originalInvoiceNumber else null
         )
-
-        links.firstNotNullOfOrNull { link ->
-            val targetDocumentId = link.targetDocumentId ?: return@firstNotNullOfOrNull null
-            cashflowEntriesRepository.getByDocumentId(tenantId, targetDocumentId).getOrNull()?.id
-        }?.let { return it }
-
-        // 2) Fallback by original invoice number from draft.
-        val originalInvoiceNumber = draftData.originalInvoiceNumber?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val invoice = invoiceRepository.findByInvoiceNumber(tenantId, originalInvoiceNumber) ?: return null
-        return cashflowEntriesRepository.getBySource(
-            tenantId = tenantId,
-            sourceType = CashflowSourceType.Invoice,
-            sourceId = UUID.fromString(invoice.id.toString())
-        ).getOrNull()?.id
     }
 }

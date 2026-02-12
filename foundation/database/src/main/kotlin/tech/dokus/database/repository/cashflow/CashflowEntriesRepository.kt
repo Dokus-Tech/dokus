@@ -391,35 +391,6 @@ class CashflowEntriesRepository {
         }
     }
 
-    /**
-     * Update gross/vat/remaining amounts and status atomically.
-     * CRITICAL: MUST filter by tenant_id.
-     */
-    suspend fun updateAmountsAndStatus(
-        entryId: CashflowEntryId,
-        tenantId: TenantId,
-        amountGross: Money,
-        amountVat: Money,
-        remainingAmount: Money,
-        newStatus: CashflowEntryStatus
-    ): Result<Boolean> = runCatching {
-        dbQuery {
-            val updated = CashflowEntriesTable.update({
-                (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
-                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }) {
-                it[CashflowEntriesTable.amountGross] = amountGross.toDbDecimal()
-                it[CashflowEntriesTable.amountVat] = amountVat.toDbDecimal()
-                it[CashflowEntriesTable.remainingAmount] = remainingAmount.toDbDecimal()
-                it[status] = newStatus
-                if (newStatus != CashflowEntryStatus.Paid) {
-                    it[paidAt] = null
-                }
-            }
-            updated > 0
-        }
-    }
-
     private fun mapRowToEntry(
         row: org.jetbrains.exposed.v1.core.ResultRow,
         contactName: String? = null
