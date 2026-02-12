@@ -1,6 +1,5 @@
 import XCTest
 import FileProvider
-@testable import DokusFileProviderExtension
 
 final class DokusFileProviderOperationPolicyTests: XCTestCase {
     private let builder = DokusProjectionBuilder()

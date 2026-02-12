@@ -39,6 +39,9 @@
 		F30101112EAC000100000001 /* DokusFileProviderExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F30100232EAC000100000001 /* DokusFileProviderExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F30201012EAC000100000001 /* DokusFileProviderProjectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30200112EAC000100000001 /* DokusFileProviderProjectionTests.swift */; };
 		F30201022EAC000100000001 /* DokusFileProviderOperationPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30200122EAC000100000001 /* DokusFileProviderOperationPolicyTests.swift */; };
+		F30201032EAC000100000001 /* DokusFileProviderConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100192EAC000100000001 /* DokusFileProviderConstants.swift */; };
+		F30201042EAC000100000001 /* DokusFileProviderProjection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100162EAC000100000001 /* DokusFileProviderProjection.swift */; };
+		F30201052EAC000100000001 /* DokusFileProviderSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100152EAC000100000001 /* DokusFileProviderSnapshotStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -575,14 +578,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F30203012EAC000100000001 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F30201022EAC000100000001 /* DokusFileProviderOperationPolicyTests.swift in Sources */,
-				F30201012EAC000100000001 /* DokusFileProviderProjectionTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
+			F30203012EAC000100000001 /* Sources */ = {
+				isa = PBXSourcesBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+					F30201052EAC000100000001 /* DokusFileProviderSnapshotStore.swift in Sources */,
+					F30201042EAC000100000001 /* DokusFileProviderProjection.swift in Sources */,
+					F30201032EAC000100000001 /* DokusFileProviderConstants.swift in Sources */,
+					F30201022EAC000100000001 /* DokusFileProviderOperationPolicyTests.swift in Sources */,
+					F30201012EAC000100000001 /* DokusFileProviderProjectionTests.swift in Sources */,
+				);
+				runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
