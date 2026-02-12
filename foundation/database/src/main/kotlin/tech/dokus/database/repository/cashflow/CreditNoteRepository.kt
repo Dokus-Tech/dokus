@@ -158,16 +158,7 @@ class CreditNoteRepository {
         request: CreateCreditNoteRequest
     ): Result<FinancialDocumentDto.CreditNoteDto> = runCatching {
         dbQuery {
-            val exists = CreditNotesTable.selectAll().where {
-                (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
-                    (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.count() > 0
-
-            if (!exists) {
-                throw IllegalArgumentException("Credit note not found or access denied")
-            }
-
-            CreditNotesTable.update({
+            val updated = CreditNotesTable.update({
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
                     (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
@@ -183,6 +174,10 @@ class CreditNoteRepository {
                 it[reason] = request.reason
                 it[notes] = request.notes
                 it[documentId] = request.documentId?.let { id -> UUID.fromString(id.toString()) }
+            }
+
+            if (updated == 0) {
+                throw IllegalArgumentException("Credit note not found or access denied")
             }
 
             CreditNotesTable.selectAll().where {

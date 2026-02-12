@@ -251,7 +251,11 @@ internal object DocumentListingQuery {
         var whereOp = DocumentsTable.tenantId eq tenantIdUuid
 
         if (trimmedSearch != null) {
-            whereOp = whereOp and (LowerCase(DocumentsTable.filename) like "%${trimmedSearch.lowercase()}%")
+            val escaped = trimmedSearch.lowercase()
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
+            whereOp = whereOp and (LowerCase(DocumentsTable.filename) like "%${escaped}%")
         }
 
         val requiresDraft = effectiveDocumentStatus != null || documentType != null

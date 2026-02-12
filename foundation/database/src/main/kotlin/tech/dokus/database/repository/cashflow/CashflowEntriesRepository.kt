@@ -128,6 +128,12 @@ class CashflowEntriesRepository {
      * Update an entry projection by source (Invoice/Expense).
      * This is used for safe "re-confirm" flows to update the projection from the latest draft.
      *
+     * CAS guard: only updates entries that are still Open with no partial payments
+     * (remainingAmount == amountGross). This prevents overwriting payment state
+     * if a concurrent payment is recorded between the caller's read and this write.
+     *
+     * Returns false if the CAS condition is not met (entry was modified concurrently).
+     *
      * CRITICAL: MUST filter by tenant_id.
      */
     suspend fun updateProjectionBySource(
@@ -145,7 +151,9 @@ class CashflowEntriesRepository {
             val updated = CashflowEntriesTable.update({
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (CashflowEntriesTable.sourceType eq sourceType) and
-                    (CashflowEntriesTable.sourceId eq sourceId)
+                    (CashflowEntriesTable.sourceId eq sourceId) and
+                    (CashflowEntriesTable.status eq CashflowEntryStatus.Open) and
+                    (CashflowEntriesTable.remainingAmount eq CashflowEntriesTable.amountGross)
             }) {
                 it[CashflowEntriesTable.direction] = direction
                 it[CashflowEntriesTable.eventDate] = eventDate

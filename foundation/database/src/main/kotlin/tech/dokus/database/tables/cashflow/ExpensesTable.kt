@@ -71,7 +71,7 @@ object ExpensesTable : UUIDTable("expenses") {
         // For contact activity queries: find all expenses for a contact
         index(false, tenantId, contactId)
 
-        // Idempotent document confirmation: only one expense per document per tenant
-        uniqueIndex("ux_expenses_tenant_document_id", tenantId, documentId)
+        // Idempotent document confirmation index managed by Flyway V3 migration
+        // (partial unique index WHERE document_id IS NOT NULL)
     }
 }

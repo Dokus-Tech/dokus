@@ -68,10 +68,6 @@ internal fun DocumentReviewRoute(
 
     val pendingContactId = backStackEntry?.savedStateHandle?.get<String>(CONTACT_RESULT_KEY)
 
-    LaunchedEffect(Unit) {
-        markDocumentsRefreshRequired()
-    }
-
     LaunchedEffect(pendingContactId) {
         if (pendingContactId != null) {
             container.store.intent(

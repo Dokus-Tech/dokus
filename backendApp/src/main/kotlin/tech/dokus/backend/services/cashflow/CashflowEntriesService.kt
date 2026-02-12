@@ -112,14 +112,7 @@ class CashflowEntriesService(
                 contactId = contactId
             ).getOrThrow()
 
-        if (existing.status != CashflowEntryStatus.Open) {
-            throw DokusException.BadRequest("Cashflow entry is not editable: status=${existing.status}")
-        }
-        if (existing.paidAt != null || existing.remainingAmount != existing.amountGross) {
-            throw DokusException.BadRequest("Cashflow entry has payments recorded and cannot be updated")
-        }
-
-        cashflowEntriesRepository.updateProjectionBySource(
+        val updated = cashflowEntriesRepository.updateProjectionBySource(
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,
             sourceId = invoiceId,
@@ -130,6 +123,10 @@ class CashflowEntriesService(
             amountVat = amountVat,
             contactId = contactId
         ).getOrThrow()
+
+        if (!updated) {
+            throw DokusException.BadRequest("Cashflow entry cannot be updated: it has payments or is no longer Open")
+        }
 
         getBySourceOrNull(tenantId, CashflowSourceType.Invoice, invoiceId)
             ?: error("Cashflow entry not found after update: invoiceId=$invoiceId")
@@ -203,14 +200,7 @@ class CashflowEntriesService(
                 contactId = contactId
             ).getOrThrow()
 
-        if (existing.status != CashflowEntryStatus.Open) {
-            throw DokusException.BadRequest("Cashflow entry is not editable: status=${existing.status}")
-        }
-        if (existing.paidAt != null || existing.remainingAmount != existing.amountGross) {
-            throw DokusException.BadRequest("Cashflow entry has payments recorded and cannot be updated")
-        }
-
-        cashflowEntriesRepository.updateProjectionBySource(
+        val updated = cashflowEntriesRepository.updateProjectionBySource(
             tenantId = tenantId,
             sourceType = CashflowSourceType.Expense,
             sourceId = expenseId,
@@ -221,6 +211,10 @@ class CashflowEntriesService(
             amountVat = amountVat,
             contactId = contactId
         ).getOrThrow()
+
+        if (!updated) {
+            throw DokusException.BadRequest("Cashflow entry cannot be updated: it has payments or is no longer Open")
+        }
 
         getBySourceOrNull(tenantId, CashflowSourceType.Expense, expenseId)
             ?: error("Cashflow entry not found after update: expenseId=$expenseId")
@@ -359,29 +353,13 @@ class CashflowEntriesService(
         }
 
         val normalizedRemaining = if (newRemaining.isNegative) Money.ZERO else newRemaining
-        return runCatching {
-            val remainingUpdated = cashflowEntriesRepository.updateRemainingAmount(
-                entryId = entryId,
-                tenantId = tenantId,
-                newRemainingAmount = normalizedRemaining
-            ).getOrThrow()
-            if (!remainingUpdated) {
-                return@runCatching false
-            }
-
-            val needsStatusUpdate = newStatus != entry.status ||
-                (newStatus == CashflowEntryStatus.Paid && paidAt != entry.paidAt)
-            if (!needsStatusUpdate) {
-                return@runCatching true
-            }
-
-            cashflowEntriesRepository.updateStatus(
-                entryId = entryId,
-                tenantId = tenantId,
-                newStatus = newStatus,
-                paidAt = paidAt
-            ).getOrThrow()
-        }
+        return cashflowEntriesRepository.updateRemainingAmountAndStatus(
+            entryId = entryId,
+            tenantId = tenantId,
+            newRemainingAmount = normalizedRemaining,
+            newStatus = newStatus,
+            paidAt = paidAt
+        )
             .onSuccess { logger.info("Payment recorded for cashflow entry: $entryId, new status: $newStatus") }
             .onFailure { logger.error("Failed to record payment for cashflow entry: $entryId", it) }
     }

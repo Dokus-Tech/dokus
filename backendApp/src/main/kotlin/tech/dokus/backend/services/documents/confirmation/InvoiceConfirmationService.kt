@@ -163,6 +163,11 @@ class InvoiceConfirmationService(
         )
     }
 
-    private fun normalizeDirection(direction: DocumentDirection): DocumentDirection =
-        if (direction == DocumentDirection.Unknown) DocumentDirection.Outbound else direction
+    private fun normalizeDirection(direction: DocumentDirection): DocumentDirection {
+        if (direction == DocumentDirection.Unknown) {
+            logger.warn("Invoice direction is Unknown, defaulting to Outbound. This may indicate a failed AI extraction.")
+            return DocumentDirection.Outbound
+        }
+        return direction
+    }
 }
