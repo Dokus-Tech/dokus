@@ -27,7 +27,7 @@
             <key>NSExtensionActivationRule</key>
             <dict>
                 <key>NSExtensionActivationSupportsFileWithMaxCount</key>
-                <integer>1</integer>
+                <integer>20</integer>
                 <key>NSExtensionActivationSupportsFileWithTypeIdentifiers</key>
                 <array>
                     <string>com.adobe.pdf</string>

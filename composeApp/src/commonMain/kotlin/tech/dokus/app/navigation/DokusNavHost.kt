@@ -53,8 +53,8 @@ fun DokusNavHost(
 
     LaunchedEffect(navController) {
         launch {
-            ExternalShareImportHandler.pendingState.collect { pendingFile ->
-                if (pendingFile != null) {
+            ExternalShareImportHandler.pendingState.collect { pendingFiles ->
+                if (!pendingFiles.isNullOrEmpty()) {
                     navController.replace(AppDestination.ShareImport)
                 }
             }
@@ -69,9 +69,9 @@ fun DokusNavHost(
                     if (deepLink.path.startsWith(KnownDeepLinks.ShareImport.path.path)) {
                         val batchId = DeepLinks.extractShareImportBatchId(deepLink)
                         PlatformShareImportBridge.consumeBatch(batchId)
-                            .onSuccess { file ->
-                                if (file != null) {
-                                    ExternalShareImportHandler.onNewSharedFile(file)
+                            .onSuccess { files ->
+                                if (files.isNotEmpty()) {
+                                    ExternalShareImportHandler.onNewSharedFiles(files)
                                 } else {
                                     println("[DokusNavHost] No share batch payload found for id=$batchId")
                                 }

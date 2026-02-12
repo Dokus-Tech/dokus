@@ -6,5 +6,5 @@ package tech.dokus.app.share
  * Used on iOS for App Group share extension batches.
  */
 expect object PlatformShareImportBridge {
-    suspend fun consumeBatch(batchId: String?): Result<SharedImportFile?>
+    suspend fun consumeBatch(batchId: String?): Result<List<SharedImportFile>>
 }

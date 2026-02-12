@@ -28,7 +28,7 @@ internal class ShareImportContainer(
     private val uploadDocumentUseCase: UploadDocumentUseCase,
 ) : Container<ShareImportState, ShareImportIntent, ShareImportAction> {
     private val logger = Logger.forClass<ShareImportContainer>()
-    private var activeFile: SharedImportFile? = null
+    private var activeFiles: List<SharedImportFile> = emptyList()
 
     override val store: Store<ShareImportState, ShareImportIntent, ShareImportAction> =
         store(ShareImportState.LoadingContext) {
@@ -45,27 +45,31 @@ internal class ShareImportContainer(
     private suspend fun ShareImportCtx.handleLoad() {
         updateState { ShareImportState.LoadingContext }
 
-        val sharedFile = activeFile ?: ExternalShareImportHandler.consumePendingFile()
-        if (sharedFile == null) {
-            logger.w { "Share import opened without a pending shared file" }
+        val sharedFiles = if (activeFiles.isNotEmpty()) {
+            activeFiles
+        } else {
+            ExternalShareImportHandler.consumePendingFiles().orEmpty()
+        }
+        if (sharedFiles.isEmpty()) {
+            logger.w { "Share import opened without pending shared files" }
             updateState {
                 ShareImportState.Error(
                     title = "No shared document found",
-                    message = "Please share a PDF to Dokus again.",
+                    message = "Please share one or more PDF files to Dokus again.",
                     canRetry = false,
                     canNavigateToLogin = false
                 )
             }
             return
         }
-        activeFile = sharedFile
+        activeFiles = sharedFiles
 
         if (!tokenManager.isAuthenticated.value) {
             logger.w { "Share import received while user is not authenticated" }
             updateState {
                 ShareImportState.Error(
                     title = "Login required",
-                    message = "Please sign in to upload this document.",
+                    message = "Please sign in to upload these documents.",
                     canRetry = false,
                     canNavigateToLogin = true
                 )
@@ -88,13 +92,14 @@ internal class ShareImportContainer(
                     }
 
                     workspaces.size == 1 -> {
-                        uploadToWorkspace(sharedFile, workspaces.first())
+                        uploadToWorkspace(sharedFiles, workspaces.first())
                     }
 
                     else -> {
                         updateState {
                             ShareImportState.SelectWorkspace(
-                                fileName = sharedFile.name,
+                                primaryFileName = sharedFiles.first().name,
+                                additionalFileCount = (sharedFiles.size - 1).coerceAtLeast(0),
                                 workspaces = workspaces
                             )
                         }
@@ -134,12 +139,11 @@ internal class ShareImportContainer(
             return
         }
 
-        val sharedFile = activeFile
-        if (sharedFile == null) {
+        if (activeFiles.isEmpty()) {
             updateState {
                 ShareImportState.Error(
                     title = "No shared document found",
-                    message = "Please share a PDF to Dokus again.",
+                    message = "Please share one or more PDF files to Dokus again.",
                     canRetry = false,
                     canNavigateToLogin = false
                 )
@@ -148,11 +152,11 @@ internal class ShareImportContainer(
         }
 
         updateState { selectState.copy(isSwitchingWorkspace = true) }
-        uploadToWorkspace(sharedFile, workspace)
+        uploadToWorkspace(activeFiles, workspace)
     }
 
     private suspend fun ShareImportCtx.uploadToWorkspace(
-        sharedFile: SharedImportFile,
+        sharedFiles: List<SharedImportFile>,
         workspace: Tenant
     ) {
         val currentTenantId = runCatching { tokenManager.getCurrentClaims()?.tenant?.tenantId }
@@ -174,45 +178,85 @@ internal class ShareImportContainer(
                 }
         }
 
-        updateState {
-            ShareImportState.Uploading(
-                fileName = sharedFile.name,
-                workspaceName = workspace.displayName.value,
-                progress = 0f
-            )
-        }
+        val totalFiles = sharedFiles.size
+        var firstUploadedDocumentId: String? = null
 
-        uploadDocumentUseCase(
-            fileContent = sharedFile.bytes,
-            filename = sharedFile.name,
-            contentType = sharedFile.mimeType,
-            prefix = "documents",
-            onProgress = { progress ->
-                // Frequent progress updates can bypass suspended state transactions for responsiveness.
-                updateStateImmediate<ShareImportState.Uploading, _> {
-                    copy(progress = progress.coerceIn(0f, 1f))
-                }
-            }
-        ).onSuccess { document ->
-            val documentId = document.id.toString()
+        for ((index, sharedFile) in sharedFiles.withIndex()) {
+            val currentFileIndex = index + 1
             updateState {
-                ShareImportState.Success(
-                    fileName = sharedFile.name,
-                    documentId = documentId
+                ShareImportState.Uploading(
+                    currentFileName = sharedFile.name,
+                    currentFileIndex = currentFileIndex,
+                    totalFiles = totalFiles,
+                    workspaceName = workspace.displayName.value,
+                    currentFileProgress = 0f,
+                    overallProgress = index.toFloat() / totalFiles.toFloat()
                 )
             }
-            delay(SuccessAnimationDelayMs)
-            action(ShareImportAction.NavigateToDocumentReview(documentId))
-        }.onFailure { error ->
-            logger.e(error) { "Share import upload failed" }
+
+            val result = uploadDocumentUseCase(
+                fileContent = sharedFile.bytes,
+                filename = sharedFile.name,
+                contentType = sharedFile.mimeType,
+                prefix = "documents",
+                onProgress = { progress ->
+                    val clampedProgress = progress.coerceIn(0f, 1f)
+                    val overallProgress = (index.toFloat() + clampedProgress) / totalFiles.toFloat()
+
+                    // Frequent progress updates can bypass suspended state transactions for responsiveness.
+                    updateStateImmediate<ShareImportState.Uploading, _> {
+                        copy(
+                            currentFileName = sharedFile.name,
+                            currentFileIndex = currentFileIndex,
+                            totalFiles = totalFiles,
+                            currentFileProgress = clampedProgress,
+                            overallProgress = overallProgress.coerceIn(0f, 1f)
+                        )
+                    }
+                }
+            )
+
+            result.onSuccess { document ->
+                if (firstUploadedDocumentId == null) {
+                    firstUploadedDocumentId = document.id.toString()
+                }
+            }.onFailure { error ->
+                logger.e(error) { "Share import upload failed for file: ${sharedFile.name}" }
+                updateState {
+                    ShareImportState.Error(
+                        title = "Upload failed",
+                        message = error.message ?: "Please try again.",
+                        canRetry = true,
+                        canNavigateToLogin = false
+                    )
+                }
+                return
+            }
+        }
+
+        val documentId = firstUploadedDocumentId
+        if (documentId == null) {
+            logger.w { "Share import completed with no uploaded document id" }
             updateState {
                 ShareImportState.Error(
                     title = "Upload failed",
-                    message = error.message ?: "Please try again.",
+                    message = "No document was uploaded. Please try again.",
                     canRetry = true,
                     canNavigateToLogin = false
                 )
             }
+            return
         }
+
+        updateState {
+            ShareImportState.Success(
+                primaryFileName = sharedFiles.first().name,
+                additionalFileCount = (sharedFiles.size - 1).coerceAtLeast(0),
+                uploadedCount = sharedFiles.size,
+                documentId = documentId
+            )
+        }
+        delay(SuccessAnimationDelayMs)
+        action(ShareImportAction.NavigateToDocumentReview(documentId))
     }
 }

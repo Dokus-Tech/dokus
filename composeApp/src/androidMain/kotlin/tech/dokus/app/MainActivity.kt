@@ -73,10 +73,10 @@ class MainActivity : ComponentActivity() {
             return true
         }
 
-        val firstPdf = uris.firstNotNullOfOrNull { uri -> readSharedPdf(uri) }
-        if (firstPdf != null) {
-            ExternalShareImportHandler.onNewSharedFile(firstPdf)
-            println("[MainActivity] Imported shared PDF: ${firstPdf.name}")
+        val sharedPdfs = uris.mapNotNull(::readSharedPdf)
+        if (sharedPdfs.isNotEmpty()) {
+            ExternalShareImportHandler.onNewSharedFiles(sharedPdfs)
+            println("[MainActivity] Imported ${sharedPdfs.size} shared PDF(s)")
         } else {
             println("[MainActivity] Share intent had no supported PDF")
         }
@@ -87,13 +87,21 @@ class MainActivity : ComponentActivity() {
 
     private fun extractShareUris(intent: Intent, action: String): List<Uri> {
         if (action == Intent.ACTION_SEND) {
-            val uri = intent.getParcelableExtraCompat(Intent.EXTRA_STREAM) ?: intent.clipData?.getItemAt(0)?.uri
-            return listOfNotNull(uri)
+            val uris = buildList {
+                intent.getParcelableExtraCompat<Uri>(Intent.EXTRA_STREAM)?.let(::add)
+                val clipData = intent.clipData
+                if (clipData != null) {
+                    for (index in 0 until clipData.itemCount) {
+                        clipData.getItemAt(index)?.uri?.let(::add)
+                    }
+                }
+            }
+            return uris.distinctBy(Uri::toString)
         }
 
         val multi = intent.getParcelableArrayListExtraCompat(Intent.EXTRA_STREAM)
         if (!multi.isNullOrEmpty()) {
-            return multi
+            return multi.distinctBy(Uri::toString)
         }
 
         val clipData = intent.clipData ?: return emptyList()
@@ -101,7 +109,7 @@ class MainActivity : ComponentActivity() {
             for (index in 0 until clipData.itemCount) {
                 clipData.getItemAt(index)?.uri?.let(::add)
             }
-        }
+        }.distinctBy(Uri::toString)
     }
 
     private fun readSharedPdf(uri: Uri): SharedImportFile? {

@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,7 +39,7 @@ internal fun ShareImportScreen(
     Scaffold(
         topBar = {
             PTopAppBar(
-                title = "Import Shared PDF",
+                title = "Import Documents",
                 showBackButton = false
             )
         }
@@ -46,7 +48,8 @@ internal fun ShareImportScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(24.dp),
+                .padding(24.dp)
+                .widthIn(max = 720.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -66,7 +69,7 @@ private fun LoadingContextContent() {
     CircularProgressIndicator()
     Spacer(modifier = Modifier.height(16.dp))
     Text(
-        text = "Preparing import…",
+        text = "Preparing import",
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -84,7 +87,10 @@ private fun SelectWorkspaceContent(
     )
     Spacer(modifier = Modifier.height(8.dp))
     Text(
-        text = "Select where \"${state.fileName}\" should be uploaded.",
+        text = workspaceSelectionDescription(
+            primaryFileName = state.primaryFileName,
+            additionalFileCount = state.additionalFileCount
+        ),
         style = MaterialTheme.typography.bodyMedium,
         textAlign = TextAlign.Center,
         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -106,7 +112,7 @@ private fun SelectWorkspaceContent(
         CircularProgressIndicator()
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Switching workspace…",
+            text = "Switching workspace",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -115,23 +121,34 @@ private fun SelectWorkspaceContent(
 
 @Composable
 private fun UploadingContent(state: ShareImportState.Uploading) {
-    CircularProgressIndicator(progress = { state.progress })
-    Spacer(modifier = Modifier.height(20.dp))
     Text(
         text = "Uploading to ${state.workspaceName}",
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(6.dp))
     Text(
-        text = state.fileName,
+        text = "File ${state.currentFileIndex} of ${state.totalFiles}",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Spacer(modifier = Modifier.height(18.dp))
+
+    LinearProgressIndicator(
+        progress = { state.overallProgress },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(14.dp))
+    Text(
+        text = state.currentFileName,
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.onSurface,
         textAlign = TextAlign.Center
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(6.dp))
     Text(
-        text = "${(state.progress * 100).toInt()}%",
+        text = "Overall ${(state.overallProgress * 100).toInt()}%",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -141,14 +158,21 @@ private fun UploadingContent(state: ShareImportState.Uploading) {
 private fun SuccessContent(state: ShareImportState.Success) {
     AnimatedCheck(play = true)
     Spacer(modifier = Modifier.height(18.dp))
+
+    val uploadedLabel = if (state.uploadedCount == 1) {
+        "Document uploaded"
+    } else {
+        "${state.uploadedCount} documents uploaded"
+    }
+
     Text(
-        text = "Upload complete",
+        text = uploadedLabel,
         style = MaterialTheme.typography.headlineSmall,
         color = MaterialTheme.colorScheme.onSurface
     )
     Spacer(modifier = Modifier.height(8.dp))
     Text(
-        text = state.fileName,
+        text = sharedFilesSummary(state.primaryFileName, state.additionalFileCount),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
@@ -190,5 +214,24 @@ private fun ErrorContent(
             modifier = Modifier.fillMaxWidth(),
             onClick = { onIntent(NavigateToLogin) }
         )
+    }
+}
+
+private fun workspaceSelectionDescription(
+    primaryFileName: String,
+    additionalFileCount: Int
+): String {
+    return if (additionalFileCount == 0) {
+        "Select where \"$primaryFileName\" should be uploaded."
+    } else {
+        "Select where ${additionalFileCount + 1} PDF files should be uploaded."
+    }
+}
+
+private fun sharedFilesSummary(primaryFileName: String, additionalFileCount: Int): String {
+    return if (additionalFileCount == 0) {
+        primaryFileName
+    } else {
+        "$primaryFileName + $additionalFileCount more"
     }
 }

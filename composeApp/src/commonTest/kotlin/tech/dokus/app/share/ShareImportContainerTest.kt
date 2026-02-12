@@ -1,7 +1,7 @@
 package tech.dokus.app.share
 
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
@@ -54,7 +54,7 @@ class ShareImportContainerTest {
             selectTenantUseCase = FakeSelectTenantUseCase(),
             uploadDocumentUseCase = uploadUseCase
         )
-        ExternalShareImportHandler.onNewSharedFile(testSharedFile())
+        ExternalShareImportHandler.onNewSharedFiles(listOf(testSharedFile()))
 
         container.store.subscribeAndTest {
             emit(ShareImportIntent.Load)
@@ -88,14 +88,16 @@ class ShareImportContainerTest {
             selectTenantUseCase = selectTenantUseCase,
             uploadDocumentUseCase = uploadUseCase
         )
-        ExternalShareImportHandler.onNewSharedFile(testSharedFile())
+        ExternalShareImportHandler.onNewSharedFiles(listOf(testSharedFile()))
 
         container.store.subscribeAndTest {
             ShareImportIntent.Load resultsIn ShareImportAction.NavigateToDocumentReview(document.id.toString())
 
             assertEquals(
                 ShareImportState.Success(
-                    fileName = "invoice.pdf",
+                    primaryFileName = "invoice.pdf",
+                    additionalFileCount = 0,
+                    uploadedCount = 1,
                     documentId = document.id.toString()
                 ),
                 states.value
@@ -128,7 +130,7 @@ class ShareImportContainerTest {
             selectTenantUseCase = selectTenantUseCase,
             uploadDocumentUseCase = uploadUseCase
         )
-        ExternalShareImportHandler.onNewSharedFile(testSharedFile())
+        ExternalShareImportHandler.onNewSharedFiles(listOf(testSharedFile()))
 
         container.store.subscribeAndTest {
             emit(ShareImportIntent.Load)
@@ -136,12 +138,62 @@ class ShareImportContainerTest {
 
             val selectState = assertIs<ShareImportState.SelectWorkspace>(states.value)
             assertEquals(2, selectState.workspaces.size)
+            assertEquals("invoice.pdf", selectState.primaryFileName)
+            assertEquals(0, selectState.additionalFileCount)
             assertEquals(0, uploadUseCase.invocations)
 
             ShareImportIntent.SelectWorkspace(workspaceB.id) resultsIn
                 ShareImportAction.NavigateToDocumentReview(document.id.toString())
             assertEquals(listOf(workspaceB.id), selectTenantUseCase.invocations)
             assertEquals(1, uploadUseCase.invocations)
+        }
+    }
+
+    @Test
+    fun `multiple shared files upload sequentially`() = runTest {
+        val workspace = testTenant(
+            id = TenantId("00000000-0000-0000-0000-000000000026"),
+            displayName = "Workspace"
+        )
+        val documents = listOf(
+            testDocument(id = DocumentId("26000000-0000-0000-0000-000000000001"), tenantId = workspace.id),
+            testDocument(id = DocumentId("26000000-0000-0000-0000-000000000002"), tenantId = workspace.id),
+            testDocument(id = DocumentId("26000000-0000-0000-0000-000000000003"), tenantId = workspace.id)
+        )
+        val uploadUseCase = FakeUploadDocumentUseCase(
+            results = documents.map { Result.success(it) }
+        )
+        val container = ShareImportContainer(
+            tokenManager = FakeTokenManager(isAuthenticated = true),
+            listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspace))),
+            selectTenantUseCase = FakeSelectTenantUseCase(),
+            uploadDocumentUseCase = uploadUseCase
+        )
+
+        ExternalShareImportHandler.onNewSharedFiles(
+            listOf(
+                testSharedFile(name = "one.pdf"),
+                testSharedFile(name = "two.pdf"),
+                testSharedFile(name = "three.pdf")
+            )
+        )
+
+        container.store.subscribeAndTest {
+            ShareImportIntent.Load resultsIn
+                ShareImportAction.NavigateToDocumentReview(documents.first().id.toString())
+
+            assertEquals(3, uploadUseCase.invocations)
+            assertEquals(listOf("one.pdf", "two.pdf", "three.pdf"), uploadUseCase.uploadedFilenames)
+
+            assertEquals(
+                ShareImportState.Success(
+                    primaryFileName = "one.pdf",
+                    additionalFileCount = 2,
+                    uploadedCount = 3,
+                    documentId = documents.first().id.toString()
+                ),
+                states.value
+            )
         }
     }
 
@@ -168,7 +220,7 @@ class ShareImportContainerTest {
             selectTenantUseCase = selectTenantUseCase,
             uploadDocumentUseCase = uploadUseCase
         )
-        ExternalShareImportHandler.onNewSharedFile(testSharedFile())
+        ExternalShareImportHandler.onNewSharedFiles(listOf(testSharedFile()))
 
         container.store.subscribeAndTest {
             emit(ShareImportIntent.Load)
@@ -200,7 +252,7 @@ class ShareImportContainerTest {
             selectTenantUseCase = FakeSelectTenantUseCase(),
             uploadDocumentUseCase = uploadUseCase
         )
-        ExternalShareImportHandler.onNewSharedFile(testSharedFile())
+        ExternalShareImportHandler.onNewSharedFiles(listOf(testSharedFile()))
 
         container.store.subscribeAndTest {
             emit(ShareImportIntent.Load)
@@ -228,7 +280,7 @@ class ShareImportContainerTest {
             selectTenantUseCase = FakeSelectTenantUseCase(),
             uploadDocumentUseCase = FakeUploadDocumentUseCase(Result.success(document))
         )
-        ExternalShareImportHandler.onNewSharedFile(testSharedFile())
+        ExternalShareImportHandler.onNewSharedFiles(listOf(testSharedFile()))
 
         container.store.subscribeAndTest {
             ShareImportIntent.Load resultsIn
@@ -270,10 +322,21 @@ private class FakeSelectTenantUseCase(
 }
 
 private class FakeUploadDocumentUseCase(
-    private val result: Result<DocumentDto>,
-    private val progressPoints: List<Float> = emptyList()
+    private val results: List<Result<DocumentDto>>,
+    private val defaultProgressPoints: List<Float> = emptyList(),
+    private val progressPointsByInvocation: Map<Int, List<Float>> = emptyMap()
 ) : UploadDocumentUseCase {
+    constructor(
+        result: Result<DocumentDto>,
+        progressPoints: List<Float> = emptyList()
+    ) : this(
+        results = listOf(result),
+        defaultProgressPoints = progressPoints,
+        progressPointsByInvocation = emptyMap()
+    )
+
     var invocations: Int = 0
+    val uploadedFilenames = mutableListOf<String>()
 
     override suspend fun invoke(
         fileContent: ByteArray,
@@ -282,14 +345,21 @@ private class FakeUploadDocumentUseCase(
         prefix: String,
         onProgress: (Float) -> Unit
     ): Result<DocumentDto> {
+        val invocationIndex = invocations
         invocations += 1
+        uploadedFilenames += filename
+
+        val progressPoints = progressPointsByInvocation[invocationIndex] ?: defaultProgressPoints
         progressPoints.forEach(onProgress)
-        return result
+
+        return results.getOrNull(invocationIndex)
+            ?: results.lastOrNull()
+            ?: Result.failure(IllegalStateException("No upload result configured"))
     }
 }
 
-private fun testSharedFile(): SharedImportFile = SharedImportFile(
-    name = "invoice.pdf",
+private fun testSharedFile(name: String = "invoice.pdf"): SharedImportFile = SharedImportFile(
+    name = name,
     bytes = byteArrayOf(1, 2, 3),
     mimeType = "application/pdf"
 )
@@ -329,7 +399,7 @@ private fun testDocument(
 )
 
 private fun clearPendingSharedFiles() {
-    while (ExternalShareImportHandler.consumePendingFile() != null) {
+    while (!ExternalShareImportHandler.consumePendingFiles().isNullOrEmpty()) {
         // Clear all pending payloads left by previous tests.
     }
 }
