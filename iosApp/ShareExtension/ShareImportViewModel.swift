@@ -406,62 +406,112 @@ struct ShareImportRootView: View {
 
     var body: some View {
         ZStack {
-            Color(.systemBackground)
+            ShareImportTheme.canvas
                 .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                switch viewModel.state {
-                case .loadingPayload:
-                    loadingView(title: "Preparing files")
-                case .resolvingSession:
-                    loadingView(title: "Resolving session")
-                case .uploading(let progress):
-                    uploadingView(progress: progress)
-                case .success(let uploadedCount):
-                    successView(uploadedCount: uploadedCount)
-                case .error(let type, let message, let retryable):
-                    errorView(type: type, message: message, retryable: retryable)
+            VStack(spacing: 0) {
+                Spacer(minLength: 12)
+
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("ADD TO DOKUS")
+                            .font(.caption.weight(.semibold))
+                            .tracking(1.1)
+                            .foregroundStyle(ShareImportTheme.textSecondary)
+                        Text(primaryHeading)
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(ShareImportTheme.textPrimary)
+                    }
+
+                    VStack(spacing: 18) {
+                        switch viewModel.state {
+                        case .loadingPayload:
+                            loadingView(description: "Preparing your PDF files.")
+                        case .resolvingSession:
+                            loadingView(description: "Checking account and workspace.")
+                        case .uploading(let progress):
+                            uploadingView(progress: progress)
+                        case .success(let uploadedCount):
+                            successView(uploadedCount: uploadedCount)
+                        case .error(let type, let message, let retryable):
+                            errorView(type: type, message: message, retryable: retryable)
+                        }
+                    }
                 }
+                .frame(maxWidth: 480, alignment: .leading)
+                .padding(24)
+                .background(ShareImportTheme.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(ShareImportTheme.cardBorder, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.05), radius: 18, y: 10)
+
+                Spacer(minLength: 12)
             }
-            .frame(maxWidth: 420)
-            .padding(24)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+    }
+
+    private var primaryHeading: String {
+        switch viewModel.state {
+        case .loadingPayload:
+            return "Preparing import"
+        case .resolvingSession:
+            return "Checking context"
+        case .uploading:
+            return "Uploading to Documents"
+        case .success:
+            return "Upload complete"
+        case .error:
+            return "Upload failed"
         }
     }
 
     @ViewBuilder
-    private func loadingView(title: String) -> some View {
+    private func loadingView(description: String) -> some View {
         ProgressView()
             .progressViewStyle(.circular)
-            .tint(.primary)
-        Text(title)
-            .font(.headline)
-            .foregroundStyle(.primary)
+            .tint(ShareImportTheme.accent)
+
+        Text(description)
+            .font(.body)
+            .foregroundStyle(ShareImportTheme.textPrimary)
+            .multilineTextAlignment(.leading)
+
+        Text("Keep this screen open.")
+            .font(.footnote)
+            .foregroundStyle(ShareImportTheme.textSecondary)
     }
 
     @ViewBuilder
     private func uploadingView(progress: UploadProgress) -> some View {
-        Text("Uploading to Dokus")
-            .font(.title3.weight(.semibold))
-            .foregroundStyle(.primary)
-
         Text("File \(progress.currentIndex) of \(progress.totalCount)")
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .font(.footnote)
+            .foregroundStyle(ShareImportTheme.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
         ProgressView(value: progress.overallProgress)
             .progressViewStyle(.linear)
-            .tint(.primary)
+            .tint(ShareImportTheme.accent)
             .frame(maxWidth: .infinity)
 
         Text(progress.fileName)
             .font(.body)
-            .foregroundStyle(.primary)
+            .foregroundStyle(ShareImportTheme.textPrimary)
             .lineLimit(2)
-            .multilineTextAlignment(.center)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-        Text("\(Int(progress.overallProgress * 100))%")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+        HStack {
+            Text("Progress")
+            Spacer()
+            Text("\(Int(progress.overallProgress * 100))%")
+        }
+        .font(.footnote)
+        .foregroundStyle(ShareImportTheme.textSecondary)
     }
 
     @ViewBuilder
@@ -472,35 +522,37 @@ struct ShareImportRootView: View {
         let summary = uploadedCount == 1 ? "1 file uploaded" : "\(uploadedCount) files uploaded"
         Text(summary)
             .font(.title3.weight(.semibold))
-            .foregroundStyle(.primary)
+            .foregroundStyle(ShareImportTheme.textPrimary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+        Text("Saved to Documents")
+            .font(.footnote)
+            .foregroundStyle(ShareImportTheme.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
         VStack(spacing: 12) {
-            Button(action: onDone) {
-                Text("Done")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.primary)
-
             Button(action: onOpenApp) {
                 Text("Open Dokus")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(SharePrimaryButtonStyle())
+
+            Button(action: onDone) {
+                Text("Done")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(ShareSecondaryButtonStyle())
         }
         .padding(.top, 4)
     }
 
     @ViewBuilder
     private func errorView(type: ShareImportErrorType, message: String, retryable: Bool) -> some View {
-        Text("Upload failed")
-            .font(.title3.weight(.semibold))
-            .foregroundStyle(.primary)
-
         Text(message)
             .font(.body)
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.center)
+            .foregroundStyle(ShareImportTheme.textSecondary)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
         VStack(spacing: 12) {
             if retryable {
@@ -510,8 +562,7 @@ struct ShareImportRootView: View {
                     Text("Retry")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.primary)
+                .buttonStyle(SharePrimaryButtonStyle())
             }
 
             if type.canOpenApp {
@@ -519,13 +570,14 @@ struct ShareImportRootView: View {
                     Text("Open app")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(ShareSecondaryButtonStyle())
 
                 if type == .workspaceContextUnavailable {
                     Text("Switch workspace in app and try again.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                        .foregroundStyle(ShareImportTheme.textSecondary)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
 
@@ -533,7 +585,7 @@ struct ShareImportRootView: View {
                 Text("Close")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(ShareSecondaryButtonStyle())
         }
         .padding(.top, 4)
     }
@@ -546,7 +598,7 @@ private struct CheckPulseView: View {
     var body: some View {
         Image(systemName: "checkmark.circle.fill")
             .font(.system(size: 72, weight: .semibold))
-            .foregroundStyle(.primary)
+            .foregroundStyle(ShareImportTheme.accent)
             .scaleEffect(scale)
             .opacity(opacity)
             .onAppear {
@@ -555,5 +607,40 @@ private struct CheckPulseView: View {
                     opacity = 1
                 }
             }
+    }
+}
+
+private enum ShareImportTheme {
+    static let canvas = Color(red: 0.964, green: 0.964, blue: 0.957)
+    static let cardBackground = Color.white
+    static let cardBorder = Color.black.opacity(0.1)
+    static let textPrimary = Color.black
+    static let textSecondary = Color.black.opacity(0.58)
+    static let accent = Color.black
+}
+
+private struct SharePrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.body.weight(.semibold))
+            .foregroundStyle(Color.white)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.black.opacity(configuration.isPressed ? 0.75 : 1))
+            )
+    }
+}
+
+private struct ShareSecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.body.weight(.medium))
+            .foregroundStyle(ShareImportTheme.textPrimary.opacity(configuration.isPressed ? 0.65 : 1))
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color.black.opacity(0.16), lineWidth: 1)
+            )
     }
 }

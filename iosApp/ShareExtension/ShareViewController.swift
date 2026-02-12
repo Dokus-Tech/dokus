@@ -2,7 +2,9 @@ import SwiftUI
 import UIKit
 
 final class ShareViewController: UIViewController {
-    private static let openAppUrl = URL(string: "dokus://")
+    @objc private protocol OpenURLHandling {
+        func openURL(_ url: URL)
+    }
 
     private lazy var viewModel = ShareImportViewModel(
         uploader: ShareImportUploader(
@@ -75,20 +77,61 @@ final class ShareViewController: UIViewController {
     }
 
     private func openHostApp(completeAfterOpen: Bool) {
-        guard let openUrl = Self.openAppUrl else { return }
-
-        let completion: (Bool) -> Void = { [weak self] _ in
-            guard completeAfterOpen else { return }
-            self?.completeRequest()
-        }
-
-        guard let extensionContext else {
+        guard let openUrl = hostAppDeepLinkUrl() else {
             if completeAfterOpen {
                 completeRequest()
             }
             return
         }
-        extensionContext.open(openUrl, completionHandler: completion)
+
+        let completeIfNeeded = { [weak self] in
+            guard completeAfterOpen else { return }
+            self?.completeRequest()
+        }
+
+        guard let extensionContext else {
+            if openHostAppViaResponder(url: openUrl) {
+                completeIfNeeded()
+            }
+            return
+        }
+
+        extensionContext.open(openUrl) { [weak self] success in
+            guard let self else { return }
+            if success {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    completeIfNeeded()
+                }
+                return
+            }
+
+            if self.openHostAppViaResponder(url: openUrl) {
+                // Give the system a beat to switch apps before finishing the extension.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    completeIfNeeded()
+                }
+            }
+        }
+    }
+
+    private func hostAppDeepLinkUrl() -> URL? {
+        URL(string: "dokus://share/import?source=extension")
+    }
+
+    @discardableResult
+    private func openHostAppViaResponder(url: URL) -> Bool {
+        var responder: UIResponder? = self
+        let selector = #selector(OpenURLHandling.openURL(_:))
+
+        while let current = responder {
+            if current.responds(to: selector) {
+                _ = current.perform(selector, with: url)
+                return true
+            }
+            responder = current.next
+        }
+
+        return false
     }
 
     private func completeRequest() {
