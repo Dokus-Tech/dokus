@@ -6,9 +6,8 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
-import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.upsert
 import tech.dokus.database.tables.notifications.NotificationPreferencesTable
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.UserId
@@ -36,22 +35,19 @@ class NotificationPreferencesRepository {
         val userUuid = UUID.fromString(userId.toString())
 
         dbQuery {
-            val updated = NotificationPreferencesTable.update({
-                (NotificationPreferencesTable.userId eq userUuid) and
-                    (NotificationPreferencesTable.type eq type)
-            }) {
+            NotificationPreferencesTable.upsert(
+                NotificationPreferencesTable.userId,
+                NotificationPreferencesTable.type,
+                onUpdate = { stmt ->
+                    stmt[NotificationPreferencesTable.emailEnabled] = emailEnabled
+                    stmt[NotificationPreferencesTable.updatedAt] = now
+                }
+            ) {
+                it[NotificationPreferencesTable.userId] = userUuid
+                it[NotificationPreferencesTable.type] = type
                 it[NotificationPreferencesTable.emailEnabled] = emailEnabled
                 it[NotificationPreferencesTable.updatedAt] = now
-            }
-
-            if (updated == 0) {
-                NotificationPreferencesTable.insert {
-                    it[NotificationPreferencesTable.userId] = userUuid
-                    it[NotificationPreferencesTable.type] = type
-                    it[NotificationPreferencesTable.emailEnabled] = emailEnabled
-                    it[NotificationPreferencesTable.updatedAt] = now
-                    it[createdAt] = now
-                }
+                it[createdAt] = now
             }
         }
     }

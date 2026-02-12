@@ -5,6 +5,9 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -33,6 +36,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalUuidApi::class)
 class NotificationServiceEmissionTest {
@@ -156,6 +160,84 @@ class NotificationServiceEmissionTest {
         assertEquals(1, emitted.size)
         assertTrue(emitted.single().type == NotificationType.PeppolReceived)
         coVerify(exactly = 0) { emailService.send(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `concurrent emits for same notification key send only one email`() = runBlocking {
+        val concurrentService = NotificationService(
+            notificationRepository = notificationRepository,
+            userRepository = userRepository,
+            preferencesService = preferencesService,
+            emailService = emailService,
+            emailTemplateRenderer = templateRenderer,
+            emailScope = CoroutineScope(Dispatchers.Default)
+        )
+
+        val userInTenant = testUserInTenant(userId, tenantId, "peppol.concurrent@test.dokus")
+        coEvery { userRepository.listByTenant(tenantId, true) } returns listOf(userInTenant)
+        stubCreateNotification()
+        coEvery { preferencesService.isEmailEnabled(userId, NotificationType.PeppolSendFailed) } returns Result.success(true)
+
+        val emailSentFlag = AtomicBoolean(false)
+        coEvery {
+            notificationRepository.hasRecentEmailFor(
+                tenantId,
+                userId,
+                NotificationType.PeppolSendFailed,
+                "inv-race"
+            )
+        } answers {
+            Result.success(emailSentFlag.get())
+        }
+        coEvery {
+            templateRenderer.renderNotification(
+                type = NotificationType.PeppolSendFailed,
+                title = any(),
+                details = any(),
+                openPath = any()
+            )
+        } returns EmailTemplate(
+            subject = "PEPPOL send failed",
+            htmlBody = "<html/>",
+            textBody = "text"
+        )
+        coEvery { emailService.send(any(), any(), any(), any()) } coAnswers {
+            delay(120)
+            Result.success(Unit)
+        }
+        coEvery { notificationRepository.markEmailSent(any(), any(), any()) } answers {
+            emailSentFlag.set(true)
+            Result.success(true)
+        }
+
+        coroutineScope {
+            launch {
+                concurrentService.emit(
+                    NotificationEmission(
+                        tenantId = tenantId,
+                        type = NotificationType.PeppolSendFailed,
+                        title = "PEPPOL send failed - Inv #race",
+                        referenceType = NotificationReferenceType.Invoice,
+                        referenceId = "inv-race",
+                        openPath = "/cashflow/document_review/doc-race"
+                    )
+                ).getOrThrow()
+            }
+            launch {
+                concurrentService.emit(
+                    NotificationEmission(
+                        tenantId = tenantId,
+                        type = NotificationType.PeppolSendFailed,
+                        title = "PEPPOL send failed - Inv #race",
+                        referenceType = NotificationReferenceType.Invoice,
+                        referenceId = "inv-race",
+                        openPath = "/cashflow/document_review/doc-race"
+                    )
+                ).getOrThrow()
+            }
+        }
+
+        coVerify(timeout = 2_000, exactly = 1) { emailService.send("peppol.concurrent@test.dokus", any(), any(), any()) }
     }
 
     private fun stubCreateNotification() {

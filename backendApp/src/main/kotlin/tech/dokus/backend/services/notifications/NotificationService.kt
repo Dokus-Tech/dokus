@@ -4,6 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
 import tech.dokus.database.repository.auth.UserRepository
@@ -28,6 +30,7 @@ class NotificationService(
 ) {
 
     private val logger = loggerFor()
+    private val dedupLocks = Array(DedupLockStripeCount) { Mutex() }
 
     suspend fun list(
         tenantId: TenantId,
@@ -123,74 +126,98 @@ class NotificationService(
             return
         }
 
-        val recentlySent = notificationRepository.hasRecentEmailFor(
+        val dedupKey = NotificationEmailDedupKey(
             tenantId = notification.tenantId,
             userId = userId,
             type = event.type,
             referenceId = event.referenceId
-        ).getOrElse { error ->
-            logger.warn("Failed email dedup check for user {}", userId, error)
-            false
-        }
-
-        if (recentlySent) {
-            logger.debug(
-                "Skipping duplicate notification email for user {} type {} reference {}",
-                userId,
-                event.type,
-                event.referenceId
-            )
-            return
-        }
-
-        val template = emailTemplateRenderer.renderNotification(
-            type = event.type,
-            title = event.title,
-            details = event.emailDetails,
-            openPath = event.openPath
         )
-
-        val sendResult = emailService.send(
-            to = userEmail,
-            subject = template.subject,
-            htmlBody = template.htmlBody,
-            textBody = template.textBody
-        )
-
-        if (sendResult.isSuccess) {
-            notificationRepository.markEmailSent(
+        dedupLock(dedupKey).withLock {
+            val recentlySent = notificationRepository.hasRecentEmailFor(
                 tenantId = notification.tenantId,
                 userId = userId,
-                notificationId = notification.id
-            ).onSuccess { updated ->
-                if (!updated) {
-                    logger.warn(
-                        "Notification email sent but markEmailSent updated 0 rows for tenant {} user {} notification {}",
+                type = event.type,
+                referenceId = event.referenceId
+            ).getOrElse { error ->
+                logger.warn("Failed email dedup check for user {}", userId, error)
+                false
+            }
+
+            if (recentlySent) {
+                logger.debug(
+                    "Skipping duplicate notification email for user {} type {} reference {}",
+                    userId,
+                    event.type,
+                    event.referenceId
+                )
+                return
+            }
+
+            val template = emailTemplateRenderer.renderNotification(
+                type = event.type,
+                title = event.title,
+                details = event.emailDetails,
+                openPath = event.openPath
+            )
+
+            val sendResult = emailService.send(
+                to = userEmail,
+                subject = template.subject,
+                htmlBody = template.htmlBody,
+                textBody = template.textBody
+            )
+
+            if (sendResult.isSuccess) {
+                notificationRepository.markEmailSent(
+                    tenantId = notification.tenantId,
+                    userId = userId,
+                    notificationId = notification.id
+                ).onSuccess { updated ->
+                    if (!updated) {
+                        logger.warn(
+                            "Notification email sent but markEmailSent updated 0 rows for tenant {} user {} notification {}",
+                            notification.tenantId,
+                            userId,
+                            notification.id
+                        )
+                    }
+                }.onFailure { error ->
+                    logger.error(
+                        "Notification email sent but failed to persist emailSent=true for tenant {} user {} notification {}",
                         notification.tenantId,
                         userId,
-                        notification.id
+                        notification.id,
+                        error
                     )
                 }
-            }.onFailure { error ->
+                return
+            }
+
+            sendResult.onFailure { error ->
                 logger.error(
-                    "Notification email sent but failed to persist emailSent=true for tenant {} user {} notification {}",
-                    notification.tenantId,
+                    "Failed to send notification email for user {} type {}",
                     userId,
-                    notification.id,
+                    event.type,
                     error
                 )
             }
-            return
         }
+    }
 
-        sendResult.onFailure { error ->
-            logger.error(
-                "Failed to send notification email for user {} type {}",
-                userId,
-                event.type,
-                error
-            )
-        }
+    private fun dedupLock(key: NotificationEmailDedupKey): Mutex {
+        val idx = (key.hashCode() and Int.MAX_VALUE) % dedupLocks.size
+        return dedupLocks[idx]
+    }
+
+    private data class NotificationEmailDedupKey(
+        val tenantId: TenantId,
+        val userId: UserId,
+        val type: NotificationType,
+        val referenceId: String
+    )
+
+    companion object {
+        private const val DedupLockStripeCount = 256
     }
 }
 

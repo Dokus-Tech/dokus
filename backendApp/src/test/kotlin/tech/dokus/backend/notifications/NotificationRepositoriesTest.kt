@@ -1,6 +1,8 @@
 package tech.dokus.backend.notifications
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -275,5 +277,29 @@ class NotificationRepositoriesTest {
         ).getOrThrow()
         assertTrue(removed)
         assertTrue(preferencesRepository.listOverrides(userId).getOrThrow().isEmpty())
+    }
+
+    @Test
+    fun `notification preferences override write is safe under concurrent writes`() = runBlocking {
+        coroutineScope {
+            launch {
+                preferencesRepository.setOverride(
+                    userId = userId,
+                    type = NotificationType.VatWarning,
+                    emailEnabled = true
+                ).getOrThrow()
+            }
+            launch {
+                preferencesRepository.setOverride(
+                    userId = userId,
+                    type = NotificationType.VatWarning,
+                    emailEnabled = false
+                ).getOrThrow()
+            }
+        }
+
+        val overrides = preferencesRepository.listOverrides(userId).getOrThrow()
+        assertEquals(1, overrides.size)
+        assertTrue(overrides.containsKey(NotificationType.VatWarning))
     }
 }
