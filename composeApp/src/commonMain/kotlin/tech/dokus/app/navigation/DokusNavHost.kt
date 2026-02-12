@@ -27,6 +27,7 @@ import tech.dokus.app.share.ExternalShareImportHandler
 import tech.dokus.app.share.PlatformShareImportBridge
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.platform.Logger
 import tech.dokus.foundation.platform.activePlatform
 import tech.dokus.foundation.platform.isDesktop
 import tech.dokus.navigation.NavigationProvider
@@ -38,6 +39,8 @@ import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.navigateTo
 import tech.dokus.navigation.replace
 import kotlin.time.Duration.Companion.seconds
+
+private val logger = Logger.withTag("DokusNavHost")
 
 @Composable
 fun DokusNavHost(
@@ -63,7 +66,7 @@ fun DokusNavHost(
         launch {
             ExternalUriHandler.deeplinkState.collect { deepLink ->
                 if (deepLink != null) {
-                    println("Collecting deeplink state: $deepLink")
+                    logger.d { "Collecting deeplink state: $deepLink" }
                     delay(0.5.seconds)
 
                     if (deepLink.path.startsWith(KnownDeepLinks.ShareImport.path.path)) {
@@ -73,11 +76,11 @@ fun DokusNavHost(
                                 if (files.isNotEmpty()) {
                                     ExternalShareImportHandler.onNewSharedFiles(files)
                                 } else {
-                                    println("[DokusNavHost] No share batch payload found for id=$batchId")
+                                    logger.w { "No share batch payload found for id=$batchId" }
                                 }
                             }
                             .onFailure { error ->
-                                println("[DokusNavHost] Failed to consume share batch: ${error.message}")
+                                logger.e(error) { "Failed to consume share batch" }
                             }
                         return@collect
                     }

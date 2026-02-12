@@ -14,6 +14,7 @@ import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
@@ -27,7 +28,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -62,7 +62,8 @@ class ShareImportContainerTest {
 
             val error = assertIs<ShareImportState.Error>(states.value)
             assertTrue(error.canNavigateToLogin)
-            assertFalse(error.canRetry)
+            assertEquals(DokusException.NotAuthenticated(), error.exception)
+            assertEquals(null, error.retryHandler)
             assertEquals(0, uploadUseCase.invocations)
         }
     }
@@ -231,7 +232,8 @@ class ShareImportContainerTest {
             testScope.advanceUntilIdle()
 
             val error = assertIs<ShareImportState.Error>(states.value)
-            assertEquals("Couldn't select workspace", error.title)
+            assertEquals(DokusException.WorkspaceSelectFailed, error.exception)
+            assertTrue(error.retryHandler != null)
             assertEquals(0, uploadUseCase.invocations)
         }
     }
@@ -259,7 +261,8 @@ class ShareImportContainerTest {
             testScope.advanceUntilIdle()
 
             val error = assertIs<ShareImportState.Error>(states.value)
-            assertEquals("Upload failed", error.title)
+            assertEquals(DokusException.DocumentUploadFailed, error.exception)
+            assertTrue(error.retryHandler != null)
             assertEquals(1, uploadUseCase.invocations)
         }
     }

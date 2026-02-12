@@ -4,6 +4,8 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Tenant
 
@@ -35,9 +37,8 @@ sealed interface ShareImportState : MVIState {
     ) : ShareImportState
 
     data class Error(
-        val title: String,
-        val message: String,
-        val canRetry: Boolean,
+        val exception: DokusException,
+        val retryHandler: RetryHandler?,
         val canNavigateToLogin: Boolean
     ) : ShareImportState
 }

@@ -8,7 +8,9 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.updateStateImmediate
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
@@ -52,14 +54,7 @@ internal class ShareImportContainer(
         }
         if (sharedFiles.isEmpty()) {
             logger.w { "Share import opened without pending shared files" }
-            updateState {
-                ShareImportState.Error(
-                    title = "No shared document found",
-                    message = "Please share one or more PDF files to Dokus again.",
-                    canRetry = false,
-                    canNavigateToLogin = false
-                )
-            }
+            updateState { ShareImportState.Error(DokusException.NotFound(), null, false) }
             return
         }
         activeFiles = sharedFiles
@@ -68,9 +63,8 @@ internal class ShareImportContainer(
             logger.w { "Share import received while user is not authenticated" }
             updateState {
                 ShareImportState.Error(
-                    title = "Login required",
-                    message = "Please sign in to upload these documents.",
-                    canRetry = false,
+                    exception = DokusException.NotAuthenticated(),
+                    retryHandler = null,
                     canNavigateToLogin = true
                 )
             }
@@ -83,9 +77,8 @@ internal class ShareImportContainer(
                     workspaces.isEmpty() -> {
                         updateState {
                             ShareImportState.Error(
-                                title = "No workspace available",
-                                message = "You need at least one workspace to upload documents.",
-                                canRetry = true,
+                                exception = DokusException.WorkspaceSelectFailed,
+                                retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
                                 canNavigateToLogin = false
                             )
                         }
@@ -110,9 +103,8 @@ internal class ShareImportContainer(
                 logger.e(error) { "Failed to load workspaces for share import" }
                 updateState {
                     ShareImportState.Error(
-                        title = "Couldn't load workspaces",
-                        message = error.message ?: "Please try again.",
-                        canRetry = true,
+                        exception = DokusException.WorkspaceSelectFailed,
+                        retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
                         canNavigateToLogin = false
                     )
                 }
@@ -130,9 +122,8 @@ internal class ShareImportContainer(
         if (workspace == null) {
             updateState {
                 ShareImportState.Error(
-                    title = "Workspace not found",
-                    message = "Please select another workspace.",
-                    canRetry = true,
+                    exception = DokusException.WorkspaceSelectFailed,
+                    retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
                     canNavigateToLogin = false
                 )
             }
@@ -142,9 +133,8 @@ internal class ShareImportContainer(
         if (activeFiles.isEmpty()) {
             updateState {
                 ShareImportState.Error(
-                    title = "No shared document found",
-                    message = "Please share one or more PDF files to Dokus again.",
-                    canRetry = false,
+                    exception = DokusException.NotFound(),
+                    retryHandler = null,
                     canNavigateToLogin = false
                 )
             }
@@ -168,9 +158,8 @@ internal class ShareImportContainer(
                     logger.e(error) { "Failed to switch workspace for share import: ${workspace.id}" }
                     updateState {
                         ShareImportState.Error(
-                            title = "Couldn't select workspace",
-                            message = error.message ?: "Please try again.",
-                            canRetry = true,
+                            exception = DokusException.WorkspaceSelectFailed,
+                            retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
                             canNavigateToLogin = false
                         )
                     }
@@ -222,11 +211,11 @@ internal class ShareImportContainer(
                 }
             }.onFailure { error ->
                 logger.e(error) { "Share import upload failed for file: ${sharedFile.name}" }
+                val exception = (error as? DokusException) ?: DokusException.DocumentUploadFailed
                 updateState {
                     ShareImportState.Error(
-                        title = "Upload failed",
-                        message = error.message ?: "Please try again.",
-                        canRetry = true,
+                        exception = exception,
+                        retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
                         canNavigateToLogin = false
                     )
                 }
@@ -239,9 +228,8 @@ internal class ShareImportContainer(
             logger.w { "Share import completed with no uploaded document id" }
             updateState {
                 ShareImportState.Error(
-                    title = "Upload failed",
-                    message = "No document was uploaded. Please try again.",
-                    canRetry = true,
+                    exception = DokusException.DocumentUploadFailed,
+                    retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
                     canNavigateToLogin = false
                 )
             }

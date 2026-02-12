@@ -18,14 +18,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.share_import_choose_workspace
+import tech.dokus.aura.resources.share_import_file_progress
+import tech.dokus.aura.resources.share_import_go_to_login
+import tech.dokus.aura.resources.share_import_overall_progress
+import tech.dokus.aura.resources.share_import_preparing
+import tech.dokus.aura.resources.share_import_select_workspace_multiple
+import tech.dokus.aura.resources.share_import_select_workspace_single
+import tech.dokus.aura.resources.share_import_success_multiple
+import tech.dokus.aura.resources.share_import_success_single
+import tech.dokus.aura.resources.share_import_success_summary_multiple
+import tech.dokus.aura.resources.share_import_switching_workspace
+import tech.dokus.aura.resources.share_import_title
+import tech.dokus.aura.resources.share_import_uploading_to
+import tech.dokus.aura.resources.state_error
+import tech.dokus.aura.resources.state_retry
 import tech.dokus.app.share.ShareImportIntent.NavigateToLogin
-import tech.dokus.app.share.ShareImportIntent.Retry
 import tech.dokus.app.share.ShareImportIntent.SelectWorkspace
 import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
 import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.extensions.localized
 
 @Composable
 internal fun ShareImportScreen(
@@ -39,7 +56,7 @@ internal fun ShareImportScreen(
     Scaffold(
         topBar = {
             PTopAppBar(
-                title = "Import Documents",
+                title = Res.string.share_import_title,
                 showBackButton = false
             )
         }
@@ -69,7 +86,7 @@ private fun LoadingContextContent() {
     CircularProgressIndicator()
     Spacer(modifier = Modifier.height(16.dp))
     Text(
-        text = "Preparing import",
+        text = stringResource(Res.string.share_import_preparing),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -81,7 +98,7 @@ private fun SelectWorkspaceContent(
     onIntent: (ShareImportIntent) -> Unit
 ) {
     Text(
-        text = "Choose workspace",
+        text = stringResource(Res.string.share_import_choose_workspace),
         style = MaterialTheme.typography.headlineSmall,
         color = MaterialTheme.colorScheme.onSurface
     )
@@ -112,7 +129,7 @@ private fun SelectWorkspaceContent(
         CircularProgressIndicator()
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Switching workspace",
+            text = stringResource(Res.string.share_import_switching_workspace),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -122,13 +139,17 @@ private fun SelectWorkspaceContent(
 @Composable
 private fun UploadingContent(state: ShareImportState.Uploading) {
     Text(
-        text = "Uploading to ${state.workspaceName}",
+        text = stringResource(Res.string.share_import_uploading_to, state.workspaceName),
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface
     )
     Spacer(modifier = Modifier.height(6.dp))
     Text(
-        text = "File ${state.currentFileIndex} of ${state.totalFiles}",
+        text = stringResource(
+            Res.string.share_import_file_progress,
+            state.currentFileIndex,
+            state.totalFiles
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -148,7 +169,10 @@ private fun UploadingContent(state: ShareImportState.Uploading) {
     )
     Spacer(modifier = Modifier.height(6.dp))
     Text(
-        text = "Overall ${(state.overallProgress * 100).toInt()}%",
+        text = stringResource(
+            Res.string.share_import_overall_progress,
+            (state.overallProgress * 100).toInt()
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -160,9 +184,9 @@ private fun SuccessContent(state: ShareImportState.Success) {
     Spacer(modifier = Modifier.height(18.dp))
 
     val uploadedLabel = if (state.uploadedCount == 1) {
-        "Document uploaded"
+        stringResource(Res.string.share_import_success_single)
     } else {
-        "${state.uploadedCount} documents uploaded"
+        stringResource(Res.string.share_import_success_multiple, state.uploadedCount)
     }
 
     Text(
@@ -185,53 +209,55 @@ private fun ErrorContent(
     onIntent: (ShareImportIntent) -> Unit
 ) {
     Text(
-        text = state.title,
+        text = stringResource(Res.string.state_error),
         style = MaterialTheme.typography.headlineSmall,
         color = MaterialTheme.colorScheme.error
     )
     Spacer(modifier = Modifier.height(8.dp))
     Text(
-        text = state.message,
+        text = state.exception.localized,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
     )
     Spacer(modifier = Modifier.height(24.dp))
 
-    if (state.canRetry) {
+    if (state.retryHandler != null) {
         POutlinedButton(
-            text = "Try again",
+            text = stringResource(Res.string.state_retry),
             modifier = Modifier.fillMaxWidth(),
-            onClick = { onIntent(Retry) }
+            onClick = { state.retryHandler.retry() }
         )
     }
     if (state.canNavigateToLogin) {
-        if (state.canRetry) {
+        if (state.retryHandler != null) {
             Spacer(modifier = Modifier.height(12.dp))
         }
         POutlinedButton(
-            text = "Go to login",
+            text = stringResource(Res.string.share_import_go_to_login),
             modifier = Modifier.fillMaxWidth(),
             onClick = { onIntent(NavigateToLogin) }
         )
     }
 }
 
+@Composable
 private fun workspaceSelectionDescription(
     primaryFileName: String,
     additionalFileCount: Int
 ): String {
     return if (additionalFileCount == 0) {
-        "Select where \"$primaryFileName\" should be uploaded."
+        stringResource(Res.string.share_import_select_workspace_single, primaryFileName)
     } else {
-        "Select where ${additionalFileCount + 1} PDF files should be uploaded."
+        stringResource(Res.string.share_import_select_workspace_multiple, additionalFileCount + 1)
     }
 }
 
+@Composable
 private fun sharedFilesSummary(primaryFileName: String, additionalFileCount: Int): String {
     return if (additionalFileCount == 0) {
         primaryFileName
     } else {
-        "$primaryFileName + $additionalFileCount more"
+        stringResource(Res.string.share_import_success_summary_multiple, primaryFileName, additionalFileCount)
     }
 }

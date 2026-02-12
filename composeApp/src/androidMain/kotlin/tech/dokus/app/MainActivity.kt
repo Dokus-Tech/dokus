@@ -11,11 +11,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import tech.dokus.app.navigation.ExternalUriHandler
 import tech.dokus.app.share.ExternalShareImportHandler
 import tech.dokus.app.share.SharedImportFile
-import tech.dokus.app.navigation.ExternalUriHandler
+import tech.dokus.foundation.platform.Logger
 
 class MainActivity : ComponentActivity() {
+    private val logger = Logger.forClass<MainActivity>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -46,19 +49,19 @@ class MainActivity : ComponentActivity() {
         val data = intent.data
 
         if (data == null) {
-            println("[MainActivity] No URI in intent")
+            logger.d { "No URI in intent" }
             return
         }
 
         val action = intent.action
-        println("[MainActivity] Intent action: $action, URI: $data")
+        logger.d { "Intent action=$action, uri=$data" }
 
         // Pass the full URI string to the handler
         ExternalUriHandler.onNewUri(data.toString())
 
         // Consume the intent data to prevent re-processing (Android best practice)
         intent.data = null
-        println("[MainActivity] Intent data consumed")
+        logger.d { "Intent data consumed" }
     }
 
     private fun handleShareIntent(intent: Intent): Boolean {
@@ -76,9 +79,9 @@ class MainActivity : ComponentActivity() {
         val sharedPdfs = uris.mapNotNull(::readSharedPdf)
         if (sharedPdfs.isNotEmpty()) {
             ExternalShareImportHandler.onNewSharedFiles(sharedPdfs)
-            println("[MainActivity] Imported ${sharedPdfs.size} shared PDF(s)")
+            logger.i { "Imported ${sharedPdfs.size} shared PDF(s)" }
         } else {
-            println("[MainActivity] Share intent had no supported PDF")
+            logger.w { "Share intent had no supported PDF" }
         }
 
         consumeShareExtras(intent)
