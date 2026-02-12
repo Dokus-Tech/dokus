@@ -48,7 +48,8 @@ final class DokusFileProviderAPIClient {
         let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
 
         var page = 0
-        let limit = 200
+        let requestedLimit = 200
+        var effectiveLimit = requestedLimit
         var all: [DokusDocumentRecord] = []
         var totalExpected = Int.max
 
@@ -56,7 +57,7 @@ final class DokusFileProviderAPIClient {
             var components = URLComponents(url: resolved.baseURL.appendingPathQuery("/api/v1/documents"), resolvingAgainstBaseURL: false)
             components?.queryItems = [
                 URLQueryItem(name: "page", value: "\(page)"),
-                URLQueryItem(name: "limit", value: "\(limit)")
+                URLQueryItem(name: "limit", value: "\(requestedLimit)")
             ]
 
             guard let url = components?.url else {
@@ -74,6 +75,7 @@ final class DokusFileProviderAPIClient {
 
             let items = object["items"] as? [[String: Any]] ?? []
             totalExpected = decodeFlexibleInt(object["total"]) ?? items.count
+            effectiveLimit = max(decodeFlexibleInt(object["limit"]) ?? effectiveLimit, 1)
             if items.isEmpty {
                 break
             }
@@ -81,7 +83,7 @@ final class DokusFileProviderAPIClient {
             let pageRecords = items.compactMap { parseDocumentRecord(workspaceId: workspaceId, row: $0) }
             all.append(contentsOf: pageRecords)
 
-            if items.count < limit {
+            if items.count < effectiveLimit {
                 break
             }
             page += 1
@@ -333,7 +335,37 @@ final class DokusFileProviderAPIClient {
         if let withFraction = DateFormatter.dokusISODateTime.date(from: value) {
             return withFraction
         }
-        return DateFormatter.dokusISODateTimeNoFraction.date(from: value)
+        if let withoutFraction = DateFormatter.dokusISODateTimeNoFraction.date(from: value) {
+            return withoutFraction
+        }
+        return parseLocalDateTimeWithoutTimeZone(value)
+    }
+
+    private func parseLocalDateTimeWithoutTimeZone(_ value: String) -> Date? {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return nil }
+
+        let parts = normalized.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+        let basePart = String(parts[0])
+        guard let baseDate = DateFormatter.dokusLocalDateTime.date(from: basePart) else {
+            return nil
+        }
+
+        guard parts.count == 2 else {
+            return baseDate
+        }
+
+        let fractionDigits = parts[1].prefix { $0.isNumber }
+        guard !fractionDigits.isEmpty else {
+            return baseDate
+        }
+
+        let digits = String(fractionDigits.prefix(9))
+        let padded = digits.padding(toLength: 9, withPad: "0", startingAt: 0)
+        guard let nanoseconds = Int(padded) else {
+            return baseDate
+        }
+        return baseDate.addingTimeInterval(Double(nanoseconds) / 1_000_000_000)
     }
 
     private func parseDate(_ value: String?) -> Date? {
