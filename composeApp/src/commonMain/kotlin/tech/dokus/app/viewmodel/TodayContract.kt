@@ -113,6 +113,9 @@ sealed interface TodayAction : MVIAction {
     /** Navigate to document details/edit screen */
     data class NavigateToDocument(val documentId: String) : TodayAction
 
+    /** Navigate to cashflow overview screen */
+    data object NavigateToCashflow : TodayAction
+
     /** Navigate to workspace selection */
     data object NavigateToWorkspaceSelect : TodayAction
 

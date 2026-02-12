@@ -122,6 +122,10 @@ internal fun TodayScreen(
                 navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId))
             }
 
+            TodayAction.NavigateToCashflow -> {
+                navController.navigateTo(CashFlowDestination.CashflowLedger())
+            }
+
             TodayAction.NavigateToWorkspaceSelect -> {
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
             }

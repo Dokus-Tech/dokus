@@ -255,8 +255,10 @@ internal class TodayContainer(
                 logger.w(error) { "Failed to mark notification as read" }
             }
 
-        resolveDocumentId(notification)?.let { documentId ->
-            action(TodayAction.NavigateToDocument(documentId))
+        when (val target = resolveNavigationTarget(notification)) {
+            is NotificationNavigationTarget.Document -> action(TodayAction.NavigateToDocument(target.documentId))
+            NotificationNavigationTarget.Cashflow -> action(TodayAction.NavigateToCashflow)
+            null -> Unit
         }
 
         intent(TodayIntent.RefreshUnreadNotifications)
@@ -284,21 +286,33 @@ internal class TodayContainer(
         intent(TodayIntent.LoadNotifications(currentFilter))
     }
 
-    private suspend fun resolveDocumentId(notification: tech.dokus.domain.model.NotificationDto): String? {
+    private suspend fun resolveNavigationTarget(
+        notification: tech.dokus.domain.model.NotificationDto
+    ): NotificationNavigationTarget? {
         return when (notification.referenceType) {
-            NotificationReferenceType.Document -> notification.referenceId
-            NotificationReferenceType.ComplianceItem -> notification.referenceId
+            NotificationReferenceType.Document -> NotificationNavigationTarget.Document(notification.referenceId)
+            NotificationReferenceType.ComplianceItem -> NotificationNavigationTarget.Document(notification.referenceId)
             NotificationReferenceType.Invoice -> {
                 val invoiceId = runCatching { InvoiceId.parse(notification.referenceId) }.getOrNull()
-                    ?: return null
-                invoiceLookupDataSource.getInvoice(invoiceId)
+                    ?: return NotificationNavigationTarget.Cashflow
+                val documentId = invoiceLookupDataSource.getInvoice(invoiceId)
                     .getOrNull()
                     ?.documentId
                     ?.toString()
+                if (documentId != null) {
+                    NotificationNavigationTarget.Document(documentId)
+                } else {
+                    NotificationNavigationTarget.Cashflow
+                }
             }
 
             NotificationReferenceType.Transmission,
             NotificationReferenceType.BillingItem -> null
         }
+    }
+
+    private sealed interface NotificationNavigationTarget {
+        data class Document(val documentId: String) : NotificationNavigationTarget
+        data object Cashflow : NotificationNavigationTarget
     }
 }
