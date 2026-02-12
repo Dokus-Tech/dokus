@@ -57,7 +57,7 @@ final class ShareImportUploader {
         guard var accessToken = keychain.string(for: Constants.accessTokenKey) else {
             throw ShareImportFailure(
                 type: .notAuthenticated,
-                message: "You are logged out. Open Dokus, sign in, and try again.",
+                message: ShareLocalizedMessage(key: .errorLoggedOut),
                 retryable: false
             )
         }
@@ -99,7 +99,7 @@ final class ShareImportUploader {
         if tenants.isEmpty {
             throw ShareImportFailure(
                 type: .workspaceSelectionFailed,
-                message: "No workspace is available for this account.",
+                message: ShareLocalizedMessage(key: .errorNoWorkspaceAvailable),
                 retryable: true
             )
         }
@@ -115,7 +115,7 @@ final class ShareImportUploader {
                 .flatMap({ candidate in tenants.first(where: { $0.id == candidate }) }) else {
                 throw ShareImportFailure(
                     type: .workspaceContextUnavailable,
-                    message: "Unable to resolve workspace for this share. Switch workspace in app and try again.",
+                    message: ShareLocalizedMessage(key: .errorWorkspaceContextUnavailable),
                     retryable: true
                 )
             }
@@ -153,7 +153,7 @@ final class ShareImportUploader {
         } catch {
             throw ShareImportFailure(
                 type: .payloadUnavailable,
-                message: "Unable to read the selected PDF file.",
+                message: ShareLocalizedMessage(key: .errorUnableReadPdf),
                 retryable: true
             )
         }
@@ -177,16 +177,18 @@ final class ShareImportUploader {
         if statusCode == 401 {
             throw ShareImportFailure(
                 type: .notAuthenticated,
-                message: "Your session expired. Open Dokus and sign in again.",
+                message: ShareLocalizedMessage(key: .errorSessionExpired),
                 retryable: false
             )
         }
 
         guard (200...299).contains(statusCode) else {
-            let message = parseServerMessage(from: data) ?? "Upload failed. Please try again."
             throw ShareImportFailure(
                 type: .upload,
-                message: message,
+                message: ShareLocalizedMessage(
+                    key: .errorUploadFailed,
+                    serverMessageOverride: parseServerMessage(from: data)
+                ),
                 retryable: true
             )
         }
@@ -214,7 +216,7 @@ final class ShareImportUploader {
         } catch {
             throw ShareImportFailure(
                 type: .network,
-                message: "Network error while loading workspaces.",
+                message: ShareLocalizedMessage(key: .errorNetworkLoadWorkspaces),
                 retryable: true
             )
         }
@@ -222,7 +224,7 @@ final class ShareImportUploader {
         guard let httpResponse = result.1 as? HTTPURLResponse else {
             throw ShareImportFailure(
                 type: .unknown,
-                message: "Invalid server response.",
+                message: ShareLocalizedMessage(key: .errorInvalidServerResponse),
                 retryable: true
             )
         }
@@ -230,7 +232,7 @@ final class ShareImportUploader {
         if httpResponse.statusCode == 401 {
             throw ShareImportFailure(
                 type: .notAuthenticated,
-                message: "Your session expired. Open Dokus and sign in again.",
+                message: ShareLocalizedMessage(key: .errorSessionExpired),
                 retryable: false
             )
         }
@@ -238,7 +240,10 @@ final class ShareImportUploader {
         guard (200...299).contains(httpResponse.statusCode) else {
             throw ShareImportFailure(
                 type: .workspaceSelectionFailed,
-                message: parseServerMessage(from: result.0) ?? "Unable to load workspaces.",
+                message: ShareLocalizedMessage(
+                    key: .errorUnableLoadWorkspaces,
+                    serverMessageOverride: parseServerMessage(from: result.0)
+                ),
                 retryable: true
             )
         }
@@ -271,7 +276,7 @@ final class ShareImportUploader {
         } catch {
             throw ShareImportFailure(
                 type: .network,
-                message: "Network error while refreshing session.",
+                message: ShareLocalizedMessage(key: .errorNetworkRefreshSession),
                 retryable: true
             )
         }
@@ -279,7 +284,7 @@ final class ShareImportUploader {
         guard let httpResponse = result.1 as? HTTPURLResponse else {
             throw ShareImportFailure(
                 type: .unknown,
-                message: "Invalid session response.",
+                message: ShareLocalizedMessage(key: .errorInvalidSessionResponse),
                 retryable: true
             )
         }
@@ -287,7 +292,7 @@ final class ShareImportUploader {
         guard (200...299).contains(httpResponse.statusCode) else {
             throw ShareImportFailure(
                 type: .notAuthenticated,
-                message: "Your session is no longer valid. Open Dokus and sign in.",
+                message: ShareLocalizedMessage(key: .errorSessionInvalid),
                 retryable: false
             )
         }
@@ -299,7 +304,7 @@ final class ShareImportUploader {
         else {
             throw ShareImportFailure(
                 type: .unknown,
-                message: "Invalid refresh response.",
+                message: ShareLocalizedMessage(key: .errorInvalidRefreshResponse),
                 retryable: true
             )
         }
@@ -324,7 +329,7 @@ final class ShareImportUploader {
         } catch {
             throw ShareImportFailure(
                 type: .network,
-                message: "Network error while selecting workspace.",
+                message: ShareLocalizedMessage(key: .errorNetworkSelectWorkspace),
                 retryable: true
             )
         }
@@ -332,7 +337,7 @@ final class ShareImportUploader {
         guard let httpResponse = result.1 as? HTTPURLResponse else {
             throw ShareImportFailure(
                 type: .workspaceSelectionFailed,
-                message: "Invalid workspace response.",
+                message: ShareLocalizedMessage(key: .errorInvalidWorkspaceResponse),
                 retryable: true
             )
         }
@@ -340,7 +345,10 @@ final class ShareImportUploader {
         guard (200...299).contains(httpResponse.statusCode) else {
             throw ShareImportFailure(
                 type: .workspaceSelectionFailed,
-                message: parseServerMessage(from: result.0) ?? "Failed to switch workspace.",
+                message: ShareLocalizedMessage(
+                    key: .errorFailedSwitchWorkspace,
+                    serverMessageOverride: parseServerMessage(from: result.0)
+                ),
                 retryable: true
             )
         }
@@ -352,7 +360,7 @@ final class ShareImportUploader {
         else {
             throw ShareImportFailure(
                 type: .workspaceSelectionFailed,
-                message: "Invalid workspace switch response.",
+                message: ShareLocalizedMessage(key: .errorInvalidWorkspaceSwitchResponse),
                 retryable: true
             )
         }
@@ -444,7 +452,9 @@ final class ShareImportUploader {
 
         return array.compactMap { entry in
             guard let id = decodeFlexibleString(entry["id"]) else { return nil }
-            let displayName = decodeFlexibleString(entry["displayName"]) ?? decodeFlexibleString(entry["legalName"]) ?? "Workspace"
+            let displayName = decodeFlexibleString(entry["displayName"]) ??
+                decodeFlexibleString(entry["legalName"]) ??
+                ShareLocalizationKey.fallbackWorkspaceName.localized()
             return TenantInfo(id: id, displayName: displayName)
         }
     }

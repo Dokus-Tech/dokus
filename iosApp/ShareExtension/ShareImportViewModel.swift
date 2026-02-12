@@ -28,9 +28,11 @@ final class ShareImportViewModel: ObservableObject {
         guard !files.isEmpty else {
             transition(
                 to: .error(
-                    type: .payloadUnavailable,
-                    message: "No PDF files were found in this share action.",
-                    retryable: false
+                    ShareImportFailure(
+                        type: .payloadUnavailable,
+                        message: ShareLocalizedMessage(key: .errorNoPdfFound),
+                        retryable: false
+                    )
                 )
             )
             return
@@ -46,9 +48,11 @@ final class ShareImportViewModel: ObservableObject {
         guard !sharedFiles.isEmpty else {
             transition(
                 to: .error(
-                    type: .payloadUnavailable,
-                    message: "No PDF files are available to retry.",
-                    retryable: false
+                    ShareImportFailure(
+                        type: .payloadUnavailable,
+                        message: ShareLocalizedMessage(key: .errorNoPdfRetry),
+                        retryable: false
+                    )
                 )
             )
             return
@@ -77,13 +81,15 @@ final class ShareImportViewModel: ObservableObject {
             sessionContext = try await uploader.resolveSessionContext()
             await uploadRemainingFiles()
         } catch let failure as ShareImportFailure {
-            transition(to: .error(type: failure.type, message: failure.message, retryable: failure.retryable))
+            transition(to: .error(failure))
         } catch {
             transition(
                 to: .error(
-                    type: .unknown,
-                    message: "Unexpected error while preparing upload.",
-                    retryable: true
+                    ShareImportFailure(
+                        type: .unknown,
+                        message: ShareLocalizedMessage(key: .errorUnexpectedPrepareUpload),
+                        retryable: true
+                    )
                 )
             )
         }
@@ -93,9 +99,11 @@ final class ShareImportViewModel: ObservableObject {
         guard let context = sessionContext else {
             transition(
                 to: .error(
-                    type: .unknown,
-                    message: "Upload session is unavailable.",
-                    retryable: true
+                    ShareImportFailure(
+                        type: .unknown,
+                        message: ShareLocalizedMessage(key: .errorUploadSessionUnavailable),
+                        retryable: true
+                    )
                 )
             )
             return
@@ -119,6 +127,7 @@ final class ShareImportViewModel: ObservableObject {
             transition(
                 to: .uploading(
                     UploadProgress(
+                        workspaceName: context.workspaceName,
                         currentIndex: index + 1,
                         totalCount: totalCount,
                         fileName: file.name,
@@ -142,6 +151,7 @@ final class ShareImportViewModel: ObservableObject {
                         self.transition(
                             to: .uploading(
                                 UploadProgress(
+                                    workspaceName: context.workspaceName,
                                     currentIndex: index + 1,
                                     totalCount: totalCount,
                                     fileName: file.name,
@@ -156,16 +166,16 @@ final class ShareImportViewModel: ObservableObject {
                 fileStatuses[index] = .uploaded(documentId: documentId)
             } catch let failure as ShareImportFailure {
                 fileStatuses[index] = .failed(failure)
-                transition(to: .error(type: failure.type, message: failure.message, retryable: failure.retryable))
+                transition(to: .error(failure))
                 return
             } catch {
                 let failure = ShareImportFailure(
                     type: .upload,
-                    message: "Upload failed. Please try again.",
+                    message: ShareLocalizedMessage(key: .errorUploadFailed),
                     retryable: true
                 )
                 fileStatuses[index] = .failed(failure)
-                transition(to: .error(type: failure.type, message: failure.message, retryable: failure.retryable))
+                transition(to: .error(failure))
                 return
             }
         }
@@ -411,89 +421,81 @@ struct ShareImportRootView: View {
             ShareImportTheme.canvas
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer(minLength: 12)
+            VStack(spacing: 22) {
+                Text(ShareLocalizationKey.appLabel.localized())
+                    .font(.caption.weight(.semibold))
+                    .tracking(1.2)
+                    .foregroundStyle(ShareImportTheme.textMuted)
 
-                VStack(alignment: .leading, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("ADD TO DOKUS")
-                            .font(.caption.weight(.semibold))
-                            .tracking(1.1)
-                            .foregroundStyle(ShareImportTheme.textSecondary)
-                        Text(primaryHeading)
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(ShareImportTheme.textPrimary)
-                    }
-
-                    VStack(spacing: 18) {
-                        switch viewModel.state {
-                        case .loadingPayload:
-                            loadingView(description: "Preparing your PDF files.")
-                        case .resolvingSession:
-                            loadingView(description: "Checking account and workspace.")
-                        case .uploading(let progress):
-                            uploadingView(progress: progress)
-                        case .success(let uploadedCount):
-                            successView(uploadedCount: uploadedCount)
-                        case .error(let type, let message, let retryable):
-                            errorView(type: type, message: message, retryable: retryable)
-                        }
-                    }
+                switch viewModel.state {
+                case .loadingPayload:
+                    loadingView(
+                        heading: .headingPreparing,
+                        description: .descriptionPreparing
+                    )
+                case .resolvingSession:
+                    loadingView(
+                        heading: .headingResolving,
+                        description: .descriptionResolving
+                    )
+                case .uploading(let progress):
+                    uploadingView(progress: progress)
+                case .success(let uploadedCount):
+                    successView(uploadedCount: uploadedCount)
+                case .error(let failure):
+                    errorView(failure: failure)
                 }
-                .frame(maxWidth: 480, alignment: .leading)
-                .padding(24)
-                .background(ShareImportTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(ShareImportTheme.cardBorder, lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.05), radius: 18, y: 10)
-
-                Spacer(minLength: 12)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-        }
-    }
-
-    private var primaryHeading: String {
-        switch viewModel.state {
-        case .loadingPayload:
-            return "Preparing import"
-        case .resolvingSession:
-            return "Checking context"
-        case .uploading:
-            return "Uploading to Documents"
-        case .success:
-            return "Upload complete"
-        case .error:
-            return "Upload failed"
+            .frame(maxWidth: 360)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 32)
         }
     }
 
     @ViewBuilder
-    private func loadingView(description: String) -> some View {
-        ProgressView()
-            .progressViewStyle(.circular)
-            .tint(ShareImportTheme.accent)
+    private func loadingView(heading: ShareLocalizationKey, description: ShareLocalizationKey) -> some View {
+        ShareRingLoader()
 
-        Text(description)
-            .font(.body)
+        Text(heading.localized())
+            .font(.title3.weight(.semibold))
             .foregroundStyle(ShareImportTheme.textPrimary)
-            .multilineTextAlignment(.leading)
+            .multilineTextAlignment(.center)
 
-        Text("Keep this screen open.")
-            .font(.footnote)
+        Text(description.localized())
+            .font(.body)
             .foregroundStyle(ShareImportTheme.textSecondary)
+            .multilineTextAlignment(.center)
+
+        Text(ShareLocalizationKey.keepOpen.localized())
+            .font(.footnote)
+            .foregroundStyle(ShareImportTheme.textMuted)
+            .multilineTextAlignment(.center)
     }
 
     @ViewBuilder
     private func uploadingView(progress: UploadProgress) -> some View {
-        Text("File \(progress.currentIndex) of \(progress.totalCount)")
+        ShareRingLoader()
+
+        Text(
+            ShareLocalizationKey.headingUploading.localized(
+                arguments: [.string(progress.workspaceName)]
+            )
+        )
+        .font(.title3.weight(.semibold))
+        .foregroundStyle(ShareImportTheme.textPrimary)
+        .multilineTextAlignment(.center)
+
+        Text(
+            ShareLocalizationKey.fileProgress.localized(
+                arguments: [
+                    .int(progress.currentIndex),
+                    .int(progress.totalCount)
+                ]
+            )
+        )
             .font(.footnote)
             .foregroundStyle(ShareImportTheme.textSecondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .multilineTextAlignment(.center)
 
         ProgressView(value: progress.overallProgress)
             .progressViewStyle(.linear)
@@ -504,13 +506,13 @@ struct ShareImportRootView: View {
             .font(.body)
             .foregroundStyle(ShareImportTheme.textPrimary)
             .lineLimit(2)
-            .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
 
         HStack {
-            Text("Progress")
+            Text(ShareLocalizationKey.progressLabel.localized())
             Spacer()
-            Text("\(Int(progress.overallProgress * 100))%")
+            Text("\(Int(progress.overallProgress * 100).clamped(to: 0...100))%")
         }
         .font(.footnote)
         .foregroundStyle(ShareImportTheme.textSecondary)
@@ -518,63 +520,77 @@ struct ShareImportRootView: View {
 
     @ViewBuilder
     private func successView(uploadedCount: Int) -> some View {
-        CheckPulseView()
+        ShareAnimatedCheck()
             .frame(height: 96)
 
-        let summary = uploadedCount == 1 ? "1 file uploaded" : "\(uploadedCount) files uploaded"
-        Text(summary)
+        Text(ShareLocalizationKey.headingSuccess.localized())
             .font(.title3.weight(.semibold))
             .foregroundStyle(ShareImportTheme.textPrimary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .multilineTextAlignment(.center)
 
-        Text("Saved to Documents")
+        let summary = if uploadedCount == 1 {
+            ShareLocalizationKey.uploadedSingle.localized()
+        } else {
+            ShareLocalizationKey.uploadedMultiple.localized(arguments: [.int(uploadedCount)])
+        }
+        Text(summary)
+            .font(.body)
+            .foregroundStyle(ShareImportTheme.textPrimary)
+            .multilineTextAlignment(.center)
+
+        Text(ShareLocalizationKey.savedToDocuments.localized())
             .font(.footnote)
             .foregroundStyle(ShareImportTheme.textSecondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        
-        Text("Closing automatically...")
+
+        Text(ShareLocalizationKey.closingAutomatically.localized())
             .font(.footnote)
-            .foregroundStyle(ShareImportTheme.textSecondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundStyle(ShareImportTheme.textMuted)
     }
 
     @ViewBuilder
-    private func errorView(type: ShareImportErrorType, message: String, retryable: Bool) -> some View {
-        Text(message)
+    private func errorView(failure: ShareImportFailure) -> some View {
+        ShareFailureGlyph()
+            .frame(height: 96)
+
+        Text(ShareLocalizationKey.headingError.localized())
+            .font(.title3.weight(.semibold))
+            .foregroundStyle(ShareImportTheme.textPrimary)
+            .multilineTextAlignment(.center)
+
+        Text(failure.localizedMessage())
             .font(.body)
             .foregroundStyle(ShareImportTheme.textSecondary)
-            .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
 
         VStack(spacing: 12) {
-            if retryable {
+            if failure.retryable {
                 Button {
                     Task { await viewModel.retry() }
                 } label: {
-                    Text("Retry")
+                    Text(ShareLocalizationKey.buttonRetry.localized())
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(SharePrimaryButtonStyle())
             }
 
-            if type.canOpenApp {
+            if failure.type.canOpenApp {
                 Button(action: onOpenApp) {
-                    Text("Open app")
+                    Text(ShareLocalizationKey.buttonOpenApp.localized())
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(ShareSecondaryButtonStyle())
 
-                if type == .workspaceContextUnavailable {
-                    Text("Switch workspace in app and try again.")
+                if failure.type == .workspaceContextUnavailable {
+                    Text(ShareLocalizationKey.workspaceSwitchHint.localized())
                         .font(.footnote)
-                        .foregroundStyle(ShareImportTheme.textSecondary)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .foregroundStyle(ShareImportTheme.textMuted)
+                        .multilineTextAlignment(.center)
                 }
             }
 
             Button(action: onDone) {
-                Text("Close")
+                Text(ShareLocalizationKey.buttonClose.localized())
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(ShareSecondaryButtonStyle())
@@ -583,43 +599,103 @@ struct ShareImportRootView: View {
     }
 }
 
-private struct CheckPulseView: View {
-    @State private var scale: CGFloat = 0.7
-    @State private var opacity: Double = 0.2
+private struct ShareRingLoader: View {
+    var body: some View {
+        ProgressView()
+            .progressViewStyle(.circular)
+            .tint(ShareImportTheme.textPrimary)
+            .scaleEffect(1.2)
+            .frame(width: 72, height: 72)
+    }
+}
+
+private struct ShareAnimatedCheck: View {
+    @State private var circleProgress: CGFloat = 0
+    @State private var checkProgress: CGFloat = 0
+    @State private var scale: CGFloat = 0.94
 
     var body: some View {
-        Image(systemName: "checkmark.circle.fill")
-            .font(.system(size: 72, weight: .semibold))
-            .foregroundStyle(ShareImportTheme.accent)
+        ZStack {
+            Circle()
+                .trim(from: 0, to: circleProgress)
+                .stroke(
+                    ShareImportTheme.textPrimary,
+                    style: StrokeStyle(lineWidth: 2.0, lineCap: .round, lineJoin: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .frame(width: 82, height: 82)
+
+            ShareCheckShape()
+                .trim(from: 0, to: checkProgress)
+                .stroke(
+                    ShareImportTheme.textPrimary,
+                    style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round)
+                )
+                .frame(width: 34, height: 24)
+        }
             .scaleEffect(scale)
-            .opacity(opacity)
             .onAppear {
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.72)) {
+                circleProgress = 0
+                checkProgress = 0
+                scale = 0.94
+
+                withAnimation(.easeInOut(duration: 0.46)) {
+                    circleProgress = 1
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                    withAnimation(.easeInOut(duration: 0.28)) {
+                        checkProgress = 1
+                    }
+                }
+
+                withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
                     scale = 1
-                    opacity = 1
                 }
             }
     }
 }
 
+private struct ShareCheckShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX + rect.width * 0.06, y: rect.minY + rect.height * 0.54))
+        path.addLine(to: CGPoint(x: rect.minX + rect.width * 0.38, y: rect.minY + rect.height * 0.86))
+        path.addLine(to: CGPoint(x: rect.minX + rect.width * 0.94, y: rect.minY + rect.height * 0.12))
+        return path
+    }
+}
+
+private struct ShareFailureGlyph: View {
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(ShareImportTheme.textSecondary, lineWidth: 1.6)
+                .frame(width: 82, height: 82)
+            Image(systemName: "xmark")
+                .font(.system(size: 24, weight: .medium))
+                .foregroundStyle(ShareImportTheme.textSecondary)
+        }
+    }
+}
+
 private enum ShareImportTheme {
-    static let canvas = Color(red: 0.964, green: 0.964, blue: 0.957)
-    static let cardBackground = Color.white
-    static let cardBorder = Color.black.opacity(0.1)
-    static let textPrimary = Color.black
-    static let textSecondary = Color.black.opacity(0.58)
-    static let accent = Color.black
+    static let canvas = Color.black
+    static let textPrimary = Color.white
+    static let textSecondary = Color.white.opacity(0.78)
+    static let textMuted = Color.white.opacity(0.56)
+    static let accent = Color.white
 }
 
 private struct SharePrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.body.weight(.semibold))
-            .foregroundStyle(Color.white)
+            .foregroundStyle(Color.black)
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.black.opacity(configuration.isPressed ? 0.75 : 1))
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.white.opacity(configuration.isPressed ? 0.75 : 1))
             )
     }
 }
@@ -628,11 +704,11 @@ private struct ShareSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.body.weight(.medium))
-            .foregroundStyle(ShareImportTheme.textPrimary.opacity(configuration.isPressed ? 0.65 : 1))
+            .foregroundStyle(ShareImportTheme.textPrimary.opacity(configuration.isPressed ? 0.72 : 1))
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.black.opacity(0.16), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(Color.white.opacity(0.28), lineWidth: 1)
             )
     }
 }

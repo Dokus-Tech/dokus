@@ -24,10 +24,11 @@ enum ShareImportState {
     case resolvingSession
     case uploading(UploadProgress)
     case success(uploadedCount: Int)
-    case error(type: ShareImportErrorType, message: String, retryable: Bool)
+    case error(ShareImportFailure)
 }
 
 struct UploadProgress {
+    let workspaceName: String
     let currentIndex: Int
     let totalCount: Int
     let fileName: String
@@ -47,10 +48,14 @@ enum SharedFileUploadStatus {
     case failed(ShareImportFailure)
 }
 
-struct ShareImportFailure: Error {
+struct ShareImportFailure: Error, Equatable {
     let type: ShareImportErrorType
-    let message: String
+    let message: ShareLocalizedMessage
     let retryable: Bool
+
+    func localizedMessage(bundle: Bundle = .main, locale: Locale = .current) -> String {
+        message.resolve(bundle: bundle, locale: locale)
+    }
 }
 
 extension Comparable {
