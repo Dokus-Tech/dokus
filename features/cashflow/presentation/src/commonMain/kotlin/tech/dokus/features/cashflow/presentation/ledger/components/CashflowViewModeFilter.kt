@@ -16,6 +16,7 @@ import tech.dokus.aura.resources.cashflow_direction_money_in
 import tech.dokus.aura.resources.cashflow_direction_money_out
 import tech.dokus.aura.resources.cashflow_direction_out
 import tech.dokus.aura.resources.cashflow_view_history
+import tech.dokus.aura.resources.cashflow_view_overdue
 import tech.dokus.aura.resources.cashflow_view_upcoming
 import tech.dokus.foundation.aura.components.filter.DokusFilterToggle
 import tech.dokus.foundation.aura.components.filter.DokusFilterToggleRow
@@ -71,6 +72,11 @@ internal fun CashflowViewModeFilter(
                     label = stringResource(Res.string.cashflow_view_upcoming)
                 )
                 DokusFilterToggle(
+                    selected = viewMode == CashflowViewMode.Overdue,
+                    onClick = { onViewModeChange(CashflowViewMode.Overdue) },
+                    label = stringResource(Res.string.cashflow_view_overdue)
+                )
+                DokusFilterToggle(
                     selected = viewMode == CashflowViewMode.History,
                     onClick = { onViewModeChange(CashflowViewMode.History) },
                     label = stringResource(Res.string.cashflow_view_history)
@@ -114,6 +120,11 @@ internal fun CashflowViewModeFilter(
                     selected = viewMode == CashflowViewMode.Upcoming,
                     onClick = { onViewModeChange(CashflowViewMode.Upcoming) },
                     label = stringResource(Res.string.cashflow_view_upcoming)
+                )
+                DokusFilterToggle(
+                    selected = viewMode == CashflowViewMode.Overdue,
+                    onClick = { onViewModeChange(CashflowViewMode.Overdue) },
+                    label = stringResource(Res.string.cashflow_view_overdue)
                 )
                 DokusFilterToggle(
                     selected = viewMode == CashflowViewMode.History,

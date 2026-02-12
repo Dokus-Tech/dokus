@@ -22,6 +22,7 @@ class Cashflow {
      * GET /api/v1/cashflow/overview - Get cashflow overview with projections
      *
      * @param viewMode Required. Upcoming uses eventDate range, History uses paidAt range.
+     *                 Overdue uses eventDate < today.
      * @param fromDate Start of date range (interpreted based on viewMode)
      * @param toDate End of date range (interpreted based on viewMode)
      * @param direction Optional filter: In, Out
@@ -42,7 +43,7 @@ class Cashflow {
      * GET /api/v1/cashflow/entries - List cashflow entries (projection ledger)
      *
      * Supports filtering by:
-     * - View mode (viewMode): Upcoming uses eventDate, History uses paidAt
+     * - View mode (viewMode): Upcoming/Overdue use eventDate, History uses paidAt
      * - Date range (fromDate, toDate): interpreted based on viewMode
      * - Direction (In/Out)
      * - Statuses: list of statuses (e.g., [Open, Overdue])
@@ -51,6 +52,7 @@ class Cashflow {
      *
      * Sorting:
      * - viewMode=Upcoming: eventDate ASC (soonest first)
+     * - viewMode=Overdue: eventDate ASC (oldest due first)
      * - viewMode=History: paidAt DESC (most recent first)
      *
      * Cancelled entries are excluded by default.

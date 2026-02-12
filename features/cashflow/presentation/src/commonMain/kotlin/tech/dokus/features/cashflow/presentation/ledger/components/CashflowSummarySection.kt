@@ -160,6 +160,7 @@ private fun DesktopSummarySection(
             // Time label + breakdown
             val timeLabel = when (viewMode) {
                 CashflowViewMode.Upcoming -> stringResource(Res.string.cashflow_summary_next_30_days)
+                CashflowViewMode.Overdue -> stringResource(Res.string.cashflow_summary_overdue)
                 CashflowViewMode.History -> stringResource(Res.string.cashflow_summary_last_30_days)
             }
             val breakdownText = formatBreakdown(summary, viewMode, currencySymbol)
@@ -213,6 +214,7 @@ private fun ExpandedMobileSummarySection(
         // Time label
         val timeLabel = when (viewMode) {
             CashflowViewMode.Upcoming -> stringResource(Res.string.cashflow_summary_next_30_days)
+            CashflowViewMode.Overdue -> stringResource(Res.string.cashflow_summary_overdue)
             CashflowViewMode.History -> stringResource(Res.string.cashflow_summary_last_30_days)
         }
         Text(
@@ -322,6 +324,7 @@ private fun CompressedMobileSummarySection(
         // Movement part
         val timeLabel = when (viewMode) {
             CashflowViewMode.Upcoming -> stringResource(Res.string.cashflow_summary_next_30d)
+            CashflowViewMode.Overdue -> stringResource(Res.string.cashflow_summary_overdue_short)
             CashflowViewMode.History -> stringResource(Res.string.cashflow_summary_last_30d)
         }
         val netAmountCompact = formatNetAmountCompact(summary.netAmount, currencySymbol)
@@ -381,11 +384,11 @@ private fun formatBreakdown(
     currencySymbol: String
 ): String {
     val inLabel = when (viewMode) {
-        CashflowViewMode.Upcoming -> stringResource(Res.string.cashflow_summary_in)
+        CashflowViewMode.Upcoming, CashflowViewMode.Overdue -> stringResource(Res.string.cashflow_summary_in)
         CashflowViewMode.History -> stringResource(Res.string.cashflow_summary_received)
     }
     val outLabel = when (viewMode) {
-        CashflowViewMode.Upcoming -> stringResource(Res.string.cashflow_summary_out)
+        CashflowViewMode.Upcoming, CashflowViewMode.Overdue -> stringResource(Res.string.cashflow_summary_out)
         CashflowViewMode.History -> stringResource(Res.string.cashflow_summary_paid)
     }
     return "$inLabel $currencySymbol${summary.totalIn.toDisplayString()} · $outLabel $currencySymbol${summary.totalOut.toDisplayString()}"

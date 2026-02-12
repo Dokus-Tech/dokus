@@ -155,6 +155,7 @@ internal class CashflowLedgerContainer(
                 val summary = CashflowSummary(
                     periodLabel = when (currentFilters.viewMode) {
                         CashflowViewMode.Upcoming -> "NEXT 30 DAYS"
+                        CashflowViewMode.Overdue -> "OVERDUE"
                         CashflowViewMode.History -> "LAST 30 DAYS"
                     },
                     netAmount = overview.netCashflow,
@@ -506,12 +507,14 @@ internal class CashflowLedgerContainer(
     /**
      * Get date range based on view mode.
      * - Upcoming: [today, today+30d]
+     * - Overdue: [today, today] (range ignored server-side; overdue is eventDate < today)
      * - History: [today-30d, today] (uses paidAt for filtering)
      */
     private fun getDateRangeForViewMode(viewMode: CashflowViewMode): Pair<LocalDate, LocalDate> {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         return when (viewMode) {
             CashflowViewMode.Upcoming -> today to today.plus(30, DateTimeUnit.DAY)
+            CashflowViewMode.Overdue -> today to today
             CashflowViewMode.History -> today.plus(-30, DateTimeUnit.DAY) to today
         }
     }
@@ -519,11 +522,13 @@ internal class CashflowLedgerContainer(
     /**
      * Get status filters based on view mode.
      * - Upcoming: Open, Overdue (money not yet moved)
+     * - Overdue: Open, Overdue (money not yet moved, due date in past)
      * - History: Paid (money already moved)
      */
     private fun getStatusesForViewMode(viewMode: CashflowViewMode): List<CashflowEntryStatus> {
         return when (viewMode) {
             CashflowViewMode.Upcoming -> listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)
+            CashflowViewMode.Overdue -> listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)
             CashflowViewMode.History -> listOf(CashflowEntryStatus.Paid)
         }
     }
@@ -545,6 +550,7 @@ internal class CashflowLedgerContainer(
     private fun mapViewModeToDomain(viewMode: CashflowViewMode): DomainViewMode {
         return when (viewMode) {
             CashflowViewMode.Upcoming -> DomainViewMode.Upcoming
+            CashflowViewMode.Overdue -> DomainViewMode.Overdue
             CashflowViewMode.History -> DomainViewMode.History
         }
     }

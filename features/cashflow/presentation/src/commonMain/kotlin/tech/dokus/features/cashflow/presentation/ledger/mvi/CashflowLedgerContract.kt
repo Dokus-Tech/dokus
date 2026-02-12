@@ -22,12 +22,14 @@ import tech.dokus.foundation.app.state.DokusState
 
 /**
  * View mode for cashflow ledger.
- * - Upcoming: Money not yet moved (Open + Overdue entries)
+ * - Upcoming: Money expected in next 30 days (Open + Overdue entries)
+ * - Overdue: Unpaid entries with due date in the past (Open + Overdue entries)
  * - History: Money already moved (Paid entries with paidAt)
  */
 @Immutable
 enum class CashflowViewMode {
-    Upcoming, // Open + Overdue (money not yet moved)
+    Upcoming, // Open + Overdue in next 30 days
+    Overdue,  // Open + Overdue with due date < today
     History   // Paid (money already moved, requires paidAt != null)
 }
 

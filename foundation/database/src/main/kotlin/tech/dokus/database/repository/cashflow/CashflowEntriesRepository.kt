@@ -1,8 +1,10 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -208,6 +210,7 @@ class CashflowEntriesRepository {
      *
      * @param viewMode Determines date field filtering and sorting:
      *                 - Upcoming: filter by eventDate, sort ASC
+     *                 - Overdue: filter by eventDate < today, sort ASC
      *                 - History: filter by paidAt, sort DESC
      * @param statuses Multi-status filter (e.g., [Open, Overdue])
      *
@@ -250,6 +253,10 @@ class CashflowEntriesRepository {
                     if (toDate != null) {
                         query = query.andWhere { CashflowEntriesTable.eventDate lessEq toDate }
                     }
+                }
+                CashflowViewMode.Overdue -> {
+                    val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+                    query = query.andWhere { CashflowEntriesTable.eventDate less today }
                 }
                 CashflowViewMode.History -> {
                     // Filter by paidAt (using LocalDate as start/end of day in UTC)
