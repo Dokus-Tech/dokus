@@ -24,6 +24,7 @@ import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.entity.EntityStatus
 import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.lookup.CbeApiClient
+import tech.dokus.foundation.backend.utils.loggerFor
 
 data class ContactResolutionResult(
     val snapshot: CounterpartySnapshot,
@@ -34,6 +35,7 @@ class ContactResolutionService(
     private val contactRepository: ContactRepository,
     private val cbeApiClient: CbeApiClient
 ) {
+    private val logger = loggerFor()
     companion object {
         private const val StrongNameThreshold = 0.90
         private const val SuggestionThreshold = 0.80
@@ -42,7 +44,9 @@ class ContactResolutionService(
             "\\b(visa|mastercard|apple\\s*pay|google\\s*pay|amex|american\\s*express|bancontact|card)\\b",
             RegexOption.IGNORE_CASE
         )
-        private val maskedOrTailPattern = Regex("(\\*{2,}|\\.{2,}|\\b\\d{4}\\b)")
+        private val maskedOrTailPattern = Regex("(\\*{2,}|\\.{2,}|[*.]+\\s*\\d{4}\\b)")
+        private val nonAlphanumericPattern = Regex("[^a-z0-9\\s]")
+        private val multiSpacePattern = Regex("\\s+")
     }
 
     suspend fun resolve(
@@ -59,7 +63,7 @@ class ContactResolutionService(
             )
         }
 
-        val name = snapshot.name?.trim().orEmpty().takeIf { it.isNotEmpty() }
+        val name = snapshot.name
         val vat = snapshot.vatNumber
         val iban = snapshot.iban
         val unknownDirectionInvoiceOrCreditNote = isUnknownDirectionInvoiceOrCreditNote(draftData)
@@ -317,7 +321,7 @@ class ContactResolutionService(
         matchedContact: ContactDto,
         authoritativeName: String?
     ): ContactDto {
-        val targetName = authoritativeName?.trim().orEmpty()
+        val targetName = authoritativeName.orEmpty()
         if (targetName.isEmpty()) return matchedContact
         if (matchedContact.source != ContactSource.AI) return matchedContact
 
@@ -326,11 +330,28 @@ class ContactResolutionService(
         if (isPaymentTokenAlias(targetName)) return matchedContact
         if (similarity(targetName, currentName) >= PaymentAliasRenameSimilarityThreshold) return matchedContact
 
-        return contactRepository.updateContact(
+        val candidateName = Name(targetName)
+        if (!candidateName.isValid) {
+            logger.warn("Skipping payment alias heal: invalid name '{}' for contact {}", targetName, matchedContact.id)
+            return matchedContact
+        }
+
+        val result = contactRepository.updateContact(
             contactId = matchedContact.id,
             tenantId = tenantId,
-            request = UpdateContactRequest(name = Name(targetName))
-        ).getOrNull() ?: matchedContact
+            request = UpdateContactRequest(name = candidateName)
+        )
+        return result.getOrElse { e ->
+            logger.warn("Failed to heal payment alias for contact {}: {}", matchedContact.id, e.message)
+            matchedContact
+        }.also { healed ->
+            if (healed.id == matchedContact.id && healed.name.value == targetName) {
+                logger.info(
+                    "Healed payment alias contact {}: '{}' -> '{}'",
+                    matchedContact.id, currentName, targetName
+                )
+            }
+        }
     }
 
     private fun isPaymentTokenAlias(value: String): Boolean {
@@ -392,8 +413,8 @@ class ContactResolutionService(
 
     private fun normalizeName(value: String): String {
         return value.lowercase()
-            .replace(Regex("[^a-z0-9\\s]"), " ")
-            .replace(Regex("\\s+"), " ")
+            .replace(nonAlphanumericPattern, " ")
+            .replace(multiSpacePattern, " ")
             .trim()
     }
 

@@ -23,8 +23,9 @@ import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.LineItemToolInput
-import tech.dokus.features.ai.models.CounterpartyExtraction
+import tech.dokus.features.ai.models.CounterpartyFields
 import tech.dokus.features.ai.models.CounterpartyRole
+import tech.dokus.features.ai.models.toCounterpartyExtraction
 import tech.dokus.features.ai.models.VatBreakdownToolInput
 import tech.dokus.features.ai.models.toDomain
 import tech.dokus.foundation.backend.config.AIConfig
@@ -85,23 +86,23 @@ data class ReceiptExtractionToolInput(
     @property:LLMDescription(ExtractionToolDescriptions.PaymentMethod)
     val paymentMethod: PaymentMethod? = null,
     @property:LLMDescription(ExtractionToolDescriptions.CounterpartyName)
-    val counterpartyName: String? = null,
+    override val counterpartyName: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.CounterpartyVat)
-    val counterpartyVat: String? = null,
+    override val counterpartyVat: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.CounterpartyEmail)
-    val counterpartyEmail: String? = null,
+    override val counterpartyEmail: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.CounterpartyStreet)
-    val counterpartyStreet: String? = null,
+    override val counterpartyStreet: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.CounterpartyPostalCode)
-    val counterpartyPostalCode: String? = null,
+    override val counterpartyPostalCode: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCity)
-    val counterpartyCity: String? = null,
+    override val counterpartyCity: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCountry)
-    val counterpartyCountry: String? = null,
+    override val counterpartyCountry: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.CounterpartyRole)
-    val counterpartyRole: CounterpartyRole = CounterpartyRole.Unknown,
+    override val counterpartyRole: CounterpartyRole = CounterpartyRole.Unknown,
     @property:LLMDescription(ExtractionToolDescriptions.CounterpartyReasoning)
-    val counterpartyReasoning: String? = null,
+    override val counterpartyReasoning: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.DirectionHint)
     val directionHint: DocumentDirection = DocumentDirection.Unknown,
     @property:LLMDescription(ExtractionToolDescriptions.DirectionHintConfidence)
@@ -110,7 +111,7 @@ data class ReceiptExtractionToolInput(
     val confidence: Double,
     @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
     val reasoning: String? = null
-)
+) : CounterpartyFields
 
 private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, FinancialExtractionResult.Receipt>(
     argsSerializer = ReceiptExtractionToolInput.serializer(),
@@ -139,33 +140,6 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
             )
         )
     }
-}
-
-private fun ReceiptExtractionToolInput.toCounterpartyExtraction(): CounterpartyExtraction? {
-    val hasAnyField = listOf(
-        counterpartyName,
-        counterpartyVat,
-        counterpartyEmail,
-        counterpartyStreet,
-        counterpartyPostalCode,
-        counterpartyCity,
-        counterpartyCountry,
-        counterpartyReasoning
-    ).any { !it.isNullOrBlank() } || counterpartyRole != CounterpartyRole.Unknown
-
-    if (!hasAnyField) return null
-
-    return CounterpartyExtraction(
-        name = counterpartyName,
-        vatNumber = counterpartyVat,
-        email = counterpartyEmail,
-        streetLine1 = counterpartyStreet,
-        postalCode = counterpartyPostalCode,
-        city = counterpartyCity,
-        country = counterpartyCountry,
-        role = counterpartyRole,
-        reasoning = counterpartyReasoning
-    )
 }
 
 private val ExtractDocumentInput.receiptPrompt

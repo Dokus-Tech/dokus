@@ -18,25 +18,25 @@ fun FinancialExtractionResult.toAuthoritativeCounterpartySnapshot(): Counterpart
 private fun CounterpartyExtraction?.toSnapshot(): CounterpartySnapshot? {
     if (this == null) return null
 
-    val name = name.cleanText()
-    val vat = vatNumber.cleanText()?.let { VatNumber.from(it) }?.takeIf { it.isValid }
-    val email = email.cleanText()?.let { Email.from(it) }
-    val streetLine1 = streetLine1.cleanText()
-    val postalCode = postalCode.cleanText()
-    val city = city.cleanText()
-    val country = country.toCountryOrNull()
+    val cleanedName = name.cleanText()
+    val cleanedVat = vatNumber.cleanText()?.let { VatNumber.from(it) }?.takeIf { it.isValid }
+    val cleanedEmail = email.cleanText()?.let { Email.from(it) }
+    val cleanedStreet = streetLine1.cleanText()
+    val cleanedPostal = postalCode.cleanText()
+    val cleanedCity = city.cleanText()
+    val cleanedCountry = country.toCountryOrNull()
 
     val snapshot = CounterpartySnapshot(
-        name = name,
-        vatNumber = vat,
+        name = cleanedName,
+        vatNumber = cleanedVat,
         iban = null,
-        email = email,
+        email = cleanedEmail,
         companyNumber = null,
-        streetLine1 = streetLine1,
+        streetLine1 = cleanedStreet,
         streetLine2 = null,
-        postalCode = postalCode,
-        city = city,
-        country = country
+        postalCode = cleanedPostal,
+        city = cleanedCity,
+        country = cleanedCountry
     )
 
     return snapshot.takeIf { it.name != null || it.vatNumber != null }
@@ -46,6 +46,21 @@ private fun String?.cleanText(): String? = this
     ?.trim()
     ?.takeIf { it.isNotEmpty() }
 
+private val countryAliases: Map<String, Country> = buildMap {
+    for (country in Country.entries) {
+        put(country.dbValue, country)
+    }
+    // Common AI-extracted aliases beyond the ISO-2 dbValue
+    put("BEL", Country.Belgium)
+    put("BELGIUM", Country.Belgium)
+    put("BELGIQUE", Country.Belgium)
+    put("NLD", Country.Netherlands)
+    put("NETHERLANDS", Country.Netherlands)
+    put("HOLLAND", Country.Netherlands)
+    put("FRA", Country.France)
+    put("FRANCE", Country.France)
+}
+
 private fun String?.toCountryOrNull(): Country? {
     val normalized = this
         ?.trim()
@@ -53,10 +68,5 @@ private fun String?.toCountryOrNull(): Country? {
         ?.takeIf { it.isNotEmpty() }
         ?: return null
 
-    return when (normalized) {
-        "BE", "BEL", "BELGIUM" -> Country.Belgium
-        "NL", "NLD", "NETHERLANDS", "HOLLAND" -> Country.Netherlands
-        "FR", "FRA", "FRANCE" -> Country.France
-        else -> null
-    }
+    return countryAliases[normalized]
 }
