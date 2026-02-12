@@ -1,0 +1,44 @@
+package tech.dokus.domain.model.common
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+
+class DeepLinksTest {
+
+    @Test
+    fun `extractShareImportBatchId returns batch id for valid share import link`() {
+        val deepLink = DeepLink("dokus://share/import?batch=batch-123")
+
+        val batchId = DeepLinks.extractShareImportBatchId(deepLink)
+
+        assertEquals("batch-123", batchId)
+    }
+
+    @Test
+    fun `extractShareImportBatchId returns null for missing batch query param`() {
+        val deepLink = DeepLink("dokus://share/import?foo=bar")
+
+        val batchId = DeepLinks.extractShareImportBatchId(deepLink)
+
+        assertNull(batchId)
+    }
+
+    @Test
+    fun `extractShareImportBatchId returns null for empty batch query param`() {
+        val deepLink = DeepLink("dokus://share/import?batch=")
+
+        val batchId = DeepLinks.extractShareImportBatchId(deepLink)
+
+        assertNull(batchId)
+    }
+
+    @Test
+    fun `extractShareImportBatchId returns null for non share-import path`() {
+        val deepLink = DeepLink("dokus://connect?host=localhost&port=8080")
+
+        val batchId = DeepLinks.extractShareImportBatchId(deepLink)
+
+        assertNull(batchId)
+    }
+}

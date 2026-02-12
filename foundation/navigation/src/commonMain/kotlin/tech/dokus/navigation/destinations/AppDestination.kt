@@ -15,4 +15,8 @@ interface AppDestination : NavigationDestination {
     @Serializable
     @SerialName("empty")
     data object Empty : AppDestination
+
+    @Serializable
+    @SerialName("app/share_import")
+    data object ShareImport : AppDestination
 }

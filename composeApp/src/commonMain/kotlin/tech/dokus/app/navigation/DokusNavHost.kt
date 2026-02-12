@@ -23,18 +23,24 @@ import tech.dokus.domain.asbtractions.AuthManager
 import tech.dokus.domain.model.auth.AuthEvent
 import tech.dokus.domain.model.common.DeepLinks
 import tech.dokus.domain.model.common.KnownDeepLinks
+import tech.dokus.app.share.ExternalShareImportHandler
+import tech.dokus.app.share.PlatformShareImportBridge
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.platform.Logger
 import tech.dokus.foundation.platform.activePlatform
 import tech.dokus.foundation.platform.isDesktop
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
+import tech.dokus.navigation.destinations.AppDestination
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.navigateTo
 import tech.dokus.navigation.replace
 import kotlin.time.Duration.Companion.seconds
+
+private val logger = Logger.withTag("DokusNavHost")
 
 @Composable
 fun DokusNavHost(
@@ -50,10 +56,46 @@ fun DokusNavHost(
 
     LaunchedEffect(navController) {
         launch {
+            ExternalShareImportHandler.pendingState.collect { pendingFiles ->
+                if (!pendingFiles.isNullOrEmpty()) {
+                    navController.replace(AppDestination.ShareImport)
+                }
+            }
+        }
+
+        launch {
+            PlatformShareImportBridge.consumeBatch(batchId = null)
+                .onSuccess { files ->
+                    if (files.isNotEmpty()) {
+                        ExternalShareImportHandler.onNewSharedFiles(files)
+                    }
+                }
+                .onFailure { error ->
+                    logger.e(error) { "Failed to consume pending share batch on startup" }
+                }
+        }
+
+        launch {
             ExternalUriHandler.deeplinkState.collect { deepLink ->
                 if (deepLink != null) {
-                    println("Collecting deeplink state: $deepLink")
+                    logger.d { "Collecting deeplink state: $deepLink" }
                     delay(0.5.seconds)
+
+                    if (deepLink.path.startsWith(KnownDeepLinks.ShareImport.path.path)) {
+                        val batchId = DeepLinks.extractShareImportBatchId(deepLink)
+                        PlatformShareImportBridge.consumeBatch(batchId)
+                            .onSuccess { files ->
+                                if (files.isNotEmpty()) {
+                                    ExternalShareImportHandler.onNewSharedFiles(files)
+                                } else {
+                                    logger.w { "No share batch payload found for id=$batchId" }
+                                }
+                            }
+                            .onFailure { error ->
+                                logger.e(error) { "Failed to consume share batch" }
+                            }
+                        return@collect
+                    }
 
                     // Handle server connect deep links specially
                     if (deepLink.path.startsWith(KnownDeepLinks.ServerConnect.path.path)) {

@@ -860,6 +860,16 @@ sealed class DokusException(
     }
 
     @Serializable
+    @SerialName("DokusException.WorkspaceContextUnavailable")
+    data object WorkspaceContextUnavailable : DokusException(
+        httpStatusCode = 400,
+        errorCode = "WORKSPACE_CONTEXT_UNAVAILABLE",
+        recoverable = true,
+    ) {
+        override val message: String? = "Workspace context unavailable"
+    }
+
+    @Serializable
     @SerialName("DokusException.ProfileSaveFailed")
     data object ProfileSaveFailed : DokusException(
         httpStatusCode = 500,

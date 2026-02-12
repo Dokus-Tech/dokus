@@ -2,8 +2,8 @@ package tech.dokus.app.navigation
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import tech.dokus.app.navigation.ExternalUriHandler.onNewUri
 import tech.dokus.domain.model.common.DeepLink
+import tech.dokus.foundation.platform.Logger
 
 /**
  * Singleton handler for external URIs/deep links following the official KMP pattern.
@@ -15,6 +15,8 @@ import tech.dokus.domain.model.common.DeepLink
  * If a URI arrives before bootstrap completes, it's cached.
  */
 object ExternalUriHandler {
+    private val logger = Logger.withTag("ExternalUriHandler")
+
     // Cache the URI if bootstrap hasn't completed yet
     private val deeplinkFlow = MutableStateFlow<DeepLink?>(null)
     val deeplinkState = deeplinkFlow.asStateFlow()
@@ -27,7 +29,7 @@ object ExternalUriHandler {
      * If the listener is already set (app running in background), processes immediately.
      */
     fun onNewUri(uri: String) {
-        println("[ExternalUriHandler] Received URI: $uri")
+        logger.d { "Received URI: $uri" }
         deeplinkFlow.tryEmit(DeepLink(uri))
     }
 }

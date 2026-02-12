@@ -34,8 +34,13 @@ class ServerConfigManagerImpl(
         .map { it.isCloud }
         .stateIn(scope, SharingStarted.Eagerly, _currentServer.value.isCloud)
 
+    init {
+        mirrorToShareExtension(_currentServer.value)
+    }
+
     override suspend fun initialize() {
         _currentServer.value = loadPersistedServerConfig() ?: ServerConfig.Cloud
+        mirrorToShareExtension(_currentServer.value)
     }
 
     override suspend fun setServer(config: ServerConfig) {
@@ -49,6 +54,7 @@ class ServerConfigManagerImpl(
 
         // Update state
         _currentServer.value = config
+        mirrorToShareExtension(config)
     }
 
     override suspend fun resetToCloud() {
@@ -84,5 +90,11 @@ class ServerConfigManagerImpl(
         private const val KEY_SERVER_NAME = "server_name"
         private const val KEY_SERVER_VERSION = "server_version"
         private const val KEY_SERVER_IS_CLOUD = "server_is_cloud"
+    }
+
+    private fun mirrorToShareExtension(config: ServerConfig) {
+        runCatching {
+            ShareExtensionServerConfigBridge.mirrorServerBaseUrl(config.baseUrl)
+        }
     }
 }

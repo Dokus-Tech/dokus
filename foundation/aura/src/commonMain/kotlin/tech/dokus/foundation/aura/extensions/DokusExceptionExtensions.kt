@@ -99,6 +99,7 @@ import tech.dokus.aura.resources.team_role_update_failed
 import tech.dokus.aura.resources.upload_failed_message
 import tech.dokus.aura.resources.workspace_avatar_delete_failed
 import tech.dokus.aura.resources.workspace_avatar_upload_failed
+import tech.dokus.aura.resources.workspace_context_unavailable
 import tech.dokus.aura.resources.workspace_create_failed
 import tech.dokus.aura.resources.workspace_select_failed
 import tech.dokus.domain.exceptions.DokusException
@@ -233,6 +234,7 @@ val DokusException.localized: String
         is DokusException.WorkspaceCreateFailed -> stringResource(Res.string.workspace_create_failed)
         is DokusException.CompanyLookupFailed -> stringResource(Res.string.auth_company_lookup_failed)
         is DokusException.WorkspaceSelectFailed -> stringResource(Res.string.workspace_select_failed)
+        is DokusException.WorkspaceContextUnavailable -> stringResource(Res.string.workspace_context_unavailable)
         is DokusException.ProfileSaveFailed -> stringResource(Res.string.profile_save_error)
         is DokusException.ChatLoadConversationFailed -> {
             val reasonText = reason?.takeIf { it.isNotBlank() }
