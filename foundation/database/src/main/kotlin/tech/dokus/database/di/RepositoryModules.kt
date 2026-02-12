@@ -26,6 +26,8 @@ import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactNoteRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.documents.DocumentLinkRepository
+import tech.dokus.database.repository.notifications.NotificationPreferencesRepository
+import tech.dokus.database.repository.notifications.NotificationRepository
 import tech.dokus.database.repository.payment.PaymentRepository
 import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
@@ -106,6 +108,11 @@ val repositoryModulePayment = module {
     single { PaymentRepository() }
 }
 
+val repositoryModuleNotifications = module {
+    single { NotificationRepository() }
+    single { NotificationPreferencesRepository() }
+}
+
 /**
  * Reporting repositories module.
  * Provides repositories for VAT returns and reporting.
@@ -152,6 +159,7 @@ val repositoryModules = module {
         repositoryModuleProcessor,
         repositoryModuleBanking,
         repositoryModulePayment,
+        repositoryModuleNotifications,
         repositoryModuleContacts,
         repositoryModuleAI
     )

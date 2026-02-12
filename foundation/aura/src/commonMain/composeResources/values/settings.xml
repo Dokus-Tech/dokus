@@ -10,6 +10,7 @@
     <string name="settings_team">Team Members</string>
     <string name="settings_peppol">Peppol E-Invoicing</string>
     <string name="settings_appearance">Appearance</string>
+    <string name="settings_notifications">Notifications</string>
 
     <!-- Settings Screen -->
     <string name="settings_select_prompt">Select a setting to configure</string>

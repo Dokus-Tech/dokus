@@ -12,6 +12,7 @@ import tech.dokus.app.screens.MoreScreen
 import tech.dokus.app.screens.TodayScreen
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
+import tech.dokus.app.screens.settings.route.NotificationPreferencesRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
 import tech.dokus.domain.asbtractions.TokenManager
@@ -39,6 +40,9 @@ internal object HomeNavigationProvider : NavigationProvider {
         }
         composable<SettingsDestination.AppearanceSettings> {
             AppearanceSettingsRoute()
+        }
+        composable<SettingsDestination.NotificationPreferences> {
+            NotificationPreferencesRoute()
         }
         composable<AuthDestination.ProfileSettings> {
             ProfileSettingsRoute()

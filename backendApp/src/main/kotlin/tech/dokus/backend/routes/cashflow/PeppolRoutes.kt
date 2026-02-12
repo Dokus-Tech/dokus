@@ -8,6 +8,9 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
+import tech.dokus.backend.services.notifications.NotificationEmission
+import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.PeppolPollingWorker
@@ -15,6 +18,8 @@ import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.enums.NotificationReferenceType
+import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolConnectStatus
@@ -41,11 +46,13 @@ import kotlin.uuid.Uuid
  */
 @OptIn(ExperimentalUuidApi::class)
 internal fun Route.peppolRoutes() {
+    val logger = LoggerFactory.getLogger("PeppolRoutes")
     val peppolService by inject<PeppolService>()
     val peppolConnectionService by inject<PeppolConnectionService>()
     val peppolRecipientResolver by inject<PeppolRecipientResolver>()
     val peppolRegistrationService by inject<PeppolRegistrationService>()
     val peppolVerificationService by inject<PeppolVerificationService>()
+    val notificationService by inject<NotificationService>()
     val invoiceService by inject<InvoiceService>()
     val contactRepository by inject<ContactRepository>()
     val tenantRepository by inject<TenantRepository>()
@@ -198,6 +205,49 @@ internal fun Route.peppolRoutes() {
                 recipientPeppolId
             )
                 .getOrElse { throw DokusException.InternalError("Failed to send invoice via Peppol: ${it.message}") }
+
+            val openPath = invoice.documentId?.let { "/cashflow/document_review/$it" } ?: "/cashflow"
+            when (result.status) {
+                tech.dokus.domain.enums.PeppolStatus.Sent -> {
+                    notificationService.emit(
+                        NotificationEmission(
+                            tenantId = tenantId,
+                            type = NotificationType.PeppolSendConfirmed,
+                            title = "PEPPOL send confirmed - Inv #${invoice.invoiceNumber.value}",
+                            referenceType = NotificationReferenceType.Invoice,
+                            referenceId = invoice.id.toString(),
+                            openPath = openPath,
+                            emailDetails = listOf(
+                                "Invoice #${invoice.invoiceNumber.value} to ${contact.name.value} was delivered via PEPPOL."
+                            )
+                        )
+                    ).onFailure { error ->
+                        logger.warn("Failed to emit PEPPOL send confirmed notification", error)
+                    }
+                }
+
+                tech.dokus.domain.enums.PeppolStatus.Failed -> {
+                    val reason = result.errorMessage ?: "Unknown error"
+                    notificationService.emit(
+                        NotificationEmission(
+                            tenantId = tenantId,
+                            type = NotificationType.PeppolSendFailed,
+                            title = "PEPPOL send failed - Inv #${invoice.invoiceNumber.value}",
+                            referenceType = NotificationReferenceType.Invoice,
+                            referenceId = invoice.id.toString(),
+                            openPath = openPath,
+                            emailDetails = listOf(
+                                "Invoice #${invoice.invoiceNumber.value} to ${contact.name.value} could not be delivered via PEPPOL.",
+                                "Reason: $reason"
+                            )
+                        )
+                    ).onFailure { error ->
+                        logger.warn("Failed to emit PEPPOL send failed notification", error)
+                    }
+                }
+
+                else -> Unit
+            }
 
             call.respond(
                 HttpStatusCode.OK,

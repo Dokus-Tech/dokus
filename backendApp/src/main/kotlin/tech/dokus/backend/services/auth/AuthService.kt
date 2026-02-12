@@ -3,6 +3,9 @@
 package tech.dokus.backend.services.auth
 
 import com.auth0.jwt.JWT
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.enums.Permission
@@ -33,12 +36,15 @@ class AuthService(
     private val jwtGenerator: JwtGenerator,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitServiceInterface,
+    private val emailService: EmailService,
+    private val emailTemplateRenderer: EmailTemplateRenderer,
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService,
     private val tokenBlacklistService: TokenBlacklistService? = null,
     private val maxConcurrentSessions: Int = DEFAULT_MAX_CONCURRENT_SESSIONS
 ) {
     private val logger = loggerFor()
+    private val emailScope = CoroutineScope(Dispatchers.IO)
 
     companion object {
         /** Default maximum concurrent sessions per user */
@@ -152,6 +158,18 @@ class AuthService(
             .onFailure { error ->
                 logger.warn("Failed to send verification email during registration: ${error.message}")
             }
+
+        emailScope.launch {
+            val template = emailTemplateRenderer.renderWelcome()
+            emailService.send(
+                to = user.email.value,
+                subject = template.subject,
+                htmlBody = template.htmlBody,
+                textBody = template.textBody
+            ).onFailure { error ->
+                logger.warn("Failed to send welcome email during registration: ${error.message}")
+            }
+        }
 
         logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value})")
         Result.success(response)

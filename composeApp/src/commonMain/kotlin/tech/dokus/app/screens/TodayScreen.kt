@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +24,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.SwitchAccount
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,17 +50,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Briefcase
-import compose.icons.feathericons.CheckCircle
-import compose.icons.feathericons.MessageCircle
 import compose.icons.feathericons.Search
-import compose.icons.feathericons.User
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.app.screens.settings.components.formatRelativeTime
+import tech.dokus.app.viewmodel.NotificationFilterTab
 import tech.dokus.app.viewmodel.TodayAction
 import tech.dokus.app.viewmodel.TodayContainer
 import tech.dokus.app.viewmodel.TodayIntent
@@ -62,28 +67,33 @@ import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.aura.resources.settings_select_workspace
 import tech.dokus.aura.resources.settings_switch_workspace
+import tech.dokus.domain.enums.NotificationCategory
+import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.NotificationDto
 import tech.dokus.features.cashflow.presentation.cashflow.components.PendingDocumentsCard
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
-import tech.dokus.foundation.aura.components.layout.DokusPanelListItem
-import tech.dokus.foundation.aura.components.layout.DokusTabbedPanel
+import tech.dokus.foundation.aura.components.filter.DokusFilterToggle
+import tech.dokus.foundation.aura.components.filter.DokusFilterToggleRow
 import tech.dokus.foundation.aura.components.navigation.UserPreferencesMenu
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
 /**
  * Today screen using FlowMVI Container pattern.
- * Displays workspace info and pending documents on mobile.
  */
 @Composable
 internal fun TodayScreen(
@@ -109,18 +119,19 @@ internal fun TodayScreen(
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is TodayAction.NavigateToDocument -> {
-                // TODO: Navigate to document edit/confirmation screen
+                navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId))
             }
+
             TodayAction.NavigateToWorkspaceSelect -> {
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
             }
+
             is TodayAction.ShowError -> {
                 pendingError = action.error
             }
         }
     }
 
-    // Refresh tenant when screen appears
     LaunchedEffect(Unit) {
         container.store.intent(TodayIntent.RefreshTenant)
     }
@@ -129,11 +140,14 @@ internal fun TodayScreen(
         isSearchExpanded = isLargeScreen
     }
 
-    // Extract state data
     val contentState = state as? TodayState.Content
     val currentTenant = contentState?.tenantState?.let { if (it.isSuccess()) it.data else null }
     val currentAvatar = contentState?.currentAvatar
     val pendingDocumentsState = contentState?.pendingDocumentsState
+    val notificationsState: DokusState<List<NotificationDto>> =
+        contentState?.notificationsState ?: DokusState.idle()
+    val unreadNotificationCount = contentState?.unreadNotificationCount ?: 0
+    val notificationFilter = contentState?.notificationFilter ?: NotificationFilterTab.All
 
     Scaffold(
         topBar = {
@@ -170,7 +184,6 @@ internal fun TodayScreen(
                     }
                 },
                 actions = {
-                    // Workspace selector button with avatar inside
                     OutlinedButton(
                         onClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
                         modifier = Modifier.height(42.dp),
@@ -182,7 +195,7 @@ internal fun TodayScreen(
                             initial = currentTenant?.displayName?.value?.take(1) ?: "D",
                             size = AvatarSize.ExtraSmall,
                             shape = AvatarShape.RoundedSquare,
-                            onClick = null // Button handles the click
+                            onClick = null
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
@@ -197,6 +210,24 @@ internal fun TodayScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    NotificationBellDropdown(
+                        unreadCount = unreadNotificationCount,
+                        filter = notificationFilter,
+                        notificationsState = notificationsState,
+                        onFilterSelected = { filter ->
+                            container.store.intent(TodayIntent.LoadNotifications(filter))
+                        },
+                        onNotificationClick = { notification ->
+                            container.store.intent(TodayIntent.OpenNotification(notification))
+                        },
+                        onMarkAllAsRead = {
+                            container.store.intent(TodayIntent.MarkAllNotificationsRead)
+                        }
+                    )
+
                     Spacer(Modifier.width(8.dp))
                     UserPreferencesMenu()
                 }
@@ -204,7 +235,6 @@ internal fun TodayScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        // Mobile today content
         if (!isLargeScreen) {
             Column(
                 modifier = Modifier
@@ -214,21 +244,18 @@ internal fun TodayScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Pending documents card - always show (displays empty/error state when needed)
                 pendingDocumentsState?.let { docsState ->
                     PendingDocumentsCard(
                         state = docsState,
-                        onDocumentClick = { /* TODO: Navigate to document edit/confirmation screen */ },
+                        onDocumentClick = { document ->
+                            navController.navigateTo(CashFlowDestination.DocumentReview(document.document.id.toString()))
+                        },
                         onLoadMore = { container.store.intent(TodayIntent.LoadMorePendingDocuments) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-
-                // Other today widgets can be added here
-                TodayNotificationsPanel(modifier = Modifier.fillMaxWidth())
             }
         } else {
-            // Desktop today content (pending documents shown in Cashflow screen)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -237,86 +264,132 @@ internal fun TodayScreen(
                     .padding(Constrains.Spacing.xLarge),
                 verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xLarge)
             ) {
-                TodayNotificationsPanel(
-                    modifier = Modifier.widthIn(max = 420.dp)
-                )
+                // Today desktop screen keeps focus on quick header actions.
             }
         }
     }
 }
 
-private data class TodayNotification(
-    val title: String,
-    val category: String,
-    val timeLabel: String,
-    val icon: ImageVector,
-)
-
 @Composable
-private fun TodayNotificationsPanel(
-    modifier: Modifier = Modifier
+private fun NotificationBellDropdown(
+    unreadCount: Int,
+    filter: NotificationFilterTab,
+    notificationsState: DokusState<List<NotificationDto>>,
+    onFilterSelected: (NotificationFilterTab) -> Unit,
+    onNotificationClick: (NotificationDto) -> Unit,
+    onMarkAllAsRead: () -> Unit,
 ) {
-    val tabs = listOf("All", "New", "Mailroom", "Agent", "Accounting")
-    var selectedTab by rememberSaveable { mutableStateOf(tabs.first()) }
-    val notifications = remember {
-        listOf(
-            TodayNotification(
-                title = "Inland revenue service (IRS)",
-                category = "Mailroom",
-                timeLabel = "Just now",
-                icon = FeatherIcons.Briefcase
-            ),
-            TodayNotification(
-                title = "Year end bookkeeping report ready for review",
-                category = "Accounting",
-                timeLabel = "2 days ago",
-                icon = FeatherIcons.CheckCircle
-            ),
-            TodayNotification(
-                title = "Foreign qualification in California was successfully filed",
-                category = "Agent",
-                timeLabel = "2 days ago",
-                icon = FeatherIcons.User
-            ),
-            TodayNotification(
-                title = "Foreign qualification in New York was successfully filed",
-                category = "Agent",
-                timeLabel = "2 days ago",
-                icon = FeatherIcons.MessageCircle
-            )
-        )
-    }
-    val visibleNotifications = if (selectedTab == tabs.first()) {
-        notifications
-    } else {
-        notifications.filter { it.category == selectedTab }
-    }
+    var expanded by rememberSaveable { mutableStateOf(false) }
 
-    DokusTabbedPanel(
-        title = "Your notifications",
-        tabs = tabs,
-        selectedTab = selectedTab,
-        onTabSelected = { selectedTab = it },
-        tabLabel = { it },
-        modifier = modifier
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
-        ) {
-            if (visibleNotifications.isEmpty()) {
-                Text(
-                    text = "No notifications yet",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+    Box {
+        IconButton(onClick = { expanded = !expanded }) {
+            BadgedBox(
+                badge = {
+                    if (unreadCount > 0) {
+                        Badge {
+                            Text(text = unreadCount.toString())
+                        }
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications"
                 )
-            } else {
-                visibleNotifications.forEach { item ->
-                    DokusPanelListItem(
-                        title = item.title,
-                        supportingText = "${item.category} - ${item.timeLabel}",
-                        leading = { NotificationLeadingIcon(icon = item.icon) }
-                    )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.widthIn(min = 360.dp, max = 420.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Notifications",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                DokusFilterToggleRow {
+                    NotificationFilterTab.entries.forEach { tab ->
+                        DokusFilterToggle(
+                            selected = tab == filter,
+                            onClick = { onFilterSelected(tab) },
+                            label = tab.label
+                        )
+                    }
+                }
+
+                HorizontalDivider()
+
+                when (notificationsState) {
+                    is DokusState.Loading -> {
+                        Text(
+                            text = "Loading notifications...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+
+                    is DokusState.Success -> {
+                        val items = notificationsState.data
+                        if (items.isEmpty()) {
+                            Text(
+                                text = "Nothing needs your attention.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.textMuted,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items.forEach { item ->
+                                    NotificationListItem(
+                                        notification = item,
+                                        onClick = {
+                                            expanded = false
+                                            onNotificationClick(item)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    is DokusState.Error -> {
+                        Text(
+                            text = notificationsState.exception.localized,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+
+                    is DokusState.Idle -> {
+                        Text(
+                            text = "Nothing needs your attention.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+                }
+
+                HorizontalDivider()
+
+                TextButton(
+                    onClick = {
+                        onMarkAllAsRead()
+                        expanded = false
+                    },
+                    modifier = Modifier.align(Alignment.Start)
+                ) {
+                    Text("Mark all as read")
                 }
             }
         }
@@ -324,22 +397,79 @@ private fun TodayNotificationsPanel(
 }
 
 @Composable
-private fun NotificationLeadingIcon(
-    icon: ImageVector,
-    modifier: Modifier = Modifier
+private fun NotificationListItem(
+    notification: NotificationDto,
+    onClick: () -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .size(32.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(16.dp)
-        )
+        if (!notification.isRead) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .size(width = 4.dp, height = 24.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        } else {
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+
+        NotificationIcon(notification.type)
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = notification.title,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1
+            )
+            Text(
+                text = "${categoryLabel(notification.category)} - ${formatRelativeTime(notification.createdAt)}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.textMuted,
+                maxLines = 1
+            )
+        }
     }
+}
+
+@Composable
+private fun NotificationIcon(type: NotificationType) {
+    val critical = when (type) {
+        NotificationType.PeppolSendFailed,
+        NotificationType.ComplianceBlocker,
+        NotificationType.PaymentFailed -> true
+
+        NotificationType.PeppolReceived,
+        NotificationType.PeppolSendConfirmed,
+        NotificationType.VatWarning,
+        NotificationType.PaymentConfirmed,
+        NotificationType.SubscriptionChanged -> false
+    }
+
+    val icon = if (critical) Icons.Default.Warning else Icons.Default.Notifications
+    val tint = if (critical) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+
+    Icon(
+        imageVector = icon,
+        contentDescription = null,
+        tint = tint,
+        modifier = Modifier.size(18.dp)
+    )
+}
+
+private fun categoryLabel(category: NotificationCategory): String = when (category) {
+    NotificationCategory.Peppol -> "PEPPOL"
+    NotificationCategory.Compliance -> "Compliance"
+    NotificationCategory.Billing -> "Billing"
 }

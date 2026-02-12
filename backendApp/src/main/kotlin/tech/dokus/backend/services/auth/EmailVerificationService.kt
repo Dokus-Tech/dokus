@@ -33,7 +33,8 @@ import kotlin.uuid.ExperimentalUuidApi
  */
 class EmailVerificationService(
     private val userRepository: UserRepository,
-    private val emailService: EmailService
+    private val emailService: EmailService,
+    private val emailTemplateRenderer: EmailTemplateRenderer
 ) {
     private val logger = loggerFor()
     private val emailScope = CoroutineScope(Dispatchers.IO)
@@ -58,7 +59,17 @@ class EmailVerificationService(
             // Send verification email (async, outside transaction)
             // Note: Email failures don't prevent registration (graceful degradation)
             emailScope.launch {
-                emailService.sendEmailVerificationEmail(email, token, expirationHours = 24)
+                val template = emailTemplateRenderer.renderEmailVerification(
+                    verificationToken = token,
+                    expirationHours = 24
+                )
+
+                emailService.send(
+                    to = email,
+                    subject = template.subject,
+                    htmlBody = template.htmlBody,
+                    textBody = template.textBody
+                )
                     .onSuccess {
                         logger.debug("Email verification sent successfully to ${email.take(3)}***")
                     }

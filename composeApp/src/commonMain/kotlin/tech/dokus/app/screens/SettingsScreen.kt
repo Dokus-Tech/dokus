@@ -44,6 +44,7 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
+import tech.dokus.app.screens.settings.route.NotificationPreferencesRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
 import tech.dokus.app.settingsGroupsCombined
@@ -363,6 +364,10 @@ private fun SettingsContentPane(
                     AppearanceSettingsRoute()
                 }
 
+                is SettingsDestination.NotificationPreferences -> {
+                    NotificationPreferencesRoute()
+                }
+
                 else -> {
                     // Fallback for unknown destinations
                     Box(
@@ -501,6 +506,7 @@ private val SettingsSectionSaver = Saver<ModuleSettingsSection?, String>(
                 is SettingsDestination.WorkspaceSettings -> "workspace"
                 is SettingsDestination.TeamSettings -> "team"
                 is SettingsDestination.AppearanceSettings -> "appearance"
+                is SettingsDestination.NotificationPreferences -> "notifications"
                 else -> null
             }
         }

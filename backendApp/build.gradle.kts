@@ -71,7 +71,7 @@ dependencies {
     implementation(libs.java.jwt)
 
     // Email
-    implementation(libs.javax.mail)
+    implementation(libs.resend)
 
     // Logging
     implementation(libs.logback)

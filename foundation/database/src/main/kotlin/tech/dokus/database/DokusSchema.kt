@@ -27,6 +27,8 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
+import tech.dokus.database.tables.notifications.NotificationPreferencesTable
+import tech.dokus.database.tables.notifications.NotificationsTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.database.tables.peppol.PeppolRegistrationTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
@@ -61,6 +63,8 @@ object DokusSchema {
                 RefreshTokensTable,
                 PasswordResetTokensTable,
                 AddressTable,
+                NotificationsTable,
+                NotificationPreferencesTable,
 
                 // ----------------------------
                 // Cashflow foundation (docs)

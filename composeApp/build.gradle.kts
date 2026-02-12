@@ -123,6 +123,7 @@ kotlin {
             implementation(libs.materialKolor)
 
             implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.resources)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

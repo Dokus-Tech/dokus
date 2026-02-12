@@ -13,6 +13,8 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.services.notifications.NotificationEmission
+import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
@@ -27,6 +29,8 @@ import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.NotificationReferenceType
+import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
@@ -70,7 +74,8 @@ class PeppolPollingWorker(
     private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val documentStorageService: DocumentStorageService,
-    private val contactRepository: ContactRepository
+    private val contactRepository: ContactRepository,
+    private val notificationService: NotificationService
 ) {
     private val logger = LoggerFactory.getLogger(PeppolPollingWorker::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -350,6 +355,29 @@ class PeppolPollingWorker(
                     "Peppol poll completed for tenant $tenantId: " +
                         "${response.processedDocuments.size} documents processed"
                 )
+
+                response.processedDocuments.forEach { processed ->
+                    val title = processed.invoiceNumber?.let { invoiceNumber ->
+                        "New PEPPOL document received - Inv #$invoiceNumber"
+                    } ?: "New PEPPOL document received"
+
+                    notificationService.emit(
+                        NotificationEmission(
+                            tenantId = tenantId,
+                            type = NotificationType.PeppolReceived,
+                            title = title,
+                            referenceType = NotificationReferenceType.Document,
+                            referenceId = processed.documentId.toString(),
+                            openPath = "/cashflow/document_review/${processed.documentId}",
+                            emailDetails = listOf(
+                                "A new document was received via PEPPOL.",
+                                "Sender: ${processed.senderPeppolId.value}"
+                            )
+                        )
+                    ).onFailure { error ->
+                        logger.warn("Failed to emit PEPPOL received notification for document ${processed.documentId}", error)
+                    }
+                }
             }.onFailure { e ->
                 logger.error("Peppol poll failed for tenant $tenantId", e)
             }

@@ -1,5 +1,6 @@
 package tech.dokus.app.viewmodel
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -10,8 +11,12 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.app.notifications.InvoiceLookupDataSource
+import tech.dokus.app.notifications.NotificationRemoteDataSource
+import tech.dokus.domain.enums.NotificationReferenceType
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
@@ -22,15 +27,16 @@ internal typealias TodayCtx = PipelineContext<TodayState, TodayIntent, TodayActi
 /**
  * Container for Today screen using FlowMVI.
  *
- * Manages the today data including:
+ * Manages:
  * - Current tenant information
- * - Pending documents for processing
- *
- * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
+ * - Pending documents list
+ * - Notification badge, filters, and dropdown content
  */
 internal class TodayContainer(
     private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
     private val watchPendingDocuments: WatchPendingDocumentsUseCase,
+    private val notificationRemoteDataSource: NotificationRemoteDataSource,
+    private val invoiceLookupDataSource: InvoiceLookupDataSource,
 ) : Container<TodayState, TodayIntent, TodayAction> {
 
     private val logger = Logger.forClass<TodayContainer>()
@@ -42,8 +48,12 @@ internal class TodayContainer(
     override val store: Store<TodayState, TodayIntent, TodayAction> =
         store(TodayState.Content()) {
             init {
-                // Start watching pending documents on init
                 launchWatchPendingDocuments()
+                launchUnreadCountPolling()
+                launch {
+                    intent(TodayIntent.LoadNotifications())
+                    intent(TodayIntent.RefreshUnreadNotifications)
+                }
             }
 
             reduce { intent ->
@@ -51,6 +61,10 @@ internal class TodayContainer(
                     is TodayIntent.RefreshTenant -> handleRefreshTenant()
                     is TodayIntent.RefreshPendingDocuments -> handleRefreshPendingDocuments()
                     is TodayIntent.LoadMorePendingDocuments -> handleLoadMorePendingDocuments()
+                    is TodayIntent.LoadNotifications -> handleLoadNotifications(intent.filter)
+                    is TodayIntent.RefreshUnreadNotifications -> handleRefreshUnreadNotifications()
+                    is TodayIntent.OpenNotification -> handleOpenNotification(intent.notification)
+                    is TodayIntent.MarkAllNotificationsRead -> handleMarkAllNotificationsRead()
                 }
             }
         }
@@ -95,6 +109,15 @@ internal class TodayContainer(
         }
     }
 
+    private suspend fun TodayCtx.launchUnreadCountPolling() {
+        launch {
+            while (true) {
+                intent(TodayIntent.RefreshUnreadNotifications)
+                delay(30_000)
+            }
+        }
+    }
+
     private suspend fun TodayCtx.handleRefreshTenant() {
         withState<TodayState.Content, _> {
             logger.d { "Refreshing tenant" }
@@ -134,12 +157,10 @@ internal class TodayContainer(
         val allDocs = allPendingDocuments.value
         val currentVisible = pendingVisibleCount.value
 
-        // Don't load more if we're already showing all items
         if (currentVisible >= allDocs.size) return
 
         logger.d { "Loading more pending documents" }
 
-        // Increase visible count
         pendingVisibleCount.value = (currentVisible + TodayState.PENDING_PAGE_SIZE)
             .coerceAtMost(allDocs.size)
 
@@ -152,7 +173,7 @@ internal class TodayContainer(
         val visibleDocs = allDocs.take(visibleCount)
         val hasMore = visibleCount < allDocs.size
 
-        val paginationState = PaginationState(
+        val paginationState = tech.dokus.domain.model.common.PaginationState(
             data = visibleDocs,
             currentPage = visibleCount / TodayState.PENDING_PAGE_SIZE,
             pageSize = TodayState.PENDING_PAGE_SIZE,
@@ -164,6 +185,115 @@ internal class TodayContainer(
             updateState {
                 copy(pendingDocumentsState = DokusState.success(paginationState))
             }
+        }
+    }
+
+    private suspend fun TodayCtx.handleLoadNotifications(filter: NotificationFilterTab) {
+        withState<TodayState.Content, _> {
+            updateState {
+                copy(
+                    notificationFilter = filter,
+                    notificationsState = DokusState.loading()
+                )
+            }
+        }
+
+        notificationRemoteDataSource.listNotifications(
+            category = filter.category,
+            isRead = if (filter.unreadOnly) false else null,
+            limit = 20,
+            offset = 0
+        ).fold(
+            onSuccess = { page ->
+                withState<TodayState.Content, _> {
+                    updateState {
+                        copy(notificationsState = DokusState.success(page.items))
+                    }
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to load notifications" }
+                withState<TodayState.Content, _> {
+                    updateState {
+                        copy(
+                            notificationsState = DokusState.error(error) {
+                                intent(TodayIntent.LoadNotifications(filter))
+                            }
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    private suspend fun TodayCtx.handleRefreshUnreadNotifications() {
+        notificationRemoteDataSource.unreadCount().fold(
+            onSuccess = { count ->
+                withState<TodayState.Content, _> {
+                    updateState { copy(unreadNotificationCount = count) }
+                }
+            },
+            onFailure = { error ->
+                logger.w(error) { "Failed to refresh unread notifications count" }
+            }
+        )
+    }
+
+    private suspend fun TodayCtx.handleOpenNotification(notification: tech.dokus.domain.model.NotificationDto) {
+        var currentFilter = NotificationFilterTab.All
+        withState<TodayState.Content, _> {
+            currentFilter = notificationFilter
+        }
+
+        notificationRemoteDataSource.markRead(notification.id)
+            .onFailure { error ->
+                logger.w(error) { "Failed to mark notification as read" }
+            }
+
+        resolveDocumentId(notification)?.let { documentId ->
+            action(TodayAction.NavigateToDocument(documentId))
+        }
+
+        intent(TodayIntent.RefreshUnreadNotifications)
+        intent(TodayIntent.LoadNotifications(currentFilter))
+    }
+
+    private suspend fun TodayCtx.handleMarkAllNotificationsRead() {
+        var currentFilter = NotificationFilterTab.All
+        withState<TodayState.Content, _> {
+            currentFilter = notificationFilter
+        }
+
+        notificationRemoteDataSource.markAllRead()
+            .onFailure { error ->
+                logger.e(error) { "Failed to mark all notifications as read" }
+                action(
+                    TodayAction.ShowError(
+                        error as? DokusException
+                            ?: DokusException.InternalError("Failed to mark all as read")
+                    )
+                )
+            }
+
+        intent(TodayIntent.RefreshUnreadNotifications)
+        intent(TodayIntent.LoadNotifications(currentFilter))
+    }
+
+    private suspend fun resolveDocumentId(notification: tech.dokus.domain.model.NotificationDto): String? {
+        return when (notification.referenceType) {
+            NotificationReferenceType.Document -> notification.referenceId
+            NotificationReferenceType.ComplianceItem -> notification.referenceId
+            NotificationReferenceType.Invoice -> {
+                val invoiceId = runCatching { InvoiceId.parse(notification.referenceId) }.getOrNull()
+                    ?: return null
+                invoiceLookupDataSource.getInvoice(invoiceId)
+                    .getOrNull()
+                    ?.documentId
+                    ?.toString()
+            }
+
+            NotificationReferenceType.Transmission,
+            NotificationReferenceType.BillingItem -> null
         }
     }
 }
