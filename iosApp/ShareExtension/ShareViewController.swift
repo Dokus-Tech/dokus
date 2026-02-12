@@ -2,6 +2,11 @@ import UIKit
 import UniformTypeIdentifiers
 
 final class ShareViewController: UIViewController {
+    private struct LoadedPdf {
+        let data: Data
+        let displayName: String
+    }
+
     private let appGroupIdentifier = "group.vision.invoid.dokus.share"
     private let sharedImportsDirectory = "SharedImports"
     private let latestBatchMarker = "latest.batch"
@@ -24,7 +29,10 @@ final class ShareViewController: UIViewController {
 
         let providers = extensionItems
             .flatMap({ $0.attachments ?? [] })
-            .filter { $0.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) }
+            .filter {
+                $0.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) ||
+                    $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
+            }
 
         guard !providers.isEmpty else {
             finishRequest()
@@ -40,14 +48,14 @@ final class ShareViewController: UIViewController {
 
             for (index, provider) in providers.enumerated() {
                 group.enter()
-                provider.loadFileRepresentation(forTypeIdentifier: UTType.pdf.identifier) { [weak self] fileUrl, _ in
+                loadPdfPayload(from: provider) { [weak self] payload in
                     defer { group.leave() }
-                    guard let self, let fileUrl else { return }
+                    guard let self, let payload else { return }
 
                     do {
                         try self.persistSharedPdf(
-                            sourceUrl: fileUrl,
-                            provider: provider,
+                            pdfData: payload.data,
+                            displayName: payload.displayName,
                             batchId: batchId,
                             index: index,
                             directoryUrl: directoryUrl
@@ -98,6 +106,121 @@ final class ShareViewController: UIViewController {
         }
     }
 
+    private func loadPdfPayload(
+        from provider: NSItemProvider,
+        completion: @escaping (LoadedPdf?) -> Void
+    ) {
+        if provider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
+            provider.loadDataRepresentation(forTypeIdentifier: UTType.pdf.identifier) { [weak self] data, _ in
+                guard let self else {
+                    completion(nil)
+                    return
+                }
+                if let data, !data.isEmpty {
+                    completion(
+                        LoadedPdf(
+                            data: data,
+                            displayName: self.resolvedPdfFileName(
+                                provider: provider,
+                                fallbackName: provider.suggestedName
+                            )
+                        )
+                    )
+                    return
+                }
+
+                provider.loadFileRepresentation(forTypeIdentifier: UTType.pdf.identifier) { fileUrl, _ in
+                    guard let fileUrl,
+                          let fileData = try? Data(contentsOf: fileUrl),
+                          !fileData.isEmpty else {
+                        completion(nil)
+                        return
+                    }
+                    completion(
+                        LoadedPdf(
+                            data: fileData,
+                            displayName: self.resolvedPdfFileName(
+                                provider: provider,
+                                fallbackName: fileUrl.lastPathComponent
+                            )
+                        )
+                    )
+                }
+            }
+            return
+        }
+
+        if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+            provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { [weak self] item, _ in
+                guard let self,
+                      let fileUrl = self.extractFileUrl(from: item),
+                      self.isLikelyPdf(fileUrl: fileUrl, provider: provider),
+                      let fileData = try? Data(contentsOf: fileUrl),
+                      !fileData.isEmpty else {
+                    completion(nil)
+                    return
+                }
+
+                completion(
+                    LoadedPdf(
+                        data: fileData,
+                        displayName: self.resolvedPdfFileName(
+                            provider: provider,
+                            fallbackName: fileUrl.lastPathComponent
+                        )
+                    )
+                )
+            }
+            return
+        }
+
+        completion(nil)
+    }
+
+    private func extractFileUrl(from item: NSSecureCoding?) -> URL? {
+        if let url = item as? URL {
+            return url
+        }
+        if let nsUrl = item as? NSURL {
+            return nsUrl as URL
+        }
+        if let data = item as? Data {
+            return URL(dataRepresentation: data, relativeTo: nil)
+        }
+        if let nsData = item as? NSData {
+            return URL(dataRepresentation: nsData as Data, relativeTo: nil)
+        }
+        if let path = item as? String {
+            return URL(fileURLWithPath: path)
+        }
+        if let nsPath = item as? NSString {
+            return URL(fileURLWithPath: nsPath as String)
+        }
+        return nil
+    }
+
+    private func isLikelyPdf(fileUrl: URL, provider: NSItemProvider) -> Bool {
+        if fileUrl.pathExtension.lowercased() == "pdf" {
+            return true
+        }
+        if let suggestedName = provider.suggestedName?.lowercased(), suggestedName.hasSuffix(".pdf") {
+            return true
+        }
+        return false
+    }
+
+    private func resolvedPdfFileName(provider: NSItemProvider, fallbackName: String?) -> String {
+        let suggestedName = provider.suggestedName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let fallback = fallbackName?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let rawName = suggestedName?.isEmpty == false ? suggestedName : (fallback?.isEmpty == false ? fallback : "shared")
+        let sanitized = (rawName ?? "shared").replacingOccurrences(of: "/", with: "-")
+        if sanitized.lowercased().hasSuffix(".pdf") {
+            return sanitized
+        }
+        return "\(sanitized).pdf"
+    }
+
     private func sharedImportsDirectoryUrl() throws -> URL {
         let fileManager = FileManager.default
 
@@ -120,8 +243,8 @@ final class ShareViewController: UIViewController {
     }
 
     private func persistSharedPdf(
-        sourceUrl: URL,
-        provider: NSItemProvider,
+        pdfData: Data,
+        displayName: String,
         batchId: String,
         index: Int,
         directoryUrl: URL
@@ -137,11 +260,8 @@ final class ShareViewController: UIViewController {
             try fileManager.removeItem(at: nameDestinationUrl)
         }
 
-        try fileManager.copyItem(at: sourceUrl, to: pdfDestinationUrl)
+        try pdfData.write(to: pdfDestinationUrl, options: .atomic)
 
-        let displayName = provider.suggestedName
-            ?? sourceUrl.deletingPathExtension().lastPathComponent
-            ?? "shared"
         if let data = displayName.data(using: .utf8) {
             try data.write(to: nameDestinationUrl, options: .atomic)
         }
@@ -207,12 +327,13 @@ final class ShareViewController: UIViewController {
 
         extensionContext.open(url) { [weak self] success in
             guard let self else { return }
-            if !success {
-                self.openHostAppViaResponder(url: url)
+            if success {
+                self.finishRequest()
+                return
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                self.finishRequest()
+            extensionContext.completeRequest(returningItems: nil) { _ in
+                self.openHostAppViaResponder(url: url)
             }
         }
     }
