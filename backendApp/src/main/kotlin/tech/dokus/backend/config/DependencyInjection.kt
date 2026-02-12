@@ -253,7 +253,7 @@ private fun cashflowModule() = module {
     single { CashflowOverviewService(get(), get(), get()) }
     single { InvoiceConfirmationService(get(), get(), get()) }
     single { ReceiptConfirmationService(get(), get(), get()) }
-    single { CreditNoteConfirmationService(get(), get()) }
+    single { CreditNoteConfirmationService(get(), get(), get(), get(), get(), get()) }
     single { DocumentConfirmationDispatcher(get(), get(), get()) }
 
     // PDF Preview

@@ -697,4 +697,65 @@ class InvoiceRepository(
             )
         }
     }
+
+    /**
+     * Find invoice by invoice number.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun findByInvoiceNumber(
+        tenantId: TenantId,
+        invoiceNumber: String
+    ): FinancialDocumentDto.InvoiceDto? = dbQuery {
+        InvoicesTable.selectAll().where {
+            (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (InvoicesTable.invoiceNumber eq invoiceNumber)
+        }.singleOrNull()?.let { row ->
+            val invoiceId = InvoiceId.parse(row[InvoicesTable.id].value.toString())
+            val items = InvoiceItemsTable.selectAll().where {
+                InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
+            }.orderBy(InvoiceItemsTable.sortOrder)
+                .map { itemRow ->
+                    InvoiceItemDto(
+                        id = itemRow[InvoiceItemsTable.id].value.toString(),
+                        invoiceId = invoiceId,
+                        description = itemRow[InvoiceItemsTable.description],
+                        quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
+                        unitPrice = Money.fromDbDecimal(itemRow[InvoiceItemsTable.unitPrice]),
+                        vatRate = VatRate.fromDbDecimal(itemRow[InvoiceItemsTable.vatRate]),
+                        lineTotal = Money.fromDbDecimal(itemRow[InvoiceItemsTable.lineTotal]),
+                        vatAmount = Money.fromDbDecimal(itemRow[InvoiceItemsTable.vatAmount]),
+                        sortOrder = itemRow[InvoiceItemsTable.sortOrder]
+                    )
+                }
+
+            FinancialDocumentDto.InvoiceDto(
+                id = invoiceId,
+                tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
+                direction = row[InvoicesTable.direction],
+                contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
+                invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
+                issueDate = row[InvoicesTable.issueDate],
+                dueDate = row[InvoicesTable.dueDate],
+                subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount]),
+                vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount]),
+                totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount]),
+                paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount]),
+                status = row[InvoicesTable.status],
+                currency = row[InvoicesTable.currency],
+                notes = row[InvoicesTable.notes],
+                termsAndConditions = row[InvoicesTable.termsAndConditions],
+                items = items,
+                peppolId = row[InvoicesTable.peppolId]?.let { PeppolId(it) },
+                peppolSentAt = row[InvoicesTable.peppolSentAt],
+                peppolStatus = row[InvoicesTable.peppolStatus],
+                paymentLink = row[InvoicesTable.paymentLink],
+                paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
+                paidAt = row[InvoicesTable.paidAt],
+                paymentMethod = row[InvoicesTable.paymentMethod],
+                documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                createdAt = row[InvoicesTable.createdAt],
+                updatedAt = row[InvoicesTable.updatedAt]
+            )
+        }
+    }
 }

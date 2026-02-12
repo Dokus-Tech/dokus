@@ -170,6 +170,30 @@ data class RejectDocumentRequest(
 )
 
 /**
+ * Request to repair missing cashflow projections for confirmed documents.
+ *
+ * Owner-only endpoint. Dry-run mode reports missing projections without writing.
+ */
+@Serializable
+data class RepairCashflowRequest(
+    val dryRun: Boolean = true
+)
+
+/**
+ * Response for cashflow repair operation.
+ */
+@Serializable
+data class RepairCashflowResponse(
+    val dryRun: Boolean,
+    val scanned: Int,
+    val missing: Int,
+    val repaired: Int,
+    val failed: Int,
+    val sampleDocumentIds: List<DocumentId> = emptyList(),
+    val errors: List<String> = emptyList()
+)
+
+/**
  * Filters for listing documents.
  */
 @Serializable

@@ -16,6 +16,8 @@ import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
+import tech.dokus.backend.services.auth.TeamService
+import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
@@ -27,11 +29,16 @@ import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.Money
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
+import tech.dokus.domain.model.RepairCashflowRequest
+import tech.dokus.domain.model.RepairCashflowResponse
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -41,6 +48,7 @@ import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
+import java.util.UUID
 
 /**
  * Document record routes using new canonical API.
@@ -63,9 +71,49 @@ internal fun Route.documentRecordRoutes() {
     val expenseRepository by inject<ExpenseRepository>()
     val creditNoteRepository by inject<CreditNoteRepository>()
     val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
+    val cashflowEntriesService by inject<CashflowEntriesService>()
+    val teamService by inject<TeamService>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
+
+    suspend fun ensureCashflowProjectionIfMissing(
+        tenantId: tech.dokus.domain.ids.TenantId,
+        documentId: DocumentId,
+        entity: FinancialDocumentDto
+    ): Result<tech.dokus.domain.ids.CashflowEntryId?> = runCatching {
+        val existing = cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrNull()
+        if (existing != null) return@runCatching existing.id
+
+        when (entity) {
+            is FinancialDocumentDto.InvoiceDto -> {
+                cashflowEntriesService.createFromInvoice(
+                    tenantId = tenantId,
+                    invoiceId = UUID.fromString(entity.id.toString()),
+                    documentId = documentId,
+                    dueDate = entity.dueDate,
+                    amountGross = entity.totalAmount,
+                    amountVat = entity.vatAmount,
+                    direction = entity.direction,
+                    contactId = entity.contactId
+                ).getOrThrow().id
+            }
+
+            is FinancialDocumentDto.ExpenseDto -> {
+                cashflowEntriesService.createFromExpense(
+                    tenantId = tenantId,
+                    expenseId = UUID.fromString(entity.id.toString()),
+                    documentId = documentId,
+                    expenseDate = entity.date,
+                    amountGross = entity.amount,
+                    amountVat = entity.vatAmount ?: Money.ZERO,
+                    contactId = entity.contactId
+                ).getOrThrow().id
+            }
+
+            else -> null
+        }
+    }
 
     authenticateJwt {
         /**
@@ -137,6 +185,127 @@ internal fun Route.documentRecordRoutes() {
                     total = total,
                     limit = limit,
                     offset = page * limit
+                )
+            )
+        }
+
+        /**
+         * POST /api/v1/documents/repair-cashflow
+         * Owner-only operation to repair missing cashflow projections for confirmed documents.
+         */
+        post<Documents.RepairCashflow> {
+            val principal = dokusPrincipal
+            val tenantId = principal.requireTenantId()
+
+            if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
+                throw DokusException.NotAuthorized("Only the workspace Owner can run cashflow repair")
+            }
+
+            val request = runCatching { call.receive<RepairCashflowRequest>() }
+                .getOrDefault(RepairCashflowRequest())
+
+            val sampleDocumentIds = mutableListOf<DocumentId>()
+            val missingCandidates = mutableListOf<Pair<DocumentId, FinancialDocumentDto>>()
+            var scanned = 0
+            var page = 0
+            val pageSize = 100
+
+            while (true) {
+                val (documentsWithInfo, _) = documentRepository.listWithDraftsAndIngestion(
+                    tenantId = tenantId,
+                    filter = DocumentListFilter.Confirmed,
+                    documentStatus = null,
+                    documentType = null,
+                    ingestionStatus = null,
+                    search = null,
+                    page = page,
+                    limit = pageSize
+                )
+
+                if (documentsWithInfo.isEmpty()) break
+
+                scanned += documentsWithInfo.size
+                for (docInfo in documentsWithInfo) {
+                    val draftType = docInfo.draft?.documentType ?: continue
+                    val confirmedEntity = findConfirmedEntity(
+                        docInfo.document.id,
+                        draftType,
+                        tenantId,
+                        invoiceRepository,
+                        expenseRepository,
+                        creditNoteRepository
+                    ) ?: continue
+
+                    val requiresProjection = confirmedEntity is FinancialDocumentDto.InvoiceDto ||
+                        confirmedEntity is FinancialDocumentDto.ExpenseDto
+                    if (!requiresProjection) continue
+
+                    val existingEntry = cashflowEntriesRepository
+                        .getByDocumentId(tenantId, docInfo.document.id)
+                        .getOrNull()
+                    if (existingEntry == null) {
+                        missingCandidates += docInfo.document.id to confirmedEntity
+                        if (sampleDocumentIds.size < 20) {
+                            sampleDocumentIds += docInfo.document.id
+                        }
+                    }
+                }
+
+                if (documentsWithInfo.size < pageSize) break
+                page += 1
+            }
+
+            if (request.dryRun) {
+                call.respond(
+                    HttpStatusCode.OK,
+                    RepairCashflowResponse(
+                        dryRun = true,
+                        scanned = scanned,
+                        missing = missingCandidates.size,
+                        repaired = 0,
+                        failed = 0,
+                        sampleDocumentIds = sampleDocumentIds
+                    )
+                )
+                return@post
+            }
+
+            var repaired = 0
+            var failed = 0
+            val errors = mutableListOf<String>()
+
+            for ((documentId, entity) in missingCandidates) {
+                ensureCashflowProjectionIfMissing(tenantId, documentId, entity)
+                    .fold(
+                        onSuccess = { entryId ->
+                            if (entryId != null) {
+                                repaired += 1
+                            } else {
+                                failed += 1
+                                if (errors.size < 20) {
+                                    errors += "No cashflow projection created for document $documentId"
+                                }
+                            }
+                        },
+                        onFailure = { throwable ->
+                            failed += 1
+                            if (errors.size < 20) {
+                                errors += "Document $documentId: ${throwable.message ?: "unknown error"}"
+                            }
+                        }
+                    )
+            }
+
+            call.respond(
+                HttpStatusCode.OK,
+                RepairCashflowResponse(
+                    dryRun = false,
+                    scanned = scanned,
+                    missing = missingCandidates.size,
+                    repaired = repaired,
+                    failed = failed,
+                    sampleDocumentIds = sampleDocumentIds,
+                    errors = errors
                 )
             )
         }
@@ -413,9 +582,21 @@ internal fun Route.documentRecordRoutes() {
                     val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
                     val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
-                    // Look up the cashflow entry for this document
-                    val cashflowEntry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId)
+                    // Look up and repair missing projection for confirmed financial entities.
+                    val currentEntryId = cashflowEntriesRepository
+                        .getByDocumentId(tenantId, documentId)
                         .getOrNull()
+                        ?.id
+                    val repairedEntryId = if (currentEntryId != null) {
+                        currentEntryId
+                    } else {
+                        ensureCashflowProjectionIfMissing(tenantId, documentId, confirmedEntity)
+                            .getOrElse {
+                                throw DokusException.InternalError(
+                                    "Failed to repair missing cashflow projection: ${it.message}"
+                                )
+                            }
+                    }
 
                     call.respond(
                         HttpStatusCode.OK,
@@ -427,7 +608,7 @@ internal fun Route.documentRecordRoutes() {
                                 includeTrace = true
                             ),
                             confirmedEntity = confirmedEntity,
-                            cashflowEntryId = cashflowEntry?.id
+                            cashflowEntryId = repairedEntryId
                         )
                     )
                     return@post

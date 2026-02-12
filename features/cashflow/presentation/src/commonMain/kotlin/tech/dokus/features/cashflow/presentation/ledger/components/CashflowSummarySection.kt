@@ -27,6 +27,8 @@ import tech.dokus.aura.resources.cashflow_summary_last_30_days
 import tech.dokus.aura.resources.cashflow_summary_last_30d
 import tech.dokus.aura.resources.cashflow_summary_next_30_days
 import tech.dokus.aura.resources.cashflow_summary_next_30d
+import tech.dokus.aura.resources.cashflow_summary_overdue
+import tech.dokus.aura.resources.cashflow_summary_overdue_short
 import tech.dokus.aura.resources.cashflow_summary_out
 import tech.dokus.aura.resources.cashflow_summary_paid
 import tech.dokus.aura.resources.cashflow_summary_received

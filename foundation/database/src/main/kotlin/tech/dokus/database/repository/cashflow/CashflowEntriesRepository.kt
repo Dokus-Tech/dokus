@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -226,6 +227,17 @@ class CashflowEntriesRepository {
         statuses: List<CashflowEntryStatus>? = null
     ): Result<List<CashflowEntry>> = runCatching {
         dbQuery {
+            val effectiveStatuses = if (!statuses.isNullOrEmpty()) {
+                statuses
+            } else {
+                when (viewMode) {
+                    CashflowViewMode.Upcoming,
+                    CashflowViewMode.Overdue -> listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)
+                    CashflowViewMode.History -> listOf(CashflowEntryStatus.Paid)
+                    null -> null
+                }
+            }
+
             var query = CashflowEntriesTable
                 .join(
                     ContactsTable,
@@ -239,7 +251,7 @@ class CashflowEntriesRepository {
                 }
 
             // Exclude Cancelled by default (unless explicitly included in statuses)
-            if (statuses == null || CashflowEntryStatus.Cancelled !in statuses) {
+            if (effectiveStatuses == null || CashflowEntryStatus.Cancelled !in effectiveStatuses) {
                 query = query.andWhere { CashflowEntriesTable.status neq CashflowEntryStatus.Cancelled }
             }
 
@@ -283,8 +295,8 @@ class CashflowEntriesRepository {
             }
 
             // Multi-status filtering
-            if (!statuses.isNullOrEmpty()) {
-                query = query.andWhere { CashflowEntriesTable.status inList statuses }
+            if (!effectiveStatuses.isNullOrEmpty()) {
+                query = query.andWhere { CashflowEntriesTable.status inList effectiveStatuses }
             }
 
             if (direction != null) {
@@ -373,6 +385,35 @@ class CashflowEntriesRepository {
                 it[status] = newStatus
                 if (paidAt != null) {
                     it[CashflowEntriesTable.paidAt] = paidAt
+                }
+            }
+            updated > 0
+        }
+    }
+
+    /**
+     * Update gross/vat/remaining amounts and status atomically.
+     * CRITICAL: MUST filter by tenant_id.
+     */
+    suspend fun updateAmountsAndStatus(
+        entryId: CashflowEntryId,
+        tenantId: TenantId,
+        amountGross: Money,
+        amountVat: Money,
+        remainingAmount: Money,
+        newStatus: CashflowEntryStatus
+    ): Result<Boolean> = runCatching {
+        dbQuery {
+            val updated = CashflowEntriesTable.update({
+                (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
+                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
+            }) {
+                it[CashflowEntriesTable.amountGross] = amountGross.toDbDecimal()
+                it[CashflowEntriesTable.amountVat] = amountVat.toDbDecimal()
+                it[CashflowEntriesTable.remainingAmount] = remainingAmount.toDbDecimal()
+                it[status] = newStatus
+                if (newStatus != CashflowEntryStatus.Paid) {
+                    it[paidAt] = null
                 }
             }
             updated > 0

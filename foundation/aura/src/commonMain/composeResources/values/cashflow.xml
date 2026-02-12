@@ -36,9 +36,12 @@
     <string name="cashflow_ledger_empty_hint">Try adjusting your filters</string>
     <!-- Context-aware empty states -->
     <string name="cashflow_empty_upcoming">No upcoming cash movements in the next 30 days.</string>
-    <string name="cashflow_empty_upcoming_hint">Cashflow entries appear when documents are confirmed.</string>
+    <string name="cashflow_empty_upcoming_hint">Confirmed documents with due dates in the next 30 days appear here.</string>
     <string name="cashflow_empty_upcoming_in">No incoming upcoming movements.</string>
     <string name="cashflow_empty_upcoming_out">No outgoing upcoming movements.</string>
+    <string name="cashflow_empty_overdue">No overdue cash movements.</string>
+    <string name="cashflow_empty_overdue_in">No overdue incoming movements.</string>
+    <string name="cashflow_empty_overdue_out">No overdue outgoing movements.</string>
     <string name="cashflow_empty_history">No recorded cash movements yet.</string>
     <string name="cashflow_empty_history_in">No incoming recorded movements.</string>
     <string name="cashflow_empty_history_out">No outgoing recorded movements.</string>
@@ -53,6 +56,8 @@
     <string name="cashflow_summary_last_30_days">Last 30 days</string>
     <string name="cashflow_summary_next_30d">Next 30d</string>
     <string name="cashflow_summary_last_30d">Last 30d</string>
+    <string name="cashflow_summary_overdue">Overdue</string>
+    <string name="cashflow_summary_overdue_short">Overdue</string>
     <string name="cashflow_summary_expected_in">Expected in</string>
     <string name="cashflow_summary_expected_out">Expected out</string>
     <string name="cashflow_summary_received">Received</string>
@@ -65,6 +70,7 @@
 
     <!-- View Modes -->
     <string name="cashflow_view_upcoming">Upcoming</string>
+    <string name="cashflow_view_overdue">Overdue</string>
     <string name="cashflow_view_history">History</string>
 
     <!-- Direction Filters -->

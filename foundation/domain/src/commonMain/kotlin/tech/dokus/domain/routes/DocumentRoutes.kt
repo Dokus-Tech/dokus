@@ -64,6 +64,14 @@ class Documents {
     class Upload(val parent: Documents = Documents())
 
     /**
+     * POST /api/v1/documents/repair-cashflow
+     * Owner-only admin action to repair missing cashflow projections for confirmed documents.
+     */
+    @Serializable
+    @Resource("repair-cashflow")
+    class RepairCashflow(val parent: Documents = Documents())
+
+    /**
      * /api/v1/documents/{id} - Single document operations
      * GET - Retrieve full DocumentRecordDto
      * DELETE - Delete document (cascades to drafts, ingestion runs, chunks)
@@ -96,16 +104,16 @@ class Documents {
         @Resource("reprocess")
         class Reprocess(val parent: Id)
 
-	        /**
-	         * POST /api/v1/documents/{id}/confirm
-	         * Confirm extraction and create financial entity
-	         * TRANSACTIONAL + IDEMPOTENT:
-	         * - If entity does not exist yet, creates it.
-	         * - If entity exists, confirmation is idempotent and may re-confirm after edits (if allowed by cashflow rules).
-	         */
-	        @Serializable
-	        @Resource("confirm")
-	        class Confirm(val parent: Id)
+        /**
+         * POST /api/v1/documents/{id}/confirm
+         * Confirm extraction and create financial entity
+         * TRANSACTIONAL + IDEMPOTENT:
+         * - If entity does not exist yet, creates it.
+         * - If entity exists, confirmation is idempotent and may re-confirm after edits (if allowed by cashflow rules).
+         */
+        @Serializable
+        @Resource("confirm")
+        class Confirm(val parent: Id)
 
         /**
          * POST /api/v1/documents/{id}/reject
