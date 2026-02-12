@@ -1,5 +1,4 @@
 import XCTest
-@testable import DokusShareExtension
 
 final class ShareImportFailureLocalizationTests: XCTestCase {
     private lazy var rootBundle = Bundle(for: ShareImportFailureLocalizationTests.self)

@@ -16,6 +16,8 @@
 		F20100032EAB000100000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F20101112EAB000100000001 /* Localizable.strings */; };
 		F20100042EAB000100000001 /* ShareLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20100122EAB000100000001 /* ShareLocalizationTests.swift */; };
 		F20100052EAB000100000001 /* ShareImportFailureLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20100132EAB000100000001 /* ShareImportFailureLocalizationTests.swift */; };
+		F20100062EAB000100000001 /* ShareLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20100112EAB000100000001 /* ShareLocalization.swift */; };
+		F20100072EAB000100000001 /* ShareImportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100162EAA000100000001 /* ShareImportState.swift */; };
 		F10100012EAA000100000001 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100112EAA000100000001 /* ShareViewController.swift */; };
 		F10100032EAA000100000001 /* ShareImportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100162EAA000100000001 /* ShareImportState.swift */; };
 		F10100042EAA000100000001 /* ShareImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100172EAA000100000001 /* ShareImportViewModel.swift */; };
@@ -380,6 +382,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F20100062EAB000100000001 /* ShareLocalization.swift in Sources */,
+				F20100072EAB000100000001 /* ShareImportState.swift in Sources */,
 				F20100042EAB000100000001 /* ShareLocalizationTests.swift in Sources */,
 				F20100052EAB000100000001 /* ShareImportFailureLocalizationTests.swift in Sources */,
 			);

@@ -34,7 +34,7 @@ final class ShareViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .black
 
         let rootView = ShareImportRootView(
             viewModel: viewModel,

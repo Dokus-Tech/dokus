@@ -1,5 +1,4 @@
 import XCTest
-@testable import DokusShareExtension
 
 final class ShareLocalizationTests: XCTestCase {
     private let localeIdentifiers = ShareLocalization.supportedLocaleIdentifiers
