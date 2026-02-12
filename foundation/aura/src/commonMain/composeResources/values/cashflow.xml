@@ -188,6 +188,8 @@
     <string name="share_import_success_multiple">%1$d documents uploaded</string>
     <string name="share_import_success_summary_multiple">%1$s + %2$d more</string>
     <string name="share_import_go_to_login">Go to login</string>
+    <string name="share_import_open_app">Open app</string>
+    <string name="share_import_workspace_switch_hint">Switch workspace in the app and try again.</string>
 
     <!-- Upload Item Actions -->
     <string name="upload_action_cancel">Cancel</string>

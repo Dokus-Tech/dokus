@@ -102,7 +102,7 @@ class MainActivity : ComponentActivity() {
             return uris.distinctBy(Uri::toString)
         }
 
-        val multi = intent.getParcelableArrayListExtraCompat(Intent.EXTRA_STREAM)
+        val multi = intent.getParcelableArrayListExtraCompat<Uri>(Intent.EXTRA_STREAM)
         if (!multi.isNullOrEmpty()) {
             return multi.distinctBy(Uri::toString)
         }
