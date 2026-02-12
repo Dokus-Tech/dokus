@@ -8,8 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import androidx.navigation.compose.currentBackStackEntryAsState
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
@@ -26,6 +26,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.cashflow.presentation.documents.route.DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -59,7 +60,17 @@ internal fun DocumentReviewRoute(
 ) {
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
+    fun markDocumentsRefreshRequired() {
+        navController.previousBackStackEntry
+            ?.savedStateHandle
+            ?.set(DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY, true)
+    }
+
     val pendingContactId = backStackEntry?.savedStateHandle?.get<String>(CONTACT_RESULT_KEY)
+
+    LaunchedEffect(Unit) {
+        markDocumentsRefreshRequired()
+    }
 
     LaunchedEffect(pendingContactId) {
         if (pendingContactId != null) {
@@ -102,18 +113,27 @@ internal fun DocumentReviewRoute(
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
-            is DocumentReviewAction.NavigateBack -> navController.popBackStack()
+            is DocumentReviewAction.NavigateBack -> {
+                markDocumentsRefreshRequired()
+                navController.popBackStack()
+            }
             is DocumentReviewAction.NavigateToChat -> {
                 navController.navigateTo(CashFlowDestination.DocumentChat(action.documentId.toString()))
             }
-            is DocumentReviewAction.NavigateToEntity -> navController.popBackStack()
+            is DocumentReviewAction.NavigateToEntity -> {
+                markDocumentsRefreshRequired()
+                navController.popBackStack()
+            }
             is DocumentReviewAction.NavigateToCashflowEntry -> {
                 navController.navigateTo(
                     CashFlowDestination.CashflowLedger(action.entryId.toString())
                 )
             }
             is DocumentReviewAction.ShowError -> pendingError = action.error
-            is DocumentReviewAction.ShowSuccess -> pendingSuccess = action.success
+            is DocumentReviewAction.ShowSuccess -> {
+                pendingSuccess = action.success
+                markDocumentsRefreshRequired()
+            }
             is DocumentReviewAction.ShowDiscardConfirmation -> {
                 showDiscardDialog = true
             }
@@ -164,7 +184,10 @@ internal fun DocumentReviewRoute(
         state = state,
         isLargeScreen = isLargeScreen,
         onIntent = { container.store.intent(it) },
-        onBackClick = { navController.popBackStack() },
+        onBackClick = {
+            markDocumentsRefreshRequired()
+            navController.popBackStack()
+        },
         onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
         onCorrectContact = { _ ->
             // Open the contact sheet instead of navigating away

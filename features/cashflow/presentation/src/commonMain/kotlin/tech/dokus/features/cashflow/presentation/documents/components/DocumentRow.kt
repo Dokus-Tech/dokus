@@ -328,22 +328,32 @@ private fun StatusDot(
 
 /**
  * Determines if a document needs user attention.
- * Documents need attention if they are:
- * - Processing or queued (temporary state)
- * - Failed ingestion
- * - Needs review
+ * Mirrors backend `DocumentListFilter.NeedsAttention` semantics for row-level indicator:
+ * - Excludes rejected documents
+ * - Includes queued/processing/failed ingestion states
+ * - Includes draft needs review
+ * - Includes anomaly states (`Confirmed` draft without confirmed entity, succeeded without draft)
  */
 internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
     val documentStatus = document.draft?.documentStatus
+    val hasConfirmedEntity = document.confirmedEntity != null
 
-    return when {
-        ingestionStatus == IngestionStatus.Failed -> true
-        ingestionStatus == IngestionStatus.Processing ||
-            ingestionStatus == IngestionStatus.Queued -> true
-        documentStatus == DocumentStatus.NeedsReview -> true
-        else -> false
+    if (documentStatus == DocumentStatus.Rejected) {
+        return false
     }
+
+    val ingestionNeedsAttention = ingestionStatus == IngestionStatus.Failed ||
+        ingestionStatus == IngestionStatus.Processing ||
+        ingestionStatus == IngestionStatus.Queued
+    val draftNeedsReview = documentStatus == DocumentStatus.NeedsReview
+    val confirmedButNoEntity = documentStatus == DocumentStatus.Confirmed && !hasConfirmedEntity
+    val succeededButNoDraft = document.draft == null && ingestionStatus == IngestionStatus.Succeeded
+    val isNotConfirmed = documentStatus == null ||
+        documentStatus != DocumentStatus.Confirmed ||
+        !hasConfirmedEntity
+
+    return confirmedButNoEntity || (isNotConfirmed && (ingestionNeedsAttention || draftNeedsReview || succeededButNoDraft))
 }
 
 /**

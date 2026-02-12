@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.exists
+import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
@@ -72,7 +73,8 @@ internal object DocumentListingQuery {
             .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
             .alias("processing_max_started_at")
 
-        val processingRunId = DocumentIngestionRunsTable.id.max().alias("processing_run_id")
+        val processingRunId = DocumentIngestionRunsTable.id.alias("processing_run_id")
+        val processingTieBreak = DocumentIngestionRunsTable.alias("processing_tie_break")
         val processingSelected = DocumentIngestionRunsTable
             .join(processingMaxStartedAt, joinType = JoinType.INNER, additionalConstraint = {
                 (DocumentIngestionRunsTable.documentId eq processingMaxStartedAt[DocumentIngestionRunsTable.documentId]) and
@@ -81,7 +83,25 @@ internal object DocumentListingQuery {
                     (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             })
             .select(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, processingRunId)
-            .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
+            .where {
+                not(
+                    exists(
+                        processingTieBreak
+                            .select(processingTieBreak[DocumentIngestionRunsTable.id])
+                            .where {
+                                (processingTieBreak[DocumentIngestionRunsTable.documentId] eq
+                                    DocumentIngestionRunsTable.documentId) and
+                                    (processingTieBreak[DocumentIngestionRunsTable.tenantId] eq
+                                        DocumentIngestionRunsTable.tenantId) and
+                                    (processingTieBreak[DocumentIngestionRunsTable.status] eq IngestionStatus.Processing) and
+                                    (processingTieBreak[DocumentIngestionRunsTable.startedAt] eq
+                                        DocumentIngestionRunsTable.startedAt) and
+                                    (processingTieBreak[DocumentIngestionRunsTable.id] greater
+                                        DocumentIngestionRunsTable.id)
+                            }
+                    )
+                )
+            }
             .alias("processing_selected")
 
         val finishedStatuses = listOf(IngestionStatus.Succeeded, IngestionStatus.Failed)
@@ -95,7 +115,8 @@ internal object DocumentListingQuery {
             .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
             .alias("finished_max_finished_at")
 
-        val finishedRunId = DocumentIngestionRunsTable.id.max().alias("finished_run_id")
+        val finishedRunId = DocumentIngestionRunsTable.id.alias("finished_run_id")
+        val finishedTieBreak = DocumentIngestionRunsTable.alias("finished_tie_break")
         val finishedSelected = DocumentIngestionRunsTable
             .join(finishedMaxFinishedAt, joinType = JoinType.INNER, additionalConstraint = {
                 (DocumentIngestionRunsTable.documentId eq finishedMaxFinishedAt[DocumentIngestionRunsTable.documentId]) and
@@ -104,7 +125,25 @@ internal object DocumentListingQuery {
                     (DocumentIngestionRunsTable.status inList finishedStatuses)
             })
             .select(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, finishedRunId)
-            .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
+            .where {
+                not(
+                    exists(
+                        finishedTieBreak
+                            .select(finishedTieBreak[DocumentIngestionRunsTable.id])
+                            .where {
+                                (finishedTieBreak[DocumentIngestionRunsTable.documentId] eq
+                                    DocumentIngestionRunsTable.documentId) and
+                                    (finishedTieBreak[DocumentIngestionRunsTable.tenantId] eq
+                                        DocumentIngestionRunsTable.tenantId) and
+                                    (finishedTieBreak[DocumentIngestionRunsTable.status] inList finishedStatuses) and
+                                    (finishedTieBreak[DocumentIngestionRunsTable.finishedAt] eq
+                                        DocumentIngestionRunsTable.finishedAt) and
+                                    (finishedTieBreak[DocumentIngestionRunsTable.id] greater
+                                        DocumentIngestionRunsTable.id)
+                            }
+                    )
+                )
+            }
             .alias("finished_selected")
 
         val maxQueuedAt = DocumentIngestionRunsTable.queuedAt.max().alias("max_queued_at")
@@ -117,7 +156,8 @@ internal object DocumentListingQuery {
             .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
             .alias("queued_max_queued_at")
 
-        val queuedRunId = DocumentIngestionRunsTable.id.max().alias("queued_run_id")
+        val queuedRunId = DocumentIngestionRunsTable.id.alias("queued_run_id")
+        val queuedTieBreak = DocumentIngestionRunsTable.alias("queued_tie_break")
         val queuedSelected = DocumentIngestionRunsTable
             .join(queuedMaxQueuedAt, joinType = JoinType.INNER, additionalConstraint = {
                 (DocumentIngestionRunsTable.documentId eq queuedMaxQueuedAt[DocumentIngestionRunsTable.documentId]) and
@@ -126,7 +166,25 @@ internal object DocumentListingQuery {
                     (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
             })
             .select(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId, queuedRunId)
-            .groupBy(DocumentIngestionRunsTable.documentId, DocumentIngestionRunsTable.tenantId)
+            .where {
+                not(
+                    exists(
+                        queuedTieBreak
+                            .select(queuedTieBreak[DocumentIngestionRunsTable.id])
+                            .where {
+                                (queuedTieBreak[DocumentIngestionRunsTable.documentId] eq
+                                    DocumentIngestionRunsTable.documentId) and
+                                    (queuedTieBreak[DocumentIngestionRunsTable.tenantId] eq
+                                        DocumentIngestionRunsTable.tenantId) and
+                                    (queuedTieBreak[DocumentIngestionRunsTable.status] eq IngestionStatus.Queued) and
+                                    (queuedTieBreak[DocumentIngestionRunsTable.queuedAt] eq
+                                        DocumentIngestionRunsTable.queuedAt) and
+                                    (queuedTieBreak[DocumentIngestionRunsTable.id] greater
+                                        DocumentIngestionRunsTable.id)
+                            }
+                    )
+                )
+            }
             .alias("queued_selected")
 
         val finishedRun = DocumentIngestionRunsTable.alias("finished_run")
