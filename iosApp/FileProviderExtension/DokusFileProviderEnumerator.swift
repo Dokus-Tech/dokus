@@ -22,7 +22,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     forceRefresh: true
                 )
                 let offset = decodePage(page)
-                let suggested = max(observer.suggestedPageSize, 1)
+                let suggested = max(observer.suggestedPageSize ?? 100, 1)
                 let pageSize = min(max(suggested, 100), 500)
 
                 guard offset < children.count else {
@@ -99,19 +99,23 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     }
 
     private func decodePage(_ page: NSFileProviderPage) -> Int {
-        if page == NSFileProviderInitialPageSortedByName || page == NSFileProviderInitialPageSortedByDate {
+        let initialByName = NSFileProviderPage(rawValue: NSFileProviderPage.initialPageSortedByName as Data)
+        let initialByDate = NSFileProviderPage(rawValue: NSFileProviderPage.initialPageSortedByDate as Data)
+        if page == initialByName || page == initialByDate {
             return 0
         }
-        guard page.count == MemoryLayout<Int32>.size else {
+        let data = page.rawValue as Data
+        guard data.count == MemoryLayout<Int32>.size else {
             return 0
         }
-        return page.withUnsafeBytes { buffer in
+        return data.withUnsafeBytes { buffer in
             Int(Int32(bigEndian: buffer.load(as: Int32.self)))
         }
     }
 
     private func encodePage(_ value: Int) -> NSFileProviderPage {
         var bigEndian = Int32(value).bigEndian
-        return Data(bytes: &bigEndian, count: MemoryLayout<Int32>.size)
+        let data = Data(bytes: &bigEndian, count: MemoryLayout<Int32>.size)
+        return NSFileProviderPage(rawValue: data)
     }
 }

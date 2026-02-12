@@ -8,7 +8,7 @@ enum DokusPlacement: Hashable {
     case typed(DokusTypedFolder)
 }
 
-struct DokusProjectedItem: Hashable {
+struct DokusProjectedItem {
     let identifier: NSFileProviderItemIdentifier
     let parentIdentifier: NSFileProviderItemIdentifier
     let filename: String

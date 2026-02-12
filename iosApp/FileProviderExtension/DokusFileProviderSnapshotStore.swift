@@ -116,7 +116,7 @@ final class DokusFileProviderSnapshotStore {
 
             let deleted = fromById.keys
                 .filter { currentById[$0] == nil }
-                .map(NSFileProviderItemIdentifier.init)
+                .map { NSFileProviderItemIdentifier($0) }
 
             return DokusChangeSet(
                 updatedIdentifiers: updated,
@@ -139,17 +139,22 @@ final class DokusFileProviderSnapshotStore {
     }
 
     private func decodeAnchor(_ anchor: NSFileProviderSyncAnchor?) -> Int64? {
-        guard let anchor, anchor.count == MemoryLayout<Int64>.size else {
+        guard let anchor else {
             return nil
         }
-        return anchor.withUnsafeBytes { rawBuffer in
+        let data = anchor.rawValue as Data
+        guard data.count == MemoryLayout<Int64>.size else {
+            return nil
+        }
+        return data.withUnsafeBytes { rawBuffer in
             rawBuffer.load(as: Int64.self).bigEndian
         }
     }
 
     private func makeAnchor(from generation: Int64) -> NSFileProviderSyncAnchor {
         var bigEndian = generation.bigEndian
-        return Data(bytes: &bigEndian, count: MemoryLayout<Int64>.size)
+        let data = Data(bytes: &bigEndian, count: MemoryLayout<Int64>.size)
+        return NSFileProviderSyncAnchor(rawValue: data)
     }
 
     private func loadState() -> SnapshotState {

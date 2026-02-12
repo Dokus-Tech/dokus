@@ -109,11 +109,12 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                 guard let contentURL = url else {
                     throw DokusFileProviderError.unsupportedOperation("Only file uploads to Inbox are supported")
                 }
-                if itemTemplate.contentType.conforms(to: .folder) {
+                let templateType = itemTemplate.contentType ?? .data
+                if templateType.conforms(to: .folder) {
                     throw DokusFileProviderError.unsupportedOperation("Creating folders is not allowed")
                 }
 
-                let mimeType = itemTemplate.contentType.preferredMIMEType ?? "application/octet-stream"
+                let mimeType = templateType.preferredMIMEType ?? "application/octet-stream"
                 let created = try await runtime.uploadDocument(
                     to: itemTemplate.parentItemIdentifier,
                     filename: itemTemplate.filename,
