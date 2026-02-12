@@ -137,6 +137,12 @@ SPA routing and build settings are versioned in `vercel.json`:
 - Output directory: `composeApp/build/dist/wasmJs/productionExecutable`
 - Rewrites: app routes fallback to `index.html`, while static assets (e.g. `.js`, `.css`, `.wasm`) stay direct
 
+Vercel Observability (Web Analytics + Speed Insights):
+
+- Enable both features in your Vercel Project settings first.
+- If enabled after a deployment, redeploy (and promote to production if needed) so Vercel provisions `/_vercel/insights/*` and `/_vercel/speed-insights/*` routes.
+- The web client only injects these scripts when the endpoints are reachable to avoid browser 404 noise on environments where observability is not enabled.
+
 ---
 
 ## ⚡ Features
