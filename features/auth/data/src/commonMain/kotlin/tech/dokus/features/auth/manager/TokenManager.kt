@@ -70,6 +70,10 @@ class TokenManagerImpl(
             refreshToken = loginResponse.refreshToken,
             expiresIn = loginResponse.expiresIn
         )
+        jwtDecoder.decode(loginResponse.accessToken)
+            ?.tenant
+            ?.tenantId
+            ?.let { tokenStorage.saveLastSelectedTenantId(it) }
         validateAndUpdateState(loginResponse.accessToken)
     }
 

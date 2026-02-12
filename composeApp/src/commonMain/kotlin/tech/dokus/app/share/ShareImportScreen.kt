@@ -20,29 +20,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.share_import_choose_workspace
 import tech.dokus.aura.resources.share_import_file_progress
 import tech.dokus.aura.resources.share_import_go_to_login
+import tech.dokus.aura.resources.share_import_open_app
 import tech.dokus.aura.resources.share_import_overall_progress
 import tech.dokus.aura.resources.share_import_preparing
-import tech.dokus.aura.resources.share_import_select_workspace_multiple
-import tech.dokus.aura.resources.share_import_select_workspace_single
 import tech.dokus.aura.resources.share_import_success_multiple
 import tech.dokus.aura.resources.share_import_success_single
 import tech.dokus.aura.resources.share_import_success_summary_multiple
-import tech.dokus.aura.resources.share_import_switching_workspace
 import tech.dokus.aura.resources.share_import_title
 import tech.dokus.aura.resources.share_import_uploading_to
+import tech.dokus.aura.resources.share_import_workspace_switch_hint
 import tech.dokus.aura.resources.state_error
 import tech.dokus.aura.resources.state_retry
 import tech.dokus.app.share.ShareImportIntent.NavigateToLogin
-import tech.dokus.app.share.ShareImportIntent.SelectWorkspace
-import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
-import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.app.share.ShareImportIntent.OpenApp
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.domain.exceptions.DokusException
 
 @Composable
 internal fun ShareImportScreen(
@@ -50,7 +47,7 @@ internal fun ShareImportScreen(
     onIntent: (ShareImportIntent) -> Unit
 ) {
     ShareImportBackHandler(
-        enabled = state is ShareImportState.Uploading || state is ShareImportState.Success
+        enabled = state is ShareImportState.Uploading || state is ShareImportState.SuccessPulse
     )
 
     Scaffold(
@@ -72,9 +69,8 @@ internal fun ShareImportScreen(
         ) {
             when (state) {
                 ShareImportState.LoadingContext -> LoadingContextContent()
-                is ShareImportState.SelectWorkspace -> SelectWorkspaceContent(state, onIntent)
                 is ShareImportState.Uploading -> UploadingContent(state)
-                is ShareImportState.Success -> SuccessContent(state)
+                is ShareImportState.SuccessPulse -> SuccessContent(state)
                 is ShareImportState.Error -> ErrorContent(state, onIntent)
             }
         }
@@ -90,50 +86,6 @@ private fun LoadingContextContent() {
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
-}
-
-@Composable
-private fun SelectWorkspaceContent(
-    state: ShareImportState.SelectWorkspace,
-    onIntent: (ShareImportIntent) -> Unit
-) {
-    Text(
-        text = stringResource(Res.string.share_import_choose_workspace),
-        style = MaterialTheme.typography.headlineSmall,
-        color = MaterialTheme.colorScheme.onSurface
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    Text(
-        text = workspaceSelectionDescription(
-            primaryFileName = state.primaryFileName,
-            additionalFileCount = state.additionalFileCount
-        ),
-        style = MaterialTheme.typography.bodyMedium,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-    Spacer(modifier = Modifier.height(20.dp))
-
-    WorkspaceSelectionBody(
-        state = DokusState.success(state.workspaces),
-        onTenantClick = { tenant ->
-            if (!state.isSwitchingWorkspace) {
-                onIntent(SelectWorkspace(tenant.id))
-            }
-        },
-        onAddTenantClick = {}
-    )
-
-    if (state.isSwitchingWorkspace) {
-        Spacer(modifier = Modifier.height(20.dp))
-        CircularProgressIndicator()
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = stringResource(Res.string.share_import_switching_workspace),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
 }
 
 @Composable
@@ -179,7 +131,7 @@ private fun UploadingContent(state: ShareImportState.Uploading) {
 }
 
 @Composable
-private fun SuccessContent(state: ShareImportState.Success) {
+private fun SuccessContent(state: ShareImportState.SuccessPulse) {
     AnimatedCheck(play = true)
     Spacer(modifier = Modifier.height(18.dp))
 
@@ -229,6 +181,25 @@ private fun ErrorContent(
             onClick = { state.retryHandler.retry() }
         )
     }
+    if (state.canOpenApp) {
+        if (state.retryHandler != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+        POutlinedButton(
+            text = stringResource(Res.string.share_import_open_app),
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { onIntent(OpenApp) }
+        )
+        if (state.exception is DokusException.WorkspaceContextUnavailable) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(Res.string.share_import_workspace_switch_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
     if (state.canNavigateToLogin) {
         if (state.retryHandler != null) {
             Spacer(modifier = Modifier.height(12.dp))
@@ -238,18 +209,6 @@ private fun ErrorContent(
             modifier = Modifier.fillMaxWidth(),
             onClick = { onIntent(NavigateToLogin) }
         )
-    }
-}
-
-@Composable
-private fun workspaceSelectionDescription(
-    primaryFileName: String,
-    additionalFileCount: Int
-): String {
-    return if (additionalFileCount == 0) {
-        stringResource(Res.string.share_import_select_workspace_single, primaryFileName)
-    } else {
-        stringResource(Res.string.share_import_select_workspace_multiple, additionalFileCount + 1)
     }
 }
 

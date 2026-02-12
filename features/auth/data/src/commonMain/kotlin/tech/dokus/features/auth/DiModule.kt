@@ -61,6 +61,8 @@ import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCaseImpl
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCaseImpl
+import tech.dokus.features.auth.usecases.GetLastSelectedTenantIdUseCase
+import tech.dokus.features.auth.usecases.GetLastSelectedTenantIdUseCaseImpl
 import tech.dokus.features.auth.usecases.GetTenantAddressUseCase
 import tech.dokus.features.auth.usecases.GetTenantAddressUseCaseImpl
 import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
@@ -171,6 +173,7 @@ val authDomainModule = module {
     singleOf(::TransferWorkspaceOwnershipUseCaseImpl) bind TransferWorkspaceOwnershipUseCase::class
     singleOf(::GetCurrentTenantUseCaseImpl) bind GetCurrentTenantUseCase::class
     singleOf(::GetCurrentTenantIdUseCaseImpl) bind GetCurrentTenantIdUseCase::class
+    singleOf(::GetLastSelectedTenantIdUseCaseImpl) bind GetLastSelectedTenantIdUseCase::class
     singleOf(::SelectTenantUseCaseImpl) bind SelectTenantUseCase::class
 
     // Server connection use cases

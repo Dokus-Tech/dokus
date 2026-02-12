@@ -6,40 +6,41 @@ import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.updateStateImmediate
-import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Tenant
+import tech.dokus.features.auth.usecases.GetLastSelectedTenantIdUseCase
 import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import tech.dokus.features.cashflow.usecases.UploadDocumentUseCase
 import tech.dokus.foundation.platform.Logger
 
-private const val SuccessAnimationDelayMs = 1200L
+private const val SuccessAnimationDelayMs = 900L
 
 internal typealias ShareImportCtx =
     PipelineContext<ShareImportState, ShareImportIntent, ShareImportAction>
 
 internal class ShareImportContainer(
     private val tokenManager: TokenManager,
+    private val getLastSelectedTenantIdUseCase: GetLastSelectedTenantIdUseCase,
     private val listMyTenantsUseCase: ListMyTenantsUseCase,
     private val selectTenantUseCase: SelectTenantUseCase,
     private val uploadDocumentUseCase: UploadDocumentUseCase,
 ) : Container<ShareImportState, ShareImportIntent, ShareImportAction> {
     private val logger = Logger.forClass<ShareImportContainer>()
     private var activeFiles: List<SharedImportFile> = emptyList()
+    private var uploadSession: UploadSession? = null
 
     override val store: Store<ShareImportState, ShareImportIntent, ShareImportAction> =
         store(ShareImportState.LoadingContext) {
             reduce { intent ->
                 when (intent) {
                     ShareImportIntent.Load -> handleLoad()
-                    ShareImportIntent.Retry -> handleLoad()
+                    ShareImportIntent.Retry -> handleRetry()
                     ShareImportIntent.NavigateToLogin -> action(ShareImportAction.NavigateToLogin)
-                    is ShareImportIntent.SelectWorkspace -> handleSelectWorkspace(intent.tenantId)
+                    ShareImportIntent.OpenApp -> action(ShareImportAction.OpenApp)
                 }
             }
         }
@@ -54,10 +55,17 @@ internal class ShareImportContainer(
         }
         if (sharedFiles.isEmpty()) {
             logger.w { "Share import opened without pending shared files" }
-            updateState { ShareImportState.Error(DokusException.NotFound(), null, false) }
+            updateState {
+                ShareImportState.Error(
+                    exception = DokusException.NotFound(),
+                    retryHandler = null,
+                    canNavigateToLogin = false
+                )
+            }
             return
         }
         activeFiles = sharedFiles
+        ensureUploadSession(sharedFiles)
 
         if (!tokenManager.isAuthenticated.value) {
             logger.w { "Share import received while user is not authenticated" }
@@ -71,34 +79,33 @@ internal class ShareImportContainer(
             return
         }
 
-        listMyTenantsUseCase()
-            .onSuccess { workspaces ->
-                when {
-                    workspaces.isEmpty() -> {
-                        updateState {
-                            ShareImportState.Error(
-                                exception = DokusException.WorkspaceSelectFailed,
-                                retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
-                                canNavigateToLogin = false
-                            )
-                        }
-                    }
+        val workspace = resolveWorkspace() ?: return
+        uploadToWorkspace(workspace = workspace)
+    }
 
-                    workspaces.size == 1 -> {
-                        uploadToWorkspace(sharedFiles, workspaces.first())
-                    }
+    private suspend fun ShareImportCtx.handleRetry() {
+        handleLoad()
+    }
 
-                    else -> {
-                        updateState {
-                            ShareImportState.SelectWorkspace(
-                                primaryFileName = sharedFiles.first().name,
-                                additionalFileCount = (sharedFiles.size - 1).coerceAtLeast(0),
-                                workspaces = workspaces
-                            )
-                        }
-                    }
-                }
-            }
+    private fun ensureUploadSession(sharedFiles: List<SharedImportFile>) {
+        val signatures = sharedFiles.map {
+            UploadFileSignature(
+                name = it.name,
+                mimeType = it.mimeType,
+                sizeBytes = it.bytes.size
+            )
+        }
+        val current = uploadSession
+        if (current != null && current.signatures == signatures) return
+        uploadSession = UploadSession(
+            files = sharedFiles,
+            signatures = signatures,
+            statuses = MutableList(sharedFiles.size) { UploadFileStatus.Pending }
+        )
+    }
+
+    private suspend fun ShareImportCtx.resolveWorkspace(): Tenant? {
+        val workspaces = listMyTenantsUseCase()
             .onFailure { error ->
                 logger.e(error) { "Failed to load workspaces for share import" }
                 updateState {
@@ -109,17 +116,10 @@ internal class ShareImportContainer(
                     )
                 }
             }
-    }
+            .getOrNull()
+            ?: return null
 
-    private suspend fun ShareImportCtx.handleSelectWorkspace(tenantId: TenantId) {
-        var currentState: ShareImportState.SelectWorkspace? = null
-        withState<ShareImportState.SelectWorkspace, _> {
-            currentState = this
-        }
-        val selectState = currentState ?: return
-
-        val workspace = selectState.workspaces.firstOrNull { it.id == tenantId }
-        if (workspace == null) {
+        if (workspaces.isEmpty()) {
             updateState {
                 ShareImportState.Error(
                     exception = DokusException.WorkspaceSelectFailed,
@@ -127,10 +127,40 @@ internal class ShareImportContainer(
                     canNavigateToLogin = false
                 )
             }
-            return
+            return null
+        }
+        if (workspaces.size == 1) {
+            return workspaces.first()
         }
 
-        if (activeFiles.isEmpty()) {
+        val claimsTenantId = runCatching { tokenManager.getCurrentClaims()?.tenant?.tenantId }
+            .getOrNull()
+        val lastSelectedTenantId = runCatching { getLastSelectedTenantIdUseCase() }
+            .getOrNull()
+
+        val candidates = listOfNotNull(claimsTenantId, lastSelectedTenantId).distinct()
+        val resolved = candidates.firstNotNullOfOrNull { candidate ->
+            workspaces.firstOrNull { it.id == candidate }
+        }
+
+        if (resolved == null) {
+            updateState {
+                ShareImportState.Error(
+                    exception = DokusException.WorkspaceContextUnavailable,
+                    retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
+                    canNavigateToLogin = false,
+                    canOpenApp = true
+                )
+            }
+            return null
+        }
+
+        return resolved
+    }
+
+    private suspend fun ShareImportCtx.uploadToWorkspace(workspace: Tenant) {
+        val session = uploadSession
+        if (session == null || session.files.isEmpty()) {
             updateState {
                 ShareImportState.Error(
                     exception = DokusException.NotFound(),
@@ -141,14 +171,7 @@ internal class ShareImportContainer(
             return
         }
 
-        updateState { selectState.copy(isSwitchingWorkspace = true) }
-        uploadToWorkspace(activeFiles, workspace)
-    }
-
-    private suspend fun ShareImportCtx.uploadToWorkspace(
-        sharedFiles: List<SharedImportFile>,
-        workspace: Tenant
-    ) {
+        val sharedFiles = session.files
         val currentTenantId = runCatching { tokenManager.getCurrentClaims()?.tenant?.tenantId }
             .getOrNull()
 
@@ -168,9 +191,12 @@ internal class ShareImportContainer(
         }
 
         val totalFiles = sharedFiles.size
-        var firstUploadedDocumentId: String? = null
+        for (index in sharedFiles.indices) {
+            val status = session.statuses[index]
+            if (status is UploadFileStatus.Uploaded) continue
 
-        for ((index, sharedFile) in sharedFiles.withIndex()) {
+            val sharedFile = sharedFiles[index]
+            val uploadedCountBefore = session.statuses.count { it is UploadFileStatus.Uploaded }
             val currentFileIndex = index + 1
             updateState {
                 ShareImportState.Uploading(
@@ -179,7 +205,7 @@ internal class ShareImportContainer(
                     totalFiles = totalFiles,
                     workspaceName = workspace.displayName.value,
                     currentFileProgress = 0f,
-                    overallProgress = index.toFloat() / totalFiles.toFloat()
+                    overallProgress = uploadedCountBefore.toFloat() / totalFiles.toFloat()
                 )
             }
 
@@ -190,7 +216,7 @@ internal class ShareImportContainer(
                 prefix = "documents",
                 onProgress = { progress ->
                     val clampedProgress = progress.coerceIn(0f, 1f)
-                    val overallProgress = (index.toFloat() + clampedProgress) / totalFiles.toFloat()
+                    val overallProgress = (uploadedCountBefore.toFloat() + clampedProgress) / totalFiles.toFloat()
 
                     // Frequent progress updates can bypass suspended state transactions for responsiveness.
                     updateStateImmediate<ShareImportState.Uploading, _> {
@@ -206,12 +232,11 @@ internal class ShareImportContainer(
             )
 
             result.onSuccess { document ->
-                if (firstUploadedDocumentId == null) {
-                    firstUploadedDocumentId = document.id.toString()
-                }
+                session.statuses[index] = UploadFileStatus.Uploaded(document.id.toString())
             }.onFailure { error ->
                 logger.e(error) { "Share import upload failed for file: ${sharedFile.name}" }
                 val exception = (error as? DokusException) ?: DokusException.DocumentUploadFailed
+                session.statuses[index] = UploadFileStatus.Failed(exception)
                 updateState {
                     ShareImportState.Error(
                         exception = exception,
@@ -223,8 +248,10 @@ internal class ShareImportContainer(
             }
         }
 
-        val documentId = firstUploadedDocumentId
-        if (documentId == null) {
+        val uploadedDocumentIds = session.statuses.mapNotNull { status ->
+            (status as? UploadFileStatus.Uploaded)?.documentId
+        }
+        if (uploadedDocumentIds.isEmpty()) {
             logger.w { "Share import completed with no uploaded document id" }
             updateState {
                 ShareImportState.Error(
@@ -237,14 +264,38 @@ internal class ShareImportContainer(
         }
 
         updateState {
-            ShareImportState.Success(
+            ShareImportState.SuccessPulse(
                 primaryFileName = sharedFiles.first().name,
                 additionalFileCount = (sharedFiles.size - 1).coerceAtLeast(0),
-                uploadedCount = sharedFiles.size,
-                documentId = documentId
+                uploadedCount = uploadedDocumentIds.size,
+                uploadedDocumentIds = uploadedDocumentIds
             )
         }
         delay(SuccessAnimationDelayMs)
-        action(ShareImportAction.NavigateToDocumentReview(documentId))
+        action(
+            ShareImportAction.Finish(
+                successCount = uploadedDocumentIds.size,
+                failureCount = 0,
+                uploadedDocumentIds = uploadedDocumentIds
+            )
+        )
     }
 }
+
+private data class UploadFileSignature(
+    val name: String,
+    val mimeType: String,
+    val sizeBytes: Int
+)
+
+private sealed interface UploadFileStatus {
+    data object Pending : UploadFileStatus
+    data class Uploaded(val documentId: String) : UploadFileStatus
+    data class Failed(val exception: DokusException) : UploadFileStatus
+}
+
+private data class UploadSession(
+    val files: List<SharedImportFile>,
+    val signatures: List<UploadFileSignature>,
+    val statuses: MutableList<UploadFileStatus>
+)

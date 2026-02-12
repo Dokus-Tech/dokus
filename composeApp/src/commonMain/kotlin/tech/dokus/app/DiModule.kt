@@ -103,6 +103,7 @@ internal val diModuleApp = module {
     container<ShareImportContainer, ShareImportState, ShareImportIntent, ShareImportAction> {
         ShareImportContainer(
             tokenManager = get(),
+            getLastSelectedTenantIdUseCase = get(),
             listMyTenantsUseCase = get(),
             selectTenantUseCase = get(),
             uploadDocumentUseCase = get()

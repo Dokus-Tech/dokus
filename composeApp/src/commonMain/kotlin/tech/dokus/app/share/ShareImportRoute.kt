@@ -7,7 +7,7 @@ import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.navigation.destinations.AuthDestination
-import tech.dokus.navigation.destinations.CashFlowDestination
+import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
 
@@ -19,12 +19,16 @@ internal fun ShareImportRoute(
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
-            is ShareImportAction.NavigateToDocumentReview -> {
-                navController.replace(CashFlowDestination.DocumentReview(action.documentId))
+            is ShareImportAction.Finish -> {
+                navController.replace(HomeDestination.Documents)
             }
 
             ShareImportAction.NavigateToLogin -> {
                 navController.replace(AuthDestination.Login)
+            }
+
+            ShareImportAction.OpenApp -> {
+                navController.replace(HomeDestination.Documents)
             }
         }
     }
