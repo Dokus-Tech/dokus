@@ -22,6 +22,10 @@ final class DokusFileProviderDomainRegistrarTests: XCTestCase {
             "\(managedPrefix).ws.ws-1",
             "\(managedPrefix).ws.ws-2"
         ]))
+        XCTAssertEqual(Set(manager.domains.map(\.displayName)), Set([
+            "Dokus — Invoid BV",
+            "Dokus — TechFlow BVBA"
+        ]))
         XCTAssertEqual(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-1"]?.count, 3)
         XCTAssertEqual(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-2"]?.count, 3)
     }
@@ -61,7 +65,7 @@ final class DokusFileProviderDomainRegistrarTests: XCTestCase {
         await registrar.synchronizeRegistrationNow()
 
         XCTAssertEqual(manager.domains.count, 1)
-        XCTAssertEqual(manager.domains.first?.displayName, "New Name")
+        XCTAssertEqual(manager.domains.first?.displayName, "Dokus — New Name")
         XCTAssertTrue(manager.addedDomainIdentifiers.contains("\(managedPrefix).ws.ws-1"))
         XCTAssertFalse(manager.removedDomainIdentifiers.contains("\(managedPrefix).ws.ws-1"))
     }
@@ -125,8 +129,8 @@ final class DokusFileProviderDomainRegistrarTests: XCTestCase {
         await registrar.synchronizeRegistrationNow()
 
         let byId = Dictionary(uniqueKeysWithValues: manager.domains.map { ($0.identifier.rawValue, $0.displayName) })
-        XCTAssertEqual(byId["\(managedPrefix).ws.ws-a"], "Acme")
-        XCTAssertEqual(byId["\(managedPrefix).ws.ws-b"], "Acme (2)")
+        XCTAssertEqual(byId["\(managedPrefix).ws.ws-a"], "Dokus — Acme")
+        XCTAssertEqual(byId["\(managedPrefix).ws.ws-b"], "Dokus — Acme (2)")
     }
 
     private func workspaceDomain(id: String, name: String) -> NSFileProviderDomain {

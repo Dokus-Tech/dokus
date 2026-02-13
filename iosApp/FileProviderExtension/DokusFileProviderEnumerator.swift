@@ -4,10 +4,16 @@ import FileProvider
 final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     private let containerItemIdentifier: NSFileProviderItemIdentifier
     private let runtime: DokusFileProviderRuntime
+    private let onSuccessfulSync: (() -> Void)?
 
-    init(containerItemIdentifier: NSFileProviderItemIdentifier, runtime: DokusFileProviderRuntime) {
+    init(
+        containerItemIdentifier: NSFileProviderItemIdentifier,
+        runtime: DokusFileProviderRuntime,
+        onSuccessfulSync: (() -> Void)? = nil
+    ) {
         self.containerItemIdentifier = containerItemIdentifier
         self.runtime = runtime
+        self.onSuccessfulSync = onSuccessfulSync
     }
 
     func invalidate() {
@@ -32,6 +38,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
                 guard offset < children.count else {
                     observer.finishEnumerating(upTo: nil)
+                    onSuccessfulSync?()
                     return
                 }
 
@@ -44,6 +51,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 } else {
                     observer.finishEnumerating(upTo: encodePage(end))
                 }
+                onSuccessfulSync?()
             } catch let error as DokusFileProviderError {
                 DokusFileProviderLog.extension.error(
                     "enumerateItems failed container=\(self.containerItemIdentifier.rawValue, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
@@ -91,6 +99,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     upTo: changeSet.anchor,
                     moreComing: false
                 )
+                onSuccessfulSync?()
             } catch let error as DokusFileProviderError {
                 DokusFileProviderLog.extension.error(
                     "enumerateChanges failed container=\(self.containerItemIdentifier.rawValue, privacy: .public) error=\(error.localizedDescription, privacy: .public)"

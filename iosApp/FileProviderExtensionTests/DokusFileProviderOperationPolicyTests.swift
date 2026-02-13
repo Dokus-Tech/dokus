@@ -69,4 +69,17 @@ final class DokusFileProviderOperationPolicyTests: XCTestCase {
         XCTAssertFalse(typedItem!.capabilities.contains(.allowsDeleting))
         XCTAssertFalse(typedItem!.capabilities.contains(.allowsWriting))
     }
+
+    func testModifyPolicyAllowsMetadataOnlyChanges() {
+        XCTAssertFalse(DokusFileProviderExtension.isDisallowedModify(.lastUsedDate))
+        XCTAssertFalse(DokusFileProviderExtension.isDisallowedModify(.favoriteRank))
+
+        XCTAssertTrue(DokusFileProviderExtension.isDisallowedModify(.contents))
+        XCTAssertTrue(DokusFileProviderExtension.isDisallowedModify(.filename))
+        XCTAssertTrue(DokusFileProviderExtension.isDisallowedModify(.parentItemIdentifier))
+
+        XCTAssertTrue(
+            DokusFileProviderExtension.isDisallowedModify([.lastUsedDate, .filename])
+        )
+    }
 }

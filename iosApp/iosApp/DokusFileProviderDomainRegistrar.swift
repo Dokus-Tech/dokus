@@ -7,6 +7,7 @@ final class DokusFileProviderDomainRegistrar {
         static let managedDomainIdentifierPrefix = "vision.invoid.dokus.fileprovider"
         static let legacyDomainIdentifier = managedDomainIdentifierPrefix
         static let workspaceDomainSeparator = ".ws."
+        static let providerDisplayPrefix = "Dokus — "
         static let resolvableFileProviderErrorCodes: [NSFileProviderError.Code] = [
             .notAuthenticated,
             .serverUnreachable,
@@ -149,14 +150,15 @@ final class DokusFileProviderDomainRegistrar {
         domains.reserveCapacity(sorted.count)
 
         for workspace in sorted {
-            let baseName = workspace.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            let workspaceName = workspace.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "Workspace"
                 : workspace.name
-            let key = baseName.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            let key = workspaceName.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
             let count = (nameCounts[key] ?? 0) + 1
             nameCounts[key] = count
 
-            let displayName = count == 1 ? baseName : "\(baseName) (\(count))"
+            let uniqueWorkspaceName = count == 1 ? workspaceName : "\(workspaceName) (\(count))"
+            let displayName = "\(Constants.providerDisplayPrefix)\(uniqueWorkspaceName)"
             let identifier = NSFileProviderDomainIdentifier(domainIdentifier(forWorkspaceId: workspace.id))
             let domain = NSFileProviderDomain(identifier: identifier, displayName: displayName)
             domains.append(domain)

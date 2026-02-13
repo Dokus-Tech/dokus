@@ -5,6 +5,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
     private let domain: NSFileProviderDomain
     private let runtime: DokusFileProviderRuntime
     private let manager: NSFileProviderManager?
+    private let errorResolver = DokusFileProviderErrorResolver()
 
     required init(domain: NSFileProviderDomain) {
         self.domain = domain
@@ -39,7 +40,10 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
         )
         return DokusFileProviderEnumerator(
             containerItemIdentifier: containerItemIdentifier,
-            runtime: runtime
+            runtime: runtime,
+            onSuccessfulSync: { [weak self] in
+                self?.resolveDomainErrorsIfNeeded()
+            }
         )
     }
 
@@ -106,6 +110,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                 }
                 progress.completedUnitCount = 100
                 completionHandler(fileURL, DokusFileProviderItem(projected: projected), nil)
+                resolveDomainErrorsIfNeeded()
             } catch is CancellationError {
                 completionHandler(nil, nil, NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError))
             } catch let error as DokusFileProviderError {
@@ -218,6 +223,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                 )
                 progress.completedUnitCount = 100
                 completionHandler(DokusFileProviderItem(projected: created), [], false, nil)
+                resolveDomainErrorsIfNeeded()
             } catch let error as DokusFileProviderError {
                 DokusFileProviderLog.extension.error(
                     "createItem failed parent=\(itemTemplate.parentItemIdentifier.rawValue, privacy: .public) filename=\(itemTemplate.filename, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
@@ -255,8 +261,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
         completionHandler: @escaping (NSFileProviderItem?, NSFileProviderItemFields, Bool, Error?) -> Void
     ) -> Progress {
         let progress = Progress(totalUnitCount: 100)
-        let disallowedFields: NSFileProviderItemFields = [.contents, .filename, .parentItemIdentifier]
-        if !changedFields.intersection(disallowedFields).isEmpty {
+        if DokusFileProviderExtension.isDisallowedModify(changedFields) {
             let error = DokusFileProviderError.unsupportedOperation(
                 "Rename, move and edit operations are not supported in Dokus Files"
             ).nsError
@@ -290,6 +295,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                 try await runtime.deleteDocument(itemIdentifier: identifier)
                 progress.completedUnitCount = 100
                 completionHandler(nil)
+                resolveDomainErrorsIfNeeded()
             } catch is CancellationError {
                 completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError))
             } catch let error as DokusFileProviderError {
@@ -331,6 +337,48 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                 "temporaryDirectoryURL failed error=\(String(describing: error), privacy: .public)"
             )
             return nil
+        }
+    }
+
+    private func resolveDomainErrorsIfNeeded() {
+        guard let manager else { return }
+        Task {
+            await errorResolver.resolveDomainErrorsIfNeeded(manager: manager)
+        }
+    }
+
+    static func isDisallowedModify(_ changedFields: NSFileProviderItemFields) -> Bool {
+        let disallowedFields: NSFileProviderItemFields = [.contents, .filename, .parentItemIdentifier]
+        return !changedFields.intersection(disallowedFields).isEmpty
+    }
+}
+
+private actor DokusFileProviderErrorResolver {
+    private let minInterval: TimeInterval = 30
+    private var lastResolvedAt: Date?
+    private let resolvableErrorCodes: [NSFileProviderError.Code] = [
+        .serverUnreachable,
+        .cannotSynchronize,
+        .notAuthenticated
+    ]
+
+    func resolveDomainErrorsIfNeeded(manager: NSFileProviderManager) async {
+        let now = Date()
+        if let lastResolvedAt, now.timeIntervalSince(lastResolvedAt) < minInterval {
+            return
+        }
+        lastResolvedAt = now
+
+        for code in resolvableErrorCodes {
+            let error = NSError(domain: NSFileProviderErrorDomain, code: code.rawValue)
+            await withCheckedContinuation { continuation in
+                manager.signalErrorResolved(error) { _ in
+                    continuation.resume()
+                }
+            }
+            DokusFileProviderLog.extension.debug(
+                "signalErrorResolved from extension code=\(code.rawValue, privacy: .public)"
+            )
         }
     }
 }
