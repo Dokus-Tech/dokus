@@ -145,7 +145,8 @@ class WelcomeEmailWorker(
             val template = emailTemplateRenderer.renderWelcomeWorkspaceActive(
                 userName = userName,
                 tenantName = tenantName,
-                peppolConnected = peppolConnected
+                peppolConnected = peppolConnected,
+                language = tenant.language
             )
 
             emailService.send(
