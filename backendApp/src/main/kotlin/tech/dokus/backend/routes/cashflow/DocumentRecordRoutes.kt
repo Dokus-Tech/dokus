@@ -206,10 +206,10 @@ internal fun Route.documentRecordRoutes() {
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
 
-            val bytes = try {
-                minioStorage.downloadDocument(document.storageKey)
+            val stream = try {
+                minioStorage.openDocumentStream(document.storageKey)
             } catch (e: Exception) {
-                logger.error("Failed to download document bytes: $documentId", e)
+                logger.error("Failed to open document stream: $documentId", e)
                 throw DokusException.InternalError("Failed to download document content")
             }
 
@@ -222,11 +222,11 @@ internal fun Route.documentRecordRoutes() {
                     .withParameter(ContentDisposition.Parameters.FileName, document.filename)
                     .toString()
             )
-            call.respondBytes(
-                bytes = bytes,
-                contentType = contentType,
-                status = HttpStatusCode.OK
-            )
+            call.respondOutputStream(contentType = contentType, status = HttpStatusCode.OK) {
+                stream.use { input ->
+                    input.copyTo(this)
+                }
+            }
         }
 
         /**

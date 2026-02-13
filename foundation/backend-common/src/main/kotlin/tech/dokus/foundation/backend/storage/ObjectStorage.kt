@@ -1,5 +1,7 @@
 package tech.dokus.foundation.backend.storage
 
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 import kotlin.time.Duration
 
 /**
@@ -25,6 +27,15 @@ interface ObjectStorage {
      * @throws NoSuchElementException if the key doesn't exist
      */
     suspend fun get(key: String): ByteArray
+
+    /**
+     * Open an object stream for incremental reads.
+     *
+     * Default implementation falls back to [get] for compatibility with non-streaming backends.
+     */
+    suspend fun openStream(key: String): InputStream {
+        return ByteArrayInputStream(get(key))
+    }
 
     /**
      * Delete an object from storage.

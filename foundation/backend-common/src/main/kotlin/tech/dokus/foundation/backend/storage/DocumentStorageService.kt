@@ -2,6 +2,7 @@ package tech.dokus.foundation.backend.storage
 
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.utils.loggerFor
+import java.io.InputStream
 import java.text.Normalizer
 import java.util.UUID
 import kotlin.time.Duration
@@ -93,6 +94,16 @@ class DocumentStorageService(
      */
     suspend fun downloadDocument(key: String): ByteArray {
         return storage.get(key)
+    }
+
+    /**
+     * Open a streaming download for a document.
+     *
+     * @param key The storage key
+     * @return Input stream for incremental reads
+     */
+    suspend fun openDocumentStream(key: String): InputStream {
+        return storage.openStream(key)
     }
 
     /**

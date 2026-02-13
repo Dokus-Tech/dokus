@@ -4,7 +4,31 @@ import FileProvider
 struct DokusChangeSet {
     let updatedIdentifiers: [NSFileProviderItemIdentifier]
     let deletedIdentifiers: [NSFileProviderItemIdentifier]
+    private let previousParentsByIdentifier: [NSFileProviderItemIdentifier: NSFileProviderItemIdentifier]
+    private let previousFolderFlagsByIdentifier: [NSFileProviderItemIdentifier: Bool]
     let anchor: NSFileProviderSyncAnchor
+
+    init(
+        updatedIdentifiers: [NSFileProviderItemIdentifier],
+        deletedIdentifiers: [NSFileProviderItemIdentifier],
+        previousParentsByIdentifier: [NSFileProviderItemIdentifier: NSFileProviderItemIdentifier],
+        previousFolderFlagsByIdentifier: [NSFileProviderItemIdentifier: Bool],
+        anchor: NSFileProviderSyncAnchor
+    ) {
+        self.updatedIdentifiers = updatedIdentifiers
+        self.deletedIdentifiers = deletedIdentifiers
+        self.previousParentsByIdentifier = previousParentsByIdentifier
+        self.previousFolderFlagsByIdentifier = previousFolderFlagsByIdentifier
+        self.anchor = anchor
+    }
+
+    func previousParentIdentifier(for identifier: NSFileProviderItemIdentifier) -> NSFileProviderItemIdentifier? {
+        previousParentsByIdentifier[identifier]
+    }
+
+    func previousWasFolder(_ identifier: NSFileProviderItemIdentifier) -> Bool? {
+        previousFolderFlagsByIdentifier[identifier]
+    }
 }
 
 final class DokusFileProviderSnapshotStore {
@@ -118,9 +142,27 @@ final class DokusFileProviderSnapshotStore {
                 .filter { currentById[$0] == nil }
                 .map { NSFileProviderItemIdentifier($0) }
 
+            let previousParentsByIdentifier = Dictionary(
+                uniqueKeysWithValues: fromById.compactMap { id, entry in
+                    let identifier = NSFileProviderItemIdentifier(id)
+                    return (
+                        identifier,
+                        NSFileProviderItemIdentifier(entry.parentIdentifier)
+                    )
+                }
+            )
+
+            let previousFolderFlagsByIdentifier = Dictionary(
+                uniqueKeysWithValues: fromById.map { id, entry in
+                    (NSFileProviderItemIdentifier(id), entry.isFolder)
+                }
+            )
+
             return DokusChangeSet(
                 updatedIdentifiers: updated,
                 deletedIdentifiers: deleted,
+                previousParentsByIdentifier: previousParentsByIdentifier,
+                previousFolderFlagsByIdentifier: previousFolderFlagsByIdentifier,
                 anchor: makeAnchor(from: currentVersion.generation)
             )
         }
@@ -154,9 +196,27 @@ final class DokusFileProviderSnapshotStore {
                 .filter { currentById[$0] == nil }
                 .map { NSFileProviderItemIdentifier($0) }
 
+            let previousParentsByIdentifier = Dictionary(
+                uniqueKeysWithValues: fromById.compactMap { id, entry in
+                    let identifier = NSFileProviderItemIdentifier(id)
+                    return (
+                        identifier,
+                        NSFileProviderItemIdentifier(entry.parentIdentifier)
+                    )
+                }
+            )
+
+            let previousFolderFlagsByIdentifier = Dictionary(
+                uniqueKeysWithValues: fromById.map { id, entry in
+                    (NSFileProviderItemIdentifier(id), entry.isFolder)
+                }
+            )
+
             return DokusChangeSet(
                 updatedIdentifiers: updated,
                 deletedIdentifiers: deleted,
+                previousParentsByIdentifier: previousParentsByIdentifier,
+                previousFolderFlagsByIdentifier: previousFolderFlagsByIdentifier,
                 anchor: makeAnchor(from: currentVersion.generation)
             )
         }

@@ -76,23 +76,43 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         Task {
             do {
                 let changeSet = try await runtime.changes(from: syncAnchor)
-                DokusFileProviderLog.extension.debug(
-                    "enumerateChanges container=\(self.containerItemIdentifier.rawValue, privacy: .public) updated=\(changeSet.updatedIdentifiers.count, privacy: .public) deleted=\(changeSet.deletedIdentifiers.count, privacy: .public)"
-                )
                 var updatedItems: [DokusFileProviderItem] = []
                 updatedItems.reserveCapacity(changeSet.updatedIdentifiers.count)
+                var deletedIdentifiers: [NSFileProviderItemIdentifier] = []
+                var deletedIdentifierSet: Set<NSFileProviderItemIdentifier> = []
 
-                for identifier in changeSet.updatedIdentifiers {
-                    if let projected = try? await runtime.item(for: identifier, forceRefresh: false) {
-                        updatedItems.append(DokusFileProviderItem(projected: projected))
+                func appendDeleted(_ identifier: NSFileProviderItemIdentifier) {
+                    if deletedIdentifierSet.insert(identifier).inserted {
+                        deletedIdentifiers.append(identifier)
                     }
                 }
+
+                for identifier in changeSet.updatedIdentifiers {
+                    let wasInScope = wasInScopeBeforeChange(identifier, changeSet: changeSet)
+                    if let projected = try? await runtime.item(for: identifier, forceRefresh: false) {
+                        if isInScopeNow(projected) {
+                            updatedItems.append(DokusFileProviderItem(projected: projected))
+                        } else if wasInScope {
+                            appendDeleted(identifier)
+                        }
+                    } else if wasInScope {
+                        appendDeleted(identifier)
+                    }
+                }
+
+                for identifier in changeSet.deletedIdentifiers where wasInScopeBeforeChange(identifier, changeSet: changeSet) {
+                    appendDeleted(identifier)
+                }
+
+                DokusFileProviderLog.extension.debug(
+                    "enumerateChanges container=\(self.containerItemIdentifier.rawValue, privacy: .public) updated=\(updatedItems.count, privacy: .public) deleted=\(deletedIdentifiers.count, privacy: .public)"
+                )
 
                 if !updatedItems.isEmpty {
                     observer.didUpdate(updatedItems)
                 }
-                if !changeSet.deletedIdentifiers.isEmpty {
-                    observer.didDeleteItems(withIdentifiers: changeSet.deletedIdentifiers)
+                if !deletedIdentifiers.isEmpty {
+                    observer.didDeleteItems(withIdentifiers: deletedIdentifiers)
                 }
 
                 observer.finishEnumeratingChanges(
@@ -149,5 +169,111 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         var bigEndian = Int32(value).bigEndian
         let data = Data(bytes: &bigEndian, count: MemoryLayout<Int32>.size)
         return NSFileProviderPage(rawValue: data)
+    }
+
+    private func isInScopeNow(_ item: DokusProjectedItem) -> Bool {
+        if containerItemIdentifier == .workingSet {
+            return !item.isFolder && item.identifier != .rootContainer
+        }
+        if containerItemIdentifier == .rootContainer {
+            return item.identifier != .rootContainer && item.identifier != .workingSet
+        }
+        if item.isFolder {
+            return isFolderIdentifier(item.identifier, descendantOf: containerItemIdentifier)
+        }
+        return isFolderIdentifier(item.parentIdentifier, descendantOf: containerItemIdentifier)
+    }
+
+    private func wasInScopeBeforeChange(
+        _ identifier: NSFileProviderItemIdentifier,
+        changeSet: DokusChangeSet
+    ) -> Bool {
+        let previousWasFolder = changeSet.previousWasFolder(identifier)
+        if containerItemIdentifier == .workingSet {
+            return previousWasFolder == false
+        }
+        if containerItemIdentifier == .rootContainer {
+            return identifier != .rootContainer && identifier != .workingSet
+        }
+
+        if previousWasFolder == true {
+            return isFolderIdentifier(identifier, descendantOf: containerItemIdentifier)
+        }
+
+        guard let previousParent = changeSet.previousParentIdentifier(for: identifier) else {
+            return false
+        }
+        return isFolderIdentifier(previousParent, descendantOf: containerItemIdentifier)
+    }
+
+    private func isFolderIdentifier(
+        _ candidate: NSFileProviderItemIdentifier,
+        descendantOf container: NSFileProviderItemIdentifier
+    ) -> Bool {
+        if container == .rootContainer {
+            return candidate != .rootContainer && candidate != .workingSet
+        }
+        if candidate == container {
+            return true
+        }
+
+        guard
+            let candidateKind = DokusItemIdentifierCodec.decode(candidate),
+            let containerKind = DokusItemIdentifierCodec.decode(container)
+        else {
+            return false
+        }
+
+        return isIdentifierKind(candidateKind, descendantOf: containerKind)
+    }
+
+    private func isIdentifierKind(
+        _ candidate: DokusIdentifierKind,
+        descendantOf container: DokusIdentifierKind
+    ) -> Bool {
+        switch (container, candidate) {
+        case (.root, _):
+            return true
+        case (.workspace(let containerWorkspaceId), .workspace(let workspaceId)):
+            return workspaceId == containerWorkspaceId
+        case (.workspace(let containerWorkspaceId), .lifecycleFolder(let workspaceId, _)):
+            return workspaceId == containerWorkspaceId
+        case (.workspace(let containerWorkspaceId), .typedFolder(let workspaceId, _)):
+            return workspaceId == containerWorkspaceId
+        case (.workspace(let containerWorkspaceId), .yearFolder(let workspaceId, _, _)):
+            return workspaceId == containerWorkspaceId
+        case (.workspace(let containerWorkspaceId), .monthFolder(let workspaceId, _, _, _)):
+            return workspaceId == containerWorkspaceId
+        case (.workspace(let containerWorkspaceId), .document(let workspaceId, _)):
+            return workspaceId == containerWorkspaceId
+        case (.lifecycleFolder(let containerWorkspaceId, let containerFolder), .lifecycleFolder(let workspaceId, let folder)):
+            return workspaceId == containerWorkspaceId && folder == containerFolder
+        case (.typedFolder(let containerWorkspaceId, let containerFolder), .typedFolder(let workspaceId, let folder)):
+            return workspaceId == containerWorkspaceId && folder == containerFolder
+        case (.typedFolder(let containerWorkspaceId, let containerFolder), .yearFolder(let workspaceId, let folder, _)):
+            return workspaceId == containerWorkspaceId && folder == containerFolder
+        case (.typedFolder(let containerWorkspaceId, let containerFolder), .monthFolder(let workspaceId, let folder, _, _)):
+            return workspaceId == containerWorkspaceId && folder == containerFolder
+        case (
+            .yearFolder(let containerWorkspaceId, let containerFolder, let containerYear),
+            .yearFolder(let workspaceId, let folder, let year)
+        ):
+            return workspaceId == containerWorkspaceId && folder == containerFolder && year == containerYear
+        case (
+            .yearFolder(let containerWorkspaceId, let containerFolder, let containerYear),
+            .monthFolder(let workspaceId, let folder, let year, _)
+        ):
+            return workspaceId == containerWorkspaceId && folder == containerFolder && year == containerYear
+        case (
+            .monthFolder(let containerWorkspaceId, let containerFolder, let containerYear, let containerMonth),
+            .monthFolder(let workspaceId, let folder, let year, let month)
+        ):
+            return workspaceId == containerWorkspaceId &&
+                folder == containerFolder &&
+                year == containerYear &&
+                month == containerMonth
+        default:
+            return false
+        }
     }
 }
