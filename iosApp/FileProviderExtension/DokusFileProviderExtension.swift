@@ -261,7 +261,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
         completionHandler: @escaping (NSFileProviderItem?, NSFileProviderItemFields, Bool, Error?) -> Void
     ) -> Progress {
         let progress = Progress(totalUnitCount: 100)
-        if DokusFileProviderExtension.isDisallowedModify(changedFields) {
+        if DokusModifyPolicy.isDisallowedModify(changedFields) {
             let error = DokusFileProviderError.unsupportedOperation(
                 "Rename, move and edit operations are not supported in Dokus Files"
             ).nsError
@@ -345,11 +345,6 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
         Task {
             await errorResolver.resolveDomainErrorsIfNeeded(manager: manager)
         }
-    }
-
-    static func isDisallowedModify(_ changedFields: NSFileProviderItemFields) -> Bool {
-        let disallowedFields: NSFileProviderItemFields = [.contents, .filename, .parentItemIdentifier]
-        return !changedFields.intersection(disallowedFields).isEmpty
     }
 }
 

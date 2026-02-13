@@ -8,6 +8,14 @@ enum DokusPlacement: Hashable {
     case typed(DokusTypedFolder)
 }
 
+enum DokusModifyPolicy {
+    static let disallowedFields: NSFileProviderItemFields = [.contents, .filename, .parentItemIdentifier]
+
+    static func isDisallowedModify(_ changedFields: NSFileProviderItemFields) -> Bool {
+        !changedFields.intersection(disallowedFields).isEmpty
+    }
+}
+
 struct DokusProjectedItem {
     let identifier: NSFileProviderItemIdentifier
     let parentIdentifier: NSFileProviderItemIdentifier

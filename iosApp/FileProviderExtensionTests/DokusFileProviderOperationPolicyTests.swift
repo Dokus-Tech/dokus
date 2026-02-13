@@ -71,15 +71,15 @@ final class DokusFileProviderOperationPolicyTests: XCTestCase {
     }
 
     func testModifyPolicyAllowsMetadataOnlyChanges() {
-        XCTAssertFalse(DokusFileProviderExtension.isDisallowedModify(.lastUsedDate))
-        XCTAssertFalse(DokusFileProviderExtension.isDisallowedModify(.favoriteRank))
+        XCTAssertFalse(DokusModifyPolicy.isDisallowedModify(.lastUsedDate))
+        XCTAssertFalse(DokusModifyPolicy.isDisallowedModify(.favoriteRank))
 
-        XCTAssertTrue(DokusFileProviderExtension.isDisallowedModify(.contents))
-        XCTAssertTrue(DokusFileProviderExtension.isDisallowedModify(.filename))
-        XCTAssertTrue(DokusFileProviderExtension.isDisallowedModify(.parentItemIdentifier))
+        XCTAssertTrue(DokusModifyPolicy.isDisallowedModify(.contents))
+        XCTAssertTrue(DokusModifyPolicy.isDisallowedModify(.filename))
+        XCTAssertTrue(DokusModifyPolicy.isDisallowedModify(.parentItemIdentifier))
 
         XCTAssertTrue(
-            DokusFileProviderExtension.isDisallowedModify([.lastUsedDate, .filename])
+            DokusModifyPolicy.isDisallowedModify([.lastUsedDate, .filename])
         )
     }
 }
