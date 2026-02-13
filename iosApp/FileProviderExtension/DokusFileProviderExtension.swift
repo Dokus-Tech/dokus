@@ -9,9 +9,14 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
         self.domain = domain
         let sessionProvider = DokusFileProviderSessionProvider()
         let apiClient = DokusFileProviderAPIClient(sessionProvider: sessionProvider)
+        let workspaceId = DokusFileProviderConstants.workspaceId(
+            fromDomainIdentifier: domain.identifier.rawValue
+        )
         self.runtime = DokusFileProviderRuntime(
             apiClient: apiClient,
-            domainIdentifier: domain.identifier.rawValue
+            domainIdentifier: domain.identifier.rawValue,
+            workspaceId: workspaceId,
+            domainDisplayName: domain.displayName
         )
         super.init()
     }

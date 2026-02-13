@@ -45,9 +45,12 @@ final class DokusFileProviderOperationPolicyTests: XCTestCase {
             )
         ]
 
-        let projection = builder.build(workspaces: [workspace], documentsByWorkspace: [workspace.id: records])
-        let workspaceIdentifier = DokusItemIdentifierCodec.encode(kind: .workspace(workspaceId: workspace.id))
-        let children = projection.children(of: workspaceIdentifier)
+        let projection = builder.build(
+            workspace: workspace,
+            records: records,
+            rootDisplayName: DokusFileProviderConstants.domainDisplayName
+        )
+        let children = projection.children(of: .rootContainer)
 
         let inboxFolder = children.first(where: { $0.filename == DokusLifecycleFolder.inbox.rawValue })
         XCTAssertNotNil(inboxFolder)

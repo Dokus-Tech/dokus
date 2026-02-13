@@ -126,17 +126,120 @@ final class DokusProjectionBuilder {
     private let filenameFormatter = DokusFilenameFormatter()
 
     func build(
-        workspaces: [DokusWorkspace],
-        documentsByWorkspace: [String: [DokusDocumentRecord]]
+        workspace: DokusWorkspace,
+        records: [DokusDocumentRecord],
+        rootDisplayName: String
     ) -> DokusProjection {
         var itemsById: [NSFileProviderItemIdentifier: DokusProjectedItem] = [:]
         var childrenByParent: [NSFileProviderItemIdentifier: [NSFileProviderItemIdentifier]] = [:]
 
+        addRootItems(
+            rootDisplayName: rootDisplayName,
+            itemsById: &itemsById,
+            childrenByParent: &childrenByParent
+        )
+
+        let workspaceId = workspace.id
+        let supportsLifecycle = workspace.role?.canSeeLifecycleFolders ?? true
+        if supportsLifecycle {
+            for lifecycle in DokusLifecycleFolder.allCases {
+                let lifecycleId = DokusItemIdentifierCodec.encode(
+                    kind: .lifecycleFolder(workspaceId: workspaceId, folder: lifecycle)
+                )
+                let capabilities: NSFileProviderItemCapabilities = lifecycle == .inbox
+                    ? [.allowsReading, .allowsContentEnumerating, .allowsAddingSubItems]
+                    : [.allowsReading, .allowsContentEnumerating]
+
+                addItem(
+                    DokusProjectedItem(
+                        identifier: lifecycleId,
+                        parentIdentifier: .rootContainer,
+                        filename: lifecycle.rawValue,
+                        contentType: .folder,
+                        isFolder: true,
+                        capabilities: capabilities,
+                        documentSize: nil,
+                        creationDate: nil,
+                        contentModificationDate: nil,
+                        childItemCount: nil,
+                        workspaceId: workspaceId,
+                        documentId: nil,
+                        placement: lifecycle == .inbox ? .inbox : .needsReview
+                    ),
+                    to: &itemsById,
+                    children: &childrenByParent
+                )
+            }
+        }
+
+        for typed in DokusTypedFolder.allCases {
+            let typedId = DokusItemIdentifierCodec.encode(kind: .typedFolder(workspaceId: workspaceId, folder: typed))
+            addItem(
+                DokusProjectedItem(
+                    identifier: typedId,
+                    parentIdentifier: .rootContainer,
+                    filename: typed.rawValue,
+                    contentType: .folder,
+                    isFolder: true,
+                    capabilities: [.allowsReading, .allowsContentEnumerating],
+                    documentSize: nil,
+                    creationDate: nil,
+                    contentModificationDate: nil,
+                    childItemCount: nil,
+                    workspaceId: workspaceId,
+                    documentId: nil,
+                    placement: .typed(typed)
+                ),
+                to: &itemsById,
+                children: &childrenByParent
+            )
+        }
+
+        let visibleRecords = projectRecords(
+            records: records,
+            workspace: workspace,
+            itemsById: &itemsById,
+            childrenByParent: &childrenByParent
+        )
+
+        for record in visibleRecords {
+            addItem(record, to: &itemsById, children: &childrenByParent)
+        }
+
+        return DokusProjection(
+            itemsByIdentifier: itemsById,
+            childrenByParent: childrenByParent,
+            generation: 0
+        )
+    }
+
+    func buildEmpty(rootDisplayName: String) -> DokusProjection {
+        var itemsById: [NSFileProviderItemIdentifier: DokusProjectedItem] = [:]
+        var childrenByParent: [NSFileProviderItemIdentifier: [NSFileProviderItemIdentifier]] = [:]
+
+        addRootItems(
+            rootDisplayName: rootDisplayName,
+            itemsById: &itemsById,
+            childrenByParent: &childrenByParent
+        )
+
+        return DokusProjection(
+            itemsByIdentifier: itemsById,
+            childrenByParent: childrenByParent,
+            generation: 0
+        )
+    }
+
+    private func addRootItems(
+        rootDisplayName: String,
+        itemsById: inout [NSFileProviderItemIdentifier: DokusProjectedItem],
+        childrenByParent: inout [NSFileProviderItemIdentifier: [NSFileProviderItemIdentifier]]
+    ) {
         addItem(
             DokusProjectedItem(
                 identifier: .rootContainer,
                 parentIdentifier: .rootContainer,
-                filename: DokusFileProviderConstants.domainDisplayName,
+                filename: rootDisplayName,
                 contentType: .folder,
                 isFolder: true,
                 capabilities: [.allowsReading, .allowsContentEnumerating],
@@ -166,108 +269,6 @@ final class DokusProjectionBuilder {
             workspaceId: nil,
             documentId: nil,
             placement: nil
-        )
-
-        let sortedWorkspaces = workspaces.sorted {
-            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
-        }
-
-        for workspace in sortedWorkspaces {
-            let workspaceId = workspace.id
-            let workspaceIdentifier = DokusItemIdentifierCodec.encode(kind: .workspace(workspaceId: workspaceId))
-
-            addItem(
-                DokusProjectedItem(
-                    identifier: workspaceIdentifier,
-                    parentIdentifier: .rootContainer,
-                    filename: workspace.name,
-                    contentType: .folder,
-                    isFolder: true,
-                    capabilities: [.allowsReading, .allowsContentEnumerating],
-                    documentSize: nil,
-                    creationDate: nil,
-                    contentModificationDate: nil,
-                    childItemCount: nil,
-                    workspaceId: workspaceId,
-                    documentId: nil,
-                    placement: nil
-                ),
-                to: &itemsById,
-                children: &childrenByParent
-            )
-
-            let supportsLifecycle = workspace.role?.canSeeLifecycleFolders ?? true
-            if supportsLifecycle {
-                for lifecycle in DokusLifecycleFolder.allCases {
-                    let lifecycleId = DokusItemIdentifierCodec.encode(
-                        kind: .lifecycleFolder(workspaceId: workspaceId, folder: lifecycle)
-                    )
-                    let capabilities: NSFileProviderItemCapabilities = lifecycle == .inbox
-                        ? [.allowsReading, .allowsContentEnumerating, .allowsAddingSubItems]
-                        : [.allowsReading, .allowsContentEnumerating]
-
-                    addItem(
-                        DokusProjectedItem(
-                            identifier: lifecycleId,
-                            parentIdentifier: workspaceIdentifier,
-                            filename: lifecycle.rawValue,
-                            contentType: .folder,
-                            isFolder: true,
-                            capabilities: capabilities,
-                            documentSize: nil,
-                            creationDate: nil,
-                            contentModificationDate: nil,
-                            childItemCount: nil,
-                            workspaceId: workspaceId,
-                            documentId: nil,
-                            placement: lifecycle == .inbox ? .inbox : .needsReview
-                        ),
-                        to: &itemsById,
-                        children: &childrenByParent
-                    )
-                }
-            }
-
-            for typed in DokusTypedFolder.allCases {
-                let typedId = DokusItemIdentifierCodec.encode(kind: .typedFolder(workspaceId: workspaceId, folder: typed))
-                addItem(
-                    DokusProjectedItem(
-                        identifier: typedId,
-                        parentIdentifier: workspaceIdentifier,
-                        filename: typed.rawValue,
-                        contentType: .folder,
-                        isFolder: true,
-                        capabilities: [.allowsReading, .allowsContentEnumerating],
-                        documentSize: nil,
-                        creationDate: nil,
-                        contentModificationDate: nil,
-                        childItemCount: nil,
-                        workspaceId: workspaceId,
-                        documentId: nil,
-                        placement: .typed(typed)
-                    ),
-                    to: &itemsById,
-                    children: &childrenByParent
-                )
-            }
-
-            let records = documentsByWorkspace[workspaceId] ?? []
-            let visibleRecords = projectRecords(
-                records: records,
-                workspace: workspace,
-                itemsById: &itemsById,
-                childrenByParent: &childrenByParent
-            )
-
-            for record in visibleRecords {
-                addItem(record, to: &itemsById, children: &childrenByParent)
-            }
-        }
-
-        return DokusProjection(
-            itemsByIdentifier: itemsById,
-            childrenByParent: childrenByParent,
-            generation: 0
         )
     }
 

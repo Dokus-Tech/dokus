@@ -6,14 +6,23 @@ actor DokusFileProviderRuntime {
     private let apiClient: DokusFileProviderAPIClient
     private let snapshotStore: DokusFileProviderSnapshotStore
     private let projectionBuilder = DokusProjectionBuilder()
+    private let workspaceId: String?
+    private let domainDisplayName: String
 
     private var cachedProjection: DokusProjection?
     private var cachedRecordsByKey: [String: DokusDocumentRecord] = [:]
     private var lastRefreshAt: Date?
 
-    init(apiClient: DokusFileProviderAPIClient, domainIdentifier: String) {
+    init(
+        apiClient: DokusFileProviderAPIClient,
+        domainIdentifier: String,
+        workspaceId: String?,
+        domainDisplayName: String
+    ) {
         self.apiClient = apiClient
         self.snapshotStore = DokusFileProviderSnapshotStore(domainIdentifier: domainIdentifier)
+        self.workspaceId = workspaceId
+        self.domainDisplayName = domainDisplayName
     }
 
     func projection(forceRefresh: Bool) async throws -> DokusProjection {
@@ -25,21 +34,37 @@ actor DokusFileProviderRuntime {
             return cachedProjection
         }
 
-        let workspaces = try await apiClient.listWorkspaces()
-        var documentsByWorkspace: [String: [DokusDocumentRecord]] = [:]
-        var recordsByKey: [String: DokusDocumentRecord] = [:]
+        guard let workspaceId else {
+            var projection = projectionBuilder.buildEmpty(rootDisplayName: domainDisplayName)
+            let generation = snapshotStore.update(with: projection)
+            projection.generation = generation
+            cachedProjection = projection
+            cachedRecordsByKey = [:]
+            lastRefreshAt = Date()
+            return projection
+        }
 
-        for workspace in workspaces {
-            let records = try await apiClient.listAllDocuments(workspaceId: workspace.id)
-            documentsByWorkspace[workspace.id] = records
-            for record in records {
-                recordsByKey[recordKey(workspaceId: workspace.id, documentId: record.documentId)] = record
-            }
+        let workspaces = try await apiClient.listWorkspaces()
+        guard let workspace = workspaces.first(where: { $0.id == workspaceId }) else {
+            var projection = projectionBuilder.buildEmpty(rootDisplayName: domainDisplayName)
+            let generation = snapshotStore.update(with: projection)
+            projection.generation = generation
+            cachedProjection = projection
+            cachedRecordsByKey = [:]
+            lastRefreshAt = Date()
+            return projection
+        }
+
+        let records = try await apiClient.listAllDocuments(workspaceId: workspaceId)
+        var recordsByKey: [String: DokusDocumentRecord] = [:]
+        for record in records {
+            recordsByKey[recordKey(workspaceId: workspaceId, documentId: record.documentId)] = record
         }
 
         var projection = projectionBuilder.build(
-            workspaces: workspaces,
-            documentsByWorkspace: documentsByWorkspace
+            workspace: workspace,
+            records: records,
+            rootDisplayName: domainDisplayName
         )
 
         let generation = snapshotStore.update(with: projection)

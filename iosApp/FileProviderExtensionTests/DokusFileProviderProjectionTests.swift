@@ -18,8 +18,9 @@ final class DokusFileProviderProjectionTests: XCTestCase {
         ]
 
         let projection = builder.build(
-            workspaces: [workspace],
-            documentsByWorkspace: [workspace.id: docs]
+            workspace: workspace,
+            records: docs,
+            rootDisplayName: DokusFileProviderConstants.domainDisplayName
         )
 
         XCTAssertEqual(parentFolderName(ofDocument: "d1", in: projection), DokusLifecycleFolder.inbox.rawValue)
@@ -44,15 +45,15 @@ final class DokusFileProviderProjectionTests: XCTestCase {
         ]
 
         let projection = builder.build(
-            workspaces: [workspace],
-            documentsByWorkspace: [workspace.id: docs]
+            workspace: workspace,
+            records: docs,
+            rootDisplayName: DokusFileProviderConstants.domainDisplayName
         )
 
-        let workspaceIdentifier = DokusItemIdentifierCodec.encode(kind: .workspace(workspaceId: workspace.id))
-        let workspaceChildren = projection.children(of: workspaceIdentifier).map(\.filename)
-        XCTAssertFalse(workspaceChildren.contains(DokusLifecycleFolder.inbox.rawValue))
-        XCTAssertFalse(workspaceChildren.contains(DokusLifecycleFolder.needsReview.rawValue))
-        XCTAssertTrue(workspaceChildren.contains(DokusTypedFolder.invoicesIn.rawValue))
+        let rootChildren = projection.children(of: .rootContainer).map(\.filename)
+        XCTAssertFalse(rootChildren.contains(DokusLifecycleFolder.inbox.rawValue))
+        XCTAssertFalse(rootChildren.contains(DokusLifecycleFolder.needsReview.rawValue))
+        XCTAssertTrue(rootChildren.contains(DokusTypedFolder.invoicesIn.rawValue))
 
         XCTAssertNil(itemForDocument("queued", in: projection), "Non-confirmed docs must not be shown for accountant/viewer")
         XCTAssertNotNil(itemForDocument("confirmed", in: projection))
@@ -63,8 +64,9 @@ final class DokusFileProviderProjectionTests: XCTestCase {
         let workspace = DokusWorkspace(id: "ws-3", name: "TechFlow BVBA", role: .owner)
 
         var projection = builder.build(
-            workspaces: [workspace],
-            documentsByWorkspace: [workspace.id: [makeRecord(id: "d1", ingestion: .queued, draftStatus: nil, draftType: nil, direction: .unknown)]]
+            workspace: workspace,
+            records: [makeRecord(id: "d1", ingestion: .queued, draftStatus: nil, draftType: nil, direction: .unknown)],
+            rootDisplayName: DokusFileProviderConstants.domainDisplayName
         )
         projection.generation = store.update(with: projection)
         let firstAnchor = store.currentAnchor()
@@ -74,16 +76,18 @@ final class DokusFileProviderProjectionTests: XCTestCase {
         XCTAssertFalse(firstDiff.updatedIdentifiers.isEmpty)
 
         var projection2 = builder.build(
-            workspaces: [workspace],
-            documentsByWorkspace: [workspace.id: [makeRecord(id: "d1", ingestion: .succeeded, draftStatus: .confirmed, draftType: .invoice, direction: .outbound)]]
+            workspace: workspace,
+            records: [makeRecord(id: "d1", ingestion: .succeeded, draftStatus: .confirmed, draftType: .invoice, direction: .outbound)],
+            rootDisplayName: DokusFileProviderConstants.domainDisplayName
         )
         projection2.generation = store.update(with: projection2)
         let secondDiff = store.changes(from: firstAnchor, projection: projection2)
         XCTAssertTrue(secondDiff.updatedIdentifiers.contains(DokusItemIdentifierCodec.encode(kind: .document(workspaceId: workspace.id, documentId: "d1"))))
 
         let projection3 = builder.build(
-            workspaces: [workspace],
-            documentsByWorkspace: [workspace.id: []]
+            workspace: workspace,
+            records: [],
+            rootDisplayName: DokusFileProviderConstants.domainDisplayName
         )
         let thirdDiff = store.changes(from: secondDiff.anchor, projection: projection3)
         XCTAssertTrue(thirdDiff.deletedIdentifiers.contains(DokusItemIdentifierCodec.encode(kind: .document(workspaceId: workspace.id, documentId: "d1"))))

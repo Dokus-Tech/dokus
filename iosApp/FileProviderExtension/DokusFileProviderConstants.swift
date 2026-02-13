@@ -4,7 +4,9 @@ import UniformTypeIdentifiers
 import Security
 
 enum DokusFileProviderConstants {
-    static let domainIdentifier = "vision.invoid.dokus.fileprovider"
+    static let managedDomainIdentifierPrefix = "vision.invoid.dokus.fileprovider"
+    static let legacyDomainIdentifier = managedDomainIdentifierPrefix
+    static let workspaceDomainSeparator = ".ws."
     static let domainDisplayName = "Dokus"
 
     static let authService = "auth"
@@ -24,6 +26,20 @@ enum DokusFileProviderConstants {
     static let workspaceFolderPrefix = "ws"
     static let folderSeparator = ":"
     static let monthSeparator = " — "
+
+    static func workspaceDomainIdentifier(workspaceId: String) -> String {
+        "\(managedDomainIdentifierPrefix)\(workspaceDomainSeparator)\(workspaceId)"
+    }
+
+    static func workspaceId(fromDomainIdentifier domainIdentifier: String) -> String? {
+        let prefix = "\(managedDomainIdentifierPrefix)\(workspaceDomainSeparator)"
+        guard domainIdentifier.hasPrefix(prefix) else {
+            return nil
+        }
+        let start = domainIdentifier.index(domainIdentifier.startIndex, offsetBy: prefix.count)
+        let workspaceId = String(domainIdentifier[start...])
+        return workspaceId.isEmpty ? nil : workspaceId
+    }
 }
 
 enum DokusTypedFolder: String, CaseIterable {
