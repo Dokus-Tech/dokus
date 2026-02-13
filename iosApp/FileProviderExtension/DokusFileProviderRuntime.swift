@@ -35,52 +35,21 @@ actor DokusFileProviderRuntime {
             return cachedProjection
         }
 
-        DokusFileProviderLog.runtime.debug(
-            "projection refreshing forceRefresh=\(forceRefresh, privacy: .public) workspaceId=\(self.workspaceId ?? "nil", privacy: .public)"
-        )
-
-        guard let workspaceId else {
-            var projection = projectionBuilder.buildEmpty(rootDisplayName: domainDisplayName)
-            let generation = snapshotStore.update(with: projection)
-            projection.generation = generation
-            cachedProjection = projection
-            cachedRecordsByKey = [:]
+        do {
+            return try await refreshProjection()
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            guard !forceRefresh, let cachedProjection else {
+                throw error
+            }
+            // Keep previously synced view available during transient network failures.
             lastRefreshAt = Date()
-            return projection
+            DokusFileProviderLog.runtime.warning(
+                "projection refresh failed, returning cached generation=\(cachedProjection.generation, privacy: .public) error=\(String(describing: error), privacy: .public)"
+            )
+            return cachedProjection
         }
-
-        let workspaces = try await apiClient.listWorkspaces()
-        guard let workspace = workspaces.first(where: { $0.id == workspaceId }) else {
-            var projection = projectionBuilder.buildEmpty(rootDisplayName: domainDisplayName)
-            let generation = snapshotStore.update(with: projection)
-            projection.generation = generation
-            cachedProjection = projection
-            cachedRecordsByKey = [:]
-            lastRefreshAt = Date()
-            return projection
-        }
-
-        let records = try await apiClient.listAllDocuments(workspaceId: workspaceId)
-        var recordsByKey: [String: DokusDocumentRecord] = [:]
-        for record in records {
-            recordsByKey[recordKey(workspaceId: workspaceId, documentId: record.documentId)] = record
-        }
-
-        var projection = projectionBuilder.build(
-            workspace: workspace,
-            records: records,
-            rootDisplayName: domainDisplayName
-        )
-
-        let generation = snapshotStore.update(with: projection)
-        projection.generation = generation
-        cachedProjection = projection
-        cachedRecordsByKey = recordsByKey
-        lastRefreshAt = Date()
-        DokusFileProviderLog.runtime.debug(
-            "projection refreshed generation=\(generation, privacy: .public) records=\(records.count, privacy: .public)"
-        )
-        return projection
     }
 
     func item(for identifier: NSFileProviderItemIdentifier, forceRefresh: Bool = false) async throws -> DokusProjectedItem {
@@ -267,5 +236,54 @@ actor DokusFileProviderRuntime {
             return lhs.isFolder && !rhs.isFolder
         }
         return lhs.filename.localizedCaseInsensitiveCompare(rhs.filename) == .orderedAscending
+    }
+
+    private func refreshProjection() async throws -> DokusProjection {
+        DokusFileProviderLog.runtime.debug(
+            "projection refreshing workspaceId=\(self.workspaceId ?? "nil", privacy: .public)"
+        )
+
+        guard let workspaceId else {
+            var projection = projectionBuilder.buildEmpty(rootDisplayName: domainDisplayName)
+            let generation = snapshotStore.update(with: projection)
+            projection.generation = generation
+            cachedProjection = projection
+            cachedRecordsByKey = [:]
+            lastRefreshAt = Date()
+            return projection
+        }
+
+        let workspaces = try await apiClient.listWorkspaces()
+        guard let workspace = workspaces.first(where: { $0.id == workspaceId }) else {
+            var projection = projectionBuilder.buildEmpty(rootDisplayName: domainDisplayName)
+            let generation = snapshotStore.update(with: projection)
+            projection.generation = generation
+            cachedProjection = projection
+            cachedRecordsByKey = [:]
+            lastRefreshAt = Date()
+            return projection
+        }
+
+        let records = try await apiClient.listAllDocuments(workspaceId: workspaceId)
+        var recordsByKey: [String: DokusDocumentRecord] = [:]
+        for record in records {
+            recordsByKey[recordKey(workspaceId: workspaceId, documentId: record.documentId)] = record
+        }
+
+        var projection = projectionBuilder.build(
+            workspace: workspace,
+            records: records,
+            rootDisplayName: domainDisplayName
+        )
+
+        let generation = snapshotStore.update(with: projection)
+        projection.generation = generation
+        cachedProjection = projection
+        cachedRecordsByKey = recordsByKey
+        lastRefreshAt = Date()
+        DokusFileProviderLog.runtime.debug(
+            "projection refreshed generation=\(generation, privacy: .public) records=\(records.count, privacy: .public)"
+        )
+        return projection
     }
 }

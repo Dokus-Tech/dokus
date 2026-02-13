@@ -178,6 +178,11 @@ final class DokusFileProviderAPIClient {
             DokusFileProviderLog.api.warning(
                 "downloadDocument via API content endpoint unavailable; falling back documentId=\(record.documentId, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
             )
+        } catch is CancellationError {
+            DokusFileProviderLog.api.debug(
+                "downloadDocument via API content endpoint cancelled documentId=\(record.documentId, privacy: .public)"
+            )
+            throw CancellationError()
         } catch {
             DokusFileProviderLog.api.warning(
                 "downloadDocument via API content endpoint failed documentId=\(record.documentId, privacy: .public) error=\(String(describing: error), privacy: .public)"
