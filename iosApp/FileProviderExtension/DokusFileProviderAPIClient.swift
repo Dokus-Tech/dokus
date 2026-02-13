@@ -107,21 +107,22 @@ final class DokusFileProviderAPIClient {
         mimeType: String
     ) async throws -> String {
         let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
-        let fileData = try Data(contentsOf: fileURL)
-
-        let multipart = buildMultipartPayload(
+        let multipart = try buildMultipartBodyFile(
+            sourceFileURL: fileURL,
             fileName: filename,
-            mimeType: mimeType,
-            fileData: fileData
+            mimeType: mimeType
         )
+        defer {
+            try? FileManager.default.removeItem(at: multipart.fileURL)
+        }
 
         var request = URLRequest(url: resolved.baseURL.appendingPathQuery("/api/v1/documents/upload"))
         request.httpMethod = "POST"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue(multipart.contentType, forHTTPHeaderField: "Content-Type")
-        request.httpBody = multipart.body
+        request.setValue("\(multipart.contentLength)", forHTTPHeaderField: "Content-Length")
 
-        let data = try await dataForRequest(request)
+        let data = try await uploadDataForRequest(request, fromFile: multipart.fileURL)
         guard let object = try parseJsonObject(from: data) as? [String: Any] else {
             throw DokusFileProviderError.invalidServerResponse
         }
@@ -159,15 +160,16 @@ final class DokusFileProviderAPIClient {
         )
 
         do {
-            let data = try await downloadDocumentViaApi(resolved: resolved, record: record)
-            DokusFileProviderLog.api.debug(
-                "downloadDocument via API content endpoint succeeded documentId=\(record.documentId, privacy: .public) bytes=\(data.count, privacy: .public)"
-            )
-            return try writeDownloadedData(
-                data,
+            let fileURL = try await downloadDocumentViaApi(
+                resolved: resolved,
                 record: record,
                 temporaryDirectoryURL: temporaryDirectoryURL
             )
+            let bytes = downloadedFileSize(for: fileURL)
+            DokusFileProviderLog.api.debug(
+                "downloadDocument via API content endpoint succeeded documentId=\(record.documentId, privacy: .public) bytes=\(bytes, privacy: .public)"
+            )
+            return fileURL
         } catch let error as DokusFileProviderError {
             guard shouldFallbackToDirectDownload(after: error) else {
                 DokusFileProviderLog.api.error(
@@ -218,15 +220,16 @@ final class DokusFileProviderAPIClient {
             )
 
             do {
-                let data = try await dataForRequest(request)
-                DokusFileProviderLog.api.debug(
-                    "downloadDocument direct candidate succeeded index=\(index, privacy: .public) documentId=\(record.documentId, privacy: .public) bytes=\(data.count, privacy: .public)"
-                )
-                return try writeDownloadedData(
-                    data,
+                let fileURL = try await downloadFileForRequest(
+                    request,
                     record: record,
                     temporaryDirectoryURL: temporaryDirectoryURL
                 )
+                let bytes = downloadedFileSize(for: fileURL)
+                DokusFileProviderLog.api.debug(
+                    "downloadDocument direct candidate succeeded index=\(index, privacy: .public) documentId=\(record.documentId, privacy: .public) bytes=\(bytes, privacy: .public)"
+                )
+                return fileURL
             } catch let error as DokusFileProviderError {
                 lastError = error
                 DokusFileProviderLog.api.warning(
@@ -282,18 +285,22 @@ final class DokusFileProviderAPIClient {
 
     private func downloadDocumentViaApi(
         resolved: DokusResolvedSession,
-        record: DokusDocumentRecord
-    ) async throws -> Data {
+        record: DokusDocumentRecord,
+        temporaryDirectoryURL: URL?
+    ) async throws -> URL {
         var request = URLRequest(
             url: resolved.baseURL.appendingPathQuery("/api/v1/documents/\(record.documentId)/content")
         )
         request.httpMethod = "GET"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
-        return try await dataForRequest(request)
+        return try await downloadFileForRequest(
+            request,
+            record: record,
+            temporaryDirectoryURL: temporaryDirectoryURL
+        )
     }
 
-    private func writeDownloadedData(
-        _ data: Data,
+    private func makeDownloadDestinationURL(
         record: DokusDocumentRecord,
         temporaryDirectoryURL: URL?
     ) throws -> URL {
@@ -305,14 +312,9 @@ final class DokusFileProviderAPIClient {
         let directory = temporaryDirectoryURL ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        let destination = directory
+        return directory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension(fileExtension)
-        try data.write(to: destination, options: .atomic)
-        DokusFileProviderLog.api.debug(
-            "writeDownloadedData destination=\(destination.path, privacy: .public) bytes=\(data.count, privacy: .public)"
-        )
-        return destination
     }
 
     private func resolveDownloadURL(
@@ -578,6 +580,122 @@ final class DokusFileProviderAPIClient {
         return response.0
     }
 
+    private func uploadDataForRequest(_ request: URLRequest, fromFile fileURL: URL) async throws -> Data {
+        let method = request.httpMethod ?? "POST"
+        let requestURL = request.url
+        let requestHost = requestURL?.host ?? "nil"
+        let requestPath = requestURL?.path ?? ""
+        DokusFileProviderLog.api.debug(
+            "HTTP upload method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) file=\(fileURL.path, privacy: .public)"
+        )
+
+        let response: (Data, URLResponse)
+        do {
+            response = try await session.upload(for: request, fromFile: fileURL)
+        } catch {
+            if let urlError = error as? URLError, urlError.code == .cancelled {
+                throw CancellationError()
+            }
+            if let urlError = error as? URLError {
+                DokusFileProviderLog.api.error(
+                    "HTTP upload failure method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) code=\(urlError.code.rawValue, privacy: .public) message=\(urlError.localizedDescription, privacy: .public)"
+                )
+            } else {
+                DokusFileProviderLog.api.error(
+                    "HTTP upload failure method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) error=\(String(describing: error), privacy: .public)"
+                )
+            }
+            let nsError = error as NSError
+            if nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError {
+                throw CancellationError()
+            }
+            throw DokusFileProviderError.network(error.localizedDescription)
+        }
+
+        guard let httpResponse = response.1 as? HTTPURLResponse else {
+            throw DokusFileProviderError.invalidServerResponse
+        }
+        DokusFileProviderLog.api.debug(
+            "HTTP upload response method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) status=\(httpResponse.statusCode, privacy: .public) bytes=\(response.0.count, privacy: .public)"
+        )
+
+        if httpResponse.statusCode == 401 {
+            throw DokusFileProviderError.notAuthenticated
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let message = parseServerMessage(from: response.0) ?? "Server error \(httpResponse.statusCode)"
+            throw DokusFileProviderError.network(message)
+        }
+        return response.0
+    }
+
+    private func downloadFileForRequest(
+        _ request: URLRequest,
+        record: DokusDocumentRecord,
+        temporaryDirectoryURL: URL?
+    ) async throws -> URL {
+        let method = request.httpMethod ?? "GET"
+        let requestURL = request.url
+        let requestHost = requestURL?.host ?? "nil"
+        let requestPath = requestURL?.path ?? ""
+        DokusFileProviderLog.api.debug(
+            "HTTP download method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public)"
+        )
+
+        let response: (URL, URLResponse)
+        do {
+            response = try await session.download(for: request)
+        } catch {
+            if let urlError = error as? URLError, urlError.code == .cancelled {
+                throw CancellationError()
+            }
+            if let urlError = error as? URLError {
+                DokusFileProviderLog.api.error(
+                    "HTTP download failure method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) code=\(urlError.code.rawValue, privacy: .public) message=\(urlError.localizedDescription, privacy: .public)"
+                )
+            } else {
+                DokusFileProviderLog.api.error(
+                    "HTTP download failure method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) error=\(String(describing: error), privacy: .public)"
+                )
+            }
+            let nsError = error as NSError
+            if nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError {
+                throw CancellationError()
+            }
+            throw DokusFileProviderError.network(error.localizedDescription)
+        }
+
+        guard let httpResponse = response.1 as? HTTPURLResponse else {
+            throw DokusFileProviderError.invalidServerResponse
+        }
+        DokusFileProviderLog.api.debug(
+            "HTTP download response method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) status=\(httpResponse.statusCode, privacy: .public)"
+        )
+
+        if httpResponse.statusCode == 401 {
+            throw DokusFileProviderError.notAuthenticated
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let errorData = (try? Data(contentsOf: response.0)) ?? Data()
+            let message = parseServerMessage(from: errorData) ?? "Server error \(httpResponse.statusCode)"
+            throw DokusFileProviderError.network(message)
+        }
+
+        let destinationURL = try makeDownloadDestinationURL(
+            record: record,
+            temporaryDirectoryURL: temporaryDirectoryURL
+        )
+        try? FileManager.default.removeItem(at: destinationURL)
+        do {
+            try FileManager.default.moveItem(at: response.0, to: destinationURL)
+        } catch {
+            // Fallback for cross-volume temp locations.
+            try FileManager.default.copyItem(at: response.0, to: destinationURL)
+            try? FileManager.default.removeItem(at: response.0)
+        }
+        return destinationURL
+    }
+
     private func normalizedDpi(fromRequestedPixelSize requestedPixelSize: Int) -> Int {
         if requestedPixelSize <= 0 {
             return 150
@@ -819,18 +937,62 @@ final class DokusFileProviderAPIClient {
         return nil
     }
 
-    private func buildMultipartPayload(fileName: String, mimeType: String, fileData: Data) -> (contentType: String, body: Data) {
-        let boundary = "Boundary-\(UUID().uuidString)"
-        var body = Data()
-        let lineBreak = "\r\n"
-
-        body.append("--\(boundary)\(lineBreak)".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\(lineBreak)".data(using: .utf8)!)
-        body.append("Content-Type: \(mimeType)\(lineBreak)\(lineBreak)".data(using: .utf8)!)
-        body.append(fileData)
-        body.append(lineBreak.data(using: .utf8)!)
-
-        body.append("--\(boundary)--\(lineBreak)".data(using: .utf8)!)
-        return ("multipart/form-data; boundary=\(boundary)", body)
+    private func downloadedFileSize(for fileURL: URL) -> Int64 {
+        guard
+            let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+            let size = attributes[.size] as? NSNumber
+        else {
+            return -1
+        }
+        return size.int64Value
     }
+
+    private func buildMultipartBodyFile(
+        sourceFileURL: URL,
+        fileName: String,
+        mimeType: String
+    ) throws -> (fileURL: URL, contentType: String, contentLength: Int64) {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        let lineBreak = "\r\n"
+        let headerString =
+            "--\(boundary)\(lineBreak)" +
+            "Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\(lineBreak)" +
+            "Content-Type: \(mimeType)\(lineBreak)\(lineBreak)"
+        let header = Data(headerString.utf8)
+        let footer = Data("\(lineBreak)--\(boundary)--\(lineBreak)".utf8)
+
+        let tempDirectory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        let multipartFileURL = tempDirectory.appendingPathComponent("dokus-upload-\(UUID().uuidString).tmp")
+        FileManager.default.createFile(atPath: multipartFileURL.path, contents: nil)
+
+        let outputHandle = try FileHandle(forWritingTo: multipartFileURL)
+        let inputHandle = try FileHandle(forReadingFrom: sourceFileURL)
+        defer {
+            try? inputHandle.close()
+            try? outputHandle.close()
+        }
+
+        try outputHandle.write(contentsOf: header)
+        let chunkSize = 64 * 1024
+        while true {
+            if Task.isCancelled {
+                throw CancellationError()
+            }
+            let chunk = try inputHandle.read(upToCount: chunkSize) ?? Data()
+            if chunk.isEmpty {
+                break
+            }
+            try outputHandle.write(contentsOf: chunk)
+        }
+        try outputHandle.write(contentsOf: footer)
+
+        let sourceSize = (try FileManager.default.attributesOfItem(atPath: sourceFileURL.path)[.size] as? NSNumber)?.int64Value ?? 0
+        let contentLength = Int64(header.count) + sourceSize + Int64(footer.count)
+        return (
+            multipartFileURL,
+            "multipart/form-data; boundary=\(boundary)",
+            contentLength
+        )
+    }
+
 }
