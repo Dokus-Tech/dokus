@@ -70,8 +70,8 @@ internal val diModuleApp = module {
     }
     container<HomeContainer, HomeState, HomeIntent, HomeAction> {
         HomeContainer(
-            getCurrentTenantUseCase = get(),
-            getCurrentUserUseCase = get(),
+            watchCurrentTenantUseCase = get(),
+            watchCurrentUserUseCase = get(),
             logoutUseCase = get(),
         )
     }
@@ -86,6 +86,7 @@ internal val diModuleApp = module {
             updateTenantSettings = get(),
             uploadWorkspaceAvatar = get(),
             deleteWorkspaceAvatar = get(),
+            watchCurrentTenantUseCase = get(),
             getPeppolRegistration = get(),
             getPeppolActivity = get(),
         )

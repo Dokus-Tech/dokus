@@ -1,16 +1,19 @@
 package tech.dokus.app.viewmodel
 
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
-import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCase
+import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCase
+import tech.dokus.features.auth.usecases.WatchCurrentUserUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
@@ -30,8 +33,8 @@ internal typealias HomeCtx = PipelineContext<HomeState, HomeIntent, HomeAction>
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class HomeContainer(
-    private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val watchCurrentTenantUseCase: WatchCurrentTenantUseCase,
+    private val watchCurrentUserUseCase: WatchCurrentUserUseCase,
     private val logoutUseCase: LogoutUseCase,
 ) : Container<HomeState, HomeIntent, HomeAction> {
 
@@ -39,6 +42,11 @@ internal class HomeContainer(
 
     override val store: Store<HomeState, HomeIntent, HomeAction> =
         store(HomeState.Ready()) {
+            init {
+                launchObserveTenant()
+                launchObserveUser()
+            }
+
             reduce { intent ->
                 when (intent) {
                     is HomeIntent.ScreenAppeared -> handleScreenAppeared()
@@ -54,57 +62,85 @@ internal class HomeContainer(
     }
 
     private suspend fun HomeCtx.handleRefreshShellData() {
+        logger.d { "Refreshing home shell data" }
         withState<HomeState.Ready, _> {
-            logger.d { "Loading home shell data" }
             updateState {
                 copy(
                     tenantState = DokusState.loading(),
                     userState = DokusState.loading()
                 )
             }
+        }
+        watchCurrentTenantUseCase.refresh()
+        watchCurrentUserUseCase.refresh()
+    }
 
-            val tenantResult = getCurrentTenantUseCase()
-            val userResult = getCurrentUserUseCase()
-            val resolvedTenantResult = tenantResult.fold(
-                onSuccess = { tenant ->
-                    if (tenant == null) {
-                        Result.failure(DokusException.WorkspaceContextUnavailable)
-                    } else {
-                        Result.success(tenant)
+    private suspend fun HomeCtx.launchObserveTenant() {
+        launch {
+            watchCurrentTenantUseCase().collectLatest { tenantResult ->
+                tenantResult.fold(
+                    onSuccess = { tenant ->
+                        if (tenant == null) {
+                            val error = DokusException.WorkspaceContextUnavailable
+                            withState<HomeState.Ready, _> {
+                                updateState {
+                                    copy(
+                                        tenantState = DokusState.error(error) {
+                                            intent(HomeIntent.RefreshShellData)
+                                        }
+                                    )
+                                }
+                            }
+                            action(HomeAction.ShowError(error))
+                        } else {
+                            withState<HomeState.Ready, _> {
+                                updateState { copy(tenantState = DokusState.success(tenant)) }
+                            }
+                        }
+                    },
+                    onFailure = { throwable ->
+                        val error = throwable.asDokusException
+                        logger.e(error) { "Failed to observe current tenant for home shell" }
+                        withState<HomeState.Ready, _> {
+                            updateState {
+                                copy(
+                                    tenantState = DokusState.error(error) {
+                                        intent(HomeIntent.RefreshShellData)
+                                    }
+                                )
+                            }
+                        }
+                        action(HomeAction.ShowError(error))
                     }
-                },
-                onFailure = { error -> Result.failure(error) }
-            )
-
-            updateState {
-                copy(
-                    tenantState = resolvedTenantResult.fold(
-                        onSuccess = { tenant -> DokusState.success(tenant) },
-                        onFailure = { error ->
-                            DokusState.error(error.asDokusException) {
-                                intent(HomeIntent.RefreshShellData)
-                            }
-                        }
-                    ),
-                    userState = userResult.fold(
-                        onSuccess = { user -> DokusState.success(user) },
-                        onFailure = { error ->
-                            DokusState.error(error.asDokusException) {
-                                intent(HomeIntent.RefreshShellData)
-                            }
-                        }
-                    )
                 )
             }
+        }
+    }
 
-            resolvedTenantResult.exceptionOrNull()?.let { error ->
-                logger.e(error) { "Failed to load current tenant for home shell" }
-                action(HomeAction.ShowError(error.asDokusException))
-            }
-
-            userResult.exceptionOrNull()?.let { error ->
-                logger.e(error) { "Failed to load current user for home shell" }
-                action(HomeAction.ShowError(error.asDokusException))
+    private suspend fun HomeCtx.launchObserveUser() {
+        launch {
+            watchCurrentUserUseCase().collectLatest { userResult ->
+                userResult.fold(
+                    onSuccess = { user ->
+                        withState<HomeState.Ready, _> {
+                            updateState { copy(userState = DokusState.success(user)) }
+                        }
+                    },
+                    onFailure = { throwable ->
+                        val error = throwable.asDokusException
+                        logger.e(error) { "Failed to observe current user for home shell" }
+                        withState<HomeState.Ready, _> {
+                            updateState {
+                                copy(
+                                    userState = DokusState.error(error) {
+                                        intent(HomeIntent.RefreshShellData)
+                                    }
+                                )
+                            }
+                        }
+                        action(HomeAction.ShowError(error))
+                    }
+                )
             }
         }
     }

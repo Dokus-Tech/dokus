@@ -28,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -117,22 +116,7 @@ internal fun HomeScreen(
 
     // Get current route directly from backstack
     val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-    val currentRoute = currentDestination?.route
-    var previousWasShellEditorRoute by remember { mutableStateOf(false) }
-
-    LaunchedEffect(currentDestination) {
-        val isCurrentShellEditorRoute = currentDestination?.let { destination ->
-            destination.hasRoute(AuthDestination.ProfileSettings::class) ||
-                destination.hasRoute(SettingsDestination.AppearanceSettings::class) ||
-                destination.hasRoute(SettingsDestination.WorkspaceSettings::class)
-        } ?: false
-
-        if (previousWasShellEditorRoute && !isCurrentShellEditorRoute && currentDestination != null) {
-            container.store.intent(HomeIntent.RefreshShellData)
-        }
-        previousWasShellEditorRoute = isCurrentShellEditorRoute
-    }
+    val currentRoute = navBackStackEntry?.destination?.route
 
     val shellState = state as? HomeState.Ready ?: HomeState.Ready()
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data

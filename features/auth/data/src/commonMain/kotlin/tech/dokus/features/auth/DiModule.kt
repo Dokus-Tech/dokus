@@ -98,6 +98,10 @@ import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCase
 import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCaseImpl
 import tech.dokus.features.auth.usecases.ValidateServerUseCase
 import tech.dokus.features.auth.usecases.ValidateServerUseCaseImpl
+import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCase
+import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCaseImpl
+import tech.dokus.features.auth.usecases.WatchCurrentUserUseCase
+import tech.dokus.features.auth.usecases.WatchCurrentUserUseCaseImpl
 import tech.dokus.features.auth.utils.JwtDecoder
 import tech.dokus.foundation.app.SharedQualifiers
 import tech.dokus.foundation.sstorage.SecureStorage
@@ -154,6 +158,7 @@ val authDomainModule = module {
     singleOf(::RegisterAndLoginUseCaseImpl) bind RegisterAndLoginUseCase::class
     singleOf(::LogoutUseCaseImpl) bind LogoutUseCase::class
     singleOf(::GetCurrentUserUseCaseImpl) bind GetCurrentUserUseCase::class
+    singleOf(::WatchCurrentUserUseCaseImpl) bind WatchCurrentUserUseCase::class
     singleOf(::UpdateProfileUseCaseImpl) bind UpdateProfileUseCase::class
     singleOf(::HasFreelancerTenantUseCaseImpl) bind HasFreelancerTenantUseCase::class
     singleOf(::CreateTenantUseCaseImpl) bind CreateTenantUseCase::class
@@ -172,6 +177,7 @@ val authDomainModule = module {
     singleOf(::RemoveTeamMemberUseCaseImpl) bind RemoveTeamMemberUseCase::class
     singleOf(::TransferWorkspaceOwnershipUseCaseImpl) bind TransferWorkspaceOwnershipUseCase::class
     singleOf(::GetCurrentTenantUseCaseImpl) bind GetCurrentTenantUseCase::class
+    singleOf(::WatchCurrentTenantUseCaseImpl) bind WatchCurrentTenantUseCase::class
     singleOf(::GetCurrentTenantIdUseCaseImpl) bind GetCurrentTenantIdUseCase::class
     singleOf(::GetLastSelectedTenantIdUseCaseImpl) bind GetLastSelectedTenantIdUseCase::class
     singleOf(::SelectTenantUseCaseImpl) bind SelectTenantUseCase::class

@@ -2,6 +2,9 @@ package tech.dokus.app.viewmodel
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
@@ -20,9 +23,9 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
-import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
-import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCase
+import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCase
+import tech.dokus.features.auth.usecases.WatchCurrentUserUseCase
 import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,12 +40,12 @@ class HomeContainerTest {
     fun `screen appeared loads tenant and user`() = runTest {
         val tenant = sampleTenant()
         val user = sampleUser()
-        val tenantUseCase = FakeGetCurrentTenantUseCase(Result.success(tenant))
-        val userUseCase = FakeGetCurrentUserUseCase(Result.success(user))
+        val tenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(tenant))
+        val userUseCase = FakeWatchCurrentUserUseCase(Result.success(user))
         val logoutUseCase = FakeLogoutUseCase()
         val container = HomeContainer(
-            getCurrentTenantUseCase = tenantUseCase,
-            getCurrentUserUseCase = userUseCase,
+            watchCurrentTenantUseCase = tenantUseCase,
+            watchCurrentUserUseCase = userUseCase,
             logoutUseCase = logoutUseCase
         )
 
@@ -55,19 +58,19 @@ class HomeContainerTest {
             val userState = assertIs<DokusState.Success<User>>(ready.userState)
             assertEquals(tenant, tenantState.data)
             assertEquals(user, userState.data)
-            assertEquals(1, tenantUseCase.invocations)
-            assertEquals(1, userUseCase.invocations)
+            assertEquals(1, tenantUseCase.refreshCalls)
+            assertEquals(1, userUseCase.refreshCalls)
         }
     }
 
     @Test
     fun `screen appeared handles no tenant selected as workspace context unavailable`() = runTest {
         val user = sampleUser()
-        val tenantUseCase = FakeGetCurrentTenantUseCase(Result.success(null))
-        val userUseCase = FakeGetCurrentUserUseCase(Result.success(user))
+        val tenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(null))
+        val userUseCase = FakeWatchCurrentUserUseCase(Result.success(user))
         val container = HomeContainer(
-            getCurrentTenantUseCase = tenantUseCase,
-            getCurrentUserUseCase = userUseCase,
+            watchCurrentTenantUseCase = tenantUseCase,
+            watchCurrentUserUseCase = userUseCase,
             logoutUseCase = FakeLogoutUseCase()
         )
 
@@ -86,8 +89,8 @@ class HomeContainerTest {
         val gate = CompletableDeferred<Result<Unit>>()
         val logoutUseCase = FakeLogoutUseCase { gate.await() }
         val container = HomeContainer(
-            getCurrentTenantUseCase = FakeGetCurrentTenantUseCase(Result.success(sampleTenant())),
-            getCurrentUserUseCase = FakeGetCurrentUserUseCase(Result.success(sampleUser())),
+            watchCurrentTenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(sampleTenant())),
+            watchCurrentUserUseCase = FakeWatchCurrentUserUseCase(Result.success(sampleUser())),
             logoutUseCase = logoutUseCase
         )
 
@@ -112,8 +115,8 @@ class HomeContainerTest {
         val expectedError = DokusException.NotAuthenticated()
         val logoutUseCase = FakeLogoutUseCase { Result.failure(expectedError) }
         val container = HomeContainer(
-            getCurrentTenantUseCase = FakeGetCurrentTenantUseCase(Result.success(sampleTenant())),
-            getCurrentUserUseCase = FakeGetCurrentUserUseCase(Result.success(sampleUser())),
+            watchCurrentTenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(sampleTenant())),
+            watchCurrentUserUseCase = FakeWatchCurrentUserUseCase(Result.success(sampleUser())),
             logoutUseCase = logoutUseCase
         )
 
@@ -126,25 +129,31 @@ class HomeContainerTest {
     }
 }
 
-private class FakeGetCurrentTenantUseCase(
-    private val result: Result<Tenant?>
-) : GetCurrentTenantUseCase {
-    var invocations: Int = 0
+private class FakeWatchCurrentTenantUseCase(
+    private val resultState: Result<Tenant?>
+) : WatchCurrentTenantUseCase {
+    private val trigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    var refreshCalls: Int = 0
 
-    override suspend fun invoke(): Result<Tenant?> {
-        invocations += 1
-        return result
+    override fun invoke(): Flow<Result<Tenant?>> = trigger.map { resultState }
+
+    override fun refresh() {
+        refreshCalls += 1
+        trigger.tryEmit(Unit)
     }
 }
 
-private class FakeGetCurrentUserUseCase(
-    private val result: Result<User>
-) : GetCurrentUserUseCase {
-    var invocations: Int = 0
+private class FakeWatchCurrentUserUseCase(
+    private val resultState: Result<User>
+) : WatchCurrentUserUseCase {
+    private val trigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    var refreshCalls: Int = 0
 
-    override suspend fun invoke(): Result<User> {
-        invocations += 1
-        return result
+    override fun invoke(): Flow<Result<User>> = trigger.map { resultState }
+
+    override fun refresh() {
+        refreshCalls += 1
+        trigger.tryEmit(Unit)
     }
 }
 
