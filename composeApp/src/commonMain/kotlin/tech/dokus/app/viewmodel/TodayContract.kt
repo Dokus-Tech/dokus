@@ -7,16 +7,13 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for the Today screen.
  *
  * The Today screen displays:
- * - Current tenant/workspace information
  * - Pending documents for processing (mobile only)
  * - Quick actions and widgets
  *
@@ -41,13 +38,9 @@ sealed interface TodayState : MVIState, DokusState<Nothing> {
     /**
      * Content state - data loaded and ready for display.
      *
-     * @property tenantState Loading state for current tenant
-     * @property currentAvatar Current workspace avatar
      * @property pendingDocumentsState Loading state for pending documents (with pagination)
      */
     data class Content(
-        val tenantState: DokusState<Tenant?> = DokusState.idle(),
-        val currentAvatar: Thumbnail? = null,
         val pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>> = DokusState.idle(),
     ) : TodayState
 
@@ -76,9 +69,6 @@ sealed interface TodayIntent : MVIIntent {
 
     // === Data Loading ===
 
-    /** Refresh tenant data */
-    data object RefreshTenant : TodayIntent
-
     /** Refresh pending documents */
     data object RefreshPendingDocuments : TodayIntent
 
@@ -95,9 +85,6 @@ sealed interface TodayAction : MVIAction {
 
     /** Navigate to document details/edit screen */
     data class NavigateToDocument(val documentId: String) : TodayAction
-
-    /** Navigate to workspace selection */
-    data object NavigateToWorkspaceSelect : TodayAction
 
     /** Show error message */
     data class ShowError(val error: DokusException) : TodayAction

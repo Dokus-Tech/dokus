@@ -12,7 +12,6 @@ import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
@@ -23,13 +22,11 @@ internal typealias TodayCtx = PipelineContext<TodayState, TodayIntent, TodayActi
  * Container for Today screen using FlowMVI.
  *
  * Manages the today data including:
- * - Current tenant information
  * - Pending documents for processing
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class TodayContainer(
-    private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
     private val watchPendingDocuments: WatchPendingDocumentsUseCase,
 ) : Container<TodayState, TodayIntent, TodayAction> {
 
@@ -48,7 +45,6 @@ internal class TodayContainer(
 
             reduce { intent ->
                 when (intent) {
-                    is TodayIntent.RefreshTenant -> handleRefreshTenant()
                     is TodayIntent.RefreshPendingDocuments -> handleRefreshPendingDocuments()
                     is TodayIntent.LoadMorePendingDocuments -> handleLoadMorePendingDocuments()
                 }
@@ -92,36 +88,6 @@ internal class TodayContainer(
                     }
                 }
             }
-        }
-    }
-
-    private suspend fun TodayCtx.handleRefreshTenant() {
-        withState<TodayState.Content, _> {
-            logger.d { "Refreshing tenant" }
-
-            updateState { copy(tenantState = DokusState.loading()) }
-
-            getCurrentTenantUseCase().fold(
-                onSuccess = { tenant ->
-                    logger.d { "Tenant loaded: ${tenant?.displayName}" }
-                    updateState {
-                        copy(
-                            tenantState = DokusState.success(tenant),
-                            currentAvatar = tenant?.avatar
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to load tenant" }
-                    updateState {
-                        copy(
-                            tenantState = DokusState.error(error) {
-                                intent(TodayIntent.RefreshTenant)
-                            }
-                        )
-                    }
-                }
-            )
         }
     }
 

@@ -65,12 +65,15 @@ internal val diModuleApp = module {
     }
     container<TodayContainer, TodayState, TodayIntent, TodayAction> {
         TodayContainer(
-            getCurrentTenantUseCase = get(),
             watchPendingDocuments = get(),
         )
     }
     container<HomeContainer, HomeState, HomeIntent, HomeAction> {
-        HomeContainer()
+        HomeContainer(
+            getCurrentTenantUseCase = get(),
+            getCurrentUserUseCase = get(),
+            logoutUseCase = get(),
+        )
     }
     container<SettingsContainer, SettingsState, SettingsIntent, SettingsAction> {
         SettingsContainer(getCurrentTenantUseCase = get())
