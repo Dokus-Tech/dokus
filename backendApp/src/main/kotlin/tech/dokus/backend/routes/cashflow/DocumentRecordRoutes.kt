@@ -208,6 +208,11 @@ internal fun Route.documentRecordRoutes() {
 
             val stream = try {
                 minioStorage.openDocumentStream(document.storageKey)
+            } catch (e: NoSuchElementException) {
+                logger.warn(
+                    "Document content object missing for document: $documentId, storageKey=${document.storageKey}"
+                )
+                throw DokusException.NotFound("Document content not found")
             } catch (e: Exception) {
                 logger.error("Failed to open document stream: $documentId", e)
                 throw DokusException.InternalError("Failed to download document content")
