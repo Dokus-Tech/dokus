@@ -81,6 +81,13 @@ internal class HomeContainer(
                 tenantResult.fold(
                     onSuccess = { tenant ->
                         if (tenant == null) {
+                            if (shouldSuppressShellErrors()) {
+                                withState<HomeState.Ready, _> {
+                                    updateState { copy(tenantState = DokusState.idle()) }
+                                }
+                                return@fold
+                            }
+
                             val error = DokusException.WorkspaceContextUnavailable
                             withState<HomeState.Ready, _> {
                                 updateState {
@@ -99,6 +106,13 @@ internal class HomeContainer(
                         }
                     },
                     onFailure = { throwable ->
+                        if (shouldSuppressShellErrors()) {
+                            withState<HomeState.Ready, _> {
+                                updateState { copy(tenantState = DokusState.idle()) }
+                            }
+                            return@fold
+                        }
+
                         val error = throwable.asDokusException
                         logger.e(error) { "Failed to observe current tenant for home shell" }
                         withState<HomeState.Ready, _> {
@@ -127,6 +141,13 @@ internal class HomeContainer(
                         }
                     },
                     onFailure = { throwable ->
+                        if (shouldSuppressShellErrors()) {
+                            withState<HomeState.Ready, _> {
+                                updateState { copy(userState = DokusState.idle()) }
+                            }
+                            return@fold
+                        }
+
                         val error = throwable.asDokusException
                         logger.e(error) { "Failed to observe current user for home shell" }
                         withState<HomeState.Ready, _> {
@@ -155,7 +176,7 @@ internal class HomeContainer(
             logoutUseCase().fold(
                 onSuccess = {
                     logger.i { "Logout successful from home shell" }
-                    updateState { copy(isLoggingOut = false) }
+                    // Keep logout state true until auth-driven navigation takes the user to login.
                 },
                 onFailure = { error ->
                     logger.e(error) { "Logout failed from home shell" }
@@ -164,5 +185,13 @@ internal class HomeContainer(
                 }
             )
         }
+    }
+
+    private suspend fun HomeCtx.shouldSuppressShellErrors(): Boolean {
+        var suppress = false
+        withState<HomeState.Ready, _> {
+            suppress = isLoggingOut
+        }
+        return suppress
     }
 }

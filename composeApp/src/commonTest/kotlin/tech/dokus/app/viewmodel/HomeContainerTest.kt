@@ -106,7 +106,27 @@ class HomeContainerTest {
             advanceUntilIdle()
 
             val completed = assertIs<HomeState.Ready>(states.value)
-            assertFalse(completed.isLoggingOut)
+            assertTrue(completed.isLoggingOut)
+        }
+    }
+
+    @Test
+    fun `tenant null is ignored while logout in progress`() = runTest {
+        val gate = CompletableDeferred<Result<Unit>>()
+        val container = HomeContainer(
+            watchCurrentTenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(null)),
+            watchCurrentUserUseCase = FakeWatchCurrentUserUseCase(Result.success(sampleUser())),
+            logoutUseCase = FakeLogoutUseCase { gate.await() }
+        )
+
+        container.store.subscribeAndTest {
+            emit(HomeIntent.Logout)
+            emit(HomeIntent.ScreenAppeared)
+            advanceUntilIdle()
+
+            val inProgress = assertIs<HomeState.Ready>(states.value)
+            assertTrue(inProgress.isLoggingOut)
+            assertIs<DokusState.Idle<Tenant>>(inProgress.tenantState)
         }
     }
 
