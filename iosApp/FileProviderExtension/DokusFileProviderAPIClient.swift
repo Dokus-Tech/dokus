@@ -146,7 +146,9 @@ final class DokusFileProviderAPIClient {
 
         var request = URLRequest(url: downloadURL)
         request.httpMethod = "GET"
-        request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        if shouldAttachAuthorization(to: downloadURL, apiBaseURL: resolved.baseURL) {
+            request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        }
 
         let data = try await dataForRequest(request)
 
@@ -184,6 +186,41 @@ final class DokusFileProviderAPIClient {
         }
 
         return url
+    }
+
+    private func shouldAttachAuthorization(to downloadURL: URL, apiBaseURL: URL) -> Bool {
+        guard
+            let downloadHost = downloadURL.host?.lowercased(),
+            let apiHost = apiBaseURL.host?.lowercased(),
+            let downloadScheme = downloadURL.scheme?.lowercased(),
+            let apiScheme = apiBaseURL.scheme?.lowercased(),
+            downloadHost == apiHost,
+            downloadScheme == apiScheme
+        else {
+            return false
+        }
+
+        let downloadPort = normalizedPort(for: downloadURL)
+        let apiPort = normalizedPort(for: apiBaseURL)
+        guard downloadPort == apiPort else {
+            return false
+        }
+
+        return downloadURL.path.hasPrefix("/api/")
+    }
+
+    private func normalizedPort(for url: URL) -> Int {
+        if let explicitPort = url.port {
+            return explicitPort
+        }
+        switch url.scheme?.lowercased() {
+        case "https":
+            return 443
+        case "http":
+            return 80
+        default:
+            return -1
+        }
     }
 
     private func dataForRequest(_ request: URLRequest, allowNoContent: Bool = false) async throws -> Data {

@@ -19,7 +19,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             do {
                 let children = try await runtime.children(
                     for: containerItemIdentifier,
-                    forceRefresh: true
+                    forceRefresh: false
                 )
                 let offset = decodePage(page)
                 let suggested = max(observer.suggestedPageSize ?? 100, 1)
@@ -93,7 +93,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
     func currentSyncAnchor(completionHandler: @escaping (NSFileProviderSyncAnchor?) -> Void) {
         Task {
-            let anchor = try? await runtime.currentAnchor(forceRefresh: true)
+            let anchor = try? await runtime.currentAnchor(forceRefresh: false)
             completionHandler(anchor ?? nil)
         }
     }

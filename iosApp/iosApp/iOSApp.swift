@@ -9,6 +9,9 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task {
+                    DokusFileProviderDomainRegistrar.shared.synchronizeRegistration()
+                }
                 .onOpenURL { url in
                     // Pass deep links to the Compose app via ExternalUriHandler
                     ExternalUriHandler.shared.onNewUri(uri: url.absoluteString)
