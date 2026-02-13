@@ -16,6 +16,7 @@ fun Application.configureAuthRoutes() {
         tenantRoutes()
         avatarRoutes()
         teamRoutes()
+        notificationRoutes()
         lookupRoutes()
     }
 }

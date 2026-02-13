@@ -12,6 +12,7 @@ import tech.dokus.database.tables.auth.TenantMembersTable
 import tech.dokus.database.tables.auth.TenantSettingsTable
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
+import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
 import tech.dokus.database.tables.banking.BankConnectionsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
@@ -27,6 +28,8 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
+import tech.dokus.database.tables.notifications.NotificationPreferencesTable
+import tech.dokus.database.tables.notifications.NotificationsTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.database.tables.peppol.PeppolRegistrationTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
@@ -56,11 +59,14 @@ object DokusSchema {
                 TenantTable,
                 TenantSettingsTable,
                 UsersTable,
+                WelcomeEmailJobsTable,
                 TenantMembersTable,
                 TenantInvitationsTable,
                 RefreshTokensTable,
                 PasswordResetTokensTable,
                 AddressTable,
+                NotificationsTable,
+                NotificationPreferencesTable,
 
                 // ----------------------------
                 // Cashflow foundation (docs)

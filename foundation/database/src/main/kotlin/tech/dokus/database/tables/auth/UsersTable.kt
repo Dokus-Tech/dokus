@@ -27,6 +27,8 @@ object UsersTable : UUIDTable("users") {
 
     // Status
     val isActive = bool("is_active").default(true)
+    val firstSignInAt = datetime("first_sign_in_at").nullable()
+    val welcomeEmailSentAt = datetime("welcome_email_sent_at").nullable()
     val lastLoginAt = datetime("last_login_at").nullable()
 
     // Timestamps

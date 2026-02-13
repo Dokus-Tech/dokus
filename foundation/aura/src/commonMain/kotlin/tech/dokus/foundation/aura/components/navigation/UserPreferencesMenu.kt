@@ -22,6 +22,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_appearance
+import tech.dokus.aura.resources.settings_notifications
 import tech.dokus.aura.resources.settings_profile
 import tech.dokus.aura.resources.user
 import tech.dokus.navigation.destinations.AuthDestination
@@ -67,6 +68,13 @@ fun UserPreferencesMenu(
                 onClick = {
                     expanded = false
                     navController.navigateTo(AuthDestination.ProfileSettings)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.settings_notifications)) },
+                onClick = {
+                    expanded = false
+                    navController.navigateTo(SettingsDestination.NotificationPreferences)
                 }
             )
             DropdownMenuItem(

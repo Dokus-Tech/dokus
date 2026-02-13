@@ -55,7 +55,7 @@ class Account {
 
     /**
      * POST /api/v1/account/email-verifications
-     * Creates a new email verification request (resends verification email)
+     * Legacy endpoint retained for contract stability (no-op on server)
      */
     @Serializable
     @Resource("email-verifications")

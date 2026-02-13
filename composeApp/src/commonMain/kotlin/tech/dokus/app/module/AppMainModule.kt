@@ -3,6 +3,7 @@ package tech.dokus.app.module
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import tech.dokus.app.diModuleApp
 import tech.dokus.app.diModuleUseCases
@@ -12,8 +13,10 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.settings_appearance
+import tech.dokus.aura.resources.settings_group_account
 import tech.dokus.aura.resources.settings_group_app
 import tech.dokus.aura.resources.settings_group_workspace
+import tech.dokus.aura.resources.settings_notifications
 import tech.dokus.aura.resources.settings_team
 import tech.dokus.aura.resources.settings_workspace_details
 import tech.dokus.foundation.app.AppDataModuleDi
@@ -43,6 +46,17 @@ internal object AppMainModule : AppModule {
         )
     )
     override val settingsGroups: List<ModuleSettingsGroup> = listOf(
+        ModuleSettingsGroup(
+            title = Res.string.settings_group_account,
+            priority = SettingsPriority.High,
+            sections = listOf(
+                ModuleSettingsSection(
+                    title = Res.string.settings_notifications,
+                    icon = Icons.Default.Notifications,
+                    destination = SettingsDestination.NotificationPreferences
+                )
+            )
+        ),
         ModuleSettingsGroup(
             title = Res.string.settings_group_workspace,
             priority = SettingsPriority.Medium,

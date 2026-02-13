@@ -11,8 +11,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.services.notifications.NotificationEmission
+import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
@@ -27,6 +32,8 @@ import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.NotificationReferenceType
+import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
@@ -48,6 +55,7 @@ import tech.dokus.peppol.service.PeppolService
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -70,7 +78,8 @@ class PeppolPollingWorker(
     private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val documentStorageService: DocumentStorageService,
-    private val contactRepository: ContactRepository
+    private val contactRepository: ContactRepository,
+    private val notificationService: NotificationService
 ) {
     private val logger = LoggerFactory.getLogger(PeppolPollingWorker::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -194,7 +203,10 @@ class PeppolPollingWorker(
             }
 
             try {
-                pollTenant(tenantId)
+                pollTenant(
+                    tenantId = tenantId,
+                    isFullSyncPoll = needsFullSync(settings.lastFullSyncAt)
+                )
             } catch (e: Exception) {
                 logger.error("Failed to poll tenant $tenantId", e)
             }
@@ -224,7 +236,7 @@ class PeppolPollingWorker(
      * Poll a single tenant's Peppol inbox.
      */
     @Suppress("LongMethod") // Complex inbox polling with document creation and confirmation
-    private suspend fun pollTenant(tenantId: TenantId) {
+    private suspend fun pollTenant(tenantId: TenantId, isFullSyncPoll: Boolean? = null) {
         // Get or create mutex for this tenant
         val mutex = pollMutexes.computeIfAbsent(tenantId) { Mutex() }
 
@@ -236,6 +248,7 @@ class PeppolPollingWorker(
 
         try {
             logger.debug("Polling Peppol inbox for tenant: {}", tenantId)
+            val fullSyncRun = isFullSyncPoll ?: resolveFullSyncForTenant(tenantId)
 
             val result = peppolService.pollInbox(tenantId) { draftData, senderPeppolId, tid, documentDetail ->
                 runCatching {
@@ -350,6 +363,38 @@ class PeppolPollingWorker(
                     "Peppol poll completed for tenant $tenantId: " +
                         "${response.processedDocuments.size} documents processed"
                 )
+
+                if (fullSyncRun) {
+                    logger.info(
+                        "Skipping PEPPOL received notifications for tenant {} because this poll was a full sync ({} documents)",
+                        tenantId,
+                        response.processedDocuments.size
+                    )
+                    return@onSuccess
+                }
+
+                response.processedDocuments.forEach { processed ->
+                    val title = processed.invoiceNumber?.let { invoiceNumber ->
+                        "New PEPPOL document received - Inv #$invoiceNumber"
+                    } ?: "New PEPPOL document received"
+
+                    notificationService.emit(
+                        NotificationEmission(
+                            tenantId = tenantId,
+                            type = NotificationType.PeppolReceived,
+                            title = title,
+                            referenceType = NotificationReferenceType.Document,
+                            referenceId = processed.documentId.toString(),
+                            openPath = "/cashflow/document_review/${processed.documentId}",
+                            emailDetails = listOf(
+                                "A new document was received via PEPPOL.",
+                                "Sender: ${processed.senderPeppolId.value}"
+                            )
+                        )
+                    ).onFailure { error ->
+                        logger.warn("Failed to emit PEPPOL received notification for document ${processed.documentId}", error)
+                    }
+                }
             }.onFailure { e ->
                 logger.error("Peppol poll failed for tenant $tenantId", e)
             }
@@ -359,6 +404,22 @@ class PeppolPollingWorker(
         } finally {
             mutex.unlock()
         }
+    }
+
+    private suspend fun resolveFullSyncForTenant(tenantId: TenantId): Boolean {
+        val settings = peppolSettingsRepository.getSettings(tenantId).getOrElse { error ->
+            logger.warn("Failed to resolve Peppol sync mode for tenant {}. Defaulting to non-full-sync notifications.", tenantId, error)
+            return false
+        } ?: return false
+        return needsFullSync(settings.lastFullSyncAt)
+    }
+
+    private fun needsFullSync(lastFullSyncAt: LocalDateTime?): Boolean {
+        if (lastFullSyncAt == null) return true
+        val threshold = Clock.System.now()
+            .minus(7.days)
+            .toLocalDateTime(TimeZone.UTC)
+        return lastFullSyncAt < threshold
     }
 
     /**

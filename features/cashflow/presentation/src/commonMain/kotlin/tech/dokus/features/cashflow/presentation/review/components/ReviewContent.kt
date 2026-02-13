@@ -51,6 +51,7 @@ import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
 import tech.dokus.features.cashflow.presentation.review.components.details.AmountsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
 import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
+import tech.dokus.features.cashflow.presentation.review.components.details.PeppolStatusCard
 import tech.dokus.features.cashflow.presentation.review.components.mobile.DetailsTabContent
 import tech.dokus.features.cashflow.presentation.review.components.mobile.DocumentDetailMobileHeader
 import tech.dokus.features.cashflow.presentation.review.components.mobile.DocumentDetailTabBar
@@ -380,6 +381,10 @@ private fun ReviewDetailsPane(
                 InvoiceDetailsCard(
                     state = state,
                     onIntent = onIntent,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                PeppolStatusCard(
+                    state = state,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 AmountsCard(

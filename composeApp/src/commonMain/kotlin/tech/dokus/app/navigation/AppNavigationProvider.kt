@@ -7,6 +7,7 @@ import tech.dokus.app.screens.HomeScreen
 import tech.dokus.app.screens.SplashScreen
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
+import tech.dokus.app.screens.settings.route.NotificationPreferencesRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
 import tech.dokus.app.share.ShareImportRoute
@@ -40,6 +41,9 @@ internal object AppNavigationProvider : NavigationProvider {
         }
         composable<SettingsDestination.AppearanceSettings> {
             AppearanceSettingsRoute()
+        }
+        composable<SettingsDestination.NotificationPreferences> {
+            NotificationPreferencesRoute()
         }
     }
 }

@@ -309,13 +309,70 @@ class UserRepository(
     }
 
     @OptIn(ExperimentalTime::class)
-    suspend fun recordLogin(userId: UserId, loginTime: Instant) = dbQuery {
+    suspend fun recordSuccessfulLogin(userId: UserId, loginTime: Instant): Boolean = dbQuery {
         val javaUuid = userId.value.toJavaUuid()
-        UsersTable.update({ UsersTable.id eq javaUuid }) {
-            it[lastLoginAt] = loginTime.toStdlibInstant().toLocalDateTime(TimeZone.UTC)
+        val loginAt = loginTime.toStdlibInstant().toLocalDateTime(TimeZone.UTC)
+
+        val firstSignInUpdateCount = UsersTable.update({
+            (UsersTable.id eq javaUuid) and (UsersTable.firstSignInAt eq null)
+        }) {
+            it[firstSignInAt] = loginAt
+            it[lastLoginAt] = loginAt
+        }
+
+        if (firstSignInUpdateCount > 0) {
+            logger.debug("Recorded first successful sign-in for user {} at {}", userId, loginTime)
+            return@dbQuery true
+        }
+
+        val loginUpdateCount = UsersTable.update({ UsersTable.id eq javaUuid }) {
+            it[lastLoginAt] = loginAt
+        }
+
+        if (loginUpdateCount == 0) {
+            throw IllegalArgumentException("User not found: $userId")
         }
 
         logger.debug("Recorded login for user {} at {}", userId, loginTime)
+        false
+    }
+
+    suspend fun hasFirstSignIn(userId: UserId): Boolean = dbQuery {
+        val javaUuid = userId.value.toJavaUuid()
+        UsersTable
+            .selectAll()
+            .where { UsersTable.id eq javaUuid }
+            .singleOrNull()
+            ?.get(UsersTable.firstSignInAt) != null
+    }
+
+    suspend fun hasWelcomeEmailSent(userId: UserId): Boolean = dbQuery {
+        val javaUuid = userId.value.toJavaUuid()
+        UsersTable
+            .selectAll()
+            .where { UsersTable.id eq javaUuid }
+            .singleOrNull()
+            ?.get(UsersTable.welcomeEmailSentAt) != null
+    }
+
+    suspend fun markWelcomeEmailSent(
+        userId: UserId,
+        sentAt: Instant
+    ): Boolean = dbQuery {
+        val javaUuid = userId.value.toJavaUuid()
+        val sentAtLocal = sentAt.toLocalDateTime(TimeZone.UTC)
+        val updated = UsersTable.update({
+            (UsersTable.id eq javaUuid) and (UsersTable.welcomeEmailSentAt eq null)
+        }) {
+            it[welcomeEmailSentAt] = sentAtLocal
+        }
+
+        if (updated > 0) {
+            logger.info("Marked welcome email as sent for user {}", userId)
+            true
+        } else {
+            false
+        }
     }
 
     suspend fun verifyCredentials(email: String, password: String): User? =

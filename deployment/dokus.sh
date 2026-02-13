@@ -856,6 +856,16 @@ initial_setup() {
         PEPPOL_MASTER_API_KEY=$(prompt_with_default "Peppol (Recommand) API Key:" "" "PEPPOL_MASTER_API_KEY")
         PEPPOL_MASTER_API_SECRET=$(prompt_with_default "Peppol (Recommand) API Secret:" "" "PEPPOL_MASTER_API_SECRET")
 
+        echo ""
+        print_status task "Transactional Email Configuration (Resend)"
+        echo_e "  ${DIM_WHITE}Resend API key is required for transactional email delivery.${NC}"
+        echo_e "  ${DIM_WHITE}Get your API key from https://resend.com/api-keys${NC}"
+        echo ""
+
+        RESEND_API_KEY=$(prompt_with_default "Resend API Key:" "" "RESEND_API_KEY")
+        EMAIL_WELCOME_FROM_ADDRESS=$(prompt_with_default "Welcome email from address:" "Artem <noreply@dokus.tech>" "EMAIL_WELCOME_FROM_ADDRESS")
+        EMAIL_WELCOME_REPLY_TO_ADDRESS=$(prompt_with_default "Welcome email reply-to address:" "artem@dokus.tech" "EMAIL_WELCOME_REPLY_TO_ADDRESS")
+
         cat > .env << EOF
 # Dokus Cloud Environment Configuration
 # Generated on $(date)
@@ -883,6 +893,14 @@ PEPPOL_MASTER_API_KEY=$PEPPOL_MASTER_API_KEY
 PEPPOL_MASTER_API_SECRET=$PEPPOL_MASTER_API_SECRET
 
 # ============================================================================
+# EMAIL (Transactional via Resend) - Required
+# Get API key from https://resend.com/api-keys
+# ============================================================================
+RESEND_API_KEY=$RESEND_API_KEY
+EMAIL_WELCOME_FROM_ADDRESS="$EMAIL_WELCOME_FROM_ADDRESS"
+EMAIL_WELCOME_REPLY_TO_ADDRESS="$EMAIL_WELCOME_REPLY_TO_ADDRESS"
+
+# ============================================================================
 # STORAGE - Public URL for presigned URLs (MinIO via Traefik)
 # ============================================================================
 STORAGE_PUBLIC_URL=https://$DOMAIN/storage
@@ -898,6 +916,16 @@ EOF
 
         PEPPOL_MASTER_API_KEY=$(prompt_with_default "Peppol (Recommand) API Key:" "" "PEPPOL_MASTER_API_KEY")
         PEPPOL_MASTER_API_SECRET=$(prompt_with_default "Peppol (Recommand) API Secret:" "" "PEPPOL_MASTER_API_SECRET")
+
+        echo ""
+        print_status task "Transactional Email Configuration (Resend)"
+        echo_e "  ${DIM_WHITE}Resend API key is required for transactional email delivery.${NC}"
+        echo_e "  ${DIM_WHITE}Get your API key from https://resend.com/api-keys${NC}"
+        echo ""
+
+        RESEND_API_KEY=$(prompt_with_default "Resend API Key:" "" "RESEND_API_KEY")
+        EMAIL_WELCOME_FROM_ADDRESS=$(prompt_with_default "Welcome email from address:" "Artem <noreply@dokus.tech>" "EMAIL_WELCOME_FROM_ADDRESS")
+        EMAIL_WELCOME_REPLY_TO_ADDRESS=$(prompt_with_default "Welcome email reply-to address:" "artem@dokus.tech" "EMAIL_WELCOME_REPLY_TO_ADDRESS")
 
         local SERVER_IP=$(get_server_ip)
         if [ "$SERVER_IP" = "localhost" ]; then
@@ -923,6 +951,14 @@ JWT_SECRET=$JWT_SECRET_VAL
 # ============================================================================
 PEPPOL_MASTER_API_KEY=$PEPPOL_MASTER_API_KEY
 PEPPOL_MASTER_API_SECRET=$PEPPOL_MASTER_API_SECRET
+
+# ============================================================================
+# EMAIL (Transactional via Resend) - Required
+# Get API key from https://resend.com/api-keys
+# ============================================================================
+RESEND_API_KEY=$RESEND_API_KEY
+EMAIL_WELCOME_FROM_ADDRESS="$EMAIL_WELCOME_FROM_ADDRESS"
+EMAIL_WELCOME_REPLY_TO_ADDRESS="$EMAIL_WELCOME_REPLY_TO_ADDRESS"
 
 # ============================================================================
 # STORAGE - Public URL for presigned URLs (MinIO via Traefik)

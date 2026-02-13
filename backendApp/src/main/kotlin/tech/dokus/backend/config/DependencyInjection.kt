@@ -14,15 +14,17 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import tech.dokus.backend.services.auth.AuthService
-import tech.dokus.backend.services.auth.DisabledEmailService
-import tech.dokus.backend.services.auth.EmailConfig
 import tech.dokus.backend.services.auth.EmailService
+import tech.dokus.backend.services.auth.EmailTemplateRenderer
 import tech.dokus.backend.services.auth.EmailVerificationService
 import tech.dokus.backend.services.auth.PasswordResetService
 import tech.dokus.backend.services.auth.RateLimitServiceInterface
 import tech.dokus.backend.services.auth.RedisRateLimitService
-import tech.dokus.backend.services.auth.SmtpEmailService
+import tech.dokus.backend.services.auth.ResendEmailService
 import tech.dokus.backend.services.auth.TeamService
+import tech.dokus.backend.services.auth.WelcomeEmailService
+import tech.dokus.backend.services.notifications.NotificationPreferencesService
+import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
@@ -45,6 +47,7 @@ import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
+import tech.dokus.backend.worker.WelcomeEmailWorker
 import tech.dokus.database.DokusSchema
 import tech.dokus.database.di.repositoryModules
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
@@ -184,15 +187,15 @@ private val cryptoModule = module {
 
 private fun authModule() = module {
     single<EmailService> {
-        val emailConfig = get<EmailConfig>()
-        if (emailConfig.enabled && emailConfig.provider == "smtp") {
-            SmtpEmailService(emailConfig)
-        } else {
-            DisabledEmailService()
-        }
+        ResendEmailService(get())
     }
 
-    single { EmailVerificationService(get<UserRepository>(), get<EmailService>()) }
+    single { EmailTemplateRenderer(get()) }
+    single { NotificationPreferencesService(get()) }
+    single { NotificationService(get(), get(), get(), get(), get()) }
+    single { WelcomeEmailService(get(), get(), get()) }
+
+    single { EmailVerificationService(get<UserRepository>(), get<EmailService>(), get()) }
 
     single {
         PasswordResetService(
@@ -200,6 +203,7 @@ private fun authModule() = module {
             get<PasswordResetTokenRepository>(),
             get<RefreshTokenRepository>(),
             get<EmailService>(),
+            get<EmailTemplateRenderer>(),
             getOrNull<TokenBlacklistService>()
         )
     }
@@ -223,6 +227,7 @@ private fun authModule() = module {
     }
     singleOf(::RedisTokenBlacklistService) bind TokenBlacklistService::class
     singleOf(::RateLimitCleanupWorker)
+    singleOf(::WelcomeEmailWorker)
 
     single {
         val authConfig = get<AuthConfig>()
@@ -231,6 +236,7 @@ private fun authModule() = module {
             jwtGenerator = get(),
             refreshTokenRepository = get(),
             rateLimitService = get(),
+            welcomeEmailService = get(),
             emailVerificationService = get(),
             passwordResetService = get(),
             tokenBlacklistService = get(),

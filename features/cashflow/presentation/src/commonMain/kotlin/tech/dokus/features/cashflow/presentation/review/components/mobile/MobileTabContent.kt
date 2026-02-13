@@ -51,6 +51,7 @@ import tech.dokus.features.cashflow.presentation.review.components.AnalysisFaile
 import tech.dokus.features.cashflow.presentation.review.components.details.AmountsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
 import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
+import tech.dokus.features.cashflow.presentation.review.components.details.PeppolStatusCard
 import tech.dokus.features.cashflow.presentation.review.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constrains
@@ -257,6 +258,10 @@ internal fun DetailsTabContent(
         InvoiceDetailsCard(
             state = state,
             onIntent = onIntent,
+            modifier = Modifier.fillMaxWidth()
+        )
+        PeppolStatusCard(
+            state = state,
             modifier = Modifier.fillMaxWidth()
         )
 

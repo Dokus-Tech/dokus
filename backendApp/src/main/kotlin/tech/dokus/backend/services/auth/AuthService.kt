@@ -33,6 +33,7 @@ class AuthService(
     private val jwtGenerator: JwtGenerator,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitServiceInterface,
+    private val welcomeEmailService: WelcomeEmailService,
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService,
     private val tokenBlacklistService: TokenBlacklistService? = null,
@@ -69,7 +70,6 @@ class AuthService(
 
         val userId = user.id
         val loginTime = now()
-        userRepository.recordLogin(userId, loginTime)
 
         // Get all user's tenants and create scopes for each
         val memberships = userRepository.getUserTenants(userId)
@@ -105,6 +105,18 @@ class AuthService(
         }
 
         rateLimitService.resetLoginAttempts(request.email.value)
+
+        val firstSignIn = userRepository.recordSuccessfulLogin(userId, loginTime)
+        if (firstSignIn && selectedTenant != null) {
+            welcomeEmailService.scheduleIfEligible(userId, selectedTenant.tenantId)
+                .onFailure { error ->
+                    logger.warn(
+                        "Failed to schedule welcome email after first sign-in for user {}",
+                        userId,
+                        error
+                    )
+                }
+        }
 
         logger.info("Successful login for user: ${user.id} (email: ${user.email.value})")
         Result.success(response)
@@ -148,10 +160,8 @@ class AuthService(
             throw DokusException.InternalError("Failed to save refresh token")
         }
 
-        emailVerificationService.sendVerificationEmail(userId, user.email.value)
-            .onFailure { error ->
-                logger.warn("Failed to send verification email during registration: ${error.message}")
-            }
+        // Registration auto-logs in the user, so treat it as first successful sign-in.
+        userRepository.recordSuccessfulLogin(userId, now())
 
         logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value})")
         Result.success(response)
@@ -280,6 +290,19 @@ class AuthService(
             throw DokusException.InternalError("Failed to save refresh token")
         }
 
+        val shouldScheduleWelcome = userRepository.hasFirstSignIn(userId) &&
+            !userRepository.hasWelcomeEmailSent(userId)
+        if (shouldScheduleWelcome) {
+            welcomeEmailService.scheduleIfEligible(userId, tenantId)
+                .onFailure { error ->
+                    logger.warn(
+                        "Failed to schedule welcome email after tenant selection for user {}",
+                        userId,
+                        error
+                    )
+                }
+        }
+
         logger.info("Tenant selection successful for user: $userId -> $tenantId")
         Result.success(response)
     } catch (e: DokusException) {
@@ -345,8 +368,8 @@ class AuthService(
     }
 
     suspend fun resendVerificationEmail(userId: UserId): Result<Unit> {
-        logger.debug("Resend verification email for user: {}", userId.value)
-        return emailVerificationService.resendVerificationEmail(userId)
+        logger.info("Email verification resend requested for user {} - no-op (disabled)", userId.value)
+        return Result.success(Unit)
     }
 
     suspend fun requestPasswordReset(email: String): Result<Unit> {

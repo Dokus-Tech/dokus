@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.paparazzi)
     id("dokus.versioning")
 }
 
@@ -123,11 +124,17 @@ kotlin {
             implementation(libs.materialKolor)
 
             implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.resources)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutinesTest)
             implementation(libs.flowmvi.test)
+        }
+        androidUnitTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlin.test.junit)
+            implementation(projects.foundation.aura)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -161,6 +168,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
 }
 

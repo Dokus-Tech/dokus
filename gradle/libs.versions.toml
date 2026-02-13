@@ -58,7 +58,7 @@ lettuceCore = "6.5.0.RELEASE"
 micrometerCore = "1.16.3"
 micrometerRegistryPrometheus = "1.16.3"
 commonsPool2 = "2.13.1"
-javaMail = "1.6.2"
+resendJava = "4.11.0"
 resilience4j = "2.3.0"
 minio = "8.6.0"
 koog = "0.6.1"
@@ -155,7 +155,7 @@ micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-p
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometerCore" }
 exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 
-javax-mail = { module = "com.sun.mail:javax.mail", version.ref = "javaMail" }
+resend = { module = "com.resend:resend-java", version.ref = "resendJava" }
 minio = { module = "io.minio:minio", version.ref = "minio" }
 
 # Image Processing (server-side)

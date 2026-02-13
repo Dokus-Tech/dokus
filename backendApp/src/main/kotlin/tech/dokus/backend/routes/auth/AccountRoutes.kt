@@ -92,7 +92,7 @@ internal fun Route.accountRoutes() {
 
         /**
          * POST /api/v1/account/email-verifications
-         * Request new email verification (resends verification email)
+         * Legacy endpoint retained for contract stability (no-op).
          */
         post<Account.EmailVerifications> {
             val principal = dokusPrincipal

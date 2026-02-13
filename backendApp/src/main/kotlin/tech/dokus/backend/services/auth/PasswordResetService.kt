@@ -41,6 +41,7 @@ class PasswordResetService(
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val emailService: EmailService,
+    private val emailTemplateRenderer: EmailTemplateRenderer,
     private val tokenBlacklistService: TokenBlacklistService? = null
 ) {
     private val logger = loggerFor()
@@ -82,7 +83,17 @@ class PasswordResetService(
                 // Send email with reset link outside the transaction (async)
                 // Note: Email failures don't prevent the flow (graceful degradation)
                 emailScope.launch {
-                    emailService.sendPasswordResetEmail(email, token, expirationHours = 1)
+                    val template = emailTemplateRenderer.renderPasswordReset(
+                        resetToken = token,
+                        expirationHours = 1
+                    )
+
+                    emailService.send(
+                        to = email,
+                        subject = template.subject,
+                        htmlBody = template.htmlBody,
+                        textBody = template.textBody
+                    )
                         .onSuccess {
                             logger.debug("Password reset email sent successfully to ${email.take(3)}***")
                         }

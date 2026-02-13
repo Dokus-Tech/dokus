@@ -3,6 +3,10 @@ package tech.dokus.app
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import tech.dokus.app.notifications.CashflowInvoiceLookupDataSource
+import tech.dokus.app.notifications.InvoiceLookupDataSource
+import tech.dokus.app.notifications.NotificationRemoteDataSource
+import tech.dokus.app.notifications.NotificationRemoteDataSourceImpl
 import tech.dokus.app.infrastructure.ServerConfigManagerImpl
 import tech.dokus.app.local.DefaultLocalDatabaseCleaner
 import tech.dokus.app.share.ShareImportAction
@@ -17,6 +21,10 @@ import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
 import tech.dokus.app.viewmodel.HomeState
+import tech.dokus.app.viewmodel.NotificationPreferencesAction
+import tech.dokus.app.viewmodel.NotificationPreferencesContainer
+import tech.dokus.app.viewmodel.NotificationPreferencesIntent
+import tech.dokus.app.viewmodel.NotificationPreferencesState
 import tech.dokus.app.viewmodel.SettingsAction
 import tech.dokus.app.viewmodel.SettingsContainer
 import tech.dokus.app.viewmodel.SettingsIntent
@@ -65,7 +73,10 @@ internal val diModuleApp = module {
     }
     container<TodayContainer, TodayState, TodayIntent, TodayAction> {
         TodayContainer(
+            getCurrentTenantUseCase = get(),
             watchPendingDocuments = get(),
+            notificationRemoteDataSource = get(),
+            invoiceLookupDataSource = get(),
         )
     }
     container<HomeContainer, HomeState, HomeIntent, HomeAction> {
@@ -77,6 +88,11 @@ internal val diModuleApp = module {
     }
     container<SettingsContainer, SettingsState, SettingsIntent, SettingsAction> {
         SettingsContainer(getCurrentTenantUseCase = get())
+    }
+    container<NotificationPreferencesContainer, NotificationPreferencesState, NotificationPreferencesIntent, NotificationPreferencesAction> {
+        NotificationPreferencesContainer(
+            notificationRemoteDataSource = get()
+        )
     }
     container<WorkspaceSettingsContainer, WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
         WorkspaceSettingsContainer(
@@ -114,7 +130,9 @@ internal val diModuleApp = module {
         )
     }
 
+    singleOf(::CashflowInvoiceLookupDataSource) bind InvoiceLookupDataSource::class
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
+    singleOf(::NotificationRemoteDataSourceImpl) bind NotificationRemoteDataSource::class
     singleOf(::DefaultLocalDatabaseCleaner) bind LocalDatabaseCleaner::class
 }
 
