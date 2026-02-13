@@ -62,6 +62,7 @@ class AuthServiceWelcomeFlowTest {
             expiresIn = 3600
         )
         coEvery { refreshTokenRepository.saveRefreshToken(any(), any(), any()) } returns Result.success(Unit)
+        coEvery { userRepository.recordSuccessfulLogin(any(), any()) } returns true
 
         val result = runBlocking {
             authService.register(
@@ -75,6 +76,7 @@ class AuthServiceWelcomeFlowTest {
         }
 
         assertTrue(result.isSuccess)
+        coVerify(exactly = 1) { userRepository.recordSuccessfulLogin(user.id, any()) }
         coVerify(exactly = 0) { emailVerificationService.sendVerificationEmail(any(), any()) }
         coVerify(exactly = 0) { welcomeEmailService.scheduleIfEligible(any(), any()) }
     }
@@ -131,6 +133,42 @@ class AuthServiceWelcomeFlowTest {
 
         assertTrue(result.isSuccess)
         coVerify(exactly = 0) { emailVerificationService.resendVerificationEmail(any()) }
+    }
+
+    @Test
+    fun `tenant selection schedules welcome when first sign in recorded and welcome not sent`() {
+        val tenantId = TenantId.generate()
+        val user = testUser()
+
+        coEvery { userRepository.findById(user.id) } returns user
+        coEvery { userRepository.getUserTenants(user.id) } returns listOf(
+            TenantMembership(
+                userId = user.id,
+                tenantId = tenantId,
+                role = UserRole.Owner,
+                isActive = true,
+                createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC),
+                updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            )
+        )
+        coEvery { jwtGenerator.generateClaims(any(), any(), any()) } returns testClaims(user.id, tenantId)
+        coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
+            accessToken = "access",
+            refreshToken = "refresh",
+            expiresIn = 3600
+        )
+        coEvery { refreshTokenRepository.countActiveForUser(user.id) } returns 0
+        coEvery { refreshTokenRepository.saveRefreshToken(any(), any(), any()) } returns Result.success(Unit)
+        coEvery { userRepository.hasFirstSignIn(user.id) } returns true
+        coEvery { userRepository.hasWelcomeEmailSent(user.id) } returns false
+        coEvery { welcomeEmailService.scheduleIfEligible(user.id, tenantId) } returns Result.success(Unit)
+
+        val result = runBlocking {
+            authService.selectOrganization(user.id, tenantId)
+        }
+
+        assertTrue(result.isSuccess)
+        coVerify(exactly = 1) { welcomeEmailService.scheduleIfEligible(user.id, tenantId) }
     }
 
     private fun testUser(): User {

@@ -160,6 +160,9 @@ class AuthService(
             throw DokusException.InternalError("Failed to save refresh token")
         }
 
+        // Registration auto-logs in the user, so treat it as first successful sign-in.
+        userRepository.recordSuccessfulLogin(userId, now())
+
         logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value})")
         Result.success(response)
     } catch (e: IllegalArgumentException) {
