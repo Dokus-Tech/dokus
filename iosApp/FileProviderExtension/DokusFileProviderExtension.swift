@@ -255,13 +255,23 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
         completionHandler: @escaping (NSFileProviderItem?, NSFileProviderItemFields, Bool, Error?) -> Void
     ) -> Progress {
         let progress = Progress(totalUnitCount: 100)
-        let error = DokusFileProviderError.unsupportedOperation(
-            "Rename, move and edit operations are not supported in Dokus Files"
-        ).nsError
-        completionHandler(nil, [], false, error)
+        let disallowedFields: NSFileProviderItemFields = [.contents, .filename, .parentItemIdentifier]
+        if !changedFields.intersection(disallowedFields).isEmpty {
+            let error = DokusFileProviderError.unsupportedOperation(
+                "Rename, move and edit operations are not supported in Dokus Files"
+            ).nsError
+            completionHandler(nil, [], false, error)
+            DokusFileProviderLog.extension.debug(
+                "modifyItem denied identifier=\(item.itemIdentifier.rawValue, privacy: .public) changedFields=\(changedFields.rawValue, privacy: .public)"
+            )
+            progress.completedUnitCount = 100
+            return progress
+        }
+
         DokusFileProviderLog.extension.debug(
-            "modifyItem denied identifier=\(item.itemIdentifier.rawValue, privacy: .public) changedFields=\(changedFields.rawValue, privacy: .public)"
+            "modifyItem accepted as metadata no-op identifier=\(item.itemIdentifier.rawValue, privacy: .public) changedFields=\(changedFields.rawValue, privacy: .public)"
         )
+        completionHandler(item, [], false, nil)
         progress.completedUnitCount = 100
         return progress
     }

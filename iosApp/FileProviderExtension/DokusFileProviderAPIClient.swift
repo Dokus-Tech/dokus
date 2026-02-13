@@ -186,35 +186,63 @@ final class DokusFileProviderAPIClient {
         }
 
         let downloadURL = try await resolveDownloadURL(resolved: resolved, record: record)
-        if shouldRejectDirectDownloadURL(downloadURL, apiBaseURL: resolved.baseURL) {
-            let host = downloadURL.host ?? "unknown"
-            DokusFileProviderLog.api.error(
-                "downloadDocument rejected unreachable direct URL documentId=\(record.documentId, privacy: .public) host=\(host, privacy: .public)"
+        let candidates = directDownloadCandidates(from: downloadURL, apiBaseURL: resolved.baseURL)
+        var firstRejectedHost: String?
+        var lastError: DokusFileProviderError?
+
+        for (index, candidate) in candidates.enumerated() {
+            if shouldRejectDirectDownloadURL(candidate, apiBaseURL: resolved.baseURL) {
+                let host = candidate.host ?? "unknown"
+                if firstRejectedHost == nil {
+                    firstRejectedHost = host
+                }
+                DokusFileProviderLog.api.warning(
+                    "downloadDocument skipping direct candidate index=\(index, privacy: .public) host=\(host, privacy: .public) path=\(candidate.path, privacy: .public)"
+                )
+                continue
+            }
+
+            var request = URLRequest(url: candidate)
+            request.httpMethod = "GET"
+            let attachAuthorization = shouldAttachAuthorization(to: candidate, apiBaseURL: resolved.baseURL)
+            if attachAuthorization {
+                request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+            }
+            DokusFileProviderLog.api.debug(
+                "downloadDocument direct candidate index=\(index, privacy: .public) host=\(candidate.host ?? "nil", privacy: .public) path=\(candidate.path, privacy: .public) attachAuthorization=\(attachAuthorization, privacy: .public)"
             )
+
+            do {
+                let data = try await dataForRequest(request)
+                DokusFileProviderLog.api.debug(
+                    "downloadDocument direct candidate succeeded index=\(index, privacy: .public) documentId=\(record.documentId, privacy: .public) bytes=\(data.count, privacy: .public)"
+                )
+                return try writeDownloadedData(
+                    data,
+                    record: record,
+                    temporaryDirectoryURL: temporaryDirectoryURL
+                )
+            } catch let error as DokusFileProviderError {
+                lastError = error
+                DokusFileProviderLog.api.warning(
+                    "downloadDocument direct candidate failed index=\(index, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+                )
+                if !shouldRetryDirectDownload(after: error) {
+                    throw error
+                }
+            }
+        }
+
+        if let lastError {
+            throw lastError
+        }
+
+        if let rejectedHost = firstRejectedHost {
             throw DokusFileProviderError.network(
-                "Direct download host '\(host)' is not reachable from this device"
+                "Direct download host '\(rejectedHost)' is not reachable from this device"
             )
         }
-
-        var request = URLRequest(url: downloadURL)
-        request.httpMethod = "GET"
-        let attachAuthorization = shouldAttachAuthorization(to: downloadURL, apiBaseURL: resolved.baseURL)
-        if attachAuthorization {
-            request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
-        }
-        DokusFileProviderLog.api.debug(
-            "downloadDocument via presigned/direct URL documentId=\(record.documentId, privacy: .public) host=\(downloadURL.host ?? "nil", privacy: .public) path=\(downloadURL.path, privacy: .public) attachAuthorization=\(attachAuthorization, privacy: .public)"
-        )
-
-        let data = try await dataForRequest(request)
-        DokusFileProviderLog.api.debug(
-            "downloadDocument via presigned/direct URL succeeded documentId=\(record.documentId, privacy: .public) bytes=\(data.count, privacy: .public)"
-        )
-        return try writeDownloadedData(
-            data,
-            record: record,
-            temporaryDirectoryURL: temporaryDirectoryURL
-        )
+        throw DokusFileProviderError.network("No reachable direct download candidate")
     }
 
     func fetchThumbnail(
@@ -324,17 +352,72 @@ final class DokusFileProviderAPIClient {
         }
     }
 
-    private func shouldRejectDirectDownloadURL(_ downloadURL: URL, apiBaseURL: URL) -> Bool {
-        guard let host = downloadURL.host else {
+    private func shouldRetryDirectDownload(after error: DokusFileProviderError) -> Bool {
+        switch error {
+        case .network:
             return true
+        case .invalidServerResponse:
+            return true
+        case .notAuthenticated, .unsupportedOperation, .noSuchItem:
+            return false
+        }
+    }
+
+    private func directDownloadCandidates(from downloadURL: URL, apiBaseURL: URL) -> [URL] {
+        var candidates: [URL] = [downloadURL]
+        guard
+            let downloadHost = downloadURL.host,
+            let apiHost = apiBaseURL.host,
+            isLikelyLocalOnlyHost(downloadHost)
+        else {
+            return candidates
+        }
+
+        guard var components = URLComponents(url: downloadURL, resolvingAgainstBaseURL: false) else {
+            return candidates
+        }
+
+        let preferredScheme = apiBaseURL.scheme ?? components.scheme
+        let preferredPort = apiBaseURL.port
+        components.scheme = preferredScheme
+        components.host = apiHost
+        components.port = preferredPort
+        if let rewritten = components.url {
+            candidates.append(rewritten)
+        }
+
+        if preferredPort != 9000 {
+            components.port = 9000
+            if let minioPortURL = components.url {
+                candidates.append(minioPortURL)
+            }
+        }
+
+        var unique: [URL] = []
+        var seen = Set<String>()
+        for candidate in candidates {
+            let key = candidate.absoluteString
+            if seen.insert(key).inserted {
+                unique.append(candidate)
+            }
+        }
+        return unique
+    }
+
+    private func shouldRejectDirectDownloadURL(_ downloadURL: URL, apiBaseURL: URL) -> Bool {
+        guard
+            let host = downloadURL.host,
+            let apiHost = apiBaseURL.host
+        else {
+            return true
+        }
+        if host.caseInsensitiveCompare(apiHost) == .orderedSame {
+            return false
         }
         if isLikelyLocalOnlyHost(host) {
             return true
         }
-        guard let apiHost = apiBaseURL.host else {
-            return false
-        }
-        return host.caseInsensitiveCompare(apiHost) != .orderedSame && isLikelyPrivateIPAddress(host)
+        return isLikelyPrivateIPAddress(host)
     }
 
     private func isLikelyLocalOnlyHost(_ host: String) -> Bool {
