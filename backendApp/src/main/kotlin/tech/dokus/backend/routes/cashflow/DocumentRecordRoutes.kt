@@ -194,6 +194,42 @@ internal fun Route.documentRecordRoutes() {
         }
 
         /**
+         * GET /api/v1/documents/{id}/content
+         * Download raw document bytes through authenticated API.
+         */
+        get<Documents.Id.Content> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val documentId = DocumentId.parse(route.parent.id)
+
+            logger.info("Downloading document content: $documentId, tenant=$tenantId")
+
+            val document = documentRepository.getById(tenantId, documentId)
+                ?: throw DokusException.NotFound("Document not found")
+
+            val bytes = try {
+                minioStorage.downloadDocument(document.storageKey)
+            } catch (e: Exception) {
+                logger.error("Failed to download document bytes: $documentId", e)
+                throw DokusException.InternalError("Failed to download document content")
+            }
+
+            val contentType = runCatching { ContentType.parse(document.contentType) }
+                .getOrDefault(ContentType.Application.OctetStream)
+
+            call.response.header(
+                HttpHeaders.ContentDisposition,
+                ContentDisposition.Attachment
+                    .withParameter(ContentDisposition.Parameters.FileName, document.filename)
+                    .toString()
+            )
+            call.respondBytes(
+                bytes = bytes,
+                contentType = contentType,
+                status = HttpStatusCode.OK
+            )
+        }
+
+        /**
          * DELETE /api/v1/documents/{id}
          * Delete document (cascades to drafts, ingestion runs, chunks).
          */

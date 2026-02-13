@@ -1,5 +1,6 @@
 import Foundation
 import FileProvider
+import OSLog
 
 final class DokusFileProviderDomainRegistrar {
     private enum Constants {
@@ -11,6 +12,7 @@ final class DokusFileProviderDomainRegistrar {
             .serverUnreachable,
             .cannotSynchronize
         ]
+        static let log = Logger(subsystem: "vision.invoid.dokus.fileprovider", category: "registrar")
     }
 
     static let shared = DokusFileProviderDomainRegistrar()
@@ -50,11 +52,13 @@ final class DokusFileProviderDomainRegistrar {
 
     func synchronizeRegistrationNow() async {
         let currentManaged = await managedDomains()
+        Constants.log.debug("synchronizeRegistrationNow currentManagedCount=\(currentManaged.count, privacy: .public)")
 
         let workspaceState: DokusWorkspaceDiscoveryState
         do {
             workspaceState = try await workspaceDiscovery.workspaceState()
         } catch {
+            Constants.log.error("workspace discovery failed error=\(String(describing: error), privacy: .public)")
             for domain in currentManaged {
                 await domainManager.signalEnumerators(for: domain)
             }
@@ -63,10 +67,12 @@ final class DokusFileProviderDomainRegistrar {
 
         switch workspaceState {
         case .signedOut:
+            Constants.log.debug("workspace state signedOut removing managed domains")
             for domain in currentManaged {
                 await domainManager.remove(domain: domain)
             }
         case .signedIn(let workspaces):
+            Constants.log.debug("workspace state signedIn workspaces=\(workspaces.count, privacy: .public)")
             let desiredDomains = makeDesiredDomains(from: workspaces)
             let desiredByIdentifier = Dictionary(
                 uniqueKeysWithValues: desiredDomains.map { ($0.identifier.rawValue, $0) }
@@ -74,6 +80,9 @@ final class DokusFileProviderDomainRegistrar {
 
             for current in currentManaged {
                 guard desiredByIdentifier[current.identifier.rawValue] != nil else {
+                    Constants.log.debug(
+                        "removing stale domain id=\(current.identifier.rawValue, privacy: .public) displayName=\(current.displayName, privacy: .public)"
+                    )
                     await domainManager.remove(domain: current)
                     continue
                 }
@@ -81,6 +90,9 @@ final class DokusFileProviderDomainRegistrar {
 
             for desired in desiredDomains {
                 // add(domain:) updates display name for existing identifiers.
+                Constants.log.debug(
+                    "adding/updating domain id=\(desired.identifier.rawValue, privacy: .public) displayName=\(desired.displayName, privacy: .public)"
+                )
                 await domainManager.add(domain: desired)
             }
 
@@ -96,6 +108,9 @@ final class DokusFileProviderDomainRegistrar {
             let error = NSError(
                 domain: NSFileProviderErrorDomain,
                 code: code.rawValue
+            )
+            Constants.log.debug(
+                "signalErrorResolved domainId=\(domain.identifier.rawValue, privacy: .public) code=\(code.rawValue, privacy: .public)"
             )
             await domainManager.signalErrorResolved(for: domain, error: error)
         }

@@ -31,13 +31,18 @@ actor DokusFileProviderSessionProvider {
 
     func resolvedSession(workspaceId: String?) async throws -> DokusResolvedSession {
         guard var accessToken = keychain.string(for: DokusFileProviderConstants.accessTokenKey) else {
+            DokusFileProviderLog.session.error("resolvedSession failed: missing access token")
             throw DokusFileProviderError.notAuthenticated
         }
 
         let refreshToken = keychain.string(for: DokusFileProviderConstants.refreshTokenKey)
         let baseURL = resolvedBaseURL()
+        DokusFileProviderLog.session.debug(
+            "resolvedSession start workspaceId=\(workspaceId ?? "nil", privacy: .public) baseURL=\(baseURL.absoluteString, privacy: .public)"
+        )
 
         if needsRefresh(for: accessToken), let refreshToken {
+            DokusFileProviderLog.session.debug("resolvedSession refreshing token")
             let refreshed = try await refreshTokens(
                 baseURL: baseURL,
                 refreshToken: refreshToken,
@@ -45,21 +50,28 @@ actor DokusFileProviderSessionProvider {
             )
             persist(tokens: refreshed)
             accessToken = refreshed.accessToken
+            DokusFileProviderLog.session.debug("resolvedSession token refresh succeeded")
         }
 
         guard let targetWorkspaceId = workspaceId else {
+            DokusFileProviderLog.session.debug("resolvedSession returning base session without tenant switch")
             return DokusResolvedSession(baseURL: baseURL, accessToken: accessToken)
         }
 
         let claimedTenant = tenantIdFromClaims(token: accessToken)
         if claimedTenant == targetWorkspaceId {
+            DokusFileProviderLog.session.debug("resolvedSession already on tenantId=\(targetWorkspaceId, privacy: .public)")
             return DokusResolvedSession(baseURL: baseURL, accessToken: accessToken)
         }
 
         guard refreshToken != nil else {
+            DokusFileProviderLog.session.error(
+                "resolvedSession tenant switch failed: no refresh token tenantId=\(targetWorkspaceId, privacy: .public)"
+            )
             throw DokusFileProviderError.notAuthenticated
         }
 
+        DokusFileProviderLog.session.debug("resolvedSession switching tenant to tenantId=\(targetWorkspaceId, privacy: .public)")
         let switched = try await selectTenant(
             baseURL: baseURL,
             accessToken: accessToken,
@@ -67,6 +79,7 @@ actor DokusFileProviderSessionProvider {
         )
         persist(tokens: switched)
         keychain.set(targetWorkspaceId, for: DokusFileProviderConstants.lastSelectedTenantKey)
+        DokusFileProviderLog.session.debug("resolvedSession tenant switch succeeded tenantId=\(targetWorkspaceId, privacy: .public)")
         return DokusResolvedSession(baseURL: baseURL, accessToken: switched.accessToken)
     }
 
@@ -100,13 +113,16 @@ actor DokusFileProviderSessionProvider {
         do {
             result = try await session.data(for: request)
         } catch {
+            DokusFileProviderLog.session.error("refreshTokens network failure error=\(error.localizedDescription, privacy: .public)")
             throw DokusFileProviderError.network("Network unavailable while refreshing authentication")
         }
 
         guard let httpResponse = result.1 as? HTTPURLResponse else {
+            DokusFileProviderLog.session.error("refreshTokens invalid HTTP response")
             throw DokusFileProviderError.invalidServerResponse
         }
         guard (200...299).contains(httpResponse.statusCode) else {
+            DokusFileProviderLog.session.error("refreshTokens failed status=\(httpResponse.statusCode, privacy: .public)")
             throw DokusFileProviderError.notAuthenticated
         }
 
@@ -136,13 +152,18 @@ actor DokusFileProviderSessionProvider {
         do {
             result = try await session.data(for: request)
         } catch {
+            DokusFileProviderLog.session.error("selectTenant network failure tenantId=\(tenantId, privacy: .public) error=\(error.localizedDescription, privacy: .public)")
             throw DokusFileProviderError.network("Network unavailable while selecting workspace")
         }
 
         guard let httpResponse = result.1 as? HTTPURLResponse else {
+            DokusFileProviderLog.session.error("selectTenant invalid HTTP response tenantId=\(tenantId, privacy: .public)")
             throw DokusFileProviderError.invalidServerResponse
         }
         guard (200...299).contains(httpResponse.statusCode) else {
+            DokusFileProviderLog.session.error(
+                "selectTenant failed tenantId=\(tenantId, privacy: .public) status=\(httpResponse.statusCode, privacy: .public)"
+            )
             throw DokusFileProviderError.notAuthenticated
         }
 

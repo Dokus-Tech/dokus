@@ -2,6 +2,7 @@ import Foundation
 import FileProvider
 import UniformTypeIdentifiers
 import Security
+import OSLog
 
 enum DokusFileProviderConstants {
     static let managedDomainIdentifierPrefix = "vision.invoid.dokus.fileprovider"
@@ -248,4 +249,14 @@ extension UTType {
         }
         return parsed
     }
+}
+
+enum DokusFileProviderLog {
+    private static let fallbackSubsystem = "vision.invoid.dokus.fileprovider"
+    static let subsystem = Bundle.main.bundleIdentifier ?? fallbackSubsystem
+
+    static let `extension` = Logger(subsystem: subsystem, category: "extension")
+    static let runtime = Logger(subsystem: subsystem, category: "runtime")
+    static let api = Logger(subsystem: subsystem, category: "api")
+    static let session = Logger(subsystem: subsystem, category: "session")
 }

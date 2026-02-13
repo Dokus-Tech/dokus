@@ -15,6 +15,7 @@ final class DokusFileProviderAPIClient {
     }
 
     func listWorkspaces() async throws -> [DokusWorkspace] {
+        DokusFileProviderLog.api.debug("listWorkspaces started")
         let resolved = try await sessionProvider.resolvedSession(workspaceId: nil)
         var request = URLRequest(url: resolved.baseURL.appendingPathQuery("/api/v1/tenants"))
         request.httpMethod = "GET"
@@ -34,7 +35,7 @@ final class DokusFileProviderAPIClient {
             rows = []
         }
 
-        return rows.compactMap { row in
+        let workspaces: [DokusWorkspace] = rows.compactMap { row -> DokusWorkspace? in
             guard let id = decodeFlexibleString(row["id"]) else { return nil }
             let name = decodeFlexibleString(row["displayName"])
                 ?? decodeFlexibleString(row["legalName"])
@@ -42,9 +43,12 @@ final class DokusFileProviderAPIClient {
             let role = DokusWorkspaceRole.from(raw: decodeFlexibleString(row["role"]))
             return DokusWorkspace(id: id, name: name, role: role)
         }
+        DokusFileProviderLog.api.debug("listWorkspaces completed count=\(workspaces.count, privacy: .public)")
+        return workspaces
     }
 
     func listAllDocuments(workspaceId: String) async throws -> [DokusDocumentRecord] {
+        DokusFileProviderLog.api.debug("listAllDocuments started workspaceId=\(workspaceId, privacy: .public)")
         let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
 
         var page = 0
@@ -76,6 +80,9 @@ final class DokusFileProviderAPIClient {
             let items = object["items"] as? [[String: Any]] ?? []
             totalExpected = decodeFlexibleInt(object["total"]) ?? items.count
             effectiveLimit = max(decodeFlexibleInt(object["limit"]) ?? effectiveLimit, 1)
+            DokusFileProviderLog.api.debug(
+                "listAllDocuments page=\(page, privacy: .public) items=\(items.count, privacy: .public) effectiveLimit=\(effectiveLimit, privacy: .public) totalExpected=\(totalExpected, privacy: .public)"
+            )
             if items.isEmpty {
                 break
             }
@@ -89,6 +96,7 @@ final class DokusFileProviderAPIClient {
             page += 1
         }
 
+        DokusFileProviderLog.api.debug("listAllDocuments completed workspaceId=\(workspaceId, privacy: .public) count=\(all.count, privacy: .public)")
         return all
     }
 
@@ -146,29 +154,67 @@ final class DokusFileProviderAPIClient {
         temporaryDirectoryURL: URL?
     ) async throws -> URL {
         let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
+        DokusFileProviderLog.api.debug(
+            "downloadDocument started workspaceId=\(workspaceId, privacy: .public) documentId=\(record.documentId, privacy: .public)"
+        )
+
+        do {
+            let data = try await downloadDocumentViaApi(resolved: resolved, record: record)
+            DokusFileProviderLog.api.debug(
+                "downloadDocument via API content endpoint succeeded documentId=\(record.documentId, privacy: .public) bytes=\(data.count, privacy: .public)"
+            )
+            return try writeDownloadedData(
+                data,
+                record: record,
+                temporaryDirectoryURL: temporaryDirectoryURL
+            )
+        } catch let error as DokusFileProviderError {
+            guard shouldFallbackToDirectDownload(after: error) else {
+                DokusFileProviderLog.api.error(
+                    "downloadDocument via API content endpoint failed without fallback documentId=\(record.documentId, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+                )
+                throw error
+            }
+            DokusFileProviderLog.api.warning(
+                "downloadDocument via API content endpoint unavailable; falling back documentId=\(record.documentId, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+            )
+        } catch {
+            DokusFileProviderLog.api.warning(
+                "downloadDocument via API content endpoint failed documentId=\(record.documentId, privacy: .public) error=\(String(describing: error), privacy: .public)"
+            )
+            throw DokusFileProviderError.network(error.localizedDescription)
+        }
+
         let downloadURL = try await resolveDownloadURL(resolved: resolved, record: record)
+        if shouldRejectDirectDownloadURL(downloadURL, apiBaseURL: resolved.baseURL) {
+            let host = downloadURL.host ?? "unknown"
+            DokusFileProviderLog.api.error(
+                "downloadDocument rejected unreachable direct URL documentId=\(record.documentId, privacy: .public) host=\(host, privacy: .public)"
+            )
+            throw DokusFileProviderError.network(
+                "Direct download host '\(host)' is not reachable from this device"
+            )
+        }
 
         var request = URLRequest(url: downloadURL)
         request.httpMethod = "GET"
-        if shouldAttachAuthorization(to: downloadURL, apiBaseURL: resolved.baseURL) {
+        let attachAuthorization = shouldAttachAuthorization(to: downloadURL, apiBaseURL: resolved.baseURL)
+        if attachAuthorization {
             request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
         }
+        DokusFileProviderLog.api.debug(
+            "downloadDocument via presigned/direct URL documentId=\(record.documentId, privacy: .public) host=\(downloadURL.host ?? "nil", privacy: .public) path=\(downloadURL.path, privacy: .public) attachAuthorization=\(attachAuthorization, privacy: .public)"
+        )
 
         let data = try await dataForRequest(request)
-
-        let suggestedExtension = URL(fileURLWithPath: record.originalFilename).pathExtension
-        let fileExtension = suggestedExtension.isEmpty
-            ? UTType.fromMimeType(record.contentType).preferredFilenameExtension ?? "bin"
-            : suggestedExtension
-
-        let directory = temporaryDirectoryURL ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-
-        let destination = directory
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension(fileExtension)
-        try data.write(to: destination, options: .atomic)
-        return destination
+        DokusFileProviderLog.api.debug(
+            "downloadDocument via presigned/direct URL succeeded documentId=\(record.documentId, privacy: .public) bytes=\(data.count, privacy: .public)"
+        )
+        return try writeDownloadedData(
+            data,
+            record: record,
+            temporaryDirectoryURL: temporaryDirectoryURL
+        )
     }
 
     func fetchThumbnail(
@@ -195,7 +241,45 @@ final class DokusFileProviderAPIClient {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        DokusFileProviderLog.api.debug(
+            "fetchThumbnail request workspaceId=\(workspaceId, privacy: .public) documentId=\(record.documentId, privacy: .public) dpi=\(dpi, privacy: .public)"
+        )
         return try await dataForRequest(request)
+    }
+
+    private func downloadDocumentViaApi(
+        resolved: DokusResolvedSession,
+        record: DokusDocumentRecord
+    ) async throws -> Data {
+        var request = URLRequest(
+            url: resolved.baseURL.appendingPathQuery("/api/v1/documents/\(record.documentId)/content")
+        )
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        return try await dataForRequest(request)
+    }
+
+    private func writeDownloadedData(
+        _ data: Data,
+        record: DokusDocumentRecord,
+        temporaryDirectoryURL: URL?
+    ) throws -> URL {
+        let suggestedExtension = URL(fileURLWithPath: record.originalFilename).pathExtension
+        let fileExtension = suggestedExtension.isEmpty
+            ? UTType.fromMimeType(record.contentType).preferredFilenameExtension ?? "bin"
+            : suggestedExtension
+
+        let directory = temporaryDirectoryURL ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+        let destination = directory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension(fileExtension)
+        try data.write(to: destination, options: .atomic)
+        DokusFileProviderLog.api.debug(
+            "writeDownloadedData destination=\(destination.path, privacy: .public) bytes=\(data.count, privacy: .public)"
+        )
+        return destination
     }
 
     private func resolveDownloadURL(
@@ -203,6 +287,9 @@ final class DokusFileProviderAPIClient {
         record: DokusDocumentRecord
     ) async throws -> URL {
         if let downloadURL = record.downloadURL {
+            DokusFileProviderLog.api.debug(
+                "resolveDownloadURL from list documentId=\(record.documentId, privacy: .public) host=\(downloadURL.host ?? "nil", privacy: .public) path=\(downloadURL.path, privacy: .public)"
+            )
             return downloadURL
         }
 
@@ -220,7 +307,69 @@ final class DokusFileProviderAPIClient {
             throw DokusFileProviderError.invalidServerResponse
         }
 
+        DokusFileProviderLog.api.debug(
+            "resolveDownloadURL from detail documentId=\(record.documentId, privacy: .public) host=\(url.host ?? "nil", privacy: .public) path=\(url.path, privacy: .public)"
+        )
         return url
+    }
+
+    private func shouldFallbackToDirectDownload(after error: DokusFileProviderError) -> Bool {
+        switch error {
+        case .network(let message):
+            return message.contains("404") || message.contains("405")
+        case .invalidServerResponse:
+            return true
+        case .notAuthenticated, .unsupportedOperation, .noSuchItem:
+            return false
+        }
+    }
+
+    private func shouldRejectDirectDownloadURL(_ downloadURL: URL, apiBaseURL: URL) -> Bool {
+        guard let host = downloadURL.host else {
+            return true
+        }
+        if isLikelyLocalOnlyHost(host) {
+            return true
+        }
+        guard let apiHost = apiBaseURL.host else {
+            return false
+        }
+        return host.caseInsensitiveCompare(apiHost) != .orderedSame && isLikelyPrivateIPAddress(host)
+    }
+
+    private func isLikelyLocalOnlyHost(_ host: String) -> Bool {
+        let normalized = host.lowercased()
+        if normalized == "localhost" || normalized == "127.0.0.1" || normalized == "::1" {
+            return true
+        }
+        if normalized.hasSuffix(".local") {
+            return true
+        }
+        if !normalized.contains(".") {
+            return true
+        }
+        return isLikelyPrivateIPAddress(normalized)
+    }
+
+    private func isLikelyPrivateIPAddress(_ host: String) -> Bool {
+        let parts = host.split(separator: ".").compactMap { Int($0) }
+        guard parts.count == 4, parts.allSatisfy({ 0...255 ~= $0 }) else {
+            return false
+        }
+
+        if parts[0] == 10 {
+            return true
+        }
+        if parts[0] == 172, 16...31 ~= parts[1] {
+            return true
+        }
+        if parts[0] == 192, parts[1] == 168 {
+            return true
+        }
+        if parts[0] == 169, parts[1] == 254 {
+            return true
+        }
+        return false
     }
 
     private func shouldAttachAuthorization(to downloadURL: URL, apiBaseURL: URL) -> Bool {
@@ -284,12 +433,29 @@ final class DokusFileProviderAPIClient {
     }
 
     private func dataForRequest(_ request: URLRequest, allowNoContent: Bool = false) async throws -> Data {
+        let method = request.httpMethod ?? "GET"
+        let requestURL = request.url
+        let requestHost = requestURL?.host ?? "nil"
+        let requestPath = requestURL?.path ?? ""
+        DokusFileProviderLog.api.debug(
+            "HTTP request method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public)"
+        )
+
         let response: (Data, URLResponse)
         do {
             response = try await session.data(for: request)
         } catch {
             if let urlError = error as? URLError, urlError.code == .cancelled {
                 throw CancellationError()
+            }
+            if let urlError = error as? URLError {
+                DokusFileProviderLog.api.error(
+                    "HTTP network failure method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) code=\(urlError.code.rawValue, privacy: .public) message=\(urlError.localizedDescription, privacy: .public)"
+                )
+            } else {
+                DokusFileProviderLog.api.error(
+                    "HTTP network failure method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) error=\(String(describing: error), privacy: .public)"
+                )
             }
             let nsError = error as NSError
             if nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError {
@@ -299,8 +465,14 @@ final class DokusFileProviderAPIClient {
         }
 
         guard let httpResponse = response.1 as? HTTPURLResponse else {
+            DokusFileProviderLog.api.error(
+                "HTTP invalid response method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public)"
+            )
             throw DokusFileProviderError.invalidServerResponse
         }
+        DokusFileProviderLog.api.debug(
+            "HTTP response method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) status=\(httpResponse.statusCode, privacy: .public) bytes=\(response.0.count, privacy: .public)"
+        )
 
         if httpResponse.statusCode == 401 {
             throw DokusFileProviderError.notAuthenticated

@@ -11,7 +11,9 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     }
 
     func invalidate() {
-        // No-op. Runtime state is managed by the actor and refreshed lazily.
+        DokusFileProviderLog.extension.debug(
+            "enumerator invalidate container=\(self.containerItemIdentifier.rawValue, privacy: .public)"
+        )
     }
 
     func enumerateItems(for observer: NSFileProviderEnumerationObserver, startingAt page: NSFileProviderPage) {
@@ -24,6 +26,9 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 let offset = decodePage(page)
                 let suggested = max(observer.suggestedPageSize ?? 100, 1)
                 let pageSize = min(max(suggested, 100), 500)
+                DokusFileProviderLog.extension.debug(
+                    "enumerateItems container=\(self.containerItemIdentifier.rawValue, privacy: .public) offset=\(offset, privacy: .public) pageSize=\(pageSize, privacy: .public) childCount=\(children.count, privacy: .public)"
+                )
 
                 guard offset < children.count else {
                     observer.finishEnumerating(upTo: nil)
@@ -40,8 +45,14 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     observer.finishEnumerating(upTo: encodePage(end))
                 }
             } catch let error as DokusFileProviderError {
+                DokusFileProviderLog.extension.error(
+                    "enumerateItems failed container=\(self.containerItemIdentifier.rawValue, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+                )
                 observer.finishEnumeratingWithError(error.nsError)
             } catch {
+                DokusFileProviderLog.extension.error(
+                    "enumerateItems failed container=\(self.containerItemIdentifier.rawValue, privacy: .public) error=\(String(describing: error), privacy: .public)"
+                )
                 observer.finishEnumeratingWithError(
                     NSError(
                         domain: NSFileProviderErrorDomain,
@@ -57,6 +68,9 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         Task {
             do {
                 let changeSet = try await runtime.changes(from: syncAnchor)
+                DokusFileProviderLog.extension.debug(
+                    "enumerateChanges container=\(self.containerItemIdentifier.rawValue, privacy: .public) updated=\(changeSet.updatedIdentifiers.count, privacy: .public) deleted=\(changeSet.deletedIdentifiers.count, privacy: .public)"
+                )
                 var updatedItems: [DokusFileProviderItem] = []
                 updatedItems.reserveCapacity(changeSet.updatedIdentifiers.count)
 
@@ -78,8 +92,14 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     moreComing: false
                 )
             } catch let error as DokusFileProviderError {
+                DokusFileProviderLog.extension.error(
+                    "enumerateChanges failed container=\(self.containerItemIdentifier.rawValue, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+                )
                 observer.finishEnumeratingWithError(error.nsError)
             } catch {
+                DokusFileProviderLog.extension.error(
+                    "enumerateChanges failed container=\(self.containerItemIdentifier.rawValue, privacy: .public) error=\(String(describing: error), privacy: .public)"
+                )
                 observer.finishEnumeratingWithError(
                     NSError(
                         domain: NSFileProviderErrorDomain,
@@ -94,6 +114,9 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     func currentSyncAnchor(completionHandler: @escaping (NSFileProviderSyncAnchor?) -> Void) {
         Task {
             let anchor = try? await runtime.currentAnchor(forceRefresh: false)
+            DokusFileProviderLog.extension.debug(
+                "currentSyncAnchor container=\(self.containerItemIdentifier.rawValue, privacy: .public) hasAnchor=\((anchor != nil), privacy: .public)"
+            )
             completionHandler(anchor ?? nil)
         }
     }

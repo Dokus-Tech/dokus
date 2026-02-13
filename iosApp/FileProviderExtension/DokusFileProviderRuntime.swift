@@ -31,8 +31,13 @@ actor DokusFileProviderRuntime {
             let cachedProjection,
             let lastRefreshAt,
             Date().timeIntervalSince(lastRefreshAt) < 15 {
+            DokusFileProviderLog.runtime.debug("projection returning cached generation=\(cachedProjection.generation, privacy: .public)")
             return cachedProjection
         }
+
+        DokusFileProviderLog.runtime.debug(
+            "projection refreshing forceRefresh=\(forceRefresh, privacy: .public) workspaceId=\(self.workspaceId ?? "nil", privacy: .public)"
+        )
 
         guard let workspaceId else {
             var projection = projectionBuilder.buildEmpty(rootDisplayName: domainDisplayName)
@@ -72,6 +77,9 @@ actor DokusFileProviderRuntime {
         cachedProjection = projection
         cachedRecordsByKey = recordsByKey
         lastRefreshAt = Date()
+        DokusFileProviderLog.runtime.debug(
+            "projection refreshed generation=\(generation, privacy: .public) records=\(records.count, privacy: .public)"
+        )
         return projection
     }
 
@@ -101,10 +109,25 @@ actor DokusFileProviderRuntime {
     func changes(from anchor: NSFileProviderSyncAnchor?) async throws -> DokusChangeSet {
         do {
             let refreshedProjection = try await self.projection(forceRefresh: false)
-            return snapshotStore.changes(from: anchor, projection: refreshedProjection)
+            let changeSet = snapshotStore.changes(from: anchor, projection: refreshedProjection)
+            DokusFileProviderLog.runtime.debug(
+                "changes computed updated=\(changeSet.updatedIdentifiers.count, privacy: .public) deleted=\(changeSet.deletedIdentifiers.count, privacy: .public)"
+            )
+            return changeSet
         } catch {
             if let cachedProjection {
-                return snapshotStore.changes(from: anchor, projection: cachedProjection)
+                let changeSet = snapshotStore.changes(from: anchor, projection: cachedProjection)
+                DokusFileProviderLog.runtime.warning(
+                    "changes fallback to cached projection updated=\(changeSet.updatedIdentifiers.count, privacy: .public) deleted=\(changeSet.deletedIdentifiers.count, privacy: .public) error=\(String(describing: error), privacy: .public)"
+                )
+                return changeSet
+            }
+
+            if let fallback = snapshotStore.fallbackChanges(from: anchor) {
+                DokusFileProviderLog.runtime.warning(
+                    "changes fallback to persisted snapshot updated=\(fallback.updatedIdentifiers.count, privacy: .public) deleted=\(fallback.deletedIdentifiers.count, privacy: .public) error=\(String(describing: error), privacy: .public)"
+                )
+                return fallback
             }
             throw error
         }
@@ -115,6 +138,9 @@ actor DokusFileProviderRuntime {
         temporaryDirectoryURL: URL?
     ) async throws -> URL {
         let (workspaceId, record) = try await documentRecord(for: itemIdentifier, forceRefresh: false)
+        DokusFileProviderLog.runtime.debug(
+            "fetchContents workspaceId=\(workspaceId, privacy: .public) documentId=\(record.documentId, privacy: .public)"
+        )
         return try await apiClient.downloadDocument(
             workspaceId: workspaceId,
             record: record,
@@ -127,6 +153,9 @@ actor DokusFileProviderRuntime {
         requestedPixelSize: Int
     ) async throws -> Data? {
         let (workspaceId, record) = try await documentRecord(for: itemIdentifier, forceRefresh: false)
+        DokusFileProviderLog.runtime.debug(
+            "fetchThumbnail workspaceId=\(workspaceId, privacy: .public) documentId=\(record.documentId, privacy: .public) requestedPixelSize=\(requestedPixelSize, privacy: .public)"
+        )
         return try await apiClient.fetchThumbnail(
             workspaceId: workspaceId,
             record: record,
@@ -152,6 +181,9 @@ actor DokusFileProviderRuntime {
             from: fileURL,
             filename: filename,
             mimeType: mimeType
+        )
+        DokusFileProviderLog.runtime.debug(
+            "uploadDocument completed workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public) filename=\(filename, privacy: .public)"
         )
 
         let refreshed = try await projection(forceRefresh: true)
@@ -193,6 +225,9 @@ actor DokusFileProviderRuntime {
 
         try await apiClient.deleteDocument(workspaceId: workspaceId, documentId: documentId)
         _ = try await projection(forceRefresh: true)
+        DokusFileProviderLog.runtime.debug(
+            "deleteDocument completed workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public)"
+        )
     }
 
     private func recordKey(workspaceId: String, documentId: String) -> String {

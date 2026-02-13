@@ -126,6 +126,42 @@ final class DokusFileProviderSnapshotStore {
         }
     }
 
+    func fallbackChanges(from anchor: NSFileProviderSyncAnchor?) -> DokusChangeSet? {
+        queue.sync {
+            let state = loadState()
+            guard state.currentGeneration > 0 else {
+                return nil
+            }
+
+            let currentVersion = state.versions.first(where: { $0.generation == state.currentGeneration })
+                ?? SnapshotVersion(generation: state.currentGeneration, entries: [])
+            let fromGeneration = decodeAnchor(anchor)
+            let fromVersion = state.versions.first(where: { $0.generation == fromGeneration })
+
+            let fromById = Dictionary(
+                uniqueKeysWithValues: (fromVersion?.entries ?? []).map { ($0.identifier, $0) }
+            )
+            let currentById = Dictionary(uniqueKeysWithValues: currentVersion.entries.map { ($0.identifier, $0) })
+
+            let updated = currentById.compactMap { id, entry -> NSFileProviderItemIdentifier? in
+                if let previous = fromById[id], previous == entry {
+                    return nil
+                }
+                return NSFileProviderItemIdentifier(id)
+            }
+
+            let deleted = fromById.keys
+                .filter { currentById[$0] == nil }
+                .map { NSFileProviderItemIdentifier($0) }
+
+            return DokusChangeSet(
+                updatedIdentifiers: updated,
+                deletedIdentifiers: deleted,
+                anchor: makeAnchor(from: currentVersion.generation)
+            )
+        }
+    }
+
     private func makeEntries(from projection: DokusProjection) -> [SnapshotEntry] {
         projection.itemsByIdentifier.values.map { item in
             SnapshotEntry(
