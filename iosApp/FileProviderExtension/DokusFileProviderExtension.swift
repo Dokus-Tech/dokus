@@ -42,7 +42,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
             containerItemIdentifier: containerItemIdentifier,
             runtime: runtime,
             onSuccessfulSync: { [weak self] in
-                self?.resolveDomainErrorsIfNeeded()
+                self?.resolveDomainErrorsIfNeeded(source: "enumerator")
             }
         )
     }
@@ -110,7 +110,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                 }
                 progress.completedUnitCount = 100
                 completionHandler(fileURL, DokusFileProviderItem(projected: projected), nil)
-                resolveDomainErrorsIfNeeded()
+                resolveDomainErrorsIfNeeded(source: "fetchContents")
             } catch is CancellationError {
                 completionHandler(nil, nil, NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError))
             } catch let error as DokusFileProviderError {
@@ -223,7 +223,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                 )
                 progress.completedUnitCount = 100
                 completionHandler(DokusFileProviderItem(projected: created), [], false, nil)
-                resolveDomainErrorsIfNeeded()
+                resolveDomainErrorsIfNeeded(source: "createItem")
             } catch let error as DokusFileProviderError {
                 DokusFileProviderLog.extension.error(
                     "createItem failed parent=\(itemTemplate.parentItemIdentifier.rawValue, privacy: .public) filename=\(itemTemplate.filename, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
@@ -295,7 +295,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                 try await runtime.deleteDocument(itemIdentifier: identifier)
                 progress.completedUnitCount = 100
                 completionHandler(nil)
-                resolveDomainErrorsIfNeeded()
+                resolveDomainErrorsIfNeeded(source: "deleteItem")
             } catch is CancellationError {
                 completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError))
             } catch let error as DokusFileProviderError {
@@ -340,10 +340,20 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
         }
     }
 
-    private func resolveDomainErrorsIfNeeded() {
-        guard let manager else { return }
+    private func resolveDomainErrorsIfNeeded(source: String) {
+        let domainIdentifier = self.domain.identifier.rawValue
+        guard let manager else {
+            DokusFileProviderLog.domainHealth.debug(
+                "resolveDomainErrors skipped domainId=\(domainIdentifier, privacy: .public) source=\(source, privacy: .public) reason=noManager"
+            )
+            return
+        }
         Task {
-            await errorResolver.resolveDomainErrorsIfNeeded(manager: manager)
+            await errorResolver.resolveDomainErrorsIfNeeded(
+                manager: manager,
+                domainIdentifier: domainIdentifier,
+                source: source
+            )
         }
     }
 }
@@ -357,23 +367,49 @@ private actor DokusFileProviderErrorResolver {
         .notAuthenticated
     ]
 
-    func resolveDomainErrorsIfNeeded(manager: NSFileProviderManager) async {
+    func resolveDomainErrorsIfNeeded(
+        manager: NSFileProviderManager,
+        domainIdentifier: String,
+        source: String
+    ) async {
         let now = Date()
-        if let lastResolvedAt, now.timeIntervalSince(lastResolvedAt) < minInterval {
-            return
+        if let lastResolvedAt {
+            let elapsed = now.timeIntervalSince(lastResolvedAt)
+            if elapsed < minInterval {
+                let retryIn = Int((minInterval - elapsed).rounded(.up))
+                DokusFileProviderLog.domainHealth.debug(
+                    "resolveDomainErrors throttled domainId=\(domainIdentifier, privacy: .public) source=\(source, privacy: .public) retryInSec=\(retryIn, privacy: .public)"
+                )
+                return
+            }
         }
+
+        DokusFileProviderLog.domainHealth.debug(
+            "resolveDomainErrors started domainId=\(domainIdentifier, privacy: .public) source=\(source, privacy: .public)"
+        )
+
         lastResolvedAt = now
 
         for code in resolvableErrorCodes {
             let error = NSError(domain: NSFileProviderErrorDomain, code: code.rawValue)
             await withCheckedContinuation { continuation in
-                manager.signalErrorResolved(error) { _ in
+                manager.signalErrorResolved(error) { resolveError in
+                    if let resolveError {
+                        DokusFileProviderLog.domainHealth.warning(
+                            "signalErrorResolved failed domainId=\(domainIdentifier, privacy: .public) code=\(code.rawValue, privacy: .public) error=\(resolveError.localizedDescription, privacy: .public)"
+                        )
+                    } else {
+                        DokusFileProviderLog.domainHealth.debug(
+                            "signalErrorResolved succeeded domainId=\(domainIdentifier, privacy: .public) code=\(code.rawValue, privacy: .public)"
+                        )
+                    }
                     continuation.resume()
                 }
             }
-            DokusFileProviderLog.extension.debug(
-                "signalErrorResolved from extension code=\(code.rawValue, privacy: .public)"
-            )
         }
+
+        DokusFileProviderLog.domainHealth.debug(
+            "resolveDomainErrors completed domainId=\(domainIdentifier, privacy: .public) source=\(source, privacy: .public)"
+        )
     }
 }

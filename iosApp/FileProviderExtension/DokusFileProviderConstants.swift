@@ -256,6 +256,7 @@ enum DokusFileProviderLog {
     static let subsystem = Bundle.main.bundleIdentifier ?? fallbackSubsystem
 
     static let `extension` = Logger(subsystem: subsystem, category: "extension")
+    static let domainHealth = Logger(subsystem: subsystem, category: "domain-health")
     static let runtime = Logger(subsystem: subsystem, category: "runtime")
     static let api = Logger(subsystem: subsystem, category: "api")
     static let session = Logger(subsystem: subsystem, category: "session")
