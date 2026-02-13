@@ -155,11 +155,25 @@ actor DokusFileProviderRuntime {
             "uploadDocument completed workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public) filename=\(filename, privacy: .public)"
         )
 
-        let refreshed = try await projection(forceRefresh: true)
         let createdIdentifier = DokusItemIdentifierCodec.encode(
             kind: .document(workspaceId: workspaceId, documentId: documentId)
         )
-        if let created = refreshed.item(createdIdentifier) {
+        do {
+            let refreshed = try await projection(forceRefresh: true)
+            if let created = refreshed.item(createdIdentifier) {
+                return created
+            }
+        } catch is CancellationError {
+            DokusFileProviderLog.runtime.warning(
+                "uploadDocument refresh cancelled workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public)"
+            )
+        } catch {
+            DokusFileProviderLog.runtime.warning(
+                "uploadDocument refresh failed workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public) error=\(String(describing: error), privacy: .public)"
+            )
+        }
+
+        if let created = cachedProjection?.item(createdIdentifier) {
             return created
         }
 
@@ -193,7 +207,17 @@ actor DokusFileProviderRuntime {
         }
 
         try await apiClient.deleteDocument(workspaceId: workspaceId, documentId: documentId)
-        _ = try await projection(forceRefresh: true)
+        do {
+            _ = try await projection(forceRefresh: true)
+        } catch is CancellationError {
+            DokusFileProviderLog.runtime.warning(
+                "deleteDocument refresh cancelled workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public)"
+            )
+        } catch {
+            DokusFileProviderLog.runtime.warning(
+                "deleteDocument refresh failed workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public) error=\(String(describing: error), privacy: .public)"
+            )
+        }
         DokusFileProviderLog.runtime.debug(
             "deleteDocument completed workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public)"
         )
