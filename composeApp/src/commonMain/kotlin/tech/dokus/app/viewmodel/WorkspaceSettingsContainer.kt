@@ -19,6 +19,7 @@ import tech.dokus.features.auth.usecases.GetTenantAddressUseCase
 import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
 import tech.dokus.features.auth.usecases.UpdateTenantSettingsUseCase
 import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCase
+import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolActivityUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.foundation.platform.Logger
@@ -45,6 +46,7 @@ internal class WorkspaceSettingsContainer(
     private val updateTenantSettings: UpdateTenantSettingsUseCase,
     private val uploadWorkspaceAvatar: UploadWorkspaceAvatarUseCase,
     private val deleteWorkspaceAvatar: DeleteWorkspaceAvatarUseCase,
+    private val watchCurrentTenantUseCase: WatchCurrentTenantUseCase,
     private val getPeppolRegistration: GetPeppolRegistrationUseCase,
     private val getPeppolActivity: GetPeppolActivityUseCase,
 ) : Container<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
@@ -286,6 +288,7 @@ internal class WorkspaceSettingsContainer(
             updateTenantSettings(updatedSettings).fold(
                 onSuccess = {
                     logger.i { "Workspace settings saved" }
+                    watchCurrentTenantUseCase.refresh()
                     updateState {
                         copy(
                             settings = updatedSettings,
@@ -343,6 +346,7 @@ internal class WorkspaceSettingsContainer(
             ).fold(
                 onSuccess = { response ->
                     logger.i { "Avatar uploaded successfully" }
+                    watchCurrentTenantUseCase.refresh()
                     updateState {
                         copy(
                             currentAvatar = response.avatar,
@@ -377,6 +381,7 @@ internal class WorkspaceSettingsContainer(
             deleteWorkspaceAvatar().fold(
                 onSuccess = {
                     logger.i { "Avatar deleted" }
+                    watchCurrentTenantUseCase.refresh()
                     updateState {
                         copy(
                             currentAvatar = null,

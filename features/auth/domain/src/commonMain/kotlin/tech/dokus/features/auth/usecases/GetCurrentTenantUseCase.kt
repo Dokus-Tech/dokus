@@ -1,5 +1,6 @@
 package tech.dokus.features.auth.usecases
 
+import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.model.Tenant
 
 /**
@@ -31,4 +32,15 @@ interface GetCurrentTenantUseCase {
      *         - Network error when fetching tenant details
      */
     suspend operator fun invoke(): Result<Tenant?>
+}
+
+/**
+ * Reactive stream for the current tenant context.
+ *
+ * `refresh()` can be called by screens that mutate tenant data (for example workspace settings)
+ * so shell chrome updates immediately without route-coupled refresh logic.
+ */
+interface WatchCurrentTenantUseCase {
+    operator fun invoke(): Flow<Result<Tenant?>>
+    fun refresh()
 }

@@ -12,6 +12,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.UpdateProfileUseCase
+import tech.dokus.features.auth.usecases.WatchCurrentUserUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ProfileSettingsCtx =
@@ -26,6 +27,7 @@ internal typealias ProfileSettingsCtx =
 class ProfileSettingsContainer(
     private val getCurrentUser: GetCurrentUserUseCase,
     private val updateProfile: UpdateProfileUseCase,
+    private val watchCurrentUserUseCase: WatchCurrentUserUseCase,
 ) : Container<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
 
     private val logger = Logger.forClass<ProfileSettingsContainer>()
@@ -134,6 +136,7 @@ class ProfileSettingsContainer(
             updateProfile(firstName, lastName).fold(
                 onSuccess = { updatedUser ->
                     logger.i { "Profile saved successfully" }
+                    watchCurrentUserUseCase.refresh()
                     updateState { ProfileSettingsState.Viewing(updatedUser) }
                     action(ProfileSettingsAction.ShowSaveSuccess)
                 },

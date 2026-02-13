@@ -2,7 +2,6 @@ package tech.dokus.features.cashflow.presentation.documents.screen
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -37,7 +35,6 @@ import tech.dokus.aura.resources.documents_empty_title
 import tech.dokus.aura.resources.documents_empty_upload_cta
 import tech.dokus.aura.resources.documents_filter_no_match
 import tech.dokus.aura.resources.documents_upload
-import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentFilterButtons
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentMobileRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableHeaderRow
@@ -50,7 +47,6 @@ import tech.dokus.features.cashflow.presentation.common.components.pagination.re
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
 @Composable
@@ -128,32 +124,6 @@ private fun DocumentsContent(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Top bar: Search + Upload button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            PSearchFieldCompact(
-                value = state.searchQuery,
-                onValueChange = { onIntent(DocumentsIntent.UpdateSearchQuery(it)) },
-                placeholder = stringResource(Res.string.search_placeholder),
-                onClear = { onIntent(DocumentsIntent.UpdateSearchQuery("")) },
-                modifier = Modifier.weight(1f)
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(onClick = onUploadClick) {
-                Icon(
-                    imageVector = Icons.Default.Upload,
-                    contentDescription = stringResource(Res.string.documents_upload),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
         // Filter buttons
         DocumentFilterButtons(
             currentFilter = state.filter,

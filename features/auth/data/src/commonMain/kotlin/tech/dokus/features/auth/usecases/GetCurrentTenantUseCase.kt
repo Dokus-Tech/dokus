@@ -1,8 +1,17 @@
 package tech.dokus.features.auth.usecases
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.auth.datasource.TenantRemoteDataSource
+import tech.dokus.features.auth.storage.TokenStorage
 import tech.dokus.foundation.platform.Logger
 
 /**
@@ -49,5 +58,31 @@ class GetCurrentTenantUseCaseImpl(
                 logger.e(error) { "Failed to load current tenant from claims" }
             }
             .map { it }
+    }
+}
+
+internal class WatchCurrentTenantUseCaseImpl(
+    private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
+    private val tokenStorage: TokenStorage,
+) : WatchCurrentTenantUseCase {
+
+    private val refreshTrigger = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun invoke(): Flow<Result<Tenant?>> {
+        val tokenChanges = tokenStorage.observeAccessToken()
+            .drop(1)
+            .map { Unit }
+
+        return merge(refreshTrigger, tokenChanges)
+            .flatMapLatest {
+                flow {
+                    emit(getCurrentTenantUseCase())
+                }
+            }
+    }
+
+    override fun refresh() {
+        refreshTrigger.tryEmit(Unit)
     }
 }
