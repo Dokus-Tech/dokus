@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,13 +23,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Inbox
 import compose.icons.feathericons.Search
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
@@ -80,13 +75,12 @@ import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
-import tech.dokus.foundation.aura.components.filter.DokusFilterToggle
-import tech.dokus.foundation.aura.components.filter.DokusFilterToggleRow
+import tech.dokus.foundation.aura.components.layout.DokusPanelListItem
+import tech.dokus.foundation.aura.components.layout.DokusTabbedPanel
 import tech.dokus.foundation.aura.components.navigation.UserPreferencesMenu
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.local.LocalNavController
@@ -150,7 +144,6 @@ internal fun TodayScreen(
     val pendingDocumentsState = contentState?.pendingDocumentsState
     val notificationsState: DokusState<List<NotificationDto>> =
         contentState?.notificationsState ?: DokusState.idle()
-    val unreadNotificationCount = contentState?.unreadNotificationCount ?: 0
     val notificationFilter = contentState?.notificationFilter ?: NotificationFilterTab.All
 
     Scaffold(
@@ -216,23 +209,6 @@ internal fun TodayScreen(
                     }
 
                     Spacer(Modifier.width(8.dp))
-
-                    NotificationBellDropdown(
-                        unreadCount = unreadNotificationCount,
-                        filter = notificationFilter,
-                        notificationsState = notificationsState,
-                        onFilterSelected = { filter ->
-                            container.store.intent(TodayIntent.LoadNotifications(filter))
-                        },
-                        onNotificationClick = { notification ->
-                            container.store.intent(TodayIntent.OpenNotification(notification))
-                        },
-                        onMarkAllAsRead = {
-                            container.store.intent(TodayIntent.MarkAllNotificationsRead)
-                        }
-                    )
-
-                    Spacer(Modifier.width(8.dp))
                     UserPreferencesMenu()
                 }
             )
@@ -258,6 +234,18 @@ internal fun TodayScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+
+                TodayNotificationsPanel(
+                    filter = notificationFilter,
+                    notificationsState = notificationsState,
+                    onFilterSelected = { filter ->
+                        container.store.intent(TodayIntent.LoadNotifications(filter))
+                    },
+                    onNotificationClick = { notification ->
+                        container.store.intent(TodayIntent.OpenNotification(notification))
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         } else {
             Column(
@@ -268,208 +256,120 @@ internal fun TodayScreen(
                     .padding(Constrains.Spacing.xLarge),
                 verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xLarge)
             ) {
-                // Today desktop screen keeps focus on quick header actions.
+                TodayNotificationsPanel(
+                    filter = notificationFilter,
+                    notificationsState = notificationsState,
+                    onFilterSelected = { filter ->
+                        container.store.intent(TodayIntent.LoadNotifications(filter))
+                    },
+                    onNotificationClick = { notification ->
+                        container.store.intent(TodayIntent.OpenNotification(notification))
+                    },
+                    modifier = Modifier.widthIn(max = 480.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun NotificationBellDropdown(
-    unreadCount: Int,
+private fun TodayNotificationsPanel(
     filter: NotificationFilterTab,
     notificationsState: DokusState<List<NotificationDto>>,
     onFilterSelected: (NotificationFilterTab) -> Unit,
     onNotificationClick: (NotificationDto) -> Unit,
-    onMarkAllAsRead: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-
-    Box {
-        IconButton(onClick = { expanded = !expanded }) {
-            BadgedBox(
-                badge = {
-                    if (unreadCount > 0) {
-                        Badge {
-                            Text(text = unreadCount.toString())
-                        }
-                    }
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications"
-                )
-            }
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.widthIn(min = 360.dp, max = 420.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Notifications",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                DokusFilterToggleRow {
-                    NotificationFilterTab.entries.forEach { tab ->
-                        DokusFilterToggle(
-                            selected = tab == filter,
-                            onClick = { onFilterSelected(tab) },
-                            label = tab.label
-                        )
-                    }
-                }
-
-                HorizontalDivider()
-
-                when (notificationsState) {
-                    is DokusState.Loading -> {
-                        Text(
-                            text = "Loading notifications...",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.textMuted,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-
-                    is DokusState.Success -> {
-                        val items = notificationsState.data
-                        if (items.isEmpty()) {
-                            Text(
-                                text = "Nothing needs your attention.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.textMuted,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                items.forEach { item ->
-                                    NotificationListItem(
-                                        notification = item,
-                                        onClick = {
-                                            expanded = false
-                                            onNotificationClick(item)
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    is DokusState.Error -> {
-                        Text(
-                            text = notificationsState.exception.localized,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-
-                    is DokusState.Idle -> {
-                        Text(
-                            text = "Nothing needs your attention.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.textMuted,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-                }
-
-                HorizontalDivider()
-
-                TextButton(
-                    onClick = {
-                        onMarkAllAsRead()
-                        expanded = false
-                    },
-                    modifier = Modifier.align(Alignment.Start)
-                ) {
-                    Text("Mark all as read")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun NotificationListItem(
-    notification: NotificationDto,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
-            .clickable(onClick = onClick)
-            .padding(8.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    DokusTabbedPanel(
+        title = "Your notifications",
+        tabs = NotificationFilterTab.entries,
+        selectedTab = filter,
+        onTabSelected = onFilterSelected,
+        tabLabel = { it.label },
+        modifier = modifier
     ) {
-        if (!notification.isRead) {
-            Box(
-                modifier = Modifier
-                    .padding(top = 6.dp)
-                    .size(width = 4.dp, height = 24.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-        } else {
-            Spacer(modifier = Modifier.width(4.dp))
-        }
+        when (notificationsState) {
+            is DokusState.Loading -> {
+                Text(
+                    text = "Loading notifications...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
-        NotificationIcon(notification.type)
+            is DokusState.Success -> {
+                val items = notificationsState.data
+                if (items.isEmpty()) {
+                    Text(
+                        text = "Nothing needs your attention.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                    ) {
+                        items.forEach { notification ->
+                            DokusPanelListItem(
+                                title = notification.title,
+                                supportingText = "${categoryLabel(notification.category)} - ${formatRelativeTime(notification.createdAt)}",
+                                leading = { NotificationLeadingIcon(notification.type) },
+                                onClick = { onNotificationClick(notification) }
+                            )
+                        }
+                    }
+                }
+            }
 
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                text = notification.title,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1
-            )
-            Text(
-                text = "${categoryLabel(notification.category)} - ${formatRelativeTime(notification.createdAt)}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.textMuted,
-                maxLines = 1
-            )
+            is DokusState.Error -> {
+                Text(
+                    text = notificationsState.exception.localized,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            is DokusState.Idle -> {
+                Text(
+                    text = "Nothing needs your attention.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun NotificationIcon(type: NotificationType) {
+private fun NotificationLeadingIcon(type: NotificationType) {
     val critical = when (type) {
         NotificationType.PeppolSendFailed,
         NotificationType.ComplianceBlocker,
         NotificationType.PaymentFailed -> true
-
         NotificationType.PeppolReceived,
         NotificationType.PeppolSendConfirmed,
         NotificationType.VatWarning,
         NotificationType.PaymentConfirmed,
         NotificationType.SubscriptionChanged -> false
     }
+    val icon = if (critical) Icons.Default.Warning else FeatherIcons.Inbox
+    val tint = if (critical) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
 
-    val icon = if (critical) Icons.Default.Warning else Icons.Default.Notifications
-    val tint = if (critical) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-
-    Icon(
-        imageVector = icon,
-        contentDescription = null,
-        tint = tint,
-        modifier = Modifier.size(18.dp)
-    )
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(MaterialTheme.shapes.small)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(16.dp)
+        )
+    }
 }
 
 private fun categoryLabel(category: NotificationCategory): String = when (category) {
