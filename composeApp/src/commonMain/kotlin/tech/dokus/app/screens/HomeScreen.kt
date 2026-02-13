@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -31,16 +32,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.app.homeItems
 import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.navigation.NavDefinition
-import tech.dokus.app.screens.home.DesktopShellSearchTopBar
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.HomeShellProfileData
 import tech.dokus.app.screens.home.MobileShellTopBar
-import tech.dokus.app.screens.home.tierBadgeLabel
 import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
@@ -51,10 +53,12 @@ import tech.dokus.domain.model.User
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
-import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
+import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
 import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.model.MobileTabConfig
@@ -114,9 +118,12 @@ internal fun HomeScreen(
     val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val shellState = state as? HomeState.Ready ?: HomeState.Ready()
-    val tenant = (shellState.tenantState as? DokusState.Success<Tenant?>)?.data
+    val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
     val user = (shellState.userState as? DokusState.Success<User>)?.data
-    val profileData = buildProfileData(user = user, tenant = tenant)
+    val profileData = buildProfileData(
+        user = user,
+        tierLabel = tenant?.subscription?.localized
+    )
 
     Surface {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -211,7 +218,7 @@ private fun HomeNavHost(
 @Composable
 private fun RailNavigationLayout(
     selectedRoute: String?,
-    tenantState: DokusState<Tenant?>,
+    tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     searchQuery: String,
@@ -302,9 +309,16 @@ private fun RailNavigationLayout(
             shadowElevation = 0.dp,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                DesktopShellSearchTopBar(
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = onSearchQueryChange
+                PTopAppBarSearchAction(
+                    searchContent = {
+                        PSearchFieldCompact(
+                            value = searchQuery,
+                            onValueChange = onSearchQueryChange,
+                            placeholder = stringResource(Res.string.search_placeholder),
+                            modifier = Modifier.widthIn(min = 220.dp, max = 360.dp)
+                        )
+                    },
+                    actions = {}
                 )
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -320,7 +334,7 @@ private fun RailNavigationLayout(
 @Composable
 private fun BottomNavigationLayout(
     selectedRoute: String?,
-    tenantState: DokusState<Tenant?>,
+    tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     searchQuery: String,
@@ -388,7 +402,7 @@ private fun BottomNavigationLayout(
 
 private fun buildProfileData(
     user: User?,
-    tenant: Tenant?,
+    tierLabel: String?,
 ): HomeShellProfileData? {
     user ?: return null
     val fullName = listOfNotNull(user.firstName?.value, user.lastName?.value)
@@ -397,6 +411,6 @@ private fun buildProfileData(
     return HomeShellProfileData(
         fullName = fullName,
         email = user.email.value,
-        tierLabel = tierBadgeLabel(tenant?.subscription)
+        tierLabel = tierLabel
     )
 }

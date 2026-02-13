@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,10 +58,9 @@ import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.profile_logout
 import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.aura.resources.settings_appearance
+import tech.dokus.aura.resources.settings_current_workspace
 import tech.dokus.aura.resources.settings_profile
-import tech.dokus.aura.resources.settings_select_workspace
 import tech.dokus.aura.resources.user
-import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.AvatarShape
@@ -83,38 +81,9 @@ internal data class HomeShellProfileData(
     val tierLabel: String?,
 )
 
-internal fun tierBadgeLabel(tier: SubscriptionTier?): String? = when (tier) {
-    SubscriptionTier.CoreFounder -> "Founder"
-    SubscriptionTier.Core -> "Core"
-    SubscriptionTier.One -> "One"
-    SubscriptionTier.SelfHosted -> "Self-hosted"
-    null -> null
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-internal fun DesktopShellSearchTopBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    PTopAppBarSearchAction(
-        searchContent = {
-            PSearchFieldCompact(
-                value = searchQuery,
-                onValueChange = onSearchQueryChange,
-                placeholder = stringResource(Res.string.search_placeholder),
-                modifier = Modifier.widthIn(min = 220.dp, max = 360.dp)
-            )
-        },
-        actions = {},
-        modifier = modifier
-    )
-}
-
 @Composable
 internal fun DesktopSidebarBottomControls(
-    tenantState: DokusState<Tenant?>,
+    tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     onWorkspaceClick: () -> Unit,
@@ -130,7 +99,7 @@ internal fun DesktopSidebarBottomControls(
             .border(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                shape = RoundedCornerShape(8.dp)
+                shape = MaterialTheme.shapes.small
             )
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -153,21 +122,18 @@ internal fun DesktopSidebarBottomControls(
 
 @Composable
 private fun DesktopWorkspaceArea(
-    tenantState: DokusState<Tenant?>,
+    tenantState: DokusState<Tenant>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val tenant = (tenantState as? DokusState.Success<Tenant?>)?.data
-    val workspaceName = tenant?.displayName?.value ?: stringResource(Res.string.settings_select_workspace)
-    val workspaceVat = tenant?.vatNumber?.formatted
-    val initial = tenant?.displayName?.value?.trim()?.firstOrNull()?.uppercaseChar()?.toString() ?: "D"
+    val tenant = (tenantState as? DokusState.Success<Tenant>)?.data
     val isLoading = tenantState is DokusState.Loading
 
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(MaterialTheme.shapes.small)
             .hoverable(interactionSource = interactionSource)
             .background(
                 if (isHovered) MaterialTheme.colorScheme.surfaceHover else MaterialTheme.colorScheme.surface
@@ -181,7 +147,7 @@ private fun DesktopWorkspaceArea(
             ShimmerBox(
                 modifier = Modifier
                     .size(26.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
             )
             Column(
                 modifier = Modifier.weight(1f),
@@ -196,9 +162,13 @@ private fun DesktopWorkspaceArea(
                     height = 10.dp
                 )
             }
-        } else {
+        } else if (tenant != null) {
+            val workspaceName = tenant.displayName.value
+            val workspaceVat = tenant.vatNumber.formatted
+            val initial = tenant.displayName.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D"
+
             CompanyAvatarImage(
-                avatarUrl = tenant?.avatar?.small,
+                avatarUrl = tenant.avatar?.small,
                 initial = initial,
                 size = AvatarSize.ExtraSmall,
                 shape = AvatarShape.RoundedSquare
@@ -213,16 +183,23 @@ private fun DesktopWorkspaceArea(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                workspaceVat?.let { vat ->
-                    Text(
-                        text = vat,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.textMuted,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                Text(
+                    text = workspaceVat,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
+        } else {
+            Text(
+                text = stringResource(Res.string.settings_current_workspace),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.textMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -243,7 +220,7 @@ private fun DesktopProfileMenuButton(
                 .size(30.dp)
                 .clickable { expanded = true },
             color = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(6.dp),
+            shape = MaterialTheme.shapes.small,
             border = BorderStroke(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
@@ -315,7 +292,7 @@ private fun ProfileMenuHeader(
     ) {
         Surface(
             modifier = Modifier.size(28.dp),
-            shape = RoundedCornerShape(4.dp),
+            shape = MaterialTheme.shapes.extraSmall,
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(
                 width = 1.dp,
@@ -360,7 +337,7 @@ private fun ProfileMenuHeader(
                     .border(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.brandGold.copy(alpha = 0.25f),
-                        shape = RoundedCornerShape(4.dp)
+                        shape = MaterialTheme.shapes.extraSmall
                     )
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             )
@@ -375,7 +352,7 @@ internal fun MobileShellTopBar(
     onSearchQueryChange: (String) -> Unit,
     isSearchExpanded: Boolean,
     onExpandSearch: () -> Unit,
-    tenantState: DokusState<Tenant?>,
+    tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     onWorkspaceClick: () -> Unit,
@@ -436,7 +413,7 @@ internal fun MobileShellTopBar(
                     modifier = Modifier
                         .padding(top = 10.dp, bottom = 8.dp)
                         .size(width = 36.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(2.dp))
+                        .clip(MaterialTheme.shapes.extraSmall)
                         .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f))
                 )
             }
@@ -474,21 +451,19 @@ internal fun MobileShellTopBar(
 
 @Composable
 private fun RowScope.MobileWorkspaceBadge(
-    tenantState: DokusState<Tenant?>,
+    tenantState: DokusState<Tenant>,
     onClick: () -> Unit,
 ) {
-    val tenant = (tenantState as? DokusState.Success<Tenant?>)?.data
-    val name = tenant?.displayName?.value ?: stringResource(Res.string.settings_select_workspace)
-    val initial = tenant?.displayName?.value?.trim()?.firstOrNull()?.uppercaseChar()?.toString() ?: "D"
+    val tenant = (tenantState as? DokusState.Success<Tenant>)?.data
     val isLoading = tenantState is DokusState.Loading
 
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(MaterialTheme.shapes.small)
             .border(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
-                shape = RoundedCornerShape(6.dp)
+                shape = MaterialTheme.shapes.small
             )
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -499,15 +474,18 @@ private fun RowScope.MobileWorkspaceBadge(
             ShimmerBox(
                 modifier = Modifier
                     .size(20.dp)
-                    .clip(RoundedCornerShape(3.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
             )
             ShimmerLine(
                 modifier = Modifier.width(90.dp),
                 height = 12.dp
             )
-        } else {
+        } else if (tenant != null) {
+            val name = tenant.displayName.value
+            val initial = tenant.displayName.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D"
+
             CompanyAvatarImage(
-                avatarUrl = tenant?.avatar?.small,
+                avatarUrl = tenant.avatar?.small,
                 initial = initial,
                 size = AvatarSize.ExtraSmall,
                 shape = AvatarShape.RoundedSquare
@@ -516,6 +494,15 @@ private fun RowScope.MobileWorkspaceBadge(
                 text = name,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 140.dp)
+            )
+        } else {
+            Text(
+                text = stringResource(Res.string.settings_current_workspace),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.textMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.widthIn(max = 140.dp)
@@ -533,7 +520,7 @@ private fun ProfileIconButton(
             .size(30.dp)
             .clickable(onClick = onClick),
         color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(6.dp),
+        shape = MaterialTheme.shapes.small,
         border = BorderStroke(
             width = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)

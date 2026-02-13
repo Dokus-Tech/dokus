@@ -6,6 +6,7 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
@@ -64,10 +65,20 @@ internal class HomeContainer(
 
             val tenantResult = getCurrentTenantUseCase()
             val userResult = getCurrentUserUseCase()
+            val resolvedTenantResult = tenantResult.fold(
+                onSuccess = { tenant ->
+                    if (tenant == null) {
+                        Result.failure(DokusException.WorkspaceContextUnavailable)
+                    } else {
+                        Result.success(tenant)
+                    }
+                },
+                onFailure = { error -> Result.failure(error) }
+            )
 
             updateState {
                 copy(
-                    tenantState = tenantResult.fold(
+                    tenantState = resolvedTenantResult.fold(
                         onSuccess = { tenant -> DokusState.success(tenant) },
                         onFailure = { error ->
                             DokusState.error(error.asDokusException) {
@@ -86,7 +97,7 @@ internal class HomeContainer(
                 )
             }
 
-            tenantResult.exceptionOrNull()?.let { error ->
+            resolvedTenantResult.exceptionOrNull()?.let { error ->
                 logger.e(error) { "Failed to load current tenant for home shell" }
                 action(HomeAction.ShowError(error.asDokusException))
             }

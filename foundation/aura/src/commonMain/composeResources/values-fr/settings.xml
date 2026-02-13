@@ -118,6 +118,10 @@
     <string name="workspace_company_logo">Logo de l'entreprise</string>
     <string name="workspace_avatar_upload_failed">Impossible de téléverser le logo de l'entreprise</string>
     <string name="workspace_avatar_delete_failed">Impossible de supprimer le logo de l'entreprise</string>
+    <string name="subscription_tier_founder">Fondateur</string>
+    <string name="subscription_tier_core">Core</string>
+    <string name="subscription_tier_one">One</string>
+    <string name="subscription_tier_self_hosted">Auto-hébergé</string>
     <string name="peppol_connect_title">Connecter un fournisseur Peppol</string>
     <string name="peppol_connect_title_with_provider">Connecter %1$s</string>
     <string name="peppol_select_provider_hint">Sélectionnez un fournisseur pour continuer</string>

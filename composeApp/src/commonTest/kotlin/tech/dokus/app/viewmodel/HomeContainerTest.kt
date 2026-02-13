@@ -28,7 +28,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -52,7 +51,7 @@ class HomeContainerTest {
             advanceUntilIdle()
 
             val ready = assertIs<HomeState.Ready>(states.value)
-            val tenantState = assertIs<DokusState.Success<Tenant?>>(ready.tenantState)
+            val tenantState = assertIs<DokusState.Success<Tenant>>(ready.tenantState)
             val userState = assertIs<DokusState.Success<User>>(ready.userState)
             assertEquals(tenant, tenantState.data)
             assertEquals(user, userState.data)
@@ -62,7 +61,7 @@ class HomeContainerTest {
     }
 
     @Test
-    fun `screen appeared handles no tenant selected`() = runTest {
+    fun `screen appeared handles no tenant selected as workspace context unavailable`() = runTest {
         val user = sampleUser()
         val tenantUseCase = FakeGetCurrentTenantUseCase(Result.success(null))
         val userUseCase = FakeGetCurrentUserUseCase(Result.success(user))
@@ -73,13 +72,11 @@ class HomeContainerTest {
         )
 
         container.store.subscribeAndTest {
-            emit(HomeIntent.ScreenAppeared)
-            advanceUntilIdle()
-
+            HomeIntent.ScreenAppeared resultsIn HomeAction.ShowError(DokusException.WorkspaceContextUnavailable)
             val ready = assertIs<HomeState.Ready>(states.value)
-            val tenantState = assertIs<DokusState.Success<Tenant?>>(ready.tenantState)
+            val tenantState = assertIs<DokusState.Error<Tenant>>(ready.tenantState)
             val userState = assertIs<DokusState.Success<User>>(ready.userState)
-            assertNull(tenantState.data)
+            assertEquals(DokusException.WorkspaceContextUnavailable, tenantState.exception)
             assertEquals(user, userState.data)
         }
     }

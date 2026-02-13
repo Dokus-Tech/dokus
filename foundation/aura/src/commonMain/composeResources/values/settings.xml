@@ -74,6 +74,10 @@
     <string name="workspace_company_logo">Company logo</string>
     <string name="workspace_avatar_upload_failed">Failed to upload company logo</string>
     <string name="workspace_avatar_delete_failed">Failed to delete company logo</string>
+    <string name="subscription_tier_founder">Founder</string>
+    <string name="subscription_tier_core">Core</string>
+    <string name="subscription_tier_one">One</string>
+    <string name="subscription_tier_self_hosted">Self-hosted</string>
 
     <!-- Invoice Settings Descriptions -->
     <string name="workspace_invoice_settings_description">Configure how your invoices are numbered and formatted</string>

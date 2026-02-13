@@ -118,6 +118,10 @@
     <string name="workspace_company_logo">Логотип компании</string>
     <string name="workspace_avatar_upload_failed">Не удалось загрузить логотип компании</string>
     <string name="workspace_avatar_delete_failed">Не удалось удалить логотип компании</string>
+    <string name="subscription_tier_founder">Основатель</string>
+    <string name="subscription_tier_core">Core</string>
+    <string name="subscription_tier_one">One</string>
+    <string name="subscription_tier_self_hosted">Self-hosted</string>
     <string name="peppol_connect_title">Подключить провайдера Peppol</string>
     <string name="peppol_connect_title_with_provider">Подключить %1$s</string>
     <string name="peppol_select_provider_hint">Выберите провайдера, чтобы продолжить</string>
