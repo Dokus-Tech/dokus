@@ -59,6 +59,39 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+private val DataUrlBase64Prefix = Regex("^data:[^,]*;base64,", RegexOption.IGNORE_CASE)
+private val StandardBase64Pattern = Regex("^[A-Za-z0-9+/]*={0,2}$")
+private val UrlSafeBase64Pattern = Regex("^[A-Za-z0-9_-]*={0,2}$")
+
+internal fun decodePeppolAttachmentBase64(encoded: String): ByteArray {
+    val stripped = encoded.trim().replace(DataUrlBase64Prefix, "")
+    if (stripped.isBlank()) {
+        throw IllegalArgumentException("Attachment payload is empty")
+    }
+
+    val compact = stripped.filterNot(Char::isWhitespace)
+    val isStandard = StandardBase64Pattern.matches(compact)
+    val isUrlSafe = UrlSafeBase64Pattern.matches(compact)
+    if (!isStandard && !isUrlSafe) {
+        throw IllegalArgumentException("Invalid PEPPOL attachment base64 payload")
+    }
+
+    val decoders = buildList {
+        if (isStandard) add(Base64.getDecoder())
+        if (isUrlSafe) add(Base64.getUrlDecoder())
+    }
+    var lastError: IllegalArgumentException? = null
+    for (decoder in decoders) {
+        try {
+            return decoder.decode(compact)
+        } catch (e: IllegalArgumentException) {
+            lastError = e
+        }
+    }
+
+    throw IllegalArgumentException("Invalid PEPPOL attachment base64 payload", lastError)
+}
+
 /**
  * Background worker that polls Peppol inbox for each enabled tenant.
  *
@@ -259,7 +292,15 @@ class PeppolPollingWorker(
 
                     val uploadResult = when {
                         pdfAttachment != null -> {
-                            val pdfBytes = Base64.getDecoder().decode(requireNotNull(pdfAttachment.embeddedDocument))
+                            val encodedAttachment = requireNotNull(pdfAttachment.embeddedDocument)
+                            val pdfBytes = try {
+                                decodePeppolAttachmentBase64(encodedAttachment)
+                            } catch (e: IllegalArgumentException) {
+                                throw IllegalArgumentException(
+                                    "Invalid PEPPOL PDF attachment base64 (attachmentId=${pdfAttachment.id}, filename=${pdfAttachment.filename})",
+                                    e
+                                )
+                            }
                             documentStorageService.uploadDocument(
                                 tenantId = tid,
                                 prefix = "peppol",

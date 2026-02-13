@@ -1,8 +1,11 @@
 package tech.dokus.backend.documents
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -293,7 +296,7 @@ class DocumentListingFiltersTest {
     }
 
     private fun insertIngestion(documentUuid: UUID, status: IngestionStatus) {
-        val now = LocalDateTime(2024, 1, 1, 0, 0, 0)
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         transaction(database) {
             DocumentIngestionRunsTable.insert {
                 it[id] = UUID.randomUUID()

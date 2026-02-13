@@ -28,7 +28,7 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -46,11 +46,6 @@ import kotlin.uuid.toKotlinUuid
  * the /reprocess endpoint which creates new runs.
  */
 class ProcessorIngestionRepository {
-
-    companion object {
-        /** Runs stuck in Processing longer than this are considered stale and marked Failed. */
-        private val STALE_RUN_TIMEOUT = 5.minutes
-    }
 
     /**
      * Find pending ingestion runs ready for processing.
@@ -292,7 +287,8 @@ class ProcessorIngestionRepository {
     /**
      * Recover ingestion runs stuck in Processing state.
      *
-     * Finds runs where status=Processing and startedAt is older than [STALE_RUN_TIMEOUT],
+     * Finds runs where status=Processing and startedAt is older than
+     * [DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MINUTES] minutes,
      * then marks them as Failed. This handles worker crashes that leave runs stuck mid-flight.
      *
      * @return Number of runs recovered
@@ -300,7 +296,7 @@ class ProcessorIngestionRepository {
     @OptIn(ExperimentalTime::class)
     suspend fun recoverStaleRuns(): Int =
         newSuspendedTransaction {
-            val cutoff = (Clock.System.now() - STALE_RUN_TIMEOUT)
+            val cutoff = (Clock.System.now() - DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MS.milliseconds)
                 .toStdlibInstant()
                 .toLocalDateTime(TimeZone.Companion.UTC)
             val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
@@ -311,7 +307,7 @@ class ProcessorIngestionRepository {
             }) {
                 it[status] = IngestionStatus.Failed
                 it[finishedAt] = now
-                it[errorMessage] = "Processing timed out"
+                it[errorMessage] = DocumentProcessingConstants.ingestionTimeoutErrorMessage()
             }
         }
 

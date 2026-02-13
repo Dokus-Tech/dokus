@@ -33,6 +33,7 @@ class AutoConfirmPolicy(
         if (documentType == DocumentType.Unknown || draftType != documentType) return false
         if (draftData is InvoiceDraftData && linkedContactId == null) return false
         if (draftData is CreditNoteDraftData && linkedContactId == null) return false
+        if (!hasRequiredFieldsForAutoConfirm(draftData)) return false
         if (directionResolvedFromAiHintOnly && draftData.requiresDirection()) return false
         if (!isDirectionValid(draftData)) return false
         if (!isAmountPositive(draftData)) return false
@@ -70,6 +71,24 @@ class AutoConfirmPolicy(
             is InvoiceDraftData -> draftData.totalAmount?.isPositive == true
             is ReceiptDraftData -> draftData.totalAmount?.isPositive == true
             is CreditNoteDraftData -> draftData.totalAmount?.isPositive == true
+        }
+    }
+
+    private fun hasRequiredFieldsForAutoConfirm(draftData: DocumentDraftData): Boolean {
+        return when (draftData) {
+            is InvoiceDraftData -> true
+            is ReceiptDraftData -> {
+                draftData.date != null &&
+                    !draftData.merchantName.isNullOrBlank() &&
+                    draftData.totalAmount != null
+            }
+            is CreditNoteDraftData -> {
+                !draftData.creditNoteNumber.isNullOrBlank() &&
+                    draftData.issueDate != null &&
+                    draftData.subtotalAmount != null &&
+                    draftData.vatAmount != null &&
+                    draftData.totalAmount != null
+            }
         }
     }
 

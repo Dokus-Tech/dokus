@@ -4,7 +4,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -13,11 +15,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.slf4j.MDC
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
-import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
+import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -26,15 +30,17 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.model.contact.ContactResolution
+import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.graph.AcceptDocumentInput
+import tech.dokus.features.ai.models.DirectionResolutionSource
 import tech.dokus.features.ai.models.confidenceScore
 import tech.dokus.features.ai.models.toAuthoritativeCounterpartySnapshot
 import tech.dokus.features.ai.models.toDraftData
 import tech.dokus.features.ai.models.toProcessingOutcome
-import tech.dokus.features.ai.models.DirectionResolutionSource
 import tech.dokus.features.ai.validation.CheckType
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -122,7 +128,9 @@ class DocumentProcessingWorker(
      * Process a batch of pending ingestion runs concurrently.
      * Concurrency is limited by mode.maxConcurrentRequests.
      */
-    private suspend fun processBatch() {
+    private suspend fun processBatch(
+        timeoutMillis: Long = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MS
+    ) {
         // Recover any runs stuck in Processing from a previous crash
         runSuspendCatching {
             val recovered = ingestionRepository.recoverStaleRuns()
@@ -154,17 +162,72 @@ class DocumentProcessingWorker(
                     if (!isRunning.get()) return@async
                     semaphore.withPermit {
                         try {
-                            processIngestionRun(ingestion)
+                            processIngestionRunWithTimeout(ingestion, timeoutMillis)
+                        } catch (e: CancellationException) {
+                            if (!isRunning.get()) throw e
+                            logger.error(
+                                "Unexpected cancellation while processing ingestion run ${ingestion.runId} " +
+                                    "for document ${ingestion.documentId}",
+                                e
+                            )
+                            markRunFailedSafely(
+                                ingestion.runId,
+                                "Processing cancelled: ${e.message ?: "Unknown cancellation"}"
+                            )
                         } catch (e: Exception) {
                             logger.error(
                                 "Failed to process ingestion run ${ingestion.runId} " +
                                         "for document ${ingestion.documentId}",
                                 e
                             )
+                            markRunFailedSafely(
+                                ingestion.runId,
+                                "Processing error: ${e.message ?: "Unknown error"}"
+                            )
                         }
                     }
                 }
             }.awaitAll()
+        }
+    }
+
+    internal suspend fun processBatchForTest(timeoutMillis: Long) {
+        isRunning.set(true)
+        try {
+            processBatch(timeoutMillis = timeoutMillis)
+        } finally {
+            isRunning.set(false)
+        }
+    }
+
+    internal suspend fun processIngestionRunWithTimeout(
+        ingestion: IngestionItemEntity,
+        timeoutMillis: Long = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MS
+    ) {
+        try {
+            withTimeout(timeoutMillis) {
+                processIngestionRun(ingestion)
+            }
+        } catch (e: TimeoutCancellationException) {
+            val timeoutMessage = DocumentProcessingConstants.ingestionTimeoutErrorMessage()
+            logger.error(
+                "Ingestion run {} for document {} exceeded timeout {}ms; marking as failed",
+                ingestion.runId,
+                ingestion.documentId,
+                timeoutMillis,
+                e
+            )
+            markRunFailedSafely(ingestion.runId, timeoutMessage)
+        }
+    }
+
+    private suspend fun markRunFailedSafely(runId: IngestionRunId, message: String) {
+        withContext(NonCancellable) {
+            try {
+                ingestionRepository.markAsFailed(runId.toString(), message)
+            } catch (markError: Exception) {
+                logger.error("Failed to mark ingestion run {} as failed", runId, markError)
+            }
         }
     }
 
@@ -222,7 +285,7 @@ class DocumentProcessingWorker(
                     documentId,
                     errorMessage
                 )
-                ingestionRepository.markAsFailed(runId.toString(), errorMessage)
+                markRunFailedSafely(runId, errorMessage)
                 return
             }
 
@@ -368,9 +431,13 @@ class DocumentProcessingWorker(
                     }
                 }
             }
+        } catch (e: CancellationException) {
+            if (!isRunning.get()) throw e
+            logger.error("Unexpected cancellation while processing document $documentId", e)
+            markRunFailedSafely(runId, "Processing cancelled: ${e.message ?: "Unknown cancellation"}")
         } catch (e: Exception) {
             logger.error("Unexpected error processing document $documentId", e)
-            ingestionRepository.markAsFailed(runId.toString(), "Processing error: ${e.message}")
+            markRunFailedSafely(runId, "Processing error: ${e.message ?: "Unknown error"}")
         } finally {
             MDC.remove("runId")
             MDC.remove("documentId")
