@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import tech.dokus.backend.worker.decodePeppolAttachmentBase64
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.database.tables.auth.TenantTable
@@ -208,6 +209,7 @@ class PeppolInboxRetryTest {
         val firstTransmission = transmissionRepository.getByExternalDocumentId(tenantId, "ext-1").getOrThrow()
         assertNotNull(firstTransmission)
         assertEquals(PeppolStatus.Failed, firstTransmission.status)
+        assertEquals("boom", firstTransmission.errorMessage)
 
         // Second poll: retries because status=FAILED, succeeds, marks as DELIVERED and marks provider item as read.
         peppolService.pollInbox(tenantId) { _, _, _, _ ->
@@ -230,6 +232,23 @@ class PeppolInboxRetryTest {
 
         assertEquals(2, callbackAttempts)
         assertEquals(2, provider.markAsReadCount)
+    }
+
+    @Test
+    fun `pollInbox stores decode failure message as retryable transmission error`() = runBlocking {
+        peppolService.pollInbox(tenantId) { _, _, _, _ ->
+            runCatching {
+                decodePeppolAttachmentBase64("%%%not-valid%%%")
+                DocumentId.generate()
+            }
+        }.getOrThrow()
+
+        val transmission = transmissionRepository.getByExternalDocumentId(tenantId, "ext-1").getOrThrow()
+        assertNotNull(transmission)
+        assertEquals(PeppolStatus.Failed, transmission.status)
+        assertTrue(
+            transmission.errorMessage?.contains("Invalid PEPPOL attachment base64 payload") == true
+        )
     }
 
     private class FakePeppolProvider(
