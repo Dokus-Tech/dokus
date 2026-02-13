@@ -18,6 +18,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,13 +37,16 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_title
 import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.app.homeItems
 import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.navigation.NavDefinition
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
+import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.HomeShellProfileData
 import tech.dokus.app.screens.home.MobileShellTopBar
+import tech.dokus.app.screens.home.resolveHomeShellTopBarConfig
 import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
@@ -53,8 +57,10 @@ import tech.dokus.domain.model.User
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
-import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
-import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
+import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
+import tech.dokus.foundation.app.shell.HomeShellTopBarHost
+import tech.dokus.foundation.app.shell.HomeShellTopBarMode
+import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
 import tech.dokus.foundation.aura.components.text.AppNameText
@@ -89,8 +95,21 @@ internal fun HomeScreen(
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val errorMessage = pendingError?.localized
     val isLargeScreen = LocalScreenSize.current.isLarge
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var fallbackSearchQuery by rememberSaveable { mutableStateOf("") }
     var isMobileSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
+    val registeredTopBarConfigs = remember { mutableStateMapOf<String, HomeShellTopBarConfig>() }
+    val topBarHost = remember {
+        object : HomeShellTopBarHost {
+            override fun update(route: String, config: HomeShellTopBarConfig) {
+                if (registeredTopBarConfigs[route] == config) return
+                registeredTopBarConfigs[route] = config
+            }
+
+            override fun clear(route: String) {
+                registeredTopBarConfigs.remove(route)
+            }
+        }
+    }
 
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
@@ -117,10 +136,23 @@ internal fun HomeScreen(
     // Get current route directly from backstack
     val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val normalizedRoute = NavDefinition.normalizeRoute(currentRoute)
 
     val shellState = state as? HomeState.Ready ?: HomeState.Ready()
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
     val user = (shellState.userState as? DokusState.Success<User>)?.data
+    val fallbackShellTopBarConfig = rememberFallbackShellTopBarConfig(
+        normalizedRoute = normalizedRoute,
+        fallbackSearchQuery = fallbackSearchQuery,
+        onFallbackSearchQueryChange = { fallbackSearchQuery = it },
+        isMobileSearchExpanded = isMobileSearchExpanded,
+        onExpandSearch = { isMobileSearchExpanded = true }
+    )
+    val topBarConfig = resolveHomeShellTopBarConfig(
+        route = currentRoute,
+        registeredConfigs = registeredTopBarConfigs,
+        fallback = { fallbackShellTopBarConfig }
+    )
     val profileData = buildProfileData(
         user = user,
         tierLabel = tenant?.subscription?.localized
@@ -131,11 +163,10 @@ internal fun HomeScreen(
             if (isLargeScreen) {
                 RailNavigationLayout(
                     selectedRoute = currentRoute,
+                    topBarConfig = topBarConfig,
                     tenantState = shellState.tenantState,
                     profileData = profileData,
                     isLoggingOut = shellState.isLoggingOut,
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
                     onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
                     onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
                     onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
@@ -146,23 +177,22 @@ internal fun HomeScreen(
                         }
                     },
                     content = {
-                        HomeNavHost(
-                            navHostController = homeNavController,
-                            homeNavProviders = homeNavProviders,
-                            startDestination = startDestination
-                        )
+                        CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
+                            HomeNavHost(
+                                navHostController = homeNavController,
+                                homeNavProviders = homeNavProviders,
+                                startDestination = startDestination
+                            )
+                        }
                     }
                 )
             } else {
                 BottomNavigationLayout(
                     selectedRoute = currentRoute,
+                    topBarConfig = topBarConfig,
                     tenantState = shellState.tenantState,
                     profileData = profileData,
                     isLoggingOut = shellState.isLoggingOut,
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
-                    isSearchExpanded = isMobileSearchExpanded,
-                    onExpandSearch = { isMobileSearchExpanded = true },
                     onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
                     onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
                     onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
@@ -175,11 +205,13 @@ internal fun HomeScreen(
                         }
                     },
                     content = {
-                        HomeNavHost(
-                            navHostController = homeNavController,
-                            homeNavProviders = homeNavProviders,
-                            startDestination = startDestination
-                        )
+                        CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
+                            HomeNavHost(
+                                navHostController = homeNavController,
+                                homeNavProviders = homeNavProviders,
+                                startDestination = startDestination
+                            )
+                        }
                     }
                 )
             }
@@ -219,11 +251,10 @@ private fun HomeNavHost(
 @Composable
 private fun RailNavigationLayout(
     selectedRoute: String?,
+    topBarConfig: HomeShellTopBarConfig?,
     tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
     onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
     onAppearanceClick: () -> Unit,
@@ -310,17 +341,9 @@ private fun RailNavigationLayout(
             shadowElevation = 0.dp,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                PTopAppBarSearchAction(
-                    searchContent = {
-                        PSearchFieldCompact(
-                            value = searchQuery,
-                            onValueChange = onSearchQueryChange,
-                            placeholder = stringResource(Res.string.search_placeholder),
-                            modifier = Modifier.widthIn(min = 220.dp, max = 360.dp)
-                        )
-                    },
-                    actions = {}
-                )
+                if (topBarConfig != null) {
+                    DesktopShellTopBar(topBarConfig = topBarConfig)
+                }
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.TopStart
@@ -335,13 +358,10 @@ private fun RailNavigationLayout(
 @Composable
 private fun BottomNavigationLayout(
     selectedRoute: String?,
+    topBarConfig: HomeShellTopBarConfig?,
     tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    isSearchExpanded: Boolean,
-    onExpandSearch: () -> Unit,
     onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
     onAppearanceClick: () -> Unit,
@@ -353,19 +373,18 @@ private fun BottomNavigationLayout(
     Scaffold(
         modifier = modifier,
         topBar = {
-            MobileShellTopBar(
-                searchQuery = searchQuery,
-                onSearchQueryChange = onSearchQueryChange,
-                isSearchExpanded = isSearchExpanded,
-                onExpandSearch = onExpandSearch,
-                tenantState = tenantState,
-                profileData = profileData,
-                isLoggingOut = isLoggingOut,
-                onWorkspaceClick = onWorkspaceClick,
-                onProfileClick = onProfileClick,
-                onAppearanceClick = onAppearanceClick,
-                onLogoutClick = onLogoutClick
-            )
+            if (topBarConfig != null) {
+                MobileShellTopBar(
+                    topBarConfig = topBarConfig,
+                    tenantState = tenantState,
+                    profileData = profileData,
+                    isLoggingOut = isLoggingOut,
+                    onWorkspaceClick = onWorkspaceClick,
+                    onProfileClick = onProfileClick,
+                    onAppearanceClick = onAppearanceClick,
+                    onLogoutClick = onLogoutClick
+                )
+            }
         },
         bottomBar = {
             // Calm, "Dokus" bottom shell: no tinted slab; keep accent only for the selected item.
@@ -414,4 +433,38 @@ private fun buildProfileData(
         email = user.email.value,
         tierLabel = tierLabel
     )
+}
+
+@Composable
+private fun rememberFallbackShellTopBarConfig(
+    normalizedRoute: String?,
+    fallbackSearchQuery: String,
+    onFallbackSearchQueryChange: (String) -> Unit,
+    isMobileSearchExpanded: Boolean,
+    onExpandSearch: () -> Unit,
+): HomeShellTopBarConfig? {
+    val defaultConfig = NavDefinition.resolveShellTopBarDefault(normalizedRoute) ?: return null
+    return when (defaultConfig.mode) {
+        NavDefinition.ShellTopBarDefaultMode.Search -> {
+            HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Search(
+                    query = fallbackSearchQuery,
+                    placeholder = stringResource(Res.string.search_placeholder),
+                    onQueryChange = onFallbackSearchQueryChange,
+                    onClear = { onFallbackSearchQueryChange("") },
+                    isSearchExpanded = isMobileSearchExpanded,
+                    onExpandSearch = onExpandSearch
+                )
+            )
+        }
+
+        NavDefinition.ShellTopBarDefaultMode.Title -> {
+            val titleRes = NavDefinition.findByRoute(normalizedRoute)?.titleRes ?: Res.string.cashflow_title
+            HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title(
+                    title = stringResource(titleRes)
+                )
+            )
+        }
+    }
 }

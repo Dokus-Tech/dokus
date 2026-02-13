@@ -244,6 +244,67 @@ object NavDefinition {
     // HELPERS
     // ========================================================================
 
+    private val knownRoutes: Set<String> = setOf(
+        Routes.TODAY,
+        Routes.TOMORROW,
+        Routes.DOCUMENTS,
+        Routes.CASHFLOW,
+        Routes.CONTACTS,
+        Routes.TEAM,
+        Routes.AI_CHAT,
+        Routes.SETTINGS,
+        Routes.WORKSPACE_SETTINGS,
+        Routes.MORE,
+        Routes.UNDER_DEVELOPMENT
+    )
+
+    private val shellTopBarRoutes: Set<String> = setOf(
+        Routes.TODAY,
+        Routes.DOCUMENTS,
+        Routes.CASHFLOW
+    )
+
+    enum class ShellTopBarDefaultMode {
+        Search,
+        Title
+    }
+
+    data class ShellTopBarDefaultConfig(
+        val mode: ShellTopBarDefaultMode
+    )
+
+    /**
+     * Normalize route to a known base route for shell-level decisions.
+     *
+     * Handles route strings that may include argument segments.
+     */
+    fun normalizeRoute(route: String?): String? {
+        val cleaned = route?.substringBefore("?") ?: return null
+        if (cleaned in knownRoutes) return cleaned
+        return knownRoutes.firstOrNull { known ->
+            cleaned.startsWith("$known/")
+        }
+    }
+
+    /**
+     * Returns true only for home routes where shell top bar must be rendered.
+     */
+    fun shouldShowShellTopBar(route: String?): Boolean {
+        return normalizeRoute(route) in shellTopBarRoutes
+    }
+
+    /**
+     * Returns shell top bar fallback configuration for whitelisted routes.
+     */
+    fun resolveShellTopBarDefault(route: String?): ShellTopBarDefaultConfig? {
+        return when (normalizeRoute(route)) {
+            Routes.TODAY -> ShellTopBarDefaultConfig(ShellTopBarDefaultMode.Search)
+            Routes.DOCUMENTS -> ShellTopBarDefaultConfig(ShellTopBarDefaultMode.Search)
+            Routes.CASHFLOW -> ShellTopBarDefaultConfig(ShellTopBarDefaultMode.Title)
+            else -> null
+        }
+    }
+
     /** Get all nav items flattened */
     val allItems: List<NavItem> = sections.flatMap { it.items }
 

@@ -34,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,12 +57,14 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.profile_logout
-import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.aura.resources.settings_appearance
 import tech.dokus.aura.resources.settings_current_workspace
 import tech.dokus.aura.resources.settings_profile
 import tech.dokus.aura.resources.user
 import tech.dokus.domain.model.Tenant
+import tech.dokus.foundation.app.shell.HomeShellTopBarAction
+import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
+import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
@@ -347,11 +350,44 @@ private fun ProfileMenuHeader(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+internal fun DesktopShellTopBar(
+    topBarConfig: HomeShellTopBarConfig,
+    modifier: Modifier = Modifier,
+) {
+    PTopAppBarSearchAction(
+        searchContent = {
+            when (val mode = topBarConfig.mode) {
+                is HomeShellTopBarMode.Search -> {
+                    PSearchFieldCompact(
+                        value = mode.query,
+                        onValueChange = mode.onQueryChange,
+                        placeholder = mode.placeholder,
+                        onClear = mode.onClear,
+                        modifier = Modifier.widthIn(min = 220.dp, max = 360.dp)
+                    )
+                }
+
+                is HomeShellTopBarMode.Title -> {
+                    Text(
+                        text = mode.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        },
+        actions = {
+            RouteTopBarActions(actions = topBarConfig.actions)
+        },
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 internal fun MobileShellTopBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    isSearchExpanded: Boolean,
-    onExpandSearch: () -> Unit,
+    topBarConfig: HomeShellTopBarConfig,
     tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
@@ -364,36 +400,55 @@ internal fun MobileShellTopBar(
 
     PTopAppBarSearchAction(
         searchContent = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (!isSearchExpanded) {
-                    IconButton(
-                        onClick = onExpandSearch,
-                        modifier = Modifier.size(40.dp)
+            when (val mode = topBarConfig.mode) {
+                is HomeShellTopBarMode.Search -> {
+                    val onExpandSearch = mode.onExpandSearch
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(
-                            imageVector = FeatherIcons.Search,
-                            contentDescription = stringResource(Res.string.action_search)
-                        )
+                        if (!mode.isSearchExpanded && onExpandSearch != null) {
+                            IconButton(
+                                onClick = onExpandSearch,
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = FeatherIcons.Search,
+                                    contentDescription = stringResource(Res.string.action_search)
+                                )
+                            }
+                        }
+                        AnimatedVisibility(
+                            visible = mode.isSearchExpanded,
+                            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+                            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut()
+                        ) {
+                            PSearchFieldCompact(
+                                value = mode.query,
+                                onValueChange = mode.onQueryChange,
+                                onClear = mode.onClear,
+                                placeholder = mode.placeholder,
+                                modifier = Modifier.widthIn(min = 120.dp, max = 220.dp)
+                            )
+                        }
                     }
                 }
-                AnimatedVisibility(
-                    visible = isSearchExpanded,
-                    enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
-                    exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut()
-                ) {
-                    PSearchFieldCompact(
-                        value = searchQuery,
-                        onValueChange = onSearchQueryChange,
-                        placeholder = stringResource(Res.string.search_placeholder),
-                        modifier = Modifier.widthIn(min = 120.dp, max = 220.dp)
+
+                is HomeShellTopBarMode.Title -> {
+                    Text(
+                        text = mode.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
         },
         actions = {
+            RouteTopBarActions(actions = topBarConfig.actions)
+            if (topBarConfig.actions.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             MobileWorkspaceBadge(
                 tenantState = tenantState,
                 onClick = onWorkspaceClick
@@ -445,6 +500,41 @@ internal fun MobileShellTopBar(
                 }
             )
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun RowScope.RouteTopBarActions(
+    actions: List<HomeShellTopBarAction>,
+) {
+    actions.forEachIndexed { index, action ->
+        when (action) {
+            is HomeShellTopBarAction.Icon -> {
+                IconButton(
+                    onClick = action.onClick,
+                    enabled = action.enabled,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = action.icon,
+                        contentDescription = action.contentDescription
+                    )
+                }
+            }
+
+            is HomeShellTopBarAction.Text -> {
+                TextButton(
+                    onClick = action.onClick,
+                    enabled = action.enabled
+                ) {
+                    Text(text = action.label)
+                }
+            }
+        }
+
+        if (index < actions.lastIndex) {
+            Spacer(modifier = Modifier.width(4.dp))
         }
     }
 }
