@@ -257,6 +257,7 @@ object NavDefinition {
         Routes.MORE,
         Routes.UNDER_DEVELOPMENT
     )
+    private val knownRoutesBySpecificity: List<String> = knownRoutes.sortedByDescending { it.length }
 
     private val shellTopBarRoutes: Set<String> = setOf(
         Routes.TODAY,
@@ -280,10 +281,10 @@ object NavDefinition {
      */
     fun normalizeRoute(route: String?): String? {
         val cleaned = route?.substringBefore("?") ?: return null
-        if (cleaned in knownRoutes) return cleaned
-        return knownRoutes.firstOrNull { known ->
-            cleaned.startsWith("$known/")
-        }
+        return knownRoutesBySpecificity
+            .firstOrNull { known ->
+                cleaned == known || cleaned.startsWith("$known/")
+            }
     }
 
     /**

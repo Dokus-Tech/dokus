@@ -10,5 +10,9 @@ internal fun resolveHomeShellTopBarConfig(
 ): HomeShellTopBarConfig? {
     val normalizedRoute = NavDefinition.normalizeRoute(route) ?: return null
     if (!NavDefinition.shouldShowShellTopBar(normalizedRoute)) return null
-    return registeredConfigs[normalizedRoute] ?: fallback(normalizedRoute)
+    val registered = registeredConfigs[normalizedRoute]
+    if (registered != null) {
+        return registered.takeIf { it.enabled }
+    }
+    return fallback(normalizedRoute)
 }

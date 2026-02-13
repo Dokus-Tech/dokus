@@ -68,6 +68,29 @@ class HomeShellTopBarResolverTest {
         )
     }
 
+    @Test
+    fun `disabled route registration suppresses fallback top bar`() {
+        val route = NavDefinition.Routes.DOCUMENTS
+        val registered = mapOf(
+            route to HomeShellTopBarConfig(
+                enabled = false,
+                mode = HomeShellTopBarMode.Search(
+                    query = "ignored",
+                    placeholder = "Search",
+                    onQueryChange = {}
+                )
+            )
+        )
+
+        val resolved = resolveHomeShellTopBarConfig(
+            route = route,
+            registeredConfigs = registered,
+            fallback = ::fallbackConfigForRoute
+        )
+
+        assertEquals(expected = null, actual = resolved)
+    }
+
     private fun fallbackConfigForRoute(normalizedRoute: String): HomeShellTopBarConfig? {
         return when (NavDefinition.resolveShellTopBarDefault(normalizedRoute)?.mode) {
             NavDefinition.ShellTopBarDefaultMode.Search -> HomeShellTopBarConfig(

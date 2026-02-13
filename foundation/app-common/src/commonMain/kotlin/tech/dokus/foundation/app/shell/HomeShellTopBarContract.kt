@@ -70,7 +70,7 @@ fun RegisterHomeShellTopBar(
     }
 
     SideEffect {
-        if (config == null || !config.enabled) {
+        if (config == null) {
             host.clear(route)
         } else {
             host.update(route, config)

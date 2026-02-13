@@ -101,12 +101,14 @@ internal fun HomeScreen(
     val topBarHost = remember {
         object : HomeShellTopBarHost {
             override fun update(route: String, config: HomeShellTopBarConfig) {
-                if (registeredTopBarConfigs[route] == config) return
-                registeredTopBarConfigs[route] = config
+                val normalizedRoute = NavDefinition.normalizeRoute(route) ?: return
+                if (registeredTopBarConfigs[normalizedRoute] == config) return
+                registeredTopBarConfigs[normalizedRoute] = config
             }
 
             override fun clear(route: String) {
-                registeredTopBarConfigs.remove(route)
+                val normalizedRoute = NavDefinition.normalizeRoute(route) ?: return
+                registeredTopBarConfigs.remove(normalizedRoute)
             }
         }
     }
