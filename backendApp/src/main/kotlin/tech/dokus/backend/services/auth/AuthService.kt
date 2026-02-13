@@ -3,9 +3,6 @@
 package tech.dokus.backend.services.auth
 
 import com.auth0.jwt.JWT
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.enums.Permission
@@ -36,15 +33,13 @@ class AuthService(
     private val jwtGenerator: JwtGenerator,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitServiceInterface,
-    private val emailService: EmailService,
-    private val emailTemplateRenderer: EmailTemplateRenderer,
+    private val welcomeEmailService: WelcomeEmailService,
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService,
     private val tokenBlacklistService: TokenBlacklistService? = null,
     private val maxConcurrentSessions: Int = DEFAULT_MAX_CONCURRENT_SESSIONS
 ) {
     private val logger = loggerFor()
-    private val emailScope = CoroutineScope(Dispatchers.IO)
 
     companion object {
         /** Default maximum concurrent sessions per user */
@@ -75,7 +70,6 @@ class AuthService(
 
         val userId = user.id
         val loginTime = now()
-        userRepository.recordLogin(userId, loginTime)
 
         // Get all user's tenants and create scopes for each
         val memberships = userRepository.getUserTenants(userId)
@@ -111,6 +105,18 @@ class AuthService(
         }
 
         rateLimitService.resetLoginAttempts(request.email.value)
+
+        val firstSignIn = userRepository.recordSuccessfulLogin(userId, loginTime)
+        if (firstSignIn && selectedTenant != null) {
+            welcomeEmailService.scheduleIfEligible(userId, selectedTenant.tenantId)
+                .onFailure { error ->
+                    logger.warn(
+                        "Failed to schedule welcome email after first sign-in for user {}",
+                        userId,
+                        error
+                    )
+                }
+        }
 
         logger.info("Successful login for user: ${user.id} (email: ${user.email.value})")
         Result.success(response)
@@ -152,23 +158,6 @@ class AuthService(
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: $userId", error)
             throw DokusException.InternalError("Failed to save refresh token")
-        }
-
-        emailVerificationService.sendVerificationEmail(userId, user.email.value)
-            .onFailure { error ->
-                logger.warn("Failed to send verification email during registration: ${error.message}")
-            }
-
-        emailScope.launch {
-            val template = emailTemplateRenderer.renderWelcome()
-            emailService.send(
-                to = user.email.value,
-                subject = template.subject,
-                htmlBody = template.htmlBody,
-                textBody = template.textBody
-            ).onFailure { error ->
-                logger.warn("Failed to send welcome email during registration: ${error.message}")
-            }
         }
 
         logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value})")
@@ -298,6 +287,19 @@ class AuthService(
             throw DokusException.InternalError("Failed to save refresh token")
         }
 
+        val shouldScheduleWelcome = userRepository.hasFirstSignIn(userId) &&
+            !userRepository.hasWelcomeEmailSent(userId)
+        if (shouldScheduleWelcome) {
+            welcomeEmailService.scheduleIfEligible(userId, tenantId)
+                .onFailure { error ->
+                    logger.warn(
+                        "Failed to schedule welcome email after tenant selection for user {}",
+                        userId,
+                        error
+                    )
+                }
+        }
+
         logger.info("Tenant selection successful for user: $userId -> $tenantId")
         Result.success(response)
     } catch (e: DokusException) {
@@ -363,8 +365,8 @@ class AuthService(
     }
 
     suspend fun resendVerificationEmail(userId: UserId): Result<Unit> {
-        logger.debug("Resend verification email for user: {}", userId.value)
-        return emailVerificationService.resendVerificationEmail(userId)
+        logger.info("Email verification resend requested for user {} - no-op (disabled)", userId.value)
+        return Result.success(Unit)
     }
 
     suspend fun requestPasswordReset(email: String): Result<Unit> {

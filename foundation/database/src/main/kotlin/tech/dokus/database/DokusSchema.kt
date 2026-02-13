@@ -12,6 +12,7 @@ import tech.dokus.database.tables.auth.TenantMembersTable
 import tech.dokus.database.tables.auth.TenantSettingsTable
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
+import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
 import tech.dokus.database.tables.banking.BankConnectionsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
@@ -58,6 +59,7 @@ object DokusSchema {
                 TenantTable,
                 TenantSettingsTable,
                 UsersTable,
+                WelcomeEmailJobsTable,
                 TenantMembersTable,
                 TenantInvitationsTable,
                 RefreshTokensTable,

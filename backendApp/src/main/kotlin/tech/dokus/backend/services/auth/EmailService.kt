@@ -5,6 +5,8 @@ interface EmailService {
         to: String,
         subject: String,
         htmlBody: String,
-        textBody: String
+        textBody: String,
+        fromAddress: String? = null,
+        replyToAddress: String? = null
     ): Result<Unit>
 }

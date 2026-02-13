@@ -21,7 +21,7 @@ The script will:
 3. Pull images from the registry
 4. Start the stack and verify health
 
-For transactional email, `.env` must include `RESEND_API_KEY`.
+For transactional email, `.env` must include `RESEND_API_KEY`, `EMAIL_WELCOME_FROM_ADDRESS`, and `EMAIL_WELCOME_REPLY_TO_ADDRESS`.
 
 ## 📋 What’s Included
 

@@ -18,16 +18,23 @@ class ResendEmailService(
         to: String,
         subject: String,
         htmlBody: String,
-        textBody: String
+        textBody: String,
+        fromAddress: String?,
+        replyToAddress: String?
     ): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            val params = CreateEmailOptions.builder()
-                .from(config.fromAddress)
+            val builder = CreateEmailOptions.builder()
+                .from(fromAddress?.trim()?.takeIf { it.isNotBlank() } ?: config.fromAddress)
                 .to(to)
                 .subject(subject)
                 .html(htmlBody)
                 .text(textBody)
-                .build()
+            replyToAddress
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { builder.replyTo(it) }
+
+            val params = builder.build()
 
             resend.emails().send(params)
         }.onSuccess {

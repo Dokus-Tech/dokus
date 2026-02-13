@@ -11,6 +11,7 @@ import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.repository.auth.WelcomeEmailJobRepository
 import tech.dokus.database.repository.banking.BankingRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
@@ -49,6 +50,7 @@ val repositoryModuleAuth = module {
     single { RefreshTokenRepository() }
     single { PasswordResetTokenRepository() }
     single { InvitationRepository() }
+    single { WelcomeEmailJobRepository() }
 }
 
 /**

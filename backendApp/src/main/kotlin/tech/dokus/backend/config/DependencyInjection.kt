@@ -22,6 +22,7 @@ import tech.dokus.backend.services.auth.RateLimitServiceInterface
 import tech.dokus.backend.services.auth.RedisRateLimitService
 import tech.dokus.backend.services.auth.ResendEmailService
 import tech.dokus.backend.services.auth.TeamService
+import tech.dokus.backend.services.auth.WelcomeEmailService
 import tech.dokus.backend.services.notifications.NotificationPreferencesService
 import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
@@ -46,6 +47,7 @@ import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
+import tech.dokus.backend.worker.WelcomeEmailWorker
 import tech.dokus.database.DokusSchema
 import tech.dokus.database.di.repositoryModules
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
@@ -191,6 +193,7 @@ private fun authModule() = module {
     single { EmailTemplateRenderer(get()) }
     single { NotificationPreferencesService(get()) }
     single { NotificationService(get(), get(), get(), get(), get()) }
+    single { WelcomeEmailService(get(), get(), get()) }
 
     single { EmailVerificationService(get<UserRepository>(), get<EmailService>(), get()) }
 
@@ -224,6 +227,7 @@ private fun authModule() = module {
     }
     singleOf(::RedisTokenBlacklistService) bind TokenBlacklistService::class
     singleOf(::RateLimitCleanupWorker)
+    singleOf(::WelcomeEmailWorker)
 
     single {
         val authConfig = get<AuthConfig>()
@@ -232,8 +236,7 @@ private fun authModule() = module {
             jwtGenerator = get(),
             refreshTokenRepository = get(),
             rateLimitService = get(),
-            emailService = get(),
-            emailTemplateRenderer = get(),
+            welcomeEmailService = get(),
             emailVerificationService = get(),
             passwordResetService = get(),
             tokenBlacklistService = get(),
