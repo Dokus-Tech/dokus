@@ -22,6 +22,8 @@ final class DokusFileProviderDomainRegistrarTests: XCTestCase {
             "\(managedPrefix).ws.ws-1",
             "\(managedPrefix).ws.ws-2"
         ]))
+        XCTAssertEqual(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-1"]?.count, 3)
+        XCTAssertEqual(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-2"]?.count, 3)
     }
 
     func testRemovesRevokedDomains() async {
@@ -44,7 +46,7 @@ final class DokusFileProviderDomainRegistrarTests: XCTestCase {
         XCTAssertTrue(manager.removedDomainIdentifiers.contains("\(managedPrefix).ws.ws-2"))
     }
 
-    func testWorkspaceRenameReRegistersDomain() async {
+    func testWorkspaceRenameUpdatesDomainDisplayName() async {
         let manager = FakeDomainManager(domains: [
             workspaceDomain(id: "ws-1", name: "Old Name")
         ])
@@ -60,8 +62,8 @@ final class DokusFileProviderDomainRegistrarTests: XCTestCase {
 
         XCTAssertEqual(manager.domains.count, 1)
         XCTAssertEqual(manager.domains.first?.displayName, "New Name")
-        XCTAssertTrue(manager.removedDomainIdentifiers.contains("\(managedPrefix).ws.ws-1"))
         XCTAssertTrue(manager.addedDomainIdentifiers.contains("\(managedPrefix).ws.ws-1"))
+        XCTAssertFalse(manager.removedDomainIdentifiers.contains("\(managedPrefix).ws.ws-1"))
     }
 
     func testSignedOutRemovesAllManagedDomains() async {
@@ -140,6 +142,7 @@ private final class FakeDomainManager: DokusFileProviderDomainManaging {
     private(set) var addedDomainIdentifiers: [String] = []
     private(set) var removedDomainIdentifiers: [String] = []
     private(set) var signaledDomainIdentifiers: [String] = []
+    private(set) var resolvedErrorsByDomainIdentifier: [String: [Int]] = [:]
 
     init(domains: [NSFileProviderDomain]) {
         self.domains = domains
@@ -162,6 +165,10 @@ private final class FakeDomainManager: DokusFileProviderDomainManaging {
 
     func signalEnumerators(for domain: NSFileProviderDomain) async {
         signaledDomainIdentifiers.append(domain.identifier.rawValue)
+    }
+
+    func signalErrorResolved(for domain: NSFileProviderDomain, error: NSError) async {
+        resolvedErrorsByDomainIdentifier[domain.identifier.rawValue, default: []].append(error.code)
     }
 }
 

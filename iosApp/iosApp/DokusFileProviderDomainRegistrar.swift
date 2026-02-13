@@ -6,6 +6,11 @@ final class DokusFileProviderDomainRegistrar {
         static let managedDomainIdentifierPrefix = "vision.invoid.dokus.fileprovider"
         static let legacyDomainIdentifier = managedDomainIdentifierPrefix
         static let workspaceDomainSeparator = ".ws."
+        static let resolvableFileProviderErrorCodes: [NSFileProviderError.Code] = [
+            .notAuthenticated,
+            .serverUnreachable,
+            .cannotSynchronize
+        ]
     }
 
     static let shared = DokusFileProviderDomainRegistrar()
@@ -66,35 +71,33 @@ final class DokusFileProviderDomainRegistrar {
             let desiredByIdentifier = Dictionary(
                 uniqueKeysWithValues: desiredDomains.map { ($0.identifier.rawValue, $0) }
             )
-            let currentByIdentifier = Dictionary(
-                uniqueKeysWithValues: currentManaged.map { ($0.identifier.rawValue, $0) }
-            )
 
             for current in currentManaged {
-                guard let desired = desiredByIdentifier[current.identifier.rawValue] else {
+                guard desiredByIdentifier[current.identifier.rawValue] != nil else {
                     await domainManager.remove(domain: current)
                     continue
-                }
-
-                if current.displayName != desired.displayName {
-                    await domainManager.remove(domain: current)
                 }
             }
 
             for desired in desiredDomains {
-                guard let current = currentByIdentifier[desired.identifier.rawValue] else {
-                    await domainManager.add(domain: desired)
-                    continue
-                }
-
-                if current.displayName != desired.displayName {
-                    await domainManager.add(domain: desired)
-                }
+                // add(domain:) updates display name for existing identifiers.
+                await domainManager.add(domain: desired)
             }
 
             for desired in desiredDomains {
+                await signalResolvableErrorsAsResolved(for: desired)
                 await domainManager.signalEnumerators(for: desired)
             }
+        }
+    }
+
+    private func signalResolvableErrorsAsResolved(for domain: NSFileProviderDomain) async {
+        for code in Constants.resolvableFileProviderErrorCodes {
+            let error = NSError(
+                domain: NSFileProviderErrorDomain,
+                code: code.rawValue
+            )
+            await domainManager.signalErrorResolved(for: domain, error: error)
         }
     }
 
@@ -157,6 +160,7 @@ protocol DokusFileProviderDomainManaging {
     func add(domain: NSFileProviderDomain) async
     func remove(domain: NSFileProviderDomain) async
     func signalEnumerators(for domain: NSFileProviderDomain) async
+    func signalErrorResolved(for domain: NSFileProviderDomain, error: NSError) async
 }
 
 private final class DokusSystemDomainManager: DokusFileProviderDomainManaging {
@@ -197,6 +201,18 @@ private final class DokusSystemDomainManager: DokusFileProviderDomainManaging {
 
         await withCheckedContinuation { continuation in
             manager.signalEnumerator(for: .workingSet) { _ in
+                continuation.resume()
+            }
+        }
+    }
+
+    func signalErrorResolved(for domain: NSFileProviderDomain, error: NSError) async {
+        guard let manager = NSFileProviderManager(for: domain) else {
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            manager.signalErrorResolved(error) { _ in
                 continuation.resume()
             }
         }

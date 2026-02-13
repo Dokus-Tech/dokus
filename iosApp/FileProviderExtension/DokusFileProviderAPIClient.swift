@@ -140,7 +140,11 @@ final class DokusFileProviderAPIClient {
         _ = try await dataForRequest(request, allowNoContent: true)
     }
 
-    func downloadDocument(workspaceId: String, record: DokusDocumentRecord) async throws -> URL {
+    func downloadDocument(
+        workspaceId: String,
+        record: DokusDocumentRecord,
+        temporaryDirectoryURL: URL?
+    ) async throws -> URL {
         let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
         let downloadURL = try await resolveDownloadURL(resolved: resolved, record: record)
 
@@ -157,10 +161,41 @@ final class DokusFileProviderAPIClient {
             ? UTType.fromMimeType(record.contentType).preferredFilenameExtension ?? "bin"
             : suggestedExtension
 
-        let directory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-        let destination = directory.appendingPathComponent(UUID().uuidString).appendingPathExtension(fileExtension)
+        let directory = temporaryDirectoryURL ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+        let destination = directory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension(fileExtension)
         try data.write(to: destination, options: .atomic)
         return destination
+    }
+
+    func fetchThumbnail(
+        workspaceId: String,
+        record: DokusDocumentRecord,
+        requestedPixelSize: Int
+    ) async throws -> Data? {
+        let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
+
+        guard record.contentType.lowercased().contains("pdf") else {
+            return nil
+        }
+
+        let dpi = normalizedDpi(fromRequestedPixelSize: requestedPixelSize)
+        var components = URLComponents(
+            url: resolved.baseURL.appendingPathQuery("/api/v1/documents/\(record.documentId)/pages/1.png"),
+            resolvingAgainstBaseURL: false
+        )
+        components?.queryItems = [URLQueryItem(name: "dpi", value: "\(dpi)")]
+        guard let url = components?.url else {
+            throw DokusFileProviderError.invalidServerResponse
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        return try await dataForRequest(request)
     }
 
     private func resolveDownloadURL(
@@ -206,7 +241,32 @@ final class DokusFileProviderAPIClient {
             return false
         }
 
-        return downloadURL.path.hasPrefix("/api/")
+        return !isPresignedDownloadURL(downloadURL)
+    }
+
+    private func isPresignedDownloadURL(_ url: URL) -> Bool {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return false
+        }
+
+        let signedQueryKeys: Set<String> = [
+            "x-amz-algorithm",
+            "x-amz-credential",
+            "x-amz-date",
+            "x-amz-expires",
+            "x-amz-signature",
+            "x-amz-signedheaders",
+            "signature",
+            "expires",
+            "awsaccesskeyid"
+        ]
+
+        for item in components.queryItems ?? [] {
+            if signedQueryKeys.contains(item.name.lowercased()) {
+                return true
+            }
+        }
+        return false
     }
 
     private func normalizedPort(for url: URL) -> Int {
@@ -228,7 +288,14 @@ final class DokusFileProviderAPIClient {
         do {
             response = try await session.data(for: request)
         } catch {
-            throw DokusFileProviderError.network("Network request failed")
+            if let urlError = error as? URLError, urlError.code == .cancelled {
+                throw CancellationError()
+            }
+            let nsError = error as NSError
+            if nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError {
+                throw CancellationError()
+            }
+            throw DokusFileProviderError.network(error.localizedDescription)
         }
 
         guard let httpResponse = response.1 as? HTTPURLResponse else {
@@ -249,6 +316,22 @@ final class DokusFileProviderAPIClient {
         }
 
         return response.0
+    }
+
+    private func normalizedDpi(fromRequestedPixelSize requestedPixelSize: Int) -> Int {
+        if requestedPixelSize <= 0 {
+            return 150
+        }
+        if requestedPixelSize <= 96 {
+            return 96
+        }
+        if requestedPixelSize <= 192 {
+            return 150
+        }
+        if requestedPixelSize <= 320 {
+            return 200
+        }
+        return 300
     }
 
     private func parseJsonObject(from data: Data) throws -> Any {

@@ -99,25 +99,39 @@ actor DokusFileProviderRuntime {
     }
 
     func changes(from anchor: NSFileProviderSyncAnchor?) async throws -> DokusChangeSet {
-        let projection = try await self.projection(forceRefresh: true)
-        return snapshotStore.changes(from: anchor, projection: projection)
+        do {
+            let refreshedProjection = try await self.projection(forceRefresh: false)
+            return snapshotStore.changes(from: anchor, projection: refreshedProjection)
+        } catch {
+            if let cachedProjection {
+                return snapshotStore.changes(from: anchor, projection: cachedProjection)
+            }
+            throw error
+        }
     }
 
-    func fetchContents(itemIdentifier: NSFileProviderItemIdentifier) async throws -> URL {
-        let item = try await self.item(for: itemIdentifier)
-        guard
-            let workspaceId = item.workspaceId,
-            let documentId = item.documentId
-        else {
-            throw DokusFileProviderError.noSuchItem
-        }
+    func fetchContents(
+        itemIdentifier: NSFileProviderItemIdentifier,
+        temporaryDirectoryURL: URL?
+    ) async throws -> URL {
+        let (workspaceId, record) = try await documentRecord(for: itemIdentifier, forceRefresh: false)
+        return try await apiClient.downloadDocument(
+            workspaceId: workspaceId,
+            record: record,
+            temporaryDirectoryURL: temporaryDirectoryURL
+        )
+    }
 
-        let key = recordKey(workspaceId: workspaceId, documentId: documentId)
-        guard let record = cachedRecordsByKey[key] else {
-            throw DokusFileProviderError.noSuchItem
-        }
-
-        return try await apiClient.downloadDocument(workspaceId: workspaceId, record: record)
+    func fetchThumbnail(
+        itemIdentifier: NSFileProviderItemIdentifier,
+        requestedPixelSize: Int
+    ) async throws -> Data? {
+        let (workspaceId, record) = try await documentRecord(for: itemIdentifier, forceRefresh: false)
+        return try await apiClient.fetchThumbnail(
+            workspaceId: workspaceId,
+            record: record,
+            requestedPixelSize: requestedPixelSize
+        )
     }
 
     func uploadDocument(
@@ -183,6 +197,34 @@ actor DokusFileProviderRuntime {
 
     private func recordKey(workspaceId: String, documentId: String) -> String {
         "\(workspaceId)#\(documentId)"
+    }
+
+    private func documentRecord(
+        for itemIdentifier: NSFileProviderItemIdentifier,
+        forceRefresh: Bool
+    ) async throws -> (workspaceId: String, record: DokusDocumentRecord) {
+        let item = try await self.item(for: itemIdentifier, forceRefresh: forceRefresh)
+        guard
+            let workspaceId = item.workspaceId,
+            let documentId = item.documentId
+        else {
+            throw DokusFileProviderError.noSuchItem
+        }
+
+        let key = recordKey(workspaceId: workspaceId, documentId: documentId)
+        if let record = cachedRecordsByKey[key] {
+            return (workspaceId, record)
+        }
+
+        guard !forceRefresh else {
+            throw DokusFileProviderError.noSuchItem
+        }
+
+        _ = try await projection(forceRefresh: true)
+        if let refreshedRecord = cachedRecordsByKey[key] {
+            return (workspaceId, refreshedRecord)
+        }
+        throw DokusFileProviderError.noSuchItem
     }
 
     private func childComparator(_ lhs: DokusProjectedItem, _ rhs: DokusProjectedItem) -> Bool {
