@@ -80,7 +80,11 @@ internal val diModuleApp = module {
         )
     }
     container<HomeContainer, HomeState, HomeIntent, HomeAction> {
-        HomeContainer()
+        HomeContainer(
+            watchCurrentTenantUseCase = get(),
+            watchCurrentUserUseCase = get(),
+            logoutUseCase = get(),
+        )
     }
     container<SettingsContainer, SettingsState, SettingsIntent, SettingsAction> {
         SettingsContainer(getCurrentTenantUseCase = get())
@@ -98,6 +102,7 @@ internal val diModuleApp = module {
             updateTenantSettings = get(),
             uploadWorkspaceAvatar = get(),
             deleteWorkspaceAvatar = get(),
+            watchCurrentTenantUseCase = get(),
             getPeppolRegistration = get(),
             getPeppolActivity = get(),
         )

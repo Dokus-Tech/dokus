@@ -23,6 +23,10 @@ import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.LineItemToolInput
+import tech.dokus.features.ai.models.CounterpartyExtraction
+import tech.dokus.features.ai.models.CounterpartyFields
+import tech.dokus.features.ai.models.CounterpartyRole
+import tech.dokus.features.ai.models.toCounterpartyExtraction
 import tech.dokus.features.ai.models.VatBreakdownToolInput
 import tech.dokus.features.ai.models.toDomain
 import tech.dokus.foundation.backend.config.AIConfig
@@ -40,6 +44,7 @@ data class ReceiptExtractionResult(
     val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
     val receiptNumber: String?,
     val paymentMethod: PaymentMethod?,
+    val counterparty: CounterpartyExtraction? = null,
     val directionHint: DocumentDirection = DocumentDirection.Unknown,
     val directionHintConfidence: Double? = null,
     val confidence: Double,
@@ -81,6 +86,24 @@ data class ReceiptExtractionToolInput(
     val receiptNumber: String?,
     @property:LLMDescription(ExtractionToolDescriptions.PaymentMethod)
     val paymentMethod: PaymentMethod? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyName)
+    override val counterpartyName: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyVat)
+    override val counterpartyVat: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyEmail)
+    override val counterpartyEmail: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyStreet)
+    override val counterpartyStreet: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyPostalCode)
+    override val counterpartyPostalCode: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCity)
+    override val counterpartyCity: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyCountry)
+    override val counterpartyCountry: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyRole)
+    override val counterpartyRole: CounterpartyRole = CounterpartyRole.Unknown,
+    @property:LLMDescription(ExtractionToolDescriptions.CounterpartyReasoning)
+    override val counterpartyReasoning: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.DirectionHint)
     val directionHint: DocumentDirection = DocumentDirection.Unknown,
     @property:LLMDescription(ExtractionToolDescriptions.DirectionHintConfidence)
@@ -89,7 +112,7 @@ data class ReceiptExtractionToolInput(
     val confidence: Double,
     @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
     val reasoning: String? = null
-)
+) : CounterpartyFields
 
 private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, FinancialExtractionResult.Receipt>(
     argsSerializer = ReceiptExtractionToolInput.serializer(),
@@ -110,6 +133,7 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
                 vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
                 receiptNumber = args.receiptNumber,
                 paymentMethod = args.paymentMethod,
+                counterparty = args.toCounterpartyExtraction(),
                 directionHint = args.directionHint,
                 directionHintConfidence = args.directionHintConfidence,
                 confidence = args.confidence,
@@ -134,6 +158,25 @@ private val ExtractDocumentInput.receiptPrompt
     - Look for the store/merchant name at the TOP of the receipt (header/logo area).
     - Extract the actual business name, not taglines or slogans.
     - If visible, extract merchant VAT number.
+
+    ## AUTHORITATIVE COUNTERPARTY (CRITICAL)
+    - For receipts, authoritative counterparty is normally the merchant/store.
+    - Set `counterpartyRole` to MERCHANT when clear.
+    - Payment instruments (Visa/Mastercard/Apple Pay/etc.) are never counterparties.
+    - Always provide short `counterpartyReasoning`.
+
+    ## ENTITY NAME RULES (for counterpartyName)
+    - Always use the legal/registered entity name when visible on the document.
+    - Look for legal suffixes: Ltd, Limited, BVBA, BV, NV, SRL, SA, GmbH, AG, S.à r.l., Inc., Corp., LLC, Pty.
+    - Footer, copyright, registration and legal contact blocks often contain the legal entity.
+    - Example: "Copyright © 2025 Example Distribution International Ltd." -> counterpartyName = "Example Distribution International Ltd."
+    - Do NOT use branding/account/product labels when legal entity is visible.
+    - If no legal entity name is visible, use the most formal complete business name shown.
+
+    ### Example
+    - Store receipt:
+      - merchant = "Albert Heijn", payment method = "Visa".
+      - counterparty = "Albert Heijn", role = MERCHANT. Never use "Visa" as counterparty.
 
     ## DATE
     - Extract transaction date if printed on receipt.

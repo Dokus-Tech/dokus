@@ -128,12 +128,16 @@ fun DokusNavHost(
             when (event) {
                 is AuthEvent.ForceLogout -> {
                     // Force navigation to login screen and clear backstack
-                    navController.replace(AuthDestination.Login)
+                    navController.navigateTo(AuthDestination.Login) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
 
                 is AuthEvent.UserLogout -> {
-                    // Navigate to login screen
-                    navController.replace(AuthDestination.Login)
+                    // Navigate to login screen and clear backstack
+                    navController.navigateTo(AuthDestination.Login) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
 
                 is AuthEvent.LoginSuccess -> {}

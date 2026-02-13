@@ -23,10 +23,6 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         totalAmount = data.totalAmount,
         lineItems = data.lineItems,
         vatBreakdown = data.vatBreakdown,
-        // Legacy customer fields stay populated from buyer facts.
-        customerName = data.buyerName,
-        customerVat = data.buyerVat,
-        customerEmail = data.buyerEmail,
         iban = data.iban,
         payment = data.payment,
         notes = null,

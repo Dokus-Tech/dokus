@@ -118,6 +118,10 @@
     <string name="workspace_company_logo">Bedrijfslogo</string>
     <string name="workspace_avatar_upload_failed">Bedrijfslogo uploaden mislukt</string>
     <string name="workspace_avatar_delete_failed">Bedrijfslogo verwijderen mislukt</string>
+    <string name="subscription_tier_founder">Oprichter</string>
+    <string name="subscription_tier_core">Core</string>
+    <string name="subscription_tier_one">One</string>
+    <string name="subscription_tier_self_hosted">Zelf gehost</string>
     <string name="peppol_connect_title">Peppol-provider verbinden</string>
     <string name="peppol_connect_title_with_provider">%1$s verbinden</string>
     <string name="peppol_select_provider_hint">Selecteer een provider om door te gaan</string>

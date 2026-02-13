@@ -4,6 +4,10 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.User
+import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for the Home screen.
@@ -24,9 +28,13 @@ import pro.respawn.flowmvi.api.MVIState
 sealed interface HomeState : MVIState {
 
     /**
-     * Ready state - home navigation is ready to display.
+     * Ready state containing shell-level data for workspace/profile controls.
      */
-    data object Ready : HomeState
+    data class Ready(
+        val tenantState: DokusState<Tenant> = DokusState.idle(),
+        val userState: DokusState<User> = DokusState.idle(),
+        val isLoggingOut: Boolean = false,
+    ) : HomeState
 }
 
 // ============================================================================
@@ -38,6 +46,12 @@ sealed interface HomeIntent : MVIIntent {
 
     /** Screen appeared - perform any initialization */
     data object ScreenAppeared : HomeIntent
+
+    /** Refresh shell data (tenant + user). */
+    data object RefreshShellData : HomeIntent
+
+    /** Logout from the shell profile controls. */
+    data object Logout : HomeIntent
 }
 
 // ============================================================================
@@ -45,5 +59,8 @@ sealed interface HomeIntent : MVIIntent {
 // ============================================================================
 
 @Immutable
-sealed interface HomeAction : MVIAction
-// No actions needed for this navigation shell screen
+sealed interface HomeAction : MVIAction {
+
+    /** Show a shell-level error message. */
+    data class ShowError(val error: DokusException) : HomeAction
+}

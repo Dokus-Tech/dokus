@@ -1,6 +1,14 @@
 package tech.dokus.features.auth.usecases
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.Name
@@ -12,6 +20,7 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
 import tech.dokus.features.auth.gateway.AuthGateway
+import tech.dokus.features.auth.storage.TokenStorage
 
 internal class AuthSessionUseCaseImpl(
     private val authGateway: AuthGateway
@@ -28,6 +37,32 @@ internal class GetCurrentUserUseCaseImpl(
 ) : GetCurrentUserUseCase {
     override suspend fun invoke(): Result<User> {
         return authGateway.getCurrentUser()
+    }
+}
+
+internal class WatchCurrentUserUseCaseImpl(
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val tokenStorage: TokenStorage,
+) : WatchCurrentUserUseCase {
+
+    private val refreshTrigger = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun invoke(): Flow<Result<User>> {
+        val tokenChanges = tokenStorage.observeAccessToken()
+            .drop(1)
+            .map { Unit }
+
+        return merge(refreshTrigger, tokenChanges)
+            .flatMapLatest {
+                flow {
+                    emit(getCurrentUserUseCase())
+                }
+            }
+    }
+
+    override fun refresh() {
+        refreshTrigger.tryEmit(Unit)
     }
 }
 

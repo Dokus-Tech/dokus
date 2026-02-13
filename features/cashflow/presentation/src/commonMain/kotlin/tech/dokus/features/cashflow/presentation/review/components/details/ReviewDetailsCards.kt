@@ -23,7 +23,6 @@ import tech.dokus.aura.resources.cashflow_use_this_contact
 import tech.dokus.aura.resources.cashflow_choose_different
 import tech.dokus.aura.resources.cashflow_credit_note_details_section
 import tech.dokus.aura.resources.cashflow_credit_note_number
-import tech.dokus.aura.resources.cashflow_extracted_name
 import tech.dokus.aura.resources.cashflow_invoice_details_section
 import tech.dokus.aura.resources.cashflow_invoice_number
 import tech.dokus.aura.resources.cashflow_processing_identifying_type
@@ -86,22 +85,13 @@ internal fun CounterpartyCard(
             counterparty.vatNumber != null ||
             counterparty.iban != null ||
             counterparty.address != null
-        val boundName = state.selectedContactSnapshot?.name
 
-        if (hasExtractedData && counterparty.name != boundName) {
+        if (hasExtractedData) {
             // Show extracted data as secondary info
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
             ) {
-                counterparty.name?.let { name ->
-                    if (name != boundName) {
-                        FactField(
-                            label = stringResource(Res.string.cashflow_extracted_name),
-                            value = name
-                        )
-                    }
-                }
                 counterparty.vatNumber?.let { vat ->
                     FactField(
                         label = stringResource(Res.string.contacts_vat_number),
@@ -202,7 +192,7 @@ private fun PendingContactCard(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
     ) {
         MicroLabel(text = stringResource(Res.string.cashflow_no_contact_selected))
-        name?.let { FactField(label = stringResource(Res.string.cashflow_extracted_name), value = it) }
+        name?.let { FactField(label = stringResource(Res.string.cashflow_contact_label), value = it) }
         vatNumber?.let { FactField(label = stringResource(Res.string.contacts_vat_number), value = it) }
         iban?.let { FactField(label = stringResource(Res.string.workspace_iban), value = it) }
         Row(horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {

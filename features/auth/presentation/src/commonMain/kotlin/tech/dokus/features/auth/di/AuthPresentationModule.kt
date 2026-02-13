@@ -64,7 +64,7 @@ val authPresentationModule = module {
         )
     }
     container<ProfileSettingsContainer, ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
-        ProfileSettingsContainer(getCurrentUser = get(), updateProfile = get())
+        ProfileSettingsContainer(getCurrentUser = get(), updateProfile = get(), watchCurrentUserUseCase = get())
     }
     container<ServerConnectionContainer, ServerConnectionState, ServerConnectionIntent, ServerConnectionAction> {
             (params: ServerConnectionContainer.Companion.Params) ->
