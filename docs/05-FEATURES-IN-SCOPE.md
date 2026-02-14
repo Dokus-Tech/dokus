@@ -1,14 +1,13 @@
 # Features In Scope
 
-Core features:
+Core scope:
 
-1. Document upload (scan, email, manual)
-2. AI document processing
-3. Cashflow overview
-4. Contact management
-5. Lightweight item catalog
-6. Invoice creation (Peppol-compliant)
-7. Bank transaction matching (assistive)
-8. Export and sharing for bookkeepers
+1. Document intake and processing
+2. AI-assisted extraction and review
+3. Cashflow overview and entry lifecycle
+4. Contact management and linking
+5. Invoice and expense workflows
+6. PEPPOL support and related compliance flows
+7. Export/share for bookkeeping handoff
 
-If a feature strengthens document quality, it belongs here.
+If a feature improves document quality and financial clarity, it likely belongs in scope.

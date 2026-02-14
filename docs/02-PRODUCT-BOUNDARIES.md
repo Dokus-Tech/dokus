@@ -1,13 +1,12 @@
 # Product Boundaries
 
-Dokus intentionally limits its scope.
+Dokus deliberately limits scope.
 
-Dokus will NEVER become:
+Dokus is not:
+- an ERP
+- a payroll system
+- a tax filing platform
+- a legal advisory product
+- an inventory operations suite
 
-- An ERP
-- A payroll system
-- A full accounting package
-- A tax filing tool
-- An inventory management system
-
-Boundaries are a competitive advantage.
+Boundary discipline is a product advantage.

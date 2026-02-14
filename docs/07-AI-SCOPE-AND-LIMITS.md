@@ -3,17 +3,14 @@
 AI in Dokus is assistive.
 
 AI may:
+- extract structured data
+- suggest classifications and links
+- flag inconsistencies
+- support contextual Q&A
 
-- Extract data
-- Suggest classifications
-- Highlight inconsistencies
-- Answer informational questions
+AI may not:
+- make legal/tax decisions on behalf of users
+- hide uncertainty
+- execute irreversible actions without explicit confirmation
 
-AI may NOT:
-
-- Make legal or tax decisions
-- Guarantee correctness
-- Hide uncertainty
-- Act without user review
-
-All AI outputs must be explainable and reversible.
+All AI output must be reviewable and reversible.

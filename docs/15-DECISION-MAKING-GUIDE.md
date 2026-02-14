@@ -1,14 +1,11 @@
 # Decision-Making Guide
 
-When evaluating a proposal:
+For any proposal, ask:
 
-Ask:
+1. does it reduce bookkeeping friction?
+2. does it simplify user operations?
+3. does it stay within product boundaries?
 
-- Does this reduce bookkeeping friction?
-- Does this simplify user behavior?
-- Does this respect product boundaries?
+If any answer is no, revise or reject the proposal.
 
-If any answer is "no":
-→ Do not build it.
-
-Dokus wins by restraint.
+Dokus wins by restraint and clarity.

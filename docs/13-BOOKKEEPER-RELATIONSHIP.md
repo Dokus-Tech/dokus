@@ -1,17 +1,13 @@
 # Bookkeeper Relationship
 
-Dokus exists to help bookkeepers indirectly.
+Dokus improves bookkeeping inputs; it does not replace professional accounting decisions.
 
-Dokus:
+Dokus responsibilities:
+- improve document quality
+- reduce missing information
+- keep audit-friendly traces
 
-- Improves input quality
-- Reduces missing documents
-- Provides audit trails
-
-Bookkeepers:
-
-- Remain final authority
-- Own accounting decisions
-- Trust prepared data
-
-Dokus assists — bookkeepers decide.
+Bookkeeper responsibilities:
+- final accounting treatment
+- legal/tax decisions
+- professional sign-off
