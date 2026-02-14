@@ -1,118 +1,159 @@
-## [0.1.4] - 05/01/2026
-
-### ✨ New Features
-- Backend consolidated into `backendApp/` with new cashflow document routes, chat endpoints, PDF previews, and background workers
-- AI platform overhaul with new agents, RAG services, model/config updates, and removal of legacy `ai/dokus` packages
-- Domain and foundation migration to `tech/dokus` with expanded models, routes, validators, enums, and exception handling
-- Compose app refactor with new container/contract view models, settings routes, and navigation updates
-
-### 🔧 Improvements
-- Tooling and ops upgrades: detekt baselines/config, CI/release pipeline tweaks, and deployment script revisions
-- Documentation refresh including product/architecture/design system updates and new AI system prompt
-- Localization resource cleanup and font asset pruning
-
-## [0.1.3] - 23-12-2025
-
-### ✨ New Features
-- 🎉 **Contacts Management**: Implement comprehensive contacts management UI with desktop panes and mobile bottom sheets for enhanced user experience across all platforms
-- 🎉 **Folder Drag-and-Drop**: Enable folder drag-and-drop uploads for desktop, streamlining the file upload experience
-- **Tag-Based Release Workflow**: Add tag-based release pipeline to Bitrise with automated artifact naming for Android, iOS, and macOS platforms
-
-### 🔧 Improvements
-- **Design System Enhancements**: Add TextFieldPhone component and generic PFilterDropdown component for consistent UI patterns
-- **TextField Focus States**: Add focus border color to TextField for improved accessibility and visual feedback
-- **Button Touch Targets**: Increase PBackButton touch target to 44dp for better mobile usability
-- **Navigation Refactoring**: Separate navigation providers and simplify invoice exit flow by providing LocalNavController in Home screen
-- **Auth Loading State**: Pass isLoading prop to PPrimaryButton for better user feedback during authentication flows
-- Resource cleanup and import resolution
-
-### 🔨 Other Changes
-- Repository reset and workflow cleanup for CI/CD optimization
-
-## [0.1.2] - 22-12-2025
-
-### 📚 Documentation
-
-- 🎉 **Comprehensive error handling guide**: Created detailed ERROR_HANDLING.md documenting DokusException patterns, client-side error handling via HttpClientExtensions, and backend error configuration
-- Added rate limiting documentation for authentication module
-- Added error handling section to cashflow backend README
-- Documented common error scenarios and debugging approaches
-- Added section documenting DokusErrorContent and DokusErrorText components
-- Added dedicated documentation for TooManyLoginAttempts exception
-- Documented DokusExceptionExtensions.localized functionality
-
-### ✨ Code Documentation
-
-- 🔍 **Enhanced API documentation**: Added comprehensive KDoc to core use cases and domain layer with detailed @param and @return documentation
-- Added comprehensive KDoc to SelectTenantUseCase interface
-- Added comprehensive KDoc to GetCurrentTenantUseCase
-- Added @param and @return documentation to LoginUseCase invoke method
-- Added @return documentation to LogoutUseCase invoke method
-- Added @param and @return documentation to RegisterAndLoginUseCase
-- Added @param and @return documentation to SelectTenantUseCaseImpl
-- Added @return documentation to GetCurrentTenantUseCaseImpl
-- Added comprehensive @param and @return documentation to additional use cases
-- Added comprehensive KDoc to RegisterFormFields class with best practices and anti-patterns section
-
-### 🔧 Maintenance
-
-- Updated .gitignore
-
-## [0.1.1] - 22/12/2025
-
-### ✨ New Features
-- 🎨 **Design System**: Implement calm, minimal visual baseline for improved UI consistency and aesthetics
-- 🏷️ **Release Workflow**: Implement tag-based release workflow with automated deployment package creation
-- Loading indicator added to PButton component for enhanced user feedback during async operations
-
-### 🔧 Changed
-- Frontend apps now use version from git tags instead of manual version management
-- Release process moved from CI workflow to dedicated tag-triggered release workflow
-
-### 🐛 Fixed
-- Remove unused major/minor/build version components
-- Build and import issues
-
 # Changelog
 
-All notable changes to Dokus are documented here.
+All notable changes to Dokus are documented in this file.
+
+The format follows Keep a Changelog principles with pragmatic release summaries.
 
 ## [Unreleased]
 
-Currently working towards the December 2025 MVP release with PEPPOL invoicing support.
+### Changed
+- Documentation refresh and cleanup.
 
-### What's New
-- Multi-platform apps for Android, iOS, Desktop, and Web
-- Complete backend infrastructure for Belgian freelancers
-- PEPPOL e-invoicing integration (Belgium 2026 compliance)
-- Self-hosted deployment with Docker
-- Multi-tenant architecture for secure data isolation
-- Comprehensive security with encryption and audit logging
+## [0.1.17] - 2026-01-23
 
-### 🔧 Improvements
-- Refine Document Review layout with read-only counterparty/details cards and desktop top-bar actions
+### Added
+- Documents view drag-and-drop file upload support.
 
-## [0.1.0] - December 2025 (Planned)
+### Fixed
+- Default intelligence model wiring for vision/chat paths.
+- Chat agent executor/provider usage.
+- Document extraction fallback behavior.
 
-The first public release focused on Belgium's January 2026 PEPPOL mandate.
+## [0.1.16] - 2026-01-23
 
-### Features
-- **PEPPOL Invoicing** - Create and send compliant e-invoices
-- **Multi-Platform Apps** - Android, iOS, Desktop, and Web from one codebase
-- **Document Storage** - Upload and manage invoices and receipts
-- **Client Management** - Track your customers and their details
-- **Belgian VAT Support** - Automatic calculations with 21%, 12%, and 6% rates
-- **Self-Hosting** - Run on your own server for complete control
+### Added
+- Contact recovery from orchestration traces.
+- Lookup tracing for AI orchestration.
 
-### Security
-- End-to-end encryption for sensitive data
-- Multi-tenant data isolation
-- Complete audit trail for compliance
-- Secure password storage
-- HTTPS/TLS enforcement
+### Changed
+- More lenient JSON parsing in orchestrator pipeline.
 
----
+## [0.1.15] - 2026-01-22
 
-**What's Coming Next?**
+### Fixed
+- Agent system prompt forwarding in runtime configuration.
 
-Check out our [roadmap](README.md#roadmap) to see what features we're building in 2026.
+## [0.1.14] - 2026-01-22
+
+### Added
+- Pro forma and credit note extraction paths.
+
+### Changed
+- Orchestration model/performance tuning.
+- Prompt abstraction and prompt refactoring.
+
+## [0.1.13] - 2026-01-22
+
+### Fixed
+- Gross/net amount handling for bill extraction.
+
+## [0.1.12] - 2026-01-21
+
+### Fixed
+- LLM JSON parse fallback robustness.
+- Trace attribution for fallback extraction tooling.
+
+## [0.1.11] - 2026-01-21
+
+### Added
+- Ingestion processing traces and raw extraction persistence/exposure.
+
+### Changed
+- Orchestrator lifecycle management and trace normalization.
+- AI processing throughput tuning.
+
+## [0.1.10] - 2026-01-21
+
+### Added
+- Redis-backed document image cache.
+- Image-ID based orchestration flow.
+
+### Fixed
+- Image token normalization before decode.
+
+## [0.1.9] - 2026-01-21
+
+### Added
+- Tool-based AI orchestrator integration.
+- LM Studio OpenAI-compatible executor/config support.
+- Contact link decision evidence and policy controls.
+- Contact linking tests for document flows.
+
+### Changed
+- Refactor from hook-style orchestration to typed handlers.
+
+## [0.1.8] - 2026-01-20
+
+### Added
+- Cloud stack Redis password support.
+- Higher document-processing concurrency.
+
+### Changed
+- Cloud Traefik internal routing alignment.
+- Ollama host configuration for containerized networking.
+
+## [0.1.7] - 2026-01-19
+
+### Changed
+- Sovereign mode resource targets/concurrency tuning.
+- Cloud host defaults and deployment configuration.
+
+## [0.1.6] - 2026-01-19
+
+### Changed
+- Container registry migration to `docker.invoid.vision`.
+
+## [0.1.5] - 2026-01-19
+
+### Added
+- Cashflow entries parallel overview capability.
+- PEPPOL registration flow improvements (including sending-only path and initial polling).
+- UI filter toggle improvements and settings UI modernization.
+
+### Changed
+- Refactors to split large files in contacts/settings/document processing routes.
+- Route enum propagation and typed query cleanup in cashflow/chat.
+
+### Docs/Build
+- Project layout docs updated.
+- Internal audit/refactor bookkeeping updates.
+
+## [0.1.4] - 2026-01-05
+
+### Added
+- Consolidated backend runtime in `backendApp` with expanded cashflow routes and background workers.
+- AI platform upgrades (agents, RAG services, config updates).
+
+### Changed
+- Namespace and package migration to current `tech.dokus` layout.
+- Compose app route/container updates and navigation refactor.
+- CI/CD and deployment script improvements.
+
+## [0.1.3] - 2025-12-23
+
+### Added
+- Contacts management UI improvements (desktop/mobile patterns).
+- Desktop folder drag-and-drop uploads.
+- Tag-based release workflow updates.
+
+### Changed
+- Design system components and interaction refinements.
+- Navigation/provider cleanup.
+
+## [0.1.2] - 2025-12-22
+
+### Added
+- Expanded engineering documentation for error handling and diagnostics.
+- Additional domain/use-case KDoc coverage.
+
+### Changed
+- Repository maintenance and ignore rules.
+
+## [0.1.1] - 2025-12-22
+
+### Added
+- Initial tagged release baseline for multiplatform app and backend.
+- Tag-driven release pipeline and deployment packaging.
+
+### Changed
+- Versioning pipeline aligned to git tags.

@@ -1,13 +1,11 @@
 # Features Out of Scope
 
 Explicitly excluded:
+- payroll administration
+- tax filing automation
+- legal advice automation
+- broad ERP modules
+- inventory stock optimization
+- opaque "autonomous finance" behavior
 
-- Inventory stock tracking
-- Payroll
-- Tax filing or submission
-- Automated accounting postings
-- ERP-style modules
-- Legal advice
-- Financial optimization engines
-
-If a feature requires an accountant to explain it, it is out.
+If a feature requires hidden decisions users cannot review, it is out of scope.

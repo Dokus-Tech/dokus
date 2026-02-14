@@ -1,77 +1,84 @@
-# Dokus Deployment (Self-Host + Cloud)
+# Deployment Guide
 
-This folder contains everything you need to deploy the Dokus backend as a **single server** (modular monolith) with shared infrastructure.
+This directory contains Docker-based deployment assets for Dokus.
 
-## 🚀 Quick Start
+## What Is Deployed
 
-### macOS / Linux
+- `dokus-server` (single Ktor backend process)
+- PostgreSQL
+- Redis
+- MinIO
+- Traefik
+
+## Profiles
+
+`dokus.sh` supports three profiles:
+
+- `lite`: self-host, low-resource defaults (default)
+- `pro`: self-host, higher performance defaults
+- `cloud`: HTTPS deployment with Let's Encrypt + domain routing
+
+## Quick Start
+
+From this directory:
 
 ```bash
-chmod +x dokus.sh
-./dokus.sh
+./dokus.sh setup
+./dokus.sh start
+./dokus.sh status
 ```
 
-### Windows
+You can also force a profile:
 
-Run `dokus.sh` via WSL2 (recommended), or start via `docker compose` manually.
+```bash
+./dokus.sh --profile=pro start
+./dokus.sh --profile=cloud start
+```
 
-The script will:
-1. Check/install Docker if needed
-2. Interactively create a `.env` with secure defaults
-3. Pull images from the registry
-4. Start the stack and verify health
+## Common Commands
 
-For transactional email, `.env` must include `RESEND_API_KEY`, `EMAIL_WELCOME_FROM_ADDRESS`, and `EMAIL_WELCOME_REPLY_TO_ADDRESS`.
+```bash
+./dokus.sh start
+./dokus.sh stop
+./dokus.sh restart
+./dokus.sh status
+./dokus.sh logs
+./dokus.sh logs dokus-server
+./dokus.sh update
+./dokus.sh db
+./dokus.sh connect
+./dokus.sh profile
+./dokus.sh profile pro
+./dokus.sh debug
+```
 
-## 📋 What’s Included
+## Compose Files
 
-**Backend (single service):**
-- `dokus-server` — one Ktor server hosting all backend routes (auth + cashflow + contacts + payments + processor worker)
+- `docker-compose.lite.yml`
+- `docker-compose.pro.yml`
+- `docker-compose.cloud.yml`
+- `docker-compose.debug.yml` (overlay for JDWP)
+- `docker-compose.local.yml` (local development overlay)
 
-**Infrastructure:**
-- PostgreSQL (single database)
-- Redis (rate limiting + token blacklist)
-- MinIO (S3-compatible object storage) **kept by design**
-- Traefik (gateway on `:8000` + optional dashboard on `:8080`)
+## Environment
 
-## 🧩 Deployment Profiles
+Start from:
+- `.env.example`
 
-`./dokus.sh` supports:
-- `lite` — Raspberry Pi / low resource
-- `pro` — Mac mini/Mac Studio / high performance
-- `cloud` — HTTPS + Let’s Encrypt (domain required)
+Do not commit secrets in `.env`.
 
-## 🌐 Access
+## Access Endpoints
 
-Self-hosted (pro/lite):
-- API gateway: `http://localhost:8000`
+For self-host profiles (`lite`, `pro`):
+- Gateway: `http://localhost:8000`
 - Health: `http://localhost:8000/health`
 - Server info: `http://localhost:8000/api/v1/server/info`
-- MinIO API via gateway: `http://localhost:8000/storage`
-- MinIO console (if exposed by profile): `http://localhost:9001`
 
-Cloud (cloud profile):
-- API gateway: `https://<your-domain>`
-- MinIO API via gateway: `https://<your-domain>/storage`
+For cloud profile:
+- Gateway: `https://<your-domain>`
 
-## 🔧 Management
+## Notes
 
-From this folder (`deployment/`):
-
-```bash
-./dokus.sh status
-./dokus.sh logs dokus-server
-./dokus.sh restart
-./dokus.sh update
-```
-
-Or directly with Docker Compose:
-
-```bash
-docker compose -f docker-compose.pro.yml ps
-docker compose -f docker-compose.pro.yml logs -f dokus-server
-```
-
-## 🔐 Registry Note
-
-Images are pulled from `docker.invoid.vision` (HTTPS with authentication). Run `docker login docker.invoid.vision` before pulling images.
+- `dokus.sh` persists selected profile in `.dokus-profile`.
+- Debug mode (`./dokus.sh debug`) toggles remote JVM debugging on port `5005`.
+- If using private images, authenticate to the registry before startup.

@@ -1,15 +1,13 @@
-# UX & Design Principles
+# UX and Design Principles
 
-Design for stressed users.
+Design for stressed operators handling financial tasks.
 
 Rules:
+- plain language over jargon
+- explicit statuses and outcomes
+- minimal required input
+- progressive disclosure for advanced detail
 
-- No jargon
-- Clear statuses
-- Minimal required input
-- Progressive disclosure
-
-Mobile = capture
-Desktop = review
-
-If a feature needs training, remove it.
+Operational split:
+- mobile: capture and quick actions
+- desktop: review, reconciliation, and editing

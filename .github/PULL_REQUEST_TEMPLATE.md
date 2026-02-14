@@ -1,28 +1,39 @@
-## What & Why
+## What and Why
 
-<!-- Briefly describe what this PR does and why -->
+<!-- Briefly describe what this PR changes and why. -->
 
 ## Type
 
-- [ ] 🐛 Bug fix
-- [ ] ✨ New feature
-- [ ] 💥 Breaking change
-- [ ] 📝 Docs/config only
+- [ ] Bug fix
+- [ ] Feature
+- [ ] Breaking change
+- [ ] Docs/config only
+- [ ] Refactor (no behavior change)
 
-## Testing
+## Validation
 
-<!-- How did you test this? What platforms? -->
+<!-- List exact commands you ran. -->
 
-- [ ] Tested locally
-- [ ] Tests added/updated
+- [ ] `./gradlew checkAll`
+- [ ] Relevant module tests/builds executed
+- [ ] UI screenshots attached (if UI changed)
 
-## Checklist
+## Architecture and Scope
 
-- [ ] Code follows project style
-- [ ] No new warnings/errors
-- [ ] No sensitive data in code
-- [ ] Used version catalog for dependencies (if any)
+- [ ] Change is within documented product boundaries (`docs/00-READ_FIRST.md`)
+- [ ] Route/Screen/Components separation preserved where applicable
+- [ ] No unrelated scope bundled into this PR
 
----
+## Documentation
 
-<!-- Optional: Add screenshots, related issues, or notes for reviewers -->
+- [ ] Updated docs for behavior/architecture/deployment changes
+- [ ] Updated `CHANGELOG.md` for user-facing changes
+
+## Security and Privacy
+
+- [ ] No secrets/credentials committed
+- [ ] Tenant boundaries and auditability preserved where applicable
+
+## Notes for Reviewers
+
+<!-- Optional: migration notes, risk areas, follow-ups, linked issues. -->

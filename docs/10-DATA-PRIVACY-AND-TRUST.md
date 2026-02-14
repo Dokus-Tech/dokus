@@ -1,12 +1,11 @@
-# Data, Privacy & Trust
+# Data, Privacy, and Trust
 
 Users own their data.
 
 Principles:
+- explicit data usage
+- straightforward export and deletion flows
+- auditability for sensitive financial actions
+- no silent model training on tenant data
 
-- Explicit data usage
-- Easy export
-- Easy deletion
-- No silent AI training
-
-Trust is a core feature.
+Trust is a core product requirement.

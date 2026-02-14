@@ -1,16 +1,13 @@
 # Development Rules
 
-Before building anything:
+Before implementing a feature:
 
-1. Identify user pain
-2. Check scope
-3. Reduce complexity
+1. identify the user pain clearly
+2. verify scope alignment
+3. choose the simplest safe implementation
 
 Rules:
-
-- No scope creep
-- No silent behavior
-- No irreversible actions
-- No feature without undo
-
-When in doubt, do less.
+- no scope creep
+- no silent irreversible behavior
+- no UX complexity without clear payoff
+- no feature that cannot be explained in plain terms

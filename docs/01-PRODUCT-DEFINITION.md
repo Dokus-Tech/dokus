@@ -1,16 +1,14 @@
 # Product Definition
 
-Dokus is a document-first bookkeeping buffer for small businesses.
+Dokus is a document-first financial operations platform for small businesses.
 
 It helps users:
+- capture financial documents early
+- structure them correctly
+- reduce errors before handoff to accounting
 
-- Capture financial documents early
-- Structure them correctly
-- Reduce mistakes before they reach the bookkeeper
-
-Dokus is not accounting software.
-Dokus does not replace bookkeepers.
-Dokus does not make legal or tax decisions.
+Dokus is not a full accounting suite.
+Dokus does not replace accountants/bookkeepers as final decision makers.
 
 Core idea:
-"Prepared, not posted."
+"Prepared before posted."

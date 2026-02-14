@@ -1,12 +1,9 @@
-# Architecture & Platform
+# Architecture and Platform
 
-Principles:
+Guiding principles:
+- modular architecture
+- feature-first boundaries
+- shared multiplatform logic where practical
+- self-host capable deployment model
 
-- Modular
-- Feature-first
-- Shared logic across platforms
-- Offline-first where possible
-
-AI is an assistant layer, not core logic.
-
-No architecture should lock users into cloud-only usage.
+AI is an assistive layer, not a replacement for deterministic domain rules.

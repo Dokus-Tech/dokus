@@ -1,10 +1,9 @@
 # Deployment Models
 
 Dokus supports:
+- self-hosted deployments
+- cloud deployments
 
-- Self-hosted deployments
-- Cloud-hosted deployments
+Deployment mode should not change core product behavior.
 
-Feature parity is mandatory.
-
-Cloud is convenience, not leverage.
+Cloud is convenience, not lock-in.

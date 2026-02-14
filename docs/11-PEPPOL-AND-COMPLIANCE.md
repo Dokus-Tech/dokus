@@ -1,11 +1,10 @@
-# Peppol & Compliance
+# PEPPOL and Compliance
 
-Dokus supports Peppol as infrastructure.
+Dokus supports PEPPOL workflows as infrastructure.
 
-Users should not need to understand:
+Design constraints:
+- keep compliance flows explicit and low-friction
+- avoid exposing provider complexity in regular UI paths
+- preserve traceability for business-critical operations
 
-- Peppol IDs
-- XML formats
-- Compliance details
-
-Compliance must be invisible and boring.
+Compliance should be reliable and operationally boring.
