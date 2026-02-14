@@ -167,7 +167,7 @@ class DocumentUploadManager(
             // If we get here, the deletion wasn't cancelled
             _deletionHandles.update { it - taskId }
 
-            val result = deleteDocumentUseCase(task.documentId)
+            val result = deleteDocumentUseCase(task.documentId, task.sourceId)
             resultDeferred.complete(result)
 
             if (result.isSuccess) {
@@ -277,12 +277,19 @@ class DocumentUploadManager(
         )
 
         result.fold(
-            onSuccess = { document ->
+            onSuccess = { intakeResult ->
+                val document = intakeResult.document
+                val intake = intakeResult.intake
                 updateTask(task.id) {
                     it.copy(
                         status = UploadStatus.COMPLETED,
                         progress = 1f,
-                        documentId = document.id
+                        documentId = document.id,
+                        sourceId = intake.sourceId,
+                        intakeOutcome = intake.outcome,
+                        linkedDocumentId = intake.linkedDocumentId,
+                        matchReviewId = intake.reviewId,
+                        sourceCount = intake.sourceCount
                     )
                 }
                 _uploadedDocuments.update { it + (task.id to document) }

@@ -3,6 +3,8 @@ package tech.dokus.features.cashflow.gateway
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.RejectDocumentRequest
@@ -47,4 +49,9 @@ interface DocumentReviewGateway {
         documentId: DocumentId,
         request: ReprocessRequest = ReprocessRequest()
     ): Result<ReprocessResponse>
+
+    suspend fun resolveDocumentMatchReview(
+        reviewId: DocumentMatchReviewId,
+        decision: DocumentMatchResolutionDecision
+    ): Result<DocumentRecordDto>
 }

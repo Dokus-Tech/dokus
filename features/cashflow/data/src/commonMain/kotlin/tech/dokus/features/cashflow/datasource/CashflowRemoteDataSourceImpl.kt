@@ -41,6 +41,8 @@ import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
@@ -54,8 +56,10 @@ import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
@@ -71,6 +75,7 @@ import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
+import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
@@ -347,9 +352,9 @@ internal class CashflowRemoteDataSourceImpl(
         filename: String,
         contentType: String,
         prefix: String
-    ): Result<DocumentDto> {
+    ): Result<DocumentIntakeResult> {
         return runCatching {
-            val response: DocumentRecordDto = httpClient.submitFormWithBinaryData(
+            httpClient.submitFormWithBinaryData(
                 url = "/api/v1/documents/upload",
                 formData = formData {
                     append(
@@ -366,7 +371,6 @@ internal class CashflowRemoteDataSourceImpl(
                     append("prefix", prefix)
                 }
             ).body()
-            response.document
         }
     }
 
@@ -376,9 +380,9 @@ internal class CashflowRemoteDataSourceImpl(
         contentType: String,
         prefix: String,
         onProgress: (Float) -> Unit
-    ): Result<DocumentDto> {
+    ): Result<DocumentIntakeResult> {
         return runCatching {
-            val response: DocumentRecordDto = httpClient.submitFormWithBinaryData(
+            httpClient.submitFormWithBinaryData(
                 url = "/api/v1/documents/upload",
                 formData = formData {
                     append(
@@ -404,19 +408,50 @@ internal class CashflowRemoteDataSourceImpl(
                     onProgress(progress.coerceIn(0f, 1f))
                 }
             }.body()
-            response.document
         }
     }
 
     override suspend fun getDocument(documentId: DocumentId): Result<DocumentDto> {
         return runCatching {
-            httpClient.get(Documents.Id(id = documentId.toString())).body()
+            val response: DocumentRecordDto = httpClient.get(Documents.Id(id = documentId.toString())).body()
+            response.document
         }
     }
 
-    override suspend fun deleteDocument(documentId: DocumentId): Result<Unit> {
+    override suspend fun deleteDocument(documentId: DocumentId, sourceId: DocumentSourceId?): Result<Unit> {
         return runCatching {
-            httpClient.delete(Documents.Id(id = documentId.toString())).body()
+            if (sourceId == null) {
+                httpClient.delete(Documents.Id(id = documentId.toString())).body()
+            } else {
+                val documentRoute = Documents.Id(id = documentId.toString())
+                httpClient.delete(
+                    Documents.Id.Source(
+                        parent = documentRoute,
+                        sourceId = sourceId.toString()
+                    )
+                ).body()
+            }
+        }
+    }
+
+    override suspend fun getDocumentSources(documentId: DocumentId): Result<List<DocumentSourceDto>> {
+        return runCatching {
+            val documentRoute = Documents.Id(id = documentId.toString())
+            httpClient.get(Documents.Id.Sources(parent = documentRoute)).body()
+        }
+    }
+
+    override suspend fun resolveDocumentMatchReview(
+        reviewId: DocumentMatchReviewId,
+        request: ResolveDocumentMatchReviewRequest
+    ): Result<DocumentRecordDto> {
+        return runCatching {
+            httpClient.post(
+                Documents.MatchReviews.Resolve(reviewId = reviewId.toString())
+            ) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
         }
     }
 

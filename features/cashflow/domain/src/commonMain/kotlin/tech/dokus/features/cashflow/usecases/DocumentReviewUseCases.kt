@@ -1,8 +1,10 @@
 package tech.dokus.features.cashflow.usecases
 
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.RejectDocumentRequest
@@ -78,4 +80,14 @@ interface ReprocessDocumentUseCase {
         documentId: DocumentId,
         request: ReprocessRequest = ReprocessRequest()
     ): Result<ReprocessResponse>
+}
+
+/**
+ * Use case for resolving a possible-match review item.
+ */
+interface ResolveDocumentMatchReviewUseCase {
+    suspend operator fun invoke(
+        reviewId: DocumentMatchReviewId,
+        decision: DocumentMatchResolutionDecision
+    ): Result<DocumentRecordDto>
 }

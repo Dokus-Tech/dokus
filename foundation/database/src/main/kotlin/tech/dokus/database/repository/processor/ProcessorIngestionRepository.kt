@@ -23,6 +23,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.processing.DocumentProcessingConstants
@@ -65,6 +66,7 @@ class ProcessorIngestionRepository {
                         runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
                         documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
+                        sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
                         storageKey = row[DocumentsTable.storageKey],
                         filename = row[DocumentsTable.filename],
                         contentType = row[DocumentsTable.contentType],

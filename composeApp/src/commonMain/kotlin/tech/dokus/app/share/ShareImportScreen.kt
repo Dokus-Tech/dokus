@@ -22,6 +22,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.share_import_file_progress
 import tech.dokus.aura.resources.share_import_go_to_login
+import tech.dokus.aura.resources.share_import_needs_review_count
 import tech.dokus.aura.resources.share_import_open_app
 import tech.dokus.aura.resources.share_import_overall_progress
 import tech.dokus.aura.resources.share_import_preparing
@@ -146,6 +147,15 @@ private fun SuccessContent(state: ShareImportState.SuccessPulse) {
         style = MaterialTheme.typography.headlineSmall,
         color = MaterialTheme.colorScheme.onSurface
     )
+    if (state.needsReviewCount > 0) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(Res.string.share_import_needs_review_count, state.needsReviewCount),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
     Spacer(modifier = Modifier.height(8.dp))
     Text(
         text = sharedFilesSummary(state.primaryFileName, state.additionalFileCount),

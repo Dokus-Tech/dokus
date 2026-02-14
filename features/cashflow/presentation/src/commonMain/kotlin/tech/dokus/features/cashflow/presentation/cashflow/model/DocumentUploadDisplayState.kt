@@ -87,6 +87,27 @@ sealed interface DocumentUploadDisplayState {
     ) : DocumentUploadDisplayState
 
     /**
+     * Upload was linked to an existing canonical document.
+     */
+    data class Linked(
+        override val id: String,
+        override val fileName: String,
+        override val fileSize: Long,
+        val document: DocumentDto,
+        val otherSources: Int
+    ) : DocumentUploadDisplayState
+
+    /**
+     * Upload requires a possible-match review decision.
+     */
+    data class NeedsReview(
+        override val id: String,
+        override val fileName: String,
+        override val fileSize: Long,
+        val document: DocumentDto
+    ) : DocumentUploadDisplayState
+
+    /**
      * Document is being deleted with countdown for undo.
      */
     data class Deleting(

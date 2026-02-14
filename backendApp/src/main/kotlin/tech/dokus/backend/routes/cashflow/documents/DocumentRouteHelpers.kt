@@ -6,6 +6,8 @@ import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
+import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
@@ -18,7 +20,9 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
 import tech.dokus.domain.model.DocumentProcessingStepDto
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -141,6 +145,33 @@ internal fun IngestionRunSummary.toDto(
         processingTrace = processingTrace
     )
 }
+
+internal fun DocumentSourceSummary.toDto(): DocumentSourceDto = DocumentSourceDto(
+    id = id,
+    tenantId = tenantId,
+    documentId = documentId,
+    blobId = blobId,
+    sourceChannel = sourceChannel,
+    arrivalAt = arrivalAt,
+    contentHash = contentHash,
+    identityKeyHash = identityKeyHash,
+    status = status,
+    isCorrective = isCorrective,
+    extractedSnapshotJson = extractedSnapshotJson,
+    detachedAt = detachedAt,
+    filename = filename,
+    contentType = contentType,
+    sizeBytes = sizeBytes,
+    matchType = matchType
+)
+
+internal fun DocumentMatchReviewSummary.toSummaryDto(): DocumentMatchReviewSummaryDto =
+    DocumentMatchReviewSummaryDto(
+        reviewId = id,
+        reasonType = reasonType,
+        status = status,
+        createdAt = createdAt
+    )
 
 /**
  * Update draft counterparty (contact ID and intent).

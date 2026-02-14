@@ -1,6 +1,5 @@
 package tech.dokus.backend.services.documents
 
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
@@ -13,9 +12,7 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.processing.DocumentProcessingConstants
 
-class AutoConfirmPolicy(
-    private val documentRepository: DocumentRepository
-) {
+class AutoConfirmPolicy {
     suspend fun canAutoConfirm(
         tenantId: TenantId,
         documentId: DocumentId,
@@ -38,8 +35,6 @@ class AutoConfirmPolicy(
         if (!isDirectionValid(draftData)) return false
         if (!isAmountPositive(draftData)) return false
         if (!auditPassed) return false
-        if (isDuplicate(tenantId, documentId)) return false
-
         return when (source) {
             DocumentSource.Peppol -> true
             DocumentSource.Upload,
@@ -50,12 +45,6 @@ class AutoConfirmPolicy(
             }
             DocumentSource.Manual -> false
         }
-    }
-
-    private suspend fun isDuplicate(tenantId: TenantId, documentId: DocumentId): Boolean {
-        val contentHash = documentRepository.getContentHash(tenantId, documentId) ?: return false
-        val existing = documentRepository.getByContentHash(tenantId, contentHash) ?: return false
-        return existing.id != documentId
     }
 
     private fun isDirectionValid(draftData: DocumentDraftData): Boolean {

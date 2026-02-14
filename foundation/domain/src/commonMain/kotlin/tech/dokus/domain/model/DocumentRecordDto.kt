@@ -106,7 +106,9 @@ data class DocumentRecordDto(
     val draft: DocumentDraftDto?,
     val latestIngestion: DocumentIngestionDto?,
     val confirmedEntity: FinancialDocumentDto?,
-    val cashflowEntryId: CashflowEntryId? = null
+    val cashflowEntryId: CashflowEntryId? = null,
+    val pendingMatchReview: DocumentMatchReviewSummaryDto? = null,
+    val sources: List<DocumentSourceDto> = emptyList()
 )
 
 /**

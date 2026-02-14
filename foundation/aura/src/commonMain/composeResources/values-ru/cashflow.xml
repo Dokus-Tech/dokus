@@ -212,7 +212,7 @@
     <string name="cashflow_reject_title">Отклонить документ</string>
     <string name="cashflow_reject_prompt">Почему вы отклоняете этот документ?</string>
     <string name="cashflow_reject_reason_not_my_business">Не моя компания</string>
-    <string name="cashflow_reject_reason_duplicate">Дубликат</string>
+    <string name="cashflow_reject_reason_duplicate">Уже учтён</string>
     <string name="cashflow_reject_reason_spam">Спам</string>
     <string name="cashflow_reject_reason_test">Тест</string>
     <string name="cashflow_reject_reason_other">Другое</string>

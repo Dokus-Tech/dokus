@@ -20,6 +20,7 @@ import kotlinx.coroutines.withTimeout
 import org.slf4j.MDC
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.database.entity.IngestionItemEntity
@@ -66,6 +67,7 @@ class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val processingAgent: DocumentProcessingAgent,
     private val contactResolutionService: ContactResolutionService,
+    private val documentTruthService: DocumentTruthService,
     private val draftRepository: DocumentDraftRepository,
     private val documentRepository: DocumentRepository,
     private val autoConfirmPolicy: AutoConfirmPolicy,
@@ -316,6 +318,26 @@ class DocumentProcessingWorker(
             )
 
             if (draftData != null) {
+                val matchOutcome = documentTruthService.applyPostExtractionMatching(
+                    tenantId = parsedTenantId,
+                    documentId = documentId,
+                    sourceId = ingestion.sourceId,
+                    draftData = draftData,
+                    extractedSnapshotJson = json.encodeToString(draftData)
+                )
+                if (matchOutcome.documentId != documentId ||
+                    matchOutcome.outcome == tech.dokus.domain.enums.DocumentIntakeOutcome.PendingMatchReview
+                ) {
+                    logger.info(
+                        "Document {} source {} resolved by truth matcher: outcome={}, target={}",
+                        documentId,
+                        ingestion.sourceId,
+                        matchOutcome.outcome,
+                        matchOutcome.documentId
+                    )
+                    return
+                }
+
                 // Ensure drafts start in NeedsReview; auto-confirm will set Confirmed explicitly.
                 draftRepository.updateDocumentStatus(
                     documentId = documentId,

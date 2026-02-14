@@ -192,6 +192,7 @@
     <string name="share_import_overall_progress">Overall %1$d%%</string>
     <string name="share_import_success_single">Document uploaded</string>
     <string name="share_import_success_multiple">%1$d documents uploaded</string>
+    <string name="share_import_needs_review_count">%1$d possible matches need review</string>
     <string name="share_import_success_summary_multiple">%1$s + %2$d more</string>
     <string name="share_import_go_to_login">Go to login</string>
     <string name="share_import_open_app">Open app</string>
@@ -206,6 +207,11 @@
     <string name="upload_action_close">Close</string>
     <string name="upload_status_failed">Failed</string>
     <string name="upload_status_uploaded">Uploaded</string>
+    <string name="upload_status_linked_to">Linked to %1$s</string>
+    <string name="upload_status_linked_to_with_sources">Linked to %1$s · %2$d other sources</string>
+    <string name="upload_status_needs_review">Possible match needs review</string>
+    <string name="cashflow_match_review_same_document">Same document</string>
+    <string name="cashflow_match_review_different_document">Different document</string>
 
     <!-- App Download Dialog -->
     <string name="app_download_title">Download Dokus App</string>
@@ -360,7 +366,7 @@
     <string name="cashflow_reject_title">Reject document</string>
     <string name="cashflow_reject_prompt">Why are you rejecting this document?</string>
     <string name="cashflow_reject_reason_not_my_business">Not my business</string>
-    <string name="cashflow_reject_reason_duplicate">Duplicate</string>
+    <string name="cashflow_reject_reason_duplicate">Already represented</string>
     <string name="cashflow_reject_reason_spam">Spam</string>
     <string name="cashflow_reject_reason_test">Test</string>
     <string name="cashflow_reject_reason_other">Other</string>

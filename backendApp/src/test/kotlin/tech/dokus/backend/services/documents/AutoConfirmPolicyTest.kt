@@ -1,12 +1,9 @@
 package tech.dokus.backend.services.documents
 
-import io.mockk.coEvery
-import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
@@ -22,7 +19,6 @@ import kotlin.test.assertTrue
 
 class AutoConfirmPolicyTest {
 
-    private lateinit var documentRepository: DocumentRepository
     private lateinit var policy: AutoConfirmPolicy
 
     private val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
@@ -31,9 +27,7 @@ class AutoConfirmPolicyTest {
 
     @BeforeEach
     fun setup() {
-        documentRepository = mockk()
-        policy = AutoConfirmPolicy(documentRepository)
-        coEvery { documentRepository.getContentHash(any(), any()) } returns null
+        policy = AutoConfirmPolicy()
     }
 
     @Test

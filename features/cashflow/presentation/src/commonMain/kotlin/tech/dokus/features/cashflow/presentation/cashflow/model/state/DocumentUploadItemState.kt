@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadDisplayState
@@ -171,12 +172,35 @@ class DocumentUploadItemState(
 
             UploadStatus.COMPLETED -> {
                 if (document != null) {
-                    DocumentUploadDisplayState.Uploaded(
-                        id = task.id,
-                        fileName = task.fileName,
-                        fileSize = task.fileSize,
-                        document = document
-                    )
+                    when (task.intakeOutcome) {
+                        DocumentIntakeOutcome.LinkedToExisting -> {
+                            DocumentUploadDisplayState.Linked(
+                                id = task.id,
+                                fileName = task.fileName,
+                                fileSize = task.fileSize,
+                                document = document,
+                                otherSources = (task.sourceCount - 1).coerceAtLeast(0)
+                            )
+                        }
+
+                        DocumentIntakeOutcome.PendingMatchReview -> {
+                            DocumentUploadDisplayState.NeedsReview(
+                                id = task.id,
+                                fileName = task.fileName,
+                                fileSize = task.fileSize,
+                                document = document
+                            )
+                        }
+
+                        else -> {
+                            DocumentUploadDisplayState.Uploaded(
+                                id = task.id,
+                                fileName = task.fileName,
+                                fileSize = task.fileSize,
+                                document = document
+                            )
+                        }
+                    }
                 } else {
                     // Document not yet available, show as uploading at 100%
                     DocumentUploadDisplayState.Uploading(

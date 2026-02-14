@@ -8,6 +8,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentSource
@@ -34,6 +35,7 @@ data class DocumentCreatePayload(
     val sizeBytes: Long,
     val storageKey: String,
     val contentHash: String?,
+    val identityKeyHash: String? = null,
     val source: DocumentSource = DocumentSource.Upload
 )
 
@@ -62,6 +64,7 @@ class DocumentRepository {
             it[DocumentsTable.sizeBytes] = payload.sizeBytes
             it[DocumentsTable.storageKey] = payload.storageKey
             it[DocumentsTable.contentHash] = payload.contentHash
+            it[DocumentsTable.identityKeyHash] = payload.identityKeyHash
             it[DocumentsTable.documentSource] = payload.source
         }
         id
@@ -127,6 +130,47 @@ class DocumentRepository {
                 .map { it.toDocumentDto() }
                 .singleOrNull()
         }
+
+    /**
+     * Get a document by identity key hash.
+     * CRITICAL: Must filter by tenantId.
+     */
+    suspend fun getByIdentityKeyHash(tenantId: TenantId, identityKeyHash: String): DocumentDto? =
+        newSuspendedTransaction {
+            DocumentsTable.selectAll()
+                .where {
+                    (DocumentsTable.identityKeyHash eq identityKeyHash) and
+                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                }
+                .map { it.toDocumentDto() }
+                .singleOrNull()
+        }
+
+    suspend fun updateIdentityKeyHash(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        identityKeyHash: String?
+    ): Boolean = newSuspendedTransaction {
+        DocumentsTable.update({
+            (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
+                (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            it[DocumentsTable.identityKeyHash] = identityKeyHash
+        } > 0
+    }
+
+    suspend fun updateContentHash(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        contentHash: String?
+    ): Boolean = newSuspendedTransaction {
+        DocumentsTable.update({
+            (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
+                (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            it[DocumentsTable.contentHash] = contentHash
+        } > 0
+    }
 
     /**
      * List all documents for a tenant with pagination.

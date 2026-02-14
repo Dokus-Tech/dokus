@@ -19,8 +19,8 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.notifications.NotificationEmission
 import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
-import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
@@ -30,6 +30,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.NotificationReferenceType
@@ -43,7 +44,6 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.utils.json
-import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.peppol.provider.client.recommand.model.RecommandAttachment
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCreditNote
 import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
@@ -108,9 +108,9 @@ class PeppolPollingWorker(
     private val documentRepository: DocumentRepository,
     private val draftRepository: DocumentDraftRepository,
     private val ingestionRunRepository: DocumentIngestionRunRepository,
+    private val documentTruthService: DocumentTruthService,
     private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
-    private val documentStorageService: DocumentStorageService,
     private val contactRepository: ContactRepository,
     private val notificationService: NotificationService
 ) {
@@ -290,7 +290,7 @@ class PeppolPollingWorker(
                         ?.let(::extractAttachments)
                         ?.firstOrNull { it.mimeCode == "application/pdf" && !it.embeddedDocument.isNullOrEmpty() }
 
-                    val uploadResult = when {
+                    val artifact = when {
                         pdfAttachment != null -> {
                             val encodedAttachment = requireNotNull(pdfAttachment.embeddedDocument)
                             val pdfBytes = try {
@@ -301,26 +301,22 @@ class PeppolPollingWorker(
                                     e
                                 )
                             }
-                            documentStorageService.uploadDocument(
-                                tenantId = tid,
-                                prefix = "peppol",
-                                filename = pdfAttachment.filename.ifBlank {
+                            Triple(
+                                pdfBytes,
+                                pdfAttachment.filename.ifBlank {
                                     "peppol-${documentNumberOf(draftData) ?: "unknown"}.pdf"
                                 },
-                                data = pdfBytes,
-                                contentType = "application/pdf"
+                                "application/pdf"
                             )
                         }
 
                         !documentDetail?.xml.isNullOrBlank() -> {
                             val xmlBytes = requireNotNull(documentDetail).xml.encodeToByteArray()
                             val fallbackId = documentDetail.envelopeId ?: documentDetail.id
-                            documentStorageService.uploadDocument(
-                                tenantId = tid,
-                                prefix = "peppol",
-                                filename = "peppol-$fallbackId.xml",
-                                data = xmlBytes,
-                                contentType = "application/xml"
+                            Triple(
+                                xmlBytes,
+                                "peppol-$fallbackId.xml",
+                                "application/xml"
                             )
                         }
 
@@ -330,23 +326,31 @@ class PeppolPollingWorker(
                         }
                     }
 
-                    val documentId = documentRepository.create(
+                    val intake = documentTruthService.intakeBytes(
                         tenantId = tid,
-                        payload = DocumentCreatePayload(
-                            filename = uploadResult.filename,
-                            contentType = uploadResult.contentType,
-                            sizeBytes = uploadResult.sizeBytes,
-                            storageKey = uploadResult.key,
-                            contentHash = null,
-                            source = DocumentSource.Peppol
-                        )
+                        filename = artifact.second,
+                        contentType = artifact.third,
+                        prefix = "peppol",
+                        fileBytes = artifact.first,
+                        sourceChannel = DocumentSource.Peppol
                     )
+                    val documentId = intake.documentId
+
+                    if (intake.outcome == DocumentIntakeOutcome.LinkedToExisting) {
+                        logger.info(
+                            "PEPPOL artifact linked to existing document {} via exact-byte match",
+                            documentId
+                        )
+                        return@runCatching documentId
+                    }
 
                     // Create ingestion run first (satisfies FK constraint on document_drafts)
-                    val runId = ingestionRunRepository.createRun(
-                        documentId = documentId,
-                        tenantId = tid
-                    )
+                    val runId = intake.runId
+                        ?: ingestionRunRepository.createRun(
+                            documentId = documentId,
+                            tenantId = tid,
+                            sourceId = intake.sourceId
+                        )
                     ingestionRunRepository.markAsProcessing(runId, "peppol")
                     ingestionRunRepository.markAsSucceeded(
                         runId = runId,
@@ -365,6 +369,25 @@ class PeppolPollingWorker(
                         documentType = documentType,
                         force = true
                     )
+
+                    val matchOutcome = documentTruthService.applyPostExtractionMatching(
+                        tenantId = tid,
+                        documentId = documentId,
+                        sourceId = intake.sourceId,
+                        draftData = draftData,
+                        extractedSnapshotJson = json.encodeToString(draftData)
+                    )
+                    if (matchOutcome.documentId != documentId ||
+                        matchOutcome.outcome == DocumentIntakeOutcome.PendingMatchReview
+                    ) {
+                        logger.info(
+                            "PEPPOL source {} resolved by truth matcher with outcome {} (target={})",
+                            intake.sourceId,
+                            matchOutcome.outcome,
+                            matchOutcome.documentId
+                        )
+                        return@runCatching matchOutcome.documentId
+                    }
 
                     val counterparty = extractCounterparty(draftData)
                     val linkedContactId = findOrCreateContactForPeppol(

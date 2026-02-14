@@ -24,6 +24,7 @@ sealed interface ShareImportState : MVIState {
         val primaryFileName: String,
         val additionalFileCount: Int,
         val uploadedCount: Int,
+        val needsReviewCount: Int = 0,
         val uploadedDocumentIds: List<String>
     ) : ShareImportState
 
@@ -48,6 +49,7 @@ sealed interface ShareImportAction : MVIAction {
     data class Finish(
         val successCount: Int,
         val failureCount: Int,
+        val needsReviewCount: Int = 0,
         val uploadedDocumentIds: List<String>
     ) : ShareImportAction
 

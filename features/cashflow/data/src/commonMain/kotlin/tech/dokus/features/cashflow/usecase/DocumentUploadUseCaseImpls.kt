@@ -1,7 +1,8 @@
 package tech.dokus.features.cashflow.usecase
 
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.features.cashflow.gateway.DocumentUploadGateway
 import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UploadDocumentUseCase
@@ -15,7 +16,7 @@ internal class UploadDocumentUseCaseImpl(
         contentType: String?,
         prefix: String,
         onProgress: (Float) -> Unit
-    ): Result<DocumentDto> {
+    ): Result<DocumentIntakeResult> {
         return documentUploadGateway.uploadDocumentWithProgress(
             fileContent = fileContent,
             filename = filename,
@@ -29,7 +30,7 @@ internal class UploadDocumentUseCaseImpl(
 internal class DeleteDocumentUseCaseImpl(
     private val documentUploadGateway: DocumentUploadGateway
 ) : DeleteDocumentUseCase {
-    override suspend fun invoke(documentId: DocumentId): Result<Unit> {
-        return documentUploadGateway.deleteDocument(documentId)
+    override suspend fun invoke(documentId: DocumentId, sourceId: DocumentSourceId?): Result<Unit> {
+        return documentUploadGateway.deleteDocument(documentId, sourceId)
     }
 }

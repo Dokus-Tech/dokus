@@ -9,6 +9,7 @@ import pro.respawn.flowmvi.dsl.updateStateImmediate
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.auth.usecases.GetLastSelectedTenantIdUseCase
@@ -231,8 +232,11 @@ internal class ShareImportContainer(
                 }
             )
 
-            result.onSuccess { document ->
-                session.statuses[index] = UploadFileStatus.Uploaded(document.id.toString())
+            result.onSuccess { intakeResult ->
+                session.statuses[index] = UploadFileStatus.Uploaded(
+                    documentId = intakeResult.document.id.toString(),
+                    needsReview = intakeResult.intake.outcome == DocumentIntakeOutcome.PendingMatchReview
+                )
             }.onFailure { error ->
                 logger.e(error) { "Share import upload failed for file: ${sharedFile.name}" }
                 val exception = (error as? DokusException) ?: DokusException.DocumentUploadFailed
@@ -251,6 +255,9 @@ internal class ShareImportContainer(
         val uploadedDocumentIds = session.statuses.mapNotNull { status ->
             (status as? UploadFileStatus.Uploaded)?.documentId
         }
+        val needsReviewCount = session.statuses.count { status ->
+            (status as? UploadFileStatus.Uploaded)?.needsReview == true
+        }
         if (uploadedDocumentIds.isEmpty()) {
             logger.w { "Share import completed with no uploaded document id" }
             updateState {
@@ -268,6 +275,7 @@ internal class ShareImportContainer(
                 primaryFileName = sharedFiles.first().name,
                 additionalFileCount = (sharedFiles.size - 1).coerceAtLeast(0),
                 uploadedCount = uploadedDocumentIds.size,
+                needsReviewCount = needsReviewCount,
                 uploadedDocumentIds = uploadedDocumentIds
             )
         }
@@ -276,6 +284,7 @@ internal class ShareImportContainer(
             ShareImportAction.Finish(
                 successCount = uploadedDocumentIds.size,
                 failureCount = 0,
+                needsReviewCount = needsReviewCount,
                 uploadedDocumentIds = uploadedDocumentIds
             )
         )
@@ -290,7 +299,10 @@ private data class UploadFileSignature(
 
 private sealed interface UploadFileStatus {
     data object Pending : UploadFileStatus
-    data class Uploaded(val documentId: String) : UploadFileStatus
+    data class Uploaded(
+        val documentId: String,
+        val needsReview: Boolean = false
+    ) : UploadFileStatus
     data class Failed(val exception: DokusException) : UploadFileStatus
 }
 

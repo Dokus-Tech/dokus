@@ -16,6 +16,7 @@ import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
@@ -29,6 +30,7 @@ internal class DocumentReviewReducer(
     private val confirmDocument: ConfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
+    private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
     private val getDocumentPages: GetDocumentPagesUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
@@ -43,6 +45,7 @@ internal class DocumentReviewReducer(
         confirmDocument,
         rejectDocument,
         reprocessDocument,
+        resolveDocumentMatchReview,
         getDocumentRecord,
         logger
     )
@@ -204,4 +207,10 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleDismissFailureBanner() =
         with(actions) { handleDismissFailureBanner() }
+
+    suspend fun DocumentReviewCtx.handleResolvePossibleMatchSame() =
+        with(actions) { handleResolvePossibleMatchSame() }
+
+    suspend fun DocumentReviewCtx.handleResolvePossibleMatchDifferent() =
+        with(actions) { handleResolvePossibleMatchDifferent() }
 }

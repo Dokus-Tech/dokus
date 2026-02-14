@@ -36,6 +36,7 @@ import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.StorageDocumentFetcher
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
@@ -264,6 +265,7 @@ private fun cashflowModule() = module {
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
     single { DocumentConfirmationDispatcher(get(), get(), get()) }
+    single { DocumentTruthService(get(), get(), get(), get(), get(), get(), get()) }
     singleOf(::CashflowProjectionReconciliationWorker)
 
     // PDF Preview

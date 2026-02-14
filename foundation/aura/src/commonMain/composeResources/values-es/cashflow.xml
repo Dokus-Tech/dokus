@@ -212,7 +212,7 @@
     <string name="cashflow_reject_title">Rechazar documento</string>
     <string name="cashflow_reject_prompt">¿Por qué rechazas este documento?</string>
     <string name="cashflow_reject_reason_not_my_business">No es mi negocio</string>
-    <string name="cashflow_reject_reason_duplicate">Duplicado</string>
+    <string name="cashflow_reject_reason_duplicate">Ya registrado</string>
     <string name="cashflow_reject_reason_spam">Spam</string>
     <string name="cashflow_reject_reason_test">Prueba</string>
     <string name="cashflow_reject_reason_other">Otro</string>

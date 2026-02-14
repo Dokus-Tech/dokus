@@ -8,6 +8,7 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -15,6 +16,7 @@ import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -23,6 +25,7 @@ internal class DocumentReviewActions(
     private val confirmDocument: ConfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
+    private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
     private val getDocumentRecord: GetDocumentRecordUseCase,
     private val logger: Logger,
 ) {
@@ -384,6 +387,52 @@ internal class DocumentReviewActions(
     suspend fun DocumentReviewCtx.handleDismissFailureBanner() {
         withState<DocumentReviewState.Content, _> {
             updateState { copy(failureBannerDismissed = true) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleResolvePossibleMatchSame() {
+        resolvePossibleMatch(DocumentMatchResolutionDecision.SAME)
+    }
+
+    suspend fun DocumentReviewCtx.handleResolvePossibleMatchDifferent() {
+        resolvePossibleMatch(DocumentMatchResolutionDecision.DIFFERENT)
+    }
+
+    private suspend fun DocumentReviewCtx.resolvePossibleMatch(decision: DocumentMatchResolutionDecision) {
+        withState<DocumentReviewState.Content, _> {
+            val reviewId = document.pendingMatchReview?.reviewId ?: return@withState
+            if (isResolvingMatchReview) return@withState
+
+            updateState { copy(isResolvingMatchReview = true) }
+
+            launch {
+                resolveDocumentMatchReview(reviewId, decision).fold(
+                    onSuccess = { record ->
+                        val draft = record.draft
+                        withState<DocumentReviewState.Content, _> {
+                            updateState {
+                                copy(
+                                    document = record,
+                                    draftData = draft?.extractedData,
+                                    originalData = draft?.extractedData,
+                                    hasUnsavedChanges = false,
+                                    isResolvingMatchReview = false,
+                                    counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
+                                    isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
+                                    isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
+                                )
+                            }
+                        }
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Failed to resolve possible match for reviewId=$reviewId" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState { copy(isResolvingMatchReview = false) }
+                        }
+                        action(DocumentReviewAction.ShowError(error.asDokusException))
+                    }
+                )
+            }
         }
     }
 

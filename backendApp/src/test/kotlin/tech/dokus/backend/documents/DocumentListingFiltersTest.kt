@@ -22,6 +22,9 @@ import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
+import tech.dokus.database.tables.documents.DocumentBlobsTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.CreditNoteStatus
@@ -72,6 +75,9 @@ class DocumentListingFiltersTest {
                 TenantTable,
                 UsersTable,
                 DocumentsTable,
+                DocumentBlobsTable,
+                DocumentSourcesTable,
+                DocumentMatchReviewsTable,
                 DocumentIngestionRunsTable,
                 DocumentDraftsTable,
                 ContactsTable,
@@ -113,6 +119,9 @@ class DocumentListingFiltersTest {
                 ExpensesTable,
                 InvoicesTable,
                 ContactsTable,
+                DocumentMatchReviewsTable,
+                DocumentSourcesTable,
+                DocumentBlobsTable,
                 DocumentDraftsTable,
                 DocumentIngestionRunsTable,
                 DocumentsTable,

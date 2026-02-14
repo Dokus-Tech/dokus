@@ -11,6 +11,7 @@ import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
@@ -44,6 +45,7 @@ internal class DocumentReviewContainer(
     private val confirmDocument: ConfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
+    private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
     private val getDocumentPages: GetDocumentPagesUseCase,
     private val getContact: GetContactUseCase,
 ) : Container<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
@@ -56,6 +58,7 @@ internal class DocumentReviewContainer(
         confirmDocument = confirmDocument,
         rejectDocument = rejectDocument,
         reprocessDocument = reprocessDocument,
+        resolveDocumentMatchReview = resolveDocumentMatchReview,
         getDocumentPages = getDocumentPages,
         getContact = getContact,
         logger = logger,
@@ -128,6 +131,8 @@ internal class DocumentReviewContainer(
                         // === Failed Analysis ===
                         is DocumentReviewIntent.RetryAnalysis -> handleRetryAnalysis()
                         is DocumentReviewIntent.DismissFailureBanner -> handleDismissFailureBanner()
+                        is DocumentReviewIntent.ResolvePossibleMatchSame -> handleResolvePossibleMatchSame()
+                        is DocumentReviewIntent.ResolvePossibleMatchDifferent -> handleResolvePossibleMatchDifferent()
 
                         // === Manual Document Type Selection ===
                         is DocumentReviewIntent.SelectDocumentType -> handleSelectDocumentType(intent.type)

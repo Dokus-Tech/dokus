@@ -52,6 +52,7 @@ import tech.dokus.features.cashflow.presentation.review.components.details.Amoun
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
 import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.PeppolStatusCard
+import tech.dokus.features.cashflow.presentation.review.components.details.SourcesCard
 import tech.dokus.features.cashflow.presentation.review.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constrains
@@ -262,6 +263,12 @@ internal fun DetailsTabContent(
         )
         PeppolStatusCard(
             state = state,
+            modifier = Modifier.fillMaxWidth()
+        )
+        SourcesCard(
+            state = state,
+            onResolveSame = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
+            onResolveDifferent = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
             modifier = Modifier.fillMaxWidth()
         )
 
