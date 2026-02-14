@@ -7,7 +7,9 @@ import kotlinx.datetime.toStdlibInstant
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
@@ -302,7 +304,8 @@ class ProcessorIngestionRepository {
 
             DocumentIngestionRunsTable.update({
                 (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                    (DocumentIngestionRunsTable.startedAt lessEq cutoff)
+                    (DocumentIngestionRunsTable.startedAt.isNull() or
+                        (DocumentIngestionRunsTable.startedAt lessEq cutoff))
             }) {
                 it[status] = IngestionStatus.Failed
                 it[finishedAt] = now
