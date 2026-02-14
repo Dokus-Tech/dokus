@@ -28,7 +28,6 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -288,7 +287,7 @@ class ProcessorIngestionRepository {
      * Recover ingestion runs stuck in Processing state.
      *
      * Finds runs where status=Processing and startedAt is older than
-     * [DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MINUTES] minutes,
+     * [DocumentProcessingConstants.INGESTION_RUN_TIMEOUT],
      * then marks them as Failed. This handles worker crashes that leave runs stuck mid-flight.
      *
      * @return Number of runs recovered
@@ -296,7 +295,7 @@ class ProcessorIngestionRepository {
     @OptIn(ExperimentalTime::class)
     suspend fun recoverStaleRuns(): Int =
         newSuspendedTransaction {
-            val cutoff = (Clock.System.now() - DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MS.milliseconds)
+            val cutoff = (Clock.System.now() - DocumentProcessingConstants.INGESTION_RUN_TIMEOUT)
                 .toStdlibInstant()
                 .toLocalDateTime(TimeZone.Companion.UTC)
             val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)

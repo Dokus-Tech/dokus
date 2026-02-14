@@ -25,7 +25,6 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import java.util.*
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
@@ -347,7 +346,7 @@ class DocumentIngestionRunRepository {
     }
 
     private fun recoverStaleProcessingRunsInternal(tenantId: UUID?): Int {
-        val timeout = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MS.milliseconds
+        val timeout = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT
         val cutoff = (Clock.System.now() - timeout).toLocalDateTime(TimeZone.UTC)
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
