@@ -23,6 +23,6 @@ object DocumentProcessingConstants {
     /**
      * Canonical error shown when a run exceeded [INGESTION_RUN_TIMEOUT].
      */
-    fun ingestionTimeoutErrorMessage(): String =
+    val INGESTION_TIMEOUT_ERROR_MESSAGE: String =
         "Processing timed out after ${INGESTION_RUN_TIMEOUT.inWholeMinutes} minutes"
 }

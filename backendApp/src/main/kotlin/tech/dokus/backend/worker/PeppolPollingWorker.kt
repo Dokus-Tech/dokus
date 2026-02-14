@@ -20,6 +20,7 @@ import tech.dokus.backend.services.notifications.NotificationEmission
 import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
+import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -284,7 +285,7 @@ class PeppolPollingWorker(
             val fullSyncRun = isFullSyncPoll ?: resolveFullSyncForTenant(tenantId)
 
             val result = peppolService.pollInbox(tenantId) { draftData, senderPeppolId, tid, documentDetail ->
-                runCatching {
+                runSuspendCatching {
                     // Find PDF attachment (if any)
                     val pdfAttachment = documentDetail
                         ?.let(::extractAttachments)
