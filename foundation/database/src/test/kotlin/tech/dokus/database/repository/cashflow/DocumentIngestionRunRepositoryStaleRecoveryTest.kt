@@ -28,7 +28,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
@@ -136,7 +136,7 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
         val runId = IngestionRunId.generate()
         val now = Clock.System.now()
         val staleStartedAt = now -
-            (DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MS + 60_000L).milliseconds
+            (DocumentProcessingConstants.INGESTION_RUN_TIMEOUT + 1.minutes)
         val startedAt = if (stale) staleStartedAt else now
         val queuedAt = startedAt.toLocalDateTime(TimeZone.UTC)
 

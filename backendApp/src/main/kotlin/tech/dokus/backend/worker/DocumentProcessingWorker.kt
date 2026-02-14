@@ -45,6 +45,7 @@ import tech.dokus.features.ai.validation.CheckType
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration
 
 /**
  * Background worker that polls for pending documents and processes them with AI extraction.
@@ -129,7 +130,7 @@ class DocumentProcessingWorker(
      * Concurrency is limited by mode.maxConcurrentRequests.
      */
     private suspend fun processBatch(
-        timeoutMillis: Long = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MS
+        timeout: Duration = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT
     ) {
         // Recover any runs stuck in Processing from a previous crash
         runSuspendCatching {
@@ -162,7 +163,7 @@ class DocumentProcessingWorker(
                     if (!isRunning.get()) return@async
                     semaphore.withPermit {
                         try {
-                            processIngestionRunWithTimeout(ingestion, timeoutMillis)
+                            processIngestionRunWithTimeout(ingestion, timeout)
                         } catch (e: CancellationException) {
                             if (!isRunning.get()) throw e
                             logger.error(
@@ -191,10 +192,10 @@ class DocumentProcessingWorker(
         }
     }
 
-    internal suspend fun processBatchForTest(timeoutMillis: Long) {
+    internal suspend fun processBatchForTest(timeout: Duration) {
         isRunning.set(true)
         try {
-            processBatch(timeoutMillis = timeoutMillis)
+            processBatch(timeout = timeout)
         } finally {
             isRunning.set(false)
         }
@@ -202,19 +203,19 @@ class DocumentProcessingWorker(
 
     internal suspend fun processIngestionRunWithTimeout(
         ingestion: IngestionItemEntity,
-        timeoutMillis: Long = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT_MS
+        timeout: Duration = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT
     ) {
         try {
-            withTimeout(timeoutMillis) {
+            withTimeout(timeout) {
                 processIngestionRun(ingestion)
             }
         } catch (e: TimeoutCancellationException) {
             val timeoutMessage = DocumentProcessingConstants.ingestionTimeoutErrorMessage()
             logger.error(
-                "Ingestion run {} for document {} exceeded timeout {}ms; marking as failed",
+                "Ingestion run {} for document {} exceeded timeout {}; marking as failed",
                 ingestion.runId,
                 ingestion.documentId,
-                timeoutMillis,
+                timeout,
                 e
             )
             markRunFailedSafely(ingestion.runId, timeoutMessage)

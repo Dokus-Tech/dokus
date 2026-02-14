@@ -21,6 +21,8 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.foundation.backend.config.ProcessorConfig
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class DocumentProcessingWorkerTimeoutTest {
 
@@ -59,7 +61,7 @@ class DocumentProcessingWorkerTimeoutTest {
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
         coEvery { processingAgent.process(any()) } throws AssertionError("processingAgent must not be invoked")
         coEvery { tenantRepository.findById(firstRun.tenantId) } coAnswers {
-            delay(5_000)
+            delay(5.seconds)
             null
         }
         coEvery { tenantRepository.findById(secondRun.tenantId) } returns null
@@ -82,8 +84,8 @@ class DocumentProcessingWorkerTimeoutTest {
             userRepository = userRepository
         )
 
-        withTimeout(2_000) {
-            worker.processBatchForTest(timeoutMillis = 75)
+        withTimeout(2.seconds) {
+            worker.processBatchForTest(timeout = 75.milliseconds)
         }
 
         coVerify(exactly = 2) { ingestionRepository.markAsProcessing(any(), "koog-graph") }
