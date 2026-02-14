@@ -28,6 +28,14 @@ data class DocumentWithDraftAndIngestion(
     val latestIngestion: IngestionRunSummary?
 )
 
+/**
+ * Paginated result of document listing queries.
+ */
+data class DocumentListPage<T>(
+    val items: List<T>,
+    val totalCount: Long
+)
+
 data class DocumentCreatePayload(
     val filename: String,
     val contentType: String,
@@ -132,13 +140,12 @@ class DocumentRepository {
      * List all documents for a tenant with pagination.
      * CRITICAL: Must filter by tenantId.
      *
-     * @return Pair of (documents, totalCount)
      */
     suspend fun listByTenant(
         tenantId: TenantId,
         page: Int = 0,
         limit: Int = 20
-    ): Pair<List<DocumentDto>, Long> = newSuspendedTransaction {
+    ): DocumentListPage<DocumentDto> = newSuspendedTransaction {
         val tenantIdUuid = UUID.fromString(tenantId.toString())
 
         val baseQuery = DocumentsTable.selectAll()
@@ -152,7 +159,7 @@ class DocumentRepository {
             .offset((page * limit).toLong())
             .map { it.toDocumentDto() }
 
-        documents to total
+        DocumentListPage(documents, total)
     }
 
     /**
@@ -168,7 +175,6 @@ class DocumentRepository {
      *
      * CRITICAL: Must filter by tenantId.
      *
-     * @return Pair of (documents with drafts/ingestion, totalCount)
      */
     suspend fun listWithDraftsAndIngestion(
         tenantId: TenantId,
@@ -179,7 +185,7 @@ class DocumentRepository {
         search: String? = null,
         page: Int = 0,
         limit: Int = 20
-    ): Pair<List<DocumentWithDraftAndIngestion>, Long> {
+    ): DocumentListPage<DocumentWithDraftAndIngestion> {
         DocumentIngestionRunRepository().recoverStaleProcessingRunsForTenant(tenantId)
 
         return DocumentListingQuery.listWithDraftsAndIngestion(
