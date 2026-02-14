@@ -5,19 +5,19 @@ import androidx.compose.runtime.getValue
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.features.auth.mvi.NewPasswordAction
-import tech.dokus.features.auth.mvi.NewPasswordContainer
-import tech.dokus.features.auth.presentation.auth.screen.NewPasswordScreen
+import tech.dokus.features.auth.mvi.VerifyEmailAction
+import tech.dokus.features.auth.mvi.VerifyEmailContainer
+import tech.dokus.features.auth.presentation.auth.screen.VerifyEmailScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
 @Composable
-internal fun NewPasswordRoute(
+internal fun VerifyEmailRoute(
     token: String,
-    container: NewPasswordContainer = container(
-        key = "new-password-$token"
+    container: VerifyEmailContainer = container(
+        key = "verify-email-$token"
     ) {
         parametersOf(token)
     }
@@ -26,14 +26,18 @@ internal fun NewPasswordRoute(
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
-            NewPasswordAction.NavigateBack -> navController.navigateTo(AuthDestination.Login) {
+            VerifyEmailAction.NavigateToLogin -> navController.navigateTo(AuthDestination.Login) {
                 popUpTo(0) { inclusive = true }
             }
         }
     }
 
-    NewPasswordScreen(
+    VerifyEmailScreen(
         state = state,
-        onIntent = { container.store.intent(it) }
+        onContinue = {
+            navController.navigateTo(AuthDestination.Login) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
     )
 }

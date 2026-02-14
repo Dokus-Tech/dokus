@@ -76,3 +76,12 @@ data class UpdateProfileRequest(
 data class SelectTenantRequest(
     val tenantId: TenantId
 )
+
+/**
+ * Request to change the current account password.
+ */
+@Serializable
+data class ChangePasswordRequest(
+    val currentPassword: Password,
+    val newPassword: Password
+)

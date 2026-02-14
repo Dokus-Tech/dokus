@@ -1,6 +1,8 @@
 package tech.dokus.backend.routes.auth
 
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.header
 import io.ktor.server.request.receive
 import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
@@ -8,12 +10,15 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.AuthService
+import tech.dokus.backend.services.auth.SessionContext
+import tech.dokus.domain.DeviceType
 import tech.dokus.domain.Email
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.ResetPasswordRequest
 import tech.dokus.domain.routes.Identity
+import tech.dokus.foundation.backend.utils.extractClientIpAddress
 
 /**
  * Identity routes using Ktor Type-Safe Routing for unauthenticated operations:
@@ -32,7 +37,15 @@ internal fun Route.identityRoutes() {
      */
     post<Identity.Login> {
         val request = call.receive<LoginRequest>()
-        val response = authService.login(request).getOrThrow()
+        val userAgent = call.request.header(HttpHeaders.UserAgent)
+        val response = authService.login(
+            request = request,
+            sessionContext = SessionContext(
+                deviceType = request.deviceType,
+                ipAddress = call.extractClientIpAddress(),
+                userAgent = userAgent
+            )
+        ).getOrThrow()
         call.respond(HttpStatusCode.OK, response)
     }
 
@@ -42,7 +55,15 @@ internal fun Route.identityRoutes() {
      */
     post<Identity.Register> {
         val request = call.receive<RegisterRequest>()
-        val response = authService.register(request).getOrThrow()
+        val userAgent = call.request.header(HttpHeaders.UserAgent)
+        val response = authService.register(
+            request = request,
+            sessionContext = SessionContext(
+                deviceType = DeviceType.fromAgent(userAgent),
+                ipAddress = call.extractClientIpAddress(),
+                userAgent = userAgent
+            )
+        ).getOrThrow()
         call.respond(HttpStatusCode.Created, response)
     }
 
@@ -52,7 +73,15 @@ internal fun Route.identityRoutes() {
      */
     post<Identity.Refresh> {
         val request = call.receive<RefreshTokenRequest>()
-        val response = authService.refreshToken(request).getOrThrow()
+        val userAgent = call.request.header(HttpHeaders.UserAgent)
+        val response = authService.refreshToken(
+            request = request,
+            sessionContext = SessionContext(
+                deviceType = request.deviceType,
+                ipAddress = call.extractClientIpAddress(),
+                userAgent = userAgent
+            )
+        ).getOrThrow()
         call.respond(HttpStatusCode.OK, response)
     }
 

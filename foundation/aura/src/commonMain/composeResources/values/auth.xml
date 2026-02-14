@@ -4,6 +4,9 @@
     <string name="auth_email_label">Email</string>
     <string name="auth_password_label">Password</string>
     <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_forgot_password_title">Reset Password</string>
+    <string name="auth_forgot_password_description">Enter your email and we will send a reset link.</string>
+    <string name="auth_send_reset_link">Send reset link</string>
     <string name="auth_sign_in_button">Sign In</string>
     <string name="auth_no_account_prefix">Don't have an account? </string>
     <string name="auth_sign_up_link">Sign up</string>
@@ -20,6 +23,15 @@
     <string name="auth_register_profile_title">Your profile</string>
     <string name="auth_register_credentials_title">Credentials</string>
     <string name="auth_register_success_title">Registration complete</string>
+    <string name="auth_reset_password_title">Set New Password</string>
+    <string name="auth_reset_password_description">Choose a strong password for your account.</string>
+    <string name="auth_reset_password_button">Update password</string>
+    <string name="auth_password_reset_success">Password updated successfully</string>
+    <string name="auth_verifying_email">Verifying email...</string>
+    <string name="auth_verify_email_title">Verify Email</string>
+    <string name="auth_verify_email_success">Your email has been verified.</string>
+    <string name="auth_verify_email_error">Verification link is invalid or expired.</string>
+    <string name="auth_verify_email_continue">Continue to login</string>
 
     <!-- Workspace Wizard -->
     <string name="auth_step_of">Step %1$d of %2$d</string>

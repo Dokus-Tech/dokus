@@ -9,7 +9,9 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -17,7 +19,10 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.auth.RefreshTokensTable
 import tech.dokus.database.utils.toKotlinxInstant
+import tech.dokus.domain.DeviceType
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -27,51 +32,49 @@ import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 
 /**
- * Information about a refresh token
- *
- * @property tokenId The database ID of the token (for display purposes)
- * @property createdAt When this token was created
- * @property expiresAt When this token will expire
- * @property isRevoked Whether this token has been revoked
+ * Information about a refresh token/session entry.
  */
 data class RefreshTokenInfo(
     val tokenId: String,
+    val sessionId: SessionId,
     val createdAt: Instant,
     val expiresAt: Instant,
-    val isRevoked: Boolean
+    val isRevoked: Boolean,
+    val accessTokenJti: String? = null,
+    val accessTokenExpiresAt: Instant? = null,
+    val deviceType: DeviceType = DeviceType.Desktop,
+    val ipAddress: String? = null,
+    val userAgent: String? = null,
+)
+
+/**
+ * Revocation metadata for a session.
+ */
+data class RevokedSessionInfo(
+    val sessionId: SessionId,
+    val accessTokenJti: String?,
+    val accessTokenExpiresAt: Instant?
 )
 
 /**
  * Repository for managing JWT refresh tokens with persistence, rotation, and revocation.
- *
- * Security features:
- * - Tokens are hashed before logging for security
- * - Expired tokens are automatically rejected
- * - Revoked tokens cannot be reused
- * - Token rotation prevents token replay attacks
- * - All database operations are transactional
- *
- * Implementation details:
- * - Uses Exposed ORM for database operations
- * - Converts between kotlin.uuid.Uuid and java.util.UUID
- * - Uses kotlinx.datetime for timestamp handling
- * - Provides comprehensive error handling and logging
  */
 class RefreshTokenRepository {
     private val logger = loggerFor()
 
     /**
-     * Save a refresh token to the database
-     *
-     * @param userId The user this token belongs to
-     * @param token The JWT refresh token string
-     * @param expiresAt When this token expires
-     * @return Result indicating success or failure
+     * Save a refresh token to the database.
      */
+    @Suppress("LongParameterList")
     suspend fun saveRefreshToken(
         userId: UserId,
         token: String,
-        expiresAt: Instant
+        expiresAt: Instant,
+        accessTokenJti: String? = null,
+        accessTokenExpiresAt: Instant? = null,
+        deviceType: DeviceType = DeviceType.Desktop,
+        ipAddress: String? = null,
+        userAgent: String? = null
     ): Result<Unit> = runCatching {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
@@ -82,6 +85,11 @@ class RefreshTokenRepository {
                 it[RefreshTokensTable.tokenHash] = tokenHash
                 it[RefreshTokensTable.expiresAt] = expiresAt.toLocalDateTime(TimeZone.UTC)
                 it[RefreshTokensTable.isRevoked] = false
+                it[RefreshTokensTable.accessTokenJti] = accessTokenJti
+                it[RefreshTokensTable.accessTokenExpiresAt] = accessTokenExpiresAt?.toLocalDateTime(TimeZone.UTC)
+                it[RefreshTokensTable.deviceType] = deviceType
+                it[RefreshTokensTable.ipAddress] = ipAddress
+                it[RefreshTokensTable.userAgent] = userAgent
             }
 
             logger.debug(
@@ -96,21 +104,12 @@ class RefreshTokenRepository {
     }
 
     /**
-     * Validate a refresh token and rotate it to a new one
-     *
-     * This implements token rotation security:
-     * 1. Validates the old token (not expired, not revoked)
-     * 2. Marks the old token as revoked
-     * 3. Returns userId for generating new tokens
-     *
-     * @param oldToken The current refresh token to validate
-     * @return Result containing userId if successful, or error if invalid
+     * Validate a refresh token and rotate it to a new one.
      */
     suspend fun validateAndRotate(oldToken: String): Result<UserId> = runCatching {
         dbQuery {
             val oldTokenHash = tokenHash(oldToken)
 
-            // Find the token
             val tokenRow = RefreshTokensTable
                 .selectAll()
                 .where { RefreshTokensTable.tokenHash eq oldTokenHash }
@@ -122,7 +121,6 @@ class RefreshTokenRepository {
             val expiresAt = tokenRow[RefreshTokensTable.expiresAt]
             val isRevoked = tokenRow[RefreshTokensTable.isRevoked]
 
-            // Security checks
             if (isRevoked) {
                 logger.warn(
                     "Attempt to use revoked token (ID: $tokenId, hash: ${oldTokenHash.take(8)})"
@@ -135,16 +133,11 @@ class RefreshTokenRepository {
 
             if (now > expiresAtInstant) {
                 logger.warn(
-                    "Attempt to use expired token (ID: $tokenId, expired: $expiresAt, hash: ${
-                        oldTokenHash.take(
-                            8
-                        )
-                    })"
+                    "Attempt to use expired token (ID: $tokenId, expired: $expiresAt, hash: ${oldTokenHash.take(8)})"
                 )
                 throw IllegalArgumentException("Refresh token has expired")
             }
 
-            // Mark old token as revoked (token rotation)
             val updated = RefreshTokensTable.update({ RefreshTokensTable.id eq tokenId }) {
                 it[RefreshTokensTable.isRevoked] = true
             }
@@ -157,31 +150,23 @@ class RefreshTokenRepository {
                 "Validated and rotated refresh token for user: $userId, token ID: $tokenId"
             )
 
-            // Return userId for generating new tokens
             @OptIn(ExperimentalUuidApi::class)
             UserId(Uuid.parse(userId.toString()).toString())
         }
     }.onFailure { error ->
         when (error) {
             is SecurityException, is IllegalArgumentException -> {
-                // Expected validation errors, already logged with details
                 logger.debug("Token validation failed: ${error.message}")
             }
 
             else -> {
-                // Unexpected errors
                 logger.error("Unexpected error during token validation and rotation", error)
             }
         }
     }
 
     /**
-     * Revoke a specific refresh token
-     *
-     * Used during logout to invalidate the current session.
-     *
-     * @param token The refresh token to revoke
-     * @return Result indicating success or failure
+     * Revoke a specific refresh token.
      */
     suspend fun revokeToken(token: String): Result<Unit> = runCatching {
         dbQuery {
@@ -206,12 +191,7 @@ class RefreshTokenRepository {
     }
 
     /**
-     * Revoke all refresh tokens for a user
-     *
-     * Used for security purposes (e.g., password reset, account compromise).
-     *
-     * @param userId The user whose tokens should be revoked
-     * @return Result indicating success or failure
+     * Revoke all refresh tokens for a user.
      */
     suspend fun revokeAllUserTokens(userId: UserId): Result<Unit> = runCatching {
         dbQuery {
@@ -233,17 +213,119 @@ class RefreshTokenRepository {
     }
 
     /**
-     * Clean up expired and revoked tokens
-     *
-     * Should be called periodically to maintain database hygiene.
-     *
-     * @return Result containing count of deleted tokens
+     * Revoke a specific session by its session id for a given user.
+     */
+    suspend fun revokeSessionById(
+        userId: UserId,
+        sessionId: SessionId
+    ): Result<RevokedSessionInfo?> = runCatching {
+        dbQuery {
+            val userUuid = userId.uuid.toJavaUuid()
+            val now = now().toLocalDateTime(TimeZone.UTC)
+            val sessionIdString = sessionId.value.toString()
+
+            val tokenRow = RefreshTokensTable
+                .selectAll()
+                .where {
+                    (RefreshTokensTable.userId eq userUuid) and
+                        (RefreshTokensTable.isRevoked eq false) and
+                        (RefreshTokensTable.expiresAt greater now) and
+                        (
+                            (RefreshTokensTable.accessTokenJti eq sessionIdString) or
+                                (RefreshTokensTable.id eq sessionId.uuid.toJavaUuid())
+                            )
+                }
+                .orderBy(RefreshTokensTable.createdAt, SortOrder.DESC)
+                .limit(1)
+                .singleOrNull()
+                ?: return@dbQuery null
+
+            val tokenId = tokenRow[RefreshTokensTable.id].value
+            val updated = RefreshTokensTable.update({ RefreshTokensTable.id eq tokenId }) {
+                it[RefreshTokensTable.isRevoked] = true
+            }
+
+            if (updated == 0) {
+                throw IllegalStateException("Failed to revoke session: $sessionId")
+            }
+
+            val resolvedSessionId = resolveSessionId(
+                accessTokenJti = tokenRow[RefreshTokensTable.accessTokenJti],
+                tokenId = tokenId.toString()
+            )
+
+            RevokedSessionInfo(
+                sessionId = resolvedSessionId,
+                accessTokenJti = tokenRow[RefreshTokensTable.accessTokenJti],
+                accessTokenExpiresAt = tokenRow[RefreshTokensTable.accessTokenExpiresAt]?.toKotlinxInstant()
+            )
+        }
+    }.onFailure { error ->
+        logger.error(
+            "Failed to revoke session $sessionId for user ${userId.value}",
+            error
+        )
+    }
+
+    /**
+     * Revoke all sessions except current session for a user.
+     * Rows without access token JTI are intentionally ignored to avoid revoking the
+     * current legacy session when identity cannot be determined.
+     */
+    suspend fun revokeOtherSessions(
+        userId: UserId,
+        currentSessionJti: String
+    ): Result<List<RevokedSessionInfo>> = runCatching {
+        dbQuery {
+            val userUuid = userId.uuid.toJavaUuid()
+            val now = now().toLocalDateTime(TimeZone.UTC)
+
+            val toRevoke = RefreshTokensTable
+                .selectAll()
+                .where {
+                    (RefreshTokensTable.userId eq userUuid) and
+                        (RefreshTokensTable.isRevoked eq false) and
+                        (RefreshTokensTable.expiresAt greater now) and
+                        (RefreshTokensTable.accessTokenJti.isNotNull()) and
+                        (RefreshTokensTable.accessTokenJti neq currentSessionJti)
+                }
+                .toList()
+
+            val revoked = mutableListOf<RevokedSessionInfo>()
+            toRevoke.forEach { row ->
+                val tokenId = row[RefreshTokensTable.id].value
+                val updated = RefreshTokensTable.update({ RefreshTokensTable.id eq tokenId }) {
+                    it[RefreshTokensTable.isRevoked] = true
+                }
+
+                if (updated > 0) {
+                    revoked += RevokedSessionInfo(
+                        sessionId = resolveSessionId(
+                            accessTokenJti = row[RefreshTokensTable.accessTokenJti],
+                            tokenId = tokenId.toString()
+                        ),
+                        accessTokenJti = row[RefreshTokensTable.accessTokenJti],
+                        accessTokenExpiresAt = row[RefreshTokensTable.accessTokenExpiresAt]?.toKotlinxInstant()
+                    )
+                }
+            }
+
+            revoked
+        }
+    }.onFailure { error ->
+        logger.error(
+            "Failed to revoke other sessions for user ${userId.value}",
+            error
+        )
+    }
+
+    /**
+     * Clean up expired and revoked tokens.
      */
     suspend fun cleanupExpiredTokens(): Result<Int> = runCatching {
         dbQuery {
             val now = now().toLocalDateTime(TimeZone.UTC)
 
-            // Delete tokens that are either expired OR revoked
             val deleted = RefreshTokensTable.deleteWhere {
                 (expiresAt less now) or (isRevoked eq true)
             }
@@ -256,12 +338,7 @@ class RefreshTokenRepository {
     }
 
     /**
-     * Count active sessions (non-revoked, non-expired tokens) for a user.
-     *
-     * Used for enforcing concurrent session limits.
-     *
-     * @param userId The user to count sessions for
-     * @return Number of active sessions
+     * Count active sessions for a user.
      */
     suspend fun countActiveForUser(userId: UserId): Int = try {
         dbQuery {
@@ -285,19 +362,12 @@ class RefreshTokenRepository {
 
     /**
      * Revoke the oldest active session for a user.
-     *
-     * Used when the user reaches their concurrent session limit
-     * to make room for a new session.
-     *
-     * @param userId The user whose oldest session should be revoked
-     * @return Result indicating success or failure
      */
     suspend fun revokeOldestForUser(userId: UserId): Result<Unit> = runCatching {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
             val now = now().toLocalDateTime(TimeZone.UTC)
 
-            // Find the oldest active token
             val oldestToken = RefreshTokensTable
                 .selectAll()
                 .where {
@@ -324,12 +394,37 @@ class RefreshTokenRepository {
     }
 
     /**
-     * Get all active tokens for a user
-     *
-     * Useful for displaying active sessions to the user.
-     *
-     * @param userId The user to query
-     * @return List of active token information
+     * List active sessions for user with current-session marker.
+     */
+    suspend fun listActiveSessions(
+        userId: UserId,
+        currentSessionJti: String?
+    ): List<SessionDto> = try {
+        val active = getUserActiveTokens(userId)
+        active.map { token ->
+            SessionDto(
+                id = token.sessionId,
+                ipAddress = token.ipAddress,
+                userAgent = token.userAgent,
+                deviceId = null,
+                deviceType = token.deviceType,
+                location = null,
+                createdAt = token.createdAt.epochSeconds,
+                expiresAt = token.expiresAt.epochSeconds,
+                lastActivityAt = token.createdAt.epochSeconds,
+                revokedAt = null,
+                revokedReason = null,
+                revokedBy = null,
+                isCurrent = token.accessTokenJti != null && token.accessTokenJti == currentSessionJti,
+            )
+        }
+    } catch (error: Exception) {
+        logger.error("Failed to list active sessions for user: ${userId.value}", error)
+        emptyList()
+    }
+
+    /**
+     * Get all active tokens for a user.
      */
     suspend fun getUserActiveTokens(userId: UserId): List<RefreshTokenInfo> = try {
         dbQuery {
@@ -345,11 +440,19 @@ class RefreshTokenRepository {
                 }
                 .orderBy(RefreshTokensTable.createdAt, SortOrder.DESC)
                 .map { row ->
+                    val tokenId = row[RefreshTokensTable.id].value.toString()
+                    val accessTokenJti = row[RefreshTokensTable.accessTokenJti]
                     RefreshTokenInfo(
-                        tokenId = row[RefreshTokensTable.id].value.toString(),
+                        tokenId = tokenId,
+                        sessionId = resolveSessionId(accessTokenJti, tokenId),
                         createdAt = row[RefreshTokensTable.createdAt].toKotlinxInstant(),
                         expiresAt = row[RefreshTokensTable.expiresAt].toKotlinxInstant(),
-                        isRevoked = row[RefreshTokensTable.isRevoked]
+                        isRevoked = row[RefreshTokensTable.isRevoked],
+                        accessTokenJti = accessTokenJti,
+                        accessTokenExpiresAt = row[RefreshTokensTable.accessTokenExpiresAt]?.toKotlinxInstant(),
+                        deviceType = row[RefreshTokensTable.deviceType],
+                        ipAddress = row[RefreshTokensTable.ipAddress],
+                        userAgent = row[RefreshTokensTable.userAgent],
                     )
                 }
         }
@@ -358,15 +461,12 @@ class RefreshTokenRepository {
         emptyList()
     }
 
-    /**
-     * Generate a secure hash of a token for logging purposes
-     *
-     * Never log the actual token value - this creates a security risk.
-     * Instead, log a hash that can be used for debugging/correlation.
-     *
-     * @param token The token to hash
-     * @return First 8 characters of SHA-256 hash
-     */
+    private fun resolveSessionId(accessTokenJti: String?, tokenId: String): SessionId {
+        val fromJti = accessTokenJti
+            ?.let { runCatching { SessionId(it) }.getOrNull() }
+        return fromJti ?: SessionId(tokenId)
+    }
+
     private fun tokenHash(token: String): String {
         return try {
             val digest = MessageDigest.getInstance("SHA-256")

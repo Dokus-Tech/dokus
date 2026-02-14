@@ -28,6 +28,9 @@ import tech.dokus.aura.resources.profile_deactivate_account
 import tech.dokus.aura.resources.profile_deactivate_warning
 import tech.dokus.aura.resources.profile_edit
 import tech.dokus.aura.resources.profile_email
+import tech.dokus.aura.resources.profile_email_not_verified
+import tech.dokus.aura.resources.profile_email_verification
+import tech.dokus.aura.resources.profile_email_verified
 import tech.dokus.aura.resources.profile_first_name
 import tech.dokus.aura.resources.profile_last_name
 import tech.dokus.aura.resources.profile_load_failed
@@ -35,7 +38,10 @@ import tech.dokus.aura.resources.profile_logging_out
 import tech.dokus.aura.resources.profile_logout
 import tech.dokus.aura.resources.profile_logout_description
 import tech.dokus.aura.resources.profile_personal_info
+import tech.dokus.aura.resources.profile_change_password
+import tech.dokus.aura.resources.profile_resend_verification
 import tech.dokus.aura.resources.profile_save
+import tech.dokus.aura.resources.profile_sessions
 import tech.dokus.domain.Name
 import tech.dokus.features.auth.mvi.ProfileSettingsState
 import tech.dokus.foundation.aura.components.DokusCard
@@ -47,7 +53,10 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldName
 @Composable
 internal fun ProfileViewingSection(
     state: ProfileSettingsState.Viewing,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onResendVerification: () -> Unit,
+    onChangePasswordClick: () -> Unit,
+    onMySessionsClick: () -> Unit
 ) {
     DokusCard(
         modifier = Modifier.fillMaxWidth(),
@@ -89,6 +98,44 @@ internal fun ProfileViewingSection(
                 label = stringResource(Res.string.profile_last_name),
                 value = state.user.lastName?.value
                     ?: stringResource(Res.string.common_empty_value)
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            ProfileField(
+                label = stringResource(Res.string.profile_email_verification),
+                value = if (state.user.emailVerified) {
+                    stringResource(Res.string.profile_email_verified)
+                } else {
+                    stringResource(Res.string.profile_email_not_verified)
+                }
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            if (!state.user.emailVerified) {
+                POutlinedButton(
+                    text = stringResource(Res.string.profile_resend_verification),
+                    enabled = !state.isResendingVerification,
+                    onClick = onResendVerification,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+            }
+
+            POutlinedButton(
+                text = stringResource(Res.string.profile_change_password),
+                onClick = onChangePasswordClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            POutlinedButton(
+                text = stringResource(Res.string.profile_sessions),
+                onClick = onMySessionsClick,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

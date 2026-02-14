@@ -49,7 +49,15 @@ value class DeepLink(val value: String) {
 enum class KnownDeepLinks(val path: DeepLink, val pattern: DeepLink) {
     QrDecision(DeepLink("auth/qr/decision"), DeepLink("auth/qr/decision?s={sessionId}&t={token}")),
     ServerConnect(DeepLink("connect"), DeepLink("connect?host={host}&port={port}&protocol={protocol}")),
-    ShareImport(DeepLink("share/import"), DeepLink("share/import?batch={batchId}"))
+    ShareImport(DeepLink("share/import"), DeepLink("share/import?batch={batchId}")),
+    AuthResetPassword(
+        DeepLink("auth/reset-password"),
+        DeepLink("auth/reset-password?token={token}")
+    ),
+    AuthVerifyEmail(
+        DeepLink("auth/verify-email"),
+        DeepLink("auth/verify-email?token={token}")
+    )
 }
 
 object DeepLinks {
@@ -64,7 +72,7 @@ object DeepLinks {
     }
 
     fun extractQrLogin(deepLink: DeepLink): Pair<SessionId, String>? {
-        val path = deepLink.path
+        val path = normalizeRoutePath(deepLink.path)
         if (!path.startsWith(KnownDeepLinks.QrDecision.path.path)) return null
         val query = path.substringAfter("?")
         val params = query.split("&")
@@ -94,7 +102,7 @@ object DeepLinks {
      * Returns a Triple of (host, port, protocol) or null if invalid.
      */
     fun extractServerConnect(deepLink: DeepLink): Triple<String, Int, String>? {
-        val path = deepLink.path
+        val path = normalizeRoutePath(deepLink.path)
         if (!path.startsWith(KnownDeepLinks.ServerConnect.path.path)) return null
         val query = path.substringAfter("?", "")
         if (query.isEmpty()) return null
@@ -112,7 +120,7 @@ object DeepLinks {
      * Example: dokus://share/import?batch=abc123
      */
     fun extractShareImportBatchId(deepLink: DeepLink): String? {
-        val path = deepLink.path
+        val path = normalizeRoutePath(deepLink.path)
         if (!path.startsWith(KnownDeepLinks.ShareImport.path.path)) return null
         val query = path.substringAfter("?", "")
         if (query.isEmpty()) return null
@@ -120,6 +128,51 @@ object DeepLinks {
         return params
             .firstOrNull { it.startsWith("batch=") }
             ?.substringAfter("batch=")
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    fun extractResetPasswordToken(deepLink: DeepLink): String? {
+        val path = normalizeRoutePath(deepLink.path)
+        if (!path.startsWith(KnownDeepLinks.AuthResetPassword.path.path)) return null
+        return extractQueryParam(path, "token")
+    }
+
+    fun extractVerifyEmailToken(deepLink: DeepLink): String? {
+        val path = normalizeRoutePath(deepLink.path)
+        if (!path.startsWith(KnownDeepLinks.AuthVerifyEmail.path.path)) return null
+        return extractQueryParam(path, "token")
+    }
+
+    /**
+     * Normalizes deep link paths so both custom scheme links and absolute https links
+     * can be matched against KnownDeepLinks.
+     *
+     * Examples:
+     * - auth/reset-password?token=abc -> auth/reset-password?token=abc
+     * - dokus.ai/auth/reset-password?token=abc -> auth/reset-password?token=abc
+     * - localhost:8080/auth/verify-email?token=abc -> auth/verify-email?token=abc
+     */
+    private fun normalizeRoutePath(path: String): String {
+        val trimmed = path.trimStart('/')
+        val firstSlash = trimmed.indexOf('/')
+        if (firstSlash <= 0) return trimmed
+
+        val firstSegment = trimmed.substring(0, firstSlash)
+        return if (firstSegment.contains('.') || firstSegment.contains(':')) {
+            trimmed.substring(firstSlash + 1)
+        } else {
+            trimmed
+        }
+    }
+
+    private fun extractQueryParam(path: String, key: String): String? {
+        val query = path.substringAfter("?", "")
+        if (query.isEmpty()) return null
+        val prefix = "$key="
+        return query
+            .split("&")
+            .firstOrNull { it.startsWith(prefix) }
+            ?.substringAfter(prefix)
             ?.takeIf { it.isNotBlank() }
     }
 }

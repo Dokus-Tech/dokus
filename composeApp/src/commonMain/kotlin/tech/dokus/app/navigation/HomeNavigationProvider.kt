@@ -17,6 +17,8 @@ import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.features.auth.presentation.auth.route.ChangePasswordRoute
+import tech.dokus.features.auth.presentation.auth.route.MySessionsRoute
 import tech.dokus.features.auth.presentation.auth.route.ProfileSettingsRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.AuthDestination
@@ -46,6 +48,12 @@ internal object HomeNavigationProvider : NavigationProvider {
         }
         composable<AuthDestination.ProfileSettings> {
             ProfileSettingsRoute()
+        }
+        composable<AuthDestination.ChangePassword> {
+            ChangePasswordRoute()
+        }
+        composable<AuthDestination.MySessions> {
+            MySessionsRoute()
         }
         composable<HomeDestination.More> {
             MoreScreen()

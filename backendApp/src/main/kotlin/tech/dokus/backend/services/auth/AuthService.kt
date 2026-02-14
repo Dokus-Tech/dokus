@@ -3,12 +3,17 @@
 package tech.dokus.backend.services.auth
 
 import com.auth0.jwt.JWT
+import kotlinx.datetime.Instant
 import tech.dokus.database.repository.auth.RefreshTokenRepository
+import tech.dokus.database.repository.auth.RevokedSessionInfo
 import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.domain.DeviceType
+import tech.dokus.domain.Password
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TenantMembership
@@ -19,14 +24,22 @@ import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
 import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
+import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.domain.model.auth.TenantScope
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.security.JwtGenerator
 import tech.dokus.foundation.backend.security.TokenBlacklistService
 import tech.dokus.foundation.backend.utils.loggerFor
+import java.time.Instant as JavaInstant
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
+
+data class SessionContext(
+    val deviceType: DeviceType = DeviceType.Desktop,
+    val ipAddress: String? = null,
+    val userAgent: String? = null
+)
 
 class AuthService(
     private val userRepository: UserRepository,
@@ -46,7 +59,10 @@ class AuthService(
         const val DEFAULT_MAX_CONCURRENT_SESSIONS = 5
     }
 
-    suspend fun login(request: LoginRequest): Result<LoginResponse> = try {
+    suspend fun login(
+        request: LoginRequest,
+        sessionContext: SessionContext = SessionContext(deviceType = request.deviceType)
+    ): Result<LoginResponse> = try {
         logger.debug("Login attempt for email: ${request.email.value}")
 
         rateLimitService.checkLoginAttempts(request.email.value).getOrElse { error ->
@@ -98,11 +114,18 @@ class AuthService(
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
+            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days),
+            accessTokenJti = claims.jti,
+            accessTokenExpiresAt = Instant.fromEpochSeconds(claims.exp),
+            deviceType = sessionContext.deviceType,
+            ipAddress = sessionContext.ipAddress,
+            userAgent = sessionContext.userAgent
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
         }
+
+        trackAccessToken(userId, claims)
 
         rateLimitService.resetLoginAttempts(request.email.value)
 
@@ -128,7 +151,10 @@ class AuthService(
         Result.failure(DokusException.InternalError(e.message ?: "Login failed"))
     }
 
-    suspend fun register(request: RegisterRequest): Result<LoginResponse> = try {
+    suspend fun register(
+        request: RegisterRequest,
+        sessionContext: SessionContext = SessionContext()
+    ): Result<LoginResponse> = try {
         logger.debug("Registration attempt for email: ${request.email.value}")
 
         // Register user without any tenant
@@ -154,14 +180,25 @@ class AuthService(
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
+            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days),
+            accessTokenJti = claims.jti,
+            accessTokenExpiresAt = Instant.fromEpochSeconds(claims.exp),
+            deviceType = sessionContext.deviceType,
+            ipAddress = sessionContext.ipAddress,
+            userAgent = sessionContext.userAgent
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: $userId", error)
             throw DokusException.InternalError("Failed to save refresh token")
         }
 
+        trackAccessToken(userId, claims)
+
         // Registration auto-logs in the user, so treat it as first successful sign-in.
         userRepository.recordSuccessfulLogin(userId, now())
+        emailVerificationService.sendVerificationEmail(userId, user.email.value)
+            .onFailure { error ->
+                logger.warn("Failed to send verification email after registration for user {}", userId, error)
+            }
 
         logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value})")
         Result.success(response)
@@ -180,7 +217,10 @@ class AuthService(
         Result.failure(DokusException.InternalError(e.message ?: "Registration failed"))
     }
 
-    suspend fun refreshToken(request: RefreshTokenRequest): Result<LoginResponse> = try {
+    suspend fun refreshToken(
+        request: RefreshTokenRequest,
+        sessionContext: SessionContext = SessionContext(deviceType = request.deviceType)
+    ): Result<LoginResponse> = try {
         logger.debug("Token refresh attempt")
 
         val userId = refreshTokenRepository.validateAndRotate(request.refreshToken)
@@ -226,11 +266,18 @@ class AuthService(
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
+            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days),
+            accessTokenJti = claims.jti,
+            accessTokenExpiresAt = Instant.fromEpochSeconds(claims.exp),
+            deviceType = sessionContext.deviceType,
+            ipAddress = sessionContext.ipAddress,
+            userAgent = sessionContext.userAgent
         ).onFailure { error ->
             logger.error("Failed to save rotated refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
         }
+
+        trackAccessToken(userId, claims)
 
         logger.info("Successfully refreshed tokens for user: ${userId.value}")
         Result.success(response)
@@ -244,7 +291,8 @@ class AuthService(
 
     suspend fun selectOrganization(
         userId: UserId,
-        tenantId: TenantId
+        tenantId: TenantId,
+        sessionContext: SessionContext = SessionContext()
     ): Result<LoginResponse> = try {
         logger.debug("Selecting tenant $tenantId for user $userId")
 
@@ -281,7 +329,12 @@ class AuthService(
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
+            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days),
+            accessTokenJti = claims.jti,
+            accessTokenExpiresAt = Instant.fromEpochSeconds(claims.exp),
+            deviceType = sessionContext.deviceType,
+            ipAddress = sessionContext.ipAddress,
+            userAgent = sessionContext.userAgent
         ).onFailure { error ->
             logger.error(
                 "Failed to save refresh token after tenant selection for user: ${userId.value}",
@@ -289,6 +342,8 @@ class AuthService(
             )
             throw DokusException.InternalError("Failed to save refresh token")
         }
+
+        trackAccessToken(userId, claims)
 
         val shouldScheduleWelcome = userRepository.hasFirstSignIn(userId) &&
             !userRepository.hasWelcomeEmailSent(userId)
@@ -362,14 +417,52 @@ class AuthService(
         }
     }
 
+    private suspend fun trackAccessToken(userId: UserId, claims: JwtClaims) {
+        tokenBlacklistService?.let { blacklist ->
+            runCatching {
+                blacklist.trackUserToken(
+                    userId = userId,
+                    jti = claims.jti,
+                    expiresAt = JavaInstant.ofEpochSecond(claims.exp)
+                )
+            }.onFailure { error ->
+                logger.warn("Failed to track access token for user {}", userId.value, error)
+            }
+        }
+    }
+
+    private suspend fun blacklistRevokedSessions(revokedSessions: List<RevokedSessionInfo>) {
+        revokedSessions.forEach { revoked ->
+            blacklistRevokedSession(revoked)
+        }
+    }
+
+    private suspend fun blacklistRevokedSession(revoked: RevokedSessionInfo) {
+        val jti = revoked.accessTokenJti ?: return
+        val expiresAt = revoked.accessTokenExpiresAt ?: return
+        tokenBlacklistService?.let { blacklist ->
+            runCatching {
+                blacklist.blacklistToken(
+                    jti = jti,
+                    expiresAt = JavaInstant.ofEpochSecond(
+                        expiresAt.epochSeconds,
+                        expiresAt.nanosecondsOfSecond.toLong()
+                    )
+                )
+            }.onFailure { error ->
+                logger.warn("Failed to blacklist revoked access token {}", jti, error)
+            }
+        }
+    }
+
     suspend fun verifyEmail(token: String): Result<Unit> {
         logger.debug("Email verification attempt with token")
         return emailVerificationService.verifyEmail(token)
     }
 
     suspend fun resendVerificationEmail(userId: UserId): Result<Unit> {
-        logger.info("Email verification resend requested for user {} - no-op (disabled)", userId.value)
-        return Result.success(Unit)
+        logger.info("Email verification resend requested for user {}", userId.value)
+        return emailVerificationService.resendVerificationEmail(userId)
     }
 
     suspend fun requestPasswordReset(email: String): Result<Unit> {
@@ -380,6 +473,102 @@ class AuthService(
     suspend fun resetPassword(token: String, newPassword: String): Result<Unit> {
         logger.debug("Password reset attempt with token")
         return passwordResetService.resetPassword(token, newPassword)
+    }
+
+    suspend fun changePassword(
+        userId: UserId,
+        currentPassword: Password,
+        newPassword: Password,
+        currentSessionJti: String?
+    ): Result<Unit> = try {
+        logger.info("Change password request for user {}", userId.value)
+
+        val user = userRepository.findById(userId)
+            ?: throw DokusException.NotFound("User account not found")
+
+        if (!user.isActive) {
+            throw DokusException.AccountInactive()
+        }
+
+        val verified = userRepository.verifyCredentials(user.email.value, currentPassword.value)
+        if (verified?.id != userId) {
+            throw DokusException.InvalidCredentials("Current password is incorrect")
+        }
+
+        newPassword.validOrThrows
+        userRepository.updatePassword(userId, newPassword.value)
+
+        val activeSessionJti = currentSessionJti
+            ?.takeIf { it.isNotBlank() }
+            ?: throw DokusException.SessionInvalid("Current session identity is missing")
+
+        val revokedSessions = refreshTokenRepository.revokeOtherSessions(userId, activeSessionJti)
+            .getOrElse { error ->
+                throw DokusException.InternalError(
+                    error.message ?: "Failed to revoke other sessions after password change"
+                )
+            }
+
+        blacklistRevokedSessions(revokedSessions)
+        logger.info("Password changed and {} sessions revoked for user {}", revokedSessions.size, userId.value)
+        Result.success(Unit)
+    } catch (e: DokusException) {
+        logger.warn("Change password failed: {} for user {}", e.errorCode, userId.value)
+        Result.failure(e)
+    } catch (e: Exception) {
+        logger.error("Change password error for user {}", userId.value, e)
+        Result.failure(DokusException.InternalError(e.message ?: "Failed to change password"))
+    }
+
+    suspend fun listSessions(
+        userId: UserId,
+        currentSessionJti: String?
+    ): Result<List<SessionDto>> = try {
+        Result.success(refreshTokenRepository.listActiveSessions(userId, currentSessionJti))
+    } catch (e: Exception) {
+        logger.error("Failed to list sessions for user {}", userId.value, e)
+        Result.failure(DokusException.InternalError("Failed to list sessions"))
+    }
+
+    suspend fun revokeSession(
+        userId: UserId,
+        sessionId: SessionId
+    ): Result<Unit> = try {
+        val revoked = refreshTokenRepository.revokeSessionById(userId, sessionId)
+            .getOrElse { error ->
+                throw DokusException.InternalError(error.message ?: "Failed to revoke session")
+            }
+            ?: throw DokusException.NotFound("Session not found")
+
+        blacklistRevokedSession(revoked)
+        Result.success(Unit)
+    } catch (e: DokusException) {
+        Result.failure(e)
+    } catch (e: Exception) {
+        logger.error("Failed to revoke session {} for user {}", sessionId.value, userId.value, e)
+        Result.failure(DokusException.InternalError("Failed to revoke session"))
+    }
+
+    suspend fun revokeOtherSessions(
+        userId: UserId,
+        currentSessionJti: String?
+    ): Result<Unit> = try {
+        val activeSessionJti = currentSessionJti
+            ?.takeIf { it.isNotBlank() }
+            ?: throw DokusException.SessionInvalid("Current session identity is missing")
+
+        val revokedSessions = refreshTokenRepository.revokeOtherSessions(userId, activeSessionJti)
+            .getOrElse { error ->
+                throw DokusException.InternalError(error.message ?: "Failed to revoke other sessions")
+            }
+
+        blacklistRevokedSessions(revokedSessions)
+        Result.success(Unit)
+    } catch (e: DokusException) {
+        Result.failure(e)
+    } catch (e: Exception) {
+        logger.error("Failed to revoke other sessions for user {}", userId.value, e)
+        Result.failure(DokusException.InternalError("Failed to revoke other sessions"))
     }
 
     suspend fun deactivateAccount(userId: UserId, reason: String): Result<Unit> = try {
