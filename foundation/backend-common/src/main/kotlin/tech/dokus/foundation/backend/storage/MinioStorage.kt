@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import tech.dokus.foundation.backend.config.MinioConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.ByteArrayInputStream
+import java.io.InputStream
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 
@@ -82,14 +83,21 @@ class MinioStorage(
         logger.debug("Downloading object: $key")
 
         try {
-            client.getObject(
-                GetObjectArgs.builder()
-                    .bucket(bucketName)
-                    .`object`(key)
-                    .build()
-            ).use { stream ->
+            openStreamInternal(key).use { stream ->
                 stream.readAllBytes()
             }
+        } catch (e: io.minio.errors.ErrorResponseException) {
+            if (e.errorResponse().code() == "NoSuchKey") {
+                throw NoSuchElementException("Object not found: $key")
+            }
+            throw e
+        }
+    }
+
+    override suspend fun openStream(key: String): InputStream = withContext(Dispatchers.IO) {
+        logger.debug("Opening object stream: $key")
+        try {
+            openStreamInternal(key)
         } catch (e: io.minio.errors.ErrorResponseException) {
             if (e.errorResponse().code() == "NoSuchKey") {
                 throw NoSuchElementException("Object not found: $key")
@@ -154,6 +162,15 @@ class MinioStorage(
                 url
             }
         }
+
+    private fun openStreamInternal(key: String): InputStream {
+        return client.getObject(
+            GetObjectArgs.builder()
+                .bucket(bucketName)
+                .`object`(key)
+                .build()
+        )
+    }
 
     companion object {
         private val logger = loggerFor<MinioStorage>()

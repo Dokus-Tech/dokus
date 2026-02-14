@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -110,10 +111,13 @@ class DocumentIngestionRunRepository {
         documentId: DocumentId,
         tenantId: TenantId
     ): List<IngestionRunSummary> = newSuspendedTransaction {
+        val tenantIdUuid = UUID.fromString(tenantId.toString())
+        recoverStaleProcessingRunsInternal(tenantIdUuid)
+
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
-                        (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (DocumentIngestionRunsTable.tenantId eq tenantIdUuid)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
             .map { it.toIngestionRunSummary() }
@@ -130,6 +134,7 @@ class DocumentIngestionRunRepository {
     ): IngestionRunSummary? = newSuspendedTransaction {
         val docIdUuid = UUID.fromString(documentId.toString())
         val tenantIdUuid = UUID.fromString(tenantId.toString())
+        recoverStaleProcessingRunsInternal(tenantIdUuid)
 
         // First, check for Processing status
         val processing = DocumentIngestionRunsTable.selectAll()
@@ -190,11 +195,14 @@ class DocumentIngestionRunRepository {
         documentId: DocumentId,
         tenantId: TenantId
     ): IngestionRunSummary? = newSuspendedTransaction {
+        val tenantIdUuid = UUID.fromString(tenantId.toString())
+        recoverStaleProcessingRunsInternal(tenantIdUuid)
+
         val pendingStatuses = listOf(IngestionStatus.Queued, IngestionStatus.Processing)
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
-                        (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                        (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
                         (DocumentIngestionRunsTable.status inList pendingStatuses)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
@@ -297,6 +305,14 @@ class DocumentIngestionRunRepository {
         } > 0
     }
 
+    suspend fun recoverStaleProcessingRunsForTenant(tenantId: TenantId): Int = newSuspendedTransaction {
+        recoverStaleProcessingRunsInternal(UUID.fromString(tenantId.toString()))
+    }
+
+    suspend fun recoverStaleProcessingRuns(): Int = newSuspendedTransaction {
+        recoverStaleProcessingRunsInternal(tenantId = null)
+    }
+
     /**
      * Delete all runs for a document.
      * CRITICAL: Must filter by tenantId.
@@ -327,5 +343,26 @@ class DocumentIngestionRunRepository {
             rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
             processingTrace = this[DocumentIngestionRunsTable.processingTrace]
         )
+    }
+
+    private fun recoverStaleProcessingRunsInternal(tenantId: UUID?): Int {
+        val timeout = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT
+        val cutoff = (Clock.System.now() - timeout).toLocalDateTime(TimeZone.UTC)
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val staleCondition = if (tenantId != null) {
+            (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
+                (DocumentIngestionRunsTable.startedAt lessEq cutoff) and
+                (DocumentIngestionRunsTable.tenantId eq tenantId)
+        } else {
+            (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
+                (DocumentIngestionRunsTable.startedAt lessEq cutoff)
+        }
+
+        return DocumentIngestionRunsTable.update({ staleCondition }) {
+            it[status] = IngestionStatus.Failed
+            it[finishedAt] = now
+            it[errorMessage] = DocumentProcessingConstants.ingestionTimeoutErrorMessage()
+        }
     }
 }

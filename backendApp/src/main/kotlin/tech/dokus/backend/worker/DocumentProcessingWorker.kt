@@ -210,7 +210,7 @@ class DocumentProcessingWorker(
                 processIngestionRun(ingestion)
             }
         } catch (e: TimeoutCancellationException) {
-            val timeoutMessage = DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE
+            val timeoutMessage = DocumentProcessingConstants.ingestionTimeoutErrorMessage()
             logger.error(
                 "Ingestion run {} for document {} exceeded timeout {}; marking as failed",
                 ingestion.runId,

@@ -309,7 +309,7 @@ class ProcessorIngestionRepository {
             }) {
                 it[status] = IngestionStatus.Failed
                 it[finishedAt] = now
-                it[errorMessage] = DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE
+                it[errorMessage] = DocumentProcessingConstants.ingestionTimeoutErrorMessage()
             }
         }
 

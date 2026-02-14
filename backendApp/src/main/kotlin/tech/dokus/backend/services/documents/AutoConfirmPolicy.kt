@@ -76,10 +76,7 @@ class AutoConfirmPolicy(
 
     private fun hasRequiredFieldsForAutoConfirm(draftData: DocumentDraftData): Boolean {
         return when (draftData) {
-            is InvoiceDraftData -> {
-                !draftData.invoiceNumber.isNullOrBlank() &&
-                    draftData.totalAmount != null
-            }
+            is InvoiceDraftData -> true
             is ReceiptDraftData -> {
                 draftData.date != null &&
                     !draftData.merchantName.isNullOrBlank() &&

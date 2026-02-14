@@ -185,16 +185,20 @@ class DocumentRepository {
         search: String? = null,
         page: Int = 0,
         limit: Int = 20
-    ): DocumentListPage<DocumentWithDraftAndIngestion> = DocumentListingQuery.listWithDraftsAndIngestion(
-        tenantId = tenantId,
-        filter = filter,
-        documentStatus = documentStatus,
-        documentType = documentType,
-        ingestionStatus = ingestionStatus,
-        search = search,
-        page = page,
-        limit = limit
-    )
+    ): DocumentListPage<DocumentWithDraftAndIngestion> {
+        DocumentIngestionRunRepository().recoverStaleProcessingRunsForTenant(tenantId)
+
+        return DocumentListingQuery.listWithDraftsAndIngestion(
+            tenantId = tenantId,
+            filter = filter,
+            documentStatus = documentStatus,
+            documentType = documentType,
+            ingestionStatus = ingestionStatus,
+            search = search,
+            page = page,
+            limit = limit
+        )
+    }
 
     /**
      * Delete a document.
