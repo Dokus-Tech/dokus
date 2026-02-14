@@ -52,6 +52,7 @@ data class Tenant(
     val status: TenantStatus,
     val language: Language,
     val vatNumber: VatNumber,
+    val role: UserRole? = null,
     val trialEndsAt: LocalDateTime? = null,
     val subscriptionStartedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,

@@ -194,6 +194,47 @@ internal fun Route.documentRecordRoutes() {
         }
 
         /**
+         * GET /api/v1/documents/{id}/content
+         * Download raw document bytes through authenticated API.
+         */
+        get<Documents.Id.Content> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val documentId = DocumentId.parse(route.parent.id)
+
+            logger.info("Downloading document content: $documentId, tenant=$tenantId")
+
+            val document = documentRepository.getById(tenantId, documentId)
+                ?: throw DokusException.NotFound("Document not found")
+
+            val stream = try {
+                minioStorage.openDocumentStream(document.storageKey)
+            } catch (e: NoSuchElementException) {
+                logger.warn(
+                    "Document content object missing for document: $documentId, storageKey=${document.storageKey}"
+                )
+                throw DokusException.NotFound("Document content not found")
+            } catch (e: Exception) {
+                logger.error("Failed to open document stream: $documentId", e)
+                throw DokusException.InternalError("Failed to download document content")
+            }
+
+            val contentType = runCatching { ContentType.parse(document.contentType) }
+                .getOrDefault(ContentType.Application.OctetStream)
+
+            call.response.header(
+                HttpHeaders.ContentDisposition,
+                ContentDisposition.Attachment
+                    .withParameter(ContentDisposition.Parameters.FileName, document.filename)
+                    .toString()
+            )
+            call.respondOutputStream(contentType = contentType, status = HttpStatusCode.OK) {
+                stream.use { input ->
+                    input.copyTo(this)
+                }
+            }
+        }
+
+        /**
          * DELETE /api/v1/documents/{id}
          * Delete document (cascades to drafts, ingestion runs, chunks).
          */
@@ -206,6 +247,13 @@ internal fun Route.documentRecordRoutes() {
             // Check if document exists
             if (!documentRepository.exists(tenantId, documentId)) {
                 throw DokusException.NotFound("Document not found")
+            }
+
+            val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
+            if (!isInboxLifecycle(latestIngestion?.status)) {
+                throw DokusException.BadRequest(
+                    "Only Inbox documents in Queued or Processing state can be deleted"
+                )
             }
 
             // Get storage key for MinIO cleanup
@@ -557,4 +605,8 @@ internal fun Route.documentRecordRoutes() {
             )
         }
     }
+}
+
+internal fun isInboxLifecycle(status: IngestionStatus?): Boolean {
+    return status == IngestionStatus.Queued || status == IngestionStatus.Processing
 }
