@@ -66,17 +66,16 @@ val List<AppModule>.navSectionsCombined: List<NavSection>
             .groupBy { it.sectionId }
             .map { (_, groups) ->
                 val first = groups.minByOrNull { it.sectionOrder } ?: groups.first()
-                val section = NavSection(
+                NavSection(
                     id = first.sectionId,
                     titleRes = first.sectionTitle,
                     iconRes = first.sectionIcon,
+                    order = first.sectionOrder,
                     items = groups.flatMap { it.items }.sortedBy { it.priority },
                     defaultExpanded = groups.any { it.sectionDefaultExpanded },
                 )
-                first.sectionOrder to section
             }
-            .sortedBy { (order, _) -> order }
-            .map { (_, section) -> section }
+            .sortedBy { it.order }
     }
 
 /** Mobile bottom tabs — items with mobileTabOrder + "More" appended */

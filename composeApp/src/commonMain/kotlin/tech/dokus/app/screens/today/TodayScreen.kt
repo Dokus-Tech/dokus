@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.viewmodel.NotificationFilterTab
 import tech.dokus.app.viewmodel.TodayAction
@@ -59,7 +60,7 @@ internal fun TodayScreen(
         }
     }
 
-    val state by container.store.subscribe { action ->
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is TodayAction.NavigateToDocument -> {
                 navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId))
@@ -88,7 +89,7 @@ internal fun TodayScreen(
     val notificationsState: DokusState<List<NotificationDto>> = contentState?.notificationsState ?: DokusState.idle()
     val notificationFilter = contentState?.notificationFilter ?: NotificationFilterTab.All
 
-    val spacing = if (isLargeScreen) Constrains.Spacing.xLarge else 16.dp
+    val spacing = if (isLargeScreen) Constrains.Spacing.xLarge else Constrains.Spacing.large
     val contentModifier = if (isLargeScreen) {
         Modifier.widthIn(max = 480.dp)
     } else {

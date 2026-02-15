@@ -111,12 +111,11 @@ sealed interface TodayAction : MVIAction {
 
 @Immutable
 enum class NotificationFilterTab(
-    val label: String,
     val category: NotificationCategory? = null,
     val unreadOnly: Boolean = false
 ) {
-    All(label = "All"),
-    Unread(label = "Unread", unreadOnly = true),
-    Peppol(label = "PEPPOL", category = NotificationCategory.Peppol),
-    Compliance(label = "Compliance", category = NotificationCategory.Compliance)
+    All,
+    Unread(unreadOnly = true),
+    Peppol(category = NotificationCategory.Peppol),
+    Compliance(category = NotificationCategory.Compliance),
 }

@@ -68,5 +68,5 @@ val NavigationDestination.route: String get() = when (this) {
         SettingsDestination.NotificationPreferences -> "settings/notifications"
         SettingsDestination.PeppolRegistration -> "settings/peppol"
     }
-    else -> error("Unknown destination: $this")
+    else -> this::class.simpleName ?: "unknown"
 }

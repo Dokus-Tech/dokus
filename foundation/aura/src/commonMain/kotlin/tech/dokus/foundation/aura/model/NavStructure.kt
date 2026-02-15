@@ -19,6 +19,8 @@ data class NavSection(
     /** Icon for section header (displayed on parent groups only) */
     val iconRes: DrawableResource,
     val items: List<NavItem>,
+    /** Sort order across sections (lower = first) */
+    val order: Int = 0,
     /** Default expanded state for desktop rail */
     val defaultExpanded: Boolean = true,
 )
