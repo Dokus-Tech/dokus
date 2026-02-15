@@ -37,6 +37,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.peppol_reg_copied
+import tech.dokus.aura.resources.peppol_reg_copy_email
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.style.statusConfirmed
@@ -235,7 +239,7 @@ internal fun TransferEmailCard(
                     }
                 ) {
                     Text(
-                        text = if (copied) "Copied to clipboard" else "Copy email",
+                        text = if (copied) stringResource(Res.string.peppol_reg_copied) else stringResource(Res.string.peppol_reg_copy_email),
                         style = MaterialTheme.typography.labelSmall,
                         color = if (copied) MaterialTheme.colorScheme.statusConfirmed else MaterialTheme.colorScheme.onSurfaceVariant,
                     )

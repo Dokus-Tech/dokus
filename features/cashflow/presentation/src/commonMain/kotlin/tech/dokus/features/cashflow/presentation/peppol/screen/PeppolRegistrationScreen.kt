@@ -125,11 +125,15 @@ private fun FreshContent(
 ) {
     PeppolCenteredFlow(
         icon = { PeppolCircle() },
-        title = "Enable Peppol",
-        subtitle = "Receive invoices automatically in Dokus.",
+        title = stringResource(Res.string.peppol_reg_fresh_title),
+        subtitle = stringResource(Res.string.peppol_reg_fresh_subtitle),
         primary = {
             POutlinedButton(
-                text = if (state.isEnabling) "Enabling…" else "Enable",
+                text = if (state.isEnabling) {
+                    stringResource(Res.string.peppol_reg_fresh_enabling)
+                } else {
+                    stringResource(Res.string.peppol_reg_fresh_enable)
+                },
                 enabled = !state.isEnabling,
                 isLoading = state.isEnabling,
                 modifier = Modifier.fillMaxWidth(),
@@ -139,13 +143,13 @@ private fun FreshContent(
         secondary = {
             TextButton(onClick = { onIntent(PeppolRegistrationIntent.NotNow) }) {
                 Text(
-                    text = "Not now",
+                    text = stringResource(Res.string.peppol_reg_not_now),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
             }
         },
-        footnote = "You can enable this later in Settings.",
+        footnote = stringResource(Res.string.peppol_reg_enable_later),
     )
 }
 
@@ -155,18 +159,18 @@ private fun ActivatingContent(
 ) {
     PeppolCenteredFlow(
         icon = { PeppolSpinner() },
-        title = "Enabling Peppol",
-        subtitle = "Connecting your inbox.",
+        title = stringResource(Res.string.peppol_reg_activating_title),
+        subtitle = stringResource(Res.string.peppol_reg_activating_subtitle),
         primary = {
             POutlinedButton(
-                text = "Continue",
+                text = stringResource(Res.string.peppol_reg_continue),
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(PeppolRegistrationIntent.Continue) }
             )
         },
         body = {
             Text(
-                text = "This can take a moment.\nYou can continue working.",
+                text = stringResource(Res.string.peppol_reg_activating_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 textAlign = TextAlign.Center,
@@ -184,21 +188,21 @@ private fun ActiveContent(
 
     PeppolCenteredFlow(
         icon = { AnimatedCheck(play = true) },
-        title = "Peppol active",
-        subtitle = "Inbox connected. Sending enabled.",
+        title = stringResource(Res.string.peppol_reg_active_title),
+        subtitle = stringResource(Res.string.peppol_reg_active_subtitle),
         primary = {
             POutlinedButton(
-                text = "Continue",
+                text = stringResource(Res.string.peppol_reg_continue),
                 onClick = { onIntent(PeppolRegistrationIntent.Continue) }
             )
         },
         details = {
             PCollapsibleSection(
-                title = "Details",
+                title = stringResource(Res.string.peppol_reg_details),
                 isExpanded = detailsExpanded,
                 onToggle = { detailsExpanded = !detailsExpanded }
             ) {
-                PCopyRow(label = "Peppol ID", value = state.context.peppolId)
+                PCopyRow(label = stringResource(Res.string.peppol_reg_peppol_id), value = state.context.peppolId)
             }
         }
     )
@@ -213,11 +217,11 @@ private fun BlockedContent(
 
     PeppolCenteredFlow(
         icon = { PeppolCircle() },
-        title = "Peppol already connected",
-        subtitle = "Your inbox is connected to another service.",
+        title = stringResource(Res.string.peppol_reg_blocked_title),
+        subtitle = stringResource(Res.string.peppol_reg_blocked_subtitle),
         body = {
             Text(
-                text = "To receive invoices in Dokus, request a transfer from your current provider.",
+                text = stringResource(Res.string.peppol_reg_blocked_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 textAlign = TextAlign.Center,
@@ -226,7 +230,7 @@ private fun BlockedContent(
         },
         primary = {
             POutlinedButton(
-                text = "Transfer inbox to Dokus",
+                text = stringResource(Res.string.peppol_reg_transfer_inbox),
                 enabled = !state.isWorking,
                 isLoading = state.isWorking,
                 onClick = { onIntent(PeppolRegistrationIntent.WaitForTransfer) }
@@ -238,7 +242,7 @@ private fun BlockedContent(
                 enabled = !state.isWorking
             ) {
                 Text(
-                    text = "Enable sending only",
+                    text = stringResource(Res.string.peppol_reg_enable_sending_only),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
@@ -246,7 +250,7 @@ private fun BlockedContent(
         },
         details = {
             PCollapsibleSection(
-                title = "Transfer request",
+                title = stringResource(Res.string.peppol_reg_transfer_request),
                 isExpanded = transferExpanded,
                 onToggle = { transferExpanded = !transferExpanded }
             ) {
@@ -268,11 +272,11 @@ private fun WaitingTransferContent(
 
     PeppolCenteredFlow(
         icon = { WaitingIndicator() },
-        title = "Waiting for transfer",
-        subtitle = "We'll connect automatically once your inbox is released.",
+        title = stringResource(Res.string.peppol_reg_waiting_title),
+        subtitle = stringResource(Res.string.peppol_reg_waiting_subtitle),
         body = {
             Text(
-                text = "This can take up to 48 hours.\nYou can close this screen.",
+                text = stringResource(Res.string.peppol_reg_waiting_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 textAlign = TextAlign.Center,
@@ -281,13 +285,13 @@ private fun WaitingTransferContent(
         },
         primary = {
             POutlinedButton(
-                text = "Continue",
+                text = stringResource(Res.string.peppol_reg_continue),
                 onClick = { onIntent(PeppolRegistrationIntent.Continue) }
             )
         },
         details = {
             PCollapsibleSection(
-                title = "Transfer request",
+                title = stringResource(Res.string.peppol_reg_transfer_request),
                 isExpanded = transferExpanded,
                 onToggle = { transferExpanded = !transferExpanded }
             ) {
@@ -309,21 +313,21 @@ private fun SendingOnlyContent(
 
     PeppolCenteredFlow(
         icon = { AnimatedCheck(play = true) },
-        title = "Peppol sending enabled",
-        subtitle = "You can send invoices via Peppol.\nIncoming invoices go to your other service.",
+        title = stringResource(Res.string.peppol_reg_sending_title),
+        subtitle = stringResource(Res.string.peppol_reg_sending_subtitle),
         primary = {
             POutlinedButton(
-                text = "Continue",
+                text = stringResource(Res.string.peppol_reg_continue),
                 onClick = { onIntent(PeppolRegistrationIntent.Continue) }
             )
         },
         details = {
             PCollapsibleSection(
-                title = "Details",
+                title = stringResource(Res.string.peppol_reg_details),
                 isExpanded = detailsExpanded,
                 onToggle = { detailsExpanded = !detailsExpanded }
             ) {
-                PCopyRow(label = "Peppol ID", value = state.context.peppolId)
+                PCopyRow(label = stringResource(Res.string.peppol_reg_peppol_id), value = state.context.peppolId)
             }
         }
     )
@@ -345,18 +349,18 @@ private fun ExternalContent(
                 )
             }
         },
-        title = "Peppol not enabled",
-        subtitle = "Dokus won't send or receive Peppol invoices.",
+        title = stringResource(Res.string.peppol_reg_external_title),
+        subtitle = stringResource(Res.string.peppol_reg_external_subtitle),
         primary = {
             POutlinedButton(
-                text = "Continue",
+                text = stringResource(Res.string.peppol_reg_continue),
                 onClick = { onIntent(PeppolRegistrationIntent.Continue) }
             )
         },
         secondary = {
             TextButton(onClick = { onIntent(PeppolRegistrationIntent.EnablePeppol) }) {
                 Text(
-                    text = "Enable Peppol",
+                    text = stringResource(Res.string.peppol_reg_fresh_title),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
@@ -376,11 +380,11 @@ private fun FailedContent(
                 PeppolCloseIcon()
             }
         },
-        title = "Couldn't enable Peppol",
-        subtitle = "Something went wrong while connecting.",
+        title = stringResource(Res.string.peppol_reg_failed_title),
+        subtitle = stringResource(Res.string.peppol_reg_failed_subtitle),
         primary = {
             POutlinedButton(
-                text = "Try again",
+                text = stringResource(Res.string.peppol_reg_failed_retry),
                 isLoading = state.isRetrying,
                 enabled = !state.isRetrying,
                 onClick = { onIntent(PeppolRegistrationIntent.Retry) }
@@ -389,12 +393,12 @@ private fun FailedContent(
         secondary = {
             TextButton(onClick = { onIntent(PeppolRegistrationIntent.NotNow) }) {
                 Text(
-                    text = "Skip for now",
+                    text = stringResource(Res.string.peppol_reg_failed_skip),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
             }
         },
-        footnote = "If this keeps happening, contact support.",
+        footnote = stringResource(Res.string.peppol_reg_failed_footnote),
     )
 }
