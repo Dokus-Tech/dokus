@@ -65,7 +65,8 @@ internal fun MoreScreen(
     val filteredSections = remember(navSections, userTier) {
         navSections.mapNotNull { section ->
             val accessibleItems = section.items.filter { item ->
-                item.requiredTier == null || SubscriptionTier.hasTomorrowAccess(userTier)
+                item.mobileTabOrder == null &&
+                    (item.requiredTier == null || SubscriptionTier.hasTomorrowAccess(userTier))
             }
             if (accessibleItems.isNotEmpty()) {
                 section.copy(items = accessibleItems)
