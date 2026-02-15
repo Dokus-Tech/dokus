@@ -9,7 +9,6 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -23,8 +22,6 @@ import tech.dokus.backend.services.auth.RedisRateLimitService
 import tech.dokus.backend.services.auth.ResendEmailService
 import tech.dokus.backend.services.auth.TeamService
 import tech.dokus.backend.services.auth.WelcomeEmailService
-import tech.dokus.backend.services.notifications.NotificationPreferencesService
-import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
@@ -41,6 +38,8 @@ import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmation
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationService
 import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
+import tech.dokus.backend.services.notifications.NotificationPreferencesService
+import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
