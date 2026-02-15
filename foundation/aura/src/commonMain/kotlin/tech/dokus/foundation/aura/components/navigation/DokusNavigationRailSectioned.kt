@@ -30,6 +30,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.coming_soon
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
@@ -206,7 +208,7 @@ private fun NavItemRow(
         if (item.comingSoon) {
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "· ${stringResource(tech.dokus.aura.resources.Res.string.coming_soon)}",
+                text = "· ${stringResource(Res.string.coming_soon)}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
