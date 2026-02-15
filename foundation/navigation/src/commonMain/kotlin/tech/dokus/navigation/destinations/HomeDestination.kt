@@ -45,12 +45,6 @@ sealed interface HomeDestination : NavigationDestination {
     @SerialName("home/under_development")
     data object UnderDevelopment : HomeDestination
 
-    companion object {
-        val allDestinations: List<HomeDestination> = listOf(
-            Today, Tomorrow, Documents, Cashflow, Contacts, Team,
-            AiChat, Settings, More, UnderDevelopment
-        )
-    }
 }
 
 /** Route string matching the @SerialName value for backstack matching. */

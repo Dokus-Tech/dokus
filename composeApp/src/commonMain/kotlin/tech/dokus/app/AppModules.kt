@@ -24,6 +24,7 @@ import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.HomeDestination
 
 private val baseAppModules = listOf(
     AppMainModule,
@@ -57,25 +58,26 @@ val List<AppModule>.homeNavigationProviders: List<NavigationProvider>
 val List<AppModule>.allNavItems: List<NavItem>
     get() = flatMap { it.navGroups }.flatMap { it.items }
 
-/** Desktop sections — groups merged by sectionId, items sorted by priority */
+/** Desktop sections — groups merged by sectionId, items sorted by priority, sections sorted by order */
 val List<AppModule>.navSectionsCombined: List<NavSection>
-    get() = flatMap { it.navGroups }
-        .groupBy { it.sectionId }
-        .map { (_, groups) ->
-            val first = groups.minByOrNull { it.sectionOrder } ?: groups.first()
-            NavSection(
-                id = first.sectionId,
-                titleRes = first.sectionTitle,
-                iconRes = first.sectionIcon,
-                items = groups.flatMap { it.items }.sortedBy { it.priority },
-                defaultExpanded = groups.any { it.sectionDefaultExpanded },
-            )
-        }
-        .sortedBy { section ->
-            flatMap { it.navGroups }
-                .filter { it.sectionId == section.id }
-                .minOf { it.sectionOrder }
-        }
+    get() {
+        val allGroups = flatMap { it.navGroups }
+        return allGroups
+            .groupBy { it.sectionId }
+            .map { (_, groups) ->
+                val first = groups.minByOrNull { it.sectionOrder } ?: groups.first()
+                val section = NavSection(
+                    id = first.sectionId,
+                    titleRes = first.sectionTitle,
+                    iconRes = first.sectionIcon,
+                    items = groups.flatMap { it.items }.sortedBy { it.priority },
+                    defaultExpanded = groups.any { it.sectionDefaultExpanded },
+                )
+                first.sectionOrder to section
+            }
+            .sortedBy { (order, _) -> order }
+            .map { (_, section) -> section }
+    }
 
 /** Mobile bottom tabs — items with mobileTabOrder + "More" appended */
 val List<AppModule>.mobileTabConfigs: List<MobileTabConfig>
@@ -84,7 +86,7 @@ val List<AppModule>.mobileTabConfigs: List<MobileTabConfig>
             .filter { it.mobileTabOrder != null }
             .sortedBy { it.mobileTabOrder }
             .map { MobileTabConfig(it.id, it.titleRes, it.iconRes, it.destination) }
-        return itemTabs + MobileTabConfig("more", Res.string.nav_more, Res.drawable.more_horizontal, null)
+        return itemTabs + MobileTabConfig("more", Res.string.nav_more, Res.drawable.more_horizontal, HomeDestination.More)
     }
 
 val List<AppModule>.settingsGroups: List<ModuleSettingsGroup>

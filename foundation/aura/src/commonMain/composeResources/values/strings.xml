@@ -53,7 +53,6 @@
     <string name="nav_reports">Reports</string>
     <string name="nav_forecast">Forecast</string>
     <string name="nav_more">More</string>
-    <string name="nav_coming_soon_suffix"> · Coming soon</string>
     <string name="coming_soon">Coming soon</string>
 
     <!-- Chat -->

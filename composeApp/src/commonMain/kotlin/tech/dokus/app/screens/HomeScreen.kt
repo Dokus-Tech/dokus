@@ -69,6 +69,7 @@ import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
+import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.foundation.aura.model.ShellTopBarDefault
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
@@ -256,7 +257,7 @@ private fun HomeNavHost(
 
 @Composable
 private fun RailNavigationLayout(
-    navSections: List<tech.dokus.foundation.aura.model.NavSection>,
+    navSections: List<NavSection>,
     selectedRoute: String?,
     topBarConfig: HomeShellTopBarConfig?,
     tenantState: DokusState<Tenant>,
