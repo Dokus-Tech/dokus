@@ -31,9 +31,11 @@ import tech.dokus.database.tables.cashflow.InvoiceItemsTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.cashflow.RefundClaimsTable
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentLinksTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
@@ -106,6 +108,8 @@ class CreditNoteConfirmationInvariantTest {
             SchemaUtils.create(
                 TenantTable,
                 DocumentsTable,
+                DocumentBlobsTable,
+                DocumentSourcesTable,
                 DocumentIngestionRunsTable,
                 DocumentDraftsTable,
                 DocumentLinksTable,
@@ -155,6 +159,8 @@ class CreditNoteConfirmationInvariantTest {
                 DocumentLinksTable,
                 DocumentDraftsTable,
                 DocumentIngestionRunsTable,
+                DocumentSourcesTable,
+                DocumentBlobsTable,
                 DocumentsTable,
                 TenantTable
             )
