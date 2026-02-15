@@ -56,6 +56,33 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.CashflowEntry
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cancel
+import tech.dokus.aura.resources.cashflow_action_mark_paid
+import tech.dokus.aura.resources.cashflow_action_view_document
+import tech.dokus.aura.resources.cashflow_detail_amount_today
+import tech.dokus.aura.resources.cashflow_detail_breakdown
+import tech.dokus.aura.resources.cashflow_detail_close
+import tech.dokus.aura.resources.cashflow_detail_confirm_payment
+import tech.dokus.aura.resources.cashflow_detail_date_label
+import tech.dokus.aura.resources.cashflow_detail_days_overdue
+import tech.dokus.aura.resources.cashflow_detail_due_in_days
+import tech.dokus.aura.resources.cashflow_detail_max_amount
+import tech.dokus.aura.resources.cashflow_detail_note_optional
+import tech.dokus.aura.resources.cashflow_detail_payable
+import tech.dokus.aura.resources.cashflow_detail_receivable
+import tech.dokus.aura.resources.cashflow_detail_remaining
+import tech.dokus.aura.resources.cashflow_detail_source_document
+import tech.dokus.aura.resources.cashflow_detail_title
+import tech.dokus.aura.resources.cashflow_detail_unknown_contact
+import tech.dokus.aura.resources.cashflow_ledger_amount
+import tech.dokus.aura.resources.cashflow_ledger_contact
+import tech.dokus.aura.resources.cashflow_ledger_description
+import tech.dokus.aura.resources.cashflow_ledger_due_date
+import tech.dokus.aura.resources.cashflow_ledger_net
+import tech.dokus.aura.resources.invoice_total
+import tech.dokus.aura.resources.invoice_vat
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.ledger.mvi.PaymentFormState
 import tech.dokus.foundation.aura.components.CashflowStatusBadge
@@ -219,7 +246,7 @@ private fun CashflowDetailContent(
     Column(modifier = Modifier.fillMaxSize()) {
         // Header
         CashflowDetailHeader(
-            title = "Cashflow item",
+            title = stringResource(Res.string.cashflow_detail_title),
             onClose = onDismiss
         )
 
@@ -306,7 +333,7 @@ private fun CashflowDetailHeader(
         IconButton(onClick = onClose) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(Res.string.cashflow_detail_close),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -326,9 +353,9 @@ private fun CashflowStatusBanner(
     val detail: String? = when {
         entry.status == CashflowEntryStatus.Paid -> null
         entry.status == CashflowEntryStatus.Cancelled -> null
-        entry.status == CashflowEntryStatus.Overdue -> "${-daysUntilDue} days overdue"
-        isPartiallyPaid -> "${entry.currency.displaySign}${entry.remainingAmount.toDisplayString()} remaining"
-        daysUntilDue >= 0 -> "Due in $daysUntilDue days"
+        entry.status == CashflowEntryStatus.Overdue -> stringResource(Res.string.cashflow_detail_days_overdue, -daysUntilDue)
+        isPartiallyPaid -> stringResource(Res.string.cashflow_detail_remaining, entry.currency.displaySign, entry.remainingAmount.toDisplayString())
+        daysUntilDue >= 0 -> stringResource(Res.string.cashflow_detail_due_in_days, daysUntilDue)
         else -> null
     }
 
@@ -349,7 +376,11 @@ private fun CashflowAmountSection(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = if (entry.direction == CashflowDirection.Out) "Payable" else "Receivable",
+            text = if (entry.direction == CashflowDirection.Out) {
+                stringResource(Res.string.cashflow_detail_payable)
+            } else {
+                stringResource(Res.string.cashflow_detail_receivable)
+            },
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -372,12 +403,12 @@ private fun CashflowContactSection(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = "Contact",
+            text = stringResource(Res.string.cashflow_ledger_contact),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = contactName ?: "Unknown",
+            text = contactName ?: stringResource(Res.string.cashflow_detail_unknown_contact),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Medium
@@ -397,7 +428,7 @@ private fun CashflowDetailsSection(
         // Due Date
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "Due Date",
+                text = stringResource(Res.string.cashflow_ledger_due_date),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -412,7 +443,7 @@ private fun CashflowDetailsSection(
         entry.description?.let { description ->
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Description",
+                    text = stringResource(Res.string.cashflow_ledger_description),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -440,13 +471,13 @@ private fun CashflowBreakdownSection(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "Breakdown",
+            text = stringResource(Res.string.cashflow_detail_breakdown),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         BreakdownRow(
-            label = "Net",
+            label = stringResource(Res.string.cashflow_ledger_net),
             value = "${entry.currency.displaySign}${netAmount.toDisplayString()}"
         )
         BreakdownRow(

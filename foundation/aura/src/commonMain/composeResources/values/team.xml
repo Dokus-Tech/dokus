@@ -16,6 +16,9 @@
     <string name="team_last_active">Last active</string>
     <string name="team_expires">Expires</string>
     <string name="team_invited_by">Invited by</string>
+    <string name="team_member_info">%1$s - Joined %2$s</string>
+    <string name="team_invitation_info">%1$s - Invited by %2$s</string>
+    <string name="team_invitation_expires">Expires %1$s</string>
     <string name="team_no_members">No team members yet</string>
     <string name="team_no_invitations">No pending invitations</string>
     <string name="team_invite_success">Invitation sent successfully</string>

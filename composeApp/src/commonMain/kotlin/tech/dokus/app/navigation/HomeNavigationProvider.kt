@@ -9,12 +9,12 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import org.koin.compose.koinInject
 import tech.dokus.app.screens.MoreScreen
-import tech.dokus.app.screens.today.TodayScreen
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
 import tech.dokus.app.screens.settings.route.NotificationPreferencesRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
+import tech.dokus.app.screens.today.TodayScreen
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.features.auth.presentation.auth.route.ChangePasswordRoute

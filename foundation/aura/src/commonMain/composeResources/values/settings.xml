@@ -71,6 +71,7 @@
 
     <!-- Workspace Settings -->
     <string name="workspace_settings_title">Company Details</string>
+    <string name="workspace_company_settings">Company Settings</string>
     <string name="workspace_company_info">Company Information</string>
     <string name="workspace_company_name">Company Name</string>
     <string name="workspace_legal_name">Legal Name</string>
