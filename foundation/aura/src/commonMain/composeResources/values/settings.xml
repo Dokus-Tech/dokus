@@ -163,6 +163,18 @@
     <string name="peppol_activating_hint">Peppol is being set up automatically. This usually takes a few moments.</string>
     <string name="peppol_managed_by_dokus">Managed by Dokus</string>
 
+    <!-- Notification Preferences -->
+    <string name="notification_pref_subtitle">In-app notifications are always on. Configure email per event.</string>
+    <string name="notification_pref_section_peppol">PEPPOL Events</string>
+    <string name="notification_pref_section_compliance">Compliance Alerts</string>
+    <string name="notification_pref_section_billing">Billing</string>
+    <string name="notification_pref_channel_email">In-app + Email</string>
+    <string name="notification_pref_channel_inapp">In-app only</string>
+    <string name="notification_pref_required">Required</string>
+    <string name="notification_pref_peppol_hint">PEPPOL transmission failures have legal and compliance implications. Email notifications cannot be disabled.</string>
+    <string name="notification_pref_compliance_hint">Some alerts are required for compliance and cannot be disabled.</string>
+    <string name="notification_pref_load_failed">Failed to load notification preferences</string>
+
     <!-- Appearance Settings -->
     <string name="appearance_settings_title">Appearance</string>
     <string name="appearance_theme">Theme</string>
