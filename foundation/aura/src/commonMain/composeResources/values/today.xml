@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="today_notifications_title">Your notifications</string>
+    <string name="today_notifications_loading">Loading notifications…</string>
+    <string name="today_notifications_empty">Nothing needs your attention.</string>
+    <string name="today_notifications_filter_all">All</string>
+    <string name="today_notifications_filter_unread">Unread</string>
+    <string name="today_notifications_filter_peppol">PEPPOL</string>
+    <string name="today_notifications_filter_compliance">Compliance</string>
+    <string name="today_notifications_category_peppol">PEPPOL</string>
+    <string name="today_notifications_category_compliance">Compliance</string>
+    <string name="today_notifications_category_billing">Billing</string>
+</resources>
