@@ -41,7 +41,7 @@ internal fun Route.identityRoutes() {
         val response = authService.login(
             request = request,
             sessionContext = SessionContext(
-                deviceType = request.deviceType,
+                deviceType = DeviceType.fromAgent(userAgent),
                 ipAddress = call.extractClientIpAddress(),
                 userAgent = userAgent
             )
@@ -77,7 +77,7 @@ internal fun Route.identityRoutes() {
         val response = authService.refreshToken(
             request = request,
             sessionContext = SessionContext(
-                deviceType = request.deviceType,
+                deviceType = DeviceType.fromAgent(userAgent),
                 ipAddress = call.extractClientIpAddress(),
                 userAgent = userAgent
             )

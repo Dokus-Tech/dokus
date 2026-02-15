@@ -22,7 +22,7 @@ object RefreshTokensTable : UUIDTable("refresh_tokens") {
     val accessTokenExpiresAt = datetime("access_token_expires_at").nullable()
     val deviceType = dbEnumeration<DeviceType>("device_type").default(DeviceType.Desktop)
     val ipAddress = varchar("ip_address", 45).nullable()
-    val userAgent = text("user_agent").nullable()
+    val userAgent = varchar("user_agent", 512).nullable()
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 
     init {

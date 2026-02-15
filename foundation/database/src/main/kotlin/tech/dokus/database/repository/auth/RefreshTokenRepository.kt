@@ -89,7 +89,7 @@ class RefreshTokenRepository {
                 it[RefreshTokensTable.accessTokenExpiresAt] = accessTokenExpiresAt?.toLocalDateTime(TimeZone.UTC)
                 it[RefreshTokensTable.deviceType] = deviceType
                 it[RefreshTokensTable.ipAddress] = ipAddress
-                it[RefreshTokensTable.userAgent] = userAgent
+                it[RefreshTokensTable.userAgent] = userAgent?.take(512)
             }
 
             logger.debug(
@@ -399,9 +399,9 @@ class RefreshTokenRepository {
     suspend fun listActiveSessions(
         userId: UserId,
         currentSessionJti: String?
-    ): List<SessionDto> = try {
+    ): List<SessionDto> {
         val active = getUserActiveTokens(userId)
-        active.map { token ->
+        return active.map { token ->
             SessionDto(
                 id = token.sessionId,
                 ipAddress = token.ipAddress,
@@ -418,9 +418,6 @@ class RefreshTokenRepository {
                 isCurrent = token.accessTokenJti != null && token.accessTokenJti == currentSessionJti,
             )
         }
-    } catch (error: Exception) {
-        logger.error("Failed to list active sessions for user: ${userId.value}", error)
-        emptyList()
     }
 
     /**

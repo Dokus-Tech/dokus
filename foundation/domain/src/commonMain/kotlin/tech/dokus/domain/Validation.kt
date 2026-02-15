@@ -24,7 +24,7 @@ interface Validatable<ValueClassType> where ValueClassType : ValueClass<*> {
 @Serializable
 @JvmInline
 value class Password(override val value: String) : ValueClass<String>, Validatable<Password> {
-    override fun toString(): String = value
+    override fun toString(): String = "***"
     override val isValid
         get() = ValidatePasswordUseCase(
             this

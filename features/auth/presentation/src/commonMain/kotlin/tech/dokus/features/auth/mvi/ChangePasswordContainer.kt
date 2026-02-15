@@ -101,7 +101,6 @@ internal class ChangePasswordContainer(
                 changePasswordUseCase(currentPassword, newPassword).fold(
                     onSuccess = {
                         logger.i { "Password changed successfully" }
-                        action(ChangePasswordAction.ShowSuccess)
                         action(ChangePasswordAction.NavigateBack)
                     },
                     onFailure = { error ->

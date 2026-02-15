@@ -48,5 +48,4 @@ sealed interface ChangePasswordIntent : MVIIntent {
 @Immutable
 sealed interface ChangePasswordAction : MVIAction {
     data object NavigateBack : ChangePasswordAction
-    data object ShowSuccess : ChangePasswordAction
 }

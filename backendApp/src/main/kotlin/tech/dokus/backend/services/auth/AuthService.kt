@@ -462,6 +462,14 @@ class AuthService(
 
     suspend fun resendVerificationEmail(userId: UserId): Result<Unit> {
         logger.info("Email verification resend requested for user {}", userId.value)
+
+        val rateLimitKey = "email-resend:${userId.value}"
+        rateLimitService.checkLoginAttempts(rateLimitKey).getOrElse { error ->
+            logger.warn("Email resend blocked by rate limiter for user: {}", userId.value)
+            throw error
+        }
+        rateLimitService.recordFailedLogin(rateLimitKey)
+
         return emailVerificationService.resendVerificationEmail(userId)
     }
 
@@ -483,6 +491,12 @@ class AuthService(
     ): Result<Unit> = try {
         logger.info("Change password request for user {}", userId.value)
 
+        val rateLimitKey = "pwd-change:${userId.value}"
+        rateLimitService.checkLoginAttempts(rateLimitKey).getOrElse { error ->
+            logger.warn("Password change blocked by rate limiter for user: {}", userId.value)
+            throw error
+        }
+
         val user = userRepository.findById(userId)
             ?: throw DokusException.NotFound("User account not found")
 
@@ -492,10 +506,14 @@ class AuthService(
 
         val verified = userRepository.verifyCredentials(user.email.value, currentPassword.value)
         if (verified?.id != userId) {
+            rateLimitService.recordFailedLogin(rateLimitKey)
             throw DokusException.InvalidCredentials("Current password is incorrect")
         }
 
         newPassword.validOrThrows
+
+        // Password update and session revocation are separate transactions.
+        // Update password first - if revocation fails, user can manually revoke via sessions UI.
         userRepository.updatePassword(userId, newPassword.value)
 
         val activeSessionJti = currentSessionJti
@@ -510,6 +528,7 @@ class AuthService(
             }
 
         blacklistRevokedSessions(revokedSessions)
+        rateLimitService.resetLoginAttempts(rateLimitKey)
         logger.info("Password changed and {} sessions revoked for user {}", revokedSessions.size, userId.value)
         Result.success(Unit)
     } catch (e: DokusException) {

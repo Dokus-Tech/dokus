@@ -21,6 +21,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.profile_change_password_save
 import tech.dokus.aura.resources.profile_change_password_title
+import tech.dokus.aura.resources.profile_change_password_warning
 import tech.dokus.aura.resources.profile_confirm_password
 import tech.dokus.aura.resources.profile_current_password
 import tech.dokus.aura.resources.profile_new_password
@@ -29,6 +30,7 @@ import tech.dokus.features.auth.mvi.ChangePasswordIntent
 import tech.dokus.features.auth.mvi.ChangePasswordState
 import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
 import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
@@ -42,6 +44,7 @@ internal fun ChangePasswordScreen(
     onIntent: (ChangePasswordIntent) -> Unit
 ) {
     Scaffold(
+        topBar = { PTopAppBar(Res.string.profile_change_password_title) },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         TwoPaneContainer(
@@ -124,6 +127,14 @@ private fun ChangePasswordContent(
                 onAction = { onIntent(ChangePasswordIntent.SubmitClicked) },
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = { onIntent(ChangePasswordIntent.UpdateConfirmPassword(it)) }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                text = stringResource(Res.string.profile_change_password_warning),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(Modifier.height(16.dp))

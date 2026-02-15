@@ -19,9 +19,11 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.auth_verifying_email
 import tech.dokus.aura.resources.auth_verify_email_continue
 import tech.dokus.aura.resources.auth_verify_email_error
+import tech.dokus.aura.resources.auth_verify_email_retry
 import tech.dokus.aura.resources.auth_verify_email_success
 import tech.dokus.aura.resources.auth_verify_email_title
 import tech.dokus.features.auth.mvi.VerifyEmailState
+import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.constrains.withContentPadding
@@ -29,12 +31,14 @@ import tech.dokus.foundation.aura.constrains.withContentPadding
 @Composable
 internal fun VerifyEmailScreen(
     state: VerifyEmailState,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    onRetry: () -> Unit
 ) {
     Scaffold { padding ->
         VerifyEmailContent(
             state = state,
             onContinue = onContinue,
+            onRetry = onRetry,
             contentPadding = padding
         )
     }
@@ -44,6 +48,7 @@ internal fun VerifyEmailScreen(
 private fun VerifyEmailContent(
     state: VerifyEmailState,
     onContinue: () -> Unit,
+    onRetry: () -> Unit,
     contentPadding: PaddingValues
 ) {
     Column(
@@ -87,6 +92,11 @@ private fun VerifyEmailContent(
                 }
 
                 is VerifyEmailState.Error -> {
+                    POutlinedButton(
+                        text = stringResource(Res.string.auth_verify_email_retry),
+                        onClick = onRetry,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     PPrimaryButton(
                         text = stringResource(Res.string.auth_verify_email_continue),
                         onClick = onContinue,

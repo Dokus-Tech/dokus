@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -86,13 +87,13 @@ private fun ForgotPasswordContent(
                 modifier = Modifier.limitWidthCenteredContent(),
                 horizontalAlignment = Alignment.Start
             ) {
-                androidx.compose.material3.Text(
+                Text(
                     text = stringResource(Res.string.auth_forgot_password_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(8.dp))
-                androidx.compose.material3.Text(
+                Text(
                     text = stringResource(Res.string.auth_forgot_password_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

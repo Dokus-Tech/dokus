@@ -32,6 +32,7 @@
     <string name="auth_verify_email_success">Your email has been verified.</string>
     <string name="auth_verify_email_error">Verification link is invalid or expired.</string>
     <string name="auth_verify_email_continue">Continue to login</string>
+    <string name="auth_verify_email_retry">Try again</string>
 
     <!-- Workspace Wizard -->
     <string name="auth_step_of">Step %1$d of %2$d</string>

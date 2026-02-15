@@ -108,11 +108,6 @@ private fun MySessionsList(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text(
-                text = stringResource(Res.string.profile_sessions_title),
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(Modifier.height(8.dp))
             PPrimaryButton(
                 text = stringResource(Res.string.profile_revoke_other_sessions),
                 onClick = onRevokeOthers,

@@ -48,6 +48,7 @@
     <string name="profile_deactivate_account">Deactivate Account</string>
     <string name="profile_deactivate_warning">Deactivating your account will remove access to all workspaces.</string>
     <string name="profile_password_changed">Password changed successfully</string>
+    <string name="profile_change_password_warning">Changing your password will sign you out of all other devices.</string>
     <string name="profile_logout">Log Out</string>
     <string name="profile_logout_description">Sign out from this device</string>
     <string name="profile_logging_out">Logging out...</string>
