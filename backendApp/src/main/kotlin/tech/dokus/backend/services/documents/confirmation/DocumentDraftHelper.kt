@@ -1,7 +1,7 @@
 package tech.dokus.backend.services.documents.confirmation
 
-import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
@@ -15,7 +15,7 @@ internal suspend fun requireConfirmableDraft(
     draftRepository: DocumentDraftRepository,
     tenantId: TenantId,
     documentId: DocumentId
-) : DraftSummary {
+): DraftSummary {
     val draft = draftRepository.getByDocumentId(documentId, tenantId)
         ?: throw DokusException.NotFound("Draft not found for document")
 

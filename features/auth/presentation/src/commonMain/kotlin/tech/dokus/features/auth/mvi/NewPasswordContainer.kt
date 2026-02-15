@@ -8,6 +8,7 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Password
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.features.auth.usecases.ResetPasswordUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias NewPasswordCtx = PipelineContext<NewPasswordState, NewPasswordIntent, NewPasswordAction>
@@ -18,7 +19,10 @@ internal typealias NewPasswordCtx = PipelineContext<NewPasswordState, NewPasswor
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
-internal class NewPasswordContainer : Container<NewPasswordState, NewPasswordIntent, NewPasswordAction> {
+internal class NewPasswordContainer(
+    private val resetToken: String,
+    private val resetPasswordUseCase: ResetPasswordUseCase
+) : Container<NewPasswordState, NewPasswordIntent, NewPasswordAction> {
 
     private val logger = Logger.forClass<NewPasswordContainer>()
 
@@ -101,16 +105,41 @@ internal class NewPasswordContainer : Container<NewPasswordState, NewPasswordInt
                     return
                 }
 
-                // TODO: Call password set API when implemented
-                // For now, just transition to success state after validation
-                logger.i { "New password validated, transitioning to success" }
-                updateState {
-                    NewPasswordState.Success(
-                        password = password,
-                        passwordConfirmation = passwordConfirmation
-                    )
+                if (resetToken.isBlank()) {
+                    updateState {
+                        NewPasswordState.Error(
+                            password = password,
+                            passwordConfirmation = passwordConfirmation,
+                            exception = DokusException.PasswordResetTokenInvalid(),
+                            retryHandler = { intent(NewPasswordIntent.SubmitClicked) }
+                        )
+                    }
+                    return
                 }
-                action(NewPasswordAction.NavigateBack)
+
+                resetPasswordUseCase(resetToken, password).fold(
+                    onSuccess = {
+                        logger.i { "Password reset completed successfully" }
+                        updateState {
+                            NewPasswordState.Success(
+                                password = password,
+                                passwordConfirmation = passwordConfirmation
+                            )
+                        }
+                        action(NewPasswordAction.NavigateBack)
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Password reset failed" }
+                        updateState {
+                            NewPasswordState.Error(
+                                password = password,
+                                passwordConfirmation = passwordConfirmation,
+                                exception = error.asDokusException,
+                                retryHandler = { intent(NewPasswordIntent.SubmitClicked) }
+                            )
+                        }
+                    }
+                )
             },
             onFailure = { error ->
                 logger.e(error) { "New password validation failed" }

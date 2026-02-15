@@ -5,15 +5,18 @@ import tech.dokus.domain.DisplayName
 import tech.dokus.domain.Email
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.Name
+import tech.dokus.domain.Password
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CreateTenantRequest
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
@@ -21,6 +24,7 @@ import tech.dokus.domain.model.auth.LogoutRequest
 import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.ResetPasswordRequest
+import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.features.auth.datasource.AccountRemoteDataSource
 import tech.dokus.features.auth.datasource.IdentityRemoteDataSource
@@ -201,8 +205,12 @@ class AuthRepository(
         logger.d { "Logging out user" }
 
         val token = tokenManager.getValidAccessToken()
+        val refreshToken = tokenManager.getRefreshToken()
         if (token != null) {
-            val request = LogoutRequest(sessionToken = token)
+            val request = LogoutRequest(
+                sessionToken = token,
+                refreshToken = refreshToken
+            )
             accountDataSource.logout(request)
                 .onFailure { e ->
                     logger.w(e) { "Logout API call failed, clearing local tokens anyway" }
@@ -233,6 +241,55 @@ class AuthRepository(
         return identityDataSource.resetPassword(resetToken, request)
             .onFailure { error ->
                 logger.e(error) { "Password reset failed" }
+            }
+    }
+
+    override suspend fun verifyEmail(token: String): Result<Unit> {
+        logger.d { "Verifying email token" }
+        return identityDataSource.verifyEmail(token)
+            .onFailure { error ->
+                logger.e(error) { "Email verification failed" }
+            }
+    }
+
+    override suspend fun resendVerificationEmail(): Result<Unit> {
+        logger.d { "Resending verification email" }
+        return accountDataSource.resendVerificationEmail()
+            .onFailure { error ->
+                logger.e(error) { "Resend verification email failed" }
+            }
+    }
+
+    override suspend fun changePassword(currentPassword: Password, newPassword: Password): Result<Unit> {
+        logger.d { "Changing current user password" }
+        val request = ChangePasswordRequest(
+            currentPassword = currentPassword,
+            newPassword = newPassword
+        )
+        return accountDataSource.changePassword(request)
+            .onFailure { error ->
+                logger.e(error) { "Change password failed" }
+            }
+    }
+
+    override suspend fun listSessions(): Result<List<SessionDto>> {
+        return accountDataSource.listSessions()
+            .onFailure { error ->
+                logger.e(error) { "Failed to list sessions" }
+            }
+    }
+
+    override suspend fun revokeSession(sessionId: SessionId): Result<Unit> {
+        return accountDataSource.revokeSession(sessionId)
+            .onFailure { error ->
+                logger.e(error) { "Failed to revoke session: $sessionId" }
+            }
+    }
+
+    override suspend fun revokeOtherSessions(): Result<Unit> {
+        return accountDataSource.revokeOtherSessions()
+            .onFailure { error ->
+                logger.e(error) { "Failed to revoke other sessions" }
             }
     }
 

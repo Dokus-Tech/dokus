@@ -2,6 +2,7 @@ package tech.dokus.domain.routes
 
 import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.ids.SessionId
 
 /**
  * Type-safe route definitions for Account API (authenticated endpoints).
@@ -55,9 +56,44 @@ class Account {
 
     /**
      * POST /api/v1/account/email-verifications
-     * Legacy endpoint retained for contract stability (no-op on server)
+     * Resend verification email for the current authenticated user.
      */
     @Serializable
     @Resource("email-verifications")
     class EmailVerifications(val parent: Account = Account())
+
+    /**
+     * POST /api/v1/account/password
+     * Change account password for the authenticated user.
+     */
+    @Serializable
+    @Resource("password")
+    class Password(val parent: Account = Account())
+
+    /**
+     * Session management endpoints.
+     * GET /api/v1/account/sessions - List active sessions.
+     */
+    @Serializable
+    @Resource("sessions")
+    class Sessions(val parent: Account = Account()) {
+        /**
+         * DELETE /api/v1/account/sessions/{sessionId}
+         * Revoke a specific session.
+         */
+        @Serializable
+        @Resource("{sessionId}")
+        class ById(
+            val parent: Sessions,
+            val sessionId: SessionId
+        )
+
+        /**
+         * POST /api/v1/account/sessions/revoke-others
+         * Revoke all sessions except the current one.
+         */
+        @Serializable
+        @Resource("revoke-others")
+        class RevokeOthers(val parent: Sessions = Sessions())
+    }
 }

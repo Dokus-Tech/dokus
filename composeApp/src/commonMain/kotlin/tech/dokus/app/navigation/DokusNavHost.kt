@@ -81,8 +81,7 @@ fun DokusNavHost(
                     logger.d { "Collecting deeplink state: $deepLink" }
                     delay(0.5.seconds)
 
-                    if (deepLink.path.startsWith(KnownDeepLinks.ShareImport.path.path)) {
-                        val batchId = DeepLinks.extractShareImportBatchId(deepLink)
+                    DeepLinks.extractShareImportBatchId(deepLink)?.let { batchId ->
                         PlatformShareImportBridge.consumeBatch(batchId)
                             .onSuccess { files ->
                                 if (files.isNotEmpty()) {
@@ -94,6 +93,16 @@ fun DokusNavHost(
                             .onFailure { error ->
                                 logger.e(error) { "Failed to consume share batch" }
                             }
+                        return@collect
+                    }
+
+                    DeepLinks.extractResetPasswordToken(deepLink)?.let { token ->
+                        navController.navigateTo(AuthDestination.ResetPassword(token))
+                        return@collect
+                    }
+
+                    DeepLinks.extractVerifyEmailToken(deepLink)?.let { token ->
+                        navController.navigateTo(AuthDestination.VerifyEmail(token))
                         return@collect
                     }
 

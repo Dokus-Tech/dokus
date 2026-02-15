@@ -10,11 +10,14 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import tech.dokus.domain.DisplayName
+import tech.dokus.domain.Email
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.Name
+import tech.dokus.domain.Password
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpsertTenantAddressRequest
@@ -103,5 +106,73 @@ internal class CreateTenantUseCaseImpl(
             vatNumber = vatNumber,
             address = address
         )
+    }
+}
+
+internal class RequestPasswordResetUseCaseImpl(
+    private val authGateway: AuthGateway
+) : RequestPasswordResetUseCase {
+    override suspend fun invoke(email: Email): Result<Unit> {
+        return authGateway.requestPasswordReset(email)
+    }
+}
+
+internal class ResetPasswordUseCaseImpl(
+    private val authGateway: AuthGateway
+) : ResetPasswordUseCase {
+    override suspend fun invoke(resetToken: String, newPassword: Password): Result<Unit> {
+        return authGateway.resetPassword(
+            resetToken = resetToken,
+            newPassword = newPassword.value
+        )
+    }
+}
+
+internal class VerifyEmailUseCaseImpl(
+    private val authGateway: AuthGateway
+) : VerifyEmailUseCase {
+    override suspend fun invoke(token: String): Result<Unit> {
+        return authGateway.verifyEmail(token)
+    }
+}
+
+internal class ResendVerificationEmailUseCaseImpl(
+    private val authGateway: AuthGateway
+) : ResendVerificationEmailUseCase {
+    override suspend fun invoke(): Result<Unit> {
+        return authGateway.resendVerificationEmail()
+    }
+}
+
+internal class ChangePasswordUseCaseImpl(
+    private val authGateway: AuthGateway
+) : ChangePasswordUseCase {
+    override suspend fun invoke(currentPassword: Password, newPassword: Password): Result<Unit> {
+        return authGateway.changePassword(
+            currentPassword = currentPassword,
+            newPassword = newPassword
+        )
+    }
+}
+
+internal class ListSessionsUseCaseImpl(
+    private val authGateway: AuthGateway
+) : ListSessionsUseCase {
+    override suspend fun invoke() = authGateway.listSessions()
+}
+
+internal class RevokeSessionUseCaseImpl(
+    private val authGateway: AuthGateway
+) : RevokeSessionUseCase {
+    override suspend fun invoke(sessionId: SessionId): Result<Unit> {
+        return authGateway.revokeSession(sessionId)
+    }
+}
+
+internal class RevokeOtherSessionsUseCaseImpl(
+    private val authGateway: AuthGateway
+) : RevokeOtherSessionsUseCase {
+    override suspend fun invoke(): Result<Unit> {
+        return authGateway.revokeOtherSessions()
     }
 }

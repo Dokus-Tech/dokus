@@ -14,12 +14,14 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.profile_verification_email_sent
 import tech.dokus.aura.resources.profile_reset_to_cloud_failed
 import tech.dokus.aura.resources.profile_save_success
 import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.mvi.ProfileSettingsAction
 import tech.dokus.features.auth.mvi.ProfileSettingsContainer
+import tech.dokus.features.auth.mvi.ProfileSettingsIntent
 import tech.dokus.features.auth.presentation.auth.screen.ProfileSettingsScreen
 import tech.dokus.features.auth.usecases.ConnectToServerUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCase
@@ -44,6 +46,7 @@ fun ProfileSettingsRoute(
     val currentServer by serverConfigManager.currentServer.collectAsState()
 
     var pendingSuccess by remember { mutableStateOf(false) }
+    var pendingVerificationSent by remember { mutableStateOf(false) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var isLoggingOut by remember { mutableStateOf(false) }
 
@@ -53,6 +56,7 @@ fun ProfileSettingsRoute(
         null
     }
     val resetToCloudFailedMessage = stringResource(Res.string.profile_reset_to_cloud_failed)
+    val verificationSentMessage = stringResource(Res.string.profile_verification_email_sent)
     val errorMessage = pendingError?.localized
 
     LaunchedEffect(saveSuccessMessage) {
@@ -69,10 +73,21 @@ fun ProfileSettingsRoute(
         }
     }
 
+    LaunchedEffect(pendingVerificationSent) {
+        if (pendingVerificationSent) {
+            snackbarHostState.showSnackbar(verificationSentMessage)
+            pendingVerificationSent = false
+        }
+    }
+
     val state by container.store.subscribe { action ->
         when (action) {
             ProfileSettingsAction.ShowSaveSuccess -> pendingSuccess = true
             is ProfileSettingsAction.ShowSaveError -> pendingError = action.error
+            ProfileSettingsAction.ShowVerificationEmailSent -> pendingVerificationSent = true
+            is ProfileSettingsAction.ShowVerificationEmailError -> pendingError = action.error
+            ProfileSettingsAction.NavigateToChangePassword -> navController.navigateTo(AuthDestination.ChangePassword)
+            ProfileSettingsAction.NavigateToMySessions -> navController.navigateTo(AuthDestination.MySessions)
             ProfileSettingsAction.NavigateBack -> navController.navigateUp()
         }
     }
@@ -83,6 +98,9 @@ fun ProfileSettingsRoute(
         isLoggingOut = isLoggingOut,
         snackbarHostState = snackbarHostState,
         onIntent = { container.store.intent(it) },
+        onResendVerification = { container.store.intent(ProfileSettingsIntent.ResendVerificationClicked) },
+        onChangePassword = { container.store.intent(ProfileSettingsIntent.ChangePasswordClicked) },
+        onMySessions = { container.store.intent(ProfileSettingsIntent.MySessionsClicked) },
         onChangeServer = { navController.navigateTo(AuthDestination.ServerConnection()) },
         onResetToCloud = {
             scope.launch {

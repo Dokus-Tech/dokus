@@ -13,6 +13,7 @@ import tech.dokus.domain.ids.UserId
  * @property name The user's full name
  * @property tenantId The tenant identifier
  * @property roles Set of roles assigned to the user
+ * @property sessionJti JWT session identifier for the current access token
  */
 @Serializable
 data class AuthenticationInfo(
@@ -20,5 +21,6 @@ data class AuthenticationInfo(
     val email: String,
     val name: String,
     val tenantId: TenantId?,
-    val roles: Set<String>
+    val roles: Set<String>,
+    val sessionJti: String? = null
 )

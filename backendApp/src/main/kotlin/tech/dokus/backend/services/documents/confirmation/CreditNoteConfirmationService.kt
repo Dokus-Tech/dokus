@@ -1,14 +1,14 @@
 package tech.dokus.backend.services.documents.confirmation
 
-import tech.dokus.backend.util.isUniqueViolation
 import tech.dokus.backend.services.cashflow.CreditNoteService
+import tech.dokus.backend.util.isUniqueViolation
 import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.documents.DocumentLinkRepository
-import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.CreditNoteType
 import tech.dokus.domain.enums.CreditNoteStatus
+import tech.dokus.domain.enums.CreditNoteType
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.SettlementIntent
 import tech.dokus.domain.exceptions.DokusException
@@ -93,7 +93,9 @@ class CreditNoteConfirmationService(
 
             isReconfirm -> {
                 if (existingCreditNote.status !in setOf(CreditNoteStatus.Draft, CreditNoteStatus.Confirmed)) {
-                    throw DokusException.BadRequest("Cannot re-confirm credit note in status: ${existingCreditNote.status}")
+                    throw DokusException.BadRequest(
+                        "Cannot re-confirm credit note in status: ${existingCreditNote.status}"
+                    )
                 }
 
                 val request = requestBase.copy(settlementIntent = existingCreditNote.settlementIntent)

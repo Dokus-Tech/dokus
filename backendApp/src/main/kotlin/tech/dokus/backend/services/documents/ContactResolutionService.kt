@@ -11,14 +11,14 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.contact.ContactAddressInput
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactMatchScore
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
-import tech.dokus.domain.model.contact.ContactAddressInput
-import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.entity.EntityStatus
@@ -348,7 +348,9 @@ class ContactResolutionService(
             if (healed.id == matchedContact.id && healed.name.value == targetName) {
                 logger.info(
                     "Healed payment alias contact {}: '{}' -> '{}'",
-                    matchedContact.id, currentName, targetName
+                    matchedContact.id,
+                    currentName,
+                    targetName
                 )
             }
         }

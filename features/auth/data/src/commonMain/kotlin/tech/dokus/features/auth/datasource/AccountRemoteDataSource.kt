@@ -1,10 +1,13 @@
 package tech.dokus.features.auth.datasource
 
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
+import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 
 /**
@@ -51,4 +54,24 @@ interface AccountRemoteDataSource {
      * @return Result indicating success or failure
      */
     suspend fun resendVerificationEmail(): Result<Unit>
+
+    /**
+     * Change the current user's password.
+     */
+    suspend fun changePassword(request: ChangePasswordRequest): Result<Unit>
+
+    /**
+     * List active sessions for the current user.
+     */
+    suspend fun listSessions(): Result<List<SessionDto>>
+
+    /**
+     * Revoke a specific session by id.
+     */
+    suspend fun revokeSession(sessionId: SessionId): Result<Unit>
+
+    /**
+     * Revoke all sessions except the current one.
+     */
+    suspend fun revokeOtherSessions(): Result<Unit>
 }

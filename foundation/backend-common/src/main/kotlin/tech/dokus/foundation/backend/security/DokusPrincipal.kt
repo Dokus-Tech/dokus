@@ -18,7 +18,8 @@ data class DokusPrincipal(
     val email: String,
     val name: String,
     val tenantId: TenantId?,
-    val roles: Set<String>
+    val roles: Set<String>,
+    val sessionJti: String? = null
 ) : Principal {
 
     /**
@@ -54,7 +55,8 @@ data class DokusPrincipal(
                 email = authInfo.email,
                 name = authInfo.name,
                 tenantId = authInfo.tenantId,
-                roles = authInfo.roles
+                roles = authInfo.roles,
+                sessionJti = authInfo.sessionJti
             )
         }
     }

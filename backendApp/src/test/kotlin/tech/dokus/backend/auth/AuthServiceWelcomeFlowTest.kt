@@ -51,7 +51,7 @@ class AuthServiceWelcomeFlowTest {
     )
 
     @Test
-    fun `register does not send verification email or welcome email`() {
+    fun `register sends verification email and does not schedule welcome email`() {
         val user = testUser()
 
         coEvery { userRepository.register(any(), any(), any(), any()) } returns user
@@ -61,8 +61,11 @@ class AuthServiceWelcomeFlowTest {
             refreshToken = "refresh",
             expiresIn = 3600
         )
-        coEvery { refreshTokenRepository.saveRefreshToken(any(), any(), any()) } returns Result.success(Unit)
+        coEvery {
+            refreshTokenRepository.saveRefreshToken(any(), any(), any(), any(), any(), any(), any(), any())
+        } returns Result.success(Unit)
         coEvery { userRepository.recordSuccessfulLogin(any(), any()) } returns true
+        coEvery { emailVerificationService.sendVerificationEmail(any(), any()) } returns Result.success(Unit)
 
         val result = runBlocking {
             authService.register(
@@ -77,7 +80,7 @@ class AuthServiceWelcomeFlowTest {
 
         assertTrue(result.isSuccess)
         coVerify(exactly = 1) { userRepository.recordSuccessfulLogin(user.id, any()) }
-        coVerify(exactly = 0) { emailVerificationService.sendVerificationEmail(any(), any()) }
+        coVerify(exactly = 1) { emailVerificationService.sendVerificationEmail(user.id, user.email.value) }
         coVerify(exactly = 0) { welcomeEmailService.scheduleIfEligible(any(), any()) }
     }
 
@@ -105,7 +108,9 @@ class AuthServiceWelcomeFlowTest {
             expiresIn = 3600
         )
         coEvery { refreshTokenRepository.countActiveForUser(user.id) } returns 0
-        coEvery { refreshTokenRepository.saveRefreshToken(any(), any(), any()) } returns Result.success(Unit)
+        coEvery {
+            refreshTokenRepository.saveRefreshToken(any(), any(), any(), any(), any(), any(), any(), any())
+        } returns Result.success(Unit)
         coEvery { rateLimitService.resetLoginAttempts(any()) } returns Unit
         coEvery { userRepository.recordSuccessfulLogin(any(), any()) } returns true
         coEvery { welcomeEmailService.scheduleIfEligible(user.id, tenantId) } returns Result.success(Unit)
@@ -124,15 +129,18 @@ class AuthServiceWelcomeFlowTest {
     }
 
     @Test
-    fun `resend verification email is a no-op success`() {
+    fun `resend verification email delegates to verification service`() {
         val userId = UserId.generate()
+        coEvery { rateLimitService.checkLoginAttempts("email-resend:${userId}") } returns Result.success(Unit)
+        coEvery { rateLimitService.recordFailedLogin("email-resend:${userId}") } returns Unit
+        coEvery { emailVerificationService.resendVerificationEmail(userId) } returns Result.success(Unit)
 
         val result = runBlocking {
             authService.resendVerificationEmail(userId)
         }
 
         assertTrue(result.isSuccess)
-        coVerify(exactly = 0) { emailVerificationService.resendVerificationEmail(any()) }
+        coVerify(exactly = 1) { emailVerificationService.resendVerificationEmail(userId) }
     }
 
     @Test
@@ -158,7 +166,9 @@ class AuthServiceWelcomeFlowTest {
             expiresIn = 3600
         )
         coEvery { refreshTokenRepository.countActiveForUser(user.id) } returns 0
-        coEvery { refreshTokenRepository.saveRefreshToken(any(), any(), any()) } returns Result.success(Unit)
+        coEvery {
+            refreshTokenRepository.saveRefreshToken(any(), any(), any(), any(), any(), any(), any(), any())
+        } returns Result.success(Unit)
         coEvery { userRepository.hasFirstSignIn(user.id) } returns true
         coEvery { userRepository.hasWelcomeEmailSent(user.id) } returns false
         coEvery { welcomeEmailService.scheduleIfEligible(user.id, tenantId) } returns Result.success(Unit)

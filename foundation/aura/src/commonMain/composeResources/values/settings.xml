@@ -30,14 +30,25 @@
     <string name="profile_first_name">First Name</string>
     <string name="profile_last_name">Last Name</string>
     <string name="profile_email">Email</string>
+    <string name="profile_email_verification">Email Verification</string>
+    <string name="profile_email_verified">Verified</string>
+    <string name="profile_email_not_verified">Not verified</string>
+    <string name="profile_resend_verification">Resend verification email</string>
+    <string name="profile_verification_email_sent">Verification email sent</string>
+    <string name="profile_verification_email_failed">Failed to resend verification email</string>
     <string name="profile_change_password">Change Password</string>
+    <string name="profile_change_password_title">Change Password</string>
+    <string name="profile_change_password_description">Update your account password.</string>
+    <string name="profile_change_password_save">Change password</string>
     <string name="profile_current_password">Current Password</string>
     <string name="profile_new_password">New Password</string>
     <string name="profile_confirm_password">Confirm Password</string>
+    <string name="profile_password_change_failed">Failed to change password</string>
     <string name="profile_danger_zone">Danger Zone</string>
     <string name="profile_deactivate_account">Deactivate Account</string>
     <string name="profile_deactivate_warning">Deactivating your account will remove access to all workspaces.</string>
     <string name="profile_password_changed">Password changed successfully</string>
+    <string name="profile_change_password_warning">Changing your password will sign you out of all other devices.</string>
     <string name="profile_logout">Log Out</string>
     <string name="profile_logout_description">Sign out from this device</string>
     <string name="profile_logging_out">Logging out...</string>
@@ -48,6 +59,15 @@
     <string name="profile_save_error">Failed to update profile</string>
     <string name="profile_load_failed">Failed to load profile</string>
     <string name="profile_reset_to_cloud_failed">Failed to reset to cloud</string>
+    <string name="profile_sessions">My Sessions</string>
+    <string name="profile_sessions_description">Review and revoke your active sessions.</string>
+    <string name="profile_sessions_title">My Sessions</string>
+    <string name="profile_sessions_empty">No active sessions found</string>
+    <string name="profile_revoke_session">Revoke</string>
+    <string name="profile_revoke_other_sessions">Revoke Other Sessions</string>
+    <string name="profile_current_session">Current session</string>
+    <string name="profile_session_revoked">Session revoked</string>
+    <string name="profile_sessions_revoke_others_success">Other sessions revoked</string>
 
     <!-- Workspace Settings -->
     <string name="workspace_settings_title">Company Details</string>

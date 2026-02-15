@@ -38,6 +38,7 @@ sealed interface ProfileSettingsState : MVIState, DokusState<User> {
      */
     data class Viewing(
         val user: User,
+        val isResendingVerification: Boolean = false,
     ) : ProfileSettingsState
 
     /**
@@ -102,6 +103,15 @@ sealed interface ProfileSettingsIntent : MVIIntent {
     /** User clicked save button */
     data object SaveClicked : ProfileSettingsIntent
 
+    /** User requested verification email resend */
+    data object ResendVerificationClicked : ProfileSettingsIntent
+
+    /** User wants to open change-password screen */
+    data object ChangePasswordClicked : ProfileSettingsIntent
+
+    /** User wants to open sessions management screen */
+    data object MySessionsClicked : ProfileSettingsIntent
+
     /** User clicked back button */
     data object BackClicked : ProfileSettingsIntent
 }
@@ -117,6 +127,18 @@ sealed interface ProfileSettingsAction : MVIAction {
 
     /** Profile save failed */
     data class ShowSaveError(val error: DokusException) : ProfileSettingsAction
+
+    /** Verification email resent successfully */
+    data object ShowVerificationEmailSent : ProfileSettingsAction
+
+    /** Verification email resend failed */
+    data class ShowVerificationEmailError(val error: DokusException) : ProfileSettingsAction
+
+    /** Navigate to change-password screen */
+    data object NavigateToChangePassword : ProfileSettingsAction
+
+    /** Navigate to sessions screen */
+    data object NavigateToMySessions : ProfileSettingsAction
 
     /** Navigate back to previous screen */
     data object NavigateBack : ProfileSettingsAction

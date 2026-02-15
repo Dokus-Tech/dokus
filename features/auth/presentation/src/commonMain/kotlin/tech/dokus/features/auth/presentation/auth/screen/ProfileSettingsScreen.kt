@@ -46,6 +46,9 @@ fun ProfileSettingsScreen(
     isLoggingOut: Boolean,
     snackbarHostState: SnackbarHostState,
     onIntent: (ProfileSettingsIntent) -> Unit,
+    onResendVerification: () -> Unit,
+    onChangePassword: () -> Unit,
+    onMySessions: () -> Unit,
     onChangeServer: () -> Unit,
     onResetToCloud: () -> Unit,
     onLogout: () -> Unit,
@@ -64,6 +67,9 @@ fun ProfileSettingsScreen(
             currentServer = currentServer,
             isLoggingOut = isLoggingOut,
             onIntent = onIntent,
+            onResendVerification = onResendVerification,
+            onChangePassword = onChangePassword,
+            onMySessions = onMySessions,
             onChangeServer = onChangeServer,
             onResetToCloud = onResetToCloud,
             onLogout = onLogout,
@@ -82,6 +88,9 @@ fun ProfileSettingsContent(
     currentServer: ServerConfig,
     isLoggingOut: Boolean,
     onIntent: (ProfileSettingsIntent) -> Unit,
+    onResendVerification: () -> Unit,
+    onChangePassword: () -> Unit,
+    onMySessions: () -> Unit,
     onChangeServer: () -> Unit,
     onResetToCloud: () -> Unit,
     onLogout: () -> Unit,
@@ -112,7 +121,10 @@ fun ProfileSettingsContent(
             is ProfileSettingsState.Viewing -> {
                 ProfileViewingSection(
                     state = state,
-                    onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) }
+                    onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
+                    onResendVerification = onResendVerification,
+                    onChangePasswordClick = onChangePassword,
+                    onMySessionsClick = onMySessions
                 )
                 DangerZoneSection()
             }

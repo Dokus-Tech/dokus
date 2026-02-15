@@ -22,6 +22,18 @@ sealed interface AuthDestination : NavigationDestination {
     data object PasswordChangeRequested : AuthDestination
 
     @Serializable
+    @SerialName("reset-password")
+    data class ResetPassword(val token: String) : AuthDestination
+
+    @Serializable
+    @SerialName("verify-email")
+    data class VerifyEmail(val token: String) : AuthDestination
+
+    @Serializable
+    @SerialName("change-password")
+    data object ChangePassword : AuthDestination
+
+    @Serializable
     @SerialName("workspace/select")
     data object WorkspaceSelect : AuthDestination
 

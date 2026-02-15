@@ -9,6 +9,7 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Email
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.features.auth.usecases.RequestPasswordResetUseCase
 import tech.dokus.foundation.platform.Logger
 
 // Number of characters to show in email preview for logging (privacy)
@@ -22,7 +23,9 @@ internal typealias ForgotPasswordCtx = PipelineContext<ForgotPasswordState, Forg
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
-internal class ForgotPasswordContainer : Container<ForgotPasswordState, ForgotPasswordIntent, ForgotPasswordAction> {
+internal class ForgotPasswordContainer(
+    private val requestPasswordResetUseCase: RequestPasswordResetUseCase
+) : Container<ForgotPasswordState, ForgotPasswordIntent, ForgotPasswordAction> {
 
     private val logger = Logger.forClass<ForgotPasswordContainer>()
 
@@ -62,13 +65,25 @@ internal class ForgotPasswordContainer : Container<ForgotPasswordState, ForgotPa
         // Validate email
         runCatching { email.validOrThrows }.fold(
             onSuccess = {
-                // TODO: Call password reset API when implemented
-                // For now, just transition to success state after validation
-                logger.i { "Password reset email validated, transitioning to success" }
-                updateState {
-                    ForgotPasswordState.Success(email = email)
-                }
-                action(ForgotPasswordAction.NavigateBack)
+                requestPasswordResetUseCase(email).fold(
+                    onSuccess = {
+                        logger.i { "Password reset requested successfully" }
+                        updateState {
+                            ForgotPasswordState.Success(email = email)
+                        }
+                        action(ForgotPasswordAction.NavigateBack)
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Password reset request failed" }
+                        updateState {
+                            ForgotPasswordState.Error(
+                                email = email,
+                                exception = error.asDokusException,
+                                retryHandler = { intent(ForgotPasswordIntent.SubmitClicked) }
+                            )
+                        }
+                    }
+                )
             },
             onFailure = { error ->
                 logger.e(error) { "Password reset validation failed" }

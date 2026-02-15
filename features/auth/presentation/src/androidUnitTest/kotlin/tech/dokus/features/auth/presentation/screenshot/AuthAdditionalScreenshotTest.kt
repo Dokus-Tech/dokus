@@ -217,6 +217,9 @@ private fun ProfileSettingsPreview(state: ProfileSettingsState) {
         isLoggingOut = false,
         snackbarHostState = snackbarHostState,
         onIntent = {},
+        onResendVerification = {},
+        onChangePassword = {},
+        onMySessions = {},
         onChangeServer = {},
         onResetToCloud = {},
         onLogout = {}

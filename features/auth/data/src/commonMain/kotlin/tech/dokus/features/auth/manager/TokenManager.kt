@@ -96,6 +96,10 @@ class TokenManagerImpl(
         }
     }
 
+    override suspend fun getRefreshToken(): String? {
+        return tokenStorage.getRefreshToken()
+    }
+
     /**
      * Refreshes the access token using the refresh token.
      *
