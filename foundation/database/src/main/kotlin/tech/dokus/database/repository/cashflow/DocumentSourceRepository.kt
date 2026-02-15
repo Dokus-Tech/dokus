@@ -139,7 +139,7 @@ class DocumentSourceRepository {
     }
 
     suspend fun countLinkedSources(tenantId: TenantId, documentId: DocumentId): Int = newSuspendedTransaction {
-        (DocumentSourcesTable innerJoin DocumentBlobsTable)
+        DocumentSourcesTable
             .selectAll()
             .where {
                 (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -155,7 +155,7 @@ class DocumentSourceRepository {
         documentId: DocumentId,
         includeDetached: Boolean = true
     ): Int = newSuspendedTransaction {
-        (DocumentSourcesTable innerJoin DocumentBlobsTable)
+        DocumentSourcesTable
             .selectAll()
             .where {
                 var where = (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -339,26 +339,9 @@ class DocumentSourceRepository {
     suspend fun selectDefaultSource(
         tenantId: TenantId,
         documentId: DocumentId
-    ): DocumentSourceSummary? = newSuspendedTransaction {
-        val trust = mapOf(
-            DocumentSource.Peppol to 4,
-            DocumentSource.Email to 3,
-            DocumentSource.Upload to 2,
-            DocumentSource.Manual to 1
-        )
-
-        (DocumentSourcesTable innerJoin DocumentBlobsTable)
-            .selectAll()
-            .where {
-                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentSourcesTable.documentId eq UUID.fromString(documentId.toString())) and
-                    (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
-            }
-            .map { it.toSourceSummary() }
-            .maxWithOrNull(
-                compareBy<DocumentSourceSummary> { trust[it.sourceChannel] ?: 0 }
-                    .thenBy { it.arrivalAt }
-            )
+    ): DocumentSourceSummary? {
+        val sources = listByDocument(tenantId, documentId, includeDetached = false)
+        return selectDefaultSourceFromList(sources)
     }
 
     private fun ResultRow.toSourceSummary(): DocumentSourceSummary {
@@ -412,4 +395,20 @@ class DocumentSourceRepository {
 
         return previous[right.length]
     }
+}
+
+private val SOURCE_TRUST_PRIORITY = mapOf(
+    DocumentSource.Peppol to 4,
+    DocumentSource.Email to 3,
+    DocumentSource.Upload to 2,
+    DocumentSource.Manual to 1
+)
+
+fun selectDefaultSourceFromList(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
+    return sources
+        .filter { it.status == DocumentSourceStatus.Linked }
+        .maxWithOrNull(
+            compareBy<DocumentSourceSummary> { SOURCE_TRUST_PRIORITY[it.sourceChannel] ?: 0 }
+                .thenBy { it.arrivalAt }
+        )
 }

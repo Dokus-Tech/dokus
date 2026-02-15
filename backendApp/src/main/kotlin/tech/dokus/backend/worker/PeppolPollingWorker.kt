@@ -36,6 +36,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.NotificationReferenceType
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CreditNoteDraftData
@@ -285,140 +286,7 @@ class PeppolPollingWorker(
 
             val result = peppolService.pollInbox(tenantId) { draftData, senderPeppolId, tid, documentDetail ->
                 runCatching {
-                    // Find PDF attachment (if any)
-                    val pdfAttachment = documentDetail
-                        ?.let(::extractAttachments)
-                        ?.firstOrNull { it.mimeCode == "application/pdf" && !it.embeddedDocument.isNullOrEmpty() }
-
-                    val artifact = when {
-                        pdfAttachment != null -> {
-                            val encodedAttachment = requireNotNull(pdfAttachment.embeddedDocument)
-                            val pdfBytes = try {
-                                decodePeppolAttachmentBase64(encodedAttachment)
-                            } catch (e: IllegalArgumentException) {
-                                throw IllegalArgumentException(
-                                    "Invalid PEPPOL PDF attachment base64 (attachmentId=${pdfAttachment.id}, filename=${pdfAttachment.filename})",
-                                    e
-                                )
-                            }
-                            Triple(
-                                pdfBytes,
-                                pdfAttachment.filename.ifBlank {
-                                    "peppol-${documentNumberOf(draftData) ?: "unknown"}.pdf"
-                                },
-                                "application/pdf"
-                            )
-                        }
-
-                        !documentDetail?.xml.isNullOrBlank() -> {
-                            val xmlBytes = requireNotNull(documentDetail).xml.encodeToByteArray()
-                            val fallbackId = documentDetail.envelopeId ?: documentDetail.id
-                            Triple(
-                                xmlBytes,
-                                "peppol-$fallbackId.xml",
-                                "application/xml"
-                            )
-                        }
-
-                        else -> {
-                            // We must store an actual artifact to keep downloads functional.
-                            error("Peppol document has no PDF attachment and no XML payload")
-                        }
-                    }
-
-                    val intake = documentTruthService.intakeBytes(
-                        tenantId = tid,
-                        filename = artifact.second,
-                        contentType = artifact.third,
-                        prefix = "peppol",
-                        fileBytes = artifact.first,
-                        sourceChannel = DocumentSource.Peppol
-                    )
-                    val documentId = intake.documentId
-
-                    if (intake.outcome == DocumentIntakeOutcome.LinkedToExisting) {
-                        logger.info(
-                            "PEPPOL artifact linked to existing document {} via exact-byte match",
-                            documentId
-                        )
-                        return@runCatching documentId
-                    }
-
-                    // Create ingestion run first (satisfies FK constraint on document_drafts)
-                    val runId = intake.runId
-                        ?: ingestionRunRepository.createRun(
-                            documentId = documentId,
-                            tenantId = tid,
-                            sourceId = intake.sourceId
-                        )
-                    ingestionRunRepository.markAsProcessing(runId, "peppol")
-                    ingestionRunRepository.markAsSucceeded(
-                        runId = runId,
-                        rawText = null,
-                        rawExtractionJson = json.encodeToString(draftData),
-                        confidence = 1.0 // Peppol data is authoritative
-                    )
-
-                    // Create draft with extracted data
-                    val documentType = documentTypeFor(draftData)
-                    draftRepository.createOrUpdateFromIngestion(
-                        documentId = documentId,
-                        tenantId = tid,
-                        runId = runId,
-                        extractedData = draftData,
-                        documentType = documentType,
-                        force = true
-                    )
-
-                    val matchOutcome = documentTruthService.applyPostExtractionMatching(
-                        tenantId = tid,
-                        documentId = documentId,
-                        sourceId = intake.sourceId,
-                        draftData = draftData,
-                        extractedSnapshotJson = json.encodeToString(draftData)
-                    )
-                    if (matchOutcome.documentId != documentId ||
-                        matchOutcome.outcome == DocumentIntakeOutcome.PendingMatchReview
-                    ) {
-                        logger.info(
-                            "PEPPOL source {} resolved by truth matcher with outcome {} (target={})",
-                            intake.sourceId,
-                            matchOutcome.outcome,
-                            matchOutcome.documentId
-                        )
-                        return@runCatching matchOutcome.documentId
-                    }
-
-                    val counterparty = extractCounterparty(draftData)
-                    val linkedContactId = findOrCreateContactForPeppol(
-                        tenantId = tid,
-                        counterpartyName = counterparty.name,
-                        counterpartyVatNumber = counterparty.vatNumber
-                    )
-
-                    // Auto-confirm if origin policy allows (PEPPOL is eligible only when base checks pass)
-                    val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
-                        tenantId = tid,
-                        documentId = documentId,
-                        source = DocumentSource.Peppol,
-                        documentType = documentType,
-                        draftData = draftData,
-                        auditPassed = peppolAuditPassed(draftData),
-                        confidence = 1.0,
-                        linkedContactId = linkedContactId,
-                        directionResolvedFromAiHintOnly = false
-                    )
-
-                    if (canAutoConfirm) {
-                        confirmationDispatcher.confirm(
-                            tenantId = tid,
-                            documentId = documentId,
-                            draftData = draftData,
-                            linkedContactId = linkedContactId
-                        ).getOrThrow()
-                    }
-
-                    documentId
+                    processIncomingPeppolDocument(draftData, senderPeppolId, tid, documentDetail)
                 }
             }
 
@@ -468,6 +336,143 @@ class PeppolPollingWorker(
         } finally {
             mutex.unlock()
         }
+    }
+
+    private suspend fun processIncomingPeppolDocument(
+        draftData: DocumentDraftData,
+        senderPeppolId: String,
+        tenantId: TenantId,
+        documentDetail: RecommandDocumentDetail?
+    ): DocumentId {
+        val pdfAttachment = documentDetail
+            ?.let(::extractAttachments)
+            ?.firstOrNull { it.mimeCode == "application/pdf" && !it.embeddedDocument.isNullOrEmpty() }
+
+        val artifact = when {
+            pdfAttachment != null -> {
+                val encodedAttachment = requireNotNull(pdfAttachment.embeddedDocument)
+                val pdfBytes = try {
+                    decodePeppolAttachmentBase64(encodedAttachment)
+                } catch (e: IllegalArgumentException) {
+                    throw IllegalArgumentException(
+                        "Invalid PEPPOL PDF attachment base64 (attachmentId=${pdfAttachment.id}, filename=${pdfAttachment.filename})",
+                        e
+                    )
+                }
+                Triple(
+                    pdfBytes,
+                    pdfAttachment.filename.ifBlank {
+                        "peppol-${documentNumberOf(draftData) ?: "unknown"}.pdf"
+                    },
+                    "application/pdf"
+                )
+            }
+
+            !documentDetail?.xml.isNullOrBlank() -> {
+                val xmlBytes = requireNotNull(documentDetail).xml.encodeToByteArray()
+                val fallbackId = documentDetail.envelopeId ?: documentDetail.id
+                Triple(
+                    xmlBytes,
+                    "peppol-$fallbackId.xml",
+                    "application/xml"
+                )
+            }
+
+            else -> {
+                error("Peppol document has no PDF attachment and no XML payload")
+            }
+        }
+
+        val intake = documentTruthService.intakeBytes(
+            tenantId = tenantId,
+            filename = artifact.second,
+            contentType = artifact.third,
+            prefix = "peppol",
+            fileBytes = artifact.first,
+            sourceChannel = DocumentSource.Peppol
+        )
+        val documentId = intake.documentId
+
+        if (intake.outcome == DocumentIntakeOutcome.LinkedToExisting) {
+            logger.info(
+                "PEPPOL artifact linked to existing document {} via exact-byte match",
+                documentId
+            )
+            return documentId
+        }
+
+        val runId = intake.runId
+            ?: ingestionRunRepository.createRun(
+                documentId = documentId,
+                tenantId = tenantId,
+                sourceId = intake.sourceId
+            )
+        ingestionRunRepository.markAsProcessing(runId, "peppol")
+        ingestionRunRepository.markAsSucceeded(
+            runId = runId,
+            rawText = null,
+            rawExtractionJson = json.encodeToString(draftData),
+            confidence = 1.0
+        )
+
+        val documentType = documentTypeFor(draftData)
+        draftRepository.createOrUpdateFromIngestion(
+            documentId = documentId,
+            tenantId = tenantId,
+            runId = runId,
+            extractedData = draftData,
+            documentType = documentType,
+            force = true
+        )
+
+        val matchOutcome = documentTruthService.applyPostExtractionMatching(
+            tenantId = tenantId,
+            documentId = documentId,
+            sourceId = intake.sourceId,
+            draftData = draftData,
+            extractedSnapshotJson = json.encodeToString(draftData)
+        )
+        if (matchOutcome.documentId != documentId ||
+            matchOutcome.outcome == DocumentIntakeOutcome.PendingMatchReview
+        ) {
+            logger.info(
+                "PEPPOL source {} resolved by truth matcher with outcome {} (target={})",
+                intake.sourceId,
+                matchOutcome.outcome,
+                matchOutcome.documentId
+            )
+            return matchOutcome.documentId
+        }
+
+        val counterparty = extractCounterparty(draftData)
+        val linkedContactId = findOrCreateContactForPeppol(
+            tenantId = tenantId,
+            counterpartyName = counterparty.name,
+            counterpartyVatNumber = counterparty.vatNumber
+        )
+
+        val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
+            tenantId = tenantId,
+            documentId = documentId,
+            source = DocumentSource.Peppol,
+            documentType = documentType,
+            draftData = draftData,
+            auditPassed = peppolAuditPassed(draftData),
+            confidence = 1.0,
+            linkedContactId = linkedContactId,
+            directionResolvedFromAiHintOnly = false
+        )
+
+        if (canAutoConfirm) {
+            confirmationDispatcher.confirm(
+                tenantId = tenantId,
+                documentId = documentId,
+                draftData = draftData,
+                linkedContactId = linkedContactId
+            ).getOrThrow()
+        }
+
+        return documentId
     }
 
     private suspend fun resolveFullSyncForTenant(tenantId: TenantId): Boolean {

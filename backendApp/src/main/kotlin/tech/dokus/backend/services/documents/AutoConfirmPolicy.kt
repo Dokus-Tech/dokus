@@ -10,6 +10,7 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.processing.DocumentProcessingConstants
 
 class AutoConfirmPolicy {
@@ -31,7 +32,7 @@ class AutoConfirmPolicy {
         if (draftData is InvoiceDraftData && linkedContactId == null) return false
         if (draftData is CreditNoteDraftData && linkedContactId == null) return false
         if (!hasRequiredFieldsForAutoConfirm(draftData)) return false
-        if (directionResolvedFromAiHintOnly && draftData.requiresDirection()) return false
+        if (directionResolvedFromAiHintOnly) return false
         if (!isDirectionValid(draftData)) return false
         if (!isAmountPositive(draftData)) return false
         if (!auditPassed) return false
@@ -81,15 +82,4 @@ class AutoConfirmPolicy {
         }
     }
 
-    private fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
-        is InvoiceDraftData -> DocumentType.Invoice
-        is ReceiptDraftData -> DocumentType.Receipt
-        is CreditNoteDraftData -> DocumentType.CreditNote
-    }
-
-    private fun DocumentDraftData.requiresDirection(): Boolean = when (this) {
-        is InvoiceDraftData -> true
-        is ReceiptDraftData -> true
-        is CreditNoteDraftData -> true
-    }
 }

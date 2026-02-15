@@ -284,6 +284,7 @@ class DocumentUploadManager(
                     it.copy(
                         status = UploadStatus.COMPLETED,
                         progress = 1f,
+                        bytes = ByteArray(0),
                         documentId = document.id,
                         sourceId = intake.sourceId,
                         intakeOutcome = intake.outcome,

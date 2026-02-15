@@ -9,9 +9,13 @@ import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTrans
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.TenantId
+import java.sql.SQLException
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
+
+/** PostgreSQL SQL state for unique_violation. */
+private const val UNIQUE_VIOLATION_STATE = "23505"
 
 data class DocumentBlobSummary(
     val id: DocumentBlobId,
@@ -58,7 +62,7 @@ class DocumentBlobRepository {
         if (existing != null) return@newSuspendedTransaction existing
 
         val newId = DocumentBlobId.generate()
-        runCatching {
+        try {
             DocumentBlobsTable.insert {
                 it[id] = UUID.fromString(newId.toString())
                 it[DocumentBlobsTable.tenantId] = tenantUuid
@@ -67,8 +71,11 @@ class DocumentBlobRepository {
                 it[contentType] = payload.contentType
                 it[sizeBytes] = payload.sizeBytes
             }
-        }.onFailure {
-            // Unique race: fetch winner.
+        } catch (e: SQLException) {
+            // Only handle unique constraint violations (concurrent insert race).
+            // Re-throw everything else (network errors, disk failures, etc.) so
+            // real database problems are not silently masked as duplicates.
+            if (e.sqlState != UNIQUE_VIOLATION_STATE) throw e
             val raced = DocumentBlobsTable.selectAll()
                 .where {
                     (DocumentBlobsTable.tenantId eq tenantUuid) and
@@ -77,7 +84,7 @@ class DocumentBlobRepository {
                 .singleOrNull()
                 ?.toBlobSummary()
             if (raced != null) return@newSuspendedTransaction raced
-            throw it
+            throw e
         }
 
         DocumentBlobSummary(

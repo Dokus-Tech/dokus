@@ -265,7 +265,12 @@ private fun cashflowModule() = module {
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
     single { DocumentConfirmationDispatcher(get(), get(), get()) }
-    single { DocumentTruthService(get(), get(), get(), get(), get(), get(), get()) }
+    single {
+        val config = get<Config>()
+        val enableFuzzy = config.hasPath("documents.enableFuzzyMatching") &&
+            config.getBoolean("documents.enableFuzzyMatching")
+        DocumentTruthService(get(), get(), get(), get(), get(), get(), get(), enableFuzzy)
+    }
     singleOf(::CashflowProjectionReconciliationWorker)
 
     // PDF Preview

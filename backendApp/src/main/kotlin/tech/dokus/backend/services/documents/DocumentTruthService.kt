@@ -31,11 +31,25 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentIntakeOutcomeDto
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.tables.documents.DocumentBlobsTable
+import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
+import tech.dokus.database.tables.documents.DocumentsTable
+import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.IngestionRunId
 import java.security.MessageDigest
+import java.util.UUID
 
 data class DocumentIntakeServiceResult(
     val documentId: DocumentId,
@@ -77,7 +91,8 @@ class DocumentTruthService(
     private val draftRepository: DocumentDraftRepository,
     private val blobRepository: DocumentBlobRepository,
     private val sourceRepository: DocumentSourceRepository,
-    private val matchReviewRepository: DocumentMatchReviewRepository
+    private val matchReviewRepository: DocumentMatchReviewRepository,
+    private val enableFuzzyMatching: Boolean = false
 ) {
     private val logger = loggerFor()
 
@@ -91,6 +106,7 @@ class DocumentTruthService(
     ): DocumentIntakeServiceResult {
         val inputHash = sha256Hex(fileBytes)
 
+        // Phase 1: Ensure blob exists in storage + DB (idempotent, safe outside lock).
         val blob = blobRepository.getByInputHash(tenantId, inputHash) ?: run {
             val upload = storageService.uploadDocument(
                 tenantId = tenantId,
@@ -110,71 +126,102 @@ class DocumentTruthService(
             )
         }
 
-        val exactMatchDocumentId = sourceRepository.findLinkedDocumentByInputHash(tenantId, inputHash)
-        if (exactMatchDocumentId != null) {
-            val sourceId = sourceRepository.create(
-                tenantId = tenantId,
-                payload = DocumentSourceCreatePayload(
-                    documentId = exactMatchDocumentId,
-                    blobId = blob.id,
-                    sourceChannel = sourceChannel,
-                    status = DocumentSourceStatus.Linked,
-                    matchType = DocumentMatchType.ExactFile,
-                    filename = filename
+        // Phase 2: Atomic check-and-create within a single transaction + advisory lock.
+        // This prevents concurrent uploads of the same file from creating duplicate documents.
+        // We inline the SQL here (bypassing repos) because each repo method opens its own
+        // transaction, which would break atomicity. The advisory lock is scoped to this
+        // transaction and released on commit.
+        return newSuspendedTransaction {
+            val lockKey = ("intake:$tenantId:$inputHash").hashCode().toLong()
+            exec("SELECT pg_advisory_xact_lock($lockKey)")
+
+            val tenantUuid = UUID.fromString(tenantId.toString())
+
+            // Check for existing linked source with same input hash
+            val existingDocId = (DocumentSourcesTable innerJoin DocumentBlobsTable)
+                .selectAll()
+                .where {
+                    (DocumentSourcesTable.tenantId eq tenantUuid) and
+                        (DocumentBlobsTable.inputHash eq inputHash) and
+                        (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
+                }
+                .orderBy(DocumentSourcesTable.arrivalAt, SortOrder.DESC)
+                .firstOrNull()
+                ?.let { DocumentId.parse(it[DocumentSourcesTable.documentId].toString()) }
+
+            if (existingDocId != null) {
+                val sourceId = DocumentSourceId.generate()
+                DocumentSourcesTable.insert {
+                    it[id] = UUID.fromString(sourceId.toString())
+                    it[DocumentSourcesTable.tenantId] = tenantUuid
+                    it[documentId] = UUID.fromString(existingDocId.toString())
+                    it[blobId] = UUID.fromString(blob.id.toString())
+                    it[DocumentSourcesTable.sourceChannel] = sourceChannel
+                    it[status] = DocumentSourceStatus.Linked
+                    it[matchType] = DocumentMatchType.ExactFile
+                    it[DocumentSourcesTable.filename] = filename
+                }
+                val sourceCount = DocumentSourcesTable.selectAll()
+                    .where {
+                        (DocumentSourcesTable.tenantId eq tenantUuid) and
+                            (DocumentSourcesTable.documentId eq UUID.fromString(existingDocId.toString())) and
+                            (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
+                    }
+                    .count()
+                    .toInt()
+
+                recordIntakeOutcome(sourceChannel, DocumentIntakeOutcome.LinkedToExisting)
+                DocumentIntakeServiceResult(
+                    documentId = existingDocId,
+                    sourceId = sourceId,
+                    runId = null,
+                    outcome = DocumentIntakeOutcome.LinkedToExisting,
+                    linkedDocumentId = existingDocId,
+                    sourceCount = sourceCount,
+                    matchType = DocumentMatchType.ExactFile
                 )
-            )
-            val sourceCount = sourceRepository.countLinkedSources(tenantId, exactMatchDocumentId)
-            recordIntakeOutcome(
-                sourceChannel = sourceChannel,
-                outcome = DocumentIntakeOutcome.LinkedToExisting
-            )
-            return DocumentIntakeServiceResult(
-                documentId = exactMatchDocumentId,
-                sourceId = sourceId,
-                runId = null,
-                outcome = DocumentIntakeOutcome.LinkedToExisting,
-                linkedDocumentId = exactMatchDocumentId,
-                sourceCount = sourceCount,
-                matchType = DocumentMatchType.ExactFile
-            )
+            } else {
+                val documentId = DocumentId.generate()
+                DocumentsTable.insert {
+                    it[DocumentsTable.id] = UUID.fromString(documentId.toString())
+                    it[DocumentsTable.tenantId] = tenantUuid
+                    it[DocumentsTable.filename] = filename
+                    it[DocumentsTable.contentType] = blob.contentType
+                    it[DocumentsTable.sizeBytes] = blob.sizeBytes
+                    it[DocumentsTable.storageKey] = blob.storageKey
+                    it[DocumentsTable.contentHash] = null
+                    it[DocumentsTable.documentSource] = sourceChannel
+                }
+
+                val sourceId = DocumentSourceId.generate()
+                DocumentSourcesTable.insert {
+                    it[id] = UUID.fromString(sourceId.toString())
+                    it[DocumentSourcesTable.tenantId] = tenantUuid
+                    it[DocumentSourcesTable.documentId] = UUID.fromString(documentId.toString())
+                    it[DocumentSourcesTable.blobId] = UUID.fromString(blob.id.toString())
+                    it[DocumentSourcesTable.sourceChannel] = sourceChannel
+                    it[status] = DocumentSourceStatus.Linked
+                    it[DocumentSourcesTable.filename] = filename
+                }
+
+                val runId = IngestionRunId.generate()
+                DocumentIngestionRunsTable.insert {
+                    it[DocumentIngestionRunsTable.id] = UUID.fromString(runId.toString())
+                    it[DocumentIngestionRunsTable.documentId] = UUID.fromString(documentId.toString())
+                    it[DocumentIngestionRunsTable.tenantId] = tenantUuid
+                    it[DocumentIngestionRunsTable.sourceId] = UUID.fromString(sourceId.toString())
+                    it[DocumentIngestionRunsTable.status] = IngestionStatus.Queued
+                }
+
+                DocumentIntakeServiceResult(
+                    documentId = documentId,
+                    sourceId = sourceId,
+                    runId = runId,
+                    outcome = DocumentIntakeOutcome.NewDocument,
+                    sourceCount = 1
+                )
+            }
         }
-
-        val documentId = documentRepository.create(
-            tenantId = tenantId,
-            payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
-                filename = filename,
-                contentType = blob.contentType,
-                sizeBytes = blob.sizeBytes,
-                storageKey = blob.storageKey,
-                contentHash = null,
-                source = sourceChannel
-            )
-        )
-
-        val sourceId = sourceRepository.create(
-            tenantId = tenantId,
-            payload = DocumentSourceCreatePayload(
-                documentId = documentId,
-                blobId = blob.id,
-                sourceChannel = sourceChannel,
-                status = DocumentSourceStatus.Linked,
-                filename = filename
-            )
-        )
-
-        val runId = ingestionRepository.createRun(
-            documentId = documentId,
-            tenantId = tenantId,
-            sourceId = sourceId
-        )
-
-        return DocumentIntakeServiceResult(
-            documentId = documentId,
-            sourceId = sourceId,
-            runId = runId,
-            outcome = DocumentIntakeOutcome.NewDocument,
-            sourceCount = 1
-        )
     }
 
     suspend fun applyPostExtractionMatching(
@@ -255,34 +302,36 @@ class DocumentTruthService(
                 }
             }
 
-            val fuzzyCandidates = sourceRepository.findFuzzyCandidates(
-                tenantId = tenantId,
-                normalizedSupplierVat = identity.normalizedSupplierVat,
-                normalizedDocumentNumber = identity.normalizedDocumentNumber,
-                documentType = identity.documentType,
-                direction = identity.direction,
-                excludeDocumentId = documentId,
-                maxDistance = 2
-            )
-            val bestFuzzy = fuzzyCandidates.firstOrNull()
-            if (bestFuzzy != null) {
-                val existingDraft = draftRepository.getByDocumentId(bestFuzzy.documentId, tenantId)?.extractedData
-                val fuzzyAssessment = buildFuzzyAssessment(
-                    incoming = draftData,
-                    existing = existingDraft
-                )
-                val result = createPendingReview(
+            if (enableFuzzyMatching) {
+                val fuzzyCandidates = sourceRepository.findFuzzyCandidates(
                     tenantId = tenantId,
-                    sourceId = resolvedSource.id,
-                    sourceDocumentId = documentId,
-                    targetDocumentId = bestFuzzy.documentId,
-                    reason = DocumentMatchReviewReasonType.FuzzyCandidate,
-                    summary = fuzzyAssessment.summary,
-                    aiConfidence = fuzzyAssessment.confidence,
-                    matchType = DocumentMatchType.FuzzyCandidate
+                    normalizedSupplierVat = identity.normalizedSupplierVat,
+                    normalizedDocumentNumber = identity.normalizedDocumentNumber,
+                    documentType = identity.documentType,
+                    direction = identity.direction,
+                    excludeDocumentId = documentId,
+                    maxDistance = 2
                 )
-                recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
-                return result
+                val bestFuzzy = fuzzyCandidates.firstOrNull()
+                if (bestFuzzy != null) {
+                    val existingDraft = draftRepository.getByDocumentId(bestFuzzy.documentId, tenantId)?.extractedData
+                    val fuzzyAssessment = buildFuzzyAssessment(
+                        incoming = draftData,
+                        existing = existingDraft
+                    )
+                    val result = createPendingReview(
+                        tenantId = tenantId,
+                        sourceId = resolvedSource.id,
+                        sourceDocumentId = documentId,
+                        targetDocumentId = bestFuzzy.documentId,
+                        reason = DocumentMatchReviewReasonType.FuzzyCandidate,
+                        summary = fuzzyAssessment.summary,
+                        aiConfidence = fuzzyAssessment.confidence,
+                        matchType = DocumentMatchType.FuzzyCandidate
+                    )
+                    recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
+                    return result
+                }
             }
         }
 
@@ -327,7 +376,7 @@ class DocumentTruthService(
                     matchType = source.matchType
                 )
                 val sourceCount = sourceRepository.countLinkedSources(tenantId, review.documentId)
-                cleanupIfOrphan(tenantId, source.documentId)
+                deleteOrphanIfSafe(tenantId, source.documentId)
                 DocumentIntakeServiceResult(
                     documentId = review.documentId,
                     sourceId = source.id,
@@ -338,13 +387,14 @@ class DocumentTruthService(
                     sourceCount = sourceCount,
                     matchType = source.matchType
                 ).also {
+                    logger.info(
+                        "AUDIT review_resolved: decision=SAME tenant={} user={} review={} " +
+                            "sourceId={} originalDocumentId={} mergedIntoDocumentId={} matchType={}",
+                        tenantId, userId, reviewId,
+                        source.id, source.documentId, review.documentId, source.matchType
+                    )
                     Metrics.counter(
                         "dokus_review_resolution_count",
-                        "decision",
-                        DocumentMatchResolutionDecision.SAME.name
-                    ).increment()
-                    Metrics.counter(
-                        "review_resolution_same_vs_different",
                         "decision",
                         DocumentMatchResolutionDecision.SAME.name
                     ).increment()
@@ -409,7 +459,7 @@ class DocumentTruthService(
                         )
                     }
                 }
-                cleanupIfOrphan(tenantId, source.documentId)
+                deleteOrphanIfSafe(tenantId, source.documentId)
 
                 DocumentIntakeServiceResult(
                     documentId = newDocumentId,
@@ -419,13 +469,14 @@ class DocumentTruthService(
                     reviewId = reviewId,
                     sourceCount = 1
                 ).also {
+                    logger.info(
+                        "AUDIT review_resolved: decision=DIFFERENT tenant={} user={} review={} " +
+                            "sourceId={} originalDocumentId={} newDocumentId={}",
+                        tenantId, userId, reviewId,
+                        source.id, source.documentId, newDocumentId
+                    )
                     Metrics.counter(
                         "dokus_review_resolution_count",
-                        "decision",
-                        DocumentMatchResolutionDecision.DIFFERENT.name
-                    ).increment()
-                    Metrics.counter(
-                        "review_resolution_same_vs_different",
                         "decision",
                         DocumentMatchResolutionDecision.DIFFERENT.name
                     ).increment()
@@ -475,10 +526,8 @@ class DocumentTruthService(
         val deleted = sourceRepository.deleteById(tenantId, sourceId)
         if (!deleted) return SourceDeleteResult(deleted = false)
         Metrics.counter("dokus_source_detach_count").increment()
-        Metrics.counter("source_detach_count").increment()
         if (linkedCount <= 1 && isConfirmed && confirmLastOnConfirmed) {
             Metrics.counter("dokus_last_source_delete_confirmed_count").increment()
-            Metrics.counter("last_source_delete_confirmed_count").increment()
         }
 
         val remainingSources = sourceRepository.countSources(
@@ -523,7 +572,7 @@ class DocumentTruthService(
             status = DocumentSourceStatus.Linked,
             matchType = matchType
         )
-        cleanupIfOrphan(tenantId, sourceDocumentId)
+        deferOrphanCleanup(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
         return DocumentIntakeServiceResult(
             documentId = targetDocumentId,
@@ -561,7 +610,7 @@ class DocumentTruthService(
             aiSummary = summary,
             aiConfidence = aiConfidence
         )
-        cleanupIfOrphan(tenantId, sourceDocumentId)
+        deferOrphanCleanup(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
         return DocumentIntakeServiceResult(
             documentId = targetDocumentId,
@@ -575,14 +624,45 @@ class DocumentTruthService(
         )
     }
 
-    private suspend fun cleanupIfOrphan(tenantId: TenantId, documentId: DocumentId) {
+    /**
+     * Logs that a document may be orphaned after source reassignment during processing.
+     *
+     * IMPORTANT: We do NOT delete orphans here because this is called during
+     * applyPostExtractionMatching, which runs while the DocumentProcessingWorker
+     * still holds the original documentId and is about to write drafts/ingestion
+     * results to it. Deleting here would cause the worker to write to a deleted
+     * record, silently losing data.
+     *
+     * True cleanup happens in [deleteOrphanIfSafe] (called from user-initiated flows)
+     * or via a scheduled cleanup job.
+     */
+    private suspend fun deferOrphanCleanup(tenantId: TenantId, documentId: DocumentId) {
         val remainingSources = sourceRepository.countSources(
             tenantId = tenantId,
             documentId = documentId,
             includeDetached = true
         )
         if (remainingSources == 0) {
-            logger.info("Removing orphaned document after source reassignment: {}", documentId)
+            logger.info(
+                "Document {} has no remaining sources after reassignment (deferred cleanup)",
+                documentId
+            )
+        }
+    }
+
+    /**
+     * Deletes a document if it has no remaining sources.
+     * Only safe to call from user-initiated flows (review resolution, source deletion)
+     * where no worker is actively processing the document.
+     */
+    private suspend fun deleteOrphanIfSafe(tenantId: TenantId, documentId: DocumentId) {
+        val remainingSources = sourceRepository.countSources(
+            tenantId = tenantId,
+            documentId = documentId,
+            includeDetached = true
+        )
+        if (remainingSources == 0) {
+            logger.info("Removing orphaned document after user action: {}", documentId)
             documentRepository.delete(tenantId, documentId)
         }
     }
@@ -780,31 +860,17 @@ class DocumentTruthService(
             "channel",
             sourceChannel.name
         ).increment()
-        Metrics.counter(
-            "intake_outcome_count",
-            "outcome",
-            outcome.name,
-            "channel",
-            sourceChannel.name
-        ).increment()
         when (outcome) {
             DocumentIntakeOutcome.LinkedToExisting -> {
                 Metrics.counter("dokus_silent_link_count", "channel", sourceChannel.name).increment()
-                Metrics.counter("silent_link_rate", "channel", sourceChannel.name).increment()
             }
 
             DocumentIntakeOutcome.PendingMatchReview -> {
                 Metrics.counter("dokus_needs_review_count", "channel", sourceChannel.name).increment()
-                Metrics.counter("needs_review_rate", "channel", sourceChannel.name).increment()
             }
 
             DocumentIntakeOutcome.NewDocument -> Unit
         }
     }
 
-    private fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
-        is InvoiceDraftData -> DocumentType.Invoice
-        is CreditNoteDraftData -> DocumentType.CreditNote
-        else -> DocumentType.Unknown
-    }
 }

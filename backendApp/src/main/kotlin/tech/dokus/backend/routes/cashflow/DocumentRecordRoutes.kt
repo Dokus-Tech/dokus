@@ -27,6 +27,7 @@ import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
+import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentSourceStatus
@@ -764,16 +765,5 @@ internal fun isInboxLifecycle(status: IngestionStatus?): Boolean {
 }
 
 private fun selectDefaultSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
-    val trustOrder = mapOf(
-        tech.dokus.domain.enums.DocumentSource.Peppol to 4,
-        tech.dokus.domain.enums.DocumentSource.Email to 3,
-        tech.dokus.domain.enums.DocumentSource.Upload to 2,
-        tech.dokus.domain.enums.DocumentSource.Manual to 1
-    )
-    return sources
-        .filter { it.status == DocumentSourceStatus.Linked }
-        .maxWithOrNull(
-        compareBy<DocumentSourceSummary> { trustOrder[it.sourceChannel] ?: 0 }
-            .thenBy { it.arrivalAt }
-        )
+    return selectDefaultSourceFromList(sources)
 }

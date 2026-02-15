@@ -224,8 +224,6 @@ class DocumentRepository {
         page: Int = 0,
         limit: Int = 20
     ): Pair<List<DocumentWithDraftAndIngestion>, Long> {
-        DocumentIngestionRunRepository().recoverStaleProcessingRunsForTenant(tenantId)
-
         return DocumentListingQuery.listWithDraftsAndIngestion(
             tenantId = tenantId,
             filter = filter,

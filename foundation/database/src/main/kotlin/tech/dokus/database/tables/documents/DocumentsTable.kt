@@ -56,7 +56,9 @@ object DocumentsTable : UUIDTable("documents") {
     init {
         // Unique constraint: one storage key per tenant
         uniqueIndex(tenantId, storageKey)
-        // Canonical identity uniqueness (null when identity is not deterministic).
-        uniqueIndex(tenantId, identityKeyHash)
+        // Identity key for matching — NOT unique because "DIFFERENT" resolution can
+        // create two distinct documents with the same identity hash (same supplier VAT
+        // + invoice number but different financial facts).
+        index(false, tenantId, identityKeyHash)
     }
 }
