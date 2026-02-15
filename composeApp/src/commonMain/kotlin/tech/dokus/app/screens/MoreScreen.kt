@@ -29,11 +29,12 @@ import androidx.compose.ui.draw.alpha
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import tech.dokus.app.navigation.NavDefinition
+import tech.dokus.app.navSectionsCombined
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.coming_soon
+import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
@@ -51,6 +52,8 @@ internal fun MoreScreen(
 ) {
     val navController = LocalNavController.current
     val scrollState = rememberScrollState()
+    val appModules = LocalAppModules.current
+    val navSections = remember(appModules) { appModules.navSectionsCombined }
 
     // Get user's subscription tier from JWT claims
     var userTier by remember { mutableStateOf(SubscriptionTier.Core) }
@@ -59,8 +62,8 @@ internal fun MoreScreen(
     }
 
     // Filter sections to only show items the user has access to
-    val filteredSections = remember(userTier) {
-        NavDefinition.sections.mapNotNull { section ->
+    val filteredSections = remember(navSections, userTier) {
+        navSections.mapNotNull { section ->
             val accessibleItems = section.items.filter { item ->
                 item.requiredTier == null || SubscriptionTier.hasTomorrowAccess(userTier)
             }
@@ -87,9 +90,7 @@ internal fun MoreScreen(
                     item = item,
                     onClick = {
                         if (!item.comingSoon) {
-                            NavDefinition.routeToDestination(item.route)?.let { destination ->
-                                navController.navigateTo(destination)
-                            }
+                            navController.navigateTo(item.destination)
                         }
                     }
                 )

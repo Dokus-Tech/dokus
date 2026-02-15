@@ -107,7 +107,7 @@ fun ColumnScope.DokusNavigationRailSectioned(
 
             SettingsRow(
                 item = settingsItem,
-                isSelected = settingsItem.route == selectedRoute,
+                isSelected = settingsItem.destination.route == selectedRoute,
                 onClick = { onItemClick(settingsItem) }
             )
         }
