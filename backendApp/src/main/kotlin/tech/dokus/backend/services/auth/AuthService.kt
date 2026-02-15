@@ -468,9 +468,12 @@ class AuthService(
             logger.warn("Email resend blocked by rate limiter for user: {}", userId.value)
             throw error
         }
-        rateLimitService.recordFailedLogin(rateLimitKey)
 
-        return emailVerificationService.resendVerificationEmail(userId)
+        return emailVerificationService.resendVerificationEmail(userId).also { result ->
+            if (result.isFailure) {
+                rateLimitService.recordFailedLogin(rateLimitKey)
+            }
+        }
     }
 
     suspend fun requestPasswordReset(email: String): Result<Unit> {
