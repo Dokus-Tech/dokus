@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.alpha
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import tech.dokus.app.navigation.local.LocalHomeNavController
 import tech.dokus.app.navSectionsCombined
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
@@ -38,6 +39,8 @@ import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
+import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
@@ -50,7 +53,8 @@ import tech.dokus.navigation.navigateTo
 internal fun MoreScreen(
     tokenManager: TokenManager = koinInject()
 ) {
-    val navController = LocalNavController.current
+    val rootNavController = LocalNavController.current
+    val homeNavController = LocalHomeNavController.current ?: rootNavController
     val scrollState = rememberScrollState()
     val appModules = LocalAppModules.current
     val navSections = remember(appModules) { appModules.navSectionsCombined }
@@ -91,6 +95,10 @@ internal fun MoreScreen(
                     item = item,
                     onClick = {
                         if (!item.comingSoon) {
+                            val navController = when (resolveMoreNavigationTarget(item.destination)) {
+                                MoreNavigationTarget.Home -> homeNavController
+                                MoreNavigationTarget.Root -> rootNavController
+                            }
                             navController.navigateTo(item.destination)
                         }
                     }
@@ -99,6 +107,18 @@ internal fun MoreScreen(
 
             Spacer(modifier = Modifier.height(Constrains.Spacing.large))
         }
+    }
+}
+
+internal enum class MoreNavigationTarget {
+    Home,
+    Root,
+}
+
+internal fun resolveMoreNavigationTarget(destination: NavigationDestination): MoreNavigationTarget {
+    return when (destination) {
+        is HomeDestination -> MoreNavigationTarget.Home
+        else -> MoreNavigationTarget.Root
     }
 }
 

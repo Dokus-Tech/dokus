@@ -41,6 +41,7 @@ import tech.dokus.app.allNavItems
 import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.mobileTabConfigs
 import tech.dokus.app.navSectionsCombined
+import tech.dokus.app.navigation.local.HomeNavControllerProvided
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.HomeShellProfileData
@@ -185,12 +186,14 @@ internal fun HomeScreen(
                         homeNavController.navigateTo(navItem.destination)
                     },
                     content = {
-                        CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
-                            HomeNavHost(
-                                navHostController = homeNavController,
-                                homeNavProviders = homeNavProviders,
-                                startDestination = startDestination
-                            )
+                        HomeNavControllerProvided(homeNavController) {
+                            CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
+                                HomeNavHost(
+                                    navHostController = homeNavController,
+                                    homeNavProviders = homeNavProviders,
+                                    startDestination = startDestination
+                                )
+                            }
                         }
                     }
                 )
@@ -212,12 +215,14 @@ internal fun HomeScreen(
                         }
                     },
                     content = {
-                        CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
-                            HomeNavHost(
-                                navHostController = homeNavController,
-                                homeNavProviders = homeNavProviders,
-                                startDestination = startDestination
-                            )
+                        HomeNavControllerProvided(homeNavController) {
+                            CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
+                                HomeNavHost(
+                                    navHostController = homeNavController,
+                                    homeNavProviders = homeNavProviders,
+                                    startDestination = startDestination
+                                )
+                            }
                         }
                     }
                 )
