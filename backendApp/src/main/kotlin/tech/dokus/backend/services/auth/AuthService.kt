@@ -510,15 +510,15 @@ class AuthService(
             throw DokusException.InvalidCredentials("Current password is incorrect")
         }
 
+        val activeSessionJti = currentSessionJti
+            ?.takeIf { it.isNotBlank() }
+            ?: throw DokusException.SessionInvalid("Current session identity is missing")
+
         newPassword.validOrThrows
 
         // Password update and session revocation are separate transactions.
         // Update password first - if revocation fails, user can manually revoke via sessions UI.
         userRepository.updatePassword(userId, newPassword.value)
-
-        val activeSessionJti = currentSessionJti
-            ?.takeIf { it.isNotBlank() }
-            ?: throw DokusException.SessionInvalid("Current session identity is missing")
 
         val revokedSessions = refreshTokenRepository.revokeOtherSessions(userId, activeSessionJti)
             .getOrElse { error ->

@@ -64,6 +64,8 @@ class AuthServiceSessionManagementTest {
             accessTokenExpiresAt = Instant.fromEpochSeconds(1_900_000_000)
         )
 
+        coEvery { rateLimitService.checkLoginAttempts("pwd-change:${user.id}") } returns Result.success(Unit)
+        coJustRun { rateLimitService.resetLoginAttempts("pwd-change:${user.id}") }
         coEvery { userRepository.findById(user.id) } returns user
         coEvery { userRepository.verifyCredentials(user.email.value, "CurrentPass123!") } returns user
         coJustRun { userRepository.updatePassword(user.id, "NewPass123!") }
@@ -90,6 +92,8 @@ class AuthServiceSessionManagementTest {
     fun `change password with invalid current password fails`() {
         val user = testUser()
 
+        coEvery { rateLimitService.checkLoginAttempts("pwd-change:${user.id}") } returns Result.success(Unit)
+        coJustRun { rateLimitService.recordFailedLogin("pwd-change:${user.id}") }
         coEvery { userRepository.findById(user.id) } returns user
         coEvery { userRepository.verifyCredentials(user.email.value, "WrongPassword123!") } returns null
 
@@ -104,6 +108,29 @@ class AuthServiceSessionManagementTest {
 
         assertTrue(result.isFailure)
         assertIs<DokusException.InvalidCredentials>(result.exceptionOrNull())
+        coVerify(exactly = 0) { userRepository.updatePassword(any(), any()) }
+        coVerify(exactly = 0) { refreshTokenRepository.revokeOtherSessions(any(), any()) }
+    }
+
+    @Test
+    fun `change password without current session identity fails before password update`() {
+        val user = testUser()
+
+        coEvery { rateLimitService.checkLoginAttempts("pwd-change:${user.id}") } returns Result.success(Unit)
+        coEvery { userRepository.findById(user.id) } returns user
+        coEvery { userRepository.verifyCredentials(user.email.value, "CurrentPass123!") } returns user
+
+        val result = runBlocking {
+            authService.changePassword(
+                userId = user.id,
+                currentPassword = Password("CurrentPass123!"),
+                newPassword = Password("NewPass123!"),
+                currentSessionJti = null
+            )
+        }
+
+        assertTrue(result.isFailure)
+        assertIs<DokusException.SessionInvalid>(result.exceptionOrNull())
         coVerify(exactly = 0) { userRepository.updatePassword(any(), any()) }
         coVerify(exactly = 0) { refreshTokenRepository.revokeOtherSessions(any(), any()) }
     }

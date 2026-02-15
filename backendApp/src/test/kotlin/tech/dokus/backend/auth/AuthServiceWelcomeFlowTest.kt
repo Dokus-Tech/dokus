@@ -131,6 +131,8 @@ class AuthServiceWelcomeFlowTest {
     @Test
     fun `resend verification email delegates to verification service`() {
         val userId = UserId.generate()
+        coEvery { rateLimitService.checkLoginAttempts("email-resend:${userId}") } returns Result.success(Unit)
+        coEvery { rateLimitService.recordFailedLogin("email-resend:${userId}") } returns Unit
         coEvery { emailVerificationService.resendVerificationEmail(userId) } returns Result.success(Unit)
 
         val result = runBlocking {

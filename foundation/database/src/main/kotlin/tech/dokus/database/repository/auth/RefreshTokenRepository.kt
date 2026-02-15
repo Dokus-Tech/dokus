@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.core.or
@@ -269,8 +270,10 @@ class RefreshTokenRepository {
 
     /**
      * Revoke all sessions except current session for a user.
-     * Rows without access token JTI are intentionally ignored to avoid revoking the
-     * current legacy session when identity cannot be determined.
+     *
+     * If the current session row is identifiable by JTI, legacy rows without JTI are revoked too.
+     * If the current session row is not identifiable (older row without JTI), we skip legacy rows
+     * to avoid revoking the current session by mistake.
      */
     suspend fun revokeOtherSessions(
         userId: UserId,
@@ -279,15 +282,40 @@ class RefreshTokenRepository {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
             val now = now().toLocalDateTime(TimeZone.UTC)
+            val activeRowsFilter = (RefreshTokensTable.userId eq userUuid) and
+                (RefreshTokensTable.isRevoked eq false) and
+                (RefreshTokensTable.expiresAt greater now)
+
+            val hasCurrentSessionRecord = RefreshTokensTable
+                .selectAll()
+                .where {
+                    activeRowsFilter and
+                        (RefreshTokensTable.accessTokenJti eq currentSessionJti)
+                }
+                .limit(1)
+                .any()
+
+            if (!hasCurrentSessionRecord) {
+                logger.warn(
+                    "Current session row not found for user {} and jti {} - " +
+                        "legacy rows will be skipped for safety",
+                    userId.value,
+                    currentSessionJti
+                )
+            }
+
+            val revokePredicate = if (hasCurrentSessionRecord) {
+                (RefreshTokensTable.accessTokenJti.isNull()) or
+                    (RefreshTokensTable.accessTokenJti neq currentSessionJti)
+            } else {
+                (RefreshTokensTable.accessTokenJti.isNotNull()) and
+                    (RefreshTokensTable.accessTokenJti neq currentSessionJti)
+            }
 
             val toRevoke = RefreshTokensTable
                 .selectAll()
                 .where {
-                    (RefreshTokensTable.userId eq userUuid) and
-                        (RefreshTokensTable.isRevoked eq false) and
-                        (RefreshTokensTable.expiresAt greater now) and
-                        (RefreshTokensTable.accessTokenJti.isNotNull()) and
-                        (RefreshTokensTable.accessTokenJti neq currentSessionJti)
+                    activeRowsFilter and revokePredicate
                 }
                 .toList()
 
