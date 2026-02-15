@@ -481,12 +481,12 @@ private fun CashflowBreakdownSection(
             value = "${entry.currency.displaySign}${netAmount.toDisplayString()}"
         )
         BreakdownRow(
-            label = "VAT",
+            label = stringResource(Res.string.invoice_vat),
             value = "${entry.currency.displaySign}${entry.amountVat.toDisplayString()}"
         )
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
         BreakdownRow(
-            label = "Total",
+            label = stringResource(Res.string.invoice_total),
             value = "${entry.currency.displaySign}${entry.amountGross.toDisplayString()}",
             isBold = true
         )
@@ -529,7 +529,7 @@ private fun CashflowSourceDocumentCard(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "Source Document",
+            text = stringResource(Res.string.cashflow_detail_source_document),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -548,7 +548,7 @@ private fun CashflowSourceDocumentCard(
                 modifier = Modifier.size(18.dp)
             )
             Text(
-                text = "View document",
+                text = stringResource(Res.string.cashflow_action_view_document),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -569,7 +569,7 @@ private fun CashflowPaymentFooter(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val defaultSubtext = "${entry.remainingAmount.toDisplayString()} today"
+    val defaultSubtext = stringResource(Res.string.cashflow_detail_amount_today, entry.remainingAmount.toDisplayString())
 
     DokusExpandableAction(
         isExpanded = formState.isOptionsExpanded,
@@ -598,7 +598,7 @@ private fun CashflowPaymentFooter(
                             strokeWidth = 2.dp
                         )
                     }
-                    Text("Mark as paid")
+                    Text(stringResource(Res.string.cashflow_action_mark_paid))
                 }
             }
         },
@@ -633,7 +633,7 @@ private fun PaymentOptionsForm(
     ) {
         // Date (read-only for now)
         Text(
-            text = "Date: ${formatShortDate(formState.paidAt)}",
+            text = stringResource(Res.string.cashflow_detail_date_label, formatShortDate(formState.paidAt)),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -642,12 +642,12 @@ private fun PaymentOptionsForm(
         OutlinedTextField(
             value = formState.amountText,
             onValueChange = onAmountTextChange,
-            label = { Text("Amount") },
+            label = { Text(stringResource(Res.string.cashflow_ledger_amount)) },
             supportingText = {
                 if (formState.amountError != null) {
                     Text(formState.amountError)
                 } else {
-                    Text("Max: ${maxAmount.toDisplayString()}")
+                    Text(stringResource(Res.string.cashflow_detail_max_amount, maxAmount.toDisplayString()))
                 }
             },
             isError = formState.amountError != null,
@@ -659,7 +659,7 @@ private fun PaymentOptionsForm(
         OutlinedTextField(
             value = formState.note,
             onValueChange = onNoteChange,
-            label = { Text("Note (optional)") },
+            label = { Text(stringResource(Res.string.cashflow_detail_note_optional)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -670,7 +670,7 @@ private fun PaymentOptionsForm(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
         ) {
             TextButton(onClick = onCancel) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
             Button(
                 onClick = onSubmit,
@@ -685,7 +685,7 @@ private fun PaymentOptionsForm(
                         strokeWidth = 2.dp
                     )
                 }
-                Text("Confirm payment")
+                Text(stringResource(Res.string.cashflow_detail_confirm_payment))
             }
         }
     }

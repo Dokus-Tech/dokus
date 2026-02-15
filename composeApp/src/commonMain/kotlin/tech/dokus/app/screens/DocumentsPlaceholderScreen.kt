@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.coming_soon
 import tech.dokus.aura.resources.file_text
 import tech.dokus.aura.resources.nav_documents
 
@@ -50,7 +51,7 @@ internal fun DocumentsPlaceholderScreen() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Coming soon",
+                text = stringResource(Res.string.coming_soon),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

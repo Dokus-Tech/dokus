@@ -32,6 +32,8 @@ import org.koin.compose.koinInject
 import tech.dokus.app.navigation.NavDefinition
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.coming_soon
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
@@ -141,7 +143,7 @@ private fun MoreNavItem(
             )
             if (item.comingSoon) {
                 Text(
-                    text = "Coming soon",
+                    text = stringResource(Res.string.coming_soon),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
