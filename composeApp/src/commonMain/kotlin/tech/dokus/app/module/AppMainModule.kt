@@ -102,7 +102,7 @@ internal object AppMainModule : AppModule {
                     id = "company_details",
                     titleRes = Res.string.settings_workspace_details,
                     iconRes = Res.drawable.user,
-                    destination = HomeDestination.UnderDevelopment,
+                    destination = SettingsDestination.WorkspaceSettings,
                     priority = 0,
                 ),
                 NavItem(

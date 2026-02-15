@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import tech.dokus.domain.enums.SubscriptionTier
-import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.NavigationDestination
 
 /**
  * Navigation structure - single source of truth for all navigation items.
@@ -32,7 +32,7 @@ data class NavItem(
     val titleRes: StringResource,
     val iconRes: DrawableResource,
     /** Typed navigation destination */
-    val destination: HomeDestination,
+    val destination: NavigationDestination,
     /** Whether this item is coming soon (disabled, reduced opacity) */
     val comingSoon: Boolean = false,
     /** Minimum subscription tier required to access this item (null = available to all tiers) */
@@ -54,5 +54,5 @@ data class MobileTabConfig(
     val titleRes: StringResource,
     val iconRes: DrawableResource,
     /** Typed navigation destination, null for "More" tab */
-    val destination: HomeDestination?,
+    val destination: NavigationDestination?,
 )

@@ -48,15 +48,25 @@ sealed interface HomeDestination : NavigationDestination {
 }
 
 /** Route string matching the @SerialName value for backstack matching. */
-val HomeDestination.route: String get() = when (this) {
-    HomeDestination.Today -> "today"
-    HomeDestination.Tomorrow -> "tomorrow"
-    HomeDestination.Documents -> "documents"
-    HomeDestination.Cashflow -> "cashflow"
-    HomeDestination.Contacts -> "contacts"
-    HomeDestination.Team -> "team"
-    HomeDestination.AiChat -> "ai-chat"
-    HomeDestination.Settings -> "settings"
-    HomeDestination.More -> "more"
-    HomeDestination.UnderDevelopment -> "home/under_development"
+val NavigationDestination.route: String get() = when (this) {
+    is HomeDestination -> when (this) {
+        HomeDestination.Today -> "today"
+        HomeDestination.Tomorrow -> "tomorrow"
+        HomeDestination.Documents -> "documents"
+        HomeDestination.Cashflow -> "cashflow"
+        HomeDestination.Contacts -> "contacts"
+        HomeDestination.Team -> "team"
+        HomeDestination.AiChat -> "ai-chat"
+        HomeDestination.Settings -> "settings"
+        HomeDestination.More -> "more"
+        HomeDestination.UnderDevelopment -> "home/under_development"
+    }
+    is SettingsDestination -> when (this) {
+        SettingsDestination.WorkspaceSettings -> "settings/workspace"
+        SettingsDestination.TeamSettings -> "settings/workspace/team"
+        SettingsDestination.AppearanceSettings -> "settings/appearance"
+        SettingsDestination.NotificationPreferences -> "settings/notifications"
+        SettingsDestination.PeppolRegistration -> "settings/peppol"
+    }
+    else -> error("Unknown destination: $this")
 }
