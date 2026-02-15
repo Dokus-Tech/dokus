@@ -6,7 +6,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.app.screens.settings.components.formatRelativeTime
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.peppol_conn_compliant_note
+import tech.dokus.aura.resources.peppol_conn_label_access_point
+import tech.dokus.aura.resources.peppol_conn_label_inbound
+import tech.dokus.aura.resources.peppol_conn_label_outbound
+import tech.dokus.aura.resources.peppol_conn_label_participant_id
+import tech.dokus.aura.resources.peppol_conn_mandate_note
+import tech.dokus.aura.resources.peppol_conn_not_configured_text
+import tech.dokus.aura.resources.peppol_conn_status_active
+import tech.dokus.aura.resources.peppol_conn_status_awaiting_transfer
+import tech.dokus.aura.resources.peppol_conn_status_blocked
+import tech.dokus.aura.resources.peppol_conn_status_compliant
+import tech.dokus.aura.resources.peppol_conn_status_connected
+import tech.dokus.aura.resources.peppol_conn_status_error
+import tech.dokus.aura.resources.peppol_conn_status_external
+import tech.dokus.aura.resources.peppol_conn_status_inactive
+import tech.dokus.aura.resources.peppol_conn_status_pending
+import tech.dokus.aura.resources.peppol_conn_status_sending_only
+import tech.dokus.aura.resources.peppol_conn_status_verified
+import tech.dokus.aura.resources.peppol_conn_subtitle_expanded
+import tech.dokus.aura.resources.peppol_conn_title
+import tech.dokus.aura.resources.peppol_managed_by_dokus
+import tech.dokus.aura.resources.peppol_not_configured
 import tech.dokus.domain.enums.PeppolRegistrationStatus
 import tech.dokus.domain.model.PeppolActivityDto
 import tech.dokus.domain.model.PeppolRegistrationDto
@@ -26,24 +50,27 @@ internal fun PeppolConnectionSection(
 ) {
     val status = peppolRegistration?.status
     val sectionStatus = when (status) {
-        PeppolRegistrationStatus.Active -> DataRowStatus("Compliant", StatusDotType.Confirmed)
-        PeppolRegistrationStatus.SendingOnly -> DataRowStatus("Sending Only", StatusDotType.Warning)
-        PeppolRegistrationStatus.WaitingTransfer -> DataRowStatus("Awaiting Transfer", StatusDotType.Neutral)
-        PeppolRegistrationStatus.Pending -> DataRowStatus("Pending", StatusDotType.Neutral)
-        PeppolRegistrationStatus.Failed -> DataRowStatus("Error", StatusDotType.Error)
-        PeppolRegistrationStatus.External -> DataRowStatus("External", StatusDotType.Neutral)
-        PeppolRegistrationStatus.NotConfigured, null -> DataRowStatus("Not Configured", StatusDotType.Empty)
+        PeppolRegistrationStatus.Active -> DataRowStatus(stringResource(Res.string.peppol_conn_status_compliant), StatusDotType.Confirmed)
+        PeppolRegistrationStatus.SendingOnly -> DataRowStatus(stringResource(Res.string.peppol_conn_status_sending_only), StatusDotType.Warning)
+        PeppolRegistrationStatus.WaitingTransfer -> DataRowStatus(stringResource(Res.string.peppol_conn_status_awaiting_transfer), StatusDotType.Neutral)
+        PeppolRegistrationStatus.Pending -> DataRowStatus(stringResource(Res.string.peppol_conn_status_pending), StatusDotType.Neutral)
+        PeppolRegistrationStatus.Failed -> DataRowStatus(stringResource(Res.string.peppol_conn_status_error), StatusDotType.Error)
+        PeppolRegistrationStatus.External -> DataRowStatus(stringResource(Res.string.peppol_conn_status_external), StatusDotType.Neutral)
+        PeppolRegistrationStatus.NotConfigured, null -> DataRowStatus(stringResource(Res.string.peppol_not_configured), StatusDotType.Empty)
     }
 
     // Show PEPPOL ID when collapsed, descriptive text when expanded
     val subtitle = if (!expanded) {
-        peppolRegistration?.peppolId ?: "Not configured"
+        peppolRegistration?.peppolId ?: stringResource(Res.string.peppol_not_configured)
     } else {
-        "Electronic invoicing network status"
+        stringResource(Res.string.peppol_conn_subtitle_expanded)
     }
 
+    val activeLabel = stringResource(Res.string.peppol_conn_status_active)
+    val inactiveLabel = stringResource(Res.string.peppol_conn_status_inactive)
+
     SettingsSection(
-        title = "PEPPOL Connection",
+        title = stringResource(Res.string.peppol_conn_title),
         subtitle = subtitle,
         status = sectionStatus,
         expanded = expanded,
@@ -53,21 +80,21 @@ internal fun PeppolConnectionSection(
         if (peppolRegistration != null && status != PeppolRegistrationStatus.NotConfigured) {
             // Participant ID
             DataRow(
-                label = "Participant ID",
+                label = stringResource(Res.string.peppol_conn_label_participant_id),
                 value = peppolRegistration.peppolId,
                 mono = true,
                 locked = true,
                 status = if (status == PeppolRegistrationStatus.Active) {
-                    DataRowStatus("Verified", StatusDotType.Confirmed)
+                    DataRowStatus(stringResource(Res.string.peppol_conn_status_verified), StatusDotType.Confirmed)
                 } else null,
             )
 
             // Access Point
             DataRow(
-                label = "Access Point",
-                value = "Managed by Dokus",
+                label = stringResource(Res.string.peppol_conn_label_access_point),
+                value = stringResource(Res.string.peppol_managed_by_dokus),
                 status = if (status == PeppolRegistrationStatus.Active) {
-                    DataRowStatus("Connected", StatusDotType.Confirmed)
+                    DataRowStatus(stringResource(Res.string.peppol_conn_status_connected), StatusDotType.Confirmed)
                 } else null,
             )
 
@@ -76,15 +103,15 @@ internal fun PeppolConnectionSection(
                 peppolRegistration.canReceive && peppolActivity?.lastInboundAt != null ->
                     DataRowStatus(formatRelativeTime(peppolActivity.lastInboundAt), StatusDotType.Confirmed)
                 peppolRegistration.canReceive ->
-                    DataRowStatus("Active", StatusDotType.Confirmed)
+                    DataRowStatus(activeLabel, StatusDotType.Confirmed)
                 status == PeppolRegistrationStatus.SendingOnly ->
-                    DataRowStatus("Blocked", StatusDotType.Warning)
+                    DataRowStatus(stringResource(Res.string.peppol_conn_status_blocked), StatusDotType.Warning)
                 else ->
-                    DataRowStatus("Inactive", StatusDotType.Neutral)
+                    DataRowStatus(inactiveLabel, StatusDotType.Neutral)
             }
             DataRow(
-                label = "Inbound",
-                value = if (peppolRegistration.canReceive) "Active" else "Inactive",
+                label = stringResource(Res.string.peppol_conn_label_inbound),
+                value = if (peppolRegistration.canReceive) activeLabel else inactiveLabel,
                 status = inboundStatus,
             )
 
@@ -93,13 +120,13 @@ internal fun PeppolConnectionSection(
                 peppolRegistration.canSend && peppolActivity?.lastOutboundAt != null ->
                     DataRowStatus(formatRelativeTime(peppolActivity.lastOutboundAt), StatusDotType.Confirmed)
                 peppolRegistration.canSend ->
-                    DataRowStatus("Active", StatusDotType.Confirmed)
+                    DataRowStatus(activeLabel, StatusDotType.Confirmed)
                 else ->
-                    DataRowStatus("Inactive", StatusDotType.Neutral)
+                    DataRowStatus(inactiveLabel, StatusDotType.Neutral)
             }
             DataRow(
-                label = "Outbound",
-                value = if (peppolRegistration.canSend) "Active" else "Inactive",
+                label = stringResource(Res.string.peppol_conn_label_outbound),
+                value = if (peppolRegistration.canSend) activeLabel else inactiveLabel,
                 status = outboundStatus,
             )
 
@@ -107,7 +134,7 @@ internal fun PeppolConnectionSection(
             if (status == PeppolRegistrationStatus.Active) {
                 Spacer(Modifier.height(Constrains.Spacing.medium))
                 Text(
-                    text = "Belgium PEPPOL mandate effective January 1, 2026.\nYour business is compliant.",
+                    text = stringResource(Res.string.peppol_conn_compliant_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
@@ -115,12 +142,12 @@ internal fun PeppolConnectionSection(
         } else {
             // Not configured
             Text(
-                text = "PEPPOL e-invoicing is not configured for your workspace.",
+                text = stringResource(Res.string.peppol_conn_not_configured_text),
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.height(Constrains.Spacing.small))
             Text(
-                text = "Belgium requires PEPPOL for B2G invoicing from January 1, 2026.",
+                text = stringResource(Res.string.peppol_conn_mandate_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
             )
