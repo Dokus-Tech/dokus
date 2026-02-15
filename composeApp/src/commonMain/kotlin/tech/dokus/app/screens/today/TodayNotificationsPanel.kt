@@ -147,6 +147,14 @@ private fun NotificationLeadingIcon(type: NotificationType) {
 }
 
 @Composable
+private fun filterTabLabel(tab: NotificationFilterTab): String = when (tab) {
+    NotificationFilterTab.All -> stringResource(Res.string.today_notifications_filter_all)
+    NotificationFilterTab.Unread -> stringResource(Res.string.today_notifications_filter_unread)
+    NotificationFilterTab.Peppol -> stringResource(Res.string.today_notifications_filter_peppol)
+    NotificationFilterTab.Compliance -> stringResource(Res.string.today_notifications_filter_compliance)
+}
+
+@Composable
 private fun categoryLabel(category: NotificationCategory): String = when (category) {
     NotificationCategory.Peppol -> stringResource(Res.string.today_notifications_category_peppol)
     NotificationCategory.Compliance -> stringResource(Res.string.today_notifications_category_compliance)
