@@ -32,8 +32,6 @@ internal object HomeNavigationProvider : NavigationProvider {
         composable<HomeDestination.Today> {
             TodayScreen()
         }
-        // Documents is now handled by CashflowHomeNavigationProvider
-        // composable<HomeDestination.Documents> { }
         composable<HomeDestination.Team> {
             TeamSettingsRoute()
         }
