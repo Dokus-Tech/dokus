@@ -24,6 +24,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import java.util.*
@@ -69,6 +70,7 @@ class DocumentIngestionRunRepository {
     suspend fun createRun(
         documentId: DocumentId,
         tenantId: TenantId,
+        sourceId: DocumentSourceId? = null,
         userFeedback: String? = null,
         overrideMaxPages: Int? = null,
         overrideDpi: Int? = null,
@@ -80,6 +82,7 @@ class DocumentIngestionRunRepository {
                 it[DocumentIngestionRunsTable.id] = id.value.toJavaUuid()
                 it[DocumentIngestionRunsTable.documentId] = UUID.fromString(documentId.toString())
                 it[DocumentIngestionRunsTable.tenantId] = UUID.fromString(tenantId.toString())
+                it[DocumentIngestionRunsTable.sourceId] = sourceId?.let { value -> UUID.fromString(value.toString()) }
                 it[status] = IngestionStatus.Queued
                 it[DocumentIngestionRunsTable.userFeedback] = userFeedback?.takeIf { fb -> fb.isNotBlank() }
                 it[DocumentIngestionRunsTable.overrideMaxPages] = sanitizedMaxPages
@@ -232,6 +235,7 @@ class DocumentIngestionRunRepository {
                     runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
                     documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
                     tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
+                    sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
                     storageKey = row[DocumentsTable.storageKey],
                     filename = row[DocumentsTable.filename],
                     contentType = row[DocumentsTable.contentType],

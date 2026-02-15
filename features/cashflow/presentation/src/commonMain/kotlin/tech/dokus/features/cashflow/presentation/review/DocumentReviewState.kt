@@ -79,6 +79,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val contactValidationError: DokusException? = null,
         val isBindingContact: Boolean = false,
         val isRejecting: Boolean = false,
+        val isResolvingMatchReview: Boolean = false,
         val isDocumentConfirmed: Boolean = false,
         val isDocumentRejected: Boolean = false,
         val confirmedCashflowEntryId: CashflowEntryId? = null,

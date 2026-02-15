@@ -34,6 +34,11 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     // Reference to the document being processed
     val documentId = uuid("document_id").references(DocumentsTable.id, onDelete = ReferenceOption.CASCADE)
 
+    // Optional source that triggered this run (one canonical doc can have many sources).
+    val sourceId = uuid("source_id")
+        .references(DocumentSourcesTable.id, onDelete = ReferenceOption.SET_NULL)
+        .nullable()
+
     // Multi-tenancy (denormalized for query performance)
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,

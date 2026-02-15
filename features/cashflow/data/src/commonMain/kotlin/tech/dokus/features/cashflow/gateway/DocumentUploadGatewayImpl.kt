@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.gateway
 
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 
 internal class DocumentUploadGatewayImpl(
@@ -20,7 +21,7 @@ internal class DocumentUploadGatewayImpl(
         onProgress = onProgress
     )
 
-    override suspend fun deleteDocument(documentId: DocumentId): Result<Unit> {
-        return cashflowRemoteDataSource.deleteDocument(documentId)
+    override suspend fun deleteDocument(documentId: DocumentId, sourceId: DocumentSourceId?): Result<Unit> {
+        return cashflowRemoteDataSource.deleteDocument(documentId, sourceId)
     }
 }

@@ -212,7 +212,7 @@
     <string name="cashflow_reject_title">Dokument ablehnen</string>
     <string name="cashflow_reject_prompt">Warum lehnen Sie dieses Dokument ab?</string>
     <string name="cashflow_reject_reason_not_my_business">Nicht mein Unternehmen</string>
-    <string name="cashflow_reject_reason_duplicate">Duplikat</string>
+    <string name="cashflow_reject_reason_duplicate">Bereits erfasst</string>
     <string name="cashflow_reject_reason_spam">Spam</string>
     <string name="cashflow_reject_reason_test">Test</string>
     <string name="cashflow_reject_reason_other">Sonstiges</string>

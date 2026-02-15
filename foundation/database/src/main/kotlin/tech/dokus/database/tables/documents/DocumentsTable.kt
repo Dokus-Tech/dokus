@@ -44,6 +44,9 @@ object DocumentsTable : UUIDTable("documents") {
     // Content fingerprint for deduplication (SHA-256 hex)
     val contentHash = varchar("content_hash", ContentHashLength).nullable()
 
+    // Canonical identity fingerprint for legal identity matching (scoped types only).
+    val identityKeyHash = varchar("identity_key_hash", ContentHashLength).nullable()
+
     // Document source (where it came from)
     val documentSource = dbEnumeration<DocumentSource>("document_source").default(DocumentSource.Upload)
 
@@ -53,7 +56,9 @@ object DocumentsTable : UUIDTable("documents") {
     init {
         // Unique constraint: one storage key per tenant
         uniqueIndex(tenantId, storageKey)
-        // Unique constraint for content hash when available
-        uniqueIndex(tenantId, contentHash)
+        // Identity key for matching — NOT unique because "DIFFERENT" resolution can
+        // create two distinct documents with the same identity hash (same supplier VAT
+        // + invoice number but different financial facts).
+        index(false, tenantId, identityKeyHash)
     }
 }

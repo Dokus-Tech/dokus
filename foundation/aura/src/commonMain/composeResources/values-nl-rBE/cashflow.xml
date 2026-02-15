@@ -212,7 +212,7 @@
     <string name="cashflow_reject_title">Document afwijzen</string>
     <string name="cashflow_reject_prompt">Waarom wijs je dit document af?</string>
     <string name="cashflow_reject_reason_not_my_business">Niet mijn bedrijf</string>
-    <string name="cashflow_reject_reason_duplicate">Duplicaat</string>
+    <string name="cashflow_reject_reason_duplicate">Reeds verwerkt</string>
     <string name="cashflow_reject_reason_spam">Spam</string>
     <string name="cashflow_reject_reason_test">Test</string>
     <string name="cashflow_reject_reason_other">Overig</string>

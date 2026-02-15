@@ -26,8 +26,10 @@ import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentListFilter
+import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
@@ -236,6 +238,13 @@ internal object DocumentListingQuery {
 
         val confirmedStrict = (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and entityExists
         val confirmedButNoEntity = (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and not(entityExists)
+        val hasPendingMatchReview = exists(
+            DocumentMatchReviewsTable.select(DocumentMatchReviewsTable.id).where {
+                (DocumentMatchReviewsTable.tenantId eq DocumentsTable.tenantId) and
+                    (DocumentMatchReviewsTable.documentId eq DocumentsTable.id) and
+                    (DocumentMatchReviewsTable.status eq DocumentMatchReviewStatus.Pending)
+            }
+        )
 
         val draftMissing = DocumentDraftsTable.documentId.isNull()
         val draftNotRejected = DocumentDraftsTable.documentStatus.isNull() or
@@ -302,7 +311,8 @@ internal object DocumentListingQuery {
                     whereOp and
                         draftNotRejected and
                         (
-                            confirmedButNoEntity or
+                            hasPendingMatchReview or
+                                confirmedButNoEntity or
                                 (isNotConfirmed and (ingestionNeedsAttention or draftNeedsReview or succeededButNoDraft))
                             )
             }

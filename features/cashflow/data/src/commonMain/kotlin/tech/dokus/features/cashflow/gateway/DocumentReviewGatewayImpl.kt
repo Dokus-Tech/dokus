@@ -3,8 +3,11 @@ package tech.dokus.features.cashflow.gateway
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
+import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 
@@ -56,5 +59,13 @@ internal class DocumentReviewGatewayImpl(
     ) = cashflowRemoteDataSource.reprocessDocument(
         documentId = documentId,
         request = request
+    )
+
+    override suspend fun resolveDocumentMatchReview(
+        reviewId: DocumentMatchReviewId,
+        decision: DocumentMatchResolutionDecision
+    ) = cashflowRemoteDataSource.resolveDocumentMatchReview(
+        reviewId = reviewId,
+        request = ResolveDocumentMatchReviewRequest(decision = decision)
     )
 }

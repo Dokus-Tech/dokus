@@ -16,9 +16,12 @@ import tech.dokus.database.repository.banking.BankingRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
+import tech.dokus.database.repository.cashflow.DocumentBlobRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
+import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
@@ -58,6 +61,9 @@ val repositoryModuleAuth = module {
  * Provides repositories for invoices, expenses, contacts, and documents.
  */
 val repositoryModuleCashflow = module {
+    single { DocumentBlobRepository() }
+    single { DocumentSourceRepository() }
+    single { DocumentMatchReviewRepository() }
     single { DocumentRepository() }
     single { DocumentIngestionRunRepository() }
     single { DocumentDraftRepository() }

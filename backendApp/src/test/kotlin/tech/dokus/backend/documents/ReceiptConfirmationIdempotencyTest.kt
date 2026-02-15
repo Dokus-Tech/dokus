@@ -23,8 +23,10 @@ import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowEntryStatus
@@ -84,6 +86,8 @@ class ReceiptConfirmationIdempotencyTest {
                 TenantTable,
                 UsersTable,
                 DocumentsTable,
+                DocumentBlobsTable,
+                DocumentSourcesTable,
                 DocumentIngestionRunsTable,
                 DocumentDraftsTable,
                 ContactsTable,
@@ -117,6 +121,8 @@ class ReceiptConfirmationIdempotencyTest {
                 ContactsTable,
                 DocumentDraftsTable,
                 DocumentIngestionRunsTable,
+                DocumentSourcesTable,
+                DocumentBlobsTable,
                 DocumentsTable,
                 UsersTable,
                 TenantTable

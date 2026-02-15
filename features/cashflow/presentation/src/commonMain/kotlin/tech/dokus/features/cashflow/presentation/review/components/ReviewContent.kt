@@ -52,6 +52,7 @@ import tech.dokus.features.cashflow.presentation.review.components.details.Amoun
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
 import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.PeppolStatusCard
+import tech.dokus.features.cashflow.presentation.review.components.details.SourcesCard
 import tech.dokus.features.cashflow.presentation.review.components.mobile.DetailsTabContent
 import tech.dokus.features.cashflow.presentation.review.components.mobile.DocumentDetailMobileHeader
 import tech.dokus.features.cashflow.presentation.review.components.mobile.DocumentDetailTabBar
@@ -385,6 +386,12 @@ private fun ReviewDetailsPane(
                 )
                 PeppolStatusCard(
                     state = state,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                SourcesCard(
+                    state = state,
+                    onResolveSame = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
+                    onResolveDifferent = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 AmountsCard(

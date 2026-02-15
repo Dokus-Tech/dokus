@@ -3,6 +3,8 @@ package tech.dokus.features.cashflow.usecase
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.RejectDocumentRequest
@@ -16,6 +18,7 @@ import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 
@@ -101,6 +104,20 @@ internal class ReprocessDocumentUseCaseImpl(
         return documentReviewGateway.reprocessDocument(
             documentId = documentId,
             request = request
+        )
+    }
+}
+
+internal class ResolveDocumentMatchReviewUseCaseImpl(
+    private val documentReviewGateway: DocumentReviewGateway
+) : ResolveDocumentMatchReviewUseCase {
+    override suspend fun invoke(
+        reviewId: DocumentMatchReviewId,
+        decision: DocumentMatchResolutionDecision
+    ): Result<DocumentRecordDto> {
+        return documentReviewGateway.resolveDocumentMatchReview(
+            reviewId = reviewId,
+            decision = decision
         )
     }
 }

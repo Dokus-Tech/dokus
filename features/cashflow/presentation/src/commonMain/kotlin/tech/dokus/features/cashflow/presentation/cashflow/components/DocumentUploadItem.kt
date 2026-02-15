@@ -24,6 +24,9 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_file_size_bytes
 import tech.dokus.aura.resources.common_file_size_kb
 import tech.dokus.aura.resources.common_file_size_mb
+import tech.dokus.aura.resources.upload_status_linked_to
+import tech.dokus.aura.resources.upload_status_linked_to_with_sources
+import tech.dokus.aura.resources.upload_status_needs_review
 import tech.dokus.aura.resources.upload_status_waiting
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.features.cashflow.presentation.cashflow.components.upload.CancelUploadAction
@@ -124,18 +127,26 @@ private fun DocumentUploadItemContent(
                 when {
                     // Uploading → Uploaded: smooth fade
                     initialState is DocumentUploadDisplayState.Uploading &&
-                        targetState is DocumentUploadDisplayState.Uploaded ->
+                        (
+                            targetState is DocumentUploadDisplayState.Uploaded ||
+                                targetState is DocumentUploadDisplayState.Linked ||
+                                targetState is DocumentUploadDisplayState.NeedsReview
+                            ) ->
                         fadeIn(tween(FadeInDurationMs)) togetherWith fadeOut(tween(FadeOutDurationMs))
 
                     // Uploaded → Deleting: slide right
-                    initialState is DocumentUploadDisplayState.Uploaded &&
+                    (initialState is DocumentUploadDisplayState.Uploaded ||
+                        initialState is DocumentUploadDisplayState.Linked ||
+                        initialState is DocumentUploadDisplayState.NeedsReview) &&
                         targetState is DocumentUploadDisplayState.Deleting ->
                         (slideInHorizontally { it } + fadeIn()) togetherWith
                             (slideOutHorizontally { -it } + fadeOut())
 
                     // Deleting → Uploaded: slide back (undo)
                     initialState is DocumentUploadDisplayState.Deleting &&
-                        targetState is DocumentUploadDisplayState.Uploaded ->
+                        (targetState is DocumentUploadDisplayState.Uploaded ||
+                            targetState is DocumentUploadDisplayState.Linked ||
+                            targetState is DocumentUploadDisplayState.NeedsReview) ->
                         (slideInHorizontally { -it } + fadeIn()) togetherWith
                             (slideOutHorizontally { it } + fadeOut())
 
@@ -163,6 +174,16 @@ private fun DocumentUploadItemContent(
                 )
 
                 is DocumentUploadDisplayState.Uploaded -> UploadedContent(
+                    state = current,
+                    onDelete = { state.initiateDelete() }
+                )
+
+                is DocumentUploadDisplayState.Linked -> LinkedContent(
+                    state = current,
+                    onDelete = { state.initiateDelete() }
+                )
+
+                is DocumentUploadDisplayState.NeedsReview -> NeedsReviewContent(
                     state = current,
                     onDelete = { state.initiateDelete() }
                 )
@@ -257,6 +278,58 @@ private fun UploadedContent(
     UploadItemRow(
         fileName = state.fileName,
         subtitle = formatFileSize(state.fileSize),
+        subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        icon = {
+            FileIconWithOverlay { UploadedOverlay() }
+        },
+        actions = {
+            DeleteDocumentAction(onClick = onDelete)
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun LinkedContent(
+    state: DocumentUploadDisplayState.Linked,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val subtitle = if (state.otherSources > 0) {
+        stringResource(
+            Res.string.upload_status_linked_to_with_sources,
+            state.document.id.toString(),
+            state.otherSources
+        )
+    } else {
+        stringResource(
+            Res.string.upload_status_linked_to,
+            state.document.id.toString()
+        )
+    }
+    UploadItemRow(
+        fileName = state.fileName,
+        subtitle = subtitle,
+        subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        icon = {
+            FileIconWithOverlay { UploadedOverlay() }
+        },
+        actions = {
+            DeleteDocumentAction(onClick = onDelete)
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun NeedsReviewContent(
+    state: DocumentUploadDisplayState.NeedsReview,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    UploadItemRow(
+        fileName = state.fileName,
+        subtitle = stringResource(Res.string.upload_status_needs_review),
         subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
         icon = {
             FileIconWithOverlay { UploadedOverlay() }

@@ -7,6 +7,7 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
@@ -17,6 +18,12 @@ import tech.dokus.domain.ids.VatNumber
  */
 @Serializable
 sealed interface DocumentDraftData
+
+fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
+    is InvoiceDraftData -> DocumentType.Invoice
+    is CreditNoteDraftData -> DocumentType.CreditNote
+    is ReceiptDraftData -> DocumentType.Receipt
+}
 
 @Serializable
 data class PartyDraft(

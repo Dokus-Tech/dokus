@@ -27,6 +27,8 @@ import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
@@ -40,8 +42,10 @@ import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
@@ -57,6 +61,7 @@ import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
+import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
@@ -267,7 +272,7 @@ interface CashflowRemoteDataSource {
         filename: String,
         contentType: String,
         prefix: String = "documents"
-    ): Result<DocumentDto>
+    ): Result<DocumentIntakeResult>
 
     /**
      * Upload a document with progress tracking.
@@ -288,7 +293,7 @@ interface CashflowRemoteDataSource {
         contentType: String,
         prefix: String = "documents",
         onProgress: (Float) -> Unit
-    ): Result<DocumentDto>
+    ): Result<DocumentIntakeResult>
 
     /**
      * Get a document by ID with a fresh presigned download URL.
@@ -307,7 +312,22 @@ interface CashflowRemoteDataSource {
      *
      * @param documentId The document ID to delete
      */
-    suspend fun deleteDocument(documentId: DocumentId): Result<Unit>
+    suspend fun deleteDocument(documentId: DocumentId, sourceId: DocumentSourceId? = null): Result<Unit>
+
+    /**
+     * Get evidence sources for a canonical document.
+     * GET /api/v1/documents/{id}/sources
+     */
+    suspend fun getDocumentSources(documentId: DocumentId): Result<List<DocumentSourceDto>>
+
+    /**
+     * Resolve a pending match review decision.
+     * POST /api/v1/documents/match-reviews/{reviewId}/resolve
+     */
+    suspend fun resolveDocumentMatchReview(
+        reviewId: DocumentMatchReviewId,
+        request: ResolveDocumentMatchReviewRequest
+    ): Result<DocumentRecordDto>
 
     // ============================================================================
     // STATISTICS & OVERVIEW

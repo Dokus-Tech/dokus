@@ -2,6 +2,7 @@ package tech.dokus.database.entity
 
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 
 /**
@@ -12,6 +13,7 @@ data class IngestionItemEntity(
     val runId: IngestionRunId,
     val documentId: DocumentId,
     val tenantId: TenantId,
+    val sourceId: DocumentSourceId? = null,
     val storageKey: String,
     val filename: String,
     val contentType: String,

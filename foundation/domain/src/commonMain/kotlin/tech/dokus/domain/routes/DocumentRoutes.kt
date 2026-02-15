@@ -65,6 +65,23 @@ class Documents {
     class Upload(val parent: Documents = Documents())
 
     /**
+     * /api/v1/documents/match-reviews/...
+     */
+    @Serializable
+    @Resource("match-reviews")
+    class MatchReviews(val parent: Documents = Documents()) {
+        /**
+         * POST /api/v1/documents/match-reviews/{reviewId}/resolve
+         */
+        @Serializable
+        @Resource("{reviewId}/resolve")
+        class Resolve(
+            val parent: MatchReviews = MatchReviews(),
+            val reviewId: String
+        )
+    }
+
+    /**
      * /api/v1/documents/{id} - Single document operations
      * GET - Retrieve full DocumentRecordDto
      * DELETE - Delete document (cascades to drafts, ingestion runs, chunks)
@@ -95,6 +112,26 @@ class Documents {
         @Serializable
         @Resource("ingestions")
         class Ingestions(val parent: Id)
+
+        /**
+         * GET /api/v1/documents/{id}/sources
+         * List all evidence sources linked to this canonical document.
+         */
+        @Serializable
+        @Resource("sources")
+        class Sources(val parent: Id)
+
+        /**
+         * DELETE /api/v1/documents/{id}/sources/{sourceId}
+         * Detach/delete a single source.
+         */
+        @Serializable
+        @Resource("sources/{sourceId}")
+        class Source(
+            val parent: Id,
+            val sourceId: String,
+            val confirm: Boolean = false
+        )
 
         /**
          * POST /api/v1/documents/{id}/reprocess

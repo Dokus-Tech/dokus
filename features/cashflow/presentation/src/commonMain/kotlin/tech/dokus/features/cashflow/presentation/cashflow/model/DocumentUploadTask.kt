@@ -1,7 +1,10 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model
 
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.ids.DocumentSourceId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -40,6 +43,11 @@ data class DocumentUploadTask(
     val progress: Float = 0f,
     val error: DokusException? = null,
     val documentId: DocumentId? = null,
+    val sourceId: DocumentSourceId? = null,
+    val intakeOutcome: DocumentIntakeOutcome? = null,
+    val linkedDocumentId: DocumentId? = null,
+    val matchReviewId: DocumentMatchReviewId? = null,
+    val sourceCount: Int = 1,
     val retryCount: Int = 0
 ) {
     /**
@@ -77,6 +85,11 @@ data class DocumentUploadTask(
         if (progress != other.progress) return false
         if (error != other.error) return false
         if (documentId != other.documentId) return false
+        if (sourceId != other.sourceId) return false
+        if (intakeOutcome != other.intakeOutcome) return false
+        if (linkedDocumentId != other.linkedDocumentId) return false
+        if (matchReviewId != other.matchReviewId) return false
+        if (sourceCount != other.sourceCount) return false
         if (retryCount != other.retryCount) return false
 
         return true
@@ -92,6 +105,11 @@ data class DocumentUploadTask(
         result = 31 * result + progress.hashCode()
         result = 31 * result + (error?.hashCode() ?: 0)
         result = 31 * result + (documentId?.hashCode() ?: 0)
+        result = 31 * result + (sourceId?.hashCode() ?: 0)
+        result = 31 * result + (intakeOutcome?.hashCode() ?: 0)
+        result = 31 * result + (linkedDocumentId?.hashCode() ?: 0)
+        result = 31 * result + (matchReviewId?.hashCode() ?: 0)
+        result = 31 * result + sourceCount
         result = 31 * result + retryCount
         return result
     }

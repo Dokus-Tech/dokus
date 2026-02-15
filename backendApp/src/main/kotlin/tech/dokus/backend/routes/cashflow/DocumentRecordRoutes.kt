@@ -15,27 +15,35 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
+import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
+import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
+import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
+import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -68,6 +76,7 @@ internal fun Route.documentRecordRoutes() {
     val projectionReconciliationService by inject<CashflowProjectionReconciliationService>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
+    val truthService by inject<DocumentTruthService>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
 
     authenticateJwt {
@@ -106,6 +115,10 @@ internal fun Route.documentRecordRoutes() {
             val cashflowEntryIdsByDocumentId = cashflowEntriesRepository
                 .getIdsByDocumentIds(tenantId, confirmedDocumentIds)
                 .getOrThrow()
+            val pendingReviewsByDocumentId = truthService.getPendingReviewsByDocuments(
+                tenantId = tenantId,
+                documentIds = documentsWithInfo.map { it.document.id }
+            )
 
             // Build full records
             val records = documentsWithInfo.map { docInfo ->
@@ -129,7 +142,8 @@ internal fun Route.documentRecordRoutes() {
                     draft = draft?.toDto(),
                     latestIngestion = docInfo.latestIngestion?.toDto(),
                     confirmedEntity = confirmedEntity,
-                    cashflowEntryId = cashflowEntryIdsByDocumentId[docInfo.document.id]
+                    cashflowEntryId = cashflowEntryIdsByDocumentId[docInfo.document.id],
+                    pendingMatchReview = pendingReviewsByDocumentId[docInfo.document.id]?.toSummaryDto()
                 )
             }
 
@@ -156,10 +170,25 @@ internal fun Route.documentRecordRoutes() {
 
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
+            val sources = truthService.listSources(tenantId, documentId)
+            val defaultSource = selectDefaultSource(sources)
+            val effectiveDocument = if (defaultSource != null) {
+                document.copy(
+                    filename = defaultSource.filename ?: document.filename,
+                    contentType = defaultSource.contentType,
+                    sizeBytes = defaultSource.sizeBytes,
+                    storageKey = defaultSource.storageKey,
+                    source = defaultSource.sourceChannel,
+                    uploadedAt = defaultSource.arrivalAt
+                )
+            } else {
+                document
+            }
 
-            val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
+            val documentWithUrl = addDownloadUrl(effectiveDocument, minioStorage, logger)
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
             val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
+            val pendingReview = truthService.getPendingReviewByDocument(tenantId, documentId)
             val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
                 findConfirmedEntity(
                     documentId,
@@ -188,7 +217,9 @@ internal fun Route.documentRecordRoutes() {
                         includeTrace = true
                     ),
                     confirmedEntity = confirmedEntity,
-                    cashflowEntryId = cashflowEntryId
+                    cashflowEntryId = cashflowEntryId,
+                    pendingMatchReview = pendingReview?.toSummaryDto(),
+                    sources = sources.map { it.toDto() }
                 )
             )
         }
@@ -205,12 +236,17 @@ internal fun Route.documentRecordRoutes() {
 
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
+            val sources = truthService.listSources(tenantId, documentId)
+            val defaultSource = selectDefaultSource(sources)
+            val storageKey = defaultSource?.storageKey ?: document.storageKey
+            val resolvedFilename = defaultSource?.filename ?: document.filename
+            val resolvedContentType = defaultSource?.contentType ?: document.contentType
 
             val stream = try {
-                minioStorage.openDocumentStream(document.storageKey)
+                minioStorage.openDocumentStream(storageKey)
             } catch (e: NoSuchElementException) {
                 logger.warn(
-                    "Document content object missing for document: $documentId, storageKey=${document.storageKey}"
+                    "Document content object missing for document: $documentId, storageKey=$storageKey"
                 )
                 throw DokusException.NotFound("Document content not found")
             } catch (e: Exception) {
@@ -218,13 +254,13 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.InternalError("Failed to download document content")
             }
 
-            val contentType = runCatching { ContentType.parse(document.contentType) }
+            val contentType = runCatching { ContentType.parse(resolvedContentType) }
                 .getOrDefault(ContentType.Application.OctetStream)
 
             call.response.header(
                 HttpHeaders.ContentDisposition,
                 ContentDisposition.Attachment
-                    .withParameter(ContentDisposition.Parameters.FileName, document.filename)
+                    .withParameter(ContentDisposition.Parameters.FileName, resolvedFilename)
                     .toString()
             )
             call.respondOutputStream(contentType = contentType, status = HttpStatusCode.OK) {
@@ -232,6 +268,50 @@ internal fun Route.documentRecordRoutes() {
                     input.copyTo(this)
                 }
             }
+        }
+
+        /**
+         * GET /api/v1/documents/{id}/sources
+         * List source evidence attached to a canonical document.
+         */
+        get<Documents.Id.Sources> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val documentId = DocumentId.parse(route.parent.id)
+
+            if (!documentRepository.exists(tenantId, documentId)) {
+                throw DokusException.NotFound("Document not found")
+            }
+
+            val sources = truthService.listSources(tenantId, documentId)
+            call.respond(HttpStatusCode.OK, sources.map { it.toDto() })
+        }
+
+        /**
+         * DELETE /api/v1/documents/{id}/sources/{sourceId}
+         * Remove one evidence source using last-source lifecycle rules.
+         */
+        delete<Documents.Id.Source> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val documentId = DocumentId.parse(route.parent.id)
+            val sourceId = DocumentSourceId.parse(route.sourceId)
+
+            val deleteResult = truthService.deleteSource(
+                tenantId = tenantId,
+                documentId = documentId,
+                sourceId = sourceId,
+                confirmLastOnConfirmed = route.confirm
+            )
+
+            if (deleteResult.requiresConfirmation) {
+                throw DokusException.BadRequest(
+                    "Deleting the last source from a confirmed document requires confirm=true"
+                )
+            }
+            if (!deleteResult.deleted) {
+                throw DokusException.NotFound("Source not found")
+            }
+
+            call.respond(HttpStatusCode.NoContent)
         }
 
         /**
@@ -249,10 +329,10 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.NotFound("Document not found")
             }
 
-            val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
-            if (!isInboxLifecycle(latestIngestion?.status)) {
+            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            if (draft?.documentStatus == DocumentStatus.Confirmed) {
                 throw DokusException.BadRequest(
-                    "Only Inbox documents in Queued or Processing state can be deleted"
+                    "Confirmed documents cannot be fully deleted. Remove sources instead."
                 )
             }
 
@@ -607,9 +687,86 @@ internal fun Route.documentRecordRoutes() {
                 )
             )
         }
+
+        /**
+         * POST /api/v1/documents/match-reviews/{reviewId}/resolve
+         * Resolve possible-match review as SAME or DIFFERENT.
+         */
+        post<Documents.MatchReviews.Resolve> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val userId = dokusPrincipal.userId
+            val reviewId = DocumentMatchReviewId.parse(route.reviewId)
+            val request = call.receive<ResolveDocumentMatchReviewRequest>()
+
+            val result = truthService.resolveMatchReview(
+                tenantId = tenantId,
+                userId = userId,
+                reviewId = reviewId,
+                decision = request.decision
+            ) ?: throw DokusException.NotFound("Match review not found")
+
+            val targetDocumentId = result.documentId
+            val document = documentRepository.getById(tenantId, targetDocumentId)
+                ?: throw DokusException.NotFound("Document not found")
+            val sources = truthService.listSources(tenantId, targetDocumentId)
+            val defaultSource = selectDefaultSource(sources)
+            val effectiveDocument = if (defaultSource != null) {
+                document.copy(
+                    filename = defaultSource.filename ?: document.filename,
+                    contentType = defaultSource.contentType,
+                    sizeBytes = defaultSource.sizeBytes,
+                    storageKey = defaultSource.storageKey,
+                    source = defaultSource.sourceChannel,
+                    uploadedAt = defaultSource.arrivalAt
+                )
+            } else {
+                document
+            }
+            val documentWithUrl = addDownloadUrl(effectiveDocument, minioStorage, logger)
+            val draft = draftRepository.getByDocumentId(targetDocumentId, tenantId)
+            val latestIngestion = ingestionRepository.getLatestForDocument(targetDocumentId, tenantId)
+            val pendingReview = truthService.getPendingReviewByDocument(tenantId, targetDocumentId)
+            val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
+                findConfirmedEntity(
+                    targetDocumentId,
+                    draft.documentType,
+                    tenantId,
+                    invoiceRepository,
+                    expenseRepository,
+                    creditNoteRepository
+                )
+            } else {
+                null
+            }
+            val cashflowEntryId = if (draft?.documentStatus == DocumentStatus.Confirmed) {
+                cashflowEntriesRepository.getByDocumentId(tenantId, targetDocumentId).getOrNull()?.id
+            } else {
+                null
+            }
+
+            call.respond(
+                HttpStatusCode.OK,
+                DocumentRecordDto(
+                    document = documentWithUrl,
+                    draft = draft?.toDto(),
+                    latestIngestion = latestIngestion?.toDto(
+                        includeRawExtraction = true,
+                        includeTrace = true
+                    ),
+                    confirmedEntity = confirmedEntity,
+                    cashflowEntryId = cashflowEntryId,
+                    pendingMatchReview = pendingReview?.toSummaryDto(),
+                    sources = sources.map { it.toDto() }
+                )
+            )
+        }
     }
 }
 
 internal fun isInboxLifecycle(status: IngestionStatus?): Boolean {
     return status == IngestionStatus.Queued || status == IngestionStatus.Processing
+}
+
+private fun selectDefaultSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
+    return selectDefaultSourceFromList(sources)
 }

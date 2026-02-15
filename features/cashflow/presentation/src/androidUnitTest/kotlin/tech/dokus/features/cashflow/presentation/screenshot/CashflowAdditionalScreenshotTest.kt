@@ -242,12 +242,15 @@ private fun createUploadManager(): DocumentUploadManager {
             contentType: String?,
             prefix: String,
             onProgress: (Float) -> Unit
-        ): Result<tech.dokus.domain.model.DocumentDto> {
+        ): Result<tech.dokus.domain.model.DocumentIntakeResult> {
             return Result.failure(IllegalStateException("Not implemented"))
         }
     }
     val deleteUseCase = object : DeleteDocumentUseCase {
-        override suspend fun invoke(documentId: DocumentId): Result<Unit> {
+        override suspend fun invoke(
+            documentId: DocumentId,
+            sourceId: tech.dokus.domain.ids.DocumentSourceId?
+        ): Result<Unit> {
             return Result.success(Unit)
         }
     }

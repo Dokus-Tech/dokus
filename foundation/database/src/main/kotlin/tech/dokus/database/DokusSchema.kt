@@ -27,6 +27,9 @@ import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentBlobsTable
+import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.notifications.NotificationPreferencesTable
 import tech.dokus.database.tables.notifications.NotificationsTable
@@ -72,8 +75,11 @@ object DokusSchema {
                 // Cashflow foundation (docs)
                 // ----------------------------
                 DocumentsTable,
+                DocumentBlobsTable,
+                DocumentSourcesTable,
                 DocumentIngestionRunsTable,
                 DocumentDraftsTable,
+                DocumentMatchReviewsTable,
 
                 // ----------------------------
                 // Contacts (depends on docs/users/addresses)

@@ -16,8 +16,10 @@ import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
@@ -66,6 +68,8 @@ class ProcessorIngestionInvariantTest {
                 UsersTable,
                 ContactsTable,
                 DocumentsTable,
+                DocumentBlobsTable,
+                DocumentSourcesTable,
                 DocumentIngestionRunsTable,
                 DocumentDraftsTable
             )
@@ -92,6 +96,8 @@ class ProcessorIngestionInvariantTest {
             SchemaUtils.drop(
                 DocumentDraftsTable,
                 DocumentIngestionRunsTable,
+                DocumentSourcesTable,
+                DocumentBlobsTable,
                 DocumentsTable,
                 ContactsTable,
                 UsersTable,
@@ -146,4 +152,3 @@ class ProcessorIngestionInvariantTest {
         assertEquals(DocumentStatus.NeedsReview, draft.documentStatus)
     }
 }
-

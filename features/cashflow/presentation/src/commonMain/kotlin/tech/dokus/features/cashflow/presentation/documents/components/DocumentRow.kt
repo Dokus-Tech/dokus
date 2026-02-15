@@ -337,6 +337,7 @@ internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
     val documentStatus = document.draft?.documentStatus
     val hasConfirmedEntity = document.confirmedEntity != null
+    val hasPendingMatchReview = document.pendingMatchReview != null
 
     if (documentStatus == DocumentStatus.Rejected) {
         return false
@@ -352,7 +353,9 @@ internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
         documentStatus != DocumentStatus.Confirmed ||
         !hasConfirmedEntity
 
-    return confirmedButNoEntity || (isNotConfirmed && (ingestionNeedsAttention || draftNeedsReview || succeededButNoDraft))
+    return hasPendingMatchReview ||
+        confirmedButNoEntity ||
+        (isNotConfirmed && (ingestionNeedsAttention || draftNeedsReview || succeededButNoDraft))
 }
 
 /**
