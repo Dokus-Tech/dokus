@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.Permission
@@ -12,10 +13,13 @@ import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentIntakeOutcomeDto
+import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.TenantScope
@@ -31,6 +35,8 @@ internal class FakeTokenManager(
     override val isAuthenticated = MutableStateFlow(isAuthenticated)
 
     override suspend fun getValidAccessToken(): String? = null
+
+    override suspend fun getRefreshToken(): String? = null
 
     override suspend fun refreshToken(force: Boolean): String? = null
 
@@ -86,7 +92,7 @@ internal class FakeUploadDocumentUseCase(
         contentType: String?,
         prefix: String,
         onProgress: (Float) -> Unit
-    ): Result<DocumentDto> {
+    ): Result<DocumentIntakeResult> {
         val invocationIndex = invocations
         invocations += 1
         uploadedFilenames += filename
@@ -94,9 +100,20 @@ internal class FakeUploadDocumentUseCase(
         val progressPoints = progressPointsByInvocation[invocationIndex] ?: defaultProgressPoints
         progressPoints.forEach(onProgress)
 
-        return results.getOrNull(invocationIndex)
+        val docResult = results.getOrNull(invocationIndex)
             ?: results.lastOrNull()
-            ?: Result.failure(IllegalStateException("No upload result configured"))
+            ?: return Result.failure(IllegalStateException("No upload result configured"))
+
+        return docResult.map { doc ->
+            DocumentIntakeResult(
+                document = doc,
+                intake = DocumentIntakeOutcomeDto(
+                    outcome = DocumentIntakeOutcome.NewDocument,
+                    sourceId = DocumentSourceId.parse(doc.id.toString()),
+                    documentId = doc.id
+                )
+            )
+        }
     }
 }
 
