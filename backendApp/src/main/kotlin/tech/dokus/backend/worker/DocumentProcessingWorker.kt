@@ -94,7 +94,7 @@ class DocumentProcessingWorker(
         val concurrency = config.batchSize.coerceAtLeast(1)
         logger.info(
             "Starting worker (KOOG-GRAPH): interval=${config.pollingInterval}ms, " +
-                    "batch=${config.batchSize}, concurrency=$concurrency"
+                "batch=${config.batchSize}, concurrency=$concurrency"
         )
 
         pollingJob = scope.launch {
@@ -180,7 +180,7 @@ class DocumentProcessingWorker(
                         } catch (e: Exception) {
                             logger.error(
                                 "Failed to process ingestion run ${ingestion.runId} " +
-                                        "for document ${ingestion.documentId}",
+                                    "for document ${ingestion.documentId}",
                                 e
                             )
                             markRunFailedSafely(
@@ -442,7 +442,12 @@ class DocumentProcessingWorker(
 
                     if (canAutoConfirm) {
                         try {
-                            confirmationDispatcher.confirm(parsedTenantId, documentId, draftData, linkedContactId).getOrThrow()
+                            confirmationDispatcher.confirm(
+                                parsedTenantId,
+                                documentId,
+                                draftData,
+                                linkedContactId
+                            ).getOrThrow()
                         } catch (e: Exception) {
                             logger.error("Auto-confirm failed for document $documentId", e)
                             draftRepository.updateDocumentStatus(

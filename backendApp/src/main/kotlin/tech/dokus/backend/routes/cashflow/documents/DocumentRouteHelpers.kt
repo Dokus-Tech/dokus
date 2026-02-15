@@ -72,7 +72,6 @@ internal suspend fun findConfirmedEntity(
     }
 }
 
-
 /**
  * Convert DraftSummary to DocumentDraftDto.
  */
@@ -108,7 +107,6 @@ private fun DocumentDraftData?.directionOrUnknown(): DocumentDirection = when (t
     is CreditNoteDraftData -> this.direction
     null -> DocumentDirection.Unknown
 }
-
 
 /**
  * Convert IngestionRunSummary to DocumentIngestionDto.

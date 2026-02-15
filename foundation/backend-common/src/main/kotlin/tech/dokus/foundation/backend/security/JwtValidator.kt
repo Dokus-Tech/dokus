@@ -91,13 +91,15 @@ class JwtValidator(
             val name = email.substringBefore('@', email)
             val roleClaim = payload.getClaim(JwtClaims.CLAIM_ROLE).asString()
             val roles: Set<String> = roleClaim?.let { setOf(it) } ?: emptySet()
+            val sessionJti = payload.getClaim(JwtClaims.CLAIM_JTI).asString()
 
             AuthenticationInfo(
                 userId = UserId(userId),
                 email = email,
                 name = name,
                 tenantId = tenantIdFromFlat ?: tenantIdFromList,
-                roles = roles
+                roles = roles,
+                sessionJti = sessionJti
             )
         } catch (e: Exception) {
             logger.error("Failed to extract auth info from JWT payload: ${'$'}{e.message}", e)

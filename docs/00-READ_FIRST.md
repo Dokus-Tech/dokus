@@ -1,14 +1,12 @@
-# READ THIS FIRST
+# Read This First
 
 This documentation defines what Dokus is and what it is not.
 
-It is written primarily for:
+Primary audience:
+- contributors
+- maintainers
+- automation agents working in this repository
 
-- AI coding agents
-- Future contributors
-- The founder when tired and tempted to add features
+If a proposal conflicts with these docs, the proposal should be revised.
 
-If any code, task, or proposal contradicts these documents:
-→ The proposal is wrong.
-
-Dokus succeeds by being narrow, calm, and useful.
+Dokus succeeds by staying narrow, explicit, and useful.

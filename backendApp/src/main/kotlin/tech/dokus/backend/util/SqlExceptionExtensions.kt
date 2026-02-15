@@ -14,4 +14,3 @@ fun Throwable.isUniqueViolation(): Boolean {
     }
     return false
 }
-

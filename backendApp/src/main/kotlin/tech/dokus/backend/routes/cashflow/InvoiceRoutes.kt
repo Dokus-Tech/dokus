@@ -11,8 +11,8 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.backend.services.cashflow.InvoiceService
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId

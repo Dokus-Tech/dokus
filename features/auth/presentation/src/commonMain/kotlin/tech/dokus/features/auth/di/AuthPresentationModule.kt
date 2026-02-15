@@ -6,10 +6,18 @@ import tech.dokus.features.auth.mvi.ForgotPasswordAction
 import tech.dokus.features.auth.mvi.ForgotPasswordContainer
 import tech.dokus.features.auth.mvi.ForgotPasswordIntent
 import tech.dokus.features.auth.mvi.ForgotPasswordState
+import tech.dokus.features.auth.mvi.ChangePasswordAction
+import tech.dokus.features.auth.mvi.ChangePasswordContainer
+import tech.dokus.features.auth.mvi.ChangePasswordIntent
+import tech.dokus.features.auth.mvi.ChangePasswordState
 import tech.dokus.features.auth.mvi.LoginAction
 import tech.dokus.features.auth.mvi.LoginContainer
 import tech.dokus.features.auth.mvi.LoginIntent
 import tech.dokus.features.auth.mvi.LoginState
+import tech.dokus.features.auth.mvi.MySessionsAction
+import tech.dokus.features.auth.mvi.MySessionsContainer
+import tech.dokus.features.auth.mvi.MySessionsIntent
+import tech.dokus.features.auth.mvi.MySessionsState
 import tech.dokus.features.auth.mvi.NewPasswordAction
 import tech.dokus.features.auth.mvi.NewPasswordContainer
 import tech.dokus.features.auth.mvi.NewPasswordIntent
@@ -34,6 +42,10 @@ import tech.dokus.features.auth.mvi.WorkspaceSelectAction
 import tech.dokus.features.auth.mvi.WorkspaceSelectContainer
 import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
 import tech.dokus.features.auth.mvi.WorkspaceSelectState
+import tech.dokus.features.auth.mvi.VerifyEmailAction
+import tech.dokus.features.auth.mvi.VerifyEmailContainer
+import tech.dokus.features.auth.mvi.VerifyEmailIntent
+import tech.dokus.features.auth.mvi.VerifyEmailState
 import tech.dokus.foundation.app.mvi.container
 
 val authPresentationModule = module {
@@ -47,10 +59,15 @@ val authPresentationModule = module {
         RegisterContainer(registerAndLoginUseCase = get(), tokenManager = get())
     }
     container<ForgotPasswordContainer, ForgotPasswordState, ForgotPasswordIntent, ForgotPasswordAction> {
-        ForgotPasswordContainer()
+        ForgotPasswordContainer(requestPasswordResetUseCase = get())
     }
     container<NewPasswordContainer, NewPasswordState, NewPasswordIntent, NewPasswordAction> {
-        NewPasswordContainer()
+            (params: String) ->
+        NewPasswordContainer(resetToken = params, resetPasswordUseCase = get())
+    }
+    container<VerifyEmailContainer, VerifyEmailState, VerifyEmailIntent, VerifyEmailAction> {
+            (params: String) ->
+        VerifyEmailContainer(token = params, verifyEmailUseCase = get())
     }
     container<WorkspaceSelectContainer, WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> {
         WorkspaceSelectContainer(listMyTenants = get(), selectTenantUseCase = get())
@@ -64,7 +81,22 @@ val authPresentationModule = module {
         )
     }
     container<ProfileSettingsContainer, ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
-        ProfileSettingsContainer(getCurrentUser = get(), updateProfile = get(), watchCurrentUserUseCase = get())
+        ProfileSettingsContainer(
+            getCurrentUser = get(),
+            updateProfile = get(),
+            watchCurrentUserUseCase = get(),
+            resendVerificationEmailUseCase = get()
+        )
+    }
+    container<ChangePasswordContainer, ChangePasswordState, ChangePasswordIntent, ChangePasswordAction> {
+        ChangePasswordContainer(changePasswordUseCase = get())
+    }
+    container<MySessionsContainer, MySessionsState, MySessionsIntent, MySessionsAction> {
+        MySessionsContainer(
+            listSessionsUseCase = get(),
+            revokeSessionUseCase = get(),
+            revokeOtherSessionsUseCase = get()
+        )
     }
     container<ServerConnectionContainer, ServerConnectionState, ServerConnectionIntent, ServerConnectionAction> {
             (params: ServerConnectionContainer.Companion.Params) ->

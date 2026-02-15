@@ -11,6 +11,7 @@ import tech.dokus.domain.Name
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
+import tech.dokus.features.auth.usecases.ResendVerificationEmailUseCase
 import tech.dokus.features.auth.usecases.UpdateProfileUseCase
 import tech.dokus.features.auth.usecases.WatchCurrentUserUseCase
 import tech.dokus.foundation.platform.Logger
@@ -28,6 +29,7 @@ class ProfileSettingsContainer(
     private val getCurrentUser: GetCurrentUserUseCase,
     private val updateProfile: UpdateProfileUseCase,
     private val watchCurrentUserUseCase: WatchCurrentUserUseCase,
+    private val resendVerificationEmailUseCase: ResendVerificationEmailUseCase,
 ) : Container<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
 
     private val logger = Logger.forClass<ProfileSettingsContainer>()
@@ -50,6 +52,9 @@ class ProfileSettingsContainer(
                     is ProfileSettingsIntent.UpdateFirstName -> handleUpdateFirstName(intent.value)
                     is ProfileSettingsIntent.UpdateLastName -> handleUpdateLastName(intent.value)
                     is ProfileSettingsIntent.SaveClicked -> handleSave()
+                    is ProfileSettingsIntent.ResendVerificationClicked -> handleResendVerification()
+                    is ProfileSettingsIntent.ChangePasswordClicked -> handleChangePassword()
+                    is ProfileSettingsIntent.MySessionsClicked -> handleMySessions()
                     is ProfileSettingsIntent.BackClicked -> handleBack()
                 }
             }
@@ -61,7 +66,7 @@ class ProfileSettingsContainer(
         getCurrentUser().fold(
             onSuccess = { user ->
                 logger.i { "User profile loaded: ${user.email.value}" }
-                updateState { ProfileSettingsState.Viewing(user) }
+                updateState { ProfileSettingsState.Viewing(user = user) }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load user profile" }
@@ -91,7 +96,7 @@ class ProfileSettingsContainer(
     private suspend fun ProfileSettingsCtx.handleCancelEditing() {
         withState<ProfileSettingsState.Editing, _> {
             logger.d { "Cancelled editing profile" }
-            updateState { ProfileSettingsState.Viewing(user) }
+            updateState { ProfileSettingsState.Viewing(user = user) }
         }
     }
 
@@ -137,7 +142,7 @@ class ProfileSettingsContainer(
                 onSuccess = { updatedUser ->
                     logger.i { "Profile saved successfully" }
                     watchCurrentUserUseCase.refresh()
-                    updateState { ProfileSettingsState.Viewing(updatedUser) }
+                    updateState { ProfileSettingsState.Viewing(user = updatedUser) }
                     action(ProfileSettingsAction.ShowSaveSuccess)
                 },
                 onFailure = { error ->
@@ -160,6 +165,32 @@ class ProfileSettingsContainer(
                 }
             )
         }
+    }
+
+    private suspend fun ProfileSettingsCtx.handleResendVerification() {
+        withState<ProfileSettingsState.Viewing, _> {
+            if (user.emailVerified) return@withState
+
+            updateState { copy(isResendingVerification = true) }
+            resendVerificationEmailUseCase().fold(
+                onSuccess = {
+                    updateState { copy(isResendingVerification = false) }
+                    action(ProfileSettingsAction.ShowVerificationEmailSent)
+                },
+                onFailure = { error ->
+                    updateState { copy(isResendingVerification = false) }
+                    action(ProfileSettingsAction.ShowVerificationEmailError(error.asDokusException))
+                }
+            )
+        }
+    }
+
+    private suspend fun ProfileSettingsCtx.handleChangePassword() {
+        action(ProfileSettingsAction.NavigateToChangePassword)
+    }
+
+    private suspend fun ProfileSettingsCtx.handleMySessions() {
+        action(ProfileSettingsAction.NavigateToMySessions)
     }
 
     private suspend fun ProfileSettingsCtx.handleBack() {

@@ -16,11 +16,11 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
-import tech.dokus.backend.services.notifications.NotificationEmission
-import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
+import tech.dokus.backend.services.notifications.NotificationEmission
+import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
@@ -324,7 +324,10 @@ class PeppolPollingWorker(
                             )
                         )
                     ).onFailure { error ->
-                        logger.warn("Failed to emit PEPPOL received notification for document ${processed.documentId}", error)
+                        logger.warn(
+                            "Failed to emit PEPPOL received notification for document ${processed.documentId}",
+                            error
+                        )
                     }
                 }
             }.onFailure { e ->

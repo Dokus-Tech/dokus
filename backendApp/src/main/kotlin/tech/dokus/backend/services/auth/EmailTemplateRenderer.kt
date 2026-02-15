@@ -75,7 +75,7 @@ class EmailTemplateRenderer(
 
     fun renderPasswordReset(resetToken: String, expirationHours: Int): EmailTemplate {
         val subject = "Reset your password"
-        val resetUrl = absoluteUrl("/reset-password?token=$resetToken")
+        val resetUrl = absoluteUrl("/auth/reset-password?token=$resetToken")
         val details = listOf(
             "A password reset was requested for your account.",
             "This link expires in $expirationHours hour(s)."
@@ -90,7 +90,7 @@ class EmailTemplateRenderer(
 
     fun renderEmailVerification(verificationToken: String, expirationHours: Int): EmailTemplate {
         val subject = "Verify your email address"
-        val verificationUrl = absoluteUrl("/verify-email?token=$verificationToken")
+        val verificationUrl = absoluteUrl("/auth/verify-email?token=$verificationToken")
         val details = listOf(
             "Confirm this email address to continue using Dokus.",
             "This link expires in $expirationHours hour(s)."

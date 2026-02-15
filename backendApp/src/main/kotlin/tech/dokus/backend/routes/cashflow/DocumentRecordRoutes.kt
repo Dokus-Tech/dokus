@@ -617,7 +617,10 @@ internal fun Route.documentRecordRoutes() {
 
             // Confirm document: creates entity + cashflow entry + marks draft confirmed
             val confirmationResult = confirmationDispatcher.confirm(
-                tenantId, documentId, draftData, draft.linkedContactId
+                tenantId,
+                documentId,
+                draftData,
+                draft.linkedContactId
             ).getOrThrow()
 
             val entryId = confirmationResult.cashflowEntryId

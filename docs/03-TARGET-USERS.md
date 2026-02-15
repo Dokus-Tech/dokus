@@ -1,15 +1,12 @@
 # Target Users
 
 Primary users:
-
-- Freelancers
-- Small companies (1–20 people)
-- Founders without accounting knowledge
+- freelancers
+- small teams (1-20 people)
+- founders/operators who are not accounting specialists
 
 Secondary users:
+- bookkeepers
+- accounting firms receiving prepared records
 
-- Bookkeepers
-- Accounting firms
-
-Users are busy and non-technical.
-The product must adapt to them, not educate them.
+The product should reduce friction, not require training.

@@ -1,12 +1,12 @@
 package tech.dokus.backend.services.cashflow
 
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import java.util.UUID
 
 /**

@@ -9,7 +9,9 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -356,11 +358,13 @@ class DocumentIngestionRunRepository {
 
         val staleCondition = if (tenantId != null) {
             (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                (DocumentIngestionRunsTable.startedAt lessEq cutoff) and
+                (DocumentIngestionRunsTable.startedAt.isNull() or
+                    (DocumentIngestionRunsTable.startedAt lessEq cutoff)) and
                 (DocumentIngestionRunsTable.tenantId eq tenantId)
         } else {
             (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                (DocumentIngestionRunsTable.startedAt lessEq cutoff)
+                (DocumentIngestionRunsTable.startedAt.isNull() or
+                    (DocumentIngestionRunsTable.startedAt lessEq cutoff))
         }
 
         return DocumentIngestionRunsTable.update({ staleCondition }) {

@@ -55,7 +55,7 @@ internal object DocumentListingQuery {
         search: String?,
         page: Int,
         limit: Int
-    ): Pair<List<DocumentWithDraftAndIngestion>, Long> = newSuspendedTransaction {
+    ): DocumentListPage<DocumentWithDraftAndIngestion> = newSuspendedTransaction {
         val tenantIdUuid = UUID.fromString(tenantId.toString())
         val trimmedSearch = search?.trim()?.takeIf { it.isNotEmpty() }
 
@@ -349,7 +349,7 @@ internal object DocumentListingQuery {
             }
 
         if (pageRows.isEmpty()) {
-            return@newSuspendedTransaction emptyList<DocumentWithDraftAndIngestion>() to total
+            return@newSuspendedTransaction DocumentListPage(emptyList(), total)
         }
 
         val documentIds = pageRows.map { UUID.fromString(it.documentId.toString()) }
@@ -393,7 +393,7 @@ internal object DocumentListingQuery {
             )
         }
 
-        results to total
+        DocumentListPage(results, total)
     }
 }
 

@@ -1,25 +1,20 @@
 # Core Domain Model
 
-Key concepts in Dokus:
+Key concepts:
 
-- Document
-    - Uploaded file (invoice, receipt, credit note, contract)
-    - Has processing status
+- Document:
+- uploaded source file with processing state and extracted structure
 
-- Cashflow Item
-    - Income or expense
-    - Linked to a document
+- Cashflow Entry:
+- expected or actual money movement linked to source records
 
-- Contact
-    - Supplier or client
-    - Can be auto-created by AI
+- Contact:
+- counterparty (customer/vendor) used across documents and transactions
 
-- Item (Catalog)
-    - Reusable invoice line template
-    - NOT inventory
+- Invoice / Expense / Inbound Invoice:
+- financial entities created from document confirmation and user actions
 
-- Bank Transaction
-    - Imported financial movement
-    - Suggestively matched only
+- Item (Catalog):
+- reusable invoice line template (not inventory stock)
 
-Documents are the source of truth.
+Documents remain the primary ingestion source of truth.

@@ -122,6 +122,19 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
     }
 
     @Test
+    fun `findActiveRun returns null after null startedAt processing auto recovery`() = runBlocking {
+        insertProcessingRunWithNullStartedAt()
+
+        val active = repository.findActiveRun(documentId, tenantId)
+        val latest = repository.getLatestForDocument(documentId, tenantId)
+
+        assertNull(active)
+        assertNotNull(latest)
+        assertEquals(IngestionStatus.Failed, latest.status)
+        assertEquals(DocumentProcessingConstants.ingestionTimeoutErrorMessage(), latest.errorMessage)
+    }
+
+    @Test
     fun `listByDocument exposes stale processing as failed after recovery`() = runBlocking {
         insertProcessingRun(stale = true)
 
@@ -148,6 +161,24 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
                 it[DocumentIngestionRunsTable.status] = IngestionStatus.Processing
                 it[DocumentIngestionRunsTable.queuedAt] = queuedAt
                 it[DocumentIngestionRunsTable.startedAt] = queuedAt
+            }
+        }
+
+        return runId
+    }
+
+    private fun insertProcessingRunWithNullStartedAt(): IngestionRunId {
+        val runId = IngestionRunId.generate()
+        val queuedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        transaction(database) {
+            DocumentIngestionRunsTable.insert {
+                it[DocumentIngestionRunsTable.id] = runId.value.toJavaUuid()
+                it[DocumentIngestionRunsTable.documentId] = documentUuid
+                it[DocumentIngestionRunsTable.tenantId] = tenantUuid
+                it[DocumentIngestionRunsTable.status] = IngestionStatus.Processing
+                it[DocumentIngestionRunsTable.queuedAt] = queuedAt
+                it[DocumentIngestionRunsTable.startedAt] = null
             }
         }
 

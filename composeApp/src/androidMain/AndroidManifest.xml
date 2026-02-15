@@ -29,10 +29,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <!-- dokus://auth/qr scheme for QR code authentication -->
+                <!-- dokus://auth deep links for auth flows -->
                 <data
                     android:host="auth"
                     android:pathPrefix="/qr"
+                    android:scheme="dokus" />
+                <data
+                    android:host="auth"
+                    android:pathPrefix="/reset-password"
+                    android:scheme="dokus" />
+                <data
+                    android:host="auth"
+                    android:pathPrefix="/verify-email"
                     android:scheme="dokus" />
             </intent-filter>
 
