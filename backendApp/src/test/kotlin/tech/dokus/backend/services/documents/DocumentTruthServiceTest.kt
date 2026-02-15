@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.FuzzySourceCandidate
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
@@ -76,8 +77,7 @@ class DocumentTruthServiceTest {
             draftRepository = draftRepository,
             blobRepository = blobRepository,
             sourceRepository = sourceRepository,
-            matchReviewRepository = matchReviewRepository,
-            enableFuzzyMatching = false
+            matchReviewRepository = matchReviewRepository
         )
     }
 
@@ -281,7 +281,7 @@ class DocumentTruthServiceTest {
     }
 
     @Test
-    fun `applyPostExtractionMatching skips fuzzy matching when disabled`() = runBlocking {
+    fun `applyPostExtractionMatching creates review on fuzzy candidate when no exact identity match`() = runBlocking {
         val source = sourceSummary(id = sourceId1, documentId = docId1)
 
         coEvery { sourceRepository.getById(tenantId, sourceId1) } returns source
@@ -291,9 +291,34 @@ class DocumentTruthServiceTest {
         coEvery {
             sourceRepository.findLinkedDocumentByIdentityKeyHash(tenantId, any(), excludeDocumentId = docId1)
         } returns null
-        coEvery { sourceRepository.countLinkedSources(tenantId, docId1) } returns 1
+        coEvery {
+            sourceRepository.findFuzzyCandidates(
+                tenantId = tenantId,
+                normalizedSupplierVat = any(),
+                normalizedDocumentNumber = any(),
+                documentType = any(),
+                direction = any(),
+                excludeDocumentId = docId1,
+                maxDistance = 2
+            )
+        } returns listOf(
+            FuzzySourceCandidate(
+                sourceId = DocumentSourceId.parse("abababab-abab-abab-abab-abababababab"),
+                documentId = docId2,
+                normalizedDocumentNumber = "INV2026002",
+                distance = 1
+            )
+        )
+        coEvery { draftRepository.getByDocumentId(docId2, tenantId) } returns draftSummary(
+            extractedData = simpleInvoiceDraft(invoiceNumber = "INV-2026-002")
+        )
+        coEvery {
+            matchReviewRepository.createPending(tenantId, docId2, sourceId1, any(), any(), any())
+        } returns reviewId1
+        coEvery { sourceRepository.countLinkedSources(tenantId, docId2) } returns 1
+        coEvery { sourceRepository.countSources(tenantId, docId1, includeDetached = true) } returns 0
 
-        service.applyPostExtractionMatching(
+        val result = service.applyPostExtractionMatching(
             tenantId = tenantId,
             documentId = docId1,
             sourceId = sourceId1,
@@ -301,10 +326,10 @@ class DocumentTruthServiceTest {
             extractedSnapshotJson = "{}"
         )
 
-        // Fuzzy matching should never be called when disabled
-        coVerify(exactly = 0) {
-            sourceRepository.findFuzzyCandidates(any(), any(), any(), any(), any(), any(), any())
-        }
+        assertEquals(DocumentIntakeOutcome.PendingMatchReview, result.outcome)
+        assertEquals(DocumentMatchType.FuzzyCandidate, result.matchType)
+        assertNotNull(result.reviewId)
+        coVerify { documentRepository.delete(tenantId, docId1) }
     }
 
     // -- deleteSource --

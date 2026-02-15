@@ -99,8 +99,6 @@ import tech.dokus.peppol.service.PeppolTransferPollingService
 import tech.dokus.peppol.service.PeppolVerificationService
 import tech.dokus.peppol.validator.PeppolValidator
 
-private const val EnableFuzzyMatching = true
-
 /**
  * Koin setup for the modular monolith server.
  */
@@ -267,18 +265,7 @@ private fun cashflowModule() = module {
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
     single { DocumentConfirmationDispatcher(get(), get(), get()) }
-    single {
-        DocumentTruthService(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            EnableFuzzyMatching
-        )
-    }
+    single { DocumentTruthService(get(), get(), get(), get(), get(), get(), get()) }
     singleOf(::CashflowProjectionReconciliationWorker)
 
     // PDF Preview

@@ -91,10 +91,14 @@ class DocumentTruthService(
     private val draftRepository: DocumentDraftRepository,
     private val blobRepository: DocumentBlobRepository,
     private val sourceRepository: DocumentSourceRepository,
-    private val matchReviewRepository: DocumentMatchReviewRepository,
-    private val enableFuzzyMatching: Boolean = false
+    private val matchReviewRepository: DocumentMatchReviewRepository
 ) {
     private val logger = loggerFor()
+
+    private companion object {
+        // Product toggle: fuzzy candidate matching is controlled in code, not env/config.
+        const val FuzzyMatchingEnabled = true
+    }
 
     suspend fun intakeBytes(
         tenantId: TenantId,
@@ -302,7 +306,7 @@ class DocumentTruthService(
                 }
             }
 
-            if (enableFuzzyMatching) {
+            if (FuzzyMatchingEnabled) {
                 val fuzzyCandidates = sourceRepository.findFuzzyCandidates(
                     tenantId = tenantId,
                     normalizedSupplierVat = identity.normalizedSupplierVat,
@@ -572,7 +576,7 @@ class DocumentTruthService(
             status = DocumentSourceStatus.Linked,
             matchType = matchType
         )
-        deferOrphanCleanup(tenantId, sourceDocumentId)
+        deleteOrphanIfSafe(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
         return DocumentIntakeServiceResult(
             documentId = targetDocumentId,
@@ -610,7 +614,7 @@ class DocumentTruthService(
             aiSummary = summary,
             aiConfidence = aiConfidence
         )
-        deferOrphanCleanup(tenantId, sourceDocumentId)
+        deleteOrphanIfSafe(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
         return DocumentIntakeServiceResult(
             documentId = targetDocumentId,
@@ -625,35 +629,9 @@ class DocumentTruthService(
     }
 
     /**
-     * Logs that a document may be orphaned after source reassignment during processing.
-     *
-     * IMPORTANT: We do NOT delete orphans here because this is called during
-     * applyPostExtractionMatching, which runs while the DocumentProcessingWorker
-     * still holds the original documentId and is about to write drafts/ingestion
-     * results to it. Deleting here would cause the worker to write to a deleted
-     * record, silently losing data.
-     *
-     * True cleanup happens in [deleteOrphanIfSafe] (called from user-initiated flows)
-     * or via a scheduled cleanup job.
-     */
-    private suspend fun deferOrphanCleanup(tenantId: TenantId, documentId: DocumentId) {
-        val remainingSources = sourceRepository.countSources(
-            tenantId = tenantId,
-            documentId = documentId,
-            includeDetached = true
-        )
-        if (remainingSources == 0) {
-            logger.info(
-                "Document {} has no remaining sources after reassignment (deferred cleanup)",
-                documentId
-            )
-        }
-    }
-
-    /**
      * Deletes a document if it has no remaining sources.
-     * Only safe to call from user-initiated flows (review resolution, source deletion)
-     * where no worker is actively processing the document.
+     * Called after source reassignment and source deletion paths to avoid
+     * leaving source-less documents visible in listing queries.
      */
     private suspend fun deleteOrphanIfSafe(tenantId: TenantId, documentId: DocumentId) {
         val remainingSources = sourceRepository.countSources(
