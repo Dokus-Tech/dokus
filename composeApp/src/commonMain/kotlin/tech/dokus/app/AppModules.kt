@@ -3,6 +3,9 @@ package tech.dokus.app
 import org.jetbrains.compose.resources.StringResource
 import org.koin.core.module.Module
 import tech.dokus.app.module.AppMainModule
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.more_horizontal
+import tech.dokus.aura.resources.nav_more
 import tech.dokus.features.auth.AuthAppModule
 import tech.dokus.features.auth.authDataModule
 import tech.dokus.features.auth.authDomainModule
@@ -17,7 +20,9 @@ import tech.dokus.features.contacts.contactsNetworkModule
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.diModules
-import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.foundation.aura.model.MobileTabConfig
+import tech.dokus.foundation.aura.model.NavItem
+import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.navigation.NavigationProvider
 
 private val baseAppModules = listOf(
@@ -48,8 +53,39 @@ val List<AppModule>.diModules: List<Module>
 val List<AppModule>.homeNavigationProviders: List<NavigationProvider>
     get() = mapNotNull { it.homeNavigationProvider }
 
-val List<AppModule>.homeItems: List<HomeItem>
-    get() = flatMap { it.homeItems }.sortedBy { it.priority }
+/** All nav items from all modules, flattened */
+val List<AppModule>.allNavItems: List<NavItem>
+    get() = flatMap { it.navGroups }.flatMap { it.items }
+
+/** Desktop sections — groups merged by sectionId, items sorted by priority */
+val List<AppModule>.navSectionsCombined: List<NavSection>
+    get() = flatMap { it.navGroups }
+        .groupBy { it.sectionId }
+        .map { (_, groups) ->
+            val first = groups.minByOrNull { it.sectionOrder } ?: groups.first()
+            NavSection(
+                id = first.sectionId,
+                titleRes = first.sectionTitle,
+                iconRes = first.sectionIcon,
+                items = groups.flatMap { it.items }.sortedBy { it.priority },
+                defaultExpanded = groups.any { it.sectionDefaultExpanded },
+            )
+        }
+        .sortedBy { section ->
+            flatMap { it.navGroups }
+                .filter { it.sectionId == section.id }
+                .minOf { it.sectionOrder }
+        }
+
+/** Mobile bottom tabs — items with mobileTabOrder + "More" appended */
+val List<AppModule>.mobileTabConfigs: List<MobileTabConfig>
+    get() {
+        val itemTabs = allNavItems
+            .filter { it.mobileTabOrder != null }
+            .sortedBy { it.mobileTabOrder }
+            .map { MobileTabConfig(it.id, it.titleRes, it.iconRes, it.destination) }
+        return itemTabs + MobileTabConfig("more", Res.string.nav_more, Res.drawable.more_horizontal, null)
+    }
 
 val List<AppModule>.settingsGroups: List<ModuleSettingsGroup>
     get() = flatMap { it.settingsGroups }.sortedBy { it.priority.order }
