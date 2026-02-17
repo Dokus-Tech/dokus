@@ -18,7 +18,6 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
-import java.util.UUID
 
 /**
  * Result of listing documents with their optional drafts and ingestion info.
@@ -65,8 +64,8 @@ class DocumentRepository {
     ): DocumentId = newSuspendedTransaction {
         val id = DocumentId.generate()
         DocumentsTable.insert {
-            it[DocumentsTable.id] = UUID.fromString(id.toString())
-            it[DocumentsTable.tenantId] = UUID.fromString(tenantId.toString())
+            it[DocumentsTable.id] = Uuid.parse(id.toString())
+            it[DocumentsTable.tenantId] = Uuid.parse(tenantId.toString())
             it[DocumentsTable.filename] = payload.filename
             it[DocumentsTable.contentType] = payload.contentType
             it[DocumentsTable.sizeBytes] = payload.sizeBytes
@@ -86,8 +85,8 @@ class DocumentRepository {
         newSuspendedTransaction {
             DocumentsTable.selectAll()
                 .where {
-                    (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
+                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -102,8 +101,8 @@ class DocumentRepository {
             DocumentsTable
                 .select(DocumentsTable.contentHash)
                 .where {
-                    (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
+                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
                 }
                 .singleOrNull()
                 ?.get(DocumentsTable.contentHash)
@@ -118,7 +117,7 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.storageKey eq storageKey) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -133,7 +132,7 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.contentHash eq contentHash) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -148,7 +147,7 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.identityKeyHash eq identityKeyHash) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -160,8 +159,8 @@ class DocumentRepository {
         identityKeyHash: String?
     ): Boolean = newSuspendedTransaction {
         DocumentsTable.update({
-            (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+            (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
+                (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
         }) {
             it[DocumentsTable.identityKeyHash] = identityKeyHash
         } > 0
@@ -173,8 +172,8 @@ class DocumentRepository {
         contentHash: String?
     ): Boolean = newSuspendedTransaction {
         DocumentsTable.update({
-            (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+            (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
+                (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
         }) {
             it[DocumentsTable.contentHash] = contentHash
         } > 0
@@ -190,7 +189,7 @@ class DocumentRepository {
         page: Int = 0,
         limit: Int = 20
     ): DocumentListPage<DocumentDto> = newSuspendedTransaction {
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
+        val tenantIdUuid = Uuid.parse(tenantId.toString())
 
         val baseQuery = DocumentsTable.selectAll()
             .where { DocumentsTable.tenantId eq tenantIdUuid }
@@ -252,8 +251,8 @@ class DocumentRepository {
     suspend fun delete(tenantId: TenantId, documentId: DocumentId): Boolean =
         newSuspendedTransaction {
             DocumentsTable.deleteWhere {
-                (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                    (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
+                    (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
             } > 0
         }
 
@@ -265,8 +264,8 @@ class DocumentRepository {
         newSuspendedTransaction {
             DocumentsTable.selectAll()
                 .where {
-                    (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
+                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
                 }
                 .count() > 0
         }

@@ -10,9 +10,6 @@ import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.TenantId
 import java.sql.SQLException
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 /** PostgreSQL SQL state for unique_violation. */
 private const val UNIQUE_VIOLATION_STATE = "23505"
@@ -33,14 +30,13 @@ data class DocumentBlobCreatePayload(
     val sizeBytes: Long
 )
 
-@OptIn(ExperimentalUuidApi::class)
 class DocumentBlobRepository {
 
     suspend fun getByInputHash(tenantId: TenantId, inputHash: String): DocumentBlobSummary? =
         newSuspendedTransaction {
             DocumentBlobsTable.selectAll()
                 .where {
-                    (DocumentBlobsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (DocumentBlobsTable.tenantId eq Uuid.parse(tenantId.toString())) and
                         (DocumentBlobsTable.inputHash eq inputHash)
                 }
                 .map { it.toBlobSummary() }
@@ -51,7 +47,7 @@ class DocumentBlobRepository {
         tenantId: TenantId,
         payload: DocumentBlobCreatePayload
     ): DocumentBlobSummary = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
         val existing = DocumentBlobsTable.selectAll()
             .where {
                 (DocumentBlobsTable.tenantId eq tenantUuid) and
@@ -64,7 +60,7 @@ class DocumentBlobRepository {
         val newId = DocumentBlobId.generate()
         try {
             DocumentBlobsTable.insert {
-                it[id] = UUID.fromString(newId.toString())
+                it[id] = Uuid.parse(newId.toString())
                 it[DocumentBlobsTable.tenantId] = tenantUuid
                 it[inputHash] = payload.inputHash
                 it[storageKey] = payload.storageKey
@@ -99,8 +95,8 @@ class DocumentBlobRepository {
 
     private fun ResultRow.toBlobSummary(): DocumentBlobSummary {
         return DocumentBlobSummary(
-            id = DocumentBlobId(this[DocumentBlobsTable.id].value.toKotlinUuid()),
-            tenantId = TenantId(this[DocumentBlobsTable.tenantId].toKotlinUuid()),
+            id = DocumentBlobId(this[DocumentBlobsTable.id].value),
+            tenantId = TenantId(this[DocumentBlobsTable.tenantId]),
             inputHash = this[DocumentBlobsTable.inputHash],
             storageKey = this[DocumentBlobsTable.storageKey],
             contentType = this[DocumentBlobsTable.contentType],

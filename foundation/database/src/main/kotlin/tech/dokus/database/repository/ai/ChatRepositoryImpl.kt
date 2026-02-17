@@ -26,8 +26,6 @@ import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Repository implementation for chat message persistence and conversation management.
@@ -38,7 +36,6 @@ import kotlin.uuid.ExperimentalUuidApi
  *
  * CRITICAL SECURITY: All queries MUST filter by tenantId for multi-tenant isolation.
  */
-@OptIn(ExperimentalUuidApi::class)
 class ChatRepositoryImpl : ChatRepository {
 
     private val logger = loggerFor()
@@ -49,10 +46,10 @@ class ChatRepositoryImpl : ChatRepository {
 
     override suspend fun saveMessage(message: ChatMessageDto): ChatMessageDto =
         newSuspendedTransaction {
-            val messageId = UUID.fromString(message.id.toString())
-            val tenantUuid = UUID.fromString(message.tenantId.toString())
-            val userUuid = UUID.fromString(message.userId.toString())
-            val sessionUuid = UUID.fromString(message.sessionId.toString())
+            val messageId = Uuid.parse(message.id.toString())
+            val tenantUuid = Uuid.parse(message.tenantId.toString())
+            val userUuid = Uuid.parse(message.userId.toString())
+            val sessionUuid = Uuid.parse(message.sessionId.toString())
 
             logger.debug(
                 "Saving chat message: id={}, session={}, role={}, tenant={}",
@@ -76,7 +73,7 @@ class ChatRepositoryImpl : ChatRepository {
                 it[content] = message.content
                 it[scope] = message.scope.dbValue
                 it[documentId] = message.documentId?.let { docId ->
-                    UUID.fromString(docId.toString())
+                    Uuid.parse(docId.toString())
                 }
                 it[citations] = citationsJson
                 it[chunksRetrieved] = message.chunksRetrieved
@@ -97,8 +94,8 @@ class ChatRepositoryImpl : ChatRepository {
         tenantId: TenantId,
         messageId: ChatMessageId
     ): ChatMessageDto? = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val msgUuid = UUID.fromString(messageId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val msgUuid = Uuid.parse(messageId.toString())
 
         ChatMessagesTable
             .selectAll()
@@ -117,8 +114,8 @@ class ChatRepositoryImpl : ChatRepository {
         offset: Int,
         descending: Boolean
     ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val sessionUuid = UUID.fromString(sessionId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val sessionUuid = Uuid.parse(sessionId.toString())
 
         val baseQuery = ChatMessagesTable
             .selectAll()
@@ -145,8 +142,8 @@ class ChatRepositoryImpl : ChatRepository {
         limit: Int,
         offset: Int
     ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val documentUuid = UUID.fromString(documentId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val documentUuid = Uuid.parse(documentId.toString())
 
         val baseQuery = ChatMessagesTable
             .selectAll()
@@ -170,8 +167,8 @@ class ChatRepositoryImpl : ChatRepository {
         tenantId: TenantId,
         sessionId: ChatSessionId
     ): Int = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val sessionUuid = UUID.fromString(sessionId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val sessionUuid = Uuid.parse(sessionId.toString())
 
         val maxSeq: Int? = ChatMessagesTable
             .select(ChatMessagesTable.sequenceNumber.max())
@@ -196,7 +193,7 @@ class ChatRepositoryImpl : ChatRepository {
         limit: Int,
         offset: Int
     ): Pair<List<ChatSessionSummary>, Long> = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         // Build query with optional filters
         var query = ChatMessagesTable
@@ -208,7 +205,7 @@ class ChatRepositoryImpl : ChatRepository {
         }
 
         if (documentId != null) {
-            val documentUuid = UUID.fromString(documentId.toString())
+            val documentUuid = Uuid.parse(documentId.toString())
             query = query.andWhere { ChatMessagesTable.documentId eq documentUuid }
         }
 
@@ -252,8 +249,8 @@ class ChatRepositoryImpl : ChatRepository {
         tenantId: TenantId,
         sessionId: ChatSessionId
     ): ChatSessionSummary? = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val sessionUuid = UUID.fromString(sessionId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val sessionUuid = Uuid.parse(sessionId.toString())
 
         val messages = ChatMessagesTable
             .selectAll()
@@ -304,8 +301,8 @@ class ChatRepositoryImpl : ChatRepository {
         tenantId: TenantId,
         sessionId: ChatSessionId
     ): Boolean = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val sessionUuid = UUID.fromString(sessionId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val sessionUuid = Uuid.parse(sessionId.toString())
 
         ChatMessagesTable
             .selectAll()
@@ -320,7 +317,7 @@ class ChatRepositoryImpl : ChatRepository {
     override suspend fun countMessagesForTenant(
         tenantId: TenantId
     ): Long = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         ChatMessagesTable
             .selectAll()
@@ -331,7 +328,7 @@ class ChatRepositoryImpl : ChatRepository {
     override suspend fun countSessionsForTenant(
         tenantId: TenantId
     ): Long = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         ChatMessagesTable
             .select(ChatMessagesTable.sessionId)
@@ -345,8 +342,8 @@ class ChatRepositoryImpl : ChatRepository {
         userId: UserId,
         limit: Int
     ): List<ChatSessionSummary> = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val userUuid = UUID.fromString(userId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val userUuid = Uuid.parse(userId.toString())
 
         val messages = ChatMessagesTable
             .selectAll()

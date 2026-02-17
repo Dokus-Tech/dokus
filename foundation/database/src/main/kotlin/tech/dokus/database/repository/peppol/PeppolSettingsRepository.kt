@@ -15,7 +15,6 @@ import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.foundation.backend.database.dbQuery
-import java.util.UUID
 
 /**
  * Repository for Peppol settings.
@@ -29,7 +28,7 @@ class PeppolSettingsRepository {
     suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> = runCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
-                .where { PeppolSettingsTable.tenantId eq UUID.fromString(tenantId.toString()) }
+                .where { PeppolSettingsTable.tenantId eq Uuid.parse(tenantId.toString()) }
                 .map { it.toDto() }
                 .singleOrNull()
         }
@@ -46,7 +45,7 @@ class PeppolSettingsRepository {
         testMode: Boolean = false
     ): Result<PeppolSettingsDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         dbQuery {
             val existing = PeppolSettingsTable.selectAll()
@@ -69,8 +68,8 @@ class PeppolSettingsRepository {
                     .single()
             } else {
                 // Create new with generated webhook token
-                val newId = UUID.randomUUID()
-                val newWebhookToken = UUID.randomUUID().toString().replace("-", "")
+                val newId = Uuid.random()
+                val newWebhookToken = Uuid.random().toString().replace("-", "")
                 PeppolSettingsTable.insert {
                     it[id] = newId
                     it[PeppolSettingsTable.tenantId] = tenantUuid
@@ -97,7 +96,7 @@ class PeppolSettingsRepository {
     suspend fun deleteSettings(tenantId: TenantId): Result<Boolean> = runCatching {
         dbQuery {
             val deleted = PeppolSettingsTable.deleteWhere {
-                PeppolSettingsTable.tenantId eq UUID.fromString(tenantId.toString())
+                PeppolSettingsTable.tenantId eq Uuid.parse(tenantId.toString())
             }
             deleted > 0
         }
@@ -134,7 +133,7 @@ class PeppolSettingsRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolSettingsTable.update({
-                PeppolSettingsTable.tenantId eq UUID.fromString(tenantId.toString())
+                PeppolSettingsTable.tenantId eq Uuid.parse(tenantId.toString())
             }) {
                 it[lastFullSyncAt] = now
                 it[updatedAt] = now

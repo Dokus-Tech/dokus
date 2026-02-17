@@ -16,14 +16,11 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 object TenantMappers {
 
     fun ResultRow.toTenant(): Tenant = Tenant(
-        id = TenantId(this[TenantTable.id].value.toKotlinUuid()),
+        id = TenantId(this[TenantTable.id].value),
         type = this[TenantTable.type],
         legalName = LegalName(this[TenantTable.legalName]),
         displayName = DisplayName(this[TenantTable.displayName]),
@@ -38,7 +35,7 @@ object TenantMappers {
     )
 
     fun ResultRow.toTenantSettings(): TenantSettings = TenantSettings(
-        tenantId = TenantId(this[TenantSettingsTable.tenantId].value.toKotlinUuid()),
+        tenantId = TenantId(this[TenantSettingsTable.tenantId].value),
         invoicePrefix = this[TenantSettingsTable.invoicePrefix],
         nextInvoiceNumber = this[TenantSettingsTable.nextInvoiceNumber],
         defaultPaymentTerms = this[TenantSettingsTable.defaultPaymentTerms],
@@ -62,8 +59,8 @@ object TenantMappers {
     )
 
     fun ResultRow.toAddress(): Address = Address(
-        id = AddressId(this[AddressTable.id].value.toKotlinUuid()),
-        tenantId = TenantId(this[AddressTable.tenantId].value.toKotlinUuid()),
+        id = AddressId(this[AddressTable.id].value),
+        tenantId = TenantId(this[AddressTable.tenantId].value),
         streetLine1 = this[AddressTable.streetLine1],
         streetLine2 = this[AddressTable.streetLine2],
         city = this[AddressTable.city],

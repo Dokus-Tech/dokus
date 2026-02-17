@@ -23,17 +23,13 @@ import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class WelcomeEmailJobRepositoryTest {
 
     private lateinit var database: Database
@@ -61,10 +57,10 @@ class WelcomeEmailJobRepositoryTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
-        userUuid = UUID.randomUUID()
-        tenantId = TenantId(tenantUuid.toKotlinUuid())
-        userId = UserId(userUuid.toKotlinUuid())
+        tenantUuid = Uuid.random()
+        userUuid = Uuid.random()
+        tenantId = TenantId(tenantUuid)
+        userId = UserId(userUuid)
 
         transaction(database) {
             TenantTable.insert {

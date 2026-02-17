@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
 
 package tech.dokus.database.repository.auth
 
@@ -16,15 +15,12 @@ import tech.dokus.database.tables.auth.RefreshTokensTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.UserId
-import java.util.UUID
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 class RefreshTokenRepositoryTest {
 
@@ -60,12 +56,12 @@ class RefreshTokenRepositoryTest {
 
     @Test
     fun `revokeOtherSessions revokes legacy sessions when current row is identifiable`() = runBlocking {
-        val userUuid = UUID.randomUUID()
-        val userId = UserId(userUuid.toKotlinUuid())
+        val userUuid = Uuid.random()
+        val userId = UserId(userUuid)
 
-        val currentTokenId = UUID.randomUUID()
-        val legacyTokenId = UUID.randomUUID()
-        val otherTokenId = UUID.randomUUID()
+        val currentTokenId = Uuid.random()
+        val legacyTokenId = Uuid.random()
+        val otherTokenId = Uuid.random()
         val currentSessionJti = "11111111-1111-1111-1111-111111111111"
         val otherSessionJti = "22222222-2222-2222-2222-222222222222"
 
@@ -102,11 +98,11 @@ class RefreshTokenRepositoryTest {
 
     @Test
     fun `revokeOtherSessions keeps legacy rows when current session row is not identifiable`() = runBlocking {
-        val userUuid = UUID.randomUUID()
-        val userId = UserId(userUuid.toKotlinUuid())
+        val userUuid = Uuid.random()
+        val userId = UserId(userUuid)
 
-        val legacyTokenId = UUID.randomUUID()
-        val otherTokenId = UUID.randomUUID()
+        val legacyTokenId = Uuid.random()
+        val otherTokenId = Uuid.random()
         val currentSessionJti = "33333333-3333-3333-3333-333333333333"
         val otherSessionJti = "44444444-4444-4444-4444-444444444444"
 

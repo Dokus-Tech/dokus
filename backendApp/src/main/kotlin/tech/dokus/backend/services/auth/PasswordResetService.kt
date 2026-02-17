@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
 
 package tech.dokus.backend.services.auth
 
@@ -16,7 +15,6 @@ import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.SecureRandom
 import java.util.Base64
 import kotlin.time.Duration.Companion.hours
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Service for handling password reset flows with email tokens.

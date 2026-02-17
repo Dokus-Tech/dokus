@@ -9,8 +9,6 @@ import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
 
 /**
  * Configuration for invoice number generation.
@@ -41,7 +39,6 @@ data class InvoiceNumberConfig(
  * CRITICAL: This service ensures Belgian tax law compliance by generating
  * gap-less sequential numbers. All operations are atomic and concurrent-safe.
  */
-@OptIn(ExperimentalUuidApi::class)
 class InvoiceNumberGenerator(
     private val invoiceNumberRepository: InvoiceNumberRepository
 ) {
@@ -162,7 +159,7 @@ class InvoiceNumberGenerator(
 
         return runCatching {
             dbQuery {
-                val javaUuid = tenantId.value.toJavaUuid()
+                val javaUuid = tenantId.value
 
                 val row = TenantSettingsTable
                     .selectAll()

@@ -25,15 +25,11 @@ import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.SecureRandom
 import java.util.Base64
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
-import kotlin.uuid.toKotlinUuid
 
 /**
  * Repository for managing tenant invitations.
  * Handles creation, lookup, acceptance, and cancellation of invitations.
  */
-@OptIn(ExperimentalUuidApi::class)
 class InvitationRepository {
     private val logger = loggerFor()
 
@@ -59,7 +55,7 @@ class InvitationRepository {
         val existing = TenantInvitationsTable
             .selectAll()
             .where {
-                (TenantInvitationsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (TenantInvitationsTable.tenantId eq tenantId.value) and
                     (TenantInvitationsTable.email eq email.value) and
                     (TenantInvitationsTable.status eq InvitationStatus.Pending)
             }
@@ -72,17 +68,17 @@ class InvitationRepository {
         val token = generateSecureToken()
 
         val invitationId = TenantInvitationsTable.insertAndGetId {
-            it[TenantInvitationsTable.tenantId] = tenantId.value.toJavaUuid()
+            it[TenantInvitationsTable.tenantId] = tenantId.value
             it[TenantInvitationsTable.email] = email.value
             it[TenantInvitationsTable.role] = role
-            it[TenantInvitationsTable.invitedBy] = invitedBy.value.toJavaUuid()
+            it[TenantInvitationsTable.invitedBy] = invitedBy.value
             it[TenantInvitationsTable.token] = token
             it[TenantInvitationsTable.status] = InvitationStatus.Pending
             it[TenantInvitationsTable.expiresAt] = expiresAt.toLocalDateTime(TimeZone.UTC)
         }.value
 
         logger.info("Created invitation $invitationId for ${email.value} to tenant $tenantId with role $role")
-        InvitationId(invitationId.toKotlinUuid())
+        InvitationId(invitationId)
     }
 
     /**
@@ -97,8 +93,8 @@ class InvitationRepository {
             .join(UsersTable, JoinType.INNER, TenantInvitationsTable.invitedBy, UsersTable.id)
             .selectAll()
             .where {
-                (TenantInvitationsTable.id eq id.value.toJavaUuid()) and
-                    (TenantInvitationsTable.tenantId eq tenantId.value.toJavaUuid())
+                (TenantInvitationsTable.id eq id.value) and
+                    (TenantInvitationsTable.tenantId eq tenantId.value)
             }
             .singleOrNull()
             ?.toTenantInvitation()
@@ -140,7 +136,7 @@ class InvitationRepository {
         tenantId: TenantId,
         status: InvitationStatus? = null
     ): List<TenantInvitation> = dbQuery {
-        val baseCondition = TenantInvitationsTable.tenantId eq tenantId.value.toJavaUuid()
+        val baseCondition = TenantInvitationsTable.tenantId eq tenantId.value
         val condition = if (status != null) {
             baseCondition and (TenantInvitationsTable.status eq status)
         } else {
@@ -164,10 +160,10 @@ class InvitationRepository {
         acceptedAt: Instant
     ): Unit = dbQuery {
         val updated = TenantInvitationsTable.update({
-            TenantInvitationsTable.id eq id.value.toJavaUuid()
+            TenantInvitationsTable.id eq id.value
         }) {
             it[status] = InvitationStatus.Accepted
-            it[TenantInvitationsTable.acceptedBy] = acceptedBy.value.toJavaUuid()
+            it[TenantInvitationsTable.acceptedBy] = acceptedBy.value
             it[TenantInvitationsTable.acceptedAt] = acceptedAt.toLocalDateTime(TimeZone.UTC)
         }
 
@@ -184,8 +180,8 @@ class InvitationRepository {
      */
     suspend fun cancel(id: InvitationId, tenantId: TenantId): Unit = dbQuery {
         val updated = TenantInvitationsTable.update({
-            (TenantInvitationsTable.id eq id.value.toJavaUuid()) and
-                (TenantInvitationsTable.tenantId eq tenantId.value.toJavaUuid())
+            (TenantInvitationsTable.id eq id.value) and
+                (TenantInvitationsTable.tenantId eq tenantId.value)
         }) {
             it[status] = InvitationStatus.Cancelled
         }
@@ -240,8 +236,8 @@ class InvitationRepository {
             .ifEmpty { inviterEmail }
 
         return TenantInvitation(
-            id = InvitationId(this[TenantInvitationsTable.id].value.toKotlinUuid()),
-            tenantId = TenantId(this[TenantInvitationsTable.tenantId].value.toKotlinUuid()),
+            id = InvitationId(this[TenantInvitationsTable.id].value),
+            tenantId = TenantId(this[TenantInvitationsTable.tenantId].value),
             email = Email(this[TenantInvitationsTable.email]),
             role = this[TenantInvitationsTable.role],
             invitedByName = inviterName,

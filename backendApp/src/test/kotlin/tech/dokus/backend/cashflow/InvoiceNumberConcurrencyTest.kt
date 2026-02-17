@@ -27,8 +27,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 /**
  * Integration tests for concurrent invoice number generation.
@@ -43,7 +41,6 @@ import kotlin.uuid.toKotlinUuid
  * 3. No gaps in the sequence
  * 4. Thread-safety under concurrent access
  */
-@OptIn(ExperimentalUuidApi::class)
 class InvoiceNumberConcurrencyTest {
 
     private lateinit var database: Database
@@ -73,8 +70,8 @@ class InvoiceNumberConcurrencyTest {
         }
 
         // Create test tenant
-        testTenantUuid = UUID.randomUUID()
-        testTenantId = TenantId(testTenantUuid.toKotlinUuid())
+        testTenantUuid = Uuid.random()
+        testTenantId = TenantId(testTenantUuid)
 
         transaction(database) {
             // Insert tenant
@@ -91,7 +88,7 @@ class InvoiceNumberConcurrencyTest {
 
             // Insert tenant settings with invoice configuration
             TenantSettingsTable.insert {
-                it[id] = UUID.randomUUID()
+                it[id] = Uuid.random()
                 it[tenantId] = testTenantUuid
                 it[invoicePrefix] = "INV"
                 it[nextInvoiceNumber] = 1
@@ -221,8 +218,8 @@ class InvoiceNumberConcurrencyTest {
     @Test
     fun `different tenants get independent sequences concurrently`() = runBlocking {
         // Create a second tenant
-        val secondTenantUuid = UUID.randomUUID()
-        val secondTenantId = TenantId(secondTenantUuid.toKotlinUuid())
+        val secondTenantUuid = Uuid.random()
+        val secondTenantId = TenantId(secondTenantUuid)
 
         transaction(database) {
             TenantTable.insert {
@@ -237,7 +234,7 @@ class InvoiceNumberConcurrencyTest {
             }
 
             TenantSettingsTable.insert {
-                it[id] = UUID.randomUUID()
+                it[id] = Uuid.random()
                 it[tenantId] = secondTenantUuid
                 it[invoicePrefix] = "SEC"
                 it[nextInvoiceNumber] = 1

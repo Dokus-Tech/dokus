@@ -57,21 +57,17 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreditNoteDraftData
 import java.math.BigDecimal
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class CreditNoteConfirmationInvariantTest {
 
     private lateinit var database: Database
 
     private lateinit var tenantUuid: UUID
     private lateinit var contactUuid: UUID
-    private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
+    private val tenantId: TenantId get() = TenantId(tenantUuid)
     private val contactId: ContactId get() = ContactId.parse(contactUuid.toString())
 
     private val documentRepository = DocumentRepository()
@@ -122,8 +118,8 @@ class CreditNoteConfirmationInvariantTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
-        contactUuid = UUID.randomUUID()
+        tenantUuid = Uuid.random()
+        contactUuid = Uuid.random()
 
         transaction(database) {
             TenantTable.insert {
@@ -256,7 +252,7 @@ class CreditNoteConfirmationInvariantTest {
                 source = DocumentSource.Upload
             )
         )
-        val invoiceId = UUID.randomUUID()
+        val invoiceId = Uuid.random()
         val invoiceNumber = "INV-REF-100"
 
         transaction(database) {
@@ -273,7 +269,7 @@ class CreditNoteConfirmationInvariantTest {
                 it[paidAmount] = BigDecimal.ZERO
                 it[status] = InvoiceStatus.Draft
                 it[direction] = DocumentDirection.Outbound
-                it[InvoicesTable.documentId] = UUID.fromString(documentId.toString())
+                it[InvoicesTable.documentId] = Uuid.parse(documentId.toString())
             }
         }
 
@@ -287,7 +283,7 @@ class CreditNoteConfirmationInvariantTest {
                 filename = "credit-note.pdf",
                 contentType = "application/pdf",
                 sizeBytes = 123L,
-                storageKey = "test/$tenantUuid/credit-note-${UUID.randomUUID()}.pdf",
+                storageKey = "test/$tenantUuid/credit-note-${Uuid.random()}.pdf",
                 contentHash = null,
                 source = DocumentSource.Upload
             )

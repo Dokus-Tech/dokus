@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
 
 package tech.dokus.database.repository.auth
 
@@ -19,10 +18,7 @@ import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.contact.ContactAddressInput
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.database.now
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import kotlin.uuid.toJavaUuid
-import kotlin.uuid.toKotlinUuid
 
 class AddressRepository {
 
@@ -35,7 +31,7 @@ class AddressRepository {
      * Tenant addresses use the tenant ID as the address ID for 1:1 lookup.
      */
     suspend fun getCompanyAddress(tenantId: TenantId): Address? = dbQuery {
-        val tenantUuid = tenantId.value.toJavaUuid()
+        val tenantUuid = tenantId.value
         AddressTable
             .selectAll()
             .where { (AddressTable.tenantId eq tenantUuid) and (AddressTable.id eq tenantUuid) }
@@ -52,7 +48,7 @@ class AddressRepository {
         tenantId: TenantId,
         request: UpsertTenantAddressRequest,
     ): Address = dbQuery {
-        val tenantUuid = tenantId.value.toJavaUuid()
+        val tenantUuid = tenantId.value
         val now = now().toLocalDateTime(TimeZone.UTC)
 
         val existing = AddressTable
@@ -104,8 +100,8 @@ class AddressRepository {
         tenantId: TenantId,
         input: ContactAddressInput
     ): Address = dbQuery {
-        val tenantUuid = tenantId.value.toJavaUuid()
-        val addressId = Uuid.random().toJavaUuid()
+        val tenantUuid = tenantId.value
+        val addressId = Uuid.random()
         val now = now().toLocalDateTime(TimeZone.UTC)
 
         AddressTable.insert {
@@ -121,7 +117,7 @@ class AddressRepository {
         }
 
         Address(
-            id = AddressId(addressId.toKotlinUuid()),
+            id = AddressId(addressId),
             tenantId = tenantId,
             streetLine1 = input.streetLine1?.trim(),
             streetLine2 = input.streetLine2?.trim(),
@@ -138,8 +134,8 @@ class AddressRepository {
      * Returns null if not found or belongs to different tenant.
      */
     suspend fun getAddressById(tenantId: TenantId, addressId: AddressId): Address? = dbQuery {
-        val tenantUuid = tenantId.value.toJavaUuid()
-        val addressUuid = addressId.value.toJavaUuid()
+        val tenantUuid = tenantId.value
+        val addressUuid = addressId.value
 
         AddressTable
             .selectAll()
@@ -157,8 +153,8 @@ class AddressRepository {
         addressId: AddressId,
         input: ContactAddressInput
     ): Address? = dbQuery {
-        val tenantUuid = tenantId.value.toJavaUuid()
-        val addressUuid = addressId.value.toJavaUuid()
+        val tenantUuid = tenantId.value
+        val addressUuid = addressId.value
         val now = now().toLocalDateTime(TimeZone.UTC)
 
         val updated = AddressTable.update({
@@ -188,8 +184,8 @@ class AddressRepository {
      * Used when removing a contact address - deletes the owned Address row.
      */
     suspend fun deleteAddress(tenantId: TenantId, addressId: AddressId): Boolean = dbQuery {
-        val tenantUuid = tenantId.value.toJavaUuid()
-        val addressUuid = addressId.value.toJavaUuid()
+        val tenantUuid = tenantId.value
+        val addressUuid = addressId.value
 
         val deleted = AddressTable.deleteWhere {
             (AddressTable.id eq addressUuid) and (AddressTable.tenantId eq tenantUuid)

@@ -25,7 +25,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.RefundClaimDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
-import java.util.UUID
 
 /**
  * Repository for managing refund claims.
@@ -54,9 +53,9 @@ class RefundClaimRepository {
     ): Result<RefundClaimDto> = runCatching {
         dbQuery {
             val claimId = RefundClaimsTable.insertAndGetId {
-                it[RefundClaimsTable.tenantId] = UUID.fromString(tenantId.toString())
-                it[RefundClaimsTable.creditNoteId] = UUID.fromString(creditNoteId.toString())
-                it[RefundClaimsTable.counterpartyId] = UUID.fromString(counterpartyId.toString())
+                it[RefundClaimsTable.tenantId] = Uuid.parse(tenantId.toString())
+                it[RefundClaimsTable.creditNoteId] = Uuid.parse(creditNoteId.toString())
+                it[RefundClaimsTable.counterpartyId] = Uuid.parse(counterpartyId.toString())
                 it[RefundClaimsTable.amount] = amount.toDbDecimal()
                 it[RefundClaimsTable.currency] = currency
                 it[RefundClaimsTable.expectedDate] = expectedDate
@@ -66,7 +65,7 @@ class RefundClaimRepository {
             // Fetch and return the created claim
             RefundClaimsTable.selectAll().where {
                 (RefundClaimsTable.id eq claimId.value) and
-                    (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }.single().let { row ->
                 mapRowToDto(row)
             }
@@ -83,8 +82,8 @@ class RefundClaimRepository {
     ): Result<RefundClaimDto?> = runCatching {
         dbQuery {
             RefundClaimsTable.selectAll().where {
-                (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (RefundClaimsTable.id eq Uuid.parse(claimId.toString())) and
+                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }.singleOrNull()?.let { row ->
                 mapRowToDto(row)
             }
@@ -100,8 +99,8 @@ class RefundClaimRepository {
         creditNoteId: CreditNoteId
     ): RefundClaimDto? = dbQuery {
         RefundClaimsTable.selectAll().where {
-            (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (RefundClaimsTable.creditNoteId eq UUID.fromString(creditNoteId.toString())) and
+            (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (RefundClaimsTable.creditNoteId eq Uuid.parse(creditNoteId.toString())) and
                 (RefundClaimsTable.status eq RefundClaimStatus.Open)
         }.singleOrNull()?.let { row ->
             mapRowToDto(row)
@@ -121,7 +120,7 @@ class RefundClaimRepository {
     ): Result<List<RefundClaimDto>> = runCatching {
         dbQuery {
             var query = RefundClaimsTable.selectAll().where {
-                RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString())
+                RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString())
             }
 
             if (status != null) {
@@ -129,7 +128,7 @@ class RefundClaimRepository {
             }
             if (counterpartyId != null) {
                 query = query.andWhere {
-                    RefundClaimsTable.counterpartyId eq UUID.fromString(counterpartyId.toString())
+                    RefundClaimsTable.counterpartyId eq Uuid.parse(counterpartyId.toString())
                 }
             }
 
@@ -146,7 +145,7 @@ class RefundClaimRepository {
      */
     suspend fun listOpenClaims(tenantId: TenantId): List<RefundClaimDto> = dbQuery {
         RefundClaimsTable.selectAll().where {
-            (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString())) and
                 (RefundClaimsTable.status eq RefundClaimStatus.Open)
         }.orderBy(RefundClaimsTable.expectedDate to SortOrder.ASC)
             .map { row -> mapRowToDto(row) }
@@ -165,12 +164,12 @@ class RefundClaimRepository {
         dbQuery {
             val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
             val updatedRows = RefundClaimsTable.update({
-                (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (RefundClaimsTable.id eq Uuid.parse(claimId.toString())) and
+                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
                 it[status] = RefundClaimStatus.Settled
                 it[settledAt] = now
-                it[RefundClaimsTable.cashflowEntryId] = UUID.fromString(cashflowEntryId.toString())
+                it[RefundClaimsTable.cashflowEntryId] = Uuid.parse(cashflowEntryId.toString())
             }
             updatedRows > 0
         }
@@ -186,8 +185,8 @@ class RefundClaimRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updatedRows = RefundClaimsTable.update({
-                (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (RefundClaimsTable.id eq Uuid.parse(claimId.toString())) and
+                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
                 it[status] = RefundClaimStatus.Cancelled
             }
@@ -205,8 +204,8 @@ class RefundClaimRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val deletedRows = RefundClaimsTable.deleteWhere {
-                (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (RefundClaimsTable.id eq Uuid.parse(claimId.toString())) and
+                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }
             deletedRows > 0
         }

@@ -34,11 +34,9 @@ import tech.dokus.domain.model.User
 import tech.dokus.domain.model.UserInTenant
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import java.util.concurrent.atomic.AtomicBoolean
 
-@OptIn(ExperimentalUuidApi::class)
 class NotificationServiceEmissionTest {
 
     private val notificationRepository = mockk<NotificationRepository>()

@@ -17,7 +17,6 @@ import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Cashflow
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private const val MAX_PAGE_SIZE = 200
@@ -31,7 +30,6 @@ private const val MAX_PAGE_SIZE = 200
  *
  * All routes require JWT authentication and tenant context.
  */
-@OptIn(ExperimentalUuidApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod", "ThrowsCount")
 internal fun Route.cashflowEntriesRoutes() {
     val cashflowEntriesService by inject<CashflowEntriesService>()

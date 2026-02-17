@@ -5,14 +5,11 @@ import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 internal fun ResultRow.toDocumentDto(): DocumentDto {
     return DocumentDto(
         id = DocumentId.parse(this[DocumentsTable.id].toString()),
-        tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
+        tenantId = TenantId(this[DocumentsTable.tenantId]),
         filename = this[DocumentsTable.filename],
         contentType = this[DocumentsTable.contentType],
         sizeBytes = this[DocumentsTable.sizeBytes],

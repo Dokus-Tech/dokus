@@ -31,7 +31,6 @@ import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
@@ -44,7 +43,6 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
  *
  * All routes require JWT authentication and tenant context.
  */
-@OptIn(ExperimentalUuidApi::class)
 internal fun Route.attachmentRoutes() {
     val documentRepository by inject<DocumentRepository>()
     val uploadValidator by inject<DocumentUploadValidator>()

@@ -28,8 +28,6 @@ import tech.dokus.domain.model.BankConnectionDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Repository for managing bank connections and transactions.
@@ -39,7 +37,6 @@ import kotlin.uuid.ExperimentalUuidApi
  * 2. Access tokens must be encrypted before storage
  * 3. Never expose raw access tokens in responses
  */
-@OptIn(ExperimentalUuidApi::class)
 class BankingRepository {
 
     // ========================================================================
@@ -63,7 +60,7 @@ class BankingRepository {
     ): Result<BankConnectionDto> = runCatching {
         dbQuery {
             val id = BankConnectionsTable.insert {
-                it[BankConnectionsTable.tenantId] = UUID.fromString(tenantId.toString())
+                it[BankConnectionsTable.tenantId] = Uuid.parse(tenantId.toString())
                 it[BankConnectionsTable.provider] = provider
                 it[BankConnectionsTable.institutionId] = institutionId
                 it[BankConnectionsTable.institutionName] = institutionName
@@ -90,8 +87,8 @@ class BankingRepository {
     ): Result<BankConnectionDto?> = runCatching {
         dbQuery {
             BankConnectionsTable.selectAll().where {
-                (BankConnectionsTable.id eq UUID.fromString(connectionId.toString())) and
-                    (BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (BankConnectionsTable.id eq Uuid.parse(connectionId.toString())) and
+                    (BankConnectionsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }.singleOrNull()?.toBankConnectionDto()
         }
     }
@@ -106,7 +103,7 @@ class BankingRepository {
     ): Result<List<BankConnectionDto>> = runCatching {
         dbQuery {
             var query = BankConnectionsTable.selectAll().where {
-                BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString())
+                BankConnectionsTable.tenantId eq Uuid.parse(tenantId.toString())
             }
             if (activeOnly) {
                 query = query.andWhere { BankConnectionsTable.isActive eq true }
@@ -126,8 +123,8 @@ class BankingRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             BankConnectionsTable.update({
-                (BankConnectionsTable.id eq UUID.fromString(connectionId.toString())) and
-                    (BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (BankConnectionsTable.id eq Uuid.parse(connectionId.toString())) and
+                    (BankConnectionsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
                 it[lastSyncedAt] = syncedAt
                 it[updatedAt] = syncedAt
@@ -144,8 +141,8 @@ class BankingRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             BankConnectionsTable.update({
-                (BankConnectionsTable.id eq UUID.fromString(connectionId.toString())) and
-                    (BankConnectionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (BankConnectionsTable.id eq Uuid.parse(connectionId.toString())) and
+                    (BankConnectionsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
                 it[isActive] = false
             } > 0
@@ -172,8 +169,8 @@ class BankingRepository {
     ): Result<BankTransactionDto> = runCatching {
         dbQuery {
             val id = BankTransactionsTable.insert {
-                it[BankTransactionsTable.bankConnectionId] = UUID.fromString(bankConnectionId.toString())
-                it[BankTransactionsTable.tenantId] = UUID.fromString(tenantId.toString())
+                it[BankTransactionsTable.bankConnectionId] = Uuid.parse(bankConnectionId.toString())
+                it[BankTransactionsTable.tenantId] = Uuid.parse(tenantId.toString())
                 it[BankTransactionsTable.externalId] = externalId
                 it[BankTransactionsTable.date] = date
                 it[BankTransactionsTable.amount] = amount.toDbDecimal()
@@ -199,8 +196,8 @@ class BankingRepository {
     ): Result<BankTransactionDto?> = runCatching {
         dbQuery {
             BankTransactionsTable.selectAll().where {
-                (BankTransactionsTable.id eq UUID.fromString(transactionId.toString())) and
-                    (BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (BankTransactionsTable.id eq Uuid.parse(transactionId.toString())) and
+                    (BankTransactionsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }.singleOrNull()?.toBankTransactionDto()
         }
     }
@@ -220,12 +217,12 @@ class BankingRepository {
     ): Result<List<BankTransactionDto>> = runCatching {
         dbQuery {
             var query = BankTransactionsTable.selectAll().where {
-                BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())
+                BankTransactionsTable.tenantId eq Uuid.parse(tenantId.toString())
             }
 
             connectionId?.let {
                 query = query.andWhere {
-                    BankTransactionsTable.bankConnectionId eq UUID.fromString(it.toString())
+                    BankTransactionsTable.bankConnectionId eq Uuid.parse(it.toString())
                 }
             }
             fromDate?.let {
@@ -255,10 +252,10 @@ class BankingRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             BankTransactionsTable.update({
-                (BankTransactionsTable.id eq UUID.fromString(transactionId.toString())) and
-                    (BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (BankTransactionsTable.id eq Uuid.parse(transactionId.toString())) and
+                    (BankTransactionsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
-                it[BankTransactionsTable.expenseId] = UUID.fromString(expenseId.toString())
+                it[BankTransactionsTable.expenseId] = Uuid.parse(expenseId.toString())
                 it[isReconciled] = true
             } > 0
         }
@@ -274,10 +271,10 @@ class BankingRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             BankTransactionsTable.update({
-                (BankTransactionsTable.id eq UUID.fromString(transactionId.toString())) and
-                    (BankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (BankTransactionsTable.id eq Uuid.parse(transactionId.toString())) and
+                    (BankTransactionsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
-                it[BankTransactionsTable.invoiceId] = UUID.fromString(invoiceId.toString())
+                it[BankTransactionsTable.invoiceId] = Uuid.parse(invoiceId.toString())
                 it[isReconciled] = true
             } > 0
         }

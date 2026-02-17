@@ -16,7 +16,6 @@ import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -25,7 +24,6 @@ import kotlin.uuid.Uuid
  *
  * All routes require JWT authentication and tenant context.
  */
-@OptIn(ExperimentalUuidApi::class)
 internal fun Route.expenseRoutes() {
     val expenseService by inject<ExpenseService>()
 

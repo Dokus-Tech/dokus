@@ -25,8 +25,6 @@ import tech.dokus.domain.repository.RetrievedChunk
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.sql.Connection
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Repository for document chunks with vector embeddings.
@@ -36,7 +34,6 @@ import kotlin.uuid.ExperimentalUuidApi
  *
  * CRITICAL SECURITY: All queries MUST filter by tenantId for multi-tenant isolation.
  */
-@OptIn(ExperimentalUuidApi::class)
 class DocumentChunksRepository : ChunkRepository {
 
     private val logger = loggerFor()
@@ -62,7 +59,7 @@ class DocumentChunksRepository : ChunkRepository {
         minSimilarity: Float,
         confirmedOnly: Boolean
     ): ChunkSearchResult = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         // Build the vector string for pgvector
         val vectorString = "[${queryEmbedding.joinToString(",")}]"
@@ -73,7 +70,7 @@ class DocumentChunksRepository : ChunkRepository {
 
         val countQuery = if (documentId != null) {
             baseCountQuery.andWhere {
-                DocumentChunksTable.documentId eq UUID.fromString(documentId.toString())
+                DocumentChunksTable.documentId eq Uuid.parse(documentId.toString())
             }
         } else {
             baseCountQuery
@@ -99,7 +96,7 @@ class DocumentChunksRepository : ChunkRepository {
             append("WHERE dc.tenant_id = '$tenantUuid' ")
             append("AND dc.embedding IS NOT NULL ")
             if (documentId != null) {
-                append("AND dc.document_id = '${UUID.fromString(documentId.toString())}' ")
+                append("AND dc.document_id = '${Uuid.parse(documentId.toString())}' ")
             }
             if (confirmedOnly) {
                 append("AND dd.document_status = 'CONFIRMED' ")
@@ -156,14 +153,14 @@ class DocumentChunksRepository : ChunkRepository {
             return@newSuspendedTransaction
         }
 
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val documentUuid = UUID.fromString(documentId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val documentUuid = Uuid.parse(documentId.toString())
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         logger.info("Storing ${chunks.size} chunks for document $documentId, tenant $tenantId, hash=$contentHash")
 
         DocumentChunksTable.batchInsert(chunks) { chunk ->
-            this[DocumentChunksTable.id] = UUID.randomUUID()
+            this[DocumentChunksTable.id] = Uuid.random()
             this[DocumentChunksTable.tenantId] = tenantUuid
             this[DocumentChunksTable.documentId] = documentUuid
             this[DocumentChunksTable.content] = chunk.content
@@ -192,8 +189,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         documentId: DocumentId
     ): String? = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val documentUuid = UUID.fromString(documentId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val documentUuid = Uuid.parse(documentId.toString())
 
         DocumentChunksTable
             .selectAll()
@@ -213,8 +210,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         documentId: DocumentId
     ): Int = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val documentUuid = UUID.fromString(documentId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val documentUuid = Uuid.parse(documentId.toString())
 
         logger.info("Deleting chunks for document $documentId, tenant $tenantId")
 
@@ -238,8 +235,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         documentId: DocumentId
     ): List<DocumentChunkDto> = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val documentUuid = UUID.fromString(documentId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val documentUuid = Uuid.parse(documentId.toString())
 
         DocumentChunksTable
             .selectAll()
@@ -258,8 +255,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         chunkId: DocumentChunkId
     ): DocumentChunkDto? = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val chunkUuid = UUID.fromString(chunkId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val chunkUuid = Uuid.parse(chunkId.toString())
 
         DocumentChunksTable
             .selectAll()
@@ -278,8 +275,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         documentId: DocumentId
     ): Long = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val documentUuid = UUID.fromString(documentId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val documentUuid = Uuid.parse(documentId.toString())
 
         DocumentChunksTable
             .selectAll()
@@ -304,7 +301,7 @@ class DocumentChunksRepository : ChunkRepository {
     override suspend fun countTotalChunksForTenant(
         tenantId: TenantId
     ): Long = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         DocumentChunksTable
             .selectAll()

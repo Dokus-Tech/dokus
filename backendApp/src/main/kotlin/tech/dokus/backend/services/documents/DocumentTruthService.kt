@@ -49,7 +49,6 @@ import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.IngestionRunId
 import java.security.MessageDigest
-import java.util.UUID
 
 data class DocumentIntakeServiceResult(
     val documentId: DocumentId,
@@ -139,7 +138,7 @@ class DocumentTruthService(
             val lockKey = ("intake:$tenantId:$inputHash").hashCode().toLong()
             exec("SELECT pg_advisory_xact_lock($lockKey)")
 
-            val tenantUuid = UUID.fromString(tenantId.toString())
+            val tenantUuid = Uuid.parse(tenantId.toString())
 
             // Check for existing linked source with same input hash
             val existingDocId = (DocumentSourcesTable innerJoin DocumentBlobsTable)
@@ -156,10 +155,10 @@ class DocumentTruthService(
             if (existingDocId != null) {
                 val sourceId = DocumentSourceId.generate()
                 DocumentSourcesTable.insert {
-                    it[id] = UUID.fromString(sourceId.toString())
+                    it[id] = Uuid.parse(sourceId.toString())
                     it[DocumentSourcesTable.tenantId] = tenantUuid
-                    it[documentId] = UUID.fromString(existingDocId.toString())
-                    it[blobId] = UUID.fromString(blob.id.toString())
+                    it[documentId] = Uuid.parse(existingDocId.toString())
+                    it[blobId] = Uuid.parse(blob.id.toString())
                     it[DocumentSourcesTable.sourceChannel] = sourceChannel
                     it[status] = DocumentSourceStatus.Linked
                     it[matchType] = DocumentMatchType.ExactFile
@@ -168,7 +167,7 @@ class DocumentTruthService(
                 val sourceCount = DocumentSourcesTable.selectAll()
                     .where {
                         (DocumentSourcesTable.tenantId eq tenantUuid) and
-                            (DocumentSourcesTable.documentId eq UUID.fromString(existingDocId.toString())) and
+                            (DocumentSourcesTable.documentId eq Uuid.parse(existingDocId.toString())) and
                             (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
                     }
                     .count()
@@ -187,7 +186,7 @@ class DocumentTruthService(
             } else {
                 val documentId = DocumentId.generate()
                 DocumentsTable.insert {
-                    it[DocumentsTable.id] = UUID.fromString(documentId.toString())
+                    it[DocumentsTable.id] = Uuid.parse(documentId.toString())
                     it[DocumentsTable.tenantId] = tenantUuid
                     it[DocumentsTable.filename] = filename
                     it[DocumentsTable.contentType] = blob.contentType
@@ -199,10 +198,10 @@ class DocumentTruthService(
 
                 val sourceId = DocumentSourceId.generate()
                 DocumentSourcesTable.insert {
-                    it[id] = UUID.fromString(sourceId.toString())
+                    it[id] = Uuid.parse(sourceId.toString())
                     it[DocumentSourcesTable.tenantId] = tenantUuid
-                    it[DocumentSourcesTable.documentId] = UUID.fromString(documentId.toString())
-                    it[DocumentSourcesTable.blobId] = UUID.fromString(blob.id.toString())
+                    it[DocumentSourcesTable.documentId] = Uuid.parse(documentId.toString())
+                    it[DocumentSourcesTable.blobId] = Uuid.parse(blob.id.toString())
                     it[DocumentSourcesTable.sourceChannel] = sourceChannel
                     it[status] = DocumentSourceStatus.Linked
                     it[DocumentSourcesTable.filename] = filename
@@ -210,10 +209,10 @@ class DocumentTruthService(
 
                 val runId = IngestionRunId.generate()
                 DocumentIngestionRunsTable.insert {
-                    it[DocumentIngestionRunsTable.id] = UUID.fromString(runId.toString())
-                    it[DocumentIngestionRunsTable.documentId] = UUID.fromString(documentId.toString())
+                    it[DocumentIngestionRunsTable.id] = Uuid.parse(runId.toString())
+                    it[DocumentIngestionRunsTable.documentId] = Uuid.parse(documentId.toString())
                     it[DocumentIngestionRunsTable.tenantId] = tenantUuid
-                    it[DocumentIngestionRunsTable.sourceId] = UUID.fromString(sourceId.toString())
+                    it[DocumentIngestionRunsTable.sourceId] = Uuid.parse(sourceId.toString())
                     it[DocumentIngestionRunsTable.status] = IngestionStatus.Queued
                 }
 

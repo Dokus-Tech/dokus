@@ -21,7 +21,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.processing.DocumentProcessingConstants
-import java.util.UUID
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -29,11 +28,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.minutes
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class DocumentIngestionRunRepositoryStaleRecoveryTest {
 
     private lateinit var database: Database
@@ -61,10 +56,10 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
-        documentUuid = UUID.randomUUID()
-        tenantId = TenantId(tenantUuid.toKotlinUuid())
-        documentId = DocumentId(documentUuid.toKotlinUuid())
+        tenantUuid = Uuid.random()
+        documentUuid = Uuid.random()
+        tenantId = TenantId(tenantUuid)
+        documentId = DocumentId(documentUuid)
 
         transaction(database) {
             TenantTable.insert {
@@ -155,7 +150,7 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
 
         transaction(database) {
             DocumentIngestionRunsTable.insert {
-                it[DocumentIngestionRunsTable.id] = runId.value.toJavaUuid()
+                it[DocumentIngestionRunsTable.id] = runId.value
                 it[DocumentIngestionRunsTable.documentId] = documentUuid
                 it[DocumentIngestionRunsTable.tenantId] = tenantUuid
                 it[DocumentIngestionRunsTable.status] = IngestionStatus.Processing
@@ -173,7 +168,7 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
 
         transaction(database) {
             DocumentIngestionRunsTable.insert {
-                it[DocumentIngestionRunsTable.id] = runId.value.toJavaUuid()
+                it[DocumentIngestionRunsTable.id] = runId.value
                 it[DocumentIngestionRunsTable.documentId] = documentUuid
                 it[DocumentIngestionRunsTable.tenantId] = tenantUuid
                 it[DocumentIngestionRunsTable.status] = IngestionStatus.Processing

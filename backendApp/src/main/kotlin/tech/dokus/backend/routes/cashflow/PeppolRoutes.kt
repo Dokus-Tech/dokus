@@ -30,7 +30,6 @@ import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
 import tech.dokus.peppol.service.PeppolVerificationService
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -44,7 +43,6 @@ import kotlin.uuid.Uuid
  * - Inbox polling for received documents
  * - Transmission history
  */
-@OptIn(ExperimentalUuidApi::class)
 internal fun Route.peppolRoutes() {
     val logger = LoggerFactory.getLogger("PeppolRoutes")
     val peppolService by inject<PeppolService>()

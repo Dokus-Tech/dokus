@@ -57,21 +57,17 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.toDbDecimal
 import java.math.BigDecimal
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class CashflowProjectionReconciliationTest {
 
     private lateinit var database: Database
 
     private lateinit var tenantUuid: UUID
     private lateinit var contactUuid: UUID
-    private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
+    private val tenantId: TenantId get() = TenantId(tenantUuid)
     private val contactId: ContactId get() = ContactId.parse(contactUuid.toString())
 
     private val tenantRepository = TenantRepository()
@@ -123,8 +119,8 @@ class CashflowProjectionReconciliationTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
-        contactUuid = UUID.randomUUID()
+        tenantUuid = Uuid.random()
+        contactUuid = Uuid.random()
 
         transaction(database) {
             TenantTable.insert {
@@ -254,7 +250,7 @@ class CashflowProjectionReconciliationTest {
                 filename = "invoice.pdf",
                 contentType = "application/pdf",
                 sizeBytes = 100L,
-                storageKey = "test/$tenantUuid/invoice-${UUID.randomUUID()}.pdf",
+                storageKey = "test/$tenantUuid/invoice-${Uuid.random()}.pdf",
                 contentHash = null,
                 source = DocumentSource.Upload
             )
@@ -267,7 +263,7 @@ class CashflowProjectionReconciliationTest {
             runId = runId,
             extractedData = InvoiceDraftData(
                 direction = DocumentDirection.Outbound,
-                invoiceNumber = "INV-${UUID.randomUUID().toString().take(8)}",
+                invoiceNumber = "INV-${Uuid.random().toString().take(8)}",
                 issueDate = LocalDate(2024, 1, 1),
                 dueDate = LocalDate(2024, 1, 31),
                 currency = Currency.Eur,
@@ -280,8 +276,8 @@ class CashflowProjectionReconciliationTest {
         )
         draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 
-        val invoiceId = UUID.randomUUID()
-        val invoiceNumber = "INV-RECON-${UUID.randomUUID().toString().take(8)}"
+        val invoiceId = Uuid.random()
+        val invoiceNumber = "INV-RECON-${Uuid.random().toString().take(8)}"
         val invoiceStatus = when {
             paidAmount.minor <= 0L -> InvoiceStatus.Draft
             paidAmount.minor >= totalAmount.minor -> InvoiceStatus.Paid
@@ -301,7 +297,7 @@ class CashflowProjectionReconciliationTest {
                 it[InvoicesTable.paidAmount] = paidAmount.toDbDecimal()
                 it[status] = invoiceStatus
                 it[direction] = DocumentDirection.Outbound
-                it[InvoicesTable.documentId] = UUID.fromString(documentId.toString())
+                it[InvoicesTable.documentId] = Uuid.parse(documentId.toString())
                 it[InvoicesTable.paidAt] = paidAt
             }
         }

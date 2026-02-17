@@ -19,9 +19,6 @@ import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 data class DocumentMatchReviewSummary(
     val id: DocumentMatchReviewId,
@@ -38,7 +35,6 @@ data class DocumentMatchReviewSummary(
     val updatedAt: kotlinx.datetime.LocalDateTime
 )
 
-@OptIn(ExperimentalUuidApi::class)
 class DocumentMatchReviewRepository {
 
     suspend fun createPending(
@@ -52,10 +48,10 @@ class DocumentMatchReviewRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val id = DocumentMatchReviewId.generate()
         DocumentMatchReviewsTable.insert {
-            it[DocumentMatchReviewsTable.id] = UUID.fromString(id.toString())
-            it[DocumentMatchReviewsTable.tenantId] = UUID.fromString(tenantId.toString())
-            it[DocumentMatchReviewsTable.documentId] = UUID.fromString(documentId.toString())
-            it[incomingSourceId] = UUID.fromString(sourceId.toString())
+            it[DocumentMatchReviewsTable.id] = Uuid.parse(id.toString())
+            it[DocumentMatchReviewsTable.tenantId] = Uuid.parse(tenantId.toString())
+            it[DocumentMatchReviewsTable.documentId] = Uuid.parse(documentId.toString())
+            it[incomingSourceId] = Uuid.parse(sourceId.toString())
             it[DocumentMatchReviewsTable.reasonType] = reasonType
             it[DocumentMatchReviewsTable.aiSummary] = aiSummary
             it[DocumentMatchReviewsTable.aiConfidence] = aiConfidence?.toBigDecimal()
@@ -70,8 +66,8 @@ class DocumentMatchReviewRepository {
         newSuspendedTransaction {
             DocumentMatchReviewsTable.selectAll()
                 .where {
-                    (DocumentMatchReviewsTable.id eq UUID.fromString(reviewId.toString())) and
-                        (DocumentMatchReviewsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentMatchReviewsTable.id eq Uuid.parse(reviewId.toString())) and
+                        (DocumentMatchReviewsTable.tenantId eq Uuid.parse(tenantId.toString()))
                 }
                 .map { it.toSummary() }
                 .singleOrNull()
@@ -82,10 +78,10 @@ class DocumentMatchReviewRepository {
         documentIds: List<DocumentId>
     ): Map<DocumentId, DocumentMatchReviewSummary> = newSuspendedTransaction {
         if (documentIds.isEmpty()) return@newSuspendedTransaction emptyMap()
-        val ids = documentIds.map { UUID.fromString(it.toString()) }
+        val ids = documentIds.map { Uuid.parse(it.toString()) }
         DocumentMatchReviewsTable.selectAll()
             .where {
-                (DocumentMatchReviewsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (DocumentMatchReviewsTable.tenantId eq Uuid.parse(tenantId.toString())) and
                     (DocumentMatchReviewsTable.documentId inList ids) and
                     (DocumentMatchReviewsTable.status eq DocumentMatchReviewStatus.Pending)
             }
@@ -102,12 +98,12 @@ class DocumentMatchReviewRepository {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentMatchReviewsTable.update({
-            (DocumentMatchReviewsTable.id eq UUID.fromString(reviewId.toString())) and
-                (DocumentMatchReviewsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (DocumentMatchReviewsTable.id eq Uuid.parse(reviewId.toString())) and
+                (DocumentMatchReviewsTable.tenantId eq Uuid.parse(tenantId.toString())) and
                 (DocumentMatchReviewsTable.status eq DocumentMatchReviewStatus.Pending)
         }) {
             it[DocumentMatchReviewsTable.status] = status
-            it[DocumentMatchReviewsTable.resolvedBy] = UUID.fromString(resolvedBy.toString())
+            it[DocumentMatchReviewsTable.resolvedBy] = Uuid.parse(resolvedBy.toString())
             it[resolvedAt] = now
             it[updatedAt] = now
         } > 0
@@ -115,15 +111,15 @@ class DocumentMatchReviewRepository {
 
     private fun ResultRow.toSummary(): DocumentMatchReviewSummary {
         return DocumentMatchReviewSummary(
-            id = DocumentMatchReviewId(this[DocumentMatchReviewsTable.id].value.toKotlinUuid()),
-            tenantId = TenantId(this[DocumentMatchReviewsTable.tenantId].toKotlinUuid()),
+            id = DocumentMatchReviewId(this[DocumentMatchReviewsTable.id].value),
+            tenantId = TenantId(this[DocumentMatchReviewsTable.tenantId]),
             documentId = DocumentId.parse(this[DocumentMatchReviewsTable.documentId].toString()),
-            incomingSourceId = DocumentSourceId(this[DocumentMatchReviewsTable.incomingSourceId].toKotlinUuid()),
+            incomingSourceId = DocumentSourceId(this[DocumentMatchReviewsTable.incomingSourceId]),
             reasonType = this[DocumentMatchReviewsTable.reasonType],
             aiSummary = this[DocumentMatchReviewsTable.aiSummary],
             aiConfidence = this[DocumentMatchReviewsTable.aiConfidence]?.toDouble(),
             status = this[DocumentMatchReviewsTable.status],
-            resolvedBy = this[DocumentMatchReviewsTable.resolvedBy]?.toKotlinUuid()?.let { UserId(it) },
+            resolvedBy = this[DocumentMatchReviewsTable.resolvedBy]??.let { UserId(it) },
             resolvedAt = this[DocumentMatchReviewsTable.resolvedAt],
             createdAt = this[DocumentMatchReviewsTable.createdAt],
             updatedAt = this[DocumentMatchReviewsTable.updatedAt]

@@ -26,7 +26,6 @@ import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -36,7 +35,6 @@ import kotlin.uuid.Uuid
  */
 private val logger = loggerFor("TenantRoutes")
 
-@OptIn(ExperimentalUuidApi::class)
 internal fun Route.tenantRoutes() {
     val tenantRepository by inject<TenantRepository>()
     val addressRepository by inject<AddressRepository>()

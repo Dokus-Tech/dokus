@@ -23,7 +23,6 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.NotificationDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.database.dbQuery
-import java.util.UUID
 import kotlin.time.Duration.Companion.hours
 
 class NotificationRepository {
@@ -39,13 +38,13 @@ class NotificationRepository {
         emailSent: Boolean = false,
     ): Result<NotificationDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val newId = UUID.randomUUID()
+        val newId = Uuid.random()
 
         dbQuery {
             NotificationsTable.insert {
                 it[id] = newId
-                it[NotificationsTable.tenantId] = UUID.fromString(tenantId.toString())
-                it[NotificationsTable.userId] = UUID.fromString(userId.toString())
+                it[NotificationsTable.tenantId] = Uuid.parse(tenantId.toString())
+                it[NotificationsTable.userId] = Uuid.parse(userId.toString())
                 it[NotificationsTable.type] = type
                 it[NotificationsTable.title] = title
                 it[NotificationsTable.referenceType] = referenceType
@@ -73,8 +72,8 @@ class NotificationRepository {
     ): Result<PaginatedResponse<NotificationDto>> = runCatching {
         dbQuery {
             var query = NotificationsTable.selectAll().where {
-                (NotificationsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (NotificationsTable.userId eq UUID.fromString(userId.toString()))
+                (NotificationsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (NotificationsTable.userId eq Uuid.parse(userId.toString()))
             }
 
             type?.let {
@@ -111,8 +110,8 @@ class NotificationRepository {
         dbQuery {
             NotificationsTable.selectAll()
                 .where {
-                    (NotificationsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                        (NotificationsTable.userId eq UUID.fromString(userId.toString())) and
+                    (NotificationsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                        (NotificationsTable.userId eq Uuid.parse(userId.toString())) and
                         (NotificationsTable.isRead eq false)
                 }
                 .count()
@@ -127,9 +126,9 @@ class NotificationRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updated = NotificationsTable.update({
-                (NotificationsTable.id eq UUID.fromString(notificationId.toString())) and
-                    (NotificationsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (NotificationsTable.userId eq UUID.fromString(userId.toString()))
+                (NotificationsTable.id eq Uuid.parse(notificationId.toString())) and
+                    (NotificationsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (NotificationsTable.userId eq Uuid.parse(userId.toString()))
             }) {
                 it[isRead] = true
             }
@@ -143,8 +142,8 @@ class NotificationRepository {
     ): Result<Int> = runCatching {
         dbQuery {
             NotificationsTable.update({
-                (NotificationsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (NotificationsTable.userId eq UUID.fromString(userId.toString())) and
+                (NotificationsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (NotificationsTable.userId eq Uuid.parse(userId.toString())) and
                     (NotificationsTable.isRead eq false)
             }) {
                 it[isRead] = true
@@ -159,9 +158,9 @@ class NotificationRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updated = NotificationsTable.update({
-                (NotificationsTable.id eq UUID.fromString(notificationId.toString())) and
-                    (NotificationsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (NotificationsTable.userId eq UUID.fromString(userId.toString()))
+                (NotificationsTable.id eq Uuid.parse(notificationId.toString())) and
+                    (NotificationsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (NotificationsTable.userId eq Uuid.parse(userId.toString()))
             }) {
                 it[emailSent] = true
             }
@@ -182,8 +181,8 @@ class NotificationRepository {
         dbQuery {
             NotificationsTable.selectAll()
                 .where {
-                    (NotificationsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                        (NotificationsTable.userId eq UUID.fromString(userId.toString())) and
+                    (NotificationsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                        (NotificationsTable.userId eq Uuid.parse(userId.toString())) and
                         (NotificationsTable.type eq type) and
                         (NotificationsTable.referenceId eq referenceId) and
                         (NotificationsTable.emailSent eq true) and

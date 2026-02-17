@@ -15,16 +15,12 @@ import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import java.util.UUID
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class ProcessorIngestionRepositoryTest {
 
     private lateinit var database: Database
@@ -51,10 +47,10 @@ class ProcessorIngestionRepositoryTest {
             )
         }
 
-        val tenantUuid = UUID.randomUUID()
-        val documentUuid = UUID.randomUUID()
-        tenantId = TenantId(tenantUuid.toKotlinUuid())
-        documentId = DocumentId(documentUuid.toKotlinUuid())
+        val tenantUuid = Uuid.random()
+        val documentUuid = Uuid.random()
+        tenantId = TenantId(tenantUuid)
+        documentId = DocumentId(documentUuid)
 
         transaction(database) {
             TenantTable.insert {

@@ -26,14 +26,10 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.NotificationId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class NotificationRepositoriesTest {
 
     private lateinit var database: Database
@@ -63,10 +59,10 @@ class NotificationRepositoriesTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
-        userUuid = UUID.randomUUID()
-        tenantId = TenantId(tenantUuid.toKotlinUuid())
-        userId = UserId(userUuid.toKotlinUuid())
+        tenantUuid = Uuid.random()
+        userUuid = Uuid.random()
+        tenantId = TenantId(tenantUuid)
+        userId = UserId(userUuid)
 
         transaction(database) {
             TenantTable.insert {
@@ -208,8 +204,8 @@ class NotificationRepositoriesTest {
 
     @Test
     fun `recent email dedup is tenant-scoped`() = runBlocking {
-        val otherTenantUuid = UUID.randomUUID()
-        val otherTenantId = TenantId(otherTenantUuid.toKotlinUuid())
+        val otherTenantUuid = Uuid.random()
+        val otherTenantId = TenantId(otherTenantUuid)
         transaction(database) {
             TenantTable.insert {
                 it[id] = otherTenantUuid

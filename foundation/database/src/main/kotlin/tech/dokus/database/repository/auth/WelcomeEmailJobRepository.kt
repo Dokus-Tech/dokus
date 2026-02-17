@@ -17,9 +17,6 @@ import tech.dokus.database.tables.auth.WelcomeEmailJobsTable.JobStatus
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.backend.database.dbQuery
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 data class WelcomeEmailJob(
     val id: UUID,
@@ -35,7 +32,6 @@ data class WelcomeEmailJob(
     val updatedAt: LocalDateTime
 )
 
-@OptIn(ExperimentalUuidApi::class)
 class WelcomeEmailJobRepository {
     private val claimableStatuses = listOf(JobStatus.Pending, JobStatus.Retry)
 
@@ -45,8 +41,8 @@ class WelcomeEmailJobRepository {
         scheduledAt: LocalDateTime
     ): Result<Unit> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val userUuid = UUID.fromString(userId.toString())
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val userUuid = Uuid.parse(userId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         dbQuery {
             WelcomeEmailJobsTable.upsert(
@@ -70,7 +66,7 @@ class WelcomeEmailJobRepository {
     }
 
     suspend fun findByUserId(userId: UserId): Result<WelcomeEmailJob?> = runCatching {
-        val userUuid = UUID.fromString(userId.toString())
+        val userUuid = Uuid.parse(userId.toString())
         dbQuery {
             WelcomeEmailJobsTable.selectAll()
                 .where { WelcomeEmailJobsTable.userId eq userUuid }
@@ -173,8 +169,8 @@ class WelcomeEmailJobRepository {
 
     private fun org.jetbrains.exposed.v1.core.ResultRow.toModel(): WelcomeEmailJob = WelcomeEmailJob(
         id = this[WelcomeEmailJobsTable.id].value,
-        userId = UserId(this[WelcomeEmailJobsTable.userId].toKotlinUuid()),
-        tenantId = TenantId(this[WelcomeEmailJobsTable.tenantId].toKotlinUuid()),
+        userId = UserId(this[WelcomeEmailJobsTable.userId]),
+        tenantId = TenantId(this[WelcomeEmailJobsTable.tenantId]),
         status = this[WelcomeEmailJobsTable.status],
         scheduledAt = this[WelcomeEmailJobsTable.scheduledAt],
         nextAttemptAt = this[WelcomeEmailJobsTable.nextAttemptAt],

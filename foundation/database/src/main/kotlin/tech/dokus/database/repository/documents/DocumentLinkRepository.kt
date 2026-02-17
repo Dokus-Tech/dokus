@@ -16,9 +16,6 @@ import tech.dokus.domain.enums.DocumentLinkType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentLinkId
 import tech.dokus.domain.ids.TenantId
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 /**
  * Data class representing a document link.
@@ -68,7 +65,6 @@ data class CreateDocumentLinkPayload(
  *
  * CRITICAL: All queries MUST filter by tenantId for tenant isolation.
  */
-@OptIn(ExperimentalUuidApi::class)
 class DocumentLinkRepository {
 
     /**
@@ -83,11 +79,11 @@ class DocumentLinkRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         DocumentLinksTable.insert {
-            it[DocumentLinksTable.id] = UUID.fromString(id.toString())
-            it[DocumentLinksTable.tenantId] = UUID.fromString(tenantId.toString())
-            it[sourceDocumentId] = UUID.fromString(payload.sourceDocumentId.toString())
+            it[DocumentLinksTable.id] = Uuid.parse(id.toString())
+            it[DocumentLinksTable.tenantId] = Uuid.parse(tenantId.toString())
+            it[sourceDocumentId] = Uuid.parse(payload.sourceDocumentId.toString())
             it[targetDocumentId] = payload.targetDocumentId?.let { docId ->
-                UUID.fromString(docId.toString())
+                Uuid.parse(docId.toString())
             }
             it[externalReference] = payload.externalReference
             it[linkType] = payload.linkType
@@ -114,9 +110,9 @@ class DocumentLinkRepository {
             "OriginalDocument link requires targetDocumentId or externalReference"
         }
 
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val sourceDocumentUuid = UUID.fromString(sourceDocumentId.toString())
-        val targetDocumentUuid = targetDocumentId?.let { UUID.fromString(it.toString()) }
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val sourceDocumentUuid = Uuid.parse(sourceDocumentId.toString())
+        val targetDocumentUuid = targetDocumentId?.let { Uuid.parse(it.toString()) }
 
         val baseWhere = (DocumentLinksTable.tenantId eq tenantUuid) and
             (DocumentLinksTable.sourceDocumentId eq sourceDocumentUuid) and
@@ -144,7 +140,7 @@ class DocumentLinkRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         DocumentLinksTable.insert {
-            it[DocumentLinksTable.id] = UUID.fromString(linkId.toString())
+            it[DocumentLinksTable.id] = Uuid.parse(linkId.toString())
             it[DocumentLinksTable.tenantId] = tenantUuid
             it[DocumentLinksTable.sourceDocumentId] = sourceDocumentUuid
             it[DocumentLinksTable.targetDocumentId] = targetDocumentUuid
@@ -166,8 +162,8 @@ class DocumentLinkRepository {
     ): DocumentLinkDto? = newSuspendedTransaction {
         DocumentLinksTable.selectAll()
             .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.id eq UUID.fromString(linkId.toString()))
+                (DocumentLinksTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (DocumentLinksTable.id eq Uuid.parse(linkId.toString()))
             }
             .map { it.toDto() }
             .singleOrNull()
@@ -183,8 +179,8 @@ class DocumentLinkRepository {
     ): List<DocumentLinkDto> = newSuspendedTransaction {
         DocumentLinksTable.selectAll()
             .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString()))
+                (DocumentLinksTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (DocumentLinksTable.sourceDocumentId eq Uuid.parse(sourceDocumentId.toString()))
             }
             .map { it.toDto() }
     }
@@ -199,8 +195,8 @@ class DocumentLinkRepository {
     ): List<DocumentLinkDto> = newSuspendedTransaction {
         DocumentLinksTable.selectAll()
             .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.targetDocumentId eq UUID.fromString(targetDocumentId.toString()))
+                (DocumentLinksTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (DocumentLinksTable.targetDocumentId eq Uuid.parse(targetDocumentId.toString()))
             }
             .map { it.toDto() }
     }
@@ -216,8 +212,8 @@ class DocumentLinkRepository {
     ): List<DocumentLinkDto> = newSuspendedTransaction {
         DocumentLinksTable.selectAll()
             .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString())) and
+                (DocumentLinksTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (DocumentLinksTable.sourceDocumentId eq Uuid.parse(sourceDocumentId.toString())) and
                     (DocumentLinksTable.linkType eq linkType)
             }
             .map { it.toDto() }
@@ -234,8 +230,8 @@ class DocumentLinkRepository {
     ): Boolean = newSuspendedTransaction {
         DocumentLinksTable.selectAll()
             .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString())) and
+                (DocumentLinksTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (DocumentLinksTable.sourceDocumentId eq Uuid.parse(sourceDocumentId.toString())) and
                     (DocumentLinksTable.linkType eq DocumentLinkType.ConvertedTo)
             }
             .count() > 0
@@ -250,8 +246,8 @@ class DocumentLinkRepository {
         linkId: DocumentLinkId
     ): Boolean = newSuspendedTransaction {
         DocumentLinksTable.deleteWhere {
-            (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (DocumentLinksTable.id eq UUID.fromString(linkId.toString()))
+            (DocumentLinksTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (DocumentLinksTable.id eq Uuid.parse(linkId.toString()))
         } > 0
     }
 
@@ -266,15 +262,15 @@ class DocumentLinkRepository {
         sourceDocumentId: DocumentId
     ): Int = newSuspendedTransaction {
         DocumentLinksTable.deleteWhere {
-            (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString()))
+            (DocumentLinksTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (DocumentLinksTable.sourceDocumentId eq Uuid.parse(sourceDocumentId.toString()))
         }
     }
 
     private fun ResultRow.toDto(): DocumentLinkDto {
         return DocumentLinkDto(
             id = DocumentLinkId.parse(this[DocumentLinksTable.id].toString()),
-            tenantId = TenantId(this[DocumentLinksTable.tenantId].toKotlinUuid()),
+            tenantId = TenantId(this[DocumentLinksTable.tenantId]),
             sourceDocumentId = DocumentId.parse(this[DocumentLinksTable.sourceDocumentId].toString()),
             targetDocumentId = this[DocumentLinksTable.targetDocumentId]?.let {
                 DocumentId.parse(it.toString())

@@ -23,7 +23,6 @@ import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.foundation.backend.utils.loggerFor
-import java.util.UUID
 
 /**
  * Confirms invoice documents and projects cashflow from invoice direction.
@@ -96,7 +95,7 @@ class InvoiceConfirmationService(
         val cashflowEntry = if (existingInvoice != null && isReconfirm) {
             cashflowEntriesService.updateFromInvoice(
                 tenantId = tenantId,
-                invoiceId = UUID.fromString(invoice.id.toString()),
+                invoiceId = Uuid.parse(invoice.id.toString()),
                 documentId = documentId,
                 dueDate = dueDate,
                 amountGross = invoice.totalAmount,
@@ -107,7 +106,7 @@ class InvoiceConfirmationService(
         } else {
             cashflowEntriesService.createFromInvoice(
                 tenantId = tenantId,
-                invoiceId = UUID.fromString(invoice.id.toString()),
+                invoiceId = Uuid.parse(invoice.id.toString()),
                 documentId = documentId,
                 dueDate = dueDate,
                 amountGross = invoice.totalAmount,

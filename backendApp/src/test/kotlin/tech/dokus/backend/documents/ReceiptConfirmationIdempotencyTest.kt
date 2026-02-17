@@ -45,20 +45,16 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.ReceiptDraftData
 import java.math.BigDecimal
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class ReceiptConfirmationIdempotencyTest {
 
     private lateinit var database: Database
 
     private lateinit var tenantUuid: UUID
-    private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
+    private val tenantId: TenantId get() = TenantId(tenantUuid)
 
     private val documentRepository = DocumentRepository()
     private val ingestionRepository = DocumentIngestionRunRepository()
@@ -96,7 +92,7 @@ class ReceiptConfirmationIdempotencyTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
+        tenantUuid = Uuid.random()
 
         transaction(database) {
             TenantTable.insert {
@@ -232,7 +228,7 @@ class ReceiptConfirmationIdempotencyTest {
     }
 
     private fun createUser(): UserId {
-        val userUuid = UUID.randomUUID()
+        val userUuid = Uuid.random()
         val userId = UserId.parse(userUuid.toString())
 
         transaction(database) {

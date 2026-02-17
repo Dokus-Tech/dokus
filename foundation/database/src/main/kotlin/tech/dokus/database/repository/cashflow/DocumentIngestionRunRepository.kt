@@ -28,9 +28,6 @@ import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import java.util.*
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
-import kotlin.uuid.toKotlinUuid
 
 /**
  * Data class for ingestion run summary.
@@ -55,7 +52,6 @@ data class IngestionRunSummary(
  * Repository for document ingestion run operations.
  * CRITICAL: All queries filter by tenantId for security.
  */
-@OptIn(ExperimentalUuidApi::class)
 class DocumentIngestionRunRepository {
 
     /**
@@ -79,10 +75,10 @@ class DocumentIngestionRunRepository {
         val sanitizedDpi = overrideDpi?.takeIf { it > 0 }
         return@newSuspendedTransaction IngestionRunId.generate().also { id ->
             DocumentIngestionRunsTable.insert {
-                it[DocumentIngestionRunsTable.id] = id.value.toJavaUuid()
-                it[DocumentIngestionRunsTable.documentId] = UUID.fromString(documentId.toString())
-                it[DocumentIngestionRunsTable.tenantId] = UUID.fromString(tenantId.toString())
-                it[DocumentIngestionRunsTable.sourceId] = sourceId?.let { value -> UUID.fromString(value.toString()) }
+                it[DocumentIngestionRunsTable.id] = id.value
+                it[DocumentIngestionRunsTable.documentId] = Uuid.parse(documentId.toString())
+                it[DocumentIngestionRunsTable.tenantId] = Uuid.parse(tenantId.toString())
+                it[DocumentIngestionRunsTable.sourceId] = sourceId?.let { value -> Uuid.parse(value.toString()) }
                 it[status] = IngestionStatus.Queued
                 it[DocumentIngestionRunsTable.userFeedback] = userFeedback?.takeIf { fb -> fb.isNotBlank() }
                 it[DocumentIngestionRunsTable.overrideMaxPages] = sanitizedMaxPages
@@ -101,8 +97,8 @@ class DocumentIngestionRunRepository {
     ): IngestionRunSummary? = newSuspendedTransaction {
         DocumentIngestionRunsTable.selectAll()
             .where {
-                (DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())) and
-                        (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (DocumentIngestionRunsTable.id eq Uuid.parse(runId.toString())) and
+                        (DocumentIngestionRunsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }
             .map { it.toIngestionRunSummary() }
             .singleOrNull()
@@ -116,12 +112,12 @@ class DocumentIngestionRunRepository {
         documentId: DocumentId,
         tenantId: TenantId
     ): List<IngestionRunSummary> = newSuspendedTransaction {
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
+        val tenantIdUuid = Uuid.parse(tenantId.toString())
         recoverStaleProcessingRunsInternal(tenantIdUuid)
 
         DocumentIngestionRunsTable.selectAll()
             .where {
-                (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
+                (DocumentIngestionRunsTable.documentId eq Uuid.parse(documentId.toString())) and
                         (DocumentIngestionRunsTable.tenantId eq tenantIdUuid)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
@@ -137,8 +133,8 @@ class DocumentIngestionRunRepository {
         documentId: DocumentId,
         tenantId: TenantId
     ): IngestionRunSummary? = newSuspendedTransaction {
-        val docIdUuid = UUID.fromString(documentId.toString())
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
+        val docIdUuid = Uuid.parse(documentId.toString())
+        val tenantIdUuid = Uuid.parse(tenantId.toString())
         recoverStaleProcessingRunsInternal(tenantIdUuid)
 
         // First, check for Processing status
@@ -200,13 +196,13 @@ class DocumentIngestionRunRepository {
         documentId: DocumentId,
         tenantId: TenantId
     ): IngestionRunSummary? = newSuspendedTransaction {
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
+        val tenantIdUuid = Uuid.parse(tenantId.toString())
         recoverStaleProcessingRunsInternal(tenantIdUuid)
 
         val pendingStatuses = listOf(IngestionStatus.Queued, IngestionStatus.Processing)
         DocumentIngestionRunsTable.selectAll()
             .where {
-                (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
+                (DocumentIngestionRunsTable.documentId eq Uuid.parse(documentId.toString())) and
                         (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
                         (DocumentIngestionRunsTable.status inList pendingStatuses)
             }
@@ -232,10 +228,10 @@ class DocumentIngestionRunRepository {
             .limit(limit)
             .map { row ->
                 IngestionItemEntity(
-                    runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
-                    documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
-                    tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-                    sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
+                    runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value),
+                    documentId = DocumentId(row[DocumentIngestionRunsTable.documentId]),
+                    tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId]),
+                    sourceId = row[DocumentIngestionRunsTable.sourceId]??.let { DocumentSourceId(it) },
                     storageKey = row[DocumentsTable.storageKey],
                     filename = row[DocumentsTable.filename],
                     contentType = row[DocumentsTable.contentType],
@@ -255,7 +251,7 @@ class DocumentIngestionRunRepository {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())
+            DocumentIngestionRunsTable.id eq Uuid.parse(runId.toString())
         }) {
             it[status] = IngestionStatus.Processing
             it[startedAt] = now
@@ -281,7 +277,7 @@ class DocumentIngestionRunRepository {
             }
         }
         DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())
+            DocumentIngestionRunsTable.id eq Uuid.parse(runId.toString())
         }) {
             it[status] = IngestionStatus.Succeeded
             it[finishedAt] = now
@@ -303,7 +299,7 @@ class DocumentIngestionRunRepository {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())
+            DocumentIngestionRunsTable.id eq Uuid.parse(runId.toString())
         }) {
             it[status] = IngestionStatus.Failed
             it[finishedAt] = now
@@ -312,7 +308,7 @@ class DocumentIngestionRunRepository {
     }
 
     suspend fun recoverStaleProcessingRunsForTenant(tenantId: TenantId): Int = newSuspendedTransaction {
-        recoverStaleProcessingRunsInternal(UUID.fromString(tenantId.toString()))
+        recoverStaleProcessingRunsInternal(Uuid.parse(tenantId.toString()))
     }
 
     suspend fun recoverStaleProcessingRuns(): Int = newSuspendedTransaction {
@@ -328,8 +324,8 @@ class DocumentIngestionRunRepository {
         tenantId: TenantId
     ): Int = newSuspendedTransaction {
         DocumentIngestionRunsTable.deleteWhere {
-            (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
-                    (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
+            (DocumentIngestionRunsTable.documentId eq Uuid.parse(documentId.toString())) and
+                    (DocumentIngestionRunsTable.tenantId eq Uuid.parse(tenantId.toString()))
         }
     }
 
@@ -337,7 +333,7 @@ class DocumentIngestionRunRepository {
         return IngestionRunSummary(
             id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
             documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
-            tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
+            tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId]),
             status = this[DocumentIngestionRunsTable.status],
             provider = this[DocumentIngestionRunsTable.provider],
             queuedAt = this[DocumentIngestionRunsTable.queuedAt],

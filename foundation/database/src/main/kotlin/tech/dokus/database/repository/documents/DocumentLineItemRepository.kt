@@ -19,9 +19,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentLineItemId
 import tech.dokus.domain.ids.TenantId
 import java.math.BigDecimal
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 /**
  * Data class representing a document line item.
@@ -66,7 +63,6 @@ data class CreateLineItemPayload(
  *
  * CRITICAL: All queries MUST filter by tenantId for tenant isolation.
  */
-@OptIn(ExperimentalUuidApi::class)
 class DocumentLineItemRepository {
 
     /**
@@ -82,9 +78,9 @@ class DocumentLineItemRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         DocumentLineItemsTable.insert {
-            it[DocumentLineItemsTable.id] = UUID.fromString(id.toString())
-            it[DocumentLineItemsTable.tenantId] = UUID.fromString(tenantId.toString())
-            it[DocumentLineItemsTable.documentId] = UUID.fromString(documentId.toString())
+            it[DocumentLineItemsTable.id] = Uuid.parse(id.toString())
+            it[DocumentLineItemsTable.tenantId] = Uuid.parse(tenantId.toString())
+            it[DocumentLineItemsTable.documentId] = Uuid.parse(documentId.toString())
             it[position] = payload.position
             it[description] = payload.description
             it[quantity] = payload.quantity
@@ -111,13 +107,13 @@ class DocumentLineItemRepository {
         items: List<CreateLineItemPayload>
     ): List<DocumentLineItemId> = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
-        val documentIdUuid = UUID.fromString(documentId.toString())
+        val tenantIdUuid = Uuid.parse(tenantId.toString())
+        val documentIdUuid = Uuid.parse(documentId.toString())
 
         val ids = items.map { DocumentLineItemId.generate() }
 
         DocumentLineItemsTable.batchInsert(items.zip(ids)) { (payload, id) ->
-            this[DocumentLineItemsTable.id] = UUID.fromString(id.toString())
+            this[DocumentLineItemsTable.id] = Uuid.parse(id.toString())
             this[DocumentLineItemsTable.tenantId] = tenantIdUuid
             this[DocumentLineItemsTable.documentId] = documentIdUuid
             this[DocumentLineItemsTable.position] = payload.position
@@ -146,8 +142,8 @@ class DocumentLineItemRepository {
     ): List<DocumentLineItemDto> = newSuspendedTransaction {
         DocumentLineItemsTable.selectAll()
             .where {
-                (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLineItemsTable.documentId eq UUID.fromString(documentId.toString()))
+                (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (DocumentLineItemsTable.documentId eq Uuid.parse(documentId.toString()))
             }
             .orderBy(DocumentLineItemsTable.position, SortOrder.ASC)
             .map { it.toDto() }
@@ -163,8 +159,8 @@ class DocumentLineItemRepository {
     ): DocumentLineItemDto? = newSuspendedTransaction {
         DocumentLineItemsTable.selectAll()
             .where {
-                (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLineItemsTable.id eq UUID.fromString(lineItemId.toString()))
+                (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (DocumentLineItemsTable.id eq Uuid.parse(lineItemId.toString()))
             }
             .map { it.toDto() }
             .singleOrNull()
@@ -181,8 +177,8 @@ class DocumentLineItemRepository {
         documentId: DocumentId
     ): Int = newSuspendedTransaction {
         DocumentLineItemsTable.deleteWhere {
-            (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (DocumentLineItemsTable.documentId eq UUID.fromString(documentId.toString()))
+            (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (DocumentLineItemsTable.documentId eq Uuid.parse(documentId.toString()))
         }
     }
 
@@ -195,8 +191,8 @@ class DocumentLineItemRepository {
         lineItemId: DocumentLineItemId
     ): Boolean = newSuspendedTransaction {
         DocumentLineItemsTable.deleteWhere {
-            (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (DocumentLineItemsTable.id eq UUID.fromString(lineItemId.toString()))
+            (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (DocumentLineItemsTable.id eq Uuid.parse(lineItemId.toString()))
         } > 0
     }
 
@@ -210,8 +206,8 @@ class DocumentLineItemRepository {
     ): Long = newSuspendedTransaction {
         DocumentLineItemsTable.selectAll()
             .where {
-                (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLineItemsTable.documentId eq UUID.fromString(documentId.toString()))
+                (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (DocumentLineItemsTable.documentId eq Uuid.parse(documentId.toString()))
             }
             .count()
     }
@@ -228,8 +224,8 @@ class DocumentLineItemRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         DocumentLineItemsTable.update({
-            (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (DocumentLineItemsTable.id eq UUID.fromString(lineItemId.toString()))
+            (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (DocumentLineItemsTable.id eq Uuid.parse(lineItemId.toString()))
         }) {
             it[position] = newPosition
             it[updatedAt] = now
@@ -239,7 +235,7 @@ class DocumentLineItemRepository {
     private fun ResultRow.toDto(): DocumentLineItemDto {
         return DocumentLineItemDto(
             id = DocumentLineItemId.parse(this[DocumentLineItemsTable.id].toString()),
-            tenantId = TenantId(this[DocumentLineItemsTable.tenantId].toKotlinUuid()),
+            tenantId = TenantId(this[DocumentLineItemsTable.tenantId]),
             documentId = DocumentId.parse(this[DocumentLineItemsTable.documentId].toString()),
             position = this[DocumentLineItemsTable.position],
             description = this[DocumentLineItemsTable.description],

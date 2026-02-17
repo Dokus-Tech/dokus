@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
 
 package tech.dokus.database.repository.auth
 
@@ -19,9 +18,6 @@ import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.MessageDigest
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
 
 /**
  * Information about a password reset token
@@ -66,7 +62,7 @@ class PasswordResetTokenRepository {
         expiresAt: Instant
     ): Result<Unit> = runCatching {
         dbQuery {
-            val userUuid = userId.uuid.toJavaUuid()
+            val userUuid = userId.uuid
             val tokenHash = tokenHash(token)
 
             PasswordResetTokensTable.insert {

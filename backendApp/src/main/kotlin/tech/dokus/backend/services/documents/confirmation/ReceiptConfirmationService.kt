@@ -17,8 +17,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
 
 /**
  * Confirms Receipt documents: creates Expense entity + CashflowEntry (Direction.Out).
@@ -32,7 +30,6 @@ class ReceiptConfirmationService(
 ) {
     private val logger = loggerFor()
 
-    @OptIn(ExperimentalUuidApi::class)
     @Suppress("ThrowsCount")
     suspend fun confirm(
         tenantId: TenantId,
@@ -95,7 +92,7 @@ class ReceiptConfirmationService(
         val cashflowEntry = if (existingExpense != null && isReconfirm) {
             cashflowEntriesService.updateFromExpense(
                 tenantId = tenantId,
-                expenseId = expense.id.value.toJavaUuid(),
+                expenseId = expense.id.value,
                 documentId = documentId,
                 expenseDate = date,
                 amountGross = expense.amount,
@@ -105,7 +102,7 @@ class ReceiptConfirmationService(
         } else {
             cashflowEntriesService.createFromExpense(
                 tenantId = tenantId,
-                expenseId = expense.id.value.toJavaUuid(),
+                expenseId = expense.id.value,
                 documentId = documentId,
                 expenseDate = date,
                 amountGross = expense.amount,

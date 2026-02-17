@@ -1,5 +1,4 @@
 @file:Suppress("UseRequire") // Custom exception messaging
-@file:OptIn(ExperimentalUuidApi::class)
 
 package tech.dokus.database.repository.contacts
 
@@ -27,10 +26,7 @@ import tech.dokus.domain.model.contact.ContactAddressDto
 import tech.dokus.domain.model.contact.ContactAddressInput
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.database.now
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import kotlin.uuid.toJavaUuid
-import kotlin.uuid.toKotlinUuid
 
 /**
  * Repository for managing contact addresses.
@@ -59,8 +55,8 @@ class ContactAddressRepository {
         input: ContactAddressInput
     ): Result<ContactAddressDto> = runCatching {
         dbQuery {
-            val tenantUuid = tenantId.value.toJavaUuid()
-            val contactUuid = contactId.value.toJavaUuid()
+            val tenantUuid = tenantId.value
+            val contactUuid = contactId.value
 
             // Validate contact belongs to tenant
             val contactExists = ContactsTable.selectAll().where {
@@ -74,7 +70,7 @@ class ContactAddressRepository {
             val now = now().toLocalDateTime(TimeZone.UTC)
 
             // Create the Address row (owned by this contact address)
-            val addressId = Uuid.random().toJavaUuid()
+            val addressId = Uuid.random()
             AddressTable.insert {
                 it[AddressTable.id] = addressId
                 it[AddressTable.tenantId] = tenantUuid
@@ -99,7 +95,7 @@ class ContactAddressRepository {
             }
 
             // Create the join row
-            val contactAddressId = Uuid.random().toJavaUuid()
+            val contactAddressId = Uuid.random()
             ContactAddressesTable.insert {
                 it[ContactAddressesTable.id] = contactAddressId
                 it[ContactAddressesTable.contactId] = contactUuid
@@ -111,9 +107,9 @@ class ContactAddressRepository {
             }
 
             ContactAddressDto(
-                id = ContactAddressId(contactAddressId.toKotlinUuid()),
+                id = ContactAddressId(contactAddressId),
                 address = AddressDto(
-                    id = AddressId(addressId.toKotlinUuid()),
+                    id = AddressId(addressId),
                     streetLine1 = input.streetLine1?.trim(),
                     streetLine2 = input.streetLine2?.trim(),
                     city = input.city?.trim(),
@@ -138,8 +134,8 @@ class ContactAddressRepository {
         input: ContactAddressInput
     ): Result<ContactAddressDto> = runCatching {
         dbQuery {
-            val tenantUuid = tenantId.value.toJavaUuid()
-            val contactAddressUuid = contactAddressId.value.toJavaUuid()
+            val tenantUuid = tenantId.value
+            val contactAddressUuid = contactAddressId.value
 
             // Get the contact address and validate ownership chain
             val joinRow = ContactAddressesTable
@@ -197,7 +193,7 @@ class ContactAddressRepository {
             ContactAddressDto(
                 id = contactAddressId,
                 address = AddressDto(
-                    id = AddressId(addressUuid.toKotlinUuid()),
+                    id = AddressId(addressUuid),
                     streetLine1 = input.streetLine1?.trim(),
                     streetLine2 = input.streetLine2?.trim(),
                     city = input.city?.trim(),
@@ -221,8 +217,8 @@ class ContactAddressRepository {
         contactAddressId: ContactAddressId
     ): Result<Boolean> = runCatching {
         dbQuery {
-            val tenantUuid = tenantId.value.toJavaUuid()
-            val contactAddressUuid = contactAddressId.value.toJavaUuid()
+            val tenantUuid = tenantId.value
+            val contactAddressUuid = contactAddressId.value
 
             // Get the contact address and validate ownership chain
             val joinRow = ContactAddressesTable
@@ -267,8 +263,8 @@ class ContactAddressRepository {
         contactId: ContactId
     ): Result<List<ContactAddressDto>> = runCatching {
         dbQuery {
-            val tenantUuid = tenantId.value.toJavaUuid()
-            val contactUuid = contactId.value.toJavaUuid()
+            val tenantUuid = tenantId.value
+            val contactUuid = contactId.value
 
             // Validate contact belongs to tenant
             val contactExists = ContactsTable.selectAll().where {
@@ -288,9 +284,9 @@ class ContactAddressRepository {
                 }
                 .map { row ->
                     ContactAddressDto(
-                        id = ContactAddressId(row[ContactAddressesTable.id].value.toKotlinUuid()),
+                        id = ContactAddressId(row[ContactAddressesTable.id].value),
                         address = AddressDto(
-                            id = AddressId(row[AddressTable.id].value.toKotlinUuid()),
+                            id = AddressId(row[AddressTable.id].value),
                             streetLine1 = row[AddressTable.streetLine1],
                             streetLine2 = row[AddressTable.streetLine2],
                             city = row[AddressTable.city],
@@ -318,8 +314,8 @@ class ContactAddressRepository {
         }
 
         dbQuery {
-            val tenantUuid = tenantId.value.toJavaUuid()
-            val contactUuids = contactIds.map { it.value.toJavaUuid() }
+            val tenantUuid = tenantId.value
+            val contactUuids = contactIds.map { it.value }
 
             // Single query to load all addresses for all contacts
             (ContactAddressesTable innerJoin AddressTable)
@@ -329,14 +325,14 @@ class ContactAddressRepository {
                         (AddressTable.tenantId eq tenantUuid)
                 }
                 .groupBy { row ->
-                    ContactId(row[ContactAddressesTable.contactId].toKotlinUuid())
+                    ContactId(row[ContactAddressesTable.contactId])
                 }
                 .mapValues { (_, rows) ->
                     rows.map { row ->
                         ContactAddressDto(
-                            id = ContactAddressId(row[ContactAddressesTable.id].value.toKotlinUuid()),
+                            id = ContactAddressId(row[ContactAddressesTable.id].value),
                             address = AddressDto(
-                                id = AddressId(row[AddressTable.id].value.toKotlinUuid()),
+                                id = AddressId(row[AddressTable.id].value),
                                 streetLine1 = row[AddressTable.streetLine1],
                                 streetLine2 = row[AddressTable.streetLine2],
                                 city = row[AddressTable.city],
@@ -360,8 +356,8 @@ class ContactAddressRepository {
         addressType: AddressType? = null
     ): Result<ContactAddressDto?> = runCatching {
         dbQuery {
-            val tenantUuid = tenantId.value.toJavaUuid()
-            val contactUuid = contactId.value.toJavaUuid()
+            val tenantUuid = tenantId.value
+            val contactUuid = contactId.value
 
             // Validate contact belongs to tenant
             val contactExists = ContactsTable.selectAll().where {
@@ -388,9 +384,9 @@ class ContactAddressRepository {
 
             query.singleOrNull()?.let { row ->
                 ContactAddressDto(
-                    id = ContactAddressId(row[ContactAddressesTable.id].value.toKotlinUuid()),
+                    id = ContactAddressId(row[ContactAddressesTable.id].value),
                     address = AddressDto(
-                        id = AddressId(row[AddressTable.id].value.toKotlinUuid()),
+                        id = AddressId(row[AddressTable.id].value),
                         streetLine1 = row[AddressTable.streetLine1],
                         streetLine2 = row[AddressTable.streetLine2],
                         city = row[AddressTable.city],
@@ -413,8 +409,8 @@ class ContactAddressRepository {
         contactAddressId: ContactAddressId
     ): Result<Boolean> = runCatching {
         dbQuery {
-            val tenantUuid = tenantId.value.toJavaUuid()
-            val contactAddressUuid = contactAddressId.value.toJavaUuid()
+            val tenantUuid = tenantId.value
+            val contactAddressUuid = contactAddressId.value
 
             // Get the contact address and validate ownership
             val joinRow = ContactAddressesTable

@@ -32,8 +32,6 @@ import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
 import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 /**
  * Repository for ingestion run operations in the processor worker.
@@ -53,7 +51,6 @@ class ProcessorIngestionRepository {
      * Find pending ingestion runs ready for processing.
      * Only picks up runs with status=Queued, ordered by queue time (FIFO).
      */
-    @OptIn(ExperimentalUuidApi::class)
     suspend fun findPendingForProcessing(limit: Int = 10): List<IngestionItemEntity> =
         newSuspendedTransaction {
             (DocumentIngestionRunsTable innerJoin DocumentsTable)
@@ -65,10 +62,10 @@ class ProcessorIngestionRepository {
                 .limit(limit)
                 .map { row ->
                     IngestionItemEntity(
-                        runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
-                        documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
-                        tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-                        sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
+                        runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value),
+                        documentId = DocumentId(row[DocumentIngestionRunsTable.documentId]),
+                        tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId]),
+                        sourceId = row[DocumentIngestionRunsTable.sourceId]??.let { DocumentSourceId(it) },
                         storageKey = row[DocumentsTable.storageKey],
                         filename = row[DocumentsTable.filename],
                         contentType = row[DocumentsTable.contentType],
@@ -88,7 +85,7 @@ class ProcessorIngestionRepository {
         newSuspendedTransaction {
             val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
             DocumentIngestionRunsTable.update({
-                DocumentIngestionRunsTable.id eq UUID.fromString(runId)
+                DocumentIngestionRunsTable.id eq Uuid.parse(runId)
             }) {
                 it[status] = IngestionStatus.Processing
                 it[startedAt] = now
@@ -109,8 +106,8 @@ class ProcessorIngestionRepository {
         DocumentIngestionRunsTable
             .selectAll()
             .where {
-                (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId)) and
-                        (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId)) and
+                (DocumentIngestionRunsTable.tenantId eq Uuid.parse(tenantId)) and
+                        (DocumentIngestionRunsTable.documentId eq Uuid.parse(documentId)) and
                         (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             }
             .orderBy(DocumentIngestionRunsTable.startedAt to SortOrder.DESC)
@@ -127,7 +124,7 @@ class ProcessorIngestionRepository {
     suspend fun getRunStatus(runId: String): IngestionStatus? = newSuspendedTransaction {
         DocumentIngestionRunsTable
             .selectAll()
-            .where { DocumentIngestionRunsTable.id eq UUID.fromString(runId) }
+            .where { DocumentIngestionRunsTable.id eq Uuid.parse(runId) }
             .singleOrNull()
             ?.get(DocumentIngestionRunsTable.status)
     }
@@ -177,9 +174,9 @@ class ProcessorIngestionRepository {
 
         return newSuspendedTransaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
-            val runUuid = UUID.fromString(runId)
-            val documentUuid = UUID.fromString(documentId)
-            val tenantUuid = UUID.fromString(tenantId)
+            val runUuid = Uuid.parse(runId)
+            val documentUuid = Uuid.parse(documentId)
+            val tenantUuid = Uuid.parse(tenantId)
             val draftJson = draftData?.let { json.encodeToString(it) }
             val keywordsJson = keywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
             val calculatedStatus = DocumentStatus.NeedsReview
@@ -279,7 +276,7 @@ class ProcessorIngestionRepository {
         newSuspendedTransaction {
             val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
             DocumentIngestionRunsTable.update({
-                DocumentIngestionRunsTable.id eq UUID.fromString(runId)
+                DocumentIngestionRunsTable.id eq Uuid.parse(runId)
             }) {
                 it[status] = IngestionStatus.Failed
                 it[finishedAt] = now
@@ -336,7 +333,7 @@ class ProcessorIngestionRepository {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
         DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq UUID.fromString(runId)
+            DocumentIngestionRunsTable.id eq Uuid.parse(runId)
         }) {
             it[indexingStatus] = status
             it[indexedAt] = now
@@ -357,7 +354,7 @@ class ProcessorIngestionRepository {
         traceJson: String?
     ): Boolean = newSuspendedTransaction {
         DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq UUID.fromString(runId)
+            DocumentIngestionRunsTable.id eq Uuid.parse(runId)
         }) {
             it[processingTrace] = traceJson
         } > 0

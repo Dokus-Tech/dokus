@@ -12,14 +12,13 @@ import tech.dokus.database.tables.notifications.NotificationPreferencesTable
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.backend.database.dbQuery
-import java.util.UUID
 
 class NotificationPreferencesRepository {
 
     suspend fun listOverrides(userId: UserId): Result<Map<NotificationType, Boolean>> = runCatching {
         dbQuery {
             NotificationPreferencesTable.selectAll()
-                .where { NotificationPreferencesTable.userId eq UUID.fromString(userId.toString()) }
+                .where { NotificationPreferencesTable.userId eq Uuid.parse(userId.toString()) }
                 .associate { row ->
                     row[NotificationPreferencesTable.type] to row[NotificationPreferencesTable.emailEnabled]
                 }
@@ -32,7 +31,7 @@ class NotificationPreferencesRepository {
         emailEnabled: Boolean
     ): Result<Unit> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val userUuid = UUID.fromString(userId.toString())
+        val userUuid = Uuid.parse(userId.toString())
 
         dbQuery {
             NotificationPreferencesTable.upsert(
@@ -58,7 +57,7 @@ class NotificationPreferencesRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val deleted = NotificationPreferencesTable.deleteWhere {
-                (NotificationPreferencesTable.userId eq UUID.fromString(userId.toString())) and
+                (NotificationPreferencesTable.userId eq Uuid.parse(userId.toString())) and
                     (NotificationPreferencesTable.type eq type)
             }
             deleted > 0

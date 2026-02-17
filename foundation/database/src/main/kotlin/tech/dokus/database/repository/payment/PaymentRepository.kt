@@ -23,8 +23,6 @@ import tech.dokus.domain.ids.TransactionId
 import tech.dokus.domain.model.PaymentDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Repository for managing payment records.
@@ -33,7 +31,6 @@ import kotlin.uuid.ExperimentalUuidApi
  * 1. ALWAYS filter by tenant_id in every query
  * 2. Use NUMERIC for money to avoid rounding errors
  */
-@OptIn(ExperimentalUuidApi::class)
 class PaymentRepository {
 
     /**
@@ -51,8 +48,8 @@ class PaymentRepository {
     ): Result<PaymentDto> = runCatching {
         dbQuery {
             val id = PaymentsTable.insert {
-                it[PaymentsTable.tenantId] = UUID.fromString(tenantId.toString())
-                it[PaymentsTable.invoiceId] = UUID.fromString(invoiceId.toString())
+                it[PaymentsTable.tenantId] = Uuid.parse(tenantId.toString())
+                it[PaymentsTable.invoiceId] = Uuid.parse(invoiceId.toString())
                 it[PaymentsTable.amount] = amount.toDbDecimal()
                 it[PaymentsTable.paymentDate] = paymentDate
                 it[PaymentsTable.paymentMethod] = paymentMethod
@@ -76,8 +73,8 @@ class PaymentRepository {
     ): Result<PaymentDto?> = runCatching {
         dbQuery {
             PaymentsTable.selectAll().where {
-                (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
-                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (PaymentsTable.id eq Uuid.parse(paymentId.toString())) and
+                    (PaymentsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }.singleOrNull()?.toPaymentDto()
         }
     }
@@ -88,7 +85,7 @@ class PaymentRepository {
     suspend fun listByInvoice(invoiceId: InvoiceId): Result<List<PaymentDto>> = runCatching {
         dbQuery {
             PaymentsTable.selectAll().where {
-                PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())
+                PaymentsTable.invoiceId eq Uuid.parse(invoiceId.toString())
             }.orderBy(PaymentsTable.paymentDate, SortOrder.DESC)
                 .map { it.toPaymentDto() }
         }
@@ -108,7 +105,7 @@ class PaymentRepository {
     ): Result<List<PaymentDto>> = runCatching {
         dbQuery {
             var query = PaymentsTable.selectAll().where {
-                PaymentsTable.tenantId eq UUID.fromString(tenantId.toString())
+                PaymentsTable.tenantId eq Uuid.parse(tenantId.toString())
             }
 
             fromDate?.let {
@@ -134,7 +131,7 @@ class PaymentRepository {
     suspend fun getTotalPaid(invoiceId: InvoiceId): Result<Money> = runCatching {
         dbQuery {
             val total = PaymentsTable.selectAll().where {
-                PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())
+                PaymentsTable.invoiceId eq Uuid.parse(invoiceId.toString())
             }.sumOf { it[PaymentsTable.amount] }
             Money.fromDbDecimal(total)
         }
@@ -150,8 +147,8 @@ class PaymentRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             PaymentsTable.deleteWhere {
-                (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
-                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (PaymentsTable.id eq Uuid.parse(paymentId.toString())) and
+                    (PaymentsTable.tenantId eq Uuid.parse(tenantId.toString()))
             } > 0
         }
     }
@@ -166,8 +163,8 @@ class PaymentRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             PaymentsTable.update({
-                (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
-                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (PaymentsTable.id eq Uuid.parse(paymentId.toString())) and
+                    (PaymentsTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
                 it[PaymentsTable.transactionId] = transactionId.value
             } > 0

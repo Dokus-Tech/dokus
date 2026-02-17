@@ -34,13 +34,9 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
 import java.math.BigDecimal
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class CashflowEntriesViewModeTest {
 
     private lateinit var database: Database
@@ -49,7 +45,7 @@ class CashflowEntriesViewModeTest {
 
     private lateinit var tenantUuid: UUID
     private lateinit var contactUuid: UUID
-    private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
+    private val tenantId: TenantId get() = TenantId(tenantUuid)
 
     @BeforeEach
     fun setup() {
@@ -69,8 +65,8 @@ class CashflowEntriesViewModeTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
-        contactUuid = UUID.randomUUID()
+        tenantUuid = Uuid.random()
+        contactUuid = Uuid.random()
 
         transaction(database) {
             TenantTable.insert {
@@ -243,13 +239,13 @@ class CashflowEntriesViewModeTest {
         amountVatMinor: Long = 0L,
         paidAt: LocalDateTime? = null
     ): UUID {
-        val entryUuid = UUID.randomUUID()
+        val entryUuid = Uuid.random()
         transaction(database) {
             CashflowEntriesTable.insert {
                 it[id] = entryUuid
                 it[tenantId] = tenantUuid
                 it[sourceType] = CashflowSourceType.Invoice
-                it[sourceId] = UUID.randomUUID()
+                it[sourceId] = Uuid.random()
                 it[documentId] = null
                 it[direction] = CashflowDirection.In
                 it[CashflowEntriesTable.eventDate] = eventDate

@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
 
 package tech.dokus.backend.services.auth
 
@@ -32,7 +31,6 @@ import tech.dokus.foundation.backend.security.JwtGenerator
 import tech.dokus.foundation.backend.security.TokenBlacklistService
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.time.Duration.Companion.days
-import kotlin.uuid.ExperimentalUuidApi
 import java.time.Instant as JavaInstant
 
 data class SessionContext(

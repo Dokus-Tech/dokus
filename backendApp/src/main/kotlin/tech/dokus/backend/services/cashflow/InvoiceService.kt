@@ -15,7 +15,6 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.utils.loggerFor
-import java.util.UUID
 
 /**
  * Service for invoice business operations.
@@ -163,7 +162,7 @@ class InvoiceService(
         val entry = cashflowEntriesRepository.getBySource(
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,
-            sourceId = UUID.fromString(invoiceId.toString())
+            sourceId = Uuid.parse(invoiceId.toString())
         ).getOrNull() ?: return@runCatching
 
         val remaining = update.totalAmount - update.paidAmount

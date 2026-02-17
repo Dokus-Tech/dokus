@@ -34,19 +34,15 @@ import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.InvoiceDraftData
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class ProcessorIngestionInvariantTest {
 
     private lateinit var database: Database
     private lateinit var tenantUuid: UUID
-    private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
+    private val tenantId: TenantId get() = TenantId(tenantUuid)
 
     private val documentRepository = DocumentRepository()
     private val ingestionRunRepository = DocumentIngestionRunRepository()
@@ -75,7 +71,7 @@ class ProcessorIngestionInvariantTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
+        tenantUuid = Uuid.random()
         transaction(database) {
             TenantTable.insert {
                 it[id] = tenantUuid

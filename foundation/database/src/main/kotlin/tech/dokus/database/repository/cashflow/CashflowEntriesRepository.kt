@@ -36,7 +36,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
-import java.util.UUID
 
 /**
  * Repository for managing cashflow entries.
@@ -68,23 +67,23 @@ class CashflowEntriesRepository {
     ): Result<CashflowEntry> = runCatching {
         dbQuery {
             val entryId = CashflowEntriesTable.insertAndGetId {
-                it[CashflowEntriesTable.tenantId] = UUID.fromString(tenantId.toString())
+                it[CashflowEntriesTable.tenantId] = Uuid.parse(tenantId.toString())
                 it[CashflowEntriesTable.sourceType] = sourceType
                 it[CashflowEntriesTable.sourceId] = sourceId
-                it[CashflowEntriesTable.documentId] = documentId?.let { id -> UUID.fromString(id.toString()) }
+                it[CashflowEntriesTable.documentId] = documentId?.let { id -> Uuid.parse(id.toString()) }
                 it[CashflowEntriesTable.direction] = direction
                 it[CashflowEntriesTable.eventDate] = eventDate
                 it[CashflowEntriesTable.amountGross] = amountGross.toDbDecimal()
                 it[CashflowEntriesTable.amountVat] = amountVat.toDbDecimal()
                 it[CashflowEntriesTable.remainingAmount] = amountGross.toDbDecimal()
                 it[CashflowEntriesTable.status] = CashflowEntryStatus.Open
-                it[CashflowEntriesTable.counterpartyId] = contactId?.let { id -> UUID.fromString(id.toString()) }
+                it[CashflowEntriesTable.counterpartyId] = contactId?.let { id -> Uuid.parse(id.toString()) }
             }
 
             mapRowToEntry(
                 CashflowEntriesTable.selectAll().where {
                     (CashflowEntriesTable.id eq entryId.value) and
-                        (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (CashflowEntriesTable.tenantId eq Uuid.parse(tenantId.toString()))
                 }.single()
             )
         }
@@ -100,8 +99,8 @@ class CashflowEntriesRepository {
     ): Result<CashflowEntry?> = runCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
-                (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
-                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (CashflowEntriesTable.id eq Uuid.parse(entryId.toString())) and
+                    (CashflowEntriesTable.tenantId eq Uuid.parse(tenantId.toString()))
             }.singleOrNull()?.let { mapRowToEntry(it) }
         }
     }
@@ -117,7 +116,7 @@ class CashflowEntriesRepository {
     ): Result<CashflowEntry?> = runCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
-                (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (CashflowEntriesTable.tenantId eq Uuid.parse(tenantId.toString())) and
                     (CashflowEntriesTable.sourceType eq sourceType) and
                     (CashflowEntriesTable.sourceId eq sourceId)
             }.singleOrNull()?.let { mapRowToEntry(it) }
@@ -149,7 +148,7 @@ class CashflowEntriesRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
-                (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (CashflowEntriesTable.tenantId eq Uuid.parse(tenantId.toString())) and
                     (CashflowEntriesTable.sourceType eq sourceType) and
                     (CashflowEntriesTable.sourceId eq sourceId) and
                     (CashflowEntriesTable.status eq CashflowEntryStatus.Open) and
@@ -161,9 +160,9 @@ class CashflowEntriesRepository {
                 it[CashflowEntriesTable.amountVat] = amountVat.toDbDecimal()
                 it[CashflowEntriesTable.remainingAmount] = amountGross.toDbDecimal()
                 if (documentId != null) {
-                    it[CashflowEntriesTable.documentId] = UUID.fromString(documentId.toString())
+                    it[CashflowEntriesTable.documentId] = Uuid.parse(documentId.toString())
                 }
-                it[CashflowEntriesTable.counterpartyId] = contactId?.let { id -> UUID.fromString(id.toString()) }
+                it[CashflowEntriesTable.counterpartyId] = contactId?.let { id -> Uuid.parse(id.toString()) }
             }
             updated > 0
         }
@@ -179,8 +178,8 @@ class CashflowEntriesRepository {
     ): Result<CashflowEntry?> = runCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
-                (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (CashflowEntriesTable.documentId eq UUID.fromString(documentId.toString()))
+                (CashflowEntriesTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (CashflowEntriesTable.documentId eq Uuid.parse(documentId.toString()))
             }.singleOrNull()?.let { mapRowToEntry(it) }
         }
     }
@@ -195,8 +194,8 @@ class CashflowEntriesRepository {
     ): Result<Map<DocumentId, CashflowEntryId>> = runCatching {
         if (documentIds.isEmpty()) return@runCatching emptyMap()
 
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val documentUuids = documentIds.map { id -> UUID.fromString(id.toString()) }
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val documentUuids = documentIds.map { id -> Uuid.parse(id.toString()) }
 
         dbQuery {
             CashflowEntriesTable
@@ -255,7 +254,7 @@ class CashflowEntriesRepository {
                 )
                 .selectAll()
                 .where {
-                    CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())
+                    CashflowEntriesTable.tenantId eq Uuid.parse(tenantId.toString())
                 }
 
             // Exclude Cancelled by default (unless explicitly included in statuses)
@@ -338,8 +337,8 @@ class CashflowEntriesRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
-                (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
-                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (CashflowEntriesTable.id eq Uuid.parse(entryId.toString())) and
+                    (CashflowEntriesTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
                 it[remainingAmount] = newRemainingAmount.toDbDecimal()
             }
@@ -360,8 +359,8 @@ class CashflowEntriesRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
-                (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
-                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (CashflowEntriesTable.id eq Uuid.parse(entryId.toString())) and
+                    (CashflowEntriesTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
                 it[status] = newStatus
                 if (paidAt != null) {
@@ -392,8 +391,8 @@ class CashflowEntriesRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
-                (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
-                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                (CashflowEntriesTable.id eq Uuid.parse(entryId.toString())) and
+                    (CashflowEntriesTable.tenantId eq Uuid.parse(tenantId.toString()))
             }) {
                 it[remainingAmount] = newRemainingAmount.toDbDecimal()
                 it[status] = newStatus

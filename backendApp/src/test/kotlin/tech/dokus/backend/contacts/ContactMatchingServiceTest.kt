@@ -24,10 +24,7 @@ import tech.dokus.domain.model.contact.ContactMatchReason
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class ContactMatchingServiceTest {
 
     private lateinit var database: Database
@@ -52,8 +49,8 @@ class ContactMatchingServiceTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
-        tenantId = TenantId(tenantUuid.toKotlinUuid())
+        tenantUuid = Uuid.random()
+        tenantId = TenantId(tenantUuid)
 
         transaction(database) {
             TenantTable.insert {
@@ -103,7 +100,7 @@ class ContactMatchingServiceTest {
 
         assertEquals(ContactMatchReason.VatNumber, suggestion.matchReason)
         assertNotNull(suggestion.contactId)
-        assertEquals(ContactId(vatContactId.toKotlinUuid()), suggestion.contactId)
+        assertEquals(ContactId(vatContactId), suggestion.contactId)
     }
 
     @Test
@@ -126,7 +123,7 @@ class ContactMatchingServiceTest {
 
         assertEquals(ContactMatchReason.NameAndCountry, suggestion.matchReason)
         assertNotNull(suggestion.contactId)
-        assertEquals(ContactId(contactId.toKotlinUuid()), suggestion.contactId)
+        assertEquals(ContactId(contactId), suggestion.contactId)
     }
 
     private fun insertContact(

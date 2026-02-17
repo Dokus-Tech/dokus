@@ -27,10 +27,7 @@ import tech.dokus.foundation.backend.crypto.PasswordCryptoService
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class UserRepository(
     private val passwordCrypto: PasswordCryptoService
 ) {
@@ -112,7 +109,7 @@ class UserRepository(
         // Create membership
         TenantMembersTable.insert {
             it[TenantMembersTable.userId] = userId
-            it[TenantMembersTable.tenantId] = tenantId.value.toJavaUuid()
+            it[TenantMembersTable.tenantId] = tenantId.value
             it[TenantMembersTable.role] = role
             it[TenantMembersTable.isActive] = true
         }
@@ -127,7 +124,7 @@ class UserRepository(
     }
 
     suspend fun findById(id: UserId): User? = dbQuery {
-        val javaUuid = id.value.toJavaUuid()
+        val javaUuid = id.value
         UsersTable
             .selectAll()
             .where { UsersTable.id eq javaUuid }
@@ -151,7 +148,7 @@ class UserRepository(
         activeOnly: Boolean
     ): List<UserInTenant> =
         dbQuery {
-            val javaUuid = tenantId.value.toJavaUuid()
+            val javaUuid = tenantId.value
 
             val query = if (activeOnly) {
                 UsersTable
@@ -176,7 +173,7 @@ class UserRepository(
      * Get all tenants a user belongs to.
      */
     suspend fun getUserTenants(userId: UserId): List<TenantMembership> = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         TenantMembersTable
             .selectAll()
             .where { TenantMembersTable.userId eq javaUuid }
@@ -193,8 +190,8 @@ class UserRepository(
         TenantMembersTable
             .selectAll()
             .where {
-                (TenantMembersTable.userId eq userId.value.toJavaUuid()) and
-                    (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
+                (TenantMembersTable.userId eq userId.value) and
+                    (TenantMembersTable.tenantId eq tenantId.value)
             }
             .singleOrNull()
             ?.toTenantMembership()
@@ -206,8 +203,8 @@ class UserRepository(
     suspend fun addToTenant(userId: UserId, tenantId: TenantId, role: UserRole) =
         dbQuery {
             TenantMembersTable.insert {
-                it[TenantMembersTable.userId] = userId.value.toJavaUuid()
-                it[TenantMembersTable.tenantId] = tenantId.value.toJavaUuid()
+                it[TenantMembersTable.userId] = userId.value
+                it[TenantMembersTable.tenantId] = tenantId.value
                 it[TenantMembersTable.role] = role
                 it[TenantMembersTable.isActive] = true
             }
@@ -220,8 +217,8 @@ class UserRepository(
     suspend fun updateRole(userId: UserId, tenantId: TenantId, newRole: UserRole) =
         dbQuery {
             val updated = TenantMembersTable.update({
-                (TenantMembersTable.userId eq userId.value.toJavaUuid()) and
-                    (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
+                (TenantMembersTable.userId eq userId.value) and
+                    (TenantMembersTable.tenantId eq tenantId.value)
             }) {
                 it[role] = newRole
             }
@@ -238,8 +235,8 @@ class UserRepository(
      */
     suspend fun removeFromTenant(userId: UserId, tenantId: TenantId) = dbQuery {
         val updated = TenantMembersTable.update({
-            (TenantMembersTable.userId eq userId.value.toJavaUuid()) and
-                (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
+            (TenantMembersTable.userId eq userId.value) and
+                (TenantMembersTable.tenantId eq tenantId.value)
         }) {
             it[isActive] = false
         }
@@ -253,7 +250,7 @@ class UserRepository(
 
     suspend fun updateProfile(userId: UserId, firstName: String?, lastName: String?) =
         dbQuery {
-            val javaUuid = userId.value.toJavaUuid()
+            val javaUuid = userId.value
             val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
                 if (firstName != null) it[UsersTable.firstName] = firstName
                 if (lastName != null) it[UsersTable.lastName] = lastName
@@ -267,7 +264,7 @@ class UserRepository(
         }
 
     suspend fun deactivate(userId: UserId, reason: String?) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[isActive] = false
         }
@@ -281,7 +278,7 @@ class UserRepository(
     }
 
     suspend fun reactivate(userId: UserId) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[isActive] = true
         }
@@ -294,7 +291,7 @@ class UserRepository(
     }
 
     suspend fun updatePassword(userId: UserId, newPassword: String) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         val passwordHash = passwordCrypto.hashPassword(Password(newPassword))
 
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
@@ -310,7 +307,7 @@ class UserRepository(
 
     @OptIn(ExperimentalTime::class)
     suspend fun recordSuccessfulLogin(userId: UserId, loginTime: Instant): Boolean = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         val loginAt = loginTime.toStdlibInstant().toLocalDateTime(TimeZone.UTC)
 
         val firstSignInUpdateCount = UsersTable.update({
@@ -338,7 +335,7 @@ class UserRepository(
     }
 
     suspend fun hasFirstSignIn(userId: UserId): Boolean = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         UsersTable
             .selectAll()
             .where { UsersTable.id eq javaUuid }
@@ -347,7 +344,7 @@ class UserRepository(
     }
 
     suspend fun hasWelcomeEmailSent(userId: UserId): Boolean = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         UsersTable
             .selectAll()
             .where { UsersTable.id eq javaUuid }
@@ -359,7 +356,7 @@ class UserRepository(
         userId: UserId,
         sentAt: Instant
     ): Boolean = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         val sentAtLocal = sentAt.toLocalDateTime(TimeZone.UTC)
         val updated = UsersTable.update({
             (UsersTable.id eq javaUuid) and (UsersTable.welcomeEmailSentAt eq null)
@@ -406,7 +403,7 @@ class UserRepository(
         token: String,
         expiry: Instant
     ) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[emailVerificationToken] = token
             it[emailVerificationExpiry] = expiry.toLocalDateTime(TimeZone.UTC)
@@ -440,7 +437,7 @@ class UserRepository(
     }
 
     suspend fun markEmailVerified(userId: UserId) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[emailVerified] = true
             it[emailVerificationToken] = null
@@ -455,7 +452,7 @@ class UserRepository(
     }
 
     suspend fun isEmailVerified(userId: UserId): Boolean = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = userId.value
         UsersTable
             .selectAll()
             .where { UsersTable.id eq javaUuid }

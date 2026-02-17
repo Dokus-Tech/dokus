@@ -45,13 +45,9 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import java.math.BigDecimal
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class DocumentListingFiltersTest {
 
     private lateinit var database: Database
@@ -59,7 +55,7 @@ class DocumentListingFiltersTest {
 
     private lateinit var tenantUuid: UUID
     private lateinit var contactUuid: UUID
-    private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
+    private val tenantId: TenantId get() = TenantId(tenantUuid)
 
     @BeforeEach
     fun setup() {
@@ -87,8 +83,8 @@ class DocumentListingFiltersTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
-        contactUuid = UUID.randomUUID()
+        tenantUuid = Uuid.random()
+        contactUuid = Uuid.random()
 
         transaction(database) {
             TenantTable.insert {
@@ -288,7 +284,7 @@ class DocumentListingFiltersTest {
     }
 
     private fun insertDocument(filename: String): UUID {
-        val docUuid = UUID.randomUUID()
+        val docUuid = Uuid.random()
         transaction(database) {
             DocumentsTable.insert {
                 it[id] = docUuid
@@ -308,7 +304,7 @@ class DocumentListingFiltersTest {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         transaction(database) {
             DocumentIngestionRunsTable.insert {
-                it[id] = UUID.randomUUID()
+                it[id] = Uuid.random()
                 it[documentId] = documentUuid
                 it[tenantId] = tenantUuid
                 it[DocumentIngestionRunsTable.status] = status
@@ -346,7 +342,7 @@ class DocumentListingFiltersTest {
     private fun insertInvoice(documentUuid: UUID) {
         transaction(database) {
             InvoicesTable.insert {
-                it[id] = UUID.randomUUID()
+                it[id] = Uuid.random()
                 it[tenantId] = tenantUuid
                 it[contactId] = contactUuid
                 it[invoiceNumber] = "INV-${documentUuid.toString().take(8)}"
@@ -368,7 +364,7 @@ class DocumentListingFiltersTest {
     private fun insertExpense(documentUuid: UUID) {
         transaction(database) {
             ExpensesTable.insert {
-                it[id] = UUID.randomUUID()
+                it[id] = Uuid.random()
                 it[tenantId] = tenantUuid
                 it[date] = LocalDate(2024, 1, 1)
                 it[merchant] = "Shop"
@@ -384,7 +380,7 @@ class DocumentListingFiltersTest {
     private fun insertCreditNote(documentUuid: UUID) {
         transaction(database) {
             CreditNotesTable.insert {
-                it[id] = UUID.randomUUID()
+                it[id] = Uuid.random()
                 it[tenantId] = tenantUuid
                 it[contactId] = contactUuid
                 it[creditNoteType] = CreditNoteType.Sales

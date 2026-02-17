@@ -20,16 +20,12 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.utils.json
-import java.util.UUID
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class DocumentDraftRepositoryTest {
 
     private lateinit var database: Database
@@ -58,12 +54,12 @@ class DocumentDraftRepositoryTest {
             )
         }
 
-        val tenantUuid = UUID.randomUUID()
-        val documentUuid = UUID.randomUUID()
-        val contactUuid = UUID.randomUUID()
+        val tenantUuid = Uuid.random()
+        val documentUuid = Uuid.random()
+        val contactUuid = Uuid.random()
 
-        tenantId = TenantId(tenantUuid.toKotlinUuid())
-        documentId = DocumentId(documentUuid.toKotlinUuid())
+        tenantId = TenantId(tenantUuid)
+        documentId = DocumentId(documentUuid)
 
         transaction(database) {
             TenantTable.insert {

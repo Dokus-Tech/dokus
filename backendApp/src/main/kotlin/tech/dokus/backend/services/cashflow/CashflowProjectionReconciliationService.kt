@@ -7,7 +7,6 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.FinancialDocumentDto
-import java.util.UUID
 
 /**
  * Ensures a confirmed document has a cashflow projection when applicable.
@@ -31,7 +30,7 @@ class CashflowProjectionReconciliationService(
             is FinancialDocumentDto.InvoiceDto -> {
                 val ensuredEntry = cashflowEntriesService.createFromInvoice(
                     tenantId = tenantId,
-                    invoiceId = UUID.fromString(entity.id.toString()),
+                    invoiceId = Uuid.parse(entity.id.toString()),
                     documentId = documentId,
                     dueDate = entity.dueDate,
                     amountGross = entity.totalAmount,
@@ -65,7 +64,7 @@ class CashflowProjectionReconciliationService(
 
             is FinancialDocumentDto.ExpenseDto -> cashflowEntriesService.createFromExpense(
                 tenantId = tenantId,
-                expenseId = UUID.fromString(entity.id.toString()),
+                expenseId = Uuid.parse(entity.id.toString()),
                 documentId = documentId,
                 expenseDate = entity.date,
                 amountGross = entity.amount,

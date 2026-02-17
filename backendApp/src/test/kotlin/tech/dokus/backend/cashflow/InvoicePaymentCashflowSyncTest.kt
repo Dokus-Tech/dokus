@@ -37,20 +37,16 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.toDbDecimal
 import java.math.BigDecimal
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 class InvoicePaymentCashflowSyncTest {
 
     private lateinit var database: Database
     private lateinit var tenantUuid: UUID
     private lateinit var contactUuid: UUID
     private lateinit var invoiceUuid: UUID
-    private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
+    private val tenantId: TenantId get() = TenantId(tenantUuid)
 
     private val cashflowEntriesRepository = CashflowEntriesRepository()
     private val invoiceRepository = InvoiceRepository(InvoiceNumberGenerator(InvoiceNumberRepository()))
@@ -75,9 +71,9 @@ class InvoicePaymentCashflowSyncTest {
             )
         }
 
-        tenantUuid = UUID.randomUUID()
-        contactUuid = UUID.randomUUID()
-        invoiceUuid = UUID.randomUUID()
+        tenantUuid = Uuid.random()
+        contactUuid = Uuid.random()
+        invoiceUuid = Uuid.random()
 
         transaction(database) {
             TenantTable.insert {
@@ -134,7 +130,7 @@ class InvoicePaymentCashflowSyncTest {
         val entry = cashflowEntriesRepository.createEntry(
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,
-            sourceId = UUID.fromString(invoiceId.toString()),
+            sourceId = Uuid.parse(invoiceId.toString()),
             documentId = null,
             direction = CashflowDirection.In,
             eventDate = LocalDate(2024, 1, 31),

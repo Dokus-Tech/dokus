@@ -11,7 +11,6 @@ import tech.dokus.database.tables.cashflow.InvoiceNumberSequencesTable
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.database.dbQuery
 import java.sql.SQLException
-import java.util.UUID
 
 /**
  * Repository for managing invoice number sequences with atomic increment.
@@ -63,7 +62,7 @@ class InvoiceNumberRepository {
         year: Int
     ): Result<Int> = runCatching {
         dbQuery {
-            val tenantUuid = UUID.fromString(tenantId.toString())
+            val tenantUuid = Uuid.parse(tenantId.toString())
 
             // Try to select existing row with FOR UPDATE lock
             val existingRow = InvoiceNumberSequencesTable.selectAll()
@@ -117,7 +116,7 @@ class InvoiceNumberRepository {
         year: Int
     ): Result<Int> = runCatching {
         dbQuery {
-            val tenantUuid = UUID.fromString(tenantId.toString())
+            val tenantUuid = Uuid.parse(tenantId.toString())
 
             val row = InvoiceNumberSequencesTable.selectAll()
                 .where {
@@ -149,7 +148,7 @@ class InvoiceNumberRepository {
         startingNumber: Int = 0
     ): Result<Unit> = runCatching {
         dbQuery {
-            val tenantUuid = UUID.fromString(tenantId.toString())
+            val tenantUuid = Uuid.parse(tenantId.toString())
 
             // Check if row already exists
             val exists = InvoiceNumberSequencesTable.selectAll()

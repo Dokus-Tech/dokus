@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
 
 package tech.dokus.database.repository.auth
 
@@ -28,9 +27,7 @@ import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.MessageDigest
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import kotlin.uuid.toJavaUuid
 
 /**
  * Information about a refresh token/session entry.
@@ -78,7 +75,7 @@ class RefreshTokenRepository {
         userAgent: String? = null
     ): Result<Unit> = runCatching {
         dbQuery {
-            val userUuid = userId.uuid.toJavaUuid()
+            val userUuid = userId.uuid
             val tokenHash = tokenHash(token)
 
             RefreshTokensTable.insert {
@@ -151,7 +148,6 @@ class RefreshTokenRepository {
                 "Validated and rotated refresh token for user: $userId, token ID: $tokenId"
             )
 
-            @OptIn(ExperimentalUuidApi::class)
             UserId(Uuid.parse(userId.toString()).toString())
         }
     }.onFailure { error ->
@@ -196,7 +192,7 @@ class RefreshTokenRepository {
      */
     suspend fun revokeAllUserTokens(userId: UserId): Result<Unit> = runCatching {
         dbQuery {
-            val userUuid = userId.uuid.toJavaUuid()
+            val userUuid = userId.uuid
 
             val updated = RefreshTokensTable.update(
                 {
@@ -221,7 +217,7 @@ class RefreshTokenRepository {
         sessionId: SessionId
     ): Result<RevokedSessionInfo?> = runCatching {
         dbQuery {
-            val userUuid = userId.uuid.toJavaUuid()
+            val userUuid = userId.uuid
             val now = now().toLocalDateTime(TimeZone.UTC)
             val sessionIdString = sessionId.value.toString()
 
@@ -233,7 +229,7 @@ class RefreshTokenRepository {
                         (RefreshTokensTable.expiresAt greater now) and
                         (
                             (RefreshTokensTable.accessTokenJti eq sessionIdString) or
-                                (RefreshTokensTable.id eq sessionId.uuid.toJavaUuid())
+                                (RefreshTokensTable.id eq sessionId.uuid)
                             )
                 }
                 .orderBy(RefreshTokensTable.createdAt, SortOrder.DESC)
@@ -280,7 +276,7 @@ class RefreshTokenRepository {
         currentSessionJti: String
     ): Result<List<RevokedSessionInfo>> = runCatching {
         dbQuery {
-            val userUuid = userId.uuid.toJavaUuid()
+            val userUuid = userId.uuid
             val now = now().toLocalDateTime(TimeZone.UTC)
             val activeRowsFilter = (RefreshTokensTable.userId eq userUuid) and
                 (RefreshTokensTable.isRevoked eq false) and
@@ -370,7 +366,7 @@ class RefreshTokenRepository {
      */
     suspend fun countActiveForUser(userId: UserId): Int = try {
         dbQuery {
-            val userUuid = userId.uuid.toJavaUuid()
+            val userUuid = userId.uuid
             val now = now().toLocalDateTime(TimeZone.UTC)
 
             RefreshTokensTable
@@ -393,7 +389,7 @@ class RefreshTokenRepository {
      */
     suspend fun revokeOldestForUser(userId: UserId): Result<Unit> = runCatching {
         dbQuery {
-            val userUuid = userId.uuid.toJavaUuid()
+            val userUuid = userId.uuid
             val now = now().toLocalDateTime(TimeZone.UTC)
 
             val oldestToken = RefreshTokensTable
@@ -453,7 +449,7 @@ class RefreshTokenRepository {
      */
     suspend fun getUserActiveTokens(userId: UserId): List<RefreshTokenInfo> = try {
         dbQuery {
-            val userUuid = userId.uuid.toJavaUuid()
+            val userUuid = userId.uuid
             val now = now().toLocalDateTime(TimeZone.UTC)
 
             RefreshTokensTable

@@ -18,7 +18,6 @@ import tech.dokus.domain.model.RecordRefundRequest
 import tech.dokus.domain.model.RefundClaimDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.utils.loggerFor
-import java.util.UUID
 
 /**
  * Service for credit note business operations.
@@ -180,7 +179,7 @@ class CreditNoteService(
         // Create cashflow entry
         val cashflowEntry = cashflowEntriesService.createFromRefund(
             tenantId = tenantId,
-            creditNoteId = UUID.fromString(creditNoteId.toString()),
+            creditNoteId = Uuid.parse(creditNoteId.toString()),
             documentId = creditNote.documentId,
             refundDate = request.refundDate,
             amountGross = request.amount,

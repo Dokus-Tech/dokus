@@ -15,9 +15,7 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.common.Thumbnail
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 class TenantRoutesProjectionTest {
 
     @Test

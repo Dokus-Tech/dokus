@@ -19,7 +19,6 @@ import tech.dokus.domain.model.UpdateMemberRoleRequest
 import tech.dokus.domain.routes.Team
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -33,7 +32,6 @@ import kotlin.uuid.Uuid
  *
  * All routes require Owner role except listing members.
  */
-@OptIn(ExperimentalUuidApi::class)
 internal fun Route.teamRoutes() {
     val teamService by inject<TeamService>()
 

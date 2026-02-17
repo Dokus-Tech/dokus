@@ -23,7 +23,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolResolution
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
-import java.util.UUID
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -56,8 +55,8 @@ class PeppolDirectoryCacheRepository {
         dbQuery {
             PeppolDirectoryCacheTable.selectAll()
                 .where {
-                    (PeppolDirectoryCacheTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                        (PeppolDirectoryCacheTable.contactId eq UUID.fromString(contactId.toString()))
+                    (PeppolDirectoryCacheTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                        (PeppolDirectoryCacheTable.contactId eq Uuid.parse(contactId.toString()))
                 }
                 .map { it.toResolution() }
                 .singleOrNull()
@@ -80,8 +79,8 @@ class PeppolDirectoryCacheRepository {
         errorMessage: String?
     ): Result<PeppolResolution> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val contactUuid = UUID.fromString(contactId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val contactUuid = Uuid.parse(contactId.toString())
 
         // Calculate expiry based on status and source
         val expiresAt = when {
@@ -120,7 +119,7 @@ class PeppolDirectoryCacheRepository {
                     it[PeppolDirectoryCacheTable.updatedAt] = now
                 }
             } else {
-                val newId = UUID.randomUUID()
+                val newId = Uuid.random()
                 PeppolDirectoryCacheTable.insert {
                     it[id] = newId
                     it[PeppolDirectoryCacheTable.tenantId] = tenantUuid
@@ -156,8 +155,8 @@ class PeppolDirectoryCacheRepository {
     suspend fun invalidateForContact(tenantId: TenantId, contactId: ContactId): Result<Boolean> = runCatching {
         dbQuery {
             val deleted = PeppolDirectoryCacheTable.deleteWhere {
-                (PeppolDirectoryCacheTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (PeppolDirectoryCacheTable.contactId eq UUID.fromString(contactId.toString()))
+                (PeppolDirectoryCacheTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (PeppolDirectoryCacheTable.contactId eq Uuid.parse(contactId.toString()))
             }
             deleted > 0
         }
@@ -191,7 +190,7 @@ class PeppolDirectoryCacheRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolDirectoryCacheTable.deleteWhere {
-                (PeppolDirectoryCacheTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (PeppolDirectoryCacheTable.tenantId eq Uuid.parse(tenantId.toString())) and
                     (PeppolDirectoryCacheTable.expiresAt.isNotNull()) and
                     (PeppolDirectoryCacheTable.expiresAt less now)
             }

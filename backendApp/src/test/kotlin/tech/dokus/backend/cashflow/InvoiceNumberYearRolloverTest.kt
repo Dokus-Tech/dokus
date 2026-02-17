@@ -23,8 +23,6 @@ import java.time.Year
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 /**
  * Integration tests for yearly invoice number rollover.
@@ -40,7 +38,6 @@ import kotlin.uuid.toKotlinUuid
  * 4. Independent sequences are maintained for each year
  * 5. Timezone handling for year calculation
  */
-@OptIn(ExperimentalUuidApi::class)
 class InvoiceNumberYearRolloverTest {
 
     private lateinit var database: Database
@@ -69,8 +66,8 @@ class InvoiceNumberYearRolloverTest {
         }
 
         // Create test tenant
-        testTenantUuid = UUID.randomUUID()
-        testTenantId = TenantId(testTenantUuid.toKotlinUuid())
+        testTenantUuid = Uuid.random()
+        testTenantId = TenantId(testTenantUuid)
 
         transaction(database) {
             // Insert tenant
@@ -87,7 +84,7 @@ class InvoiceNumberYearRolloverTest {
 
             // Insert tenant settings with invoice configuration (yearlyReset=true by default)
             TenantSettingsTable.insert {
-                it[id] = UUID.randomUUID()
+                it[id] = Uuid.random()
                 it[tenantId] = testTenantUuid
                 it[invoicePrefix] = "INV"
                 it[nextInvoiceNumber] = 1
@@ -377,8 +374,8 @@ class InvoiceNumberYearRolloverTest {
     @Test
     fun `multiple tenants have independent year sequences`() = runBlocking {
         // Create second tenant
-        val secondTenantUuid = UUID.randomUUID()
-        val secondTenantId = TenantId(secondTenantUuid.toKotlinUuid())
+        val secondTenantUuid = Uuid.random()
+        val secondTenantId = TenantId(secondTenantUuid)
 
         transaction(database) {
             TenantTable.insert {
@@ -393,7 +390,7 @@ class InvoiceNumberYearRolloverTest {
             }
 
             TenantSettingsTable.insert {
-                it[id] = UUID.randomUUID()
+                it[id] = Uuid.random()
                 it[tenantId] = secondTenantUuid
                 it[invoicePrefix] = "SEC"
                 it[nextInvoiceNumber] = 1

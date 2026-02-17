@@ -26,9 +26,6 @@ import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
-import kotlin.uuid.toKotlinUuid
 
 /**
  * Configuration for invoice number generation.
@@ -44,7 +41,6 @@ data class TenantInvoiceConfig(
     val timezone: String
 )
 
-@OptIn(ExperimentalUuidApi::class)
 class TenantRepository {
     private val logger = loggerFor()
 
@@ -90,11 +86,11 @@ class TenantRepository {
         }
 
         logger.info("Created new tenant: $tenantId with address")
-        TenantId(tenantId.toKotlinUuid())
+        TenantId(tenantId)
     }
 
     suspend fun findById(id: TenantId): Tenant? = dbQuery {
-        val javaUuid = id.value.toJavaUuid()
+        val javaUuid = id.value
         val tenantRow = TenantTable
             .selectAll()
             .where { TenantTable.id eq javaUuid }
@@ -105,7 +101,7 @@ class TenantRepository {
     }
 
     suspend fun getSettings(tenantId: TenantId): TenantSettings = dbQuery {
-        val javaUuid = tenantId.value.toJavaUuid()
+        val javaUuid = tenantId.value
         TenantSettingsTable
             .selectAll()
             .where { TenantSettingsTable.tenantId eq javaUuid }
@@ -115,7 +111,7 @@ class TenantRepository {
     }
 
     suspend fun updateSettings(settings: TenantSettings): Unit = dbQuery {
-        val javaUuid = settings.tenantId.value.toJavaUuid()
+        val javaUuid = settings.tenantId.value
         TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
             it[invoicePrefix] = settings.invoicePrefix
             it[nextInvoiceNumber] = settings.nextInvoiceNumber
@@ -139,7 +135,7 @@ class TenantRepository {
     }
 
     suspend fun getNextInvoiceNumber(tenantId: TenantId): InvoiceNumber = dbQuery {
-        val javaUuid = tenantId.value.toJavaUuid()
+        val javaUuid = tenantId.value
         val settings = TenantSettingsTable
             .selectAll()
             .where { TenantSettingsTable.tenantId eq javaUuid }
@@ -169,7 +165,7 @@ class TenantRepository {
      * @param avatarStorageKey The MinIO storage key prefix for the avatar, or null to remove
      */
     suspend fun updateAvatarStorageKey(tenantId: TenantId, avatarStorageKey: String?): Unit = dbQuery {
-        val javaUuid = tenantId.value.toJavaUuid()
+        val javaUuid = tenantId.value
         TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
             it[companyLogoUrl] = avatarStorageKey
         }
@@ -182,7 +178,7 @@ class TenantRepository {
      * @return The storage key prefix, or null if no avatar is set
      */
     suspend fun getAvatarStorageKey(tenantId: TenantId): String? = dbQuery {
-        val javaUuid = tenantId.value.toJavaUuid()
+        val javaUuid = tenantId.value
         TenantSettingsTable
             .selectAll()
             .where { TenantSettingsTable.tenantId eq javaUuid }
@@ -201,7 +197,7 @@ class TenantRepository {
      */
     suspend fun getInvoiceConfig(tenantId: TenantId): Result<TenantInvoiceConfig> = runCatching {
         dbQuery {
-            val javaUuid = tenantId.value.toJavaUuid()
+            val javaUuid = tenantId.value
 
             val row = TenantSettingsTable
                 .selectAll()

@@ -1,4 +1,3 @@
-@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 
 package tech.dokus.database.repository.cashflow
 
@@ -40,8 +39,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.utils.json
-import java.util.UUID
-import kotlin.uuid.toKotlinUuid
 
 internal object DocumentListingQuery {
 
@@ -56,7 +53,7 @@ internal object DocumentListingQuery {
         page: Int,
         limit: Int
     ): DocumentListPage<DocumentWithDraftAndIngestion> = newSuspendedTransaction {
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
+        val tenantIdUuid = Uuid.parse(tenantId.toString())
         val trimmedSearch = search?.trim()?.takeIf { it.isNotEmpty() }
 
         // Precedence: when using the high-level filter, ignore lower-level status filters.
@@ -352,8 +349,8 @@ internal object DocumentListingQuery {
             return@newSuspendedTransaction DocumentListPage(emptyList(), total)
         }
 
-        val documentIds = pageRows.map { UUID.fromString(it.documentId.toString()) }
-        val latestRunIds = pageRows.mapNotNull { row -> row.latestRunId?.let { UUID.fromString(it.toString()) } }
+        val documentIds = pageRows.map { Uuid.parse(it.documentId.toString()) }
+        val latestRunIds = pageRows.mapNotNull { row -> row.latestRunId?.let { Uuid.parse(it.toString()) } }
 
         val documentsById = DocumentsTable.selectAll()
             .where {
@@ -401,7 +398,7 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toIngestionRunSummary(): Ing
     return IngestionRunSummary(
         id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
         documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
-        tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
+        tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId]),
         status = this[DocumentIngestionRunsTable.status],
         provider = this[DocumentIngestionRunsTable.provider],
         queuedAt = this[DocumentIngestionRunsTable.queuedAt],
@@ -418,7 +415,7 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toIngestionRunSummary(): Ing
 private fun org.jetbrains.exposed.v1.core.ResultRow.toDraftSummary(): DraftSummary {
     return DraftSummary(
         documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
-        tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),
+        tenantId = TenantId(this[DocumentDraftsTable.tenantId]),
         documentStatus = this[DocumentDraftsTable.documentStatus],
         documentType = this[DocumentDraftsTable.documentType],
         extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString<DocumentDraftData>(it) },
@@ -428,11 +425,11 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toDraftSummary(): DraftSumma
         aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]?.let { IngestionRunId.parse(it.toString()) },
         draftVersion = this[DocumentDraftsTable.draftVersion],
         draftEditedAt = this[DocumentDraftsTable.draftEditedAt],
-        draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
+        draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it) },
         contactSuggestions = this[DocumentDraftsTable.contactSuggestions]?.let { json.decodeFromString(it) } ?: emptyList(),
         counterpartySnapshot = this[DocumentDraftsTable.counterpartySnapshot]?.let { json.decodeFromString(it) },
         matchEvidence = this[DocumentDraftsTable.matchEvidence]?.let { json.decodeFromString(it) },
-        linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it.toKotlinUuid()) },
+        linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it) },
         linkedContactSource = this[DocumentDraftsTable.linkedContactSource],
         counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
         rejectReason = this[DocumentDraftsTable.rejectReason],

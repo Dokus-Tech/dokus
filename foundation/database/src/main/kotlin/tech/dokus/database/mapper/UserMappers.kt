@@ -10,10 +10,7 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.UserInTenant
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 object UserMappers {
 
     /**
@@ -36,7 +33,7 @@ object UserMappers {
      */
     fun ResultRow.toTenantMembership(): TenantMembership = TenantMembership(
         userId = UserId(this[TenantMembersTable.userId].value.toString()),
-        tenantId = TenantId(this[TenantMembersTable.tenantId].value.toKotlinUuid()),
+        tenantId = TenantId(this[TenantMembersTable.tenantId].value),
         role = this[TenantMembersTable.role],
         isActive = this[TenantMembersTable.isActive],
         createdAt = this[TenantMembersTable.createdAt],
@@ -48,7 +45,7 @@ object UserMappers {
      */
     fun ResultRow.toUserInTenant(): UserInTenant = UserInTenant(
         user = this.toUser(),
-        tenantId = TenantId(this[TenantMembersTable.tenantId].value.toKotlinUuid()),
+        tenantId = TenantId(this[TenantMembersTable.tenantId].value),
         role = this[TenantMembersTable.role],
         membershipActive = this[TenantMembersTable.isActive]
     )

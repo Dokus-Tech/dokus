@@ -22,15 +22,12 @@ import tech.dokus.domain.model.DocumentExample
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.sql.Connection
-import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Repository for document examples used in few-shot learning.
  *
  * CRITICAL SECURITY: All queries MUST filter by tenantId for multi-tenant isolation.
  */
-@OptIn(ExperimentalUuidApi::class)
 class DocumentExamplesRepository : ExampleRepository {
 
     private val logger = loggerFor()
@@ -40,7 +37,7 @@ class DocumentExamplesRepository : ExampleRepository {
         tenantId: TenantId,
         vatNumber: String
     ): DocumentExample? = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         logger.debug("Looking up example by VAT: tenant=$tenantId, vat=$vatNumber")
 
@@ -59,7 +56,7 @@ class DocumentExamplesRepository : ExampleRepository {
         name: String,
         similarity: Float
     ): DocumentExample? = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         logger.debug("Looking up example by name: tenant=$tenantId, name=$name, similarity=$similarity")
 
@@ -97,7 +94,7 @@ class DocumentExamplesRepository : ExampleRepository {
     }
 
     override suspend fun save(example: DocumentExample): DocumentExample = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(example.tenantId.toString())
+        val tenantUuid = Uuid.parse(example.tenantId.toString())
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         logger.info(
@@ -135,7 +132,7 @@ class DocumentExamplesRepository : ExampleRepository {
             example.copy(id = ExampleId.parse(existingId.toString()))
         } else {
             // Insert new example
-            val id = UUID.randomUUID()
+            val id = Uuid.random()
             DocumentExamplesTable.insert {
                 it[DocumentExamplesTable.id] = id
                 it[DocumentExamplesTable.tenantId] = tenantUuid
@@ -155,7 +152,7 @@ class DocumentExamplesRepository : ExampleRepository {
     }
 
     override suspend fun incrementUsage(exampleId: ExampleId): Unit = newSuspendedTransaction {
-        val exampleUuid = UUID.fromString(exampleId.toString())
+        val exampleUuid = Uuid.parse(exampleId.toString())
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         logger.debug("Incrementing usage for example: $exampleId")
@@ -179,8 +176,8 @@ class DocumentExamplesRepository : ExampleRepository {
         tenantId: TenantId,
         exampleId: ExampleId
     ): Boolean = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val exampleUuid = UUID.fromString(exampleId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
+        val exampleUuid = Uuid.parse(exampleId.toString())
 
         logger.info("Deleting example: $exampleId, tenant=$tenantId")
 
@@ -193,7 +190,7 @@ class DocumentExamplesRepository : ExampleRepository {
     }
 
     override suspend fun countForTenant(tenantId: TenantId): Long = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = Uuid.parse(tenantId.toString())
 
         DocumentExamplesTable
             .selectAll()

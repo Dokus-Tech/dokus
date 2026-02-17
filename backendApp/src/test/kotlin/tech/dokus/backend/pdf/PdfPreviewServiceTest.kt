@@ -12,7 +12,6 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.storage.ObjectStorage
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -24,7 +23,6 @@ import kotlin.uuid.Uuid
  * - Cache key generation format
  * - Page bounds validation
  */
-@OptIn(ExperimentalUuidApi::class)
 class PdfPreviewServiceTest {
 
     private lateinit var objectStorage: ObjectStorage
