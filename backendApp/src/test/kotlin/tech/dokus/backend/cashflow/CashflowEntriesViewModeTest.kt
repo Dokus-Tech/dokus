@@ -1,4 +1,5 @@
 package tech.dokus.backend.cashflow
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
@@ -43,8 +44,8 @@ class CashflowEntriesViewModeTest {
     private val repository = CashflowEntriesRepository()
     private val service = CashflowEntriesService(repository)
 
-    private lateinit var tenantUuid: UUID
-    private lateinit var contactUuid: UUID
+    private lateinit var tenantUuid: Uuid
+    private lateinit var contactUuid: Uuid
     private val tenantId: TenantId get() = TenantId(tenantUuid)
 
     @BeforeEach
@@ -238,7 +239,7 @@ class CashflowEntriesViewModeTest {
         remainingMinor: Long,
         amountVatMinor: Long = 0L,
         paidAt: LocalDateTime? = null
-    ): UUID {
+    ): Uuid {
         val entryUuid = Uuid.random()
         transaction(database) {
             CashflowEntriesTable.insert {

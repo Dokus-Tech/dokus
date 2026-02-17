@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.cashflow
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
@@ -36,8 +37,8 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
 
     private var tenantId: TenantId = TenantId.generate()
     private var documentId: DocumentId = DocumentId.generate()
-    private lateinit var tenantUuid: UUID
-    private lateinit var documentUuid: UUID
+    private lateinit var tenantUuid: Uuid
+    private lateinit var documentUuid: Uuid
 
     @BeforeTest
     fun setup() {

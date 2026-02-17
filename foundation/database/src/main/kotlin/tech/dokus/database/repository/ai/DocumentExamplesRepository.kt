@@ -1,9 +1,11 @@
 package tech.dokus.database.repository.ai
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toStdlibInstant
+import tech.dokus.database.utils.toKotlinxInstant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -83,8 +85,8 @@ class DocumentExamplesRepository : ExampleRepository {
                         extraction = json.parseToJsonElement(rs.getString("extraction")),
                         confidence = rs.getBigDecimal("confidence").toDouble(),
                         timesUsed = rs.getInt("times_used"),
-                        createdAt = Instant.parse(rs.getTimestamp("created_at").toInstant().toString()),
-                        updatedAt = Instant.parse(rs.getTimestamp("updated_at").toInstant().toString())
+                        createdAt = kotlin.time.Instant.parse(rs.getTimestamp("created_at").toInstant().toString()),
+                        updatedAt = kotlin.time.Instant.parse(rs.getTimestamp("updated_at").toInstant().toString())
                     )
                 } else {
                     null
@@ -208,12 +210,8 @@ class DocumentExamplesRepository : ExampleRepository {
             extraction = json.parseToJsonElement(this[DocumentExamplesTable.extraction]),
             confidence = this[DocumentExamplesTable.confidence].toDouble(),
             timesUsed = this[DocumentExamplesTable.timesUsed],
-            createdAt = this[DocumentExamplesTable.createdAt].let {
-                Instant.parse(it.toString() + "Z")
-            },
-            updatedAt = this[DocumentExamplesTable.updatedAt].let {
-                Instant.parse(it.toString() + "Z")
-            }
+            createdAt = this[DocumentExamplesTable.createdAt].toKotlinxInstant().toStdlibInstant(),
+            updatedAt = this[DocumentExamplesTable.updatedAt].toKotlinxInstant().toStdlibInstant()
         )
     }
 

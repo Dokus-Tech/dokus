@@ -1,5 +1,6 @@
 
 package tech.dokus.database.repository.cashflow
+import kotlin.uuid.Uuid
 
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LowerCase

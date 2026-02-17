@@ -38,7 +38,7 @@ class CashflowEntriesService(
     private suspend fun getBySourceOrNull(
         tenantId: TenantId,
         sourceType: CashflowSourceType,
-        sourceId: UUID
+        sourceId: Uuid
     ): CashflowEntry? = cashflowEntriesRepository.getBySource(tenantId, sourceType, sourceId).getOrThrow()
 
     /**
@@ -46,7 +46,7 @@ class CashflowEntriesService(
      */
     suspend fun createFromInvoice(
         tenantId: TenantId,
-        invoiceId: UUID,
+        invoiceId: Uuid,
         documentId: DocumentId?,
         dueDate: LocalDate,
         amountGross: Money,
@@ -92,7 +92,7 @@ class CashflowEntriesService(
      */
     suspend fun updateFromInvoice(
         tenantId: TenantId,
-        invoiceId: UUID,
+        invoiceId: Uuid,
         documentId: DocumentId?,
         dueDate: LocalDate,
         amountGross: Money,
@@ -137,7 +137,7 @@ class CashflowEntriesService(
      */
     suspend fun createFromExpense(
         tenantId: TenantId,
-        expenseId: UUID,
+        expenseId: Uuid,
         documentId: DocumentId?,
         expenseDate: LocalDate,
         amountGross: Money,
@@ -182,7 +182,7 @@ class CashflowEntriesService(
      */
     suspend fun updateFromExpense(
         tenantId: TenantId,
-        expenseId: UUID,
+        expenseId: Uuid,
         documentId: DocumentId?,
         expenseDate: LocalDate,
         amountGross: Money,
@@ -229,7 +229,7 @@ class CashflowEntriesService(
      */
     suspend fun createFromRefund(
         tenantId: TenantId,
-        creditNoteId: UUID,
+        creditNoteId: Uuid,
         documentId: DocumentId?,
         refundDate: LocalDate,
         amountGross: Money,
@@ -284,7 +284,7 @@ class CashflowEntriesService(
     suspend fun getBySource(
         tenantId: TenantId,
         sourceType: CashflowSourceType,
-        sourceId: UUID
+        sourceId: Uuid
     ): Result<CashflowEntry?> {
         logger.debug("Fetching cashflow entry for source: {} {}", sourceType, sourceId)
         return cashflowEntriesRepository.getBySource(tenantId, sourceType, sourceId)

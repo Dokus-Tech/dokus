@@ -1,4 +1,5 @@
 package tech.dokus.backend.auth
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -35,8 +36,8 @@ class WelcomeEmailJobRepositoryTest {
     private lateinit var database: Database
     private lateinit var repository: WelcomeEmailJobRepository
 
-    private lateinit var tenantUuid: UUID
-    private lateinit var userUuid: UUID
+    private lateinit var tenantUuid: Uuid
+    private lateinit var userUuid: Uuid
     private var tenantId: TenantId = TenantId.generate()
     private var userId: UserId = UserId.generate()
 

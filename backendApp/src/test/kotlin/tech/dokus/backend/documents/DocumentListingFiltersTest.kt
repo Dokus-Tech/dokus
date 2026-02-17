@@ -1,4 +1,5 @@
 package tech.dokus.backend.documents
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
@@ -53,8 +54,8 @@ class DocumentListingFiltersTest {
     private lateinit var database: Database
     private val documentRepository = DocumentRepository()
 
-    private lateinit var tenantUuid: UUID
-    private lateinit var contactUuid: UUID
+    private lateinit var tenantUuid: Uuid
+    private lateinit var contactUuid: Uuid
     private val tenantId: TenantId get() = TenantId(tenantUuid)
 
     @BeforeEach
@@ -283,7 +284,7 @@ class DocumentListingFiltersTest {
         )
     }
 
-    private fun insertDocument(filename: String): UUID {
+    private fun insertDocument(filename: String): Uuid {
         val docUuid = Uuid.random()
         transaction(database) {
             DocumentsTable.insert {
@@ -300,7 +301,7 @@ class DocumentListingFiltersTest {
         return docUuid
     }
 
-    private fun insertIngestion(documentUuid: UUID, status: IngestionStatus) {
+    private fun insertIngestion(documentUuid: Uuid, status: IngestionStatus) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         transaction(database) {
             DocumentIngestionRunsTable.insert {
@@ -321,7 +322,7 @@ class DocumentListingFiltersTest {
         }
     }
 
-    private fun insertDraft(documentUuid: UUID, status: DocumentStatus, type: DocumentType) {
+    private fun insertDraft(documentUuid: Uuid, status: DocumentStatus, type: DocumentType) {
         val now = LocalDateTime(2024, 1, 1, 0, 0, 0)
         transaction(database) {
             DocumentDraftsTable.insert {
@@ -339,7 +340,7 @@ class DocumentListingFiltersTest {
         }
     }
 
-    private fun insertInvoice(documentUuid: UUID) {
+    private fun insertInvoice(documentUuid: Uuid) {
         transaction(database) {
             InvoicesTable.insert {
                 it[id] = Uuid.random()
@@ -361,7 +362,7 @@ class DocumentListingFiltersTest {
     }
 
     @Suppress("unused")
-    private fun insertExpense(documentUuid: UUID) {
+    private fun insertExpense(documentUuid: Uuid) {
         transaction(database) {
             ExpensesTable.insert {
                 it[id] = Uuid.random()
@@ -377,7 +378,7 @@ class DocumentListingFiltersTest {
     }
 
     @Suppress("unused")
-    private fun insertCreditNote(documentUuid: UUID) {
+    private fun insertCreditNote(documentUuid: Uuid) {
         transaction(database) {
             CreditNotesTable.insert {
                 it[id] = Uuid.random()

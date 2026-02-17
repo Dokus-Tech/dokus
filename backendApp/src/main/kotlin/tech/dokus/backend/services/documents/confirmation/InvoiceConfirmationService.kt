@@ -1,4 +1,5 @@
 package tech.dokus.backend.services.documents.confirmation
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod

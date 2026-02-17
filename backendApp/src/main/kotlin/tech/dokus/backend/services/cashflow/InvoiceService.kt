@@ -1,4 +1,5 @@
 package tech.dokus.backend.services.cashflow
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime

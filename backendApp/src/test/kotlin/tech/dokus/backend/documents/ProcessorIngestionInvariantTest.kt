@@ -1,4 +1,5 @@
 package tech.dokus.backend.documents
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
@@ -41,7 +42,7 @@ import kotlin.test.assertTrue
 class ProcessorIngestionInvariantTest {
 
     private lateinit var database: Database
-    private lateinit var tenantUuid: UUID
+    private lateinit var tenantUuid: Uuid
     private val tenantId: TenantId get() = TenantId(tenantUuid)
 
     private val documentRepository = DocumentRepository()

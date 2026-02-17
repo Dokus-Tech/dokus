@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.ai
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone

@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.cashflow
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
@@ -27,7 +28,6 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.processing.DocumentProcessingConstants
-import java.util.*
 
 /**
  * Data class for ingestion run summary.
@@ -231,7 +231,7 @@ class DocumentIngestionRunRepository {
                     runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value),
                     documentId = DocumentId(row[DocumentIngestionRunsTable.documentId]),
                     tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId]),
-                    sourceId = row[DocumentIngestionRunsTable.sourceId]??.let { DocumentSourceId(it) },
+                    sourceId = row[DocumentIngestionRunsTable.sourceId]?.let { DocumentSourceId(it) },
                     storageKey = row[DocumentsTable.storageKey],
                     filename = row[DocumentsTable.filename],
                     contentType = row[DocumentsTable.contentType],
@@ -347,7 +347,7 @@ class DocumentIngestionRunRepository {
         )
     }
 
-    private fun recoverStaleProcessingRunsInternal(tenantId: UUID?): Int {
+    private fun recoverStaleProcessingRunsInternal(tenantId: Uuid?): Int {
         val timeout = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT
         val cutoff = (Clock.System.now() - timeout).toLocalDateTime(TimeZone.UTC)
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)

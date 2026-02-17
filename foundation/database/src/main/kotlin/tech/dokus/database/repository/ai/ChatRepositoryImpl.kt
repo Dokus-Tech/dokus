@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.ai
+import kotlin.uuid.Uuid
 
 import kotlinx.serialization.builtins.ListSerializer
 import org.jetbrains.exposed.v1.core.ResultRow

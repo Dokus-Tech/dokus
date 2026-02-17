@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.processor
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -30,7 +31,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
-import java.util.*
 import kotlin.time.ExperimentalTime
 
 /**
@@ -65,7 +65,7 @@ class ProcessorIngestionRepository {
                         runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value),
                         documentId = DocumentId(row[DocumentIngestionRunsTable.documentId]),
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId]),
-                        sourceId = row[DocumentIngestionRunsTable.sourceId]??.let { DocumentSourceId(it) },
+                        sourceId = row[DocumentIngestionRunsTable.sourceId]?.let { DocumentSourceId(it) },
                         storageKey = row[DocumentsTable.storageKey],
                         filename = row[DocumentsTable.filename],
                         contentType = row[DocumentsTable.contentType],

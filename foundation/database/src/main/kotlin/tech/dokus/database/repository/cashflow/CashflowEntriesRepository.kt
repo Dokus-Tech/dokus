@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.cashflow
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.Clock
@@ -57,7 +58,7 @@ class CashflowEntriesRepository {
     suspend fun createEntry(
         tenantId: TenantId,
         sourceType: CashflowSourceType,
-        sourceId: UUID,
+        sourceId: Uuid,
         documentId: DocumentId?,
         direction: CashflowDirection,
         eventDate: LocalDate,
@@ -112,7 +113,7 @@ class CashflowEntriesRepository {
     suspend fun getBySource(
         tenantId: TenantId,
         sourceType: CashflowSourceType,
-        sourceId: UUID
+        sourceId: Uuid
     ): Result<CashflowEntry?> = runCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
@@ -138,7 +139,7 @@ class CashflowEntriesRepository {
     suspend fun updateProjectionBySource(
         tenantId: TenantId,
         sourceType: CashflowSourceType,
-        sourceId: UUID,
+        sourceId: Uuid,
         documentId: DocumentId?,
         direction: CashflowDirection,
         eventDate: LocalDate,

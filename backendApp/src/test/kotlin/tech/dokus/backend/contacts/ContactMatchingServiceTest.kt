@@ -1,4 +1,5 @@
 package tech.dokus.backend.contacts
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -21,7 +22,6 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactMatchReason
-import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -30,7 +30,7 @@ class ContactMatchingServiceTest {
     private lateinit var database: Database
     private lateinit var contactMatchingService: ContactMatchingService
     private var tenantId: TenantId = TenantId.generate()
-    private lateinit var tenantUuid: UUID
+    private lateinit var tenantUuid: Uuid
 
     @BeforeEach
     fun setup() {
@@ -129,7 +129,7 @@ class ContactMatchingServiceTest {
     private fun insertContact(
         name: String,
         vatNumber: String?
-    ): UUID {
+    ): Uuid {
         return transaction(database) {
             ContactsTable.insertAndGetId {
                 it[ContactsTable.tenantId] = tenantUuid

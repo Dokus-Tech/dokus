@@ -1,4 +1,5 @@
 package tech.dokus.backend.peppol
+import kotlin.uuid.Uuid
 
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -54,7 +55,7 @@ class PeppolInboxRetryTest {
 
     private lateinit var database: Database
 
-    private lateinit var tenantUuid: UUID
+    private lateinit var tenantUuid: Uuid
     private val tenantId: TenantId get() = TenantId(tenantUuid)
 
     private lateinit var settingsRepository: PeppolSettingsRepository

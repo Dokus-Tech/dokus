@@ -1,5 +1,6 @@
 
 package tech.dokus.database.repository.auth
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
@@ -129,7 +130,7 @@ class RefreshTokenRepositoryTest {
         assertTrue(isRevoked(otherTokenId))
     }
 
-    private fun insertUser(userId: UUID) {
+    private fun insertUser(userId: Uuid) {
         transaction(database) {
             UsersTable.insert {
                 it[id] = userId
@@ -144,8 +145,8 @@ class RefreshTokenRepositoryTest {
     }
 
     private fun insertRefreshToken(
-        tokenId: UUID,
-        userId: UUID,
+        tokenId: Uuid,
+        userId: Uuid,
         tokenHash: String,
         accessTokenJti: String?
     ) {
@@ -163,7 +164,7 @@ class RefreshTokenRepositoryTest {
         }
     }
 
-    private fun isRevoked(tokenId: UUID): Boolean = transaction(database) {
+    private fun isRevoked(tokenId: Uuid): Boolean = transaction(database) {
         RefreshTokensTable
             .selectAll()
             .where { RefreshTokensTable.id eq tokenId }

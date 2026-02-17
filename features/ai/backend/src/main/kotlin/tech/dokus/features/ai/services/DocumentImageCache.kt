@@ -1,12 +1,12 @@
 package tech.dokus.features.ai.services
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 /**
  * Cache for document images used by vision tools.

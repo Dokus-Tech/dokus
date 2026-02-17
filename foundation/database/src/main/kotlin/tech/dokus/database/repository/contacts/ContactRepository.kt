@@ -1,6 +1,7 @@
 @file:Suppress("UseRequire") // Custom exception messaging
 
 package tech.dokus.database.repository.contacts
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone

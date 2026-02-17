@@ -20,6 +20,7 @@ plugins {
 subprojects {
     tasks.withType<KotlinCompilationTask<*>>().configureEach {
         compilerOptions {
+            optIn.add("kotlin.time.ExperimentalTime")
             optIn.add("kotlin.uuid.ExperimentalUuidApi")
         }
     }

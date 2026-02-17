@@ -1,4 +1,5 @@
 package tech.dokus.backend.services.documents
+import kotlin.uuid.Uuid
 
 import io.micrometer.core.instrument.Metrics
 import tech.dokus.database.repository.cashflow.DocumentBlobCreatePayload

@@ -1,4 +1,5 @@
 package tech.dokus.backend.notifications
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.coroutineScope
@@ -36,8 +37,8 @@ class NotificationRepositoriesTest {
     private lateinit var notificationRepository: NotificationRepository
     private lateinit var preferencesRepository: NotificationPreferencesRepository
 
-    private lateinit var tenantUuid: UUID
-    private lateinit var userUuid: UUID
+    private lateinit var tenantUuid: Uuid
+    private lateinit var userUuid: Uuid
     private var tenantId: TenantId = TenantId.generate()
     private var userId: UserId = UserId.generate()
 

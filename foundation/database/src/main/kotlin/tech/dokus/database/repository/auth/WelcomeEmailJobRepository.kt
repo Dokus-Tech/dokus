@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.auth
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
@@ -19,7 +20,7 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.backend.database.dbQuery
 
 data class WelcomeEmailJob(
-    val id: UUID,
+    val id: Uuid,
     val userId: UserId,
     val tenantId: TenantId,
     val status: JobStatus,
@@ -112,7 +113,7 @@ class WelcomeEmailJobRepository {
     }
 
     suspend fun markSent(
-        jobId: UUID,
+        jobId: Uuid,
         sentAt: LocalDateTime
     ): Result<Boolean> = runCatching {
         dbQuery {
@@ -130,7 +131,7 @@ class WelcomeEmailJobRepository {
     }
 
     suspend fun scheduleRetry(
-        jobId: UUID,
+        jobId: Uuid,
         attemptCount: Int,
         nextAttemptAt: LocalDateTime,
         errorMessage: String

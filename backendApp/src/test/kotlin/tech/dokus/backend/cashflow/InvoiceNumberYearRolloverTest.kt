@@ -1,4 +1,5 @@
 package tech.dokus.backend.cashflow
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -20,7 +21,6 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.TenantId
 import java.math.BigDecimal
 import java.time.Year
-import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -44,7 +44,7 @@ class InvoiceNumberYearRolloverTest {
     private lateinit var invoiceNumberRepository: InvoiceNumberRepository
     private lateinit var invoiceNumberGenerator: InvoiceNumberGenerator
     private var testTenantId: TenantId? = null
-    private lateinit var testTenantUuid: UUID
+    private lateinit var testTenantUuid: Uuid
 
     @BeforeEach
     fun setup() {

@@ -1,4 +1,5 @@
 package tech.dokus.backend.cashflow
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -23,7 +24,6 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.TenantId
 import java.math.BigDecimal
 import java.time.Year
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -47,7 +47,7 @@ class InvoiceNumberConcurrencyTest {
     private lateinit var invoiceNumberRepository: InvoiceNumberRepository
     private lateinit var invoiceNumberGenerator: InvoiceNumberGenerator
     private var testTenantId: TenantId? = null
-    private lateinit var testTenantUuid: UUID
+    private lateinit var testTenantUuid: Uuid
 
     @BeforeEach
     fun setup() {

@@ -1,5 +1,6 @@
 
 package tech.dokus.database.repository.auth
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -28,7 +29,7 @@ import java.security.MessageDigest
  * @property isUsed Whether this token has been used
  */
 data class PasswordResetTokenInfo(
-    val tokenId: UUID,
+    val tokenId: Uuid,
     val userId: UserId,
     val expiresAt: Instant,
     val isUsed: Boolean
@@ -111,7 +112,7 @@ class PasswordResetTokenRepository {
      * @param tokenId The ID of the token to mark as used
      * @return Result indicating success or failure
      */
-    suspend fun markAsUsed(tokenId: UUID): Result<Unit> = runCatching {
+    suspend fun markAsUsed(tokenId: Uuid): Result<Unit> = runCatching {
         dbQuery {
             val updated =
                 PasswordResetTokensTable.update({ PasswordResetTokensTable.id eq tokenId }) {

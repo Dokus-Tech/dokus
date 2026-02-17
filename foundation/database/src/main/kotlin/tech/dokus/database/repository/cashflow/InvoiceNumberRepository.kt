@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.cashflow
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.delay
 import org.jetbrains.exposed.v1.core.and

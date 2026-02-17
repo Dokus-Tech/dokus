@@ -1,4 +1,5 @@
 package tech.dokus.backend.documents
+import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
@@ -65,8 +66,8 @@ class CreditNoteConfirmationInvariantTest {
 
     private lateinit var database: Database
 
-    private lateinit var tenantUuid: UUID
-    private lateinit var contactUuid: UUID
+    private lateinit var tenantUuid: Uuid
+    private lateinit var contactUuid: Uuid
     private val tenantId: TenantId get() = TenantId(tenantUuid)
     private val contactId: ContactId get() = ContactId.parse(contactUuid.toString())
 
@@ -240,7 +241,7 @@ class CreditNoteConfirmationInvariantTest {
         assertTrue(cashflowEntriesRepository.listEntries(tenantId).getOrThrow().isEmpty())
     }
 
-    private suspend fun seedInvoiceDocument(): Triple<DocumentId, UUID, String> {
+    private suspend fun seedInvoiceDocument(): Triple<DocumentId, Uuid, String> {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = DocumentCreatePayload(

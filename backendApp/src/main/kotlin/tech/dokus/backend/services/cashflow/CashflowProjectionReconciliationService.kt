@@ -1,4 +1,5 @@
 package tech.dokus.backend.services.cashflow
+import kotlin.uuid.Uuid
 
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.Money

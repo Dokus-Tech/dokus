@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.cashflow
+import kotlin.uuid.Uuid
 
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and

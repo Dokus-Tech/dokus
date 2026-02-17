@@ -1,4 +1,5 @@
 package tech.dokus.database.repository.cashflow
+import kotlin.uuid.Uuid
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -119,7 +120,7 @@ class DocumentMatchReviewRepository {
             aiSummary = this[DocumentMatchReviewsTable.aiSummary],
             aiConfidence = this[DocumentMatchReviewsTable.aiConfidence]?.toDouble(),
             status = this[DocumentMatchReviewsTable.status],
-            resolvedBy = this[DocumentMatchReviewsTable.resolvedBy]??.let { UserId(it) },
+            resolvedBy = this[DocumentMatchReviewsTable.resolvedBy]?.let { UserId(it) },
             resolvedAt = this[DocumentMatchReviewsTable.resolvedAt],
             createdAt = this[DocumentMatchReviewsTable.createdAt],
             updatedAt = this[DocumentMatchReviewsTable.updatedAt]
