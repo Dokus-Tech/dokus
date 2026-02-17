@@ -129,7 +129,7 @@ private fun LoadingContent(contentPadding: PaddingValues) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
         ) {
-            CircularProgressIndicator()
+            DokusLoader()
             Text(
                 text = stringResource(Res.string.cashflow_loading_document),
                 style = MaterialTheme.typography.bodyMedium,
@@ -203,7 +203,7 @@ private fun AwaitingExtractionContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
             ) {
-                CircularProgressIndicator()
+                DokusLoader()
                 Text(
                     text = stringResource(Res.string.cashflow_awaiting_extraction),
                     style = MaterialTheme.typography.bodyMedium,
@@ -234,7 +234,7 @@ private fun AwaitingExtractionStatusPanel(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
         ) {
-            CircularProgressIndicator()
+            DokusLoader()
             Text(
                 text = stringResource(Res.string.cashflow_awaiting_extraction),
                 style = MaterialTheme.typography.bodyMedium,

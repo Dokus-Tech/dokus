@@ -170,7 +170,7 @@ fun InvoiceClientSidePanel(
                                         .weight(1f),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    CircularProgressIndicator()
+                                    DokusLoader()
                                 }
                             }
 
@@ -258,7 +258,7 @@ fun InvoiceClientSidePanel(
                                         .weight(1f),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    CircularProgressIndicator()
+                                    DokusLoader()
                                 }
                             }
                         }

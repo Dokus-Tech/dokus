@@ -72,7 +72,7 @@ internal fun DocumentsScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        DokusLoader()
                     }
                 }
 
@@ -214,7 +214,7 @@ private fun DocumentsContent(
                                             .padding(16.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                        DokusLoader(size = 24.dp, particleCount = 100)
                                     }
                                 }
                             }
@@ -246,7 +246,7 @@ private fun DocumentsContent(
                                             .padding(16.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                        DokusLoader(size = 24.dp, particleCount = 100)
                                     }
                                 }
                             }

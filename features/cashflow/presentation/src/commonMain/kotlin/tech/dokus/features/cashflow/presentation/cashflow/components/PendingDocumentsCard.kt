@@ -303,10 +303,7 @@ private fun PendingDocumentsLazyList(
                         .padding(vertical = ItemVerticalPadding),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(LoadingIndicatorSize),
-                        strokeWidth = LoadingIndicatorStrokeWidth
-                    )
+                    DokusLoader(size = LoadingIndicatorSize, particleCount = 100)
                 }
             }
         }

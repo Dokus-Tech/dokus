@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -77,9 +77,9 @@ fun InvoiceClientSelector(
                     )
 
                     if (clientsState is DokusState.Loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
+                        DokusLoader(
+                            size = 20.dp,
+                            particleCount = 80,
                         )
                     }
                 }

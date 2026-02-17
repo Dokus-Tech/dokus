@@ -124,7 +124,7 @@ private fun LoadingPreview(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator()
+        DokusLoader()
     }
 }
 
@@ -245,7 +245,7 @@ private fun PdfPageImage(
                             .background(Color.White),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator()
+                        DokusLoader()
                     }
                 },
                 error = {

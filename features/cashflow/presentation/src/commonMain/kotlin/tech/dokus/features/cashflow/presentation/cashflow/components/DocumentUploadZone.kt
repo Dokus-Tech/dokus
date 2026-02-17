@@ -123,7 +123,7 @@ fun DocumentUploadZone(
         contentAlignment = Alignment.Center
     ) {
         if (isUploading) {
-            CircularProgressIndicator()
+            DokusLoader()
         } else {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -222,7 +222,7 @@ fun DocumentUploadZone(
         contentAlignment = Alignment.Center
     ) {
         if (isUploading) {
-            CircularProgressIndicator()
+            DokusLoader()
         } else {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

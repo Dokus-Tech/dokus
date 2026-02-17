@@ -133,13 +133,7 @@ internal fun PeppolCircle(
 
 @Composable
 internal fun PeppolSpinner() {
-    CircularProgressIndicator(
-        modifier = Modifier.size(72.dp),
-        strokeWidth = 1.5.dp,
-        color = MaterialTheme.colorScheme.textMuted,
-        trackColor = MaterialTheme.colorScheme.outlineVariant,
-        strokeCap = StrokeCap.Round,
-    )
+    DokusLoader(size = 72.dp, particleCount = 100)
 }
 
 @Composable

@@ -533,7 +533,7 @@ private fun ContactList(
                     .height(ContentMinHeight),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                DokusLoader()
             }
         }
 

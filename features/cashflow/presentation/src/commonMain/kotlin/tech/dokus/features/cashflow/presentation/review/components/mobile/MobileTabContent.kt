@@ -80,7 +80,7 @@ internal fun PreviewTabContent(
     ) {
         when (previewState) {
             is DocumentPreviewState.Loading -> {
-                CircularProgressIndicator()
+                DokusLoader()
             }
             is DocumentPreviewState.Error -> {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -147,7 +147,7 @@ private fun MobilePdfPageImage(
                             .background(Color.White),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        DokusLoader()
                     }
                 },
                 error = {

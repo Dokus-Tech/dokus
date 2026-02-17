@@ -15,7 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -69,9 +69,9 @@ internal fun ContactDropdownMenu(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(LoadingIndicatorSize),
-                            strokeWidth = LoadingIndicatorStrokeWidth
+                        DokusLoader(
+                            size = LoadingIndicatorSize,
+                            particleCount = 100,
                         )
                         Spacer(modifier = Modifier.width(ContentSpacing))
                         Text(

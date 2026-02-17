@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -132,9 +132,9 @@ private fun ContactLoadingState(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(ProgressIndicatorSize),
-                strokeWidth = ProgressIndicatorStrokeWidth,
+            DokusLoader(
+                size = ProgressIndicatorSize,
+                particleCount = 80,
             )
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))
             Text(
