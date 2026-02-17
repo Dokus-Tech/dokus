@@ -19,7 +19,8 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.foundation.backend.utils.loggerFor
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Service for cashflow entry business operations.
