@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PersonAdd
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -372,6 +373,6 @@ private fun ContactsLoadingMoreIndicator(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DokusLoader(size = 24.dp, particleCount = 100)
+        DokusLoader(size = DokusLoaderSize.Small)
     }
 }

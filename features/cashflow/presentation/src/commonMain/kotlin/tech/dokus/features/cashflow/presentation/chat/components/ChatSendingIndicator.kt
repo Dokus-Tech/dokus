@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,10 +42,7 @@ internal fun SendingIndicator(
                 horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                DokusLoader(
-                    size = 16.dp,
-                    particleCount = 60,
-                )
+                DokusLoader(size = DokusLoaderSize.Small)
                 Text(
                     text = stringResource(Res.string.chat_thinking),
                     style = MaterialTheme.typography.labelMedium,

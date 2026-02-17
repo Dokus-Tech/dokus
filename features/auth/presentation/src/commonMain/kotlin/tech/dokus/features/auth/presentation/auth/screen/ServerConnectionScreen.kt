@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -247,10 +248,7 @@ private fun ServerConnectionContent(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    DokusLoader(
-                        size = 24.dp,
-                        particleCount = 100,
-                    )
+                    DokusLoader(size = DokusLoaderSize.Small)
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = if (state is ServerConnectionState.Validating) {

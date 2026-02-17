@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Payment
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -258,7 +259,7 @@ private fun CashflowLedgerContent(
                                         .padding(16.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    DokusLoader(size = 24.dp, particleCount = 100)
+                                    DokusLoader(size = DokusLoaderSize.Small)
                                 }
                             }
                         }

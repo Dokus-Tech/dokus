@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -82,8 +83,6 @@ private val IconSizeSmall = 16.dp
 private val IconSizeMedium = 18.dp
 private val IconSizeLarge = 48.dp
 private val CardCornerRadius = 8.dp
-private val ProgressIndicatorSize = 16.dp
-private val ProgressStrokeWidth = 2.dp
 private val ButtonSpacing = 4.dp
 private val NoteItemPadding = 12.dp
 private val ContentMinHeight = 200.dp
@@ -343,10 +342,7 @@ private fun NotesBottomSheetForm(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
                 ) {
-                    DokusLoader(
-                        size = ProgressIndicatorSize,
-                        particleCount = 60,
-                    )
+                    DokusLoader(size = DokusLoaderSize.Small)
                     Text(
                         text = stringResource(Res.string.contacts_saving),
                         style = MaterialTheme.typography.bodySmall,

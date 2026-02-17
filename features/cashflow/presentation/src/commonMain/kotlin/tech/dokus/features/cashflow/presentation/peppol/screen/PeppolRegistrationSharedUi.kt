@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -133,7 +134,7 @@ internal fun PeppolCircle(
 
 @Composable
 internal fun PeppolSpinner() {
-    DokusLoader(size = 72.dp, particleCount = 100)
+    DokusLoader(size = DokusLoaderSize.Medium)
 }
 
 @Composable

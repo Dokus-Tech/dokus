@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Upload
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -214,7 +215,7 @@ private fun DocumentsContent(
                                             .padding(16.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        DokusLoader(size = 24.dp, particleCount = 100)
+                                        DokusLoader(size = DokusLoaderSize.Small)
                                     }
                                 }
                             }
@@ -246,7 +247,7 @@ private fun DocumentsContent(
                                             .padding(16.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        DokusLoader(size = 24.dp, particleCount = 100)
+                                        DokusLoader(size = DokusLoaderSize.Small)
                                     }
                                 }
                             }

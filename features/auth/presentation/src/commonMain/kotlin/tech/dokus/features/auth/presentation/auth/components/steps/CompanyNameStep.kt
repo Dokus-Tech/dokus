@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,10 +67,7 @@ internal fun CompanyNameStep(
 
         when (lookupState) {
             is LookupState.Loading -> {
-                DokusLoader(
-                    size = 24.dp,
-                    particleCount = 100,
-                )
+                DokusLoader(size = DokusLoaderSize.Small)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(Res.string.auth_company_name_searching),

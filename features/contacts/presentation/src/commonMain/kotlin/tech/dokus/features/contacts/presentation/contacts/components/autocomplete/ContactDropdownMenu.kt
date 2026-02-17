@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -69,10 +70,7 @@ internal fun ContactDropdownMenu(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        DokusLoader(
-                            size = LoadingIndicatorSize,
-                            particleCount = 100,
-                        )
+                        DokusLoader(size = DokusLoaderSize.Small)
                         Spacer(modifier = Modifier.width(ContentSpacing))
                         Text(
                             text = stringResource(Res.string.contacts_searching),

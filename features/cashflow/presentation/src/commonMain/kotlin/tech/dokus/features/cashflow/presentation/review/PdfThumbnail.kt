@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Description
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -74,10 +75,7 @@ fun PdfThumbnail(
         ) {
             when {
                 isLoading -> {
-                    DokusLoader(
-                        size = 24.dp,
-                        particleCount = 100,
-                    )
+                    DokusLoader(size = DokusLoaderSize.Small)
                 }
                 firstPageUrl != null -> {
                     SubcomposeAsyncImage(
@@ -85,10 +83,7 @@ fun PdfThumbnail(
                         contentDescription = stringResource(Res.string.cashflow_document_preview_title),
                         imageLoader = imageLoader,
                         loading = {
-                            DokusLoader(
-                                size = 24.dp,
-                                particleCount = 100,
-                            )
+                            DokusLoader(size = DokusLoaderSize.Small)
                         },
                         error = {
                             PlaceholderIcon()

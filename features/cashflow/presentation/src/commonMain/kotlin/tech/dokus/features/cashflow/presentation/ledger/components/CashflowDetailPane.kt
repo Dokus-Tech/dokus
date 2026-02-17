@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.Button
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -559,7 +560,7 @@ private fun CashflowPaymentFooter(
                     enabled = !formState.isSubmitting
                 ) {
                     if (formState.isSubmitting) {
-                        DokusLoader(size = 16.dp, particleCount = 100)
+                        DokusLoader(size = DokusLoaderSize.Small)
                     }
                     Text("Mark as paid")
                 }
@@ -640,7 +641,7 @@ private fun PaymentOptionsForm(
                 enabled = !formState.isSubmitting
             ) {
                 if (formState.isSubmitting) {
-                    DokusLoader(size = 16.dp, particleCount = 100)
+                    DokusLoader(size = DokusLoaderSize.Small)
                 }
                 Text("Confirm payment")
             }

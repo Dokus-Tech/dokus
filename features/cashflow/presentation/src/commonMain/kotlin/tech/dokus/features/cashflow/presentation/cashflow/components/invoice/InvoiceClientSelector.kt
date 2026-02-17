@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -77,10 +78,7 @@ fun InvoiceClientSelector(
                     )
 
                     if (clientsState is DokusState.Loading) {
-                        DokusLoader(
-                            size = 20.dp,
-                            particleCount = 80,
-                        )
+                        DokusLoader(size = DokusLoaderSize.Small)
                     }
                 }
             }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -81,7 +82,7 @@ internal fun ContactMergeSelectTargetStep(
                         .padding(vertical = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    DokusLoader(size = 24.dp, particleCount = 100)
+                    DokusLoader(size = DokusLoaderSize.Small)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(Res.string.contacts_searching),

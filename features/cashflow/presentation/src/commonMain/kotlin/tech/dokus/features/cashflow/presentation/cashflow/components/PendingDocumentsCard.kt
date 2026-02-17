@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,8 +62,6 @@ private val ShimmerNameHeight = 16.dp
 private val ShimmerBadgeWidth = 100.dp
 private val ShimmerBadgeHeight = 22.dp
 private val BadgeCornerRadius = 16.dp
-private val LoadingIndicatorSize = 24.dp
-private val LoadingIndicatorStrokeWidth = 2.dp
 
 // Pagination constants
 private const val SkeletonRowCount = 4
@@ -303,7 +302,7 @@ private fun PendingDocumentsLazyList(
                         .padding(vertical = ItemVerticalPadding),
                     contentAlignment = Alignment.Center
                 ) {
-                    DokusLoader(size = LoadingIndicatorSize, particleCount = 100)
+                    DokusLoader(size = DokusLoaderSize.Small)
                 }
             }
         }
