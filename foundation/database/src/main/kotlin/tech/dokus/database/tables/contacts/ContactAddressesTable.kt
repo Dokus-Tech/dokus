@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.contacts
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.AddressTable
@@ -22,7 +22,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * - Update mutates the owned Address row
  * - Remove deletes both join row AND Address in same transaction
  */
-object ContactAddressesTable : UUIDTable("contact_addresses") {
+object ContactAddressesTable : UuidTable("contact_addresses") {
     val contactId = uuid("contact_id")
         .references(ContactsTable.id, onDelete = ReferenceOption.CASCADE)
 

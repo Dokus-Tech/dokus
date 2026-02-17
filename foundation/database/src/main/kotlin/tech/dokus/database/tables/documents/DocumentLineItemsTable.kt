@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.documents
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
@@ -24,7 +24,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * OWNER: documents service
  * CRITICAL: All queries MUST filter by tenant_id for tenant isolation.
  */
-object DocumentLineItemsTable : UUIDTable("document_line_items") {
+object DocumentLineItemsTable : UuidTable("document_line_items") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("tenant_id")
         .references(TenantTable.id, onDelete = ReferenceOption.CASCADE)

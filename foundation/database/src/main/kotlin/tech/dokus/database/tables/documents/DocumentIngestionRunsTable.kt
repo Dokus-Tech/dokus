@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.documents
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
@@ -29,7 +29,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * startedAt is when processing actually began.
  * finishedAt is when processing completed (success or failure).
  */
-object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
+object DocumentIngestionRunsTable : UuidTable("document_ingestion_runs") {
 
     // Reference to the document being processed
     val documentId = uuid("document_id").references(DocumentsTable.id, onDelete = ReferenceOption.CASCADE)

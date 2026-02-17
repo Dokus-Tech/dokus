@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.auth
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
@@ -14,7 +14,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Note: Fields are nullable to support AI partial extraction for contacts.
  * Tenant company addresses enforce required fields at the service layer.
  */
-object AddressTable : UUIDTable("addresses") {
+object AddressTable : UuidTable("addresses") {
     // Changed from uniqueIndex() to index() to allow multiple addresses per tenant
     val tenantId = reference(
         name = "tenant_id",

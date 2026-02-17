@@ -1,6 +1,6 @@
 package tech.dokus.database.tables.auth
 
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.domain.enums.Language
@@ -15,7 +15,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  *
  * OWNER: auth service
  */
-object TenantTable : UUIDTable("tenants") {
+object TenantTable : UuidTable("tenants") {
     // Identity
     val type = dbEnumeration<TenantType>("type")
     val legalName = varchar("legal_name", 255)

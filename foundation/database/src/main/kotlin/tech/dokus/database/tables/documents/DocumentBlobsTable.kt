@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.documents
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
@@ -14,7 +14,7 @@ private const val ContentTypeMaxLength = 100
  * Physical stored artifacts keyed by exact byte hash.
  * One blob can back many source arrivals.
  */
-object DocumentBlobsTable : UUIDTable("document_blobs") {
+object DocumentBlobsTable : UuidTable("document_blobs") {
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE

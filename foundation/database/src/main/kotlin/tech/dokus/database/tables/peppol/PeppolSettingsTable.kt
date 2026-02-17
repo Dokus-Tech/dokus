@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.peppol
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
@@ -11,7 +11,7 @@ import tech.dokus.database.tables.auth.TenantTable
  * Credentials are managed via environment variables (PEPPOL_MASTER_API_KEY/SECRET),
  * not stored in the database.
  */
-object PeppolSettingsTable : UUIDTable("peppol_settings") {
+object PeppolSettingsTable : UuidTable("peppol_settings") {
     // Multi-tenancy (CRITICAL) - one settings record per tenant
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,

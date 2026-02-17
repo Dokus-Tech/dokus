@@ -15,7 +15,7 @@ import org.postgresql.util.PGobject
  *
  * Usage:
  * ```kotlin
- * object DocumentChunksTable : UUIDTable("document_chunks") {
+ * object DocumentChunksTable : UuidTable("document_chunks") {
  *     val embedding = vector("embedding", 768)  // 768 for Ollama
  * }
  * ```

@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.cashflow
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -27,7 +27,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * OWNER: cashflow service
  * CRITICAL: All queries MUST filter by tenant_id for tenant isolation.
  */
-object RefundClaimsTable : UUIDTable("refund_claims") {
+object RefundClaimsTable : UuidTable("refund_claims") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("tenant_id")
         .references(TenantTable.id, onDelete = ReferenceOption.CASCADE)

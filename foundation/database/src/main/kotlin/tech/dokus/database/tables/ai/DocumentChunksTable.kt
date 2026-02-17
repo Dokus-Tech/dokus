@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.ai
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.columns.EmbeddingDimensions
@@ -32,7 +32,7 @@ import tech.dokus.database.tables.documents.DocumentsTable
  * CREATE EXTENSION IF NOT EXISTS vector;
  * ```
  */
-object DocumentChunksTable : UUIDTable("document_chunks") {
+object DocumentChunksTable : UuidTable("document_chunks") {
 
     // Reference to the document (not processing record - chunks are per-document)
     val documentId = uuid("document_id")

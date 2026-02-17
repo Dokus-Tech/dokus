@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.notifications
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
@@ -10,7 +10,7 @@ import tech.dokus.domain.enums.NotificationReferenceType
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.foundation.backend.database.dbEnumeration
 
-object NotificationsTable : UUIDTable("user_notifications") {
+object NotificationsTable : UuidTable("user_notifications") {
     val tenantId = reference("tenant_id", TenantTable, onDelete = ReferenceOption.CASCADE).index()
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE).index()
 

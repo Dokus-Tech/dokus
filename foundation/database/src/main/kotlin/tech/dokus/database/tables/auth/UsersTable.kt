@@ -1,6 +1,6 @@
 package tech.dokus.database.tables.auth
 
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
@@ -10,7 +10,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  *
  * OWNER: auth service
  */
-object UsersTable : UUIDTable("users") {
+object UsersTable : UuidTable("users") {
     val email = varchar("email", 255).uniqueIndex()
 
     // Authentication

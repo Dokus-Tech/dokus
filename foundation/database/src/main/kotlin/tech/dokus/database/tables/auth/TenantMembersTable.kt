@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.auth
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.domain.enums.UserRole
@@ -13,7 +13,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  *
  * OWNER: auth service
  */
-object TenantMembersTable : UUIDTable("tenant_members") {
+object TenantMembersTable : UuidTable("tenant_members") {
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE).index()
     val tenantId = reference("tenant_id", TenantTable, onDelete = ReferenceOption.CASCADE).index()
     val role = dbEnumeration<UserRole>("role")

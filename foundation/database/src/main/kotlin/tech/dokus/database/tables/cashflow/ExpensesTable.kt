@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.cashflow
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -19,7 +19,7 @@ import java.math.BigDecimal
  * OWNER: cashflow service
  * CRITICAL: All queries MUST filter by tenant_id
  */
-object ExpensesTable : UUIDTable("expenses") {
+object ExpensesTable : UuidTable("expenses") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,

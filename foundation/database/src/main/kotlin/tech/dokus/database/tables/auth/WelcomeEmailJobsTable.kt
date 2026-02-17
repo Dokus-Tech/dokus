@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.auth
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
@@ -9,7 +9,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Durable welcome email queue.
  * Ensures welcome email is sent once per user with retry/backoff support.
  */
-object WelcomeEmailJobsTable : UUIDTable("welcome_email_jobs") {
+object WelcomeEmailJobsTable : UuidTable("welcome_email_jobs") {
     enum class JobStatus {
         Pending,
         Processing,

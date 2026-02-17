@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.auth
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
@@ -17,7 +17,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  *
  * OWNER: auth service
  */
-object PasswordResetTokensTable : UUIDTable("password_reset_tokens") {
+object PasswordResetTokensTable : UuidTable("password_reset_tokens") {
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE).index()
     val tokenHash = varchar("token_hash", 64).uniqueIndex()
     val expiresAt = datetime("expires_at").index()

@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.banking
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -13,7 +13,7 @@ import tech.dokus.database.tables.cashflow.InvoicesTable
  * Bank transactions synced from bank connections
  * Links to expenses or invoices for reconciliation
  */
-object BankTransactionsTable : UUIDTable("bank_transactions") {
+object BankTransactionsTable : UuidTable("bank_transactions") {
     val bankConnectionId = uuid("bank_connection_id").references(
         BankConnectionsTable.id,
         onDelete = ReferenceOption.CASCADE

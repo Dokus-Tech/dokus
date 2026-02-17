@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.payment
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -14,7 +14,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * Payment transactions against invoices
  * Track when and how invoices are paid
  */
-object PaymentsTable : UUIDTable("payments") {
+object PaymentsTable : UuidTable("payments") {
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE

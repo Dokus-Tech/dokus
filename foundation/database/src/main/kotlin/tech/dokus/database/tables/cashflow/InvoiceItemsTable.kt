@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.cashflow
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
@@ -11,7 +11,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  *
  * OWNER: cashflow service
  */
-object InvoiceItemsTable : UUIDTable("invoice_items") {
+object InvoiceItemsTable : UuidTable("invoice_items") {
     // Foreign key to invoice
     val invoiceId = uuid("invoice_id")
         .references(InvoicesTable.id, onDelete = ReferenceOption.CASCADE)

@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.peppol
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
@@ -15,7 +15,7 @@ import tech.dokus.domain.enums.PeppolRegistrationStatus
  *
  * One registration per tenant - uniquely indexed on tenantId.
  */
-object PeppolRegistrationTable : UUIDTable("peppol_registrations") {
+object PeppolRegistrationTable : UuidTable("peppol_registrations") {
     // Multi-tenancy (CRITICAL) - one registration per tenant
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,

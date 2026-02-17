@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.auth
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import java.math.BigDecimal
@@ -12,7 +12,7 @@ import java.math.BigDecimal
  *
  * OWNER: auth service
  */
-object TenantSettingsTable : UUIDTable("tenant_settings") {
+object TenantSettingsTable : UuidTable("tenant_settings") {
     val tenantId = reference(
         name = "tenant_id",
         foreign = TenantTable,

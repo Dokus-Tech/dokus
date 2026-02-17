@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.peppol
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
@@ -15,7 +15,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * Peppol document transmissions - tracks all sent and received Peppol documents.
  * CRITICAL: All queries MUST filter by tenant_id
  */
-object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
+object PeppolTransmissionsTable : UuidTable("peppol_transmissions") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,

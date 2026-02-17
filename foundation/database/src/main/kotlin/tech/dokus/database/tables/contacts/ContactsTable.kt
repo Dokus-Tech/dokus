@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.contacts
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
@@ -17,7 +17,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  * OWNER: contacts service
  * CRITICAL: All queries MUST filter by tenant_id
  */
-object ContactsTable : UUIDTable("contacts") {
+object ContactsTable : UuidTable("contacts") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,

@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.documents
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
@@ -26,7 +26,7 @@ private const val ExternalReferenceMaxLength = 255
  * OWNER: documents service
  * CRITICAL: All queries MUST filter by tenant_id for tenant isolation.
  */
-object DocumentLinksTable : UUIDTable("document_links") {
+object DocumentLinksTable : UuidTable("document_links") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("tenant_id")
         .references(TenantTable.id, onDelete = ReferenceOption.CASCADE)

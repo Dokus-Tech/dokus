@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.cashflow
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -28,7 +28,7 @@ private const val CreditNoteNumberMaxLength = 50
  * OWNER: cashflow service
  * CRITICAL: All queries MUST filter by tenant_id for tenant isolation.
  */
-object CreditNotesTable : UUIDTable("credit_notes") {
+object CreditNotesTable : UuidTable("credit_notes") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("tenant_id")
         .references(TenantTable.id, onDelete = ReferenceOption.CASCADE)

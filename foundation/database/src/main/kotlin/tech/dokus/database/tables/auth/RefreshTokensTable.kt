@@ -1,7 +1,7 @@
 package tech.dokus.database.tables.auth
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.domain.DeviceType
@@ -13,7 +13,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  *
  * OWNER: auth service
  */
-object RefreshTokensTable : UUIDTable("refresh_tokens") {
+object RefreshTokensTable : UuidTable("refresh_tokens") {
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE).index()
     val tokenHash = varchar("token_hash", 64).uniqueIndex()
     val expiresAt = datetime("expires_at").index()
