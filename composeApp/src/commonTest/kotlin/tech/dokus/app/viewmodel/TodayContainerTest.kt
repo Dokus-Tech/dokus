@@ -219,7 +219,9 @@ private class FakeNotificationRemoteDataSource(
     override suspend fun markAllRead(): Result<Int> {
         markAllCalls += 1
         val unread = notifications.count { !it.isRead }
-        notifications.replaceAll { it.copy(isRead = true) }
+        for (i in notifications.indices) {
+            notifications[i] = notifications[i].copy(isRead = true)
+        }
         return Result.success(unread)
     }
 

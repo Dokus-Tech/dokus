@@ -1,12 +1,12 @@
 package tech.dokus.features.ai.services
 
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 /**
  * Cache for document images used by vision tools.
@@ -75,7 +75,7 @@ class InMemoryDocumentImageCache(
     }
 
     private fun buildId(documentId: String, runId: String?): String {
-        val base = UUID.randomUUID().toString()
+        val base = Uuid.random().toString()
         return if (runId.isNullOrBlank()) {
             "img_${documentId}_$base"
         } else {

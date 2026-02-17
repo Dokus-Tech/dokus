@@ -1,23 +1,14 @@
 package tech.dokus.database.utils
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
-import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 /**
- * Convert LocalDateTime to kotlinx.datetime.Instant.
+ * Convert LocalDateTime to kotlin.time.Instant.
  *
- * This is a JVM-specific utility for the database module to avoid
- * type resolution issues with the multiplatform domain module.
+ * Exposed datetime() columns return LocalDateTime. The domain model uses
+ * kotlin.time.Instant (kotlinx-datetime 0.7.1 makes it a typealias in commonMain).
  */
-@Suppress("DEPRECATION")
-@OptIn(ExperimentalTime::class)
-fun LocalDateTime.toKotlinxInstant(): Instant {
-    val kotlinTimeInstant = toInstant(TimeZone.UTC)
-    return Instant.fromEpochSeconds(
-        kotlinTimeInstant.epochSeconds,
-        kotlinTimeInstant.nanosecondsOfSecond.toLong()
-    )
-}
+fun LocalDateTime.toKotlinxInstant(): Instant = toInstant(TimeZone.UTC)
