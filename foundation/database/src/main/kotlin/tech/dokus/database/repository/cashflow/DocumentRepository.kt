@@ -65,8 +65,8 @@ class DocumentRepository {
     ): DocumentId = newSuspendedTransaction {
         val id = DocumentId.generate()
         DocumentsTable.insert {
-            it[DocumentsTable.id] = Uuid.parse(id.toString())
-            it[DocumentsTable.tenantId] = Uuid.parse(tenantId.toString())
+            it[DocumentsTable.id] = id.value
+            it[DocumentsTable.tenantId] = tenantId.value
             it[DocumentsTable.filename] = payload.filename
             it[DocumentsTable.contentType] = payload.contentType
             it[DocumentsTable.sizeBytes] = payload.sizeBytes
@@ -86,8 +86,8 @@ class DocumentRepository {
         newSuspendedTransaction {
             DocumentsTable.selectAll()
                 .where {
-                    (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
-                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (DocumentsTable.id eq documentId.value) and
+                        (DocumentsTable.tenantId eq tenantId.value)
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -102,8 +102,8 @@ class DocumentRepository {
             DocumentsTable
                 .select(DocumentsTable.contentHash)
                 .where {
-                    (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
-                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (DocumentsTable.id eq documentId.value) and
+                        (DocumentsTable.tenantId eq tenantId.value)
                 }
                 .singleOrNull()
                 ?.get(DocumentsTable.contentHash)
@@ -118,7 +118,7 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.storageKey eq storageKey) and
-                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                        (DocumentsTable.tenantId eq tenantId.value)
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -133,7 +133,7 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.contentHash eq contentHash) and
-                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                        (DocumentsTable.tenantId eq tenantId.value)
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -148,7 +148,7 @@ class DocumentRepository {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.identityKeyHash eq identityKeyHash) and
-                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                        (DocumentsTable.tenantId eq tenantId.value)
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
@@ -160,8 +160,8 @@ class DocumentRepository {
         identityKeyHash: String?
     ): Boolean = newSuspendedTransaction {
         DocumentsTable.update({
-            (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
-                (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentsTable.id eq documentId.value) and
+                (DocumentsTable.tenantId eq tenantId.value)
         }) {
             it[DocumentsTable.identityKeyHash] = identityKeyHash
         } > 0
@@ -173,8 +173,8 @@ class DocumentRepository {
         contentHash: String?
     ): Boolean = newSuspendedTransaction {
         DocumentsTable.update({
-            (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
-                (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentsTable.id eq documentId.value) and
+                (DocumentsTable.tenantId eq tenantId.value)
         }) {
             it[DocumentsTable.contentHash] = contentHash
         } > 0
@@ -190,7 +190,7 @@ class DocumentRepository {
         page: Int = 0,
         limit: Int = 20
     ): DocumentListPage<DocumentDto> = newSuspendedTransaction {
-        val tenantIdUuid = Uuid.parse(tenantId.toString())
+        val tenantIdUuid = tenantId.value
 
         val baseQuery = DocumentsTable.selectAll()
             .where { DocumentsTable.tenantId eq tenantIdUuid }
@@ -252,8 +252,8 @@ class DocumentRepository {
     suspend fun delete(tenantId: TenantId, documentId: DocumentId): Boolean =
         newSuspendedTransaction {
             DocumentsTable.deleteWhere {
-                (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
-                    (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (DocumentsTable.id eq documentId.value) and
+                    (DocumentsTable.tenantId eq tenantId.value)
             } > 0
         }
 
@@ -265,8 +265,8 @@ class DocumentRepository {
         newSuspendedTransaction {
             DocumentsTable.selectAll()
                 .where {
-                    (DocumentsTable.id eq Uuid.parse(documentId.toString())) and
-                        (DocumentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (DocumentsTable.id eq documentId.value) and
+                        (DocumentsTable.tenantId eq tenantId.value)
                 }
                 .count() > 0
         }

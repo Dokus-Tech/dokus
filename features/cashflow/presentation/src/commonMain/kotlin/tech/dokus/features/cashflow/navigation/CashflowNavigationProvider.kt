@@ -14,7 +14,6 @@ import tech.dokus.features.cashflow.presentation.review.route.DocumentReviewRout
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.SettingsDestination
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 internal object CashflowNavigationProvider : NavigationProvider {
@@ -38,8 +37,7 @@ internal object CashflowNavigationProvider : NavigationProvider {
         composable<CashFlowDestination.CashflowLedger> { backStackEntry ->
             val route = backStackEntry.toRoute<CashFlowDestination.CashflowLedger>()
 
-            @OptIn(ExperimentalUuidApi::class)
-            val entryId = route.highlightEntryId?.let { CashflowEntryId(Uuid.parse(it)) }
+            @OptIn            val entryId = route.highlightEntryId?.let { CashflowEntryId(Uuid.parse(it)) }
             CashflowLedgerRoute(highlightEntryId = entryId)
         }
         composable<SettingsDestination.PeppolRegistration> {

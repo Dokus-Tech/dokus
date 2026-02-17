@@ -37,7 +37,7 @@ class DocumentBlobRepository {
         newSuspendedTransaction {
             DocumentBlobsTable.selectAll()
                 .where {
-                    (DocumentBlobsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (DocumentBlobsTable.tenantId eq tenantId.value) and
                         (DocumentBlobsTable.inputHash eq inputHash)
                 }
                 .map { it.toBlobSummary() }
@@ -48,7 +48,7 @@ class DocumentBlobRepository {
         tenantId: TenantId,
         payload: DocumentBlobCreatePayload
     ): DocumentBlobSummary = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
         val existing = DocumentBlobsTable.selectAll()
             .where {
                 (DocumentBlobsTable.tenantId eq tenantUuid) and
@@ -61,7 +61,7 @@ class DocumentBlobRepository {
         val newId = DocumentBlobId.generate()
         try {
             DocumentBlobsTable.insert {
-                it[id] = Uuid.parse(newId.toString())
+                it[id] = newId.value
                 it[DocumentBlobsTable.tenantId] = tenantUuid
                 it[inputHash] = payload.inputHash
                 it[storageKey] = payload.storageKey

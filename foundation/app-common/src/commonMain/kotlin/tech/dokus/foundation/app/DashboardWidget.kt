@@ -3,10 +3,8 @@ package tech.dokus.foundation.app
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
 @JvmInline
 value class WidgetId(val value: String) {
     companion object {

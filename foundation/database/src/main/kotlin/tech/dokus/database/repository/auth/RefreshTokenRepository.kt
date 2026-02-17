@@ -148,7 +148,7 @@ class RefreshTokenRepository {
                 "Validated and rotated refresh token for user: $userId, token ID: $tokenId"
             )
 
-            UserId(Uuid.parse(userId.toString()).toString())
+            UserId(userId)
         }
     }.onFailure { error ->
         when (error) {

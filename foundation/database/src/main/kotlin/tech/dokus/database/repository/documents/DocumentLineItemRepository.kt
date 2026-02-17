@@ -79,9 +79,9 @@ class DocumentLineItemRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         DocumentLineItemsTable.insert {
-            it[DocumentLineItemsTable.id] = Uuid.parse(id.toString())
-            it[DocumentLineItemsTable.tenantId] = Uuid.parse(tenantId.toString())
-            it[DocumentLineItemsTable.documentId] = Uuid.parse(documentId.toString())
+            it[DocumentLineItemsTable.id] = id.value
+            it[DocumentLineItemsTable.tenantId] = tenantId.value
+            it[DocumentLineItemsTable.documentId] = documentId.value
             it[position] = payload.position
             it[description] = payload.description
             it[quantity] = payload.quantity
@@ -108,13 +108,13 @@ class DocumentLineItemRepository {
         items: List<CreateLineItemPayload>
     ): List<DocumentLineItemId> = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantIdUuid = Uuid.parse(tenantId.toString())
-        val documentIdUuid = Uuid.parse(documentId.toString())
+        val tenantIdUuid = tenantId.value
+        val documentIdUuid = documentId.value
 
         val ids = items.map { DocumentLineItemId.generate() }
 
         DocumentLineItemsTable.batchInsert(items.zip(ids)) { (payload, id) ->
-            this[DocumentLineItemsTable.id] = Uuid.parse(id.toString())
+            this[DocumentLineItemsTable.id] = id.value
             this[DocumentLineItemsTable.tenantId] = tenantIdUuid
             this[DocumentLineItemsTable.documentId] = documentIdUuid
             this[DocumentLineItemsTable.position] = payload.position
@@ -143,8 +143,8 @@ class DocumentLineItemRepository {
     ): List<DocumentLineItemDto> = newSuspendedTransaction {
         DocumentLineItemsTable.selectAll()
             .where {
-                (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                    (DocumentLineItemsTable.documentId eq Uuid.parse(documentId.toString()))
+                (DocumentLineItemsTable.tenantId eq tenantId.value) and
+                    (DocumentLineItemsTable.documentId eq documentId.value)
             }
             .orderBy(DocumentLineItemsTable.position, SortOrder.ASC)
             .map { it.toDto() }
@@ -160,8 +160,8 @@ class DocumentLineItemRepository {
     ): DocumentLineItemDto? = newSuspendedTransaction {
         DocumentLineItemsTable.selectAll()
             .where {
-                (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                    (DocumentLineItemsTable.id eq Uuid.parse(lineItemId.toString()))
+                (DocumentLineItemsTable.tenantId eq tenantId.value) and
+                    (DocumentLineItemsTable.id eq lineItemId.value)
             }
             .map { it.toDto() }
             .singleOrNull()
@@ -178,8 +178,8 @@ class DocumentLineItemRepository {
         documentId: DocumentId
     ): Int = newSuspendedTransaction {
         DocumentLineItemsTable.deleteWhere {
-            (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                (DocumentLineItemsTable.documentId eq Uuid.parse(documentId.toString()))
+            (DocumentLineItemsTable.tenantId eq tenantId.value) and
+                (DocumentLineItemsTable.documentId eq documentId.value)
         }
     }
 
@@ -192,8 +192,8 @@ class DocumentLineItemRepository {
         lineItemId: DocumentLineItemId
     ): Boolean = newSuspendedTransaction {
         DocumentLineItemsTable.deleteWhere {
-            (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                (DocumentLineItemsTable.id eq Uuid.parse(lineItemId.toString()))
+            (DocumentLineItemsTable.tenantId eq tenantId.value) and
+                (DocumentLineItemsTable.id eq lineItemId.value)
         } > 0
     }
 
@@ -207,8 +207,8 @@ class DocumentLineItemRepository {
     ): Long = newSuspendedTransaction {
         DocumentLineItemsTable.selectAll()
             .where {
-                (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                    (DocumentLineItemsTable.documentId eq Uuid.parse(documentId.toString()))
+                (DocumentLineItemsTable.tenantId eq tenantId.value) and
+                    (DocumentLineItemsTable.documentId eq documentId.value)
             }
             .count()
     }
@@ -225,8 +225,8 @@ class DocumentLineItemRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         DocumentLineItemsTable.update({
-            (DocumentLineItemsTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                (DocumentLineItemsTable.id eq Uuid.parse(lineItemId.toString()))
+            (DocumentLineItemsTable.tenantId eq tenantId.value) and
+                (DocumentLineItemsTable.id eq lineItemId.value)
         }) {
             it[position] = newPosition
             it[updatedAt] = now
@@ -235,9 +235,9 @@ class DocumentLineItemRepository {
 
     private fun ResultRow.toDto(): DocumentLineItemDto {
         return DocumentLineItemDto(
-            id = DocumentLineItemId.parse(this[DocumentLineItemsTable.id].toString()),
+            id = DocumentLineItemId(this[DocumentLineItemsTable.id].value),
             tenantId = TenantId(this[DocumentLineItemsTable.tenantId]),
-            documentId = DocumentId.parse(this[DocumentLineItemsTable.documentId].toString()),
+            documentId = DocumentId(this[DocumentLineItemsTable.documentId]),
             position = this[DocumentLineItemsTable.position],
             description = this[DocumentLineItemsTable.description],
             quantity = this[DocumentLineItemsTable.quantity],

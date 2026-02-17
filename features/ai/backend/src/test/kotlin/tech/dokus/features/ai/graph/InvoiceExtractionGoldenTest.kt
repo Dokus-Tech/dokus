@@ -23,11 +23,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
-import kotlin.uuid.ExperimentalUuidApi
 
 class InvoiceExtractionGoldenTest {
 
-    @OptIn(ExperimentalUuidApi::class, ExperimentalAgentsApi::class)
+    @OptIn(ExperimentalAgentsApi::class)
     @Tag("ai")
     @Test
     fun `extracts line items and vat breakdown for test invoice`() = runBlocking {

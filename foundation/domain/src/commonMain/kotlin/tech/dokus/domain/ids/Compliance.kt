@@ -7,7 +7,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.validators.ValidatePeppolIdUseCase
 import tech.dokus.domain.validators.ValidateVatNumberUseCase
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private const val VAT_COUNTRY_CODE_LENGTH = 2
@@ -15,7 +14,6 @@ private const val BELGIAN_COMPANY_NUMBER_LENGTH = 10
 private const val BELGIAN_COMPANY_FIRST_GROUP_END = 4
 private const val BELGIAN_COMPANY_SECOND_GROUP_END = 7
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class VatReturnId(val value: Uuid) {
@@ -142,7 +140,6 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class PeppolTransmissionId(val value: Uuid) {
@@ -154,7 +151,6 @@ value class PeppolTransmissionId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class PeppolSettingsId(val value: Uuid) {
@@ -166,7 +162,6 @@ value class PeppolSettingsId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class PeppolRegistrationId(val value: Uuid) {

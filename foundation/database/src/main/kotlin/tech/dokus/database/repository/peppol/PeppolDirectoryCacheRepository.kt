@@ -56,8 +56,8 @@ class PeppolDirectoryCacheRepository {
         dbQuery {
             PeppolDirectoryCacheTable.selectAll()
                 .where {
-                    (PeppolDirectoryCacheTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                        (PeppolDirectoryCacheTable.contactId eq Uuid.parse(contactId.toString()))
+                    (PeppolDirectoryCacheTable.tenantId eq tenantId.value) and
+                        (PeppolDirectoryCacheTable.contactId eq contactId.value)
                 }
                 .map { it.toResolution() }
                 .singleOrNull()
@@ -80,8 +80,8 @@ class PeppolDirectoryCacheRepository {
         errorMessage: String?
     ): Result<PeppolResolution> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val contactUuid = Uuid.parse(contactId.toString())
+        val tenantUuid = tenantId.value
+        val contactUuid = contactId.value
 
         // Calculate expiry based on status and source
         val expiresAt = when {
@@ -156,8 +156,8 @@ class PeppolDirectoryCacheRepository {
     suspend fun invalidateForContact(tenantId: TenantId, contactId: ContactId): Result<Boolean> = runCatching {
         dbQuery {
             val deleted = PeppolDirectoryCacheTable.deleteWhere {
-                (PeppolDirectoryCacheTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                    (PeppolDirectoryCacheTable.contactId eq Uuid.parse(contactId.toString()))
+                (PeppolDirectoryCacheTable.tenantId eq tenantId.value) and
+                    (PeppolDirectoryCacheTable.contactId eq contactId.value)
             }
             deleted > 0
         }
@@ -191,7 +191,7 @@ class PeppolDirectoryCacheRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolDirectoryCacheTable.deleteWhere {
-                (PeppolDirectoryCacheTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (PeppolDirectoryCacheTable.tenantId eq tenantId.value) and
                     (PeppolDirectoryCacheTable.expiresAt.isNotNull()) and
                     (PeppolDirectoryCacheTable.expiresAt less now)
             }
@@ -207,7 +207,7 @@ class PeppolDirectoryCacheRepository {
         }
 
         return PeppolResolution(
-            contactId = ContactId.parse(this[PeppolDirectoryCacheTable.contactId].toString()),
+            contactId = ContactId(this[PeppolDirectoryCacheTable.contactId]),
             status = this[PeppolDirectoryCacheTable.status],
             participantId = this[PeppolDirectoryCacheTable.participantId],
             scheme = this[PeppolDirectoryCacheTable.scheme],

@@ -49,8 +49,8 @@ class PaymentRepository {
     ): Result<PaymentDto> = runCatching {
         dbQuery {
             val id = PaymentsTable.insert {
-                it[PaymentsTable.tenantId] = Uuid.parse(tenantId.toString())
-                it[PaymentsTable.invoiceId] = Uuid.parse(invoiceId.toString())
+                it[PaymentsTable.tenantId] = tenantId.value
+                it[PaymentsTable.invoiceId] = invoiceId.value
                 it[PaymentsTable.amount] = amount.toDbDecimal()
                 it[PaymentsTable.paymentDate] = paymentDate
                 it[PaymentsTable.paymentMethod] = paymentMethod
@@ -74,8 +74,8 @@ class PaymentRepository {
     ): Result<PaymentDto?> = runCatching {
         dbQuery {
             PaymentsTable.selectAll().where {
-                (PaymentsTable.id eq Uuid.parse(paymentId.toString())) and
-                    (PaymentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (PaymentsTable.id eq paymentId.value) and
+                    (PaymentsTable.tenantId eq tenantId.value)
             }.singleOrNull()?.toPaymentDto()
         }
     }
@@ -86,7 +86,7 @@ class PaymentRepository {
     suspend fun listByInvoice(invoiceId: InvoiceId): Result<List<PaymentDto>> = runCatching {
         dbQuery {
             PaymentsTable.selectAll().where {
-                PaymentsTable.invoiceId eq Uuid.parse(invoiceId.toString())
+                PaymentsTable.invoiceId eq invoiceId.value
             }.orderBy(PaymentsTable.paymentDate, SortOrder.DESC)
                 .map { it.toPaymentDto() }
         }
@@ -106,7 +106,7 @@ class PaymentRepository {
     ): Result<List<PaymentDto>> = runCatching {
         dbQuery {
             var query = PaymentsTable.selectAll().where {
-                PaymentsTable.tenantId eq Uuid.parse(tenantId.toString())
+                PaymentsTable.tenantId eq tenantId.value
             }
 
             fromDate?.let {
@@ -132,7 +132,7 @@ class PaymentRepository {
     suspend fun getTotalPaid(invoiceId: InvoiceId): Result<Money> = runCatching {
         dbQuery {
             val total = PaymentsTable.selectAll().where {
-                PaymentsTable.invoiceId eq Uuid.parse(invoiceId.toString())
+                PaymentsTable.invoiceId eq invoiceId.value
             }.sumOf { it[PaymentsTable.amount] }
             Money.fromDbDecimal(total)
         }
@@ -148,8 +148,8 @@ class PaymentRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             PaymentsTable.deleteWhere {
-                (PaymentsTable.id eq Uuid.parse(paymentId.toString())) and
-                    (PaymentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (PaymentsTable.id eq paymentId.value) and
+                    (PaymentsTable.tenantId eq tenantId.value)
             } > 0
         }
     }
@@ -164,8 +164,8 @@ class PaymentRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             PaymentsTable.update({
-                (PaymentsTable.id eq Uuid.parse(paymentId.toString())) and
-                    (PaymentsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (PaymentsTable.id eq paymentId.value) and
+                    (PaymentsTable.tenantId eq tenantId.value)
             }) {
                 it[PaymentsTable.transactionId] = transactionId.value
             } > 0
@@ -174,9 +174,9 @@ class PaymentRepository {
 
     private fun ResultRow.toPaymentDto(): PaymentDto {
         return PaymentDto(
-            id = PaymentId.parse(this[PaymentsTable.id].value.toString()),
-            tenantId = TenantId.parse(this[PaymentsTable.tenantId].toString()),
-            invoiceId = InvoiceId.parse(this[PaymentsTable.invoiceId].toString()),
+            id = PaymentId(this[PaymentsTable.id].value),
+            tenantId = TenantId(this[PaymentsTable.tenantId]),
+            invoiceId = InvoiceId(this[PaymentsTable.invoiceId]),
             amount = Money.fromDbDecimal(this[PaymentsTable.amount]),
             paymentDate = this[PaymentsTable.paymentDate],
             paymentMethod = this[PaymentsTable.paymentMethod],

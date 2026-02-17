@@ -2,13 +2,11 @@ package tech.dokus.domain.ids
 
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
  * Strongly typed ID for document processing records.
  */
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class DocumentProcessingId(val value: Uuid) {

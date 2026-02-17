@@ -26,13 +26,11 @@ import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.routes.Tenants
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * HTTP implementation of TenantRemoteDataSource.
  * Uses authenticated Ktor HttpClient with type-safe routing to communicate with the tenant service.
  */
-@OptIn(ExperimentalUuidApi::class)
 internal class TenantRemoteDataSourceImpl(
     private val httpClient: HttpClient,
 ) : TenantRemoteDataSource {

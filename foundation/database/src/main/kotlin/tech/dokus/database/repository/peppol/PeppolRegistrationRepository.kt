@@ -27,7 +27,7 @@ class PeppolRegistrationRepository {
     suspend fun getRegistration(tenantId: TenantId): Result<PeppolRegistrationDto?> = runCatching {
         dbQuery {
             PeppolRegistrationTable.selectAll()
-                .where { PeppolRegistrationTable.tenantId eq Uuid.parse(tenantId.toString()) }
+                .where { PeppolRegistrationTable.tenantId eq tenantId.value }
                 .map { it.toDto() }
                 .singleOrNull()
         }
@@ -43,7 +43,7 @@ class PeppolRegistrationRepository {
         testMode: Boolean = false
     ): Result<PeppolRegistrationDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
         val newId = Uuid.random()
 
         dbQuery {
@@ -75,7 +75,7 @@ class PeppolRegistrationRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
-                PeppolRegistrationTable.tenantId eq Uuid.parse(tenantId.toString())
+                PeppolRegistrationTable.tenantId eq tenantId.value
             }) {
                 it[PeppolRegistrationTable.status] = status
                 it[PeppolRegistrationTable.errorMessage] = errorMessage
@@ -95,7 +95,7 @@ class PeppolRegistrationRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
-                PeppolRegistrationTable.tenantId eq Uuid.parse(tenantId.toString())
+                PeppolRegistrationTable.tenantId eq tenantId.value
             }) {
                 it[PeppolRegistrationTable.canReceive] = canReceive
                 it[PeppolRegistrationTable.canSend] = canSend
@@ -111,7 +111,7 @@ class PeppolRegistrationRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
-                PeppolRegistrationTable.tenantId eq Uuid.parse(tenantId.toString())
+                PeppolRegistrationTable.tenantId eq tenantId.value
             }) {
                 it[status] = PeppolRegistrationStatus.WaitingTransfer
                 it[waitingSince] = now
@@ -128,7 +128,7 @@ class PeppolRegistrationRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
-                PeppolRegistrationTable.tenantId eq Uuid.parse(tenantId.toString())
+                PeppolRegistrationTable.tenantId eq tenantId.value
             }) {
                 it[lastPolledAt] = now
                 it[updatedAt] = now
@@ -146,7 +146,7 @@ class PeppolRegistrationRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
-                PeppolRegistrationTable.tenantId eq Uuid.parse(tenantId.toString())
+                PeppolRegistrationTable.tenantId eq tenantId.value
             }) {
                 it[recommandCompanyId] = companyId
                 it[updatedAt] = now
@@ -166,8 +166,8 @@ class PeppolRegistrationRepository {
     }
 
     private fun ResultRow.toDto(): PeppolRegistrationDto = PeppolRegistrationDto(
-        id = PeppolRegistrationId.parse(this[PeppolRegistrationTable.id].value.toString()),
-        tenantId = TenantId.parse(this[PeppolRegistrationTable.tenantId].toString()),
+        id = PeppolRegistrationId(this[PeppolRegistrationTable.id].value),
+        tenantId = TenantId(this[PeppolRegistrationTable.tenantId]),
         peppolId = this[PeppolRegistrationTable.peppolId],
         recommandCompanyId = this[PeppolRegistrationTable.recommandCompanyId],
         status = this[PeppolRegistrationTable.status],

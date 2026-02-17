@@ -54,7 +54,7 @@ internal object DocumentListingQuery {
         page: Int,
         limit: Int
     ): DocumentListPage<DocumentWithDraftAndIngestion> = newSuspendedTransaction {
-        val tenantIdUuid = Uuid.parse(tenantId.toString())
+        val tenantIdUuid = tenantId.value
         val trimmedSearch = search?.trim()?.takeIf { it.isNotEmpty() }
 
         // Precedence: when using the high-level filter, ignore lower-level status filters.
@@ -338,7 +338,7 @@ internal object DocumentListingQuery {
             .limit(limit)
             .offset(offset)
             .mapNotNull { row ->
-                val documentId = DocumentId.parse(row[DocumentsTable.id].toString())
+                val documentId = DocumentId(row[DocumentsTable.id].value)
                 val processing = row.getOrNull(processingRunIdExpr)
                 val finished = row.getOrNull(finishedRunIdExpr)
                 val queued = row.getOrNull(queuedRunIdExpr)
@@ -350,15 +350,15 @@ internal object DocumentListingQuery {
             return@newSuspendedTransaction DocumentListPage(emptyList(), total)
         }
 
-        val documentIds = pageRows.map { Uuid.parse(it.documentId.toString()) }
-        val latestRunIds = pageRows.mapNotNull { row -> row.latestRunId?.let { Uuid.parse(it.toString()) } }
+        val documentIds = pageRows.map { it.documentId.value }
+        val latestRunIds = pageRows.mapNotNull { row -> row.latestRunId?.value }
 
         val documentsById = DocumentsTable.selectAll()
             .where {
                 (DocumentsTable.tenantId eq tenantIdUuid) and
                     (DocumentsTable.id inList documentIds)
             }
-            .associate { row -> DocumentId.parse(row[DocumentsTable.id].toString()) to row.toDocumentDto() }
+            .associate { row -> DocumentId(row[DocumentsTable.id].value) to row.toDocumentDto() }
 
         val draftsByDocumentId = DocumentDraftsTable.selectAll()
             .where {
@@ -366,7 +366,7 @@ internal object DocumentListingQuery {
                     (DocumentDraftsTable.documentId inList documentIds)
             }
             .associate { row ->
-                DocumentId.parse(row[DocumentDraftsTable.documentId].toString()) to row.toDraftSummary()
+                DocumentId(row[DocumentDraftsTable.documentId]) to row.toDraftSummary()
             }
 
         val latestIngestionsById = if (latestRunIds.isEmpty()) {
@@ -378,7 +378,7 @@ internal object DocumentListingQuery {
                         (DocumentIngestionRunsTable.id inList latestRunIds)
                 }
                 .associate { row ->
-                    IngestionRunId.parse(row[DocumentIngestionRunsTable.id].toString()) to row.toIngestionRunSummary()
+                    IngestionRunId(row[DocumentIngestionRunsTable.id].value) to row.toIngestionRunSummary()
                 }
         }
 
@@ -397,8 +397,8 @@ internal object DocumentListingQuery {
 
 private fun org.jetbrains.exposed.v1.core.ResultRow.toIngestionRunSummary(): IngestionRunSummary {
     return IngestionRunSummary(
-        id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
-        documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
+        id = IngestionRunId(this[DocumentIngestionRunsTable.id].value),
+        documentId = DocumentId(this[DocumentIngestionRunsTable.documentId]),
         tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId]),
         status = this[DocumentIngestionRunsTable.status],
         provider = this[DocumentIngestionRunsTable.provider],
@@ -415,7 +415,7 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toIngestionRunSummary(): Ing
 
 private fun org.jetbrains.exposed.v1.core.ResultRow.toDraftSummary(): DraftSummary {
     return DraftSummary(
-        documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
+        documentId = DocumentId(this[DocumentDraftsTable.documentId]),
         tenantId = TenantId(this[DocumentDraftsTable.tenantId]),
         documentStatus = this[DocumentDraftsTable.documentStatus],
         documentType = this[DocumentDraftsTable.documentType],

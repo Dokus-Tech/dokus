@@ -29,7 +29,7 @@ class PeppolSettingsRepository {
     suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> = runCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
-                .where { PeppolSettingsTable.tenantId eq Uuid.parse(tenantId.toString()) }
+                .where { PeppolSettingsTable.tenantId eq tenantId.value }
                 .map { it.toDto() }
                 .singleOrNull()
         }
@@ -46,7 +46,7 @@ class PeppolSettingsRepository {
         testMode: Boolean = false
     ): Result<PeppolSettingsDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
 
         dbQuery {
             val existing = PeppolSettingsTable.selectAll()
@@ -97,7 +97,7 @@ class PeppolSettingsRepository {
     suspend fun deleteSettings(tenantId: TenantId): Result<Boolean> = runCatching {
         dbQuery {
             val deleted = PeppolSettingsTable.deleteWhere {
-                PeppolSettingsTable.tenantId eq Uuid.parse(tenantId.toString())
+                PeppolSettingsTable.tenantId eq tenantId.value
             }
             deleted > 0
         }
@@ -111,7 +111,7 @@ class PeppolSettingsRepository {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where { PeppolSettingsTable.webhookToken eq token }
-                .map { TenantId.parse(it[PeppolSettingsTable.tenantId].toString()) }
+                .map { TenantId(it[PeppolSettingsTable.tenantId]) }
                 .singleOrNull()
         }
     }
@@ -134,7 +134,7 @@ class PeppolSettingsRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolSettingsTable.update({
-                PeppolSettingsTable.tenantId eq Uuid.parse(tenantId.toString())
+                PeppolSettingsTable.tenantId eq tenantId.value
             }) {
                 it[lastFullSyncAt] = now
                 it[updatedAt] = now
@@ -143,8 +143,8 @@ class PeppolSettingsRepository {
     }
 
     private fun ResultRow.toDto(): PeppolSettingsDto = PeppolSettingsDto(
-        id = PeppolSettingsId.parse(this[PeppolSettingsTable.id].value.toString()),
-        tenantId = TenantId.parse(this[PeppolSettingsTable.tenantId].toString()),
+        id = PeppolSettingsId(this[PeppolSettingsTable.id].value),
+        tenantId = TenantId(this[PeppolSettingsTable.tenantId]),
         companyId = this[PeppolSettingsTable.companyId],
         peppolId = PeppolId(this[PeppolSettingsTable.peppolId]),
         isEnabled = this[PeppolSettingsTable.isEnabled],

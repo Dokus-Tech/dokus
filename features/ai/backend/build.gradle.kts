@@ -11,7 +11,6 @@ kotlin {
     jvmToolchain(17)
     compilerOptions {
         suppressWarnings.set(true)
-        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
     }
 }
 

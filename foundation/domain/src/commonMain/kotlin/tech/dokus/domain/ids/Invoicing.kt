@@ -6,10 +6,8 @@ import tech.dokus.domain.ValueClass
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.validators.ValidateInvoiceNumberUseCase
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class InvoiceId(val value: Uuid) {
@@ -21,7 +19,6 @@ value class InvoiceId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class InvoiceItemId(val value: Uuid) {
@@ -45,7 +42,6 @@ value class InvoiceNumber(override val value: String) : ValueClass<String>, Vali
         get() = if (isValid) this else throw DokusException.Validation.InvalidInvoiceNumber
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class CreditNoteId(val value: Uuid) {
@@ -57,7 +53,6 @@ value class CreditNoteId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class RefundClaimId(val value: Uuid) {
@@ -69,7 +64,6 @@ value class RefundClaimId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class DocumentLineItemId(val value: Uuid) {
@@ -81,7 +75,6 @@ value class DocumentLineItemId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class DocumentLinkId(val value: Uuid) {
@@ -93,7 +86,6 @@ value class DocumentLinkId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class QuoteId(val value: Uuid) {
@@ -105,7 +97,6 @@ value class QuoteId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class ProFormaId(val value: Uuid) {
@@ -117,7 +108,6 @@ value class ProFormaId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class PurchaseOrderId(val value: Uuid) {

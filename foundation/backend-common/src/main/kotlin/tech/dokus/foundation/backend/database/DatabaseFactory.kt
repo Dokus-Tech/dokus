@@ -112,7 +112,9 @@ class DatabaseFactory(
 suspend fun <T> dbQuery(block: () -> T): T = withContext(Dispatchers.IO) {
     transaction {
         TenantContextHolder.currentTenantId()?.let { tenant ->
-            TransactionManager.current().exec("set local app.tenant_id = '$tenant'")
+            TransactionManager.current().exec("set local app.tenant_id = ?", listOf(
+                org.jetbrains.exposed.v1.core.VarCharColumnType() to tenant
+            ))
         }
         block()
     }

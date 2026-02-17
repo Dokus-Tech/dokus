@@ -270,7 +270,7 @@ class CreditNoteConfirmationInvariantTest {
                 it[paidAmount] = BigDecimal.ZERO
                 it[status] = InvoiceStatus.Draft
                 it[direction] = DocumentDirection.Outbound
-                it[InvoicesTable.documentId] = Uuid.parse(documentId.toString())
+                it[InvoicesTable.documentId] = documentId.value
             }
         }
 

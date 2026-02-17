@@ -42,8 +42,8 @@ class WelcomeEmailJobRepository {
         scheduledAt: LocalDateTime
     ): Result<Unit> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val userUuid = Uuid.parse(userId.toString())
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val userUuid = userId.value
+        val tenantUuid = tenantId.value
 
         dbQuery {
             WelcomeEmailJobsTable.upsert(
@@ -67,7 +67,7 @@ class WelcomeEmailJobRepository {
     }
 
     suspend fun findByUserId(userId: UserId): Result<WelcomeEmailJob?> = runCatching {
-        val userUuid = Uuid.parse(userId.toString())
+        val userUuid = userId.value
         dbQuery {
             WelcomeEmailJobsTable.selectAll()
                 .where { WelcomeEmailJobsTable.userId eq userUuid }

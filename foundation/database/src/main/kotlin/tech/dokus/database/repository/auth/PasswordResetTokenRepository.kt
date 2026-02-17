@@ -95,7 +95,7 @@ class PasswordResetTokenRepository {
                 ?.let { row ->
                     PasswordResetTokenInfo(
                         tokenId = row[PasswordResetTokensTable.id].value,
-                        userId = UserId(row[PasswordResetTokensTable.userId].value.toString()),
+                        userId = UserId(row[PasswordResetTokensTable.userId].value),
                         expiresAt = row[PasswordResetTokensTable.expiresAt].toKotlinxInstant(),
                         isUsed = row[PasswordResetTokensTable.isUsed]
                     )

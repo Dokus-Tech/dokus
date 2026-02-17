@@ -39,7 +39,7 @@ class DocumentExamplesRepository : ExampleRepository {
         tenantId: TenantId,
         vatNumber: String
     ): DocumentExample? = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
 
         logger.debug("Looking up example by VAT: tenant=$tenantId, vat=$vatNumber")
 
@@ -58,23 +58,25 @@ class DocumentExamplesRepository : ExampleRepository {
         name: String,
         similarity: Float
     ): DocumentExample? = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-
         logger.debug("Looking up example by name: tenant=$tenantId, name=$name, similarity=$similarity")
 
         // Use PostgreSQL trigram similarity for fuzzy matching
         // Requires pg_trgm extension: CREATE EXTENSION IF NOT EXISTS pg_trgm;
         val sql = """
             SELECT * FROM document_examples
-            WHERE tenant_id = '$tenantUuid'
-            AND similarity(vendor_name, '$name') >= $similarity
-            ORDER BY similarity(vendor_name, '$name') DESC
+            WHERE tenant_id = ?
+            AND similarity(vendor_name, ?) >= ?
+            ORDER BY similarity(vendor_name, ?) DESC
             LIMIT 1
         """.trimIndent()
 
         val connection = this.connection.connection as Connection
-        connection.createStatement().use { stmt ->
-            stmt.executeQuery(sql).use { rs ->
+        connection.prepareStatement(sql).use { stmt ->
+            stmt.setObject(1, tenantId.value)
+            stmt.setString(2, name)
+            stmt.setFloat(3, similarity)
+            stmt.setString(4, name)
+            stmt.executeQuery().use { rs ->
                 if (rs.next()) {
                     DocumentExample(
                         id = ExampleId.parse(rs.getString("id")),
@@ -85,8 +87,8 @@ class DocumentExamplesRepository : ExampleRepository {
                         extraction = json.parseToJsonElement(rs.getString("extraction")),
                         confidence = rs.getBigDecimal("confidence").toDouble(),
                         timesUsed = rs.getInt("times_used"),
-                        createdAt = Instant.parse(rs.getTimestamp("created_at").toInstant().toString()),
-                        updatedAt = Instant.parse(rs.getTimestamp("updated_at").toInstant().toString())
+                        createdAt = Instant.fromEpochMilliseconds(rs.getTimestamp("created_at").time),
+                        updatedAt = Instant.fromEpochMilliseconds(rs.getTimestamp("updated_at").time)
                     )
                 } else {
                     null
@@ -96,7 +98,7 @@ class DocumentExamplesRepository : ExampleRepository {
     }
 
     override suspend fun save(example: DocumentExample): DocumentExample = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(example.tenantId.toString())
+        val tenantUuid = example.tenantId.value
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         logger.info(
@@ -154,7 +156,7 @@ class DocumentExamplesRepository : ExampleRepository {
     }
 
     override suspend fun incrementUsage(exampleId: ExampleId): Unit = newSuspendedTransaction {
-        val exampleUuid = Uuid.parse(exampleId.toString())
+        val exampleUuid = exampleId.value
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         logger.debug("Incrementing usage for example: $exampleId")
@@ -178,8 +180,8 @@ class DocumentExamplesRepository : ExampleRepository {
         tenantId: TenantId,
         exampleId: ExampleId
     ): Boolean = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val exampleUuid = Uuid.parse(exampleId.toString())
+        val tenantUuid = tenantId.value
+        val exampleUuid = exampleId.value
 
         logger.info("Deleting example: $exampleId, tenant=$tenantId")
 
@@ -192,7 +194,7 @@ class DocumentExamplesRepository : ExampleRepository {
     }
 
     override suspend fun countForTenant(tenantId: TenantId): Long = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
 
         DocumentExamplesTable
             .selectAll()
@@ -202,8 +204,8 @@ class DocumentExamplesRepository : ExampleRepository {
 
     private fun ResultRow.toDocumentExample(): DocumentExample {
         return DocumentExample(
-            id = ExampleId.parse(this[DocumentExamplesTable.id].value.toString()),
-            tenantId = TenantId.parse(this[DocumentExamplesTable.tenantId].toString()),
+            id = ExampleId(this[DocumentExamplesTable.id].value),
+            tenantId = TenantId(this[DocumentExamplesTable.tenantId]),
             vendorVat = this[DocumentExamplesTable.vendorVat],
             vendorName = this[DocumentExamplesTable.vendorName],
             documentType = parseDocumentType(this[DocumentExamplesTable.documentType]),

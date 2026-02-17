@@ -96,7 +96,7 @@ class InvoiceConfirmationService(
         val cashflowEntry = if (existingInvoice != null && isReconfirm) {
             cashflowEntriesService.updateFromInvoice(
                 tenantId = tenantId,
-                invoiceId = Uuid.parse(invoice.id.toString()),
+                invoiceId = invoice.id.value,
                 documentId = documentId,
                 dueDate = dueDate,
                 amountGross = invoice.totalAmount,
@@ -107,7 +107,7 @@ class InvoiceConfirmationService(
         } else {
             cashflowEntriesService.createFromInvoice(
                 tenantId = tenantId,
-                invoiceId = Uuid.parse(invoice.id.toString()),
+                invoiceId = invoice.id.value,
                 documentId = documentId,
                 dueDate = dueDate,
                 amountGross = invoice.totalAmount,

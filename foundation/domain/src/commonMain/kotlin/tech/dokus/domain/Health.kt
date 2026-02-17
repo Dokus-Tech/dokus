@@ -3,12 +3,8 @@ package tech.dokus.domain
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.config.ServerStatus
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
 @Serializable
-data class HealthStatus
-@OptIn(ExperimentalTime::class)
-constructor(
+data class HealthStatus(
     val status: ServerStatus,
     val checks: Map<String, HealthCheck>,
     val timestamp: Long = Clock.System.now().toEpochMilliseconds()

@@ -6,8 +6,6 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.database.DbEnum
 import tech.dokus.domain.ids.SessionId
-import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -26,20 +24,15 @@ data class SessionDto(
     val revokedBy: String? = null,
     val isCurrent: Boolean = false,
 ) {
-    @OptIn(ExperimentalUuidApi::class)
-    val idUuid: Uuid get() = id.value
+    @OptIn    val idUuid: Uuid get() = id.value
 
-    @OptIn(ExperimentalTime::class)
-    val createdAtInstant: Instant? get() = createdAt?.let { Instant.fromEpochSeconds(it) }
+    @OptIn    val createdAtInstant: Instant? get() = createdAt?.let { Instant.fromEpochSeconds(it) }
 
-    @OptIn(ExperimentalTime::class)
-    val expiresAtInstant: Instant? get() = expiresAt?.let { Instant.fromEpochSeconds(it) }
+    @OptIn    val expiresAtInstant: Instant? get() = expiresAt?.let { Instant.fromEpochSeconds(it) }
 
-    @OptIn(ExperimentalTime::class)
-    val lastActivityAtInstant: Instant? get() = lastActivityAt?.let { Instant.fromEpochSeconds(it) }
+    @OptIn    val lastActivityAtInstant: Instant? get() = lastActivityAt?.let { Instant.fromEpochSeconds(it) }
 
-    @OptIn(ExperimentalTime::class)
-    val revokedAtInstant: Instant? get() = revokedAt?.let { Instant.fromEpochSeconds(it) }
+    @OptIn    val revokedAtInstant: Instant? get() = revokedAt?.let { Instant.fromEpochSeconds(it) }
 }
 
 @Serializable

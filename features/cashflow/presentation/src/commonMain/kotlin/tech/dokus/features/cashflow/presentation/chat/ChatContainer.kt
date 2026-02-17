@@ -33,8 +33,6 @@ import tech.dokus.features.cashflow.usecases.ListChatSessionsUseCase
 import tech.dokus.features.cashflow.usecases.SendChatMessageUseCase
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
 /** Maximum number of messages to load from session history */
 private const val SessionHistoryLimit = 100
 
@@ -471,7 +469,6 @@ internal class ChatContainer(
             ?: ChatConfiguration() // Use defaults if fetch fails
     }
 
-    @OptIn(kotlin.uuid.ExperimentalUuidApi::class, ExperimentalTime::class)
     private fun ChatState.Content.createOptimisticUserMessage(content: String): ChatMessageDto {
         val nowInstant = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
         val now = nowInstant.toLocalDateTime(TimeZone.currentSystemDefault())

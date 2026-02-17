@@ -24,7 +24,6 @@ import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Folder name -> Expected DocumentType mapping
@@ -43,8 +42,7 @@ private val folderToDocumentType = mapOf(
 
 class ClassificationGraphTest {
 
-    @OptIn(ExperimentalUuidApi::class)
-    @Tag("ai")
+    @OptIn    @Tag("ai")
     @TestFactory
     fun `classify documents from fixtures`(): List<DynamicTest> {
         val fixturesPath = "fixtures"
@@ -67,7 +65,7 @@ class ClassificationGraphTest {
             } ?: emptyList()
     }
 
-    @OptIn(ExperimentalUuidApi::class, ExperimentalAgentsApi::class)
+    @OptIn(ExperimentalAgentsApi::class)
     private fun runClassificationTest(pdfFile: File, expectedType: DocumentType) = runBlocking {
         val documentBytes = pdfFile.readBytes()
 

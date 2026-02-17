@@ -19,9 +19,7 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 class DocumentRowAttentionTest {
 
     @Test

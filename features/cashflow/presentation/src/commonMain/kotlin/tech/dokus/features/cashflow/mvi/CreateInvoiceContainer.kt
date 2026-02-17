@@ -29,8 +29,6 @@ import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.Validate
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceUseCase
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
 /** Default number of days from issue date to due date for new invoices */
 private const val DefaultPaymentTermDays = 30
 
@@ -58,8 +56,7 @@ internal class CreateInvoiceContainer(
 
     private val logger = Logger.forClass<CreateInvoiceContainer>()
 
-    @OptIn(ExperimentalTime::class)
-    override val store: Store<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> =
+    @OptIn    override val store: Store<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> =
         store(createInitialState()) {
             reduce { intent ->
                 when (intent) {
@@ -430,8 +427,7 @@ internal class CreateInvoiceContainer(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
-    private suspend fun CreateInvoiceCtx.handleResetForm() {
+    @OptIn    private suspend fun CreateInvoiceCtx.handleResetForm() {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val firstItem = InvoiceLineItem()
 
@@ -548,8 +544,7 @@ internal class CreateInvoiceContainer(
         return formState.selectedClient != null
     }
 
-    @OptIn(ExperimentalTime::class)
-    private fun createInitialState(): CreateInvoiceState.Editing {
+    @OptIn    private fun createInitialState(): CreateInvoiceState.Editing {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val firstItem = InvoiceLineItem()
 

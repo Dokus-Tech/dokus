@@ -16,9 +16,7 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 class DocumentUiStatusMapperTest {
 
     // === FAILED CASES ===

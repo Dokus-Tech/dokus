@@ -47,10 +47,10 @@ class ChatRepositoryImpl : ChatRepository {
 
     override suspend fun saveMessage(message: ChatMessageDto): ChatMessageDto =
         newSuspendedTransaction {
-            val messageId = Uuid.parse(message.id.toString())
-            val tenantUuid = Uuid.parse(message.tenantId.toString())
-            val userUuid = Uuid.parse(message.userId.toString())
-            val sessionUuid = Uuid.parse(message.sessionId.toString())
+            val messageId = message.id.value
+            val tenantUuid = message.tenantId.value
+            val userUuid = message.userId.value
+            val sessionUuid = message.sessionId.value
 
             logger.debug(
                 "Saving chat message: id={}, session={}, role={}, tenant={}",
@@ -74,7 +74,7 @@ class ChatRepositoryImpl : ChatRepository {
                 it[content] = message.content
                 it[scope] = message.scope.dbValue
                 it[documentId] = message.documentId?.let { docId ->
-                    Uuid.parse(docId.toString())
+                    docId.value
                 }
                 it[citations] = citationsJson
                 it[chunksRetrieved] = message.chunksRetrieved
@@ -95,8 +95,8 @@ class ChatRepositoryImpl : ChatRepository {
         tenantId: TenantId,
         messageId: ChatMessageId
     ): ChatMessageDto? = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val msgUuid = Uuid.parse(messageId.toString())
+        val tenantUuid = tenantId.value
+        val msgUuid = messageId.value
 
         ChatMessagesTable
             .selectAll()
@@ -115,8 +115,8 @@ class ChatRepositoryImpl : ChatRepository {
         offset: Int,
         descending: Boolean
     ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val sessionUuid = Uuid.parse(sessionId.toString())
+        val tenantUuid = tenantId.value
+        val sessionUuid = sessionId.value
 
         val baseQuery = ChatMessagesTable
             .selectAll()
@@ -143,8 +143,8 @@ class ChatRepositoryImpl : ChatRepository {
         limit: Int,
         offset: Int
     ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val documentUuid = Uuid.parse(documentId.toString())
+        val tenantUuid = tenantId.value
+        val documentUuid = documentId.value
 
         val baseQuery = ChatMessagesTable
             .selectAll()
@@ -168,8 +168,8 @@ class ChatRepositoryImpl : ChatRepository {
         tenantId: TenantId,
         sessionId: ChatSessionId
     ): Int = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val sessionUuid = Uuid.parse(sessionId.toString())
+        val tenantUuid = tenantId.value
+        val sessionUuid = sessionId.value
 
         val maxSeq: Int? = ChatMessagesTable
             .select(ChatMessagesTable.sequenceNumber.max())
@@ -194,7 +194,7 @@ class ChatRepositoryImpl : ChatRepository {
         limit: Int,
         offset: Int
     ): Pair<List<ChatSessionSummary>, Long> = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
 
         // Build query with optional filters
         var query = ChatMessagesTable
@@ -206,7 +206,7 @@ class ChatRepositoryImpl : ChatRepository {
         }
 
         if (documentId != null) {
-            val documentUuid = Uuid.parse(documentId.toString())
+            val documentUuid = documentId.value
             query = query.andWhere { ChatMessagesTable.documentId eq documentUuid }
         }
 
@@ -250,8 +250,8 @@ class ChatRepositoryImpl : ChatRepository {
         tenantId: TenantId,
         sessionId: ChatSessionId
     ): ChatSessionSummary? = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val sessionUuid = Uuid.parse(sessionId.toString())
+        val tenantUuid = tenantId.value
+        val sessionUuid = sessionId.value
 
         val messages = ChatMessagesTable
             .selectAll()
@@ -302,8 +302,8 @@ class ChatRepositoryImpl : ChatRepository {
         tenantId: TenantId,
         sessionId: ChatSessionId
     ): Boolean = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val sessionUuid = Uuid.parse(sessionId.toString())
+        val tenantUuid = tenantId.value
+        val sessionUuid = sessionId.value
 
         ChatMessagesTable
             .selectAll()
@@ -318,7 +318,7 @@ class ChatRepositoryImpl : ChatRepository {
     override suspend fun countMessagesForTenant(
         tenantId: TenantId
     ): Long = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
 
         ChatMessagesTable
             .selectAll()
@@ -329,7 +329,7 @@ class ChatRepositoryImpl : ChatRepository {
     override suspend fun countSessionsForTenant(
         tenantId: TenantId
     ): Long = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
 
         ChatMessagesTable
             .select(ChatMessagesTable.sessionId)
@@ -343,8 +343,8 @@ class ChatRepositoryImpl : ChatRepository {
         userId: UserId,
         limit: Int
     ): List<ChatSessionSummary> = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val userUuid = Uuid.parse(userId.toString())
+        val tenantUuid = tenantId.value
+        val userUuid = userId.value
 
         val messages = ChatMessagesTable
             .selectAll()
@@ -396,10 +396,10 @@ class ChatRepositoryImpl : ChatRepository {
         }
 
         return ChatMessageDto(
-            id = ChatMessageId.parse(this[ChatMessagesTable.id].value.toString()),
-            tenantId = TenantId.parse(this[ChatMessagesTable.tenantId].toString()),
-            userId = UserId(this[ChatMessagesTable.userId].toString()),
-            sessionId = ChatSessionId.parse(this[ChatMessagesTable.sessionId].toString()),
+            id = ChatMessageId(this[ChatMessagesTable.id].value),
+            tenantId = TenantId(this[ChatMessagesTable.tenantId]),
+            userId = UserId(this[ChatMessagesTable.userId]),
+            sessionId = ChatSessionId(this[ChatMessagesTable.sessionId]),
             role = MessageRole.fromDbValue(this[ChatMessagesTable.role]),
             content = this[ChatMessagesTable.content],
             scope = ChatScope.fromDbValue(this[ChatMessagesTable.scope]),

@@ -139,7 +139,7 @@ class DocumentTruthService(
             val lockKey = ("intake:$tenantId:$inputHash").hashCode().toLong()
             exec("SELECT pg_advisory_xact_lock($lockKey)")
 
-            val tenantUuid = Uuid.parse(tenantId.toString())
+            val tenantUuid = tenantId.value
 
             // Check for existing linked source with same input hash
             val existingDocId = (DocumentSourcesTable innerJoin DocumentBlobsTable)
@@ -156,10 +156,10 @@ class DocumentTruthService(
             if (existingDocId != null) {
                 val sourceId = DocumentSourceId.generate()
                 DocumentSourcesTable.insert {
-                    it[id] = Uuid.parse(sourceId.toString())
+                    it[id] = sourceId.value
                     it[DocumentSourcesTable.tenantId] = tenantUuid
-                    it[documentId] = Uuid.parse(existingDocId.toString())
-                    it[blobId] = Uuid.parse(blob.id.toString())
+                    it[documentId] = existingDocId.value
+                    it[blobId] = blob.id.value
                     it[DocumentSourcesTable.sourceChannel] = sourceChannel
                     it[status] = DocumentSourceStatus.Linked
                     it[matchType] = DocumentMatchType.ExactFile
@@ -168,7 +168,7 @@ class DocumentTruthService(
                 val sourceCount = DocumentSourcesTable.selectAll()
                     .where {
                         (DocumentSourcesTable.tenantId eq tenantUuid) and
-                            (DocumentSourcesTable.documentId eq Uuid.parse(existingDocId.toString())) and
+                            (DocumentSourcesTable.documentId eq existingDocId.value) and
                             (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
                     }
                     .count()
@@ -187,7 +187,7 @@ class DocumentTruthService(
             } else {
                 val documentId = DocumentId.generate()
                 DocumentsTable.insert {
-                    it[DocumentsTable.id] = Uuid.parse(documentId.toString())
+                    it[DocumentsTable.id] = documentId.value
                     it[DocumentsTable.tenantId] = tenantUuid
                     it[DocumentsTable.filename] = filename
                     it[DocumentsTable.contentType] = blob.contentType
@@ -199,10 +199,10 @@ class DocumentTruthService(
 
                 val sourceId = DocumentSourceId.generate()
                 DocumentSourcesTable.insert {
-                    it[id] = Uuid.parse(sourceId.toString())
+                    it[id] = sourceId.value
                     it[DocumentSourcesTable.tenantId] = tenantUuid
-                    it[DocumentSourcesTable.documentId] = Uuid.parse(documentId.toString())
-                    it[DocumentSourcesTable.blobId] = Uuid.parse(blob.id.toString())
+                    it[DocumentSourcesTable.documentId] = documentId.value
+                    it[DocumentSourcesTable.blobId] = blob.id.value
                     it[DocumentSourcesTable.sourceChannel] = sourceChannel
                     it[status] = DocumentSourceStatus.Linked
                     it[DocumentSourcesTable.filename] = filename
@@ -210,10 +210,10 @@ class DocumentTruthService(
 
                 val runId = IngestionRunId.generate()
                 DocumentIngestionRunsTable.insert {
-                    it[DocumentIngestionRunsTable.id] = Uuid.parse(runId.toString())
-                    it[DocumentIngestionRunsTable.documentId] = Uuid.parse(documentId.toString())
+                    it[DocumentIngestionRunsTable.id] = runId.value
+                    it[DocumentIngestionRunsTable.documentId] = documentId.value
                     it[DocumentIngestionRunsTable.tenantId] = tenantUuid
-                    it[DocumentIngestionRunsTable.sourceId] = Uuid.parse(sourceId.toString())
+                    it[DocumentIngestionRunsTable.sourceId] = sourceId.value
                     it[DocumentIngestionRunsTable.status] = IngestionStatus.Queued
                 }
 

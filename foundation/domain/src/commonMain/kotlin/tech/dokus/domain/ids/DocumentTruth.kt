@@ -2,10 +2,8 @@ package tech.dokus.domain.ids
 
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class DocumentBlobId(val value: Uuid) {
@@ -17,7 +15,6 @@ value class DocumentBlobId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class DocumentSourceId(val value: Uuid) {
@@ -29,7 +26,6 @@ value class DocumentSourceId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class DocumentMatchReviewId(val value: Uuid) {

@@ -21,8 +21,6 @@ import tech.dokus.domain.utils.json
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /** Number of parts in a valid JWT (header.payload.signature) */
@@ -40,7 +38,7 @@ private const val Base64PaddingMod3 = 3
 /** Base64 block size for padding calculation */
 private const val Base64BlockSize = 4
 
-@OptIn(ExperimentalEncodingApi::class, ExperimentalTime::class, ExperimentalUuidApi::class)
+@OptIn(ExperimentalEncodingApi::class)
 class JwtDecoder {
 
     fun decode(token: String): JwtClaims? {

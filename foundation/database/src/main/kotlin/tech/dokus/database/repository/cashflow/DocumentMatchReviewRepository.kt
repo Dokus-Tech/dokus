@@ -49,10 +49,10 @@ class DocumentMatchReviewRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val id = DocumentMatchReviewId.generate()
         DocumentMatchReviewsTable.insert {
-            it[DocumentMatchReviewsTable.id] = Uuid.parse(id.toString())
-            it[DocumentMatchReviewsTable.tenantId] = Uuid.parse(tenantId.toString())
-            it[DocumentMatchReviewsTable.documentId] = Uuid.parse(documentId.toString())
-            it[incomingSourceId] = Uuid.parse(sourceId.toString())
+            it[DocumentMatchReviewsTable.id] = id.value
+            it[DocumentMatchReviewsTable.tenantId] = tenantId.value
+            it[DocumentMatchReviewsTable.documentId] = documentId.value
+            it[incomingSourceId] = sourceId.value
             it[DocumentMatchReviewsTable.reasonType] = reasonType
             it[DocumentMatchReviewsTable.aiSummary] = aiSummary
             it[DocumentMatchReviewsTable.aiConfidence] = aiConfidence?.toBigDecimal()
@@ -67,8 +67,8 @@ class DocumentMatchReviewRepository {
         newSuspendedTransaction {
             DocumentMatchReviewsTable.selectAll()
                 .where {
-                    (DocumentMatchReviewsTable.id eq Uuid.parse(reviewId.toString())) and
-                        (DocumentMatchReviewsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (DocumentMatchReviewsTable.id eq reviewId.value) and
+                        (DocumentMatchReviewsTable.tenantId eq tenantId.value)
                 }
                 .map { it.toSummary() }
                 .singleOrNull()
@@ -79,10 +79,10 @@ class DocumentMatchReviewRepository {
         documentIds: List<DocumentId>
     ): Map<DocumentId, DocumentMatchReviewSummary> = newSuspendedTransaction {
         if (documentIds.isEmpty()) return@newSuspendedTransaction emptyMap()
-        val ids = documentIds.map { Uuid.parse(it.toString()) }
+        val ids = documentIds.map { it.value }
         DocumentMatchReviewsTable.selectAll()
             .where {
-                (DocumentMatchReviewsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (DocumentMatchReviewsTable.tenantId eq tenantId.value) and
                     (DocumentMatchReviewsTable.documentId inList ids) and
                     (DocumentMatchReviewsTable.status eq DocumentMatchReviewStatus.Pending)
             }
@@ -99,12 +99,12 @@ class DocumentMatchReviewRepository {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentMatchReviewsTable.update({
-            (DocumentMatchReviewsTable.id eq Uuid.parse(reviewId.toString())) and
-                (DocumentMatchReviewsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+            (DocumentMatchReviewsTable.id eq reviewId.value) and
+                (DocumentMatchReviewsTable.tenantId eq tenantId.value) and
                 (DocumentMatchReviewsTable.status eq DocumentMatchReviewStatus.Pending)
         }) {
             it[DocumentMatchReviewsTable.status] = status
-            it[DocumentMatchReviewsTable.resolvedBy] = Uuid.parse(resolvedBy.toString())
+            it[DocumentMatchReviewsTable.resolvedBy] = resolvedBy.value
             it[resolvedAt] = now
             it[updatedAt] = now
         } > 0
@@ -114,7 +114,7 @@ class DocumentMatchReviewRepository {
         return DocumentMatchReviewSummary(
             id = DocumentMatchReviewId(this[DocumentMatchReviewsTable.id].value),
             tenantId = TenantId(this[DocumentMatchReviewsTable.tenantId]),
-            documentId = DocumentId.parse(this[DocumentMatchReviewsTable.documentId].toString()),
+            documentId = DocumentId(this[DocumentMatchReviewsTable.documentId]),
             incomingSourceId = DocumentSourceId(this[DocumentMatchReviewsTable.incomingSourceId]),
             reasonType = this[DocumentMatchReviewsTable.reasonType],
             aiSummary = this[DocumentMatchReviewsTable.aiSummary],

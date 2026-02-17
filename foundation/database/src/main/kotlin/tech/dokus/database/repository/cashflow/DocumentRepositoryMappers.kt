@@ -8,7 +8,7 @@ import tech.dokus.domain.model.DocumentDto
 
 internal fun ResultRow.toDocumentDto(): DocumentDto {
     return DocumentDto(
-        id = DocumentId.parse(this[DocumentsTable.id].toString()),
+        id = DocumentId(this[DocumentsTable.id].value),
         tenantId = TenantId(this[DocumentsTable.tenantId]),
         filename = this[DocumentsTable.filename],
         contentType = this[DocumentsTable.contentType],

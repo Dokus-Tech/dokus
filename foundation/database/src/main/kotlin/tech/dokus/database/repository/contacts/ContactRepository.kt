@@ -64,7 +64,7 @@ class ContactRepository {
     ): Result<ContactDto> = runCatching {
         dbQuery {
             val contactId = ContactsTable.insertAndGetId {
-                it[ContactsTable.tenantId] = Uuid.parse(tenantId.toString())
+                it[ContactsTable.tenantId] = tenantId.value
                 it[name] = request.name.value
                 it[email] = request.email?.value
                 it[iban] = request.iban?.value
@@ -84,7 +84,7 @@ class ContactRepository {
             // Fetch and return the created contact (addresses populated by caller)
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq contactId.value) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (ContactsTable.tenantId eq tenantId.value)
             }.single().let { row ->
                 mapRowToContactDto(row)
             }
@@ -101,8 +101,8 @@ class ContactRepository {
     ): Result<ContactDto?> = runCatching {
         dbQuery {
             ContactsTable.selectAll().where {
-                (ContactsTable.id eq Uuid.parse(contactId.toString())) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactsTable.id eq contactId.value) and
+                    (ContactsTable.tenantId eq tenantId.value)
             }.singleOrNull()?.let { row ->
                 mapRowToContactDto(row)
             }
@@ -123,7 +123,7 @@ class ContactRepository {
     ): Result<PaginatedResponse<ContactDto>> = runCatching {
         dbQuery {
             var query = ContactsTable.selectAll().where {
-                ContactsTable.tenantId eq Uuid.parse(tenantId.toString())
+                ContactsTable.tenantId eq tenantId.value
             }
 
             // Apply filters (contactType removed - roles are derived)
@@ -202,8 +202,8 @@ class ContactRepository {
         dbQuery {
             // Verify contact exists and belongs to tenant
             val exists = ContactsTable.selectAll().where {
-                (ContactsTable.id eq Uuid.parse(contactId.toString())) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactsTable.id eq contactId.value) and
+                    (ContactsTable.tenantId eq tenantId.value)
             }.count() > 0
 
             if (!exists) {
@@ -213,8 +213,8 @@ class ContactRepository {
             // Update contact (only non-null fields)
             // Addresses are managed separately via ContactAddressRepository
             ContactsTable.update({
-                (ContactsTable.id eq Uuid.parse(contactId.toString())) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactsTable.id eq contactId.value) and
+                    (ContactsTable.tenantId eq tenantId.value)
             }) {
                 request.name?.let { value -> it[name] = value.value }
                 request.email?.let { value -> it[email] = value.value }
@@ -234,8 +234,8 @@ class ContactRepository {
 
             // Fetch and return the updated contact (addresses populated by caller)
             ContactsTable.selectAll().where {
-                (ContactsTable.id eq Uuid.parse(contactId.toString())) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactsTable.id eq contactId.value) and
+                    (ContactsTable.tenantId eq tenantId.value)
             }.single().let { row ->
                 mapRowToContactDto(row)
             }
@@ -254,8 +254,8 @@ class ContactRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val deletedRows = ContactsTable.deleteWhere {
-                (ContactsTable.id eq Uuid.parse(contactId.toString())) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactsTable.id eq contactId.value) and
+                    (ContactsTable.tenantId eq tenantId.value)
             }
             deletedRows > 0
         }
@@ -271,8 +271,8 @@ class ContactRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updatedRows = ContactsTable.update({
-                (ContactsTable.id eq Uuid.parse(contactId.toString())) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactsTable.id eq contactId.value) and
+                    (ContactsTable.tenantId eq tenantId.value)
             }) {
                 it[isActive] = false
             }
@@ -290,8 +290,8 @@ class ContactRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updatedRows = ContactsTable.update({
-                (ContactsTable.id eq Uuid.parse(contactId.toString())) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactsTable.id eq contactId.value) and
+                    (ContactsTable.tenantId eq tenantId.value)
             }) {
                 it[isActive] = true
             }
@@ -309,8 +309,8 @@ class ContactRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             ContactsTable.selectAll().where {
-                (ContactsTable.id eq Uuid.parse(contactId.toString())) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactsTable.id eq contactId.value) and
+                    (ContactsTable.tenantId eq tenantId.value)
             }.count() > 0
         }
     }
@@ -322,7 +322,7 @@ class ContactRepository {
     suspend fun getContactStats(tenantId: TenantId): Result<ContactStats> = runCatching {
         dbQuery {
             val allContacts = ContactsTable.selectAll().where {
-                ContactsTable.tenantId eq Uuid.parse(tenantId.toString())
+                ContactsTable.tenantId eq tenantId.value
             }
 
             val totalContacts = allContacts.count()
@@ -365,7 +365,7 @@ class ContactRepository {
             val normalized = VatNumber.normalize(vatNumber)
             // Search for both normalized and original format
             ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (ContactsTable.tenantId eq tenantId.value) and
                     (ContactsTable.isActive eq true)
             }.filter { row ->
                 // Case-insensitive comparison on the result
@@ -389,7 +389,7 @@ class ContactRepository {
     ): Result<ContactDto?> = runCatching {
         dbQuery {
             ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (ContactsTable.tenantId eq tenantId.value) and
                     (ContactsTable.companyNumber eq companyNumber) and
                     (ContactsTable.isActive eq true)
             }.singleOrNull()?.let { row ->
@@ -409,7 +409,7 @@ class ContactRepository {
         dbQuery {
             val normalized = Iban.from(iban.value)?.value ?: return@dbQuery emptyList()
             ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (ContactsTable.tenantId eq tenantId.value) and
                     (ContactsTable.isActive eq true) and
                     (ContactsTable.iban eq normalized)
             }.map { row -> mapRowToContactDto(row) }
@@ -431,7 +431,7 @@ class ContactRepository {
         dbQuery {
             val searchTerm = name.lowercase()
             val query = ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (ContactsTable.tenantId eq tenantId.value) and
                     (ContactsTable.isActive eq true)
             }
 
@@ -453,7 +453,7 @@ class ContactRepository {
         dbQuery {
             // Check if system contact already exists
             val existing = ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (ContactsTable.tenantId eq tenantId.value) and
                     (ContactsTable.isSystemContact eq true)
             }.singleOrNull()
 
@@ -462,7 +462,7 @@ class ContactRepository {
             } else {
                 // Create the Unknown Contact placeholder
                 val contactId = ContactsTable.insertAndGetId {
-                    it[ContactsTable.tenantId] = Uuid.parse(tenantId.toString())
+                    it[ContactsTable.tenantId] = tenantId.value
                     it[ContactsTable.name] = "Unknown / Unassigned"
                     it[ContactsTable.isSystemContact] = true
                     it[ContactsTable.isActive] = true
@@ -492,8 +492,8 @@ class ContactRepository {
         tenantId: TenantId
     ): Result<ContactActivitySummary> = runCatching {
         dbQuery {
-            val contactUuid = Uuid.parse(contactId.toString())
-            val tenantUuid = Uuid.parse(tenantId.toString())
+            val contactUuid = contactId.value
+            val tenantUuid = tenantId.value
 
             // Get invoice count and total using simple queries
             val invoices = InvoicesTable.selectAll().where {
@@ -581,9 +581,9 @@ class ContactRepository {
         mergedByEmail: String
     ): Result<ContactMergeResult> = runCatching {
         dbQuery {
-            val sourceUuid = Uuid.parse(sourceContactId.toString())
-            val targetUuid = Uuid.parse(targetContactId.toString())
-            val tenantUuid = Uuid.parse(tenantId.toString())
+            val sourceUuid = sourceContactId.value
+            val targetUuid = targetContactId.value
+            val tenantUuid = tenantId.value
 
             // 1. Fetch both contacts and validate
             val sourceContact = ContactsTable.selectAll().where {
@@ -692,8 +692,8 @@ class ContactRepository {
      */
     private fun mapRowToContactDto(row: ResultRow): ContactDto {
         return ContactDto(
-            id = ContactId.parse(row[ContactsTable.id].value.toString()),
-            tenantId = TenantId.parse(row[ContactsTable.tenantId].toString()),
+            id = ContactId(row[ContactsTable.id].value),
+            tenantId = TenantId(row[ContactsTable.tenantId]),
             name = Name(row[ContactsTable.name]),
             email = row[ContactsTable.email]?.let { Email(it) },
             iban = row[ContactsTable.iban]?.let { Iban(it) },

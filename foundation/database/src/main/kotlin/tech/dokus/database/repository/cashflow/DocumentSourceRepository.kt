@@ -84,10 +84,10 @@ class DocumentSourceRepository {
     ): DocumentSourceId = newSuspendedTransaction {
         val sourceId = DocumentSourceId.generate()
         DocumentSourcesTable.insert {
-            it[id] = Uuid.parse(sourceId.toString())
-            it[DocumentSourcesTable.tenantId] = Uuid.parse(tenantId.toString())
-            it[documentId] = Uuid.parse(payload.documentId.toString())
-            it[blobId] = Uuid.parse(payload.blobId.toString())
+            it[id] = sourceId.value
+            it[DocumentSourcesTable.tenantId] = tenantId.value
+            it[documentId] = payload.documentId.value
+            it[blobId] = payload.blobId.value
             it[sourceChannel] = payload.sourceChannel
             it[status] = payload.status
             it[matchType] = payload.matchType
@@ -109,8 +109,8 @@ class DocumentSourceRepository {
             (DocumentSourcesTable innerJoin DocumentBlobsTable)
                 .selectAll()
                 .where {
-                    (DocumentSourcesTable.id eq Uuid.parse(sourceId.toString())) and
-                        (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (DocumentSourcesTable.id eq sourceId.value) and
+                        (DocumentSourcesTable.tenantId eq tenantId.value)
                 }
                 .map { it.toSourceSummary() }
                 .singleOrNull()
@@ -121,8 +121,8 @@ class DocumentSourceRepository {
         documentId: DocumentId,
         includeDetached: Boolean = false
     ): List<DocumentSourceSummary> = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val docUuid = Uuid.parse(documentId.toString())
+        val tenantUuid = tenantId.value
+        val docUuid = documentId.value
         val rows = (DocumentSourcesTable innerJoin DocumentBlobsTable)
             .selectAll()
             .where {
@@ -139,8 +139,8 @@ class DocumentSourceRepository {
         DocumentSourcesTable
             .selectAll()
             .where {
-                (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                    (DocumentSourcesTable.documentId eq Uuid.parse(documentId.toString())) and
+                (DocumentSourcesTable.tenantId eq tenantId.value) and
+                    (DocumentSourcesTable.documentId eq documentId.value) and
                     (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
             }
             .count()
@@ -155,8 +155,8 @@ class DocumentSourceRepository {
         DocumentSourcesTable
             .selectAll()
             .where {
-                var where = (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                    (DocumentSourcesTable.documentId eq Uuid.parse(documentId.toString()))
+                var where = (DocumentSourcesTable.tenantId eq tenantId.value) and
+                    (DocumentSourcesTable.documentId eq documentId.value)
                 if (!includeDetached) {
                     where = where and (DocumentSourcesTable.status neq DocumentSourceStatus.Detached)
                 }
@@ -173,13 +173,13 @@ class DocumentSourceRepository {
         (DocumentSourcesTable innerJoin DocumentBlobsTable)
             .selectAll()
             .where {
-                (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                (DocumentSourcesTable.tenantId eq tenantId.value) and
                     (DocumentBlobsTable.inputHash eq inputHash) and
                     (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
             }
             .orderBy(DocumentSourcesTable.arrivalAt, SortOrder.DESC)
             .firstOrNull()
-            ?.let { DocumentId.parse(it[DocumentSourcesTable.documentId].toString()) }
+            ?.let { DocumentId(it[DocumentSourcesTable.documentId]) }
     }
 
     suspend fun findLinkedDocumentByContentHash(
@@ -190,17 +190,17 @@ class DocumentSourceRepository {
         (DocumentSourcesTable innerJoin DocumentBlobsTable)
             .selectAll()
             .where {
-                var where = (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                var where = (DocumentSourcesTable.tenantId eq tenantId.value) and
                     (DocumentSourcesTable.contentHash eq contentHash) and
                     (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
                 if (excludeSourceId != null) {
-                    where = where and (DocumentSourcesTable.id neq Uuid.parse(excludeSourceId.toString()))
+                    where = where and (DocumentSourcesTable.id neq excludeSourceId.value)
                 }
                 where
             }
             .orderBy(DocumentSourcesTable.arrivalAt, SortOrder.DESC)
             .firstOrNull()
-            ?.let { DocumentId.parse(it[DocumentSourcesTable.documentId].toString()) }
+            ?.let { DocumentId(it[DocumentSourcesTable.documentId]) }
     }
 
     suspend fun findLinkedDocumentByIdentityKeyHash(
@@ -211,17 +211,17 @@ class DocumentSourceRepository {
         (DocumentSourcesTable innerJoin DocumentBlobsTable)
             .selectAll()
             .where {
-                var where = (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                var where = (DocumentSourcesTable.tenantId eq tenantId.value) and
                     (DocumentSourcesTable.identityKeyHash eq identityKeyHash) and
                     (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
                 if (excludeDocumentId != null) {
-                    where = where and (DocumentSourcesTable.documentId neq Uuid.parse(excludeDocumentId.toString()))
+                    where = where and (DocumentSourcesTable.documentId neq excludeDocumentId.value)
                 }
                 where
             }
             .orderBy(DocumentSourcesTable.arrivalAt, SortOrder.DESC)
             .firstOrNull()
-            ?.let { DocumentId.parse(it[DocumentSourcesTable.documentId].toString()) }
+            ?.let { DocumentId(it[DocumentSourcesTable.documentId]) }
     }
 
     suspend fun findFuzzyCandidates(
@@ -233,7 +233,7 @@ class DocumentSourceRepository {
         excludeDocumentId: DocumentId? = null,
         maxDistance: Int = 2
     ): List<FuzzySourceCandidate> = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
         val candidates = (DocumentSourcesTable innerJoin DocumentBlobsTable)
             .selectAll()
             .where {
@@ -243,7 +243,7 @@ class DocumentSourceRepository {
                     (DocumentSourcesTable.documentType eq documentType) and
                     (DocumentSourcesTable.direction eq direction)
                 if (excludeDocumentId != null) {
-                    where = where and (DocumentSourcesTable.documentId neq Uuid.parse(excludeDocumentId.toString()))
+                    where = where and (DocumentSourcesTable.documentId neq excludeDocumentId.value)
                 }
                 where
             }
@@ -253,7 +253,7 @@ class DocumentSourceRepository {
                 if (distance > maxDistance) return@mapNotNull null
                 FuzzySourceCandidate(
                     sourceId = DocumentSourceId(row[DocumentSourcesTable.id].value),
-                    documentId = DocumentId.parse(row[DocumentSourcesTable.documentId].toString()),
+                    documentId = DocumentId(row[DocumentSourcesTable.documentId]),
                     normalizedDocumentNumber = candidateNumber,
                     distance = distance
                 )
@@ -275,8 +275,8 @@ class DocumentSourceRepository {
         matchType: DocumentMatchType?
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.update({
-            (DocumentSourcesTable.id eq Uuid.parse(sourceId.toString())) and
-                (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentSourcesTable.id eq sourceId.value) and
+                (DocumentSourcesTable.tenantId eq tenantId.value)
         }) {
             it[DocumentSourcesTable.contentHash] = contentHash
             it[DocumentSourcesTable.identityKeyHash] = identityKeyHash
@@ -299,10 +299,10 @@ class DocumentSourceRepository {
         matchType: DocumentMatchType?
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.update({
-            (DocumentSourcesTable.id eq Uuid.parse(sourceId.toString())) and
-                (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentSourcesTable.id eq sourceId.value) and
+                (DocumentSourcesTable.tenantId eq tenantId.value)
         }) {
-            it[DocumentSourcesTable.documentId] = Uuid.parse(documentId.toString())
+            it[DocumentSourcesTable.documentId] = documentId.value
             it[DocumentSourcesTable.status] = status
             it[DocumentSourcesTable.matchType] = matchType
             it[detachedAt] = null
@@ -315,8 +315,8 @@ class DocumentSourceRepository {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentSourcesTable.update({
-            (DocumentSourcesTable.id eq Uuid.parse(sourceId.toString())) and
-                (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentSourcesTable.id eq sourceId.value) and
+                (DocumentSourcesTable.tenantId eq tenantId.value)
         }) {
             it[status] = DocumentSourceStatus.Detached
             it[detachedAt] = now
@@ -328,8 +328,8 @@ class DocumentSourceRepository {
         sourceId: DocumentSourceId
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.deleteWhere {
-            (DocumentSourcesTable.id eq Uuid.parse(sourceId.toString())) and
-                (DocumentSourcesTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentSourcesTable.id eq sourceId.value) and
+                (DocumentSourcesTable.tenantId eq tenantId.value)
         } > 0
     }
 
@@ -345,7 +345,7 @@ class DocumentSourceRepository {
         return DocumentSourceSummary(
             id = DocumentSourceId(this[DocumentSourcesTable.id].value),
             tenantId = TenantId(this[DocumentSourcesTable.tenantId]),
-            documentId = DocumentId.parse(this[DocumentSourcesTable.documentId].toString()),
+            documentId = DocumentId(this[DocumentSourcesTable.documentId]),
             blobId = DocumentBlobId(this[DocumentSourcesTable.blobId]),
             sourceChannel = this[DocumentSourcesTable.sourceChannel],
             arrivalAt = this[DocumentSourcesTable.arrivalAt],

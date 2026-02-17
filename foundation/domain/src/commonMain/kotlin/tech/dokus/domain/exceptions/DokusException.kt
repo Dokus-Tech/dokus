@@ -3,7 +3,6 @@ package tech.dokus.domain.exceptions
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -1022,8 +1021,7 @@ sealed class DokusException(
     }
 
     companion object {
-        @OptIn(ExperimentalUuidApi::class)
-        fun generateErrorId(): String =
+        @OptIn        fun generateErrorId(): String =
             "ERR-${Uuid.random()}"
     }
 }

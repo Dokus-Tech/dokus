@@ -60,18 +60,16 @@ class DocumentChunksRepository : ChunkRepository {
         minSimilarity: Float,
         confirmedOnly: Boolean
     ): ChunkSearchResult = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-
         // Build the vector string for pgvector
         val vectorString = "[${queryEmbedding.joinToString(",")}]"
 
         // Count total chunks for this tenant (or document)
         val baseCountQuery = DocumentChunksTable.selectAll()
-            .where { DocumentChunksTable.tenantId eq tenantUuid }
+            .where { DocumentChunksTable.tenantId eq tenantId.value }
 
         val countQuery = if (documentId != null) {
             baseCountQuery.andWhere {
-                DocumentChunksTable.documentId eq Uuid.parse(documentId.toString())
+                DocumentChunksTable.documentId eq documentId.value
             }
         } else {
             baseCountQuery
@@ -84,7 +82,7 @@ class DocumentChunksRepository : ChunkRepository {
             append("SELECT ")
             append("dc.id, dc.document_id, dc.content, dc.chunk_index, ")
             append("dc.page_number, dc.metadata, ")
-            append("(1 - (dc.embedding <=> '$vectorString'::vector)) as similarity, ")
+            append("(1 - (dc.embedding <=> ?::vector)) as similarity, ")
             append("d.filename as document_name ")
             append("FROM document_chunks dc ")
             append("LEFT JOIN documents d ON dc.document_id = d.id ")
@@ -94,27 +92,38 @@ class DocumentChunksRepository : ChunkRepository {
                     "INNER JOIN document_drafts dd ON dc.document_id = dd.document_id AND dc.tenant_id = dd.tenant_id "
                 )
             }
-            append("WHERE dc.tenant_id = '$tenantUuid' ")
+            append("WHERE dc.tenant_id = ? ")
             append("AND dc.embedding IS NOT NULL ")
             if (documentId != null) {
-                append("AND dc.document_id = '${Uuid.parse(documentId.toString())}' ")
+                append("AND dc.document_id = ? ")
             }
             if (confirmedOnly) {
                 append("AND dd.document_status = 'CONFIRMED' ")
             }
-            append("AND (1 - (dc.embedding <=> '$vectorString'::vector)) >= $minSimilarity ")
-            append("ORDER BY dc.embedding <=> '$vectorString'::vector ")
-            append("LIMIT $topK")
+            append("AND (1 - (dc.embedding <=> ?::vector)) >= ? ")
+            append("ORDER BY dc.embedding <=> ?::vector ")
+            append("LIMIT ?")
         }
 
-        logger.debug("Executing vector search SQL (confirmedOnly=$confirmedOnly): ${sql.take(200)}...")
+        logger.debug("Executing vector search SQL (confirmedOnly=$confirmedOnly)")
 
         val chunks = mutableListOf<RetrievedChunk>()
 
-        // Execute raw SQL and map results
+        // Execute raw SQL with parameterized query
         val connection = this.connection.connection as Connection
-        connection.createStatement().use { stmt ->
-            stmt.executeQuery(sql).use { rs ->
+        connection.prepareStatement(sql).use { stmt ->
+            var paramIdx = 1
+            stmt.setString(paramIdx++, vectorString)    // similarity calc
+            stmt.setObject(paramIdx++, tenantId.value)  // tenant filter
+            if (documentId != null) {
+                stmt.setObject(paramIdx++, documentId.value) // document filter
+            }
+            stmt.setString(paramIdx++, vectorString)    // similarity threshold
+            stmt.setFloat(paramIdx++, minSimilarity)
+            stmt.setString(paramIdx++, vectorString)    // order by
+            stmt.setInt(paramIdx, topK)
+
+            stmt.executeQuery().use { rs ->
                 while (rs.next()) {
                     chunks.add(
                         RetrievedChunk(
@@ -154,8 +163,8 @@ class DocumentChunksRepository : ChunkRepository {
             return@newSuspendedTransaction
         }
 
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val documentUuid = Uuid.parse(documentId.toString())
+        val tenantUuid = tenantId.value
+        val documentUuid = documentId.value
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         logger.info("Storing ${chunks.size} chunks for document $documentId, tenant $tenantId, hash=$contentHash")
@@ -190,8 +199,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         documentId: DocumentId
     ): String? = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val documentUuid = Uuid.parse(documentId.toString())
+        val tenantUuid = tenantId.value
+        val documentUuid = documentId.value
 
         DocumentChunksTable
             .selectAll()
@@ -211,8 +220,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         documentId: DocumentId
     ): Int = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val documentUuid = Uuid.parse(documentId.toString())
+        val tenantUuid = tenantId.value
+        val documentUuid = documentId.value
 
         logger.info("Deleting chunks for document $documentId, tenant $tenantId")
 
@@ -236,8 +245,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         documentId: DocumentId
     ): List<DocumentChunkDto> = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val documentUuid = Uuid.parse(documentId.toString())
+        val tenantUuid = tenantId.value
+        val documentUuid = documentId.value
 
         DocumentChunksTable
             .selectAll()
@@ -256,8 +265,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         chunkId: DocumentChunkId
     ): DocumentChunkDto? = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val chunkUuid = Uuid.parse(chunkId.toString())
+        val tenantUuid = tenantId.value
+        val chunkUuid = chunkId.value
 
         DocumentChunksTable
             .selectAll()
@@ -276,8 +285,8 @@ class DocumentChunksRepository : ChunkRepository {
         tenantId: TenantId,
         documentId: DocumentId
     ): Long = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
-        val documentUuid = Uuid.parse(documentId.toString())
+        val tenantUuid = tenantId.value
+        val documentUuid = documentId.value
 
         DocumentChunksTable
             .selectAll()
@@ -302,7 +311,7 @@ class DocumentChunksRepository : ChunkRepository {
     override suspend fun countTotalChunksForTenant(
         tenantId: TenantId
     ): Long = newSuspendedTransaction {
-        val tenantUuid = Uuid.parse(tenantId.toString())
+        val tenantUuid = tenantId.value
 
         DocumentChunksTable
             .selectAll()
@@ -326,11 +335,11 @@ class DocumentChunksRepository : ChunkRepository {
         }
 
         return DocumentChunkDto(
-            id = DocumentChunkId.parse(this[DocumentChunksTable.id].value.toString()),
+            id = DocumentChunkId(this[DocumentChunksTable.id].value),
             documentId = DocumentId.parse(
                 this[DocumentChunksTable.documentId].toString()
             ),
-            tenantId = TenantId.parse(this[DocumentChunksTable.tenantId].toString()),
+            tenantId = TenantId(this[DocumentChunksTable.tenantId]),
             content = this[DocumentChunksTable.content],
             chunkIndex = this[DocumentChunksTable.chunkIndex],
             totalChunks = this[DocumentChunksTable.totalChunks],

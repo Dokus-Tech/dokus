@@ -5,7 +5,6 @@ import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -32,7 +31,6 @@ enum class UploadStatus {
  * @property documentId ID of the uploaded document (set after success)
  * @property retryCount Number of retry attempts
  */
-@OptIn(ExperimentalUuidApi::class)
 data class DocumentUploadTask(
     val id: String = Uuid.random().toString(),
     val fileName: String,

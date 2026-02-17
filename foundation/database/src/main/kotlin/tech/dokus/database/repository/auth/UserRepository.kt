@@ -25,8 +25,6 @@ import tech.dokus.domain.model.UserInTenant
 import tech.dokus.foundation.backend.crypto.PasswordCryptoService
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlin.time.ExperimentalTime
-
 class UserRepository(
     private val passwordCrypto: PasswordCryptoService
 ) {
@@ -304,8 +302,7 @@ class UserRepository(
         logger.info("Updated password for user $userId")
     }
 
-    @OptIn(ExperimentalTime::class)
-    suspend fun recordSuccessfulLogin(userId: UserId, loginTime: Instant): Boolean = dbQuery {
+    @OptIn    suspend fun recordSuccessfulLogin(userId: UserId, loginTime: Instant): Boolean = dbQuery {
         val javaUuid = userId.value
         val loginAt = loginTime.toLocalDateTime(TimeZone.UTC)
 
@@ -428,7 +425,7 @@ class UserRepository(
                     ?: return@let null
 
                 EmailVerificationUserInfo(
-                    userId = UserId(row[UsersTable.id].value.toString()),
+                    userId = UserId(row[UsersTable.id].value),
                     email = row[UsersTable.email],
                     expiresAt = expiry.toKotlinxInstant()
                 )

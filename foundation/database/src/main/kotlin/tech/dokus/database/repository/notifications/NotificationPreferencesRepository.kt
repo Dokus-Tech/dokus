@@ -19,7 +19,7 @@ class NotificationPreferencesRepository {
     suspend fun listOverrides(userId: UserId): Result<Map<NotificationType, Boolean>> = runCatching {
         dbQuery {
             NotificationPreferencesTable.selectAll()
-                .where { NotificationPreferencesTable.userId eq Uuid.parse(userId.toString()) }
+                .where { NotificationPreferencesTable.userId eq userId.value }
                 .associate { row ->
                     row[NotificationPreferencesTable.type] to row[NotificationPreferencesTable.emailEnabled]
                 }
@@ -32,7 +32,7 @@ class NotificationPreferencesRepository {
         emailEnabled: Boolean
     ): Result<Unit> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val userUuid = Uuid.parse(userId.toString())
+        val userUuid = userId.value
 
         dbQuery {
             NotificationPreferencesTable.upsert(
@@ -58,7 +58,7 @@ class NotificationPreferencesRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val deleted = NotificationPreferencesTable.deleteWhere {
-                (NotificationPreferencesTable.userId eq Uuid.parse(userId.toString())) and
+                (NotificationPreferencesTable.userId eq userId.value) and
                     (NotificationPreferencesTable.type eq type)
             }
             deleted > 0

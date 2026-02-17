@@ -63,7 +63,7 @@ class InvoiceNumberRepository {
         year: Int
     ): Result<Int> = runCatching {
         dbQuery {
-            val tenantUuid = Uuid.parse(tenantId.toString())
+            val tenantUuid = tenantId.value
 
             // Try to select existing row with FOR UPDATE lock
             val existingRow = InvoiceNumberSequencesTable.selectAll()
@@ -117,7 +117,7 @@ class InvoiceNumberRepository {
         year: Int
     ): Result<Int> = runCatching {
         dbQuery {
-            val tenantUuid = Uuid.parse(tenantId.toString())
+            val tenantUuid = tenantId.value
 
             val row = InvoiceNumberSequencesTable.selectAll()
                 .where {
@@ -149,7 +149,7 @@ class InvoiceNumberRepository {
         startingNumber: Int = 0
     ): Result<Unit> = runCatching {
         dbQuery {
-            val tenantUuid = Uuid.parse(tenantId.toString())
+            val tenantUuid = tenantId.value
 
             // Check if row already exists
             val exists = InvoiceNumberSequencesTable.selectAll()

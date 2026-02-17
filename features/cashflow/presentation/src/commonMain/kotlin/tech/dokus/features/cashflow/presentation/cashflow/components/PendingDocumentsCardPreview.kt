@@ -183,7 +183,6 @@ fun PendingDocumentsCardWithMoreItemsPreview(
 /**
  * Generates sample pending documents for preview.
  */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
     // Use static date for preview stability
     val now = LocalDateTime(

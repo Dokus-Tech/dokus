@@ -2,10 +2,8 @@ package tech.dokus.domain.ids
 
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class ExpenseId(val value: Uuid) {
@@ -17,7 +15,6 @@ value class ExpenseId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class PaymentId(val value: Uuid) {
@@ -29,7 +26,6 @@ value class PaymentId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class CashflowEntryId(val value: Uuid) {

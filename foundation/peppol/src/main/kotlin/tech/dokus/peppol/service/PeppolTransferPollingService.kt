@@ -7,8 +7,6 @@ import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlin.time.ExperimentalTime
-
 /**
  * Background service for polling WAITING_TRANSFER registrations.
  *
@@ -81,8 +79,7 @@ class PeppolTransferPollingService(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
-    private fun shouldPoll(registration: PeppolRegistrationDto): Boolean {
+    @OptIn    private fun shouldPoll(registration: PeppolRegistrationDto): Boolean {
         val lastPoll = registration.lastPolledAt ?: return true
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         // Simple hour comparison - if more than POLL_INTERVAL_HOURS have passed

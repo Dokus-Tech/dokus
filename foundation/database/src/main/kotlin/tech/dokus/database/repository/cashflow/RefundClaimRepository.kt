@@ -54,9 +54,9 @@ class RefundClaimRepository {
     ): Result<RefundClaimDto> = runCatching {
         dbQuery {
             val claimId = RefundClaimsTable.insertAndGetId {
-                it[RefundClaimsTable.tenantId] = Uuid.parse(tenantId.toString())
-                it[RefundClaimsTable.creditNoteId] = Uuid.parse(creditNoteId.toString())
-                it[RefundClaimsTable.counterpartyId] = Uuid.parse(counterpartyId.toString())
+                it[RefundClaimsTable.tenantId] = tenantId.value
+                it[RefundClaimsTable.creditNoteId] = creditNoteId.value
+                it[RefundClaimsTable.counterpartyId] = counterpartyId.value
                 it[RefundClaimsTable.amount] = amount.toDbDecimal()
                 it[RefundClaimsTable.currency] = currency
                 it[RefundClaimsTable.expectedDate] = expectedDate
@@ -66,7 +66,7 @@ class RefundClaimRepository {
             // Fetch and return the created claim
             RefundClaimsTable.selectAll().where {
                 (RefundClaimsTable.id eq claimId.value) and
-                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (RefundClaimsTable.tenantId eq tenantId.value)
             }.single().let { row ->
                 mapRowToDto(row)
             }
@@ -83,8 +83,8 @@ class RefundClaimRepository {
     ): Result<RefundClaimDto?> = runCatching {
         dbQuery {
             RefundClaimsTable.selectAll().where {
-                (RefundClaimsTable.id eq Uuid.parse(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (RefundClaimsTable.id eq claimId.value) and
+                    (RefundClaimsTable.tenantId eq tenantId.value)
             }.singleOrNull()?.let { row ->
                 mapRowToDto(row)
             }
@@ -100,8 +100,8 @@ class RefundClaimRepository {
         creditNoteId: CreditNoteId
     ): RefundClaimDto? = dbQuery {
         RefundClaimsTable.selectAll().where {
-            (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                (RefundClaimsTable.creditNoteId eq Uuid.parse(creditNoteId.toString())) and
+            (RefundClaimsTable.tenantId eq tenantId.value) and
+                (RefundClaimsTable.creditNoteId eq creditNoteId.value) and
                 (RefundClaimsTable.status eq RefundClaimStatus.Open)
         }.singleOrNull()?.let { row ->
             mapRowToDto(row)
@@ -121,7 +121,7 @@ class RefundClaimRepository {
     ): Result<List<RefundClaimDto>> = runCatching {
         dbQuery {
             var query = RefundClaimsTable.selectAll().where {
-                RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString())
+                RefundClaimsTable.tenantId eq tenantId.value
             }
 
             if (status != null) {
@@ -129,7 +129,7 @@ class RefundClaimRepository {
             }
             if (counterpartyId != null) {
                 query = query.andWhere {
-                    RefundClaimsTable.counterpartyId eq Uuid.parse(counterpartyId.toString())
+                    RefundClaimsTable.counterpartyId eq counterpartyId.value
                 }
             }
 
@@ -146,7 +146,7 @@ class RefundClaimRepository {
      */
     suspend fun listOpenClaims(tenantId: TenantId): List<RefundClaimDto> = dbQuery {
         RefundClaimsTable.selectAll().where {
-            (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+            (RefundClaimsTable.tenantId eq tenantId.value) and
                 (RefundClaimsTable.status eq RefundClaimStatus.Open)
         }.orderBy(RefundClaimsTable.expectedDate to SortOrder.ASC)
             .map { row -> mapRowToDto(row) }
@@ -165,12 +165,12 @@ class RefundClaimRepository {
         dbQuery {
             val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
             val updatedRows = RefundClaimsTable.update({
-                (RefundClaimsTable.id eq Uuid.parse(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (RefundClaimsTable.id eq claimId.value) and
+                    (RefundClaimsTable.tenantId eq tenantId.value)
             }) {
                 it[status] = RefundClaimStatus.Settled
                 it[settledAt] = now
-                it[RefundClaimsTable.cashflowEntryId] = Uuid.parse(cashflowEntryId.toString())
+                it[RefundClaimsTable.cashflowEntryId] = cashflowEntryId.value
             }
             updatedRows > 0
         }
@@ -186,8 +186,8 @@ class RefundClaimRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updatedRows = RefundClaimsTable.update({
-                (RefundClaimsTable.id eq Uuid.parse(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (RefundClaimsTable.id eq claimId.value) and
+                    (RefundClaimsTable.tenantId eq tenantId.value)
             }) {
                 it[status] = RefundClaimStatus.Cancelled
             }
@@ -205,8 +205,8 @@ class RefundClaimRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val deletedRows = RefundClaimsTable.deleteWhere {
-                (RefundClaimsTable.id eq Uuid.parse(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (RefundClaimsTable.id eq claimId.value) and
+                    (RefundClaimsTable.tenantId eq tenantId.value)
             }
             deletedRows > 0
         }
@@ -214,10 +214,10 @@ class RefundClaimRepository {
 
     private fun mapRowToDto(row: org.jetbrains.exposed.v1.core.ResultRow): RefundClaimDto {
         return RefundClaimDto(
-            id = RefundClaimId.parse(row[RefundClaimsTable.id].value.toString()),
-            tenantId = TenantId.parse(row[RefundClaimsTable.tenantId].toString()),
-            creditNoteId = CreditNoteId.parse(row[RefundClaimsTable.creditNoteId].toString()),
-            counterpartyId = ContactId.parse(row[RefundClaimsTable.counterpartyId].toString()),
+            id = RefundClaimId(row[RefundClaimsTable.id].value),
+            tenantId = TenantId(row[RefundClaimsTable.tenantId]),
+            creditNoteId = CreditNoteId(row[RefundClaimsTable.creditNoteId]),
+            counterpartyId = ContactId(row[RefundClaimsTable.counterpartyId]),
             amount = Money.fromDbDecimal(row[RefundClaimsTable.amount]),
             currency = row[RefundClaimsTable.currency],
             expectedDate = row[RefundClaimsTable.expectedDate],

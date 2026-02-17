@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package tech.dokus.foundation.backend.security
 
 import tech.dokus.domain.ids.UserId
@@ -7,7 +5,6 @@ import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.time.Duration
 import java.time.Instant
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Service for managing JWT access token blacklist.

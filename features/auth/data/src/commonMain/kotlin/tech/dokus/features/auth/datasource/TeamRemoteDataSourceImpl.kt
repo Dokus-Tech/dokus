@@ -19,13 +19,11 @@ import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.TransferOwnershipRequest
 import tech.dokus.domain.model.UpdateMemberRoleRequest
 import tech.dokus.domain.routes.Team
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * HTTP implementation of TeamRemoteDataSource.
  * Uses authenticated Ktor HttpClient with type-safe routing to communicate with the team management API.
  */
-@OptIn(ExperimentalUuidApi::class)
 internal class TeamRemoteDataSourceImpl(
     private val httpClient: HttpClient,
 ) : TeamRemoteDataSource {

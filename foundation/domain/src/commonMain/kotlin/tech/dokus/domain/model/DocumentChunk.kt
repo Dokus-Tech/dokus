@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 // =============================================================================
@@ -15,7 +14,6 @@ import kotlin.uuid.Uuid
 /**
  * Strongly typed ID for document chunks.
  */
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class DocumentChunkId(val value: Uuid) {

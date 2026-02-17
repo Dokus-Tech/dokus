@@ -79,7 +79,6 @@ data class FinancialDocumentRow(
 /**
  * Converts a FinancialDocumentDto to a FinancialDocumentRow for display.
  */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Composable
 fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
     val cashflowType = when (this) {

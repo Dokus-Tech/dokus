@@ -56,7 +56,6 @@ fun FinancialDocumentTablePreview(
 /**
  * Generates sample financial documents for preview.
  */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
     val now = LocalDateTime(PreviewYear, PreviewMonth, PreviewDay, PreviewHour, PreviewMinute)
     val date = LocalDate(PreviewYear, PreviewMonth, PreviewDay)

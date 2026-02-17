@@ -11,7 +11,6 @@ import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.DocumentStatusChecker
 import tech.dokus.domain.repository.IngestionStatusChecker
 import tech.dokus.domain.repository.RetrievedChunk
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * RAG (Retrieval Augmented Generation) Service for vector similarity search.
@@ -165,8 +164,7 @@ class RAGService(
     /**
      * Retrieve relevant chunks using the domain ChunkRetrievalRequest model.
      */
-    @OptIn(ExperimentalUuidApi::class)
-    suspend fun retrieve(
+    @OptIn    suspend fun retrieve(
         tenantId: TenantId,
         request: ChunkRetrievalRequest
     ): ChunkRetrievalResponse {

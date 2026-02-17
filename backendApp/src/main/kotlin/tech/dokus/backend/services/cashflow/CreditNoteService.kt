@@ -180,7 +180,7 @@ class CreditNoteService(
         // Create cashflow entry
         val cashflowEntry = cashflowEntriesService.createFromRefund(
             tenantId = tenantId,
-            creditNoteId = Uuid.parse(creditNoteId.toString()),
+            creditNoteId = creditNoteId.value,
             documentId = creditNote.documentId,
             refundDate = request.refundDate,
             amountGross = request.amount,

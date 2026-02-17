@@ -298,7 +298,7 @@ class CashflowProjectionReconciliationTest {
                 it[InvoicesTable.paidAmount] = paidAmount.toDbDecimal()
                 it[status] = invoiceStatus
                 it[direction] = DocumentDirection.Outbound
-                it[InvoicesTable.documentId] = Uuid.parse(documentId.toString())
+                it[InvoicesTable.documentId] = documentId.value
                 it[InvoicesTable.paidAt] = paidAt
             }
         }

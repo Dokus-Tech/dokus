@@ -8,10 +8,8 @@ import tech.dokus.domain.validators.ValidateBicUseCase
 import tech.dokus.domain.validators.ValidateIbanUseCase
 import tech.dokus.domain.validators.ValidateOgmUseCase
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class BankConnectionId(val value: Uuid) {
@@ -23,7 +21,6 @@ value class BankConnectionId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class BankTransactionId(val value: Uuid) {

@@ -131,7 +131,7 @@ class InvoicePaymentCashflowSyncTest {
         val entry = cashflowEntriesRepository.createEntry(
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,
-            sourceId = Uuid.parse(invoiceId.toString()),
+            sourceId = invoiceId.value,
             documentId = null,
             direction = CashflowDirection.In,
             eventDate = LocalDate(2024, 1, 31),

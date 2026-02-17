@@ -61,7 +61,7 @@ class BankingRepository {
     ): Result<BankConnectionDto> = runCatching {
         dbQuery {
             val id = BankConnectionsTable.insert {
-                it[BankConnectionsTable.tenantId] = Uuid.parse(tenantId.toString())
+                it[BankConnectionsTable.tenantId] = tenantId.value
                 it[BankConnectionsTable.provider] = provider
                 it[BankConnectionsTable.institutionId] = institutionId
                 it[BankConnectionsTable.institutionName] = institutionName
@@ -88,8 +88,8 @@ class BankingRepository {
     ): Result<BankConnectionDto?> = runCatching {
         dbQuery {
             BankConnectionsTable.selectAll().where {
-                (BankConnectionsTable.id eq Uuid.parse(connectionId.toString())) and
-                    (BankConnectionsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (BankConnectionsTable.id eq connectionId.value) and
+                    (BankConnectionsTable.tenantId eq tenantId.value)
             }.singleOrNull()?.toBankConnectionDto()
         }
     }
@@ -104,7 +104,7 @@ class BankingRepository {
     ): Result<List<BankConnectionDto>> = runCatching {
         dbQuery {
             var query = BankConnectionsTable.selectAll().where {
-                BankConnectionsTable.tenantId eq Uuid.parse(tenantId.toString())
+                BankConnectionsTable.tenantId eq tenantId.value
             }
             if (activeOnly) {
                 query = query.andWhere { BankConnectionsTable.isActive eq true }
@@ -124,8 +124,8 @@ class BankingRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             BankConnectionsTable.update({
-                (BankConnectionsTable.id eq Uuid.parse(connectionId.toString())) and
-                    (BankConnectionsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (BankConnectionsTable.id eq connectionId.value) and
+                    (BankConnectionsTable.tenantId eq tenantId.value)
             }) {
                 it[lastSyncedAt] = syncedAt
                 it[updatedAt] = syncedAt
@@ -142,8 +142,8 @@ class BankingRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             BankConnectionsTable.update({
-                (BankConnectionsTable.id eq Uuid.parse(connectionId.toString())) and
-                    (BankConnectionsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (BankConnectionsTable.id eq connectionId.value) and
+                    (BankConnectionsTable.tenantId eq tenantId.value)
             }) {
                 it[isActive] = false
             } > 0
@@ -170,8 +170,8 @@ class BankingRepository {
     ): Result<BankTransactionDto> = runCatching {
         dbQuery {
             val id = BankTransactionsTable.insert {
-                it[BankTransactionsTable.bankConnectionId] = Uuid.parse(bankConnectionId.toString())
-                it[BankTransactionsTable.tenantId] = Uuid.parse(tenantId.toString())
+                it[BankTransactionsTable.bankConnectionId] = bankConnectionId.value
+                it[BankTransactionsTable.tenantId] = tenantId.value
                 it[BankTransactionsTable.externalId] = externalId
                 it[BankTransactionsTable.date] = date
                 it[BankTransactionsTable.amount] = amount.toDbDecimal()
@@ -197,8 +197,8 @@ class BankingRepository {
     ): Result<BankTransactionDto?> = runCatching {
         dbQuery {
             BankTransactionsTable.selectAll().where {
-                (BankTransactionsTable.id eq Uuid.parse(transactionId.toString())) and
-                    (BankTransactionsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (BankTransactionsTable.id eq transactionId.value) and
+                    (BankTransactionsTable.tenantId eq tenantId.value)
             }.singleOrNull()?.toBankTransactionDto()
         }
     }
@@ -218,12 +218,12 @@ class BankingRepository {
     ): Result<List<BankTransactionDto>> = runCatching {
         dbQuery {
             var query = BankTransactionsTable.selectAll().where {
-                BankTransactionsTable.tenantId eq Uuid.parse(tenantId.toString())
+                BankTransactionsTable.tenantId eq tenantId.value
             }
 
             connectionId?.let {
                 query = query.andWhere {
-                    BankTransactionsTable.bankConnectionId eq Uuid.parse(it.toString())
+                    BankTransactionsTable.bankConnectionId eq it.value
                 }
             }
             fromDate?.let {
@@ -253,10 +253,10 @@ class BankingRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             BankTransactionsTable.update({
-                (BankTransactionsTable.id eq Uuid.parse(transactionId.toString())) and
-                    (BankTransactionsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (BankTransactionsTable.id eq transactionId.value) and
+                    (BankTransactionsTable.tenantId eq tenantId.value)
             }) {
-                it[BankTransactionsTable.expenseId] = Uuid.parse(expenseId.toString())
+                it[BankTransactionsTable.expenseId] = expenseId.value
                 it[isReconciled] = true
             } > 0
         }
@@ -272,10 +272,10 @@ class BankingRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             BankTransactionsTable.update({
-                (BankTransactionsTable.id eq Uuid.parse(transactionId.toString())) and
-                    (BankTransactionsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (BankTransactionsTable.id eq transactionId.value) and
+                    (BankTransactionsTable.tenantId eq tenantId.value)
             }) {
-                it[BankTransactionsTable.invoiceId] = Uuid.parse(invoiceId.toString())
+                it[BankTransactionsTable.invoiceId] = invoiceId.value
                 it[isReconciled] = true
             } > 0
         }
@@ -287,8 +287,8 @@ class BankingRepository {
 
     private fun ResultRow.toBankConnectionDto(): BankConnectionDto {
         return BankConnectionDto(
-            id = BankConnectionId.parse(this[BankConnectionsTable.id].value.toString()),
-            tenantId = TenantId.parse(this[BankConnectionsTable.tenantId].toString()),
+            id = BankConnectionId(this[BankConnectionsTable.id].value),
+            tenantId = TenantId(this[BankConnectionsTable.tenantId]),
             provider = this[BankConnectionsTable.provider],
             institutionId = this[BankConnectionsTable.institutionId],
             institutionName = this[BankConnectionsTable.institutionName],
@@ -305,9 +305,9 @@ class BankingRepository {
 
     private fun ResultRow.toBankTransactionDto(): BankTransactionDto {
         return BankTransactionDto(
-            id = BankTransactionId.parse(this[BankTransactionsTable.id].value.toString()),
-            bankConnectionId = BankConnectionId.parse(this[BankTransactionsTable.bankConnectionId].toString()),
-            tenantId = TenantId.parse(this[BankTransactionsTable.tenantId].toString()),
+            id = BankTransactionId(this[BankTransactionsTable.id].value),
+            bankConnectionId = BankConnectionId(this[BankTransactionsTable.bankConnectionId]),
+            tenantId = TenantId(this[BankTransactionsTable.tenantId]),
             externalId = this[BankTransactionsTable.externalId],
             date = this[BankTransactionsTable.date],
             amount = Money.fromDbDecimal(this[BankTransactionsTable.amount]),

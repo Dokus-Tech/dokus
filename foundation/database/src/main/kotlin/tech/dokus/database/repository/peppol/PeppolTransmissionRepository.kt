@@ -50,11 +50,11 @@ class PeppolTransmissionRepository {
         dbQuery {
             PeppolTransmissionsTable.insert {
                 it[id] = newId
-                it[PeppolTransmissionsTable.tenantId] = Uuid.parse(tenantId.toString())
+                it[PeppolTransmissionsTable.tenantId] = tenantId.value
                 it[PeppolTransmissionsTable.direction] = direction
                 it[PeppolTransmissionsTable.documentType] = documentType
                 it[status] = PeppolStatus.Pending
-                it[PeppolTransmissionsTable.invoiceId] = invoiceId?.let { inv -> Uuid.parse(inv.toString()) }
+                it[PeppolTransmissionsTable.invoiceId] = invoiceId?.let { inv -> inv.value }
                 it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId
                 it[PeppolTransmissionsTable.recipientPeppolId] = recipientPeppolId?.value
                 it[PeppolTransmissionsTable.senderPeppolId] = senderPeppolId?.value
@@ -80,7 +80,7 @@ class PeppolTransmissionRepository {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
-                    (PeppolTransmissionsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value) and
                         (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
                 }
                 .limit(1)
@@ -99,7 +99,7 @@ class PeppolTransmissionRepository {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
-                    (PeppolTransmissionsTable.tenantId eq Uuid.parse(tenantId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value) and
                         (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
                 }
                 .map { it.toDto() }
@@ -117,8 +117,8 @@ class PeppolTransmissionRepository {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
-                    (PeppolTransmissionsTable.id eq Uuid.parse(transmissionId.toString())) and
-                        (PeppolTransmissionsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (PeppolTransmissionsTable.id eq transmissionId.value) and
+                        (PeppolTransmissionsTable.tenantId eq tenantId.value)
                 }
                 .map { it.toDto() }
                 .singleOrNull()
@@ -135,8 +135,8 @@ class PeppolTransmissionRepository {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
-                    (PeppolTransmissionsTable.invoiceId eq Uuid.parse(invoiceId.toString())) and
-                        (PeppolTransmissionsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (PeppolTransmissionsTable.invoiceId eq invoiceId.value) and
+                        (PeppolTransmissionsTable.tenantId eq tenantId.value)
                 }
                 .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.DESC)
                 .map { it.toDto() }
@@ -156,7 +156,7 @@ class PeppolTransmissionRepository {
     ): Result<List<PeppolTransmissionDto>> = runCatching {
         dbQuery {
             var query = PeppolTransmissionsTable.selectAll()
-                .where { PeppolTransmissionsTable.tenantId eq Uuid.parse(tenantId.toString()) }
+                .where { PeppolTransmissionsTable.tenantId eq tenantId.value }
 
             direction?.let {
                 query = query.andWhere { PeppolTransmissionsTable.direction eq it }
@@ -191,8 +191,8 @@ class PeppolTransmissionRepository {
 
         dbQuery {
             PeppolTransmissionsTable.update({
-                (PeppolTransmissionsTable.id eq Uuid.parse(transmissionId.toString())) and
-                    (PeppolTransmissionsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (PeppolTransmissionsTable.id eq transmissionId.value) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value)
             }) {
                 it[PeppolTransmissionsTable.status] = status
                 it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId
@@ -204,15 +204,15 @@ class PeppolTransmissionRepository {
             }
 
             PeppolTransmissionsTable.selectAll()
-                .where { PeppolTransmissionsTable.id eq Uuid.parse(transmissionId.toString()) }
+                .where { PeppolTransmissionsTable.id eq transmissionId.value }
                 .map { it.toDto() }
                 .single()
         }
     }
 
     private fun ResultRow.toDto(): PeppolTransmissionDto = PeppolTransmissionDto(
-        id = PeppolTransmissionId.parse(this[PeppolTransmissionsTable.id].value.toString()),
-        tenantId = TenantId.parse(this[PeppolTransmissionsTable.tenantId].toString()),
+        id = PeppolTransmissionId(this[PeppolTransmissionsTable.id].value),
+        tenantId = TenantId(this[PeppolTransmissionsTable.tenantId]),
         direction = this[PeppolTransmissionsTable.direction],
         documentType = this[PeppolTransmissionsTable.documentType],
         status = this[PeppolTransmissionsTable.status],

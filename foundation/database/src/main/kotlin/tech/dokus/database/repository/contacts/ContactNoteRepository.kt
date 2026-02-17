@@ -43,8 +43,8 @@ class ContactNoteRepository {
         dbQuery {
             // Verify contact exists and belongs to tenant
             val contactExists = ContactsTable.selectAll().where {
-                (ContactsTable.id eq Uuid.parse(contactId.toString())) and
-                    (ContactsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactsTable.id eq contactId.value) and
+                    (ContactsTable.tenantId eq tenantId.value)
             }.count() > 0
 
             if (!contactExists) {
@@ -52,17 +52,17 @@ class ContactNoteRepository {
             }
 
             val noteId = ContactNotesTable.insertAndGetId {
-                it[ContactNotesTable.tenantId] = Uuid.parse(tenantId.toString())
-                it[ContactNotesTable.contactId] = Uuid.parse(contactId.toString())
+                it[ContactNotesTable.tenantId] = tenantId.value
+                it[ContactNotesTable.contactId] = contactId.value
                 it[ContactNotesTable.content] = content
-                it[ContactNotesTable.authorId] = authorId?.let { id -> Uuid.parse(id.toString()) }
+                it[ContactNotesTable.authorId] = authorId?.let { id -> id.value }
                 it[ContactNotesTable.authorName] = authorName
             }
 
             // Fetch and return the created note
             ContactNotesTable.selectAll().where {
                 (ContactNotesTable.id eq noteId.value) and
-                    (ContactNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (ContactNotesTable.tenantId eq tenantId.value)
             }.single().let { row ->
                 mapRowToContactNoteDto(row)
             }
@@ -79,8 +79,8 @@ class ContactNoteRepository {
     ): Result<ContactNoteDto?> = runCatching {
         dbQuery {
             ContactNotesTable.selectAll().where {
-                (ContactNotesTable.id eq Uuid.parse(noteId.toString())) and
-                    (ContactNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactNotesTable.id eq noteId.value) and
+                    (ContactNotesTable.tenantId eq tenantId.value)
             }.singleOrNull()?.let { row ->
                 mapRowToContactNoteDto(row)
             }
@@ -99,8 +99,8 @@ class ContactNoteRepository {
     ): Result<PaginatedResponse<ContactNoteDto>> = runCatching {
         dbQuery {
             val query = ContactNotesTable.selectAll().where {
-                (ContactNotesTable.contactId eq Uuid.parse(contactId.toString())) and
-                    (ContactNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactNotesTable.contactId eq contactId.value) and
+                    (ContactNotesTable.tenantId eq tenantId.value)
             }
 
             val total = query.count()
@@ -130,8 +130,8 @@ class ContactNoteRepository {
     ): Result<Long> = runCatching {
         dbQuery {
             ContactNotesTable.selectAll().where {
-                (ContactNotesTable.contactId eq Uuid.parse(contactId.toString())) and
-                    (ContactNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactNotesTable.contactId eq contactId.value) and
+                    (ContactNotesTable.tenantId eq tenantId.value)
             }.count()
         }
     }
@@ -148,8 +148,8 @@ class ContactNoteRepository {
         dbQuery {
             // Verify note exists and belongs to tenant
             val exists = ContactNotesTable.selectAll().where {
-                (ContactNotesTable.id eq Uuid.parse(noteId.toString())) and
-                    (ContactNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactNotesTable.id eq noteId.value) and
+                    (ContactNotesTable.tenantId eq tenantId.value)
             }.count() > 0
 
             if (!exists) {
@@ -157,16 +157,16 @@ class ContactNoteRepository {
             }
 
             ContactNotesTable.update({
-                (ContactNotesTable.id eq Uuid.parse(noteId.toString())) and
-                    (ContactNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactNotesTable.id eq noteId.value) and
+                    (ContactNotesTable.tenantId eq tenantId.value)
             }) {
                 it[ContactNotesTable.content] = content
             }
 
             // Fetch and return the updated note
             ContactNotesTable.selectAll().where {
-                (ContactNotesTable.id eq Uuid.parse(noteId.toString())) and
-                    (ContactNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactNotesTable.id eq noteId.value) and
+                    (ContactNotesTable.tenantId eq tenantId.value)
             }.single().let { row ->
                 mapRowToContactNoteDto(row)
             }
@@ -183,8 +183,8 @@ class ContactNoteRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val deletedRows = ContactNotesTable.deleteWhere {
-                (ContactNotesTable.id eq Uuid.parse(noteId.toString())) and
-                    (ContactNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactNotesTable.id eq noteId.value) and
+                    (ContactNotesTable.tenantId eq tenantId.value)
             }
             deletedRows > 0
         }
@@ -201,8 +201,8 @@ class ContactNoteRepository {
     ): Result<Int> = runCatching {
         dbQuery {
             ContactNotesTable.deleteWhere {
-                (ContactNotesTable.contactId eq Uuid.parse(contactId.toString())) and
-                    (ContactNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (ContactNotesTable.contactId eq contactId.value) and
+                    (ContactNotesTable.tenantId eq tenantId.value)
             }
         }
     }
@@ -212,9 +212,9 @@ class ContactNoteRepository {
      */
     private fun mapRowToContactNoteDto(row: ResultRow): ContactNoteDto {
         return ContactNoteDto(
-            id = ContactNoteId.parse(row[ContactNotesTable.id].value.toString()),
-            contactId = ContactId.parse(row[ContactNotesTable.contactId].toString()),
-            tenantId = TenantId.parse(row[ContactNotesTable.tenantId].toString()),
+            id = ContactNoteId(row[ContactNotesTable.id].value),
+            contactId = ContactId(row[ContactNotesTable.contactId]),
+            tenantId = TenantId(row[ContactNotesTable.tenantId]),
             content = row[ContactNotesTable.content],
             authorId = row[ContactNotesTable.authorId]?.let { UserId(it.toString()) },
             authorName = row[ContactNotesTable.authorName],

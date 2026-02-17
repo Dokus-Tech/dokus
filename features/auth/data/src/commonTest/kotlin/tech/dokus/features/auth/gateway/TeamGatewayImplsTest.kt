@@ -16,9 +16,7 @@ import tech.dokus.features.auth.datasource.TeamRemoteDataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 class TeamGatewayImplsTest {
 
     @Test

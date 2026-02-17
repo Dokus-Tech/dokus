@@ -45,8 +45,7 @@ object Mocks {
 
     private val now = LocalDateTime(MockYear, MockMonth, MockDay, MockHour, MockMinute)
 
-    @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-    val sampleClient = ContactDto(
+        val sampleClient = ContactDto(
         id = ContactId.generate(),
         tenantId = TenantId.generate(),
         name = Name("Acme Corporation"),
@@ -71,8 +70,7 @@ object Mocks {
         updatedAt = now
     )
 
-    @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-    val sampleClientWithoutPeppol = ContactDto(
+        val sampleClientWithoutPeppol = ContactDto(
         id = ContactId.generate(),
         tenantId = TenantId.generate(),
         name = Name("Local Business BVBA"),

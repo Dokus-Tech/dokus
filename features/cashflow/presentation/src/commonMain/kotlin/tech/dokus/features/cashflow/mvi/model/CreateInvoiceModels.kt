@@ -11,8 +11,6 @@ import kotlin.math.absoluteValue
 import kotlin.math.round
 import kotlin.random.Random
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
 // Invoice defaults
 private const val DefaultDueDateOffsetDays = 30
 private const val DefaultQuantity = 1.0
@@ -111,8 +109,7 @@ data class CreateInvoiceFormState(
         /**
          * Create initial form state with today's date and default due date.
          */
-        @OptIn(ExperimentalTime::class)
-        fun createInitial(expandedItemId: (String) -> Unit): CreateInvoiceFormState {
+        @OptIn        fun createInitial(expandedItemId: (String) -> Unit): CreateInvoiceFormState {
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val firstItem = InvoiceLineItem()
             expandedItemId(firstItem.id)

@@ -17,7 +17,7 @@ object UserMappers {
      * Maps a ResultRow from UsersTable to User.
      */
     fun ResultRow.toUser(): User = User(
-        id = UserId(this[UsersTable.id].value.toString()),
+        id = UserId(this[UsersTable.id].value),
         email = Email(this[UsersTable.email]),
         firstName = Name(this[UsersTable.firstName]),
         lastName = Name(this[UsersTable.lastName]),
@@ -32,7 +32,7 @@ object UserMappers {
      * Maps a ResultRow from TenantMembersTable to TenantMembership.
      */
     fun ResultRow.toTenantMembership(): TenantMembership = TenantMembership(
-        userId = UserId(this[TenantMembersTable.userId].value.toString()),
+        userId = UserId(this[TenantMembersTable.userId].value),
         tenantId = TenantId(this[TenantMembersTable.tenantId].value),
         role = this[TenantMembersTable.role],
         isActive = this[TenantMembersTable.isActive],

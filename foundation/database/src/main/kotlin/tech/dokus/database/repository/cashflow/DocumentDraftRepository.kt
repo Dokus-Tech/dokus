@@ -93,9 +93,9 @@ class DocumentDraftRepository : DocumentStatusChecker {
         force: Boolean = false
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val docIdUuid = Uuid.parse(documentId.toString())
-        val tenantIdUuid = Uuid.parse(tenantId.toString())
-        val runIdUuid = Uuid.parse(runId.toString())
+        val docIdUuid = documentId.value
+        val tenantIdUuid = tenantId.value
+        val runIdUuid = runId.value
         val keywordsJson = aiKeywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
 
         // Check if draft exists and get current state
@@ -170,8 +170,8 @@ class DocumentDraftRepository : DocumentStatusChecker {
     ): DraftSummary? = newSuspendedTransaction {
         DocumentDraftsTable.selectAll()
             .where {
-                (DocumentDraftsTable.documentId eq Uuid.parse(documentId.toString())) and
-                    (DocumentDraftsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (DocumentDraftsTable.documentId eq documentId.value) and
+                    (DocumentDraftsTable.tenantId eq tenantId.value)
             }
             .map { it.toDraftSummary() }
             .singleOrNull()
@@ -191,8 +191,8 @@ class DocumentDraftRepository : DocumentStatusChecker {
         updatedData: DocumentDraftData
     ): Int? = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val docIdUuid = Uuid.parse(documentId.toString())
-        val tenantIdUuid = Uuid.parse(tenantId.toString())
+        val docIdUuid = documentId.value
+        val tenantIdUuid = tenantId.value
 
         // Get current draft to check version
         val current = DocumentDraftsTable.selectAll()
@@ -221,7 +221,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
             it[extractedData] = json.encodeToString(updatedData)
             it[draftVersion] = newVersion
             it[draftEditedAt] = now
-            it[draftEditedBy] = Uuid.parse(userId.toString())
+            it[draftEditedBy] = userId.value
             if (nextStatus != currentStatus) {
                 it[documentStatus] = nextStatus
             }
@@ -242,8 +242,8 @@ class DocumentDraftRepository : DocumentStatusChecker {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentDraftsTable.update({
-            (DocumentDraftsTable.documentId eq Uuid.parse(documentId.toString())) and
-                (DocumentDraftsTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentDraftsTable.documentId eq documentId.value) and
+                (DocumentDraftsTable.tenantId eq tenantId.value)
         }) {
             it[documentStatus] = status
             if (status != DocumentStatus.Rejected) {
@@ -266,8 +266,8 @@ class DocumentDraftRepository : DocumentStatusChecker {
         matchEvidence: MatchEvidence? = null
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val docIdUuid = Uuid.parse(documentId.toString())
-        val tenantIdUuid = Uuid.parse(tenantId.toString())
+        val docIdUuid = documentId.value
+        val tenantIdUuid = tenantId.value
         val evidenceJson = matchEvidence?.let { json.encodeToString(it) }
 
         val current = DocumentDraftsTable.selectAll()
@@ -285,7 +285,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
                 (DocumentDraftsTable.tenantId eq tenantIdUuid)
         }) {
             if (contactId != null) {
-                it[linkedContactId] = Uuid.parse(contactId.toString())
+                it[linkedContactId] = contactId.value
                 it[counterpartyIntent] = CounterpartyIntent.None
                 it[linkedContactSource] = source
                 if (evidenceJson != null) {
@@ -316,8 +316,8 @@ class DocumentDraftRepository : DocumentStatusChecker {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentDraftsTable.update({
-            (DocumentDraftsTable.documentId eq Uuid.parse(documentId.toString())) and
-                (DocumentDraftsTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentDraftsTable.documentId eq documentId.value) and
+                (DocumentDraftsTable.tenantId eq tenantId.value)
         }) {
             it[documentStatus] = DocumentStatus.Rejected
             it[rejectReason] = reason
@@ -338,7 +338,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
         page: Int = 0,
         limit: Int = 20
     ): Pair<List<DraftSummary>, Long> = newSuspendedTransaction {
-        val tenantIdUuid = Uuid.parse(tenantId.toString())
+        val tenantIdUuid = tenantId.value
 
         val baseQuery = DocumentDraftsTable.selectAll()
             .where {
@@ -380,14 +380,14 @@ class DocumentDraftRepository : DocumentStatusChecker {
         val snapshotJson = counterpartySnapshot?.let { json.encodeToString(it) }
 
         DocumentDraftsTable.update({
-            (DocumentDraftsTable.documentId eq Uuid.parse(documentId.toString())) and
-                (DocumentDraftsTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentDraftsTable.documentId eq documentId.value) and
+                (DocumentDraftsTable.tenantId eq tenantId.value)
         }) {
             it[DocumentDraftsTable.contactSuggestions] = suggestionsJson
             it[DocumentDraftsTable.counterpartySnapshot] = snapshotJson
 
             if (linkedContactId != null) {
-                it[DocumentDraftsTable.linkedContactId] = Uuid.parse(linkedContactId.toString())
+                it[DocumentDraftsTable.linkedContactId] = linkedContactId.value
                 it[DocumentDraftsTable.linkedContactSource] = linkedContactSource
                 it[DocumentDraftsTable.counterpartyIntent] = CounterpartyIntent.None
                 it[DocumentDraftsTable.matchEvidence] = matchEvidence?.let { evidence -> json.encodeToString(evidence) }
@@ -410,8 +410,8 @@ class DocumentDraftRepository : DocumentStatusChecker {
         tenantId: TenantId
     ): Boolean = newSuspendedTransaction {
         DocumentDraftsTable.deleteWhere {
-            (DocumentDraftsTable.documentId eq Uuid.parse(documentId.toString())) and
-                (DocumentDraftsTable.tenantId eq Uuid.parse(tenantId.toString()))
+            (DocumentDraftsTable.documentId eq documentId.value) and
+                (DocumentDraftsTable.tenantId eq tenantId.value)
         } > 0
     }
 
@@ -431,8 +431,8 @@ class DocumentDraftRepository : DocumentStatusChecker {
     ): Boolean = newSuspendedTransaction {
         val draft = DocumentDraftsTable.selectAll()
             .where {
-                (DocumentDraftsTable.documentId eq Uuid.parse(documentId.toString())) and
-                    (DocumentDraftsTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (DocumentDraftsTable.documentId eq documentId.value) and
+                    (DocumentDraftsTable.tenantId eq tenantId.value)
             }
             .singleOrNull()
 
@@ -441,7 +441,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
 
     private fun ResultRow.toDraftSummary(): DraftSummary {
         return DraftSummary(
-            documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
+            documentId = DocumentId(this[DocumentDraftsTable.documentId]),
             tenantId = TenantId(this[DocumentDraftsTable.tenantId]),
             documentStatus = this[DocumentDraftsTable.documentStatus],
             documentType = this[DocumentDraftsTable.documentType],

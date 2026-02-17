@@ -30,8 +30,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
-import kotlin.time.ExperimentalTime
-
 /**
  * Repository for ingestion run operations in the processor worker.
  *
@@ -79,8 +77,7 @@ class ProcessorIngestionRepository {
      * Mark an ingestion run as currently being processed.
      * Sets status to Processing and records the AI provider.
      */
-    @OptIn(ExperimentalTime::class)
-    suspend fun markAsProcessing(runId: String, provider: String): Boolean =
+    @OptIn    suspend fun markAsProcessing(runId: String, provider: String): Boolean =
         newSuspendedTransaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
             DocumentIngestionRunsTable.update({
@@ -270,8 +267,7 @@ class ProcessorIngestionRepository {
     /**
      * Mark an ingestion run as failed.
      */
-    @OptIn(ExperimentalTime::class)
-    suspend fun markAsFailed(runId: String, error: String): Boolean =
+    @OptIn    suspend fun markAsFailed(runId: String, error: String): Boolean =
         newSuspendedTransaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
             DocumentIngestionRunsTable.update({
@@ -292,8 +288,7 @@ class ProcessorIngestionRepository {
      *
      * @return Number of runs recovered
      */
-    @OptIn(ExperimentalTime::class)
-    suspend fun recoverStaleRuns(): Int =
+    @OptIn    suspend fun recoverStaleRuns(): Int =
         newSuspendedTransaction {
             val cutoff = (Clock.System.now() - DocumentProcessingConstants.INGESTION_RUN_TIMEOUT)
                 
@@ -323,8 +318,7 @@ class ProcessorIngestionRepository {
      * @param chunksCount Number of chunks created (for SUCCEEDED)
      * @param errorMessage Error message (for FAILED)
      */
-    @OptIn(ExperimentalTime::class)
-    suspend fun updateIndexingStatus(
+    @OptIn    suspend fun updateIndexingStatus(
         runId: String,
         status: IndexingStatus,
         chunksCount: Int? = null,

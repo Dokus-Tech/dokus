@@ -31,7 +31,7 @@ class CashflowProjectionReconciliationService(
             is FinancialDocumentDto.InvoiceDto -> {
                 val ensuredEntry = cashflowEntriesService.createFromInvoice(
                     tenantId = tenantId,
-                    invoiceId = Uuid.parse(entity.id.toString()),
+                    invoiceId = entity.id.value,
                     documentId = documentId,
                     dueDate = entity.dueDate,
                     amountGross = entity.totalAmount,
@@ -65,7 +65,7 @@ class CashflowProjectionReconciliationService(
 
             is FinancialDocumentDto.ExpenseDto -> cashflowEntriesService.createFromExpense(
                 tenantId = tenantId,
-                expenseId = Uuid.parse(entity.id.toString()),
+                expenseId = entity.id.value,
                 documentId = documentId,
                 expenseDate = entity.date,
                 amountGross = entity.amount,

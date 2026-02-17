@@ -14,13 +14,10 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.utils.json
 import tech.dokus.features.contacts.cache.ContactsCacheDatabase
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
 /**
  * SQLDelight implementation of ContactLocalDataSource.
  * Stores contacts as JSON blobs for simplicity and flexibility.
  */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class, ExperimentalTime::class)
 internal class ContactLocalDataSourceImpl(
     private val database: ContactsCacheDatabase,
 ) : ContactLocalDataSource {

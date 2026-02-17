@@ -8,7 +8,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 // =============================================================================
@@ -18,7 +17,6 @@ import kotlin.uuid.Uuid
 /**
  * Strongly typed ID for chat messages.
  */
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class ChatMessageId(val value: Uuid) {
@@ -34,7 +32,6 @@ value class ChatMessageId(val value: Uuid) {
  * Strongly typed ID for chat sessions.
  * Groups messages into conversations.
  */
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class ChatSessionId(val value: Uuid) {

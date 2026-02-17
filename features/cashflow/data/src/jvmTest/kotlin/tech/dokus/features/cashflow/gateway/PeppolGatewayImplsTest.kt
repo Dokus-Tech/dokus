@@ -23,9 +23,7 @@ import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 class PeppolGatewayImplsTest {
 
     @Test

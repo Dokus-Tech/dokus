@@ -4,8 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
 /**
  * Monitors connection to the Dokus server based on actual API request results.
  *
@@ -21,7 +19,6 @@ import kotlin.time.ExperimentalTime
  * - Detects connection issues immediately when they happen
  * - Works even if the health endpoint doesn't exist
  */
-@OptIn(ExperimentalTime::class)
 class ServerConnectionMonitor {
     private val _isConnected = MutableStateFlow(true) // Assume connected initially
     val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()

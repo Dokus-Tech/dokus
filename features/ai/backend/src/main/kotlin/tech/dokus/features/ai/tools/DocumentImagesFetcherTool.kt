@@ -7,7 +7,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Should not be used as it returns bytearray, which is not correct
@@ -32,8 +31,7 @@ class DocumentImagesFetcherTool(
         """.trimIndent()
 ) {
 
-    @OptIn(ExperimentalUuidApi::class)
-    override suspend fun execute(args: Input): Output {
+    @OptIn    override suspend fun execute(args: Input): Output {
         val document = fetcher(tenantId, DocumentId(args.documentId)).getOrElse {
             return Output.Failure(it.localizedMessage)
         }

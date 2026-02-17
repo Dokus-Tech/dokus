@@ -3,9 +3,6 @@ package tech.dokus.features.contacts.datasource
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
-@OptIn(ExperimentalTime::class)
 internal class ContactCacheDataSourceImpl(
     private val localDataSource: ContactLocalDataSource
 ) : ContactCacheDataSource {

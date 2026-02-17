@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package tech.dokus.foundation.backend.security
 
 import com.auth0.jwt.JWT
@@ -14,7 +12,6 @@ import java.time.Instant
 import java.util.*
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class JwtGenerator(

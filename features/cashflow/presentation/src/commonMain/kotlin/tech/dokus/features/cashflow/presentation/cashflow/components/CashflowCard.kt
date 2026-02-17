@@ -145,7 +145,6 @@ fun CashflowCard(
  * @param document The financial document to display
  * @param modifier Optional modifier for the row
  */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Composable
 private fun CashflowDocumentItem(
     document: FinancialDocumentDto,

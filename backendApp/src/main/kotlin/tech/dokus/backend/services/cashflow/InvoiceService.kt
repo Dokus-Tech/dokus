@@ -163,7 +163,7 @@ class InvoiceService(
         val entry = cashflowEntriesRepository.getBySource(
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,
-            sourceId = Uuid.parse(invoiceId.toString())
+            sourceId = invoiceId.value
         ).getOrNull() ?: return@runCatching
 
         val remaining = update.totalAmount - update.paidAmount

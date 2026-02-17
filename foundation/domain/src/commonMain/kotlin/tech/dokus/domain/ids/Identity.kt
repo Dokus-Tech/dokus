@@ -2,10 +2,8 @@ package tech.dokus.domain.ids
 
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class TenantId(val value: Uuid) {
@@ -19,7 +17,6 @@ value class TenantId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class AddressId(val value: Uuid) {
@@ -33,7 +30,6 @@ value class AddressId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class UserId(val value: Uuid) {
@@ -41,7 +37,6 @@ value class UserId(val value: Uuid) {
 
     override fun toString(): String = value.toString()
 
-    @OptIn(ExperimentalUuidApi::class)
     val uuid: Uuid get() = value
 
     companion object {
@@ -50,7 +45,6 @@ value class UserId(val value: Uuid) {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class SessionId(val value: Uuid) {
@@ -58,16 +52,13 @@ value class SessionId(val value: Uuid) {
 
     override fun toString(): String = value.toString()
 
-    @OptIn(ExperimentalUuidApi::class)
     val uuid: Uuid get() = value
 
     companion object {
-        @OptIn(ExperimentalUuidApi::class)
-        fun generate(): SessionId = SessionId(Uuid.random().toString())
+        fun generate(): SessionId = SessionId(Uuid.random())
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
 value class InvitationId(val value: Uuid) {

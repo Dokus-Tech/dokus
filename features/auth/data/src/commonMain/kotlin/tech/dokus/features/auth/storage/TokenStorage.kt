@@ -4,8 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.sstorage.SecureStorage
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
 /**
  * Token storage implementation using SecureStorage.
  * Provides secure storage for JWT tokens across all platforms.
@@ -96,8 +94,7 @@ class TokenStorage(
     /**
      * Stores all tokens from a login response.
      */
-    @OptIn(ExperimentalTime::class)
-    suspend fun saveTokens(accessToken: String, refreshToken: String, expiresIn: Long) {
+    @OptIn    suspend fun saveTokens(accessToken: String, refreshToken: String, expiresIn: Long) {
         saveAccessToken(accessToken)
         saveRefreshToken(refreshToken)
 

@@ -4,8 +4,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import tech.dokus.domain.ids.AttachmentId
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
 /**
  * Platform-specific function to get the cache directory path.
  * Returns the path to a directory suitable for caching files.
@@ -50,7 +48,6 @@ expect fun listFiles(directory: String): List<String>
  * - Thread-safe operations
  * - On-demand caching (attachments cached when first viewed)
  */
-@OptIn(ExperimentalTime::class)
 class AttachmentCache(
     private val maxSizeBytes: Long = DEFAULT_MAX_SIZE_BYTES
 ) {

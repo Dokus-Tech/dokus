@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package tech.dokus.foundation.backend.security
 
 import com.auth0.jwt.JWT
@@ -16,7 +14,6 @@ import tech.dokus.domain.model.auth.TenantClaimDto
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**

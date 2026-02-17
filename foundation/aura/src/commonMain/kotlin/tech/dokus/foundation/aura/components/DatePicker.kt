@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package tech.dokus.foundation.aura.components
 
 import androidx.compose.material3.DatePicker
@@ -17,7 +15,6 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.action_confirm
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 /**

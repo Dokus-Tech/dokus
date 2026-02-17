@@ -48,8 +48,8 @@ class CreditNoteRepository {
     ): Result<FinancialDocumentDto.CreditNoteDto> = runCatching {
         dbQuery {
             val creditNoteId = CreditNotesTable.insertAndGetId {
-                it[CreditNotesTable.tenantId] = Uuid.parse(tenantId.toString())
-                it[contactId] = Uuid.parse(request.contactId.toString())
+                it[CreditNotesTable.tenantId] = tenantId.value
+                it[contactId] = request.contactId.value
                 it[creditNoteType] = request.creditNoteType
                 it[creditNoteNumber] = request.creditNoteNumber
                 it[issueDate] = request.issueDate
@@ -61,13 +61,13 @@ class CreditNoteRepository {
                 it[status] = CreditNoteStatus.Draft
                 it[reason] = request.reason
                 it[notes] = request.notes
-                it[documentId] = request.documentId?.let { id -> Uuid.parse(id.toString()) }
+                it[documentId] = request.documentId?.let { id -> id.value }
             }
 
             // Fetch and return the created credit note
             CreditNotesTable.selectAll().where {
                 (CreditNotesTable.id eq creditNoteId.value) and
-                    (CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                    (CreditNotesTable.tenantId eq tenantId.value)
             }.single().let { row ->
                 mapRowToDto(row)
             }
@@ -84,8 +84,8 @@ class CreditNoteRepository {
     ): Result<FinancialDocumentDto.CreditNoteDto?> = runCatching {
         dbQuery {
             CreditNotesTable.selectAll().where {
-                (CreditNotesTable.id eq Uuid.parse(creditNoteId.toString())) and
-                    (CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (CreditNotesTable.id eq creditNoteId.value) and
+                    (CreditNotesTable.tenantId eq tenantId.value)
             }.singleOrNull()?.let { row ->
                 mapRowToDto(row)
             }
@@ -108,7 +108,7 @@ class CreditNoteRepository {
     ): Result<PaginatedResponse<FinancialDocumentDto.CreditNoteDto>> = runCatching {
         dbQuery {
             var query = CreditNotesTable.selectAll().where {
-                CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString())
+                CreditNotesTable.tenantId eq tenantId.value
             }
 
             // Apply filters
@@ -120,7 +120,7 @@ class CreditNoteRepository {
             }
             if (contactId != null) {
                 query = query.andWhere {
-                    CreditNotesTable.contactId eq Uuid.parse(contactId.toString())
+                    CreditNotesTable.contactId eq contactId.value
                 }
             }
             if (fromDate != null) {
@@ -159,10 +159,10 @@ class CreditNoteRepository {
     ): Result<FinancialDocumentDto.CreditNoteDto> = runCatching {
         dbQuery {
             val updated = CreditNotesTable.update({
-                (CreditNotesTable.id eq Uuid.parse(creditNoteId.toString())) and
-                    (CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (CreditNotesTable.id eq creditNoteId.value) and
+                    (CreditNotesTable.tenantId eq tenantId.value)
             }) {
-                it[contactId] = Uuid.parse(request.contactId.toString())
+                it[contactId] = request.contactId.value
                 it[creditNoteType] = request.creditNoteType
                 it[creditNoteNumber] = request.creditNoteNumber
                 it[issueDate] = request.issueDate
@@ -173,7 +173,7 @@ class CreditNoteRepository {
                 it[settlementIntent] = request.settlementIntent
                 it[reason] = request.reason
                 it[notes] = request.notes
-                it[documentId] = request.documentId?.let { id -> Uuid.parse(id.toString()) }
+                it[documentId] = request.documentId?.let { id -> id.value }
             }
 
             if (updated == 0) {
@@ -181,8 +181,8 @@ class CreditNoteRepository {
             }
 
             CreditNotesTable.selectAll().where {
-                (CreditNotesTable.id eq Uuid.parse(creditNoteId.toString())) and
-                    (CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (CreditNotesTable.id eq creditNoteId.value) and
+                    (CreditNotesTable.tenantId eq tenantId.value)
             }.single().let { row ->
                 mapRowToDto(row)
             }
@@ -200,8 +200,8 @@ class CreditNoteRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updatedRows = CreditNotesTable.update({
-                (CreditNotesTable.id eq Uuid.parse(creditNoteId.toString())) and
-                    (CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (CreditNotesTable.id eq creditNoteId.value) and
+                    (CreditNotesTable.tenantId eq tenantId.value)
             }) {
                 it[CreditNotesTable.status] = status
             }
@@ -220,8 +220,8 @@ class CreditNoteRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updatedRows = CreditNotesTable.update({
-                (CreditNotesTable.id eq Uuid.parse(creditNoteId.toString())) and
-                    (CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (CreditNotesTable.id eq creditNoteId.value) and
+                    (CreditNotesTable.tenantId eq tenantId.value)
             }) {
                 it[CreditNotesTable.settlementIntent] = settlementIntent
             }
@@ -238,8 +238,8 @@ class CreditNoteRepository {
         documentId: DocumentId
     ): FinancialDocumentDto.CreditNoteDto? = dbQuery {
         CreditNotesTable.selectAll().where {
-            (CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString())) and
-                (CreditNotesTable.documentId eq Uuid.parse(documentId.toString()))
+            (CreditNotesTable.tenantId eq tenantId.value) and
+                (CreditNotesTable.documentId eq documentId.value)
         }.singleOrNull()?.let { row ->
             mapRowToDto(row)
         }
@@ -255,8 +255,8 @@ class CreditNoteRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             val deletedRows = CreditNotesTable.deleteWhere {
-                (CreditNotesTable.id eq Uuid.parse(creditNoteId.toString())) and
-                    (CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (CreditNotesTable.id eq creditNoteId.value) and
+                    (CreditNotesTable.tenantId eq tenantId.value)
             }
             deletedRows > 0
         }
@@ -272,17 +272,17 @@ class CreditNoteRepository {
     ): Result<Boolean> = runCatching {
         dbQuery {
             CreditNotesTable.selectAll().where {
-                (CreditNotesTable.id eq Uuid.parse(creditNoteId.toString())) and
-                    (CreditNotesTable.tenantId eq Uuid.parse(tenantId.toString()))
+                (CreditNotesTable.id eq creditNoteId.value) and
+                    (CreditNotesTable.tenantId eq tenantId.value)
             }.count() > 0
         }
     }
 
     private fun mapRowToDto(row: org.jetbrains.exposed.v1.core.ResultRow): FinancialDocumentDto.CreditNoteDto {
         return FinancialDocumentDto.CreditNoteDto(
-            id = CreditNoteId.parse(row[CreditNotesTable.id].value.toString()),
-            tenantId = TenantId.parse(row[CreditNotesTable.tenantId].toString()),
-            contactId = ContactId.parse(row[CreditNotesTable.contactId].toString()),
+            id = CreditNoteId(row[CreditNotesTable.id].value),
+            tenantId = TenantId(row[CreditNotesTable.tenantId]),
+            contactId = ContactId(row[CreditNotesTable.contactId]),
             creditNoteType = row[CreditNotesTable.creditNoteType],
             creditNoteNumber = row[CreditNotesTable.creditNoteNumber],
             issueDate = row[CreditNotesTable.issueDate],

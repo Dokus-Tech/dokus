@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-
 package tech.dokus.features.cashflow.presentation.cashflow.components.invoice
 
 import androidx.compose.animation.AnimatedVisibility

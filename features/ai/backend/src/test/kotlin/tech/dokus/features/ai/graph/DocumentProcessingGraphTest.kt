@@ -21,11 +21,10 @@ import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
-import kotlin.uuid.ExperimentalUuidApi
 
 class DocumentProcessingGraphTest {
 
-    @OptIn(ExperimentalUuidApi::class, ExperimentalAgentsApi::class)
+    @OptIn(ExperimentalAgentsApi::class)
     @Tag("ai")
     @Disabled("Requires running AI model endpoint (LM Studio / OpenAI)")
     @Test
