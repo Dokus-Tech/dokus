@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -24,8 +23,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -35,6 +32,10 @@ import tech.dokus.aura.resources.documents_empty_title
 import tech.dokus.aura.resources.documents_empty_upload_cta
 import tech.dokus.aura.resources.documents_filter_no_match
 import tech.dokus.aura.resources.documents_upload
+import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
+import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
+import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
+import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentFilterButtons
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentMobileRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableHeaderRow
@@ -42,10 +43,6 @@ import tech.dokus.features.cashflow.presentation.documents.components.DocumentTa
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
-import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
-import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
-import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
-import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
@@ -60,12 +57,8 @@ internal fun DocumentsScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
+    ) {
+        Box(Modifier.fillMaxSize()) {
             when (state) {
                 is DocumentsState.Loading -> {
                     Box(

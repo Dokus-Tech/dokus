@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.viewmodel.NotificationFilterTab
 import tech.dokus.app.viewmodel.TodayAction
@@ -60,7 +59,7 @@ internal fun TodayScreen(
         }
     }
 
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
+    val state by container.store.subscribe { action ->
         when (action) {
             is TodayAction.NavigateToDocument -> {
                 navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId))
@@ -98,11 +97,10 @@ internal fun TodayScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { contentPadding ->
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(contentPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(spacing),
             verticalArrangement = Arrangement.spacedBy(spacing)

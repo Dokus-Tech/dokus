@@ -82,12 +82,8 @@ internal fun CashflowLedgerScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
+    ) {
+        Box(Modifier.fillMaxSize()) {
             when (state) {
                 is CashflowLedgerState.Loading -> {
                     CashflowLedgerSkeleton(
@@ -365,11 +361,13 @@ private fun getEmptyStateTitle(
         DirectionFilter.In -> stringResource(Res.string.cashflow_empty_upcoming_in)
         DirectionFilter.Out -> stringResource(Res.string.cashflow_empty_upcoming_out)
     }
+
     CashflowViewMode.Overdue -> when (direction) {
         DirectionFilter.All -> stringResource(Res.string.cashflow_empty_overdue)
         DirectionFilter.In -> stringResource(Res.string.cashflow_empty_overdue_in)
         DirectionFilter.Out -> stringResource(Res.string.cashflow_empty_overdue_out)
     }
+
     CashflowViewMode.History -> when (direction) {
         DirectionFilter.All -> stringResource(Res.string.cashflow_empty_history)
         DirectionFilter.In -> stringResource(Res.string.cashflow_empty_history_in)
