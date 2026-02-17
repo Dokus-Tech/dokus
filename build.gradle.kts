@@ -1,5 +1,6 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
@@ -17,6 +18,12 @@ plugins {
 }
 
 subprojects {
+    tasks.withType<KotlinCompilationTask<*>>().configureEach {
+        compilerOptions {
+            optIn.add("kotlin.uuid.ExperimentalUuidApi")
+        }
+    }
+
     val detektConfig = files("$rootDir/config/detekt/detekt.yml")
     fun org.gradle.api.Project.configureDetekt() {
         extensions.configure<DetektExtension> {
