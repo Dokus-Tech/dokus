@@ -393,7 +393,7 @@ private fun NotesBottomSheetContent(
                     .height(ContentMinHeight),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                DokusLoader()
             }
         }
 
@@ -482,7 +482,7 @@ private fun NotesBottomSheetContent(
                     .height(ContentMinHeight),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                DokusLoader()
             }
         }
     }

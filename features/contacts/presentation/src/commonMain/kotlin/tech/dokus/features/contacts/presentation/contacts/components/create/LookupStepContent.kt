@@ -267,7 +267,7 @@ private fun UnifiedResultsList(
                             .height(120.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        DokusLoader()
                     }
                 }
             }
