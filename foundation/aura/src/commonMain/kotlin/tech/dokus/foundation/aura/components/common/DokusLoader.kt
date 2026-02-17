@@ -179,29 +179,45 @@ private fun lerpColor(a: Color, b: Color, fraction: Float): Color {
 }
 
 /**
+ * Standard sizes for the Dokus loading animation.
+ *
+ * Enforces design consistency — screens must pick one of these rather than arbitrary sizes.
+ */
+enum class DokusLoaderSize(internal val canvasDp: Dp, internal val particles: Int) {
+    /** 24.dp — inline next to text, dropdowns, list-loading indicators. */
+    Small(canvasDp = 24.dp, particles = 100),
+
+    /** 72.dp — section or panel loading. */
+    Medium(canvasDp = 72.dp, particles = 200),
+
+    /** 120.dp — full-screen / page loading. */
+    Large(canvasDp = 120.dp, particles = 400),
+}
+
+/**
  * Dokus branded loading animation — particles morph from chaos (sphere) into an ordered cube.
  *
  * Reinforces the "chaos to order" brand metaphor. Theme-adaptive with accessibility fallbacks.
  *
  * @param modifier Modifier for layout
- * @param size Canvas size (default 120.dp for full-screen, use smaller for inline)
- * @param particleCount Number of particles (scale down for smaller sizes)
+ * @param size Standard loader size (default [DokusLoaderSize.Large])
  * @param speed Animation speed multiplier
  */
 @Composable
 fun DokusLoader(
     modifier: Modifier = Modifier,
-    size: Dp = 120.dp,
-    particleCount: Int = 400,
+    size: DokusLoaderSize = DokusLoaderSize.Large,
     speed: Float = 1f,
 ) {
+    val canvasSize = size.canvasDp
+    val particleCount = size.particles
     if (LocalInspectionMode.current) {
-        StaticLoaderPlaceholder(modifier = modifier, size = size)
+        StaticLoaderPlaceholder(modifier = modifier, size = canvasSize)
         return
     }
 
     if (LocalReduceMotion.current) {
-        ReducedMotionLoader(modifier = modifier, size = size)
+        ReducedMotionLoader(modifier = modifier, size = canvasSize)
         return
     }
 
@@ -230,7 +246,7 @@ fun DokusLoader(
         }
     }
 
-    Canvas(modifier = modifier.size(size)) {
+    Canvas(modifier = modifier.size(canvasSize)) {
         val centerX = this.size.width / 2f
         val centerY = this.size.height / 2f
         val scale = this.size.minDimension / 2f
