@@ -56,7 +56,7 @@ internal class CreateInvoiceContainer(
 
     private val logger = Logger.forClass<CreateInvoiceContainer>()
 
-    @OptIn    override val store: Store<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> =
+override val store: Store<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> =
         store(createInitialState()) {
             reduce { intent ->
                 when (intent) {
@@ -427,7 +427,7 @@ internal class CreateInvoiceContainer(
         }
     }
 
-    @OptIn    private suspend fun CreateInvoiceCtx.handleResetForm() {
+private suspend fun CreateInvoiceCtx.handleResetForm() {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val firstItem = InvoiceLineItem()
 
@@ -544,7 +544,7 @@ internal class CreateInvoiceContainer(
         return formState.selectedClient != null
     }
 
-    @OptIn    private fun createInitialState(): CreateInvoiceState.Editing {
+private fun createInitialState(): CreateInvoiceState.Editing {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val firstItem = InvoiceLineItem()
 

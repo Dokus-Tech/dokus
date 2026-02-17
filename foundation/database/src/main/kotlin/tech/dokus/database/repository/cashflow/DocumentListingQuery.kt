@@ -1,7 +1,5 @@
 
 package tech.dokus.database.repository.cashflow
-import kotlin.uuid.Uuid
-
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -15,8 +13,8 @@ import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.core.max
-import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -89,15 +87,23 @@ internal object DocumentListingQuery {
                         processingTieBreak
                             .select(processingTieBreak[DocumentIngestionRunsTable.id])
                             .where {
-                                (processingTieBreak[DocumentIngestionRunsTable.documentId] eq
-                                    DocumentIngestionRunsTable.documentId) and
-                                    (processingTieBreak[DocumentIngestionRunsTable.tenantId] eq
-                                        DocumentIngestionRunsTable.tenantId) and
+                                (
+                                    processingTieBreak[DocumentIngestionRunsTable.documentId] eq
+                                        DocumentIngestionRunsTable.documentId
+                                    ) and
+                                    (
+                                        processingTieBreak[DocumentIngestionRunsTable.tenantId] eq
+                                            DocumentIngestionRunsTable.tenantId
+                                        ) and
                                     (processingTieBreak[DocumentIngestionRunsTable.status] eq IngestionStatus.Processing) and
-                                    (processingTieBreak[DocumentIngestionRunsTable.startedAt] eq
-                                        DocumentIngestionRunsTable.startedAt) and
-                                    (processingTieBreak[DocumentIngestionRunsTable.id] greater
-                                        DocumentIngestionRunsTable.id)
+                                    (
+                                        processingTieBreak[DocumentIngestionRunsTable.startedAt] eq
+                                            DocumentIngestionRunsTable.startedAt
+                                        ) and
+                                    (
+                                        processingTieBreak[DocumentIngestionRunsTable.id] greater
+                                            DocumentIngestionRunsTable.id
+                                        )
                             }
                     )
                 )
@@ -131,15 +137,23 @@ internal object DocumentListingQuery {
                         finishedTieBreak
                             .select(finishedTieBreak[DocumentIngestionRunsTable.id])
                             .where {
-                                (finishedTieBreak[DocumentIngestionRunsTable.documentId] eq
-                                    DocumentIngestionRunsTable.documentId) and
-                                    (finishedTieBreak[DocumentIngestionRunsTable.tenantId] eq
-                                        DocumentIngestionRunsTable.tenantId) and
+                                (
+                                    finishedTieBreak[DocumentIngestionRunsTable.documentId] eq
+                                        DocumentIngestionRunsTable.documentId
+                                    ) and
+                                    (
+                                        finishedTieBreak[DocumentIngestionRunsTable.tenantId] eq
+                                            DocumentIngestionRunsTable.tenantId
+                                        ) and
                                     (finishedTieBreak[DocumentIngestionRunsTable.status] inList finishedStatuses) and
-                                    (finishedTieBreak[DocumentIngestionRunsTable.finishedAt] eq
-                                        DocumentIngestionRunsTable.finishedAt) and
-                                    (finishedTieBreak[DocumentIngestionRunsTable.id] greater
-                                        DocumentIngestionRunsTable.id)
+                                    (
+                                        finishedTieBreak[DocumentIngestionRunsTable.finishedAt] eq
+                                            DocumentIngestionRunsTable.finishedAt
+                                        ) and
+                                    (
+                                        finishedTieBreak[DocumentIngestionRunsTable.id] greater
+                                            DocumentIngestionRunsTable.id
+                                        )
                             }
                     )
                 )
@@ -172,15 +186,23 @@ internal object DocumentListingQuery {
                         queuedTieBreak
                             .select(queuedTieBreak[DocumentIngestionRunsTable.id])
                             .where {
-                                (queuedTieBreak[DocumentIngestionRunsTable.documentId] eq
-                                    DocumentIngestionRunsTable.documentId) and
-                                    (queuedTieBreak[DocumentIngestionRunsTable.tenantId] eq
-                                        DocumentIngestionRunsTable.tenantId) and
+                                (
+                                    queuedTieBreak[DocumentIngestionRunsTable.documentId] eq
+                                        DocumentIngestionRunsTable.documentId
+                                    ) and
+                                    (
+                                        queuedTieBreak[DocumentIngestionRunsTable.tenantId] eq
+                                            DocumentIngestionRunsTable.tenantId
+                                        ) and
                                     (queuedTieBreak[DocumentIngestionRunsTable.status] eq IngestionStatus.Queued) and
-                                    (queuedTieBreak[DocumentIngestionRunsTable.queuedAt] eq
-                                        DocumentIngestionRunsTable.queuedAt) and
-                                    (queuedTieBreak[DocumentIngestionRunsTable.id] greater
-                                        DocumentIngestionRunsTable.id)
+                                    (
+                                        queuedTieBreak[DocumentIngestionRunsTable.queuedAt] eq
+                                            DocumentIngestionRunsTable.queuedAt
+                                        ) and
+                                    (
+                                        queuedTieBreak[DocumentIngestionRunsTable.id] greater
+                                            DocumentIngestionRunsTable.id
+                                        )
                             }
                     )
                 )
@@ -190,7 +212,12 @@ internal object DocumentListingQuery {
         val finishedRun = DocumentIngestionRunsTable.alias("finished_run")
 
         val join = DocumentsTable
-            .join(DocumentDraftsTable, joinType = JoinType.LEFT, onColumn = DocumentsTable.id, otherColumn = DocumentDraftsTable.documentId) {
+            .join(
+                DocumentDraftsTable,
+                joinType = JoinType.LEFT,
+                onColumn = DocumentsTable.id,
+                otherColumn = DocumentDraftsTable.documentId
+            ) {
                 DocumentDraftsTable.tenantId eq DocumentsTable.tenantId
             }
             .join(processingSelected, joinType = JoinType.LEFT, additionalConstraint = {
@@ -262,7 +289,7 @@ internal object DocumentListingQuery {
                 .replace("\\", "\\\\")
                 .replace("%", "\\%")
                 .replace("_", "\\_")
-            whereOp = whereOp and (LowerCase(DocumentsTable.filename) like "%${escaped}%")
+            whereOp = whereOp and (LowerCase(DocumentsTable.filename) like "%$escaped%")
         }
 
         val requiresDraft = effectiveDocumentStatus != null || documentType != null
@@ -307,12 +334,12 @@ internal object DocumentListingQuery {
 
                 whereOp =
                     whereOp and
-                        draftNotRejected and
-                        (
-                            hasPendingMatchReview or
-                                confirmedButNoEntity or
-                                (isNotConfirmed and (ingestionNeedsAttention or draftNeedsReview or succeededButNoDraft))
-                            )
+                    draftNotRejected and
+                    (
+                        hasPendingMatchReview or
+                            confirmedButNoEntity or
+                            (isNotConfirmed and (ingestionNeedsAttention or draftNeedsReview or succeededButNoDraft))
+                        )
             }
         }
 
@@ -434,7 +461,9 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toDraftSummary(): DraftSumma
         linkedContactSource = this[DocumentDraftsTable.linkedContactSource],
         counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
         rejectReason = this[DocumentDraftsTable.rejectReason],
-        lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(it.toString()) },
+        lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(
+            it.toString()
+        ) },
         createdAt = this[DocumentDraftsTable.createdAt],
         updatedAt = this[DocumentDraftsTable.updatedAt]
     )

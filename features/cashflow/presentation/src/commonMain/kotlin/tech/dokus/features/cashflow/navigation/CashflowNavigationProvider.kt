@@ -37,7 +37,7 @@ internal object CashflowNavigationProvider : NavigationProvider {
         composable<CashFlowDestination.CashflowLedger> { backStackEntry ->
             val route = backStackEntry.toRoute<CashFlowDestination.CashflowLedger>()
 
-            @OptIn            val entryId = route.highlightEntryId?.let { CashflowEntryId(Uuid.parse(it)) }
+val entryId = route.highlightEntryId?.let { CashflowEntryId(Uuid.parse(it)) }
             CashflowLedgerRoute(highlightEntryId = entryId)
         }
         composable<SettingsDestination.PeppolRegistration> {

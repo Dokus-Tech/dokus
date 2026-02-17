@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.peppol
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -16,6 +13,8 @@ import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.foundation.backend.database.dbQuery
+import kotlin.time.Clock
+import kotlin.uuid.Uuid
 
 /**
  * Repository for Peppol settings.

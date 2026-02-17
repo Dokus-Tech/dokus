@@ -1,6 +1,5 @@
 package tech.dokus.backend.services.auth
 
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -11,6 +10,7 @@ import tech.dokus.database.utils.toKotlinxInstant
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.backend.utils.loggerFor
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 
 class WelcomeEmailService(

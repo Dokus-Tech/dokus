@@ -47,4 +47,3 @@ data class RecommandSendDocumentResponse(
     val peppolMessageId: String? = null,
     val envelopeId: String? = null,
 )
-

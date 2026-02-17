@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.cashflow
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -19,23 +16,21 @@ import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.repository.DocumentStatusChecker
 import tech.dokus.domain.utils.json
+import kotlin.time.Clock
 
 /**
  * Data class for draft summary.

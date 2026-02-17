@@ -1,6 +1,5 @@
 package tech.dokus.backend.services.auth
 
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.database.repository.auth.InvitationRepository
@@ -15,6 +14,7 @@ import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.foundation.backend.utils.loggerFor
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
 /**

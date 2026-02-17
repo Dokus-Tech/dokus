@@ -6,7 +6,6 @@ import io.ktor.server.resources.get
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
@@ -35,6 +34,7 @@ import tech.dokus.features.ai.agents.ConversationMessage
 import tech.dokus.features.ai.config.ModelSet
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
+import kotlin.time.Clock
 import tech.dokus.features.ai.agents.MessageRole as AgentMessageRole
 
 /**

@@ -24,15 +24,15 @@ data class SessionDto(
     val revokedBy: String? = null,
     val isCurrent: Boolean = false,
 ) {
-    @OptIn    val idUuid: Uuid get() = id.value
+val idUuid: Uuid get() = id.value
 
-    @OptIn    val createdAtInstant: Instant? get() = createdAt?.let { Instant.fromEpochSeconds(it) }
+val createdAtInstant: Instant? get() = createdAt?.let { Instant.fromEpochSeconds(it) }
 
-    @OptIn    val expiresAtInstant: Instant? get() = expiresAt?.let { Instant.fromEpochSeconds(it) }
+val expiresAtInstant: Instant? get() = expiresAt?.let { Instant.fromEpochSeconds(it) }
 
-    @OptIn    val lastActivityAtInstant: Instant? get() = lastActivityAt?.let { Instant.fromEpochSeconds(it) }
+val lastActivityAtInstant: Instant? get() = lastActivityAt?.let { Instant.fromEpochSeconds(it) }
 
-    @OptIn    val revokedAtInstant: Instant? get() = revokedAt?.let { Instant.fromEpochSeconds(it) }
+val revokedAtInstant: Instant? get() = revokedAt?.let { Instant.fromEpochSeconds(it) }
 }
 
 @Serializable

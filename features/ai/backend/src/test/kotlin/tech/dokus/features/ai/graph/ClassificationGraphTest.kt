@@ -42,7 +42,7 @@ private val folderToDocumentType = mapOf(
 
 class ClassificationGraphTest {
 
-    @OptIn    @Tag("ai")
+@Tag("ai")
     @TestFactory
     fun `classify documents from fixtures`(): List<DynamicTest> {
         val fixturesPath = "fixtures"

@@ -100,7 +100,7 @@ class PeppolMapper {
             streetName = companyAddress?.streetLine1,
             cityName = companyAddress?.city,
             postalZone = companyAddress?.postalCode,
-            countryCode = companyAddress?.country  // Already ISO-2 string
+            countryCode = companyAddress?.country // Already ISO-2 string
         )
     }
 
@@ -324,5 +324,4 @@ class PeppolMapper {
             null
         }
     }
-
 }

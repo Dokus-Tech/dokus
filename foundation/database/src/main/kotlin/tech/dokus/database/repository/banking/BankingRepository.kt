@@ -1,6 +1,4 @@
 package tech.dokus.database.repository.banking
-import kotlin.uuid.Uuid
-
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow

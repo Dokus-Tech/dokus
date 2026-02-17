@@ -47,4 +47,3 @@ data class RecommandApiPagination(
     val limit: Int,
     val totalPages: Int,
 )
-

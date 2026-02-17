@@ -10,8 +10,8 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**

@@ -1,7 +1,4 @@
 package tech.dokus.backend.services.documents.confirmation
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
@@ -24,6 +21,7 @@ import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.foundation.backend.utils.loggerFor
+import kotlin.time.Clock
 
 /**
  * Confirms invoice documents and projects cashflow from invoice direction.

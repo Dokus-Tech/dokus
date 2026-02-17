@@ -1,6 +1,5 @@
 package tech.dokus.peppol.provider.client
 
-import java.util.Locale
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
@@ -23,7 +22,6 @@ import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCreditNote
 import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
 import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDirection
-import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentSummary
 import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentType
 import tech.dokus.peppol.provider.client.recommand.model.RecommandGetDocumentsResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandInboxDocument
@@ -32,16 +30,17 @@ import tech.dokus.peppol.provider.client.recommand.model.RecommandLine
 import tech.dokus.peppol.provider.client.recommand.model.RecommandParty
 import tech.dokus.peppol.provider.client.recommand.model.RecommandPaymentMeans
 import tech.dokus.peppol.provider.client.recommand.model.RecommandPaymentMethod
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingCreditNote
+import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingInvoice
 import tech.dokus.peppol.provider.client.recommand.model.RecommandSendDocumentRequest
 import tech.dokus.peppol.provider.client.recommand.model.RecommandSendDocumentResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandSendInvoice
-import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingCreditNote
-import tech.dokus.peppol.provider.client.recommand.model.RecommandSelfBillingInvoice
 import tech.dokus.peppol.provider.client.recommand.model.RecommandTotals
 import tech.dokus.peppol.provider.client.recommand.model.RecommandVat
 import tech.dokus.peppol.provider.client.recommand.model.RecommandVatCategory
 import tech.dokus.peppol.provider.client.recommand.model.RecommandVatTotals
 import tech.dokus.peppol.provider.client.recommand.model.RecommandVerifyRecipientResponse
+import java.util.Locale
 
 /**
  * Maps between provider-agnostic Peppol models and Recommand-specific API models.
@@ -117,7 +116,9 @@ object RecommandMapper {
     }
 
     private fun toRecommandLine(item: PeppolLineItem): RecommandLine {
-        val vatCategory = runCatching { RecommandVatCategory.valueOf(item.taxCategory) }.getOrDefault(RecommandVatCategory.S)
+        val vatCategory = runCatching { RecommandVatCategory.valueOf(
+            item.taxCategory
+        ) }.getOrDefault(RecommandVatCategory.S)
         return RecommandLine(
             id = item.id,
             name = item.name,
@@ -212,12 +213,21 @@ object RecommandMapper {
         )
 
         return when (detail.type) {
-            RecommandDocumentType.Invoice -> fromParsedInvoice(detail, json.decodeFromJsonElement<RecommandInvoice>(parsed))
-            RecommandDocumentType.CreditNote -> fromParsedCreditNote(detail, json.decodeFromJsonElement<RecommandCreditNote>(parsed))
+            RecommandDocumentType.Invoice -> fromParsedInvoice(
+                detail,
+                json.decodeFromJsonElement<RecommandInvoice>(parsed)
+            )
+            RecommandDocumentType.CreditNote -> fromParsedCreditNote(
+                detail,
+                json.decodeFromJsonElement<RecommandCreditNote>(parsed)
+            )
             RecommandDocumentType.SelfBillingInvoice ->
                 fromParsedSelfBillingInvoice(detail, json.decodeFromJsonElement<RecommandSelfBillingInvoice>(parsed))
             RecommandDocumentType.SelfBillingCreditNote ->
-                fromParsedSelfBillingCreditNote(detail, json.decodeFromJsonElement<RecommandSelfBillingCreditNote>(parsed))
+                fromParsedSelfBillingCreditNote(
+                    detail,
+                    json.decodeFromJsonElement<RecommandSelfBillingCreditNote>(parsed)
+                )
             RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml -> PeppolReceivedDocument(
                 id = detail.id,
                 documentType = recommandToDocumentType(detail.type),
@@ -464,4 +474,3 @@ object RecommandMapper {
         RecommandDocumentType.MessageLevelResponse, RecommandDocumentType.Xml -> PeppolDocumentType.Xml
     }
 }
-

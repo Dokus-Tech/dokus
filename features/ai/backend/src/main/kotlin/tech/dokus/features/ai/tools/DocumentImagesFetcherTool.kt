@@ -31,7 +31,7 @@ class DocumentImagesFetcherTool(
         """.trimIndent()
 ) {
 
-    @OptIn    override suspend fun execute(args: Input): Output {
+override suspend fun execute(args: Input): Output {
         val document = fetcher(tenantId, DocumentId(args.documentId)).getOrElse {
             return Output.Failure(it.localizedMessage)
         }

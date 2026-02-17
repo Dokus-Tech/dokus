@@ -2,7 +2,6 @@
 package tech.dokus.backend.services.auth
 
 import com.auth0.jwt.JWT
-import kotlin.time.Instant
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
 import tech.dokus.database.repository.auth.UserRepository
@@ -31,6 +30,7 @@ import tech.dokus.foundation.backend.security.JwtGenerator
 import tech.dokus.foundation.backend.security.TokenBlacklistService
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 import java.time.Instant as JavaInstant
 
 data class SessionContext(

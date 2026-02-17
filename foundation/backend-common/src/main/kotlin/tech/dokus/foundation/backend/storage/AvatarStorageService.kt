@@ -7,9 +7,9 @@ import kotlinx.coroutines.withContext
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.foundation.backend.utils.loggerFor
-import kotlin.uuid.Uuid
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlin.uuid.Uuid
 
 /**
  * Service for handling company avatar uploads with automatic resizing.

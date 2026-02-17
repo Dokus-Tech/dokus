@@ -109,7 +109,7 @@ data class CreateInvoiceFormState(
         /**
          * Create initial form state with today's date and default due date.
          */
-        @OptIn        fun createInitial(expandedItemId: (String) -> Unit): CreateInvoiceFormState {
+fun createInitial(expandedItemId: (String) -> Unit): CreateInvoiceFormState {
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val firstItem = InvoiceLineItem()
             expandedItemId(firstItem.id)

@@ -1,12 +1,11 @@
 package tech.dokus.peppol.service
 
-import kotlin.time.Clock
-import tech.dokus.domain.Money
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
+import tech.dokus.domain.Money
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
@@ -38,6 +37,7 @@ import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.provider.client.recommand.model.RecommandDocumentDetail
 import tech.dokus.peppol.validator.PeppolValidator
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -252,7 +252,8 @@ class PeppolService(
      */
     suspend fun pollInbox(
         tenantId: TenantId,
-        createDocumentCallback: suspend (DocumentDraftData, String, TenantId, RecommandDocumentDetail?) -> Result<DocumentId>
+        createDocumentCallback:
+        suspend (DocumentDraftData, String, TenantId, RecommandDocumentDetail?) -> Result<DocumentId>
     ): Result<PeppolInboxPollResponse> {
         logger.info("Polling Peppol inbox for tenant: $tenantId")
 

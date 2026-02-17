@@ -1021,7 +1021,7 @@ sealed class DokusException(
     }
 
     companion object {
-        @OptIn        fun generateErrorId(): String =
+fun generateErrorId(): String =
             "ERR-${Uuid.random()}"
     }
 }

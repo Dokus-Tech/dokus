@@ -1,13 +1,7 @@
 package tech.dokus.database.repository.ai
-import kotlin.uuid.Uuid
-
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
-import kotlin.time.Instant
-import tech.dokus.database.utils.toKotlinxInstant
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -17,6 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.ai.DocumentExamplesTable
+import tech.dokus.database.utils.toKotlinxInstant
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ExampleId
 import tech.dokus.domain.ids.TenantId
@@ -24,6 +19,9 @@ import tech.dokus.domain.model.DocumentExample
 import tech.dokus.domain.repository.ExampleRepository
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.sql.Connection
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 /**
  * Repository for document examples used in few-shot learning.

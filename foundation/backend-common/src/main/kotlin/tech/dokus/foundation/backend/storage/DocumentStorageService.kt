@@ -4,9 +4,9 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.InputStream
 import java.text.Normalizer
-import kotlin.uuid.Uuid
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlin.uuid.Uuid
 
 /**
  * High-level service for document storage operations.

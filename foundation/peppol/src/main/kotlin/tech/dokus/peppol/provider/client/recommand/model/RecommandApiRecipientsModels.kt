@@ -88,4 +88,3 @@ data class RecommandSearchPeppolDirectoryResponse(
     val success: Boolean,
     val results: List<RecommandPeppolDirectoryResult>,
 )
-

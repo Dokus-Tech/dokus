@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.processor
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -18,18 +15,20 @@ import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
+import kotlin.time.Clock
+import kotlin.uuid.Uuid
 /**
  * Repository for ingestion run operations in the processor worker.
  *
@@ -77,7 +76,7 @@ class ProcessorIngestionRepository {
      * Mark an ingestion run as currently being processed.
      * Sets status to Processing and records the AI provider.
      */
-    @OptIn    suspend fun markAsProcessing(runId: String, provider: String): Boolean =
+    suspend fun markAsProcessing(runId: String, provider: String): Boolean =
         newSuspendedTransaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
             DocumentIngestionRunsTable.update({
@@ -103,8 +102,8 @@ class ProcessorIngestionRepository {
             .selectAll()
             .where {
                 (DocumentIngestionRunsTable.tenantId eq Uuid.parse(tenantId)) and
-                        (DocumentIngestionRunsTable.documentId eq Uuid.parse(documentId)) and
-                        (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
+                    (DocumentIngestionRunsTable.documentId eq Uuid.parse(documentId)) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             }
             .orderBy(DocumentIngestionRunsTable.startedAt to SortOrder.DESC)
             .limit(1)
@@ -198,7 +197,7 @@ class ProcessorIngestionRepository {
             val existingDraft = DocumentDraftsTable.selectAll()
                 .where {
                     (DocumentDraftsTable.documentId eq documentUuid) and
-                            (DocumentDraftsTable.tenantId eq tenantUuid)
+                        (DocumentDraftsTable.tenantId eq tenantUuid)
                 }
                 .singleOrNull()
 
@@ -233,7 +232,7 @@ class ProcessorIngestionRepository {
                 // SECURITY: Always filter by tenantId to prevent cross-tenant modification
                 DocumentDraftsTable.update({
                     (DocumentDraftsTable.documentId eq documentUuid) and
-                            (DocumentDraftsTable.tenantId eq tenantUuid)
+                        (DocumentDraftsTable.tenantId eq tenantUuid)
                 }) {
                     it[DocumentDraftsTable.documentType] = documentType
                     it[lastSuccessfulRunId] = runUuid
@@ -267,7 +266,7 @@ class ProcessorIngestionRepository {
     /**
      * Mark an ingestion run as failed.
      */
-    @OptIn    suspend fun markAsFailed(runId: String, error: String): Boolean =
+    suspend fun markAsFailed(runId: String, error: String): Boolean =
         newSuspendedTransaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
             DocumentIngestionRunsTable.update({
@@ -288,17 +287,18 @@ class ProcessorIngestionRepository {
      *
      * @return Number of runs recovered
      */
-    @OptIn    suspend fun recoverStaleRuns(): Int =
+    suspend fun recoverStaleRuns(): Int =
         newSuspendedTransaction {
             val cutoff = (Clock.System.now() - DocumentProcessingConstants.INGESTION_RUN_TIMEOUT)
-                
                 .toLocalDateTime(TimeZone.Companion.UTC)
             val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
 
             DocumentIngestionRunsTable.update({
                 (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                    (DocumentIngestionRunsTable.startedAt.isNull() or
-                        (DocumentIngestionRunsTable.startedAt lessEq cutoff))
+                    (
+                        DocumentIngestionRunsTable.startedAt.isNull() or
+                            (DocumentIngestionRunsTable.startedAt lessEq cutoff)
+                        )
             }) {
                 it[status] = IngestionStatus.Failed
                 it[finishedAt] = now
@@ -318,7 +318,7 @@ class ProcessorIngestionRepository {
      * @param chunksCount Number of chunks created (for SUCCEEDED)
      * @param errorMessage Error message (for FAILED)
      */
-    @OptIn    suspend fun updateIndexingStatus(
+    suspend fun updateIndexingStatus(
         runId: String,
         status: IndexingStatus,
         chunksCount: Int? = null,

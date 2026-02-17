@@ -12,4 +12,3 @@ import kotlinx.serialization.Serializable
 data class RecommandVerifyAuthResponse(
     val success: Boolean,
 )
-

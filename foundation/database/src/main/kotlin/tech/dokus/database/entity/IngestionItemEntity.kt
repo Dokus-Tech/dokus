@@ -1,8 +1,8 @@
 package tech.dokus.database.entity
 
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 
 /**

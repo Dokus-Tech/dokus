@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.ai
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -26,6 +23,8 @@ import tech.dokus.domain.repository.RetrievedChunk
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.sql.Connection
+import kotlin.time.Clock
+import kotlin.uuid.Uuid
 
 /**
  * Repository for document chunks with vector embeddings.
@@ -113,14 +112,14 @@ class DocumentChunksRepository : ChunkRepository {
         val connection = this.connection.connection as Connection
         connection.prepareStatement(sql).use { stmt ->
             var paramIdx = 1
-            stmt.setString(paramIdx++, vectorString)    // similarity calc
-            stmt.setObject(paramIdx++, tenantId.value)  // tenant filter
+            stmt.setString(paramIdx++, vectorString) // similarity calc
+            stmt.setObject(paramIdx++, tenantId.value) // tenant filter
             if (documentId != null) {
                 stmt.setObject(paramIdx++, documentId.value) // document filter
             }
-            stmt.setString(paramIdx++, vectorString)    // similarity threshold
+            stmt.setString(paramIdx++, vectorString) // similarity threshold
             stmt.setFloat(paramIdx++, minSimilarity)
-            stmt.setString(paramIdx++, vectorString)    // order by
+            stmt.setString(paramIdx++, vectorString) // order by
             stmt.setInt(paramIdx, topK)
 
             stmt.executeQuery().use { rs ->

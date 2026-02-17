@@ -1,6 +1,5 @@
 package tech.dokus.backend.services.cashflow
 
-import kotlin.time.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -22,6 +21,7 @@ import tech.dokus.domain.model.CashOutSummary
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPeriod
 import tech.dokus.foundation.backend.utils.loggerFor
+import kotlin.time.Clock
 
 /**
  * Service for cashflow overview calculations.

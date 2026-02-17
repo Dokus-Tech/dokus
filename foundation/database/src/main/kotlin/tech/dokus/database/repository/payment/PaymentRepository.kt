@@ -1,6 +1,4 @@
 package tech.dokus.database.repository.payment
-import kotlin.uuid.Uuid
-
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder

@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.notifications
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -11,8 +8,8 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.andWhere
-import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.notifications.NotificationsTable
 import tech.dokus.domain.enums.NotificationCategory
@@ -24,7 +21,9 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.NotificationDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.database.dbQuery
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
+import kotlin.uuid.Uuid
 
 class NotificationRepository {
 

@@ -1,6 +1,5 @@
 package tech.dokus.backend.services.cashflow
 
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -19,6 +18,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.foundation.backend.utils.loggerFor
+import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
 /**

@@ -164,7 +164,7 @@ class RAGService(
     /**
      * Retrieve relevant chunks using the domain ChunkRetrievalRequest model.
      */
-    @OptIn    suspend fun retrieve(
+suspend fun retrieve(
         tenantId: TenantId,
         request: ChunkRetrievalRequest
     ): ChunkRetrievalResponse {

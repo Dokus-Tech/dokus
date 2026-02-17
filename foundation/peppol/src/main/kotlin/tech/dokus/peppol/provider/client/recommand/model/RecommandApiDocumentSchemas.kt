@@ -1,10 +1,10 @@
 package tech.dokus.peppol.provider.client.recommand.model
 
-import kotlin.jvm.JvmInline
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlin.jvm.JvmInline
 
 /**
  * Email fallback settings.
@@ -711,4 +711,3 @@ data class RecommandSendSelfBillingCreditNote(
     val attachments: List<RecommandAttachment>? = null,
     val currency: String = "EUR",
 )
-

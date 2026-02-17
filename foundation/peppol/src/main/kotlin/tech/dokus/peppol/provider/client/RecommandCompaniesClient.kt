@@ -12,13 +12,13 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import tech.dokus.peppol.config.PeppolProviderConfig
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCompany
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateCompanyRequest
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateCompanyResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandGetCompaniesResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandUpdateCompanyRequest
 import tech.dokus.peppol.provider.client.recommand.model.RecommandUpdateCompanyResponse
-import tech.dokus.peppol.config.PeppolProviderConfig
 
 class RecommandCompaniesClient(
     private val httpClient: HttpClient,

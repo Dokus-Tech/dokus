@@ -11,10 +11,10 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolProviderConfig
-import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolReceivedDocument
@@ -176,18 +176,18 @@ class RecommandProvider(
                 basicAuth(credentials.apiKey, credentials.apiSecret)
             }
 
-        if (!response.status.isSuccess()) {
-            val errorBody = response.bodyAsText()
-            logger.error("Recommand API error: ${response.status} - $errorBody")
-            throw RecommandApiException(response.status.value, errorBody)
+            if (!response.status.isSuccess()) {
+                val errorBody = response.bodyAsText()
+                logger.error("Recommand API error: ${response.status} - $errorBody")
+                throw RecommandApiException(response.status.value, errorBody)
+            }
+
+            val detail = response.body<RecommandGetDocumentResponse>().document
+
+            RecommandMapper.fromRecommandDocumentDetail(detail)
+        }.onFailure { e ->
+            logger.error("Failed to fetch Peppol document: $documentId", e)
         }
-
-        val detail = response.body<RecommandGetDocumentResponse>().document
-
-        RecommandMapper.fromRecommandDocumentDetail(detail)
-    }.onFailure { e ->
-        logger.error("Failed to fetch Peppol document: $documentId", e)
-    }
 
     /**
      * Get raw document detail including attachments.

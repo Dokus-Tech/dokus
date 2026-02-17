@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.documents
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -17,6 +14,7 @@ import tech.dokus.domain.enums.DocumentLinkType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentLinkId
 import tech.dokus.domain.ids.TenantId
+import kotlin.time.Clock
 
 /**
  * Data class representing a document link.

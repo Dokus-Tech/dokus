@@ -1,6 +1,4 @@
 package tech.dokus.database.repository.contacts
-import kotlin.uuid.Uuid
-
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and

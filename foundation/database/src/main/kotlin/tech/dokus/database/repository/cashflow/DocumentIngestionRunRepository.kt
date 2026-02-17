@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.cashflow
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -24,10 +21,12 @@ import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.processing.DocumentProcessingConstants
+import kotlin.time.Clock
+import kotlin.uuid.Uuid
 
 /**
  * Data class for ingestion run summary.
@@ -98,7 +97,7 @@ class DocumentIngestionRunRepository {
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.id eq runId.value) and
-                        (DocumentIngestionRunsTable.tenantId eq tenantId.value)
+                    (DocumentIngestionRunsTable.tenantId eq tenantId.value)
             }
             .map { it.toIngestionRunSummary() }
             .singleOrNull()
@@ -118,7 +117,7 @@ class DocumentIngestionRunRepository {
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq documentId.value) and
-                        (DocumentIngestionRunsTable.tenantId eq tenantIdUuid)
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
             .map { it.toIngestionRunSummary() }
@@ -141,8 +140,8 @@ class DocumentIngestionRunRepository {
         val processing = DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                        (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                        (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
             }
             .orderBy(
                 DocumentIngestionRunsTable.startedAt to SortOrder.DESC_NULLS_LAST,
@@ -157,11 +156,13 @@ class DocumentIngestionRunRepository {
         val finished = DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                        (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                        (DocumentIngestionRunsTable.status inList listOf(
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (
+                        DocumentIngestionRunsTable.status inList listOf(
                             IngestionStatus.Succeeded,
                             IngestionStatus.Failed
-                        ))
+                        )
+                        )
             }
             .orderBy(
                 DocumentIngestionRunsTable.finishedAt to SortOrder.DESC_NULLS_LAST,
@@ -176,8 +177,8 @@ class DocumentIngestionRunRepository {
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq docIdUuid) and
-                        (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                        (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
             }
             .orderBy(
                 DocumentIngestionRunsTable.queuedAt to SortOrder.DESC,
@@ -203,8 +204,8 @@ class DocumentIngestionRunRepository {
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.documentId eq documentId.value) and
-                        (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
-                        (DocumentIngestionRunsTable.status inList pendingStatuses)
+                    (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                    (DocumentIngestionRunsTable.status inList pendingStatuses)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
             .map { it.toIngestionRunSummary() }
@@ -325,7 +326,7 @@ class DocumentIngestionRunRepository {
     ): Int = newSuspendedTransaction {
         DocumentIngestionRunsTable.deleteWhere {
             (DocumentIngestionRunsTable.documentId eq documentId.value) and
-                    (DocumentIngestionRunsTable.tenantId eq tenantId.value)
+                (DocumentIngestionRunsTable.tenantId eq tenantId.value)
         }
     }
 
@@ -354,13 +355,17 @@ class DocumentIngestionRunRepository {
 
         val staleCondition = if (tenantId != null) {
             (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                (DocumentIngestionRunsTable.startedAt.isNull() or
-                    (DocumentIngestionRunsTable.startedAt lessEq cutoff)) and
+                (
+                    DocumentIngestionRunsTable.startedAt.isNull() or
+                        (DocumentIngestionRunsTable.startedAt lessEq cutoff)
+                    ) and
                 (DocumentIngestionRunsTable.tenantId eq tenantId)
         } else {
             (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                (DocumentIngestionRunsTable.startedAt.isNull() or
-                    (DocumentIngestionRunsTable.startedAt lessEq cutoff))
+                (
+                    DocumentIngestionRunsTable.startedAt.isNull() or
+                        (DocumentIngestionRunsTable.startedAt lessEq cutoff)
+                    )
         }
 
         return DocumentIngestionRunsTable.update({ staleCondition }) {

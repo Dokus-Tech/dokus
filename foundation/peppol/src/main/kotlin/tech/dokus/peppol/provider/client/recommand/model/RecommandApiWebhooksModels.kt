@@ -114,4 +114,3 @@ data class RecommandDeleteWebhookRequest(
 data class RecommandDeleteWebhookResponse(
     val success: Boolean,
 )
-

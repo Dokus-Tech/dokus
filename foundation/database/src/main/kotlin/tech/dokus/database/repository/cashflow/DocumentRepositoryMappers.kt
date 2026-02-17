@@ -19,4 +19,3 @@ internal fun ResultRow.toDocumentDto(): DocumentDto {
         downloadUrl = null // Generated on-demand by the service layer
     )
 }
-

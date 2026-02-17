@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.cashflow
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -26,6 +23,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import kotlin.math.min
+import kotlin.time.Clock
 
 data class DocumentSourceSummary(
     val id: DocumentSourceId,

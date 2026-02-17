@@ -94,7 +94,7 @@ class TokenStorage(
     /**
      * Stores all tokens from a login response.
      */
-    @OptIn    suspend fun saveTokens(accessToken: String, refreshToken: String, expiresIn: Long) {
+suspend fun saveTokens(accessToken: String, refreshToken: String, expiresIn: Long) {
         saveAccessToken(accessToken)
         saveRefreshToken(refreshToken)
 

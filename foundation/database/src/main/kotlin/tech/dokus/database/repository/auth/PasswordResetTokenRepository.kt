@@ -1,8 +1,5 @@
 
 package tech.dokus.database.repository.auth
-import kotlin.uuid.Uuid
-
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.eq
@@ -19,6 +16,8 @@ import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.MessageDigest
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 /**
  * Information about a password reset token

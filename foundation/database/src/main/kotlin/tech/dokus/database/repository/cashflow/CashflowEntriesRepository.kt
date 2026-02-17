@@ -1,8 +1,5 @@
 package tech.dokus.database.repository.cashflow
-import kotlin.uuid.Uuid
-
 import kotlinx.datetime.DatePeriod
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -37,6 +34,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
+import kotlin.time.Clock
+import kotlin.uuid.Uuid
 
 /**
  * Repository for managing cashflow entries.
@@ -281,7 +280,14 @@ class CashflowEntriesRepository {
                 CashflowViewMode.History -> {
                     // Filter by paidAt (using LocalDate as start/end of day in UTC)
                     if (fromDate != null) {
-                        val startOfDay = LocalDateTime(fromDate.year, fromDate.monthNumber, fromDate.dayOfMonth, 0, 0, 0)
+                        val startOfDay = LocalDateTime(
+                            fromDate.year,
+                            fromDate.monthNumber,
+                            fromDate.dayOfMonth,
+                            0,
+                            0,
+                            0
+                        )
                         query = query.andWhere { CashflowEntriesTable.paidAt greaterEq startOfDay }
                     }
                     if (toDate != null) {

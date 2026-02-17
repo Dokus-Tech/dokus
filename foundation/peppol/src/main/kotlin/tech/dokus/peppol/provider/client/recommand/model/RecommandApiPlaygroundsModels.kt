@@ -46,4 +46,3 @@ data class RecommandCreatePlaygroundResponse(
     val success: Boolean,
     val playground: RecommandPlayground? = null,
 )
-

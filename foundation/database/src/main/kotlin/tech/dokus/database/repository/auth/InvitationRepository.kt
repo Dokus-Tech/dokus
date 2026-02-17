@@ -1,7 +1,5 @@
 package tech.dokus.database.repository.auth
 
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
@@ -25,6 +23,8 @@ import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.SecureRandom
 import java.util.Base64
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 /**
  * Repository for managing tenant invitations.

@@ -1,6 +1,5 @@
 package tech.dokus.database.repository.auth
 
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.and
@@ -25,6 +24,7 @@ import tech.dokus.domain.model.UserInTenant
 import tech.dokus.foundation.backend.crypto.PasswordCryptoService
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
+import kotlin.time.Instant
 class UserRepository(
     private val passwordCrypto: PasswordCryptoService
 ) {
@@ -302,7 +302,7 @@ class UserRepository(
         logger.info("Updated password for user $userId")
     }
 
-    @OptIn    suspend fun recordSuccessfulLogin(userId: UserId, loginTime: Instant): Boolean = dbQuery {
+    suspend fun recordSuccessfulLogin(userId: UserId, loginTime: Instant): Boolean = dbQuery {
         val javaUuid = userId.value
         val loginAt = loginTime.toLocalDateTime(TimeZone.UTC)
 

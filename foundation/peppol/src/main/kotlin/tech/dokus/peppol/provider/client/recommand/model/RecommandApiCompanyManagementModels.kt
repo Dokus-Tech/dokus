@@ -533,4 +533,3 @@ data class RecommandDeleteCompanyNotificationEmailAddressRequest(
 data class RecommandDeleteCompanyNotificationEmailAddressResponse(
     val success: Boolean,
 )
-

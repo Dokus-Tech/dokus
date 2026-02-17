@@ -352,4 +352,3 @@ data class RecommandDeleteLabelRequest(
 data class RecommandDeleteLabelResponse(
     val success: Boolean,
 )
-

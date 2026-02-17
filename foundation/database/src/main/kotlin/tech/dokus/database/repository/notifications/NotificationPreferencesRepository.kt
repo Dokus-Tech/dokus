@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.notifications
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.and
@@ -13,6 +10,7 @@ import tech.dokus.database.tables.notifications.NotificationPreferencesTable
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.backend.database.dbQuery
+import kotlin.time.Clock
 
 class NotificationPreferencesRepository {
 

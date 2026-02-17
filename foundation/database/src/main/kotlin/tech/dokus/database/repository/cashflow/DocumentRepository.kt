@@ -1,6 +1,4 @@
 package tech.dokus.database.repository.cashflow
-import kotlin.uuid.Uuid
-
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -13,8 +11,8 @@ import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -270,5 +268,4 @@ class DocumentRepository {
                 }
                 .count() > 0
         }
-
 }

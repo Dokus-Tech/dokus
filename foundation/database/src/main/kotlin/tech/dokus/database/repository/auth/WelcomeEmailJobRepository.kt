@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.auth
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -18,6 +15,8 @@ import tech.dokus.database.tables.auth.WelcomeEmailJobsTable.JobStatus
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.backend.database.dbQuery
+import kotlin.time.Clock
+import kotlin.uuid.Uuid
 
 data class WelcomeEmailJob(
     val id: Uuid,

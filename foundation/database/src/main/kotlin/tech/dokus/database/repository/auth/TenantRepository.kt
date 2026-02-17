@@ -77,7 +77,7 @@ class TenantRepository {
             it[streetLine2] = address.streetLine2
             it[city] = address.city
             it[postalCode] = address.postalCode
-            it[country] = address.country.dbValue  // Convert enum to ISO-2 string
+            it[country] = address.country.dbValue // Convert enum to ISO-2 string
         }
 
         // Create default settings for the tenant

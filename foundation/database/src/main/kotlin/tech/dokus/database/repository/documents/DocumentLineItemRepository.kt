@@ -1,7 +1,4 @@
 package tech.dokus.database.repository.documents
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -20,6 +17,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentLineItemId
 import tech.dokus.domain.ids.TenantId
 import java.math.BigDecimal
+import kotlin.time.Clock
 
 /**
  * Data class representing a document line item.

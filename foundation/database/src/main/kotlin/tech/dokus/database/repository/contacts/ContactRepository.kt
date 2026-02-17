@@ -1,9 +1,6 @@
 @file:Suppress("UseRequire") // Custom exception messaging
 
 package tech.dokus.database.repository.contacts
-import kotlin.uuid.Uuid
-
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -26,6 +23,7 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -39,9 +37,9 @@ import tech.dokus.domain.model.contact.ContactMergeResult
 import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.foundation.backend.database.dbQuery
 import java.math.BigDecimal
+import kotlin.time.Clock
 
 /**
  * Repository for managing contacts (customers AND vendors)
