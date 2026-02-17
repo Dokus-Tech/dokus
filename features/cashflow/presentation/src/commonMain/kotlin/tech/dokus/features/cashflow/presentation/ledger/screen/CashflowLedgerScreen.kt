@@ -258,7 +258,7 @@ private fun CashflowLedgerContent(
                                         .padding(16.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                    DokusLoader(size = 24.dp, particleCount = 100)
                                 }
                             }
                         }

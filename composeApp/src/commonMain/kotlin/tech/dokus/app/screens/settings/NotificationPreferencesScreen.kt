@@ -90,7 +90,7 @@ internal fun NotificationPreferencesContent(
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                DokusLoader()
             }
         }
 

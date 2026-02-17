@@ -559,13 +559,7 @@ private fun CashflowPaymentFooter(
                     enabled = !formState.isSubmitting
                 ) {
                     if (formState.isSubmitting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .height(16.dp)
-                                .width(16.dp),
-                            strokeWidth = 2.dp
-                        )
+                        DokusLoader(size = 16.dp, particleCount = 100)
                     }
                     Text("Mark as paid")
                 }
@@ -646,13 +640,7 @@ private fun PaymentOptionsForm(
                 enabled = !formState.isSubmitting
             ) {
                 if (formState.isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .height(16.dp)
-                            .width(16.dp),
-                        strokeWidth = 2.dp
-                    )
+                    DokusLoader(size = 16.dp, particleCount = 100)
                 }
                 Text("Confirm payment")
             }

@@ -30,7 +30,7 @@ internal fun LoadingContent(contentPadding: PaddingValues) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
         ) {
-            CircularProgressIndicator()
+            DokusLoader()
             Text(
                 text = stringResource(Res.string.chat_loading),
                 style = MaterialTheme.typography.bodyMedium,
