@@ -24,7 +24,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -343,9 +343,9 @@ private fun NotesBottomSheetForm(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(ProgressIndicatorSize),
-                        strokeWidth = ProgressStrokeWidth
+                    DokusLoader(
+                        size = ProgressIndicatorSize,
+                        particleCount = 60,
                     )
                     Text(
                         text = stringResource(Res.string.contacts_saving),

@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,9 +66,9 @@ internal fun CompanyNameStep(
 
         when (lookupState) {
             is LookupState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp
+                DokusLoader(
+                    size = 24.dp,
+                    particleCount = 100,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(

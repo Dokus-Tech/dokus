@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
@@ -86,7 +86,7 @@ private fun StateDrivenContent(
         }
 
         else -> {
-            CircularProgressIndicator()
+            DokusLoader()
         }
     }
 }

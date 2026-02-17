@@ -18,7 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -247,9 +247,9 @@ private fun ServerConnectionContent(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
+                    DokusLoader(
+                        size = 24.dp,
+                        particleCount = 100,
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
