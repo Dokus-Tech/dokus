@@ -6,7 +6,7 @@ import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.foundation.backend.cache.RedisClient
 import java.time.Duration
 import java.util.Base64
-import java.util.UUID
+import kotlin.uuid.Uuid
 import kotlin.time.Duration.Companion.minutes
 
 class RedisDocumentImageCache(
@@ -52,7 +52,7 @@ class RedisDocumentImageCache(
     }
 
     private fun buildId(documentId: String, runId: String?): String {
-        val base = UUID.randomUUID().toString()
+        val base = Uuid.random().toString()
         return if (runId.isNullOrBlank()) {
             "img_${documentId}_$base"
         } else {

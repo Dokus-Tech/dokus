@@ -1,6 +1,6 @@
 package tech.dokus.domain.model.auth
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.DeviceType

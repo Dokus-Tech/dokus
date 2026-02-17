@@ -2,7 +2,7 @@ package tech.dokus.database.repository.cashflow
 import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.jdbc.Database

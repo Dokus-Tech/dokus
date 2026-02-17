@@ -2,7 +2,7 @@
 package tech.dokus.backend.services.auth
 
 import com.auth0.jwt.JWT
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
 import tech.dokus.database.repository.auth.UserRepository

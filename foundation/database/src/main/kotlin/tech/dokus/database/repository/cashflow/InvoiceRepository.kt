@@ -1,7 +1,7 @@
 package tech.dokus.database.repository.cashflow
 import kotlin.uuid.Uuid
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime

@@ -1,7 +1,7 @@
 package tech.dokus.database.repository.documents
 import kotlin.uuid.Uuid
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

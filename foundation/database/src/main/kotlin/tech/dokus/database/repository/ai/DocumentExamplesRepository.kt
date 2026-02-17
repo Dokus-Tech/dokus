@@ -1,10 +1,10 @@
 package tech.dokus.database.repository.ai
 import kotlin.uuid.Uuid
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
 import tech.dokus.database.utils.toKotlinxInstant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement

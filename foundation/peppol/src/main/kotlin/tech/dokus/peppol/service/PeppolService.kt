@@ -1,6 +1,6 @@
 package tech.dokus.peppol.service
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import tech.dokus.domain.Money
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone

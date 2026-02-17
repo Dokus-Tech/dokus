@@ -7,7 +7,7 @@ package tech.dokus.features.cashflow.presentation.chat
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import pro.respawn.flowmvi.api.Container

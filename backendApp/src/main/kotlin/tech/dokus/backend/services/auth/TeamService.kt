@@ -1,7 +1,8 @@
 package tech.dokus.backend.services.auth
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import tech.dokus.database.repository.auth.InvitationRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -248,10 +249,4 @@ class TeamService(
         val membership = userRepository.getMembership(userId, tenantId)
         return membership?.role == UserRole.Owner && membership.isActive
     }
-}
-
-private fun kotlinx.datetime.Instant.toLocalDateTime(
-    timeZone: kotlinx.datetime.TimeZone
-): kotlinx.datetime.LocalDateTime {
-    return this.toLocalDateTime(timeZone)
 }

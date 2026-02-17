@@ -2,7 +2,7 @@ package tech.dokus.backend.cashflow
 import kotlin.uuid.Uuid
 
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime

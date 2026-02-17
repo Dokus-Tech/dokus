@@ -1,10 +1,9 @@
 package tech.dokus.database.repository.processor
 import kotlin.uuid.Uuid
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.toStdlibInstant
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -83,7 +82,7 @@ class ProcessorIngestionRepository {
     @OptIn(ExperimentalTime::class)
     suspend fun markAsProcessing(runId: String, provider: String): Boolean =
         newSuspendedTransaction {
-            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
+            val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
             DocumentIngestionRunsTable.update({
                 DocumentIngestionRunsTable.id eq Uuid.parse(runId)
             }) {
@@ -274,7 +273,7 @@ class ProcessorIngestionRepository {
     @OptIn(ExperimentalTime::class)
     suspend fun markAsFailed(runId: String, error: String): Boolean =
         newSuspendedTransaction {
-            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
+            val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
             DocumentIngestionRunsTable.update({
                 DocumentIngestionRunsTable.id eq Uuid.parse(runId)
             }) {
@@ -297,9 +296,9 @@ class ProcessorIngestionRepository {
     suspend fun recoverStaleRuns(): Int =
         newSuspendedTransaction {
             val cutoff = (Clock.System.now() - DocumentProcessingConstants.INGESTION_RUN_TIMEOUT)
-                .toStdlibInstant()
+                
                 .toLocalDateTime(TimeZone.Companion.UTC)
-            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
+            val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
 
             DocumentIngestionRunsTable.update({
                 (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
@@ -331,7 +330,7 @@ class ProcessorIngestionRepository {
         chunksCount: Int? = null,
         errorMessage: String? = null
     ): Boolean = newSuspendedTransaction {
-        val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
+        val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
         DocumentIngestionRunsTable.update({
             DocumentIngestionRunsTable.id eq Uuid.parse(runId)
         }) {

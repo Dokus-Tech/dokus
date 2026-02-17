@@ -1,9 +1,8 @@
 package tech.dokus.database.repository.auth
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.toStdlibInstant
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -308,7 +307,7 @@ class UserRepository(
     @OptIn(ExperimentalTime::class)
     suspend fun recordSuccessfulLogin(userId: UserId, loginTime: Instant): Boolean = dbQuery {
         val javaUuid = userId.value
-        val loginAt = loginTime.toStdlibInstant().toLocalDateTime(TimeZone.UTC)
+        val loginAt = loginTime.toLocalDateTime(TimeZone.UTC)
 
         val firstSignInUpdateCount = UsersTable.update({
             (UsersTable.id eq javaUuid) and (UsersTable.firstSignInAt eq null)

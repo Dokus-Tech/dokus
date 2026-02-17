@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.foundation.backend.utils.loggerFor
-import java.util.UUID
+import kotlin.uuid.Uuid
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
@@ -75,7 +75,7 @@ class AvatarStorageService(
         validateImage(imageData, contentType)
 
         // Generate unique key prefix for this avatar
-        val uuid = UUID.randomUUID().toString()
+        val uuid = Uuid.random().toString()
         val keyPrefix = "$AVATAR_PREFIX/$tenantId/$uuid"
 
         // Load and process image

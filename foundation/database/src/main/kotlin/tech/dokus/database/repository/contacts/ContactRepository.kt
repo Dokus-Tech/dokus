@@ -3,7 +3,7 @@
 package tech.dokus.database.repository.contacts
 import kotlin.uuid.Uuid
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow

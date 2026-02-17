@@ -4,7 +4,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.InputStream
 import java.text.Normalizer
-import java.util.UUID
+import kotlin.uuid.Uuid
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
@@ -111,7 +111,7 @@ class DocumentStorageService(
      * Format: {prefix}/{tenantId}/{uuid}_{filename}
      */
     private fun generateStorageKey(tenantId: TenantId, prefix: String, filename: String): String {
-        val uuid = UUID.randomUUID().toString()
+        val uuid = Uuid.random().toString()
         return "$prefix/$tenantId/${uuid}_$filename"
     }
 
