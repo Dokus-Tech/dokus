@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- Peppol Registration Flow -->
+
+    <!-- Fresh state -->
+    <string name="peppol_reg_fresh_title">Enable Peppol</string>
+    <string name="peppol_reg_fresh_subtitle">Receive invoices automatically in Dokus.</string>
+    <string name="peppol_reg_fresh_enabling">Enabling…</string>
+    <string name="peppol_reg_fresh_enable">Enable</string>
+    <string name="peppol_reg_not_now">Not now</string>
+    <string name="peppol_reg_enable_later">You can enable this later in Settings.</string>
+
+    <!-- Activating state -->
+    <string name="peppol_reg_activating_title">Enabling Peppol</string>
+    <string name="peppol_reg_activating_subtitle">Connecting your inbox.</string>
+    <string name="peppol_reg_activating_body">This can take a moment.\nYou can continue working.</string>
+
+    <!-- Active state -->
+    <string name="peppol_reg_active_title">Peppol active</string>
+    <string name="peppol_reg_active_subtitle">Inbox connected. Sending enabled.</string>
+
+    <!-- Blocked state -->
+    <string name="peppol_reg_blocked_title">Peppol already connected</string>
+    <string name="peppol_reg_blocked_subtitle">Your inbox is connected to another service.</string>
+    <string name="peppol_reg_blocked_body">To receive invoices in Dokus, request a transfer from your current provider.</string>
+    <string name="peppol_reg_transfer_inbox">Transfer inbox to Dokus</string>
+    <string name="peppol_reg_enable_sending_only">Enable sending only</string>
+
+    <!-- Waiting transfer state -->
+    <string name="peppol_reg_waiting_title">Waiting for transfer</string>
+    <string name="peppol_reg_waiting_subtitle">We\'ll connect automatically once your inbox is released.</string>
+    <string name="peppol_reg_waiting_body">This can take up to 48 hours.\nYou can close this screen.</string>
+
+    <!-- Sending only state -->
+    <string name="peppol_reg_sending_title">Peppol sending enabled</string>
+    <string name="peppol_reg_sending_subtitle">You can send invoices via Peppol.\nIncoming invoices go to your other service.</string>
+
+    <!-- External state -->
+    <string name="peppol_reg_external_title">Peppol not enabled</string>
+    <string name="peppol_reg_external_subtitle">Dokus won\'t send or receive Peppol invoices.</string>
+
+    <!-- Failed state -->
+    <string name="peppol_reg_failed_title">Couldn\'t enable Peppol</string>
+    <string name="peppol_reg_failed_subtitle">Something went wrong while connecting.</string>
+    <string name="peppol_reg_failed_retry">Try again</string>
+    <string name="peppol_reg_failed_skip">Skip for now</string>
+    <string name="peppol_reg_failed_footnote">If this keeps happening, contact support.</string>
+
+    <!-- Shared -->
+    <string name="peppol_reg_continue">Continue</string>
+    <string name="peppol_reg_details">Details</string>
+    <string name="peppol_reg_peppol_id">Peppol ID</string>
+    <string name="peppol_reg_transfer_request">Transfer request</string>
+    <string name="peppol_reg_copy_email">Copy email</string>
+    <string name="peppol_reg_copied">Copied to clipboard</string>
+</resources>

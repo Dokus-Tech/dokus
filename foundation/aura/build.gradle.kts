@@ -75,6 +75,9 @@ kotlin {
             api(libs.coil.compose.core)
             api(libs.coil.network.ktor3)
         }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+        }
         desktopMain.dependencies {
             api(compose.desktop.currentOs)
             api(libs.kotlinx.coroutines.swing)

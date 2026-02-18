@@ -48,20 +48,15 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.cancel
-import tech.dokus.aura.resources.role_accountant
-import tech.dokus.aura.resources.role_admin
-import tech.dokus.aura.resources.role_editor
-import tech.dokus.aura.resources.role_owner
-import tech.dokus.aura.resources.role_viewer
 import tech.dokus.aura.resources.state_sending
+import tech.dokus.aura.resources.team_invitation_expires
+import tech.dokus.aura.resources.team_invitation_info
+import tech.dokus.aura.resources.team_member_info
 import tech.dokus.aura.resources.team_cancel_invitation
 import tech.dokus.aura.resources.team_change_role
-import tech.dokus.aura.resources.team_expires
 import tech.dokus.aura.resources.team_invite_email
 import tech.dokus.aura.resources.team_invite_member
 import tech.dokus.aura.resources.team_invite_role
-import tech.dokus.aura.resources.team_invited_by
-import tech.dokus.aura.resources.team_joined
 import tech.dokus.aura.resources.team_members
 import tech.dokus.aura.resources.team_no_invitations
 import tech.dokus.aura.resources.team_no_members
@@ -75,6 +70,7 @@ import tech.dokus.aura.resources.team_transfer_confirm
 import tech.dokus.aura.resources.team_transfer_ownership
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.model.TeamMember
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
@@ -367,9 +363,11 @@ private fun TeamMemberItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "${getRoleDisplayName(
-                    member.role
-                )} - ${stringResource(Res.string.team_joined)} ${formatDate(member.joinedAt)}",
+                text = stringResource(
+                    Res.string.team_member_info,
+                    member.role.localized,
+                    formatDate(member.joinedAt)
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -407,14 +405,16 @@ private fun InvitationItem(
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "${getRoleDisplayName(
-                    invitation.role
-                )} - ${stringResource(Res.string.team_invited_by)} ${invitation.invitedByName}",
+                text = stringResource(
+                    Res.string.team_invitation_info,
+                    invitation.role.localized,
+                    invitation.invitedByName
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "${stringResource(Res.string.team_expires)} ${formatDate(invitation.expiresAt)}",
+                text = stringResource(Res.string.team_invitation_expires, formatDate(invitation.expiresAt)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -460,7 +460,7 @@ private fun InviteDialog(
                     items = UserRole.assignable,
                     selectedItem = role,
                     onItemSelected = onRoleChange,
-                    itemText = { getRoleDisplayName(it) },
+                    itemText = { it.localized },
                     enabled = !isInviting,
                 )
             }
@@ -501,7 +501,7 @@ private fun ChangeRoleDialog(
                 items = UserRole.assignable,
                 selectedItem = selectedRole,
                 onItemSelected = { selectedRole = it },
-                itemText = { getRoleDisplayName(it) },
+                itemText = { it.localized },
             )
         },
         primaryAction = DokusDialogAction(
@@ -545,16 +545,6 @@ private fun ConfirmationDialog(
     )
 }
 
-@Composable
-private fun getRoleDisplayName(role: UserRole): String {
-    return when (role) {
-        UserRole.Owner -> stringResource(Res.string.role_owner)
-        UserRole.Admin -> stringResource(Res.string.role_admin)
-        UserRole.Accountant -> stringResource(Res.string.role_accountant)
-        UserRole.Editor -> stringResource(Res.string.role_editor)
-        UserRole.Viewer -> stringResource(Res.string.role_viewer)
-    }
-}
 
 private fun formatDate(dateTime: LocalDateTime): String {
     return try {

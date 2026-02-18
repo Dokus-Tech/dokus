@@ -8,13 +8,14 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import org.koin.compose.koinInject
+import tech.dokus.app.navigation.local.LocalHomeNavController
 import tech.dokus.app.screens.MoreScreen
-import tech.dokus.app.screens.TodayScreen
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
 import tech.dokus.app.screens.settings.route.NotificationPreferencesRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
+import tech.dokus.app.screens.today.TodayScreen
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.features.auth.presentation.auth.route.ChangePasswordRoute
@@ -32,8 +33,6 @@ internal object HomeNavigationProvider : NavigationProvider {
         composable<HomeDestination.Today> {
             TodayScreen()
         }
-        // Documents is now handled by CashflowHomeNavigationProvider
-        // composable<HomeDestination.Documents> { }
         composable<HomeDestination.Team> {
             TeamSettingsRoute()
         }
@@ -61,7 +60,8 @@ internal object HomeNavigationProvider : NavigationProvider {
         composable<HomeDestination.Tomorrow> {
             // Tomorrow is One-tier only - redirect Core users to Today
             val tokenManager: TokenManager = koinInject()
-            val navController = LocalNavController.current
+            val rootNavController = LocalNavController.current
+            val homeNavController = LocalHomeNavController.current ?: rootNavController
             var userTier by remember { mutableStateOf<SubscriptionTier?>(null) }
 
             LaunchedEffect(Unit) {
@@ -75,7 +75,7 @@ internal object HomeNavigationProvider : NavigationProvider {
                 }
                 !SubscriptionTier.hasTomorrowAccess(userTier!!) -> {
                     LaunchedEffect(Unit) {
-                        navController.navigateTo(HomeDestination.Today) {
+                        homeNavController.navigateTo(HomeDestination.Today) {
                             popUpTo(HomeDestination.Tomorrow::class) { inclusive = true }
                         }
                     }

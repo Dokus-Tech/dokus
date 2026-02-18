@@ -71,6 +71,7 @@
 
     <!-- Workspace Settings -->
     <string name="workspace_settings_title">Company Details</string>
+    <string name="workspace_company_settings">Company Settings</string>
     <string name="workspace_company_info">Company Information</string>
     <string name="workspace_company_name">Company Name</string>
     <string name="workspace_legal_name">Legal Name</string>
@@ -162,6 +163,40 @@
     <string name="peppol_activating">Activating</string>
     <string name="peppol_activating_hint">Peppol is being set up automatically. This usually takes a few moments.</string>
     <string name="peppol_managed_by_dokus">Managed by Dokus</string>
+
+    <!-- Peppol Connection Section -->
+    <string name="peppol_conn_title">PEPPOL Connection</string>
+    <string name="peppol_conn_subtitle_expanded">Electronic invoicing network status</string>
+    <string name="peppol_conn_status_compliant">Compliant</string>
+    <string name="peppol_conn_status_sending_only">Sending Only</string>
+    <string name="peppol_conn_status_awaiting_transfer">Awaiting Transfer</string>
+    <string name="peppol_conn_status_pending">Pending</string>
+    <string name="peppol_conn_status_error">Error</string>
+    <string name="peppol_conn_status_external">External</string>
+    <string name="peppol_conn_label_participant_id">Participant ID</string>
+    <string name="peppol_conn_label_access_point">Access Point</string>
+    <string name="peppol_conn_status_verified">Verified</string>
+    <string name="peppol_conn_status_connected">Connected</string>
+    <string name="peppol_conn_label_inbound">Inbound</string>
+    <string name="peppol_conn_label_outbound">Outbound</string>
+    <string name="peppol_conn_status_active">Active</string>
+    <string name="peppol_conn_status_inactive">Inactive</string>
+    <string name="peppol_conn_status_blocked">Blocked</string>
+    <string name="peppol_conn_compliant_note">Belgium PEPPOL mandate effective January 1, 2026.\nYour business is compliant.</string>
+    <string name="peppol_conn_not_configured_text">PEPPOL e-invoicing is not configured for your workspace.</string>
+    <string name="peppol_conn_mandate_note">Belgium requires PEPPOL for B2G invoicing from January 1, 2026.</string>
+
+    <!-- Notification Preferences -->
+    <string name="notification_pref_subtitle">In-app notifications are always on. Configure email per event.</string>
+    <string name="notification_pref_section_peppol">PEPPOL Events</string>
+    <string name="notification_pref_section_compliance">Compliance Alerts</string>
+    <string name="notification_pref_section_billing">Billing</string>
+    <string name="notification_pref_channel_email">In-app + Email</string>
+    <string name="notification_pref_channel_inapp">In-app only</string>
+    <string name="notification_pref_required">Required</string>
+    <string name="notification_pref_peppol_hint">PEPPOL transmission failures have legal and compliance implications. Email notifications cannot be disabled.</string>
+    <string name="notification_pref_compliance_hint">Some alerts are required for compliance and cannot be disabled.</string>
+    <string name="notification_pref_load_failed">Failed to load notification preferences</string>
 
     <!-- Appearance Settings -->
     <string name="appearance_settings_title">Appearance</string>

@@ -1,7 +1,8 @@
 package tech.dokus.features.contacts
 
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_title
+import tech.dokus.aura.resources.nav_contacts
+import tech.dokus.aura.resources.nav_section_company
 import tech.dokus.aura.resources.users
 import tech.dokus.features.contacts.di.contactsPresentationModule
 import tech.dokus.features.contacts.navigation.ContactsHomeNavigationProvider
@@ -11,9 +12,9 @@ import tech.dokus.foundation.app.AppDomainModuleDi
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.AppPresentationModuleDi
 import tech.dokus.foundation.app.DashboardWidget
+import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.foundation.app.ModuleSettingsGroup
-import tech.dokus.foundation.aura.model.HomeItem
-import tech.dokus.foundation.aura.model.HomeItemPriority
+import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.HomeDestination
 
@@ -26,14 +27,22 @@ object ContactsAppModule : AppModule {
     // Presentation layer
     override val navigationProvider: NavigationProvider = ContactsNavigationProvider
     override val homeNavigationProvider: NavigationProvider = ContactsHomeNavigationProvider
-    override val homeItems: List<HomeItem> = listOf(
-        HomeItem(
-            destination = HomeDestination.Contacts,
-            titleRes = Res.string.contacts_title,
-            iconRes = Res.drawable.users,
-            priority = HomeItemPriority.Medium,
-            showTopBar = false
-        )
+    override val navGroups: List<ModuleNavGroup> = listOf(
+        ModuleNavGroup(
+            sectionId = "company",
+            sectionTitle = Res.string.nav_section_company,
+            sectionIcon = Res.drawable.users,
+            sectionOrder = 1,
+            items = listOf(
+                NavItem(
+                    id = "contacts",
+                    titleRes = Res.string.nav_contacts,
+                    iconRes = Res.drawable.users,
+                    destination = HomeDestination.Contacts,
+                    priority = 10,
+                ),
+            ),
+        ),
     )
     override val settingsGroups: List<ModuleSettingsGroup> = emptyList()
     override val dashboardWidgets: List<DashboardWidget> = emptyList()

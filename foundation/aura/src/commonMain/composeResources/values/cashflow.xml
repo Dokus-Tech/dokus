@@ -51,6 +51,23 @@
     <string name="cashflow_action_view_document">View document</string>
     <string name="cashflow_ledger_items">%1$d items</string>
 
+    <!-- Cashflow Detail Pane -->
+    <string name="cashflow_detail_title">Cashflow item</string>
+    <string name="cashflow_detail_close">Close</string>
+    <string name="cashflow_detail_payable">Payable</string>
+    <string name="cashflow_detail_receivable">Receivable</string>
+    <string name="cashflow_detail_unknown_contact">Unknown</string>
+    <string name="cashflow_detail_breakdown">Breakdown</string>
+    <string name="cashflow_detail_source_document">Source Document</string>
+    <string name="cashflow_detail_days_overdue">%1$d days overdue</string>
+    <string name="cashflow_detail_remaining">%1$s%2$s remaining</string>
+    <string name="cashflow_detail_due_in_days">Due in %1$d days</string>
+    <string name="cashflow_detail_amount_today">%1$s today</string>
+    <string name="cashflow_detail_date_label">Date: %1$s</string>
+    <string name="cashflow_detail_max_amount">Max: %1$s</string>
+    <string name="cashflow_detail_note_optional">Note (optional)</string>
+    <string name="cashflow_detail_confirm_payment">Confirm payment</string>
+
     <!-- Cashflow Summary (Phase A) -->
     <string name="cashflow_summary_next_30_days">Next 30 days</string>
     <string name="cashflow_summary_last_30_days">Last 30 days</string>

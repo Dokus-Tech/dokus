@@ -30,9 +30,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.coming_soon
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
+import tech.dokus.navigation.destinations.route
 
 /**
  * Sectioned navigation rail with expandable/collapsible sections (Firstbase style).
@@ -67,7 +70,7 @@ fun ColumnScope.DokusNavigationRailSectioned(
     ) {
         sections.forEach { section ->
             val isExpanded = expandedSections[section.id] ?: section.defaultExpanded
-            val hasSelectedChild = section.items.any { it.route == selectedRoute }
+            val hasSelectedChild = section.items.any { it.destination.route == selectedRoute }
 
             NavSectionHeader(
                 section = section,
@@ -86,7 +89,7 @@ fun ColumnScope.DokusNavigationRailSectioned(
                     verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
                     section.items.forEachIndexed { index, item ->
-                        val isSelected = item.route == selectedRoute
+                        val isSelected = item.destination.route == selectedRoute
                         val isLastItem = index == section.items.lastIndex
 
                         NavItemRow(
@@ -106,7 +109,7 @@ fun ColumnScope.DokusNavigationRailSectioned(
 
             SettingsRow(
                 item = settingsItem,
-                isSelected = settingsItem.route == selectedRoute,
+                isSelected = settingsItem.destination.route == selectedRoute,
                 onClick = { onItemClick(settingsItem) }
             )
         }
@@ -205,7 +208,7 @@ private fun NavItemRow(
         if (item.comingSoon) {
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "· Coming soon",
+                text = "· ${stringResource(Res.string.coming_soon)}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

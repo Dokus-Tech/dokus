@@ -15,7 +15,7 @@ import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.SettingsPriority
-import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.AuthDestination
 
@@ -23,7 +23,7 @@ object AuthAppModule : AppModule {
     // Presentation layer
     override val navigationProvider: NavigationProvider? = AuthNavigationProvider
     override val homeNavigationProvider: NavigationProvider? = null
-    override val homeItems: List<HomeItem> = emptyList()
+    override val navGroups: List<ModuleNavGroup> = emptyList()
     override val settingsGroups: List<ModuleSettingsGroup> = listOf(
         ModuleSettingsGroup(
             title = Res.string.settings_group_account,

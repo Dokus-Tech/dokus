@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.NotificationCategory
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentRecordDto
@@ -20,12 +19,10 @@ import tech.dokus.foundation.app.state.DokusState
  * The Today screen displays:
  * - Current tenant/workspace information
  * - Pending documents for processing (mobile only)
- * - Quick actions and widgets
+ * - Notifications panel with filters
  *
- * Flow:
- * 1. Loading -> Initial data fetch
- * 2. Content -> Data loaded, user can interact
- * 3. Error -> Failed to load with retry option
+ * All sub-states (tenant, pending docs, notifications) use [DokusState]
+ * for async loading/error handling within the single [Content] state.
  */
 
 // ============================================================================
@@ -33,39 +30,30 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface TodayState : MVIState, DokusState<Nothing> {
+sealed interface TodayState : MVIState {
 
     /**
-     * Loading state - initial data fetch in progress.
-     */
-    data object Loading : TodayState
-
-    /**
-     * Content state - data loaded and ready for display.
+     * Content state - the single working state for the Today screen.
      *
      * @property tenantState Loading state for current tenant
      * @property currentAvatar Current workspace avatar
      * @property pendingDocumentsState Loading state for pending documents (with pagination)
+     * @property allPendingDocuments Full list from server (used for client-side pagination)
+     * @property pendingVisibleCount Number of pending documents currently visible
+     * @property notificationsState Loading state for notifications
+     * @property unreadNotificationCount Badge count for unread notifications
+     * @property notificationFilter Currently selected notification filter tab
      */
-data class Content(
+    data class Content(
         val tenantState: DokusState<Tenant?> = DokusState.idle(),
         val currentAvatar: Thumbnail? = null,
         val pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>> = DokusState.idle(),
+        val allPendingDocuments: List<DocumentRecordDto> = emptyList(),
+        val pendingVisibleCount: Int = PENDING_PAGE_SIZE,
         val notificationsState: DokusState<List<NotificationDto>> = DokusState.idle(),
         val unreadNotificationCount: Int = 0,
         val notificationFilter: NotificationFilterTab = NotificationFilterTab.All,
     ) : TodayState
-
-    /**
-     * Error state - failed to load initial data.
-     *
-     * @property exception The error that occurred
-     * @property retryHandler Handler to retry the failed operation
-     */
-    data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : TodayState, DokusState.Error<Nothing>
 
     companion object {
         const val PENDING_PAGE_SIZE = 5
@@ -78,8 +66,6 @@ data class Content(
 
 @Immutable
 sealed interface TodayIntent : MVIIntent {
-
-    // === Data Loading ===
 
     /** Refresh tenant data */
     data object RefreshTenant : TodayIntent
@@ -125,12 +111,11 @@ sealed interface TodayAction : MVIAction {
 
 @Immutable
 enum class NotificationFilterTab(
-    val label: String,
     val category: NotificationCategory? = null,
     val unreadOnly: Boolean = false
 ) {
-    All(label = "All"),
-    Unread(label = "Unread", unreadOnly = true),
-    Peppol(label = "PEPPOL", category = NotificationCategory.Peppol),
-    Compliance(label = "Compliance", category = NotificationCategory.Compliance)
+    All,
+    Unread(unreadOnly = true),
+    Peppol(category = NotificationCategory.Peppol),
+    Compliance(category = NotificationCategory.Compliance),
 }

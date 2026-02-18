@@ -50,6 +50,9 @@ fun Themed(
         ThemeMode.DARK -> true
         ThemeMode.SYSTEM -> isSystemDark
     }
+
+    SystemBarEffect(useDarkTheme)
+
     val colorScheme = createColorScheme(useDarkTheme)
 
     val fontFamily = createFontFamily()

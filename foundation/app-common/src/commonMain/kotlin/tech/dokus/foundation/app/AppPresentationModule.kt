@@ -1,7 +1,6 @@
 package tech.dokus.foundation.app
 
 import org.koin.core.module.Module
-import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.navigation.NavigationProvider
 
 interface AppPresentationModule {
@@ -11,8 +10,8 @@ interface AppPresentationModule {
     /** Navigation graph for home screen items */
     val homeNavigationProvider: NavigationProvider?
 
-    /** Quick-access items displayed on the home screen */
-    val homeItems: List<HomeItem>
+    /** Navigation groups contributed by this feature, merged by sectionId at the app level */
+    val navGroups: List<ModuleNavGroup>
 
     /** Settings sections contributed by this feature */
     val settingsGroups: List<ModuleSettingsGroup>

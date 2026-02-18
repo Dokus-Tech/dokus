@@ -33,8 +33,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -149,9 +147,7 @@ private fun SettingsSplitPaneLayout(
     }
 
     // Track selected section (first section selected by default)
-    var selectedSection by rememberSaveable(stateSaver = SettingsSectionSaver) {
-        mutableStateOf(allSections.firstOrNull())
-    }
+    var selectedSection by remember { mutableStateOf(allSections.firstOrNull()) }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -492,26 +488,3 @@ private fun SettingsGroupCard(
     }
 }
 
-/**
- * Custom saver for ModuleSettingsSection to persist selection across configuration changes.
- * Uses the destination's serialized name as the key.
- */
-private val SettingsSectionSaver = Saver<ModuleSettingsSection?, String>(
-    save = { section ->
-        section?.destination?.let { dest ->
-            when (dest) {
-                is AuthDestination.ProfileSettings -> "profile"
-                is SettingsDestination.WorkspaceSettings -> "workspace"
-                is SettingsDestination.TeamSettings -> "team"
-                is SettingsDestination.AppearanceSettings -> "appearance"
-                is SettingsDestination.NotificationPreferences -> "notifications"
-                else -> null
-            }
-        }
-    },
-    restore = { _ ->
-        // We can't restore the full section without access to the modules,
-        // so we return null and let the default selection logic handle it
-        null
-    }
-)

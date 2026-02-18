@@ -1,42 +1,77 @@
 package tech.dokus.app.screens.home
 
-import tech.dokus.app.navigation.NavDefinition
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
+import tech.dokus.foundation.aura.model.NavItem
+import tech.dokus.foundation.aura.model.ShellTopBarDefault
+import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chart_bar_trend_up
+import tech.dokus.aura.resources.cashflow
+import tech.dokus.aura.resources.cashflow_title
+import tech.dokus.aura.resources.file_text
+import tech.dokus.aura.resources.home_today
+import tech.dokus.aura.resources.nav_contacts
+import tech.dokus.aura.resources.nav_documents
+import tech.dokus.aura.resources.nav_team
+import tech.dokus.aura.resources.users
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.assertNull
 
 class HomeShellTopBarResolverTest {
 
-    @Test
-    fun `shell visibility is limited to today documents and cashflow`() {
-        assertTrue(NavDefinition.shouldShowShellTopBar(NavDefinition.Routes.TODAY))
-        assertTrue(NavDefinition.shouldShowShellTopBar(NavDefinition.Routes.DOCUMENTS))
-        assertTrue(NavDefinition.shouldShowShellTopBar(NavDefinition.Routes.CASHFLOW))
+    private val testNavItems = listOf(
+        NavItem("today", Res.string.home_today, Res.drawable.chart_bar_trend_up,
+            HomeDestination.Today, shellTopBar = ShellTopBarDefault.Search),
+        NavItem("documents", Res.string.nav_documents, Res.drawable.file_text,
+            HomeDestination.Documents, shellTopBar = ShellTopBarDefault.Search),
+        NavItem("cashflow", Res.string.cashflow_title, Res.drawable.cashflow,
+            HomeDestination.Cashflow, shellTopBar = ShellTopBarDefault.Title),
+        NavItem("contacts", Res.string.nav_contacts, Res.drawable.users,
+            HomeDestination.Contacts),
+        NavItem("team", Res.string.nav_team, Res.drawable.users,
+            HomeDestination.Team),
+    )
 
-        assertFalse(NavDefinition.shouldShowShellTopBar(NavDefinition.Routes.CONTACTS))
-        assertFalse(NavDefinition.shouldShowShellTopBar(NavDefinition.Routes.TEAM))
-        assertFalse(NavDefinition.shouldShowShellTopBar(NavDefinition.Routes.AI_CHAT))
-        assertFalse(NavDefinition.shouldShowShellTopBar(NavDefinition.Routes.MORE))
-        assertFalse(NavDefinition.shouldShowShellTopBar(NavDefinition.Routes.WORKSPACE_SETTINGS))
-        assertFalse(NavDefinition.shouldShowShellTopBar(null))
+    @Test
+    fun `shell visibility is driven by NavItem shellTopBar field`() {
+        // Items with shellTopBar set should resolve
+        val todayResult = resolveHomeShellTopBarConfig(
+            "today", testNavItems, emptyMap(), ::fallbackConfig
+        )
+        assertEquals("Search fallback", (todayResult?.mode as? HomeShellTopBarMode.Search)?.placeholder)
+
+        val cashflowResult = resolveHomeShellTopBarConfig(
+            "cashflow", testNavItems, emptyMap(), ::fallbackConfig
+        )
+        assertEquals("Default Cashflow", (cashflowResult?.mode as? HomeShellTopBarMode.Title)?.title)
+
+        // Items without shellTopBar should return null
+        val contactsResult = resolveHomeShellTopBarConfig(
+            "contacts", testNavItems, emptyMap(), ::fallbackConfig
+        )
+        assertNull(contactsResult)
+
+        val nullResult = resolveHomeShellTopBarConfig(
+            null, testNavItems, emptyMap(), ::fallbackConfig
+        )
+        assertNull(nullResult)
     }
 
     @Test
     fun `registered config overrides default config`() {
-        val route = NavDefinition.Routes.CASHFLOW
         val registered = mapOf(
-            route to HomeShellTopBarConfig(
+            "cashflow" to HomeShellTopBarConfig(
                 mode = HomeShellTopBarMode.Title("Custom Cashflow")
             )
         )
 
         val resolved = resolveHomeShellTopBarConfig(
-            route = route,
+            route = "cashflow",
+            allNavItems = testNavItems,
             registeredConfigs = registered,
-            fallback = ::fallbackConfigForRoute
+            fallback = ::fallbackConfig
         )
 
         assertEquals(
@@ -47,19 +82,19 @@ class HomeShellTopBarResolverTest {
 
     @Test
     fun `clearing route registration restores default config`() {
-        val route = NavDefinition.Routes.CASHFLOW
         val registered = mutableMapOf(
-            route to HomeShellTopBarConfig(
+            "cashflow" to HomeShellTopBarConfig(
                 mode = HomeShellTopBarMode.Title("Custom Cashflow")
             )
         )
 
-        registered.remove(route)
+        registered.remove("cashflow")
 
         val resolved = resolveHomeShellTopBarConfig(
-            route = route,
+            route = "cashflow",
+            allNavItems = testNavItems,
             registeredConfigs = registered,
-            fallback = ::fallbackConfigForRoute
+            fallback = ::fallbackConfig
         )
 
         assertEquals(
@@ -70,9 +105,8 @@ class HomeShellTopBarResolverTest {
 
     @Test
     fun `disabled route registration suppresses fallback top bar`() {
-        val route = NavDefinition.Routes.DOCUMENTS
         val registered = mapOf(
-            route to HomeShellTopBarConfig(
+            "documents" to HomeShellTopBarConfig(
                 enabled = false,
                 mode = HomeShellTopBarMode.Search(
                     query = "ignored",
@@ -83,29 +117,27 @@ class HomeShellTopBarResolverTest {
         )
 
         val resolved = resolveHomeShellTopBarConfig(
-            route = route,
+            route = "documents",
+            allNavItems = testNavItems,
             registeredConfigs = registered,
-            fallback = ::fallbackConfigForRoute
+            fallback = ::fallbackConfig
         )
 
-        assertEquals(expected = null, actual = resolved)
+        assertNull(resolved)
     }
 
-    private fun fallbackConfigForRoute(normalizedRoute: String): HomeShellTopBarConfig? {
-        return when (NavDefinition.resolveShellTopBarDefault(normalizedRoute)?.mode) {
-            NavDefinition.ShellTopBarDefaultMode.Search -> HomeShellTopBarConfig(
+    private fun fallbackConfig(normalizedRoute: String, default: ShellTopBarDefault): HomeShellTopBarConfig? {
+        return when (default) {
+            ShellTopBarDefault.Search -> HomeShellTopBarConfig(
                 mode = HomeShellTopBarMode.Search(
                     query = "",
-                    placeholder = "Search",
+                    placeholder = "Search fallback",
                     onQueryChange = {}
                 )
             )
-
-            NavDefinition.ShellTopBarDefaultMode.Title -> HomeShellTopBarConfig(
+            ShellTopBarDefault.Title -> HomeShellTopBarConfig(
                 mode = HomeShellTopBarMode.Title("Default Cashflow")
             )
-
-            null -> null
         }
     }
 }

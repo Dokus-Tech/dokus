@@ -1,7 +1,6 @@
 package tech.dokus.app.viewmodel
 
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.api.Container
@@ -16,7 +15,6 @@ import tech.dokus.app.notifications.NotificationRemoteDataSource
 import tech.dokus.domain.enums.NotificationReferenceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
@@ -31,7 +29,7 @@ internal typealias TodayCtx = PipelineContext<TodayState, TodayIntent, TodayActi
  *
  * Manages:
  * - Current tenant information
- * - Pending documents list
+ * - Pending documents list (with client-side pagination)
  * - Notification badge, filters, and dropdown content
  */
 internal class TodayContainer(
@@ -43,10 +41,6 @@ internal class TodayContainer(
 ) : Container<TodayState, TodayIntent, TodayAction> {
 
     private val logger = Logger.forClass<TodayContainer>()
-
-    // Internal state for pending documents pagination
-    private val allPendingDocuments = MutableStateFlow<List<DocumentRecordDto>>(emptyList())
-    private val pendingVisibleCount = MutableStateFlow(TodayState.PENDING_PAGE_SIZE)
 
     override val store: Store<TodayState, TodayIntent, TodayAction> =
         store(TodayState.Content()) {
@@ -85,16 +79,22 @@ internal class TodayContainer(
                     }
 
                     is DokusState.Success -> {
-                        allPendingDocuments.value = state.data
-                        pendingVisibleCount.value = TodayState.PENDING_PAGE_SIZE
+                        withState<TodayState.Content, _> {
+                            updateState {
+                                copy(
+                                    allPendingDocuments = state.data,
+                                    pendingVisibleCount = TodayState.PENDING_PAGE_SIZE
+                                )
+                            }
+                        }
                         updatePendingPaginationState()
                     }
 
                     is DokusState.Error -> {
-                        allPendingDocuments.value = emptyList()
                         withState<TodayState.Content, _> {
                             updateState {
                                 copy(
+                                    allPendingDocuments = emptyList(),
                                     pendingDocumentsState = DokusState.error(
                                         state.exception,
                                         state.retryHandler
@@ -159,34 +159,34 @@ internal class TodayContainer(
     }
 
     private suspend fun TodayCtx.handleLoadMorePendingDocuments() {
-        val allDocs = allPendingDocuments.value
-        val currentVisible = pendingVisibleCount.value
+        withState<TodayState.Content, _> {
+            if (pendingVisibleCount >= allPendingDocuments.size) return@withState
 
-        if (currentVisible >= allDocs.size) return
+            logger.d { "Loading more pending documents" }
 
-        logger.d { "Loading more pending documents" }
-
-        pendingVisibleCount.value = (currentVisible + TodayState.PENDING_PAGE_SIZE)
-            .coerceAtMost(allDocs.size)
-
+            updateState {
+                copy(
+                    pendingVisibleCount = (pendingVisibleCount + TodayState.PENDING_PAGE_SIZE)
+                        .coerceAtMost(allPendingDocuments.size)
+                )
+            }
+        }
         updatePendingPaginationState()
     }
 
     private suspend fun TodayCtx.updatePendingPaginationState() {
-        val allDocs = allPendingDocuments.value
-        val visibleCount = pendingVisibleCount.value
-        val visibleDocs = allDocs.take(visibleCount)
-        val hasMore = visibleCount < allDocs.size
-
-        val paginationState = tech.dokus.domain.model.common.PaginationState(
-            data = visibleDocs,
-            currentPage = visibleCount / TodayState.PENDING_PAGE_SIZE,
-            pageSize = TodayState.PENDING_PAGE_SIZE,
-            hasMorePages = hasMore,
-            isLoadingMore = false
-        )
-
         withState<TodayState.Content, _> {
+            val visibleDocs = allPendingDocuments.take(pendingVisibleCount)
+            val hasMore = pendingVisibleCount < allPendingDocuments.size
+
+            val paginationState = tech.dokus.domain.model.common.PaginationState(
+                data = visibleDocs,
+                currentPage = pendingVisibleCount / TodayState.PENDING_PAGE_SIZE,
+                pageSize = TodayState.PENDING_PAGE_SIZE,
+                hasMorePages = hasMore,
+                isLoadingMore = false
+            )
+
             updateState {
                 copy(pendingDocumentsState = DokusState.success(paginationState))
             }

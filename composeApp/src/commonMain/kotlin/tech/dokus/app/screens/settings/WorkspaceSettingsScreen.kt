@@ -38,6 +38,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_saved_successfully
 import tech.dokus.aura.resources.state_retry
 import tech.dokus.aura.resources.workspace_settings_load_failed
+import tech.dokus.aura.resources.workspace_company_settings
 import tech.dokus.aura.resources.workspace_settings_title
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
@@ -184,7 +185,7 @@ private fun WorkspaceSettingsContentScreen(
             // Page Header with company info
             Column {
                 Text(
-                    text = "Company Settings",
+                    text = stringResource(Res.string.workspace_company_settings),
                     style = MaterialTheme.typography.headlineMedium,
                 )
                 Spacer(Modifier.height(Constrains.Spacing.xSmall))

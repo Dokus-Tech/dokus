@@ -33,10 +33,21 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.app.viewmodel.NotificationPreferencesIntent
 import tech.dokus.app.viewmodel.NotificationPreferencesState
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.notification_pref_channel_email
+import tech.dokus.aura.resources.notification_pref_channel_inapp
+import tech.dokus.aura.resources.notification_pref_compliance_hint
+import tech.dokus.aura.resources.notification_pref_load_failed
+import tech.dokus.aura.resources.notification_pref_peppol_hint
+import tech.dokus.aura.resources.notification_pref_required
+import tech.dokus.aura.resources.notification_pref_section_billing
+import tech.dokus.aura.resources.notification_pref_section_compliance
+import tech.dokus.aura.resources.notification_pref_section_peppol
+import tech.dokus.aura.resources.notification_pref_subtitle
 import tech.dokus.aura.resources.settings_notifications
 import tech.dokus.aura.resources.state_retry
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.model.NotificationPreferenceDto
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.icons.LockIcon
@@ -111,7 +122,8 @@ internal fun NotificationPreferencesContent(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = state.exception.message ?: "Failed to load notification preferences",
+                        text = state.exception.message
+                            ?: stringResource(Res.string.notification_pref_load_failed),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -137,18 +149,18 @@ private fun NotificationPreferencesContentScreen(
     var billingExpanded by remember { mutableStateOf(false) }
 
     val peppolRows = listOf(
-        NotificationType.PeppolReceived to "New document received",
-        NotificationType.PeppolSendConfirmed to "Send confirmed",
-        NotificationType.PeppolSendFailed to "Send failed",
+        NotificationType.PeppolReceived,
+        NotificationType.PeppolSendConfirmed,
+        NotificationType.PeppolSendFailed,
     )
     val complianceRows = listOf(
-        NotificationType.ComplianceBlocker to "Blocking issues",
-        NotificationType.VatWarning to "VAT warnings",
+        NotificationType.ComplianceBlocker,
+        NotificationType.VatWarning,
     )
     val billingRows = listOf(
-        NotificationType.PaymentConfirmed to "Payment confirmed",
-        NotificationType.PaymentFailed to "Payment failed",
-        NotificationType.SubscriptionChanged to "Subscription changed",
+        NotificationType.PaymentConfirmed,
+        NotificationType.PaymentFailed,
+        NotificationType.SubscriptionChanged,
     )
 
     Column(
@@ -168,7 +180,7 @@ private fun NotificationPreferencesContentScreen(
             )
             Spacer(Modifier.height(Constrains.Spacing.xxSmall))
             Text(
-                text = "In-app notifications are always on. Configure email per event.",
+                text = stringResource(Res.string.notification_pref_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.textMuted
             )
@@ -176,18 +188,19 @@ private fun NotificationPreferencesContentScreen(
             Spacer(Modifier.height(Constrains.Spacing.large))
 
             NotificationSection(
-                title = "PEPPOL Events",
+                title = stringResource(Res.string.notification_pref_section_peppol),
                 expanded = peppolExpanded,
                 onToggle = { peppolExpanded = !peppolExpanded },
                 rows = peppolRows,
                 state = state,
-                onIntent = onIntent
+                onIntent = onIntent,
+                hint = stringResource(Res.string.notification_pref_peppol_hint)
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
             NotificationSection(
-                title = "Compliance Alerts",
+                title = stringResource(Res.string.notification_pref_section_compliance),
                 expanded = complianceExpanded,
                 onToggle = { complianceExpanded = !complianceExpanded },
                 rows = complianceRows,
@@ -198,7 +211,7 @@ private fun NotificationPreferencesContentScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
             NotificationSection(
-                title = "Billing",
+                title = stringResource(Res.string.notification_pref_section_billing),
                 expanded = billingExpanded,
                 onToggle = { billingExpanded = !billingExpanded },
                 rows = billingRows,
@@ -208,7 +221,7 @@ private fun NotificationPreferencesContentScreen(
 
             Spacer(Modifier.height(Constrains.Spacing.small))
             Text(
-                text = "Some alerts are required for compliance and cannot be disabled.",
+                text = stringResource(Res.string.notification_pref_compliance_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted
             )
@@ -223,9 +236,10 @@ private fun NotificationSection(
     title: String,
     expanded: Boolean,
     onToggle: () -> Unit,
-    rows: List<Pair<NotificationType, String>>,
+    rows: List<NotificationType>,
     state: NotificationPreferencesState.Content,
     onIntent: (NotificationPreferencesIntent) -> Unit,
+    hint: String? = null,
 ) {
     SettingsSection(
         title = title,
@@ -233,9 +247,9 @@ private fun NotificationSection(
         onToggle = onToggle,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {
-            rows.forEach { (type, label) ->
+            rows.forEach { type ->
                 NotificationPreferenceRow(
-                    label = label,
+                    label = type.localized,
                     preference = state.preferenceFor(type),
                     isUpdating = type in state.updatingTypes,
                     onToggleEmail = { enabled ->
@@ -243,9 +257,9 @@ private fun NotificationSection(
                     }
                 )
             }
-            if (title == "PEPPOL Events") {
+            if (hint != null) {
                 Text(
-                    text = "PEPPOL transmission failures have legal and compliance implications. Email notifications cannot be disabled.",
+                    text = hint,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     modifier = Modifier.padding(top = Constrains.Spacing.xSmall)
@@ -262,7 +276,11 @@ private fun NotificationPreferenceRow(
     isUpdating: Boolean,
     onToggleEmail: (Boolean) -> Unit,
 ) {
-    val channelLabel = if (preference.emailEnabled) "In-app + Email" else "In-app only"
+    val channelLabel = if (preference.emailEnabled) {
+        stringResource(Res.string.notification_pref_channel_email)
+    } else {
+        stringResource(Res.string.notification_pref_channel_inapp)
+    }
     val isLarge = LocalScreenSize.current.isLarge
 
     if (isLarge) {
@@ -341,7 +359,7 @@ private fun RequiredBadge() {
     ) {
         StatusDot(type = StatusDotType.Confirmed)
         Text(
-            text = "Required",
+            text = stringResource(Res.string.notification_pref_required),
             style = MaterialTheme.typography.labelSmall,
             color = StatusDotType.Confirmed.toColor()
         )
