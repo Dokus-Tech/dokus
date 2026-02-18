@@ -16,7 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,8 +38,6 @@ import tech.dokus.foundation.aura.extensions.localized
 
 // UI dimension constants
 private val ErrorSurfaceCornerRadius = 8.dp
-private val ProgressIndicatorSize = 20.dp
-private val ProgressIndicatorStrokeWidth = 2.dp
 
 /**
  * Contact selection section for the Document Review screen.
@@ -132,10 +131,7 @@ private fun ContactLoadingState(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(ProgressIndicatorSize),
-                strokeWidth = ProgressIndicatorStrokeWidth,
-            )
+            DokusLoader(size = DokusLoaderSize.Small)
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))
             Text(
                 text = stringResource(Res.string.cashflow_saving_contact),

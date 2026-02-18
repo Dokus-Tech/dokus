@@ -16,7 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -74,10 +75,7 @@ fun PdfThumbnail(
         ) {
             when {
                 isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                    )
+                    DokusLoader(size = DokusLoaderSize.Small)
                 }
                 firstPageUrl != null -> {
                     SubcomposeAsyncImage(
@@ -85,10 +83,7 @@ fun PdfThumbnail(
                         contentDescription = stringResource(Res.string.cashflow_document_preview_title),
                         imageLoader = imageLoader,
                         loading = {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp,
-                            )
+                            DokusLoader(size = DokusLoaderSize.Small)
                         },
                         error = {
                             PlaceholderIcon()

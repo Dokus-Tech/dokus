@@ -15,7 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -133,13 +134,7 @@ internal fun PeppolCircle(
 
 @Composable
 internal fun PeppolSpinner() {
-    CircularProgressIndicator(
-        modifier = Modifier.size(72.dp),
-        strokeWidth = 1.5.dp,
-        color = MaterialTheme.colorScheme.textMuted,
-        trackColor = MaterialTheme.colorScheme.outlineVariant,
-        strokeCap = StrokeCap.Round,
-    )
+    DokusLoader(size = DokusLoaderSize.Medium)
 }
 
 @Composable

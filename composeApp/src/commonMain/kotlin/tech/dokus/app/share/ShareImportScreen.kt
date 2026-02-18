@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.CircularProgressIndicator
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -80,7 +80,7 @@ internal fun ShareImportScreen(
 
 @Composable
 private fun LoadingContextContent() {
-    CircularProgressIndicator()
+    DokusLoader()
     Spacer(modifier = Modifier.height(16.dp))
     Text(
         text = stringResource(Res.string.share_import_preparing),
