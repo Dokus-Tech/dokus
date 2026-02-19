@@ -15,6 +15,7 @@ import tech.dokus.aura.resources.calculator
 import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.file_text
 import tech.dokus.aura.resources.home_today
+import tech.dokus.aura.resources.nav_accountant
 import tech.dokus.aura.resources.nav_documents
 import tech.dokus.aura.resources.nav_reports
 import tech.dokus.aura.resources.nav_section_accounting
@@ -30,6 +31,7 @@ import tech.dokus.aura.resources.settings_team
 import tech.dokus.aura.resources.settings_workspace_details
 import tech.dokus.aura.resources.user
 import tech.dokus.aura.resources.users
+import tech.dokus.aura.resources.wallet_2
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
 import tech.dokus.foundation.app.AppModule
@@ -73,6 +75,14 @@ internal object AppMainModule : AppModule {
                     priority = 10,
                     mobileTabOrder = 1,
                     shellTopBar = ShellTopBarDefault.Search,
+                ),
+                NavItem(
+                    id = "accountant",
+                    titleRes = Res.string.nav_accountant,
+                    iconRes = Res.drawable.wallet_2,
+                    destination = HomeDestination.Accountant,
+                    priority = 25,
+                    shellTopBar = ShellTopBarDefault.Title,
                 ),
                 NavItem(
                     id = "vat",

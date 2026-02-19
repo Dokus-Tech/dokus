@@ -5,7 +5,6 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,59 +23,45 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_search
-import tech.dokus.aura.resources.profile_logout
-import tech.dokus.aura.resources.settings_appearance
 import tech.dokus.aura.resources.settings_current_workspace
-import tech.dokus.aura.resources.settings_profile
-import tech.dokus.aura.resources.user
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.MonogramAvatar
+import tech.dokus.foundation.aura.components.navigation.ProfilePopover
 import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
-import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.style.dokusEffects
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
 import tech.dokus.foundation.aura.style.glassHeader
-import tech.dokus.foundation.aura.style.statusError
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
@@ -85,7 +70,14 @@ internal data class HomeShellProfileData(
     val fullName: String,
     val email: String,
     val tierLabel: String?,
-)
+) {
+    val initials: String
+        get() = fullName
+            .split(" ")
+            .take(2)
+            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+            .joinToString("")
+}
 
 @Composable
 internal fun DesktopSidebarBottomControls(
@@ -122,7 +114,6 @@ internal fun DesktopSidebarBottomControls(
             profileData = profileData,
             isLoggingOut = isLoggingOut,
             onProfileClick = onProfileClick,
-            onAppearanceClick = onAppearanceClick,
             onLogoutClick = onLogoutClick
         )
     }
@@ -219,143 +210,32 @@ private fun DesktopProfileMenuButton(
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     onProfileClick: () -> Unit,
-    onAppearanceClick: () -> Unit,
     onLogoutClick: () -> Unit,
 ) {
-    val spacing = MaterialTheme.dokusSpacing
     val sizing = MaterialTheme.dokusSizing
-    var expanded by remember { mutableStateOf(false) }
+    var popoverVisible by remember { mutableStateOf(false) }
+    val initials = profileData?.initials ?: ""
 
     Box {
-        Surface(
-            modifier = Modifier
-                .size(sizing.iconLarge)
-                .clickable { expanded = true },
-            color = MaterialTheme.colorScheme.surface,
-            shape = MaterialTheme.shapes.small,
-            border = BorderStroke(
-                width = sizing.strokeThin,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    painter = painterResource(Res.drawable.user),
-                    contentDescription = stringResource(Res.string.settings_profile),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(sizing.iconXSmall)
-                )
-            }
-        }
+        MonogramAvatar(
+            initials = initials,
+            size = sizing.avatarExtraSmall,
+            radius = sizing.avatarExtraSmall / 4,
+            modifier = Modifier.clickable { popoverVisible = true },
+        )
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            offset = DpOffset.Zero.copy(y = -spacing.small),
-            modifier = Modifier.widthIn(min = spacing.large * 15f)
-        ) {
-            ProfileMenuHeader(profileData = profileData)
-            HorizontalDivider()
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.settings_profile)) },
-                onClick = {
-                    expanded = false
-                    onProfileClick()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.settings_appearance)) },
-                onClick = {
-                    expanded = false
-                    onAppearanceClick()
-                }
-            )
-            HorizontalDivider()
-            DropdownMenuItem(
-                enabled = !isLoggingOut,
-                text = {
-                    Text(
-                        text = stringResource(Res.string.profile_logout),
-                        color = MaterialTheme.colorScheme.statusError
-                    )
-                },
-                onClick = {
-                    expanded = false
-                    onLogoutClick()
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProfileMenuHeader(
-    profileData: HomeShellProfileData?,
-) {
-    val spacing = MaterialTheme.dokusSpacing
-    val sizing = MaterialTheme.dokusSizing
-    val fullName = profileData?.fullName ?: stringResource(Res.string.settings_profile)
-    val email = profileData?.email ?: ""
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = spacing.large, vertical = spacing.medium),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(spacing.medium)
-    ) {
-        Surface(
-            modifier = Modifier.size(sizing.avatarExtraSmall),
-            shape = MaterialTheme.shapes.extraSmall,
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(
-                width = sizing.strokeThin,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
-            )
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    painter = painterResource(Res.drawable.user),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(sizing.iconXSmall)
-                )
-            }
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(spacing.xxSmall)
-        ) {
-            Text(
-                text = fullName,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (email.isNotBlank()) {
-                Text(
-                    text = email,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.textMuted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        profileData?.tierLabel?.let { tier ->
-            Text(
-                text = tier,
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier
-                    .border(
-                        width = sizing.strokeThin,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                        shape = MaterialTheme.shapes.extraSmall
-                    )
-                    .padding(horizontal = spacing.small, vertical = spacing.xxSmall)
-            )
-        }
+        ProfilePopover(
+            isVisible = popoverVisible,
+            onDismiss = { popoverVisible = false },
+            userName = profileData?.fullName ?: "",
+            userEmail = profileData?.email ?: "",
+            userInitials = initials,
+            tierLabel = profileData?.tierLabel ?: "",
+            onProfileClick = onProfileClick,
+            onLogoutClick = {
+                if (!isLoggingOut) onLogoutClick()
+            },
+        )
     }
 }
 
@@ -446,28 +326,12 @@ internal fun MobileShellTopBar(
         ) {
             AppNameText(modifier = Modifier.weight(1f))
 
-            // Avatar monogram → navigates to profile
-            val initials = profileData?.fullName
-                ?.split(" ")
-                ?.take(2)
-                ?.mapNotNull { it.firstOrNull()?.uppercaseChar() }
-                ?.joinToString("") ?: ""
-            Surface(
-                modifier = Modifier
-                    .size(sizing.avatarExtraSmall)
-                    .clickable(onClick = onProfileClick),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = MaterialTheme.shapes.extraSmall,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = initials,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-            }
+            MonogramAvatar(
+                initials = profileData?.initials ?: "",
+                size = sizing.avatarExtraSmall,
+                radius = sizing.avatarExtraSmall / 4,
+                modifier = Modifier.clickable(onClick = onProfileClick),
+            )
         }
 
         // Row 2: Search/title + actions (conditional — only when topBarConfig has content)

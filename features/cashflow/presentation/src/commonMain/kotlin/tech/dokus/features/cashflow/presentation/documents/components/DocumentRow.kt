@@ -1,24 +1,17 @@
 package tech.dokus.features.cashflow.presentation.documents.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,12 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -41,7 +33,6 @@ import tech.dokus.aura.resources.document_table_amount
 import tech.dokus.aura.resources.document_table_date
 import tech.dokus.aura.resources.documents_table_counterparty
 import tech.dokus.aura.resources.documents_table_description
-import tech.dokus.aura.resources.documents_view_details
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
@@ -50,32 +41,32 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.badges.SourceBadge
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
+import tech.dokus.foundation.aura.components.status.StatusDot
+import tech.dokus.foundation.aura.components.status.StatusDotType
+import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.foundation.aura.style.statusWarning
+import tech.dokus.foundation.aura.style.surfaceHover
+import tech.dokus.foundation.aura.style.textFaint
+import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.components.badges.DocumentSource as UiDocumentSource
 
-private val TableRowHeight = 56.dp
-private val StatusDotSize = 8.dp
+private val TableRowHeight = 48.dp
 
 /**
  * Column specifications for the documents table.
- * New structure: Dot | Description | Counterparty | Amount | Date | Chevron
+ * v2: Vendor (dot+name) | Reference | Amount | Date | Source
  */
 private object DocumentTableColumns {
-    val Dot = DokusTableColumnSpec(
-        width = 32.dp,
-        horizontalAlignment = Alignment.CenterHorizontally
-    )
-    val Description = DokusTableColumnSpec(weight = 1f)
-    val Counterparty = DokusTableColumnSpec(width = 180.dp)
-    val Amount = DokusTableColumnSpec(width = 100.dp, horizontalAlignment = Alignment.End)
-    val Date = DokusTableColumnSpec(width = 100.dp)
-    val Action = DokusTableColumnSpec(
-        width = 40.dp,
-        horizontalAlignment = Alignment.CenterHorizontally
-    )
+    val Vendor = DokusTableColumnSpec(weight = 1f)
+    val Reference = DokusTableColumnSpec(width = 150.dp)
+    val Amount = DokusTableColumnSpec(width = 90.dp, horizontalAlignment = Alignment.End)
+    val Date = DokusTableColumnSpec(width = 70.dp)
+    val Source = DokusTableColumnSpec(width = 64.dp)
 }
 
 @Composable
@@ -87,41 +78,32 @@ internal fun DocumentTableHeaderRow(
         minHeight = 40.dp,
         contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
     ) {
-        // Empty cell for dot column
-        DokusTableCell(DocumentTableColumns.Dot) {
-            Spacer(modifier = Modifier.width(1.dp))
+        DokusTableCell(DocumentTableColumns.Vendor) {
+            HeaderLabel(text = stringResource(Res.string.documents_table_counterparty))
         }
-        DokusTableCell(DocumentTableColumns.Description) {
-            SubtleHeaderLabel(text = stringResource(Res.string.documents_table_description))
-        }
-        DokusTableCell(DocumentTableColumns.Counterparty) {
-            SubtleHeaderLabel(text = stringResource(Res.string.documents_table_counterparty))
+        DokusTableCell(DocumentTableColumns.Reference) {
+            HeaderLabel(text = stringResource(Res.string.documents_table_description))
         }
         DokusTableCell(DocumentTableColumns.Amount) {
-            SubtleHeaderLabel(
-                text = stringResource(Res.string.document_table_amount),
-                textAlign = TextAlign.End
-            )
+            HeaderLabel(text = stringResource(Res.string.document_table_amount))
         }
         DokusTableCell(DocumentTableColumns.Date) {
-            SubtleHeaderLabel(text = stringResource(Res.string.document_table_date))
+            HeaderLabel(text = stringResource(Res.string.document_table_date))
         }
-        DokusTableCell(DocumentTableColumns.Action) {
+        DokusTableCell(DocumentTableColumns.Source) {
             Spacer(modifier = Modifier.width(1.dp))
         }
     }
 }
 
 @Composable
-private fun SubtleHeaderLabel(
-    text: String,
-    textAlign: TextAlign = TextAlign.Start
-) {
+private fun HeaderLabel(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelSmall,
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.SemiBold,
+        ),
         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-        textAlign = textAlign,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
@@ -133,12 +115,13 @@ internal fun DocumentTableRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val description = resolveDescription(document, stringResource(Res.string.common_unknown))
-    val counterparty = resolveCounterparty(document)
-    val amount = extractAmount(document)
+    val vendorName = resolveCounterparty(document, stringResource(Res.string.common_unknown))
+    val reference = extractReference(document)
+    val amountDouble = extractAmountDouble(document)
     val dateLabel = formatShortDate(extractDocumentDate(document))
     val needsAttention = computeNeedsAttention(document)
     val isProcessing = computeIsProcessing(document)
+    val source = document.document.source.toUiSource()
 
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
@@ -150,75 +133,75 @@ internal fun DocumentTableRow(
         minHeight = TableRowHeight,
         onClick = onClick,
         backgroundColor = if (isHovered) {
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+            MaterialTheme.colorScheme.surfaceHover
         } else {
             MaterialTheme.colorScheme.surface.copy(alpha = 0f)
         },
         contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
     ) {
-        // Status dot
-        DokusTableCell(DocumentTableColumns.Dot) {
-            StatusDot(needsAttention = needsAttention)
+        // Vendor: dot + name
+        DokusTableCell(DocumentTableColumns.Vendor) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                StatusDot(
+                    type = if (needsAttention) StatusDotType.Warning else StatusDotType.Confirmed,
+                    size = 5.dp,
+                )
+                Text(
+                    text = vendorName,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 12.5.sp,
+                        fontStyle = if (isProcessing) FontStyle.Italic else FontStyle.Normal,
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
 
-        // Description (primary text)
-        DokusTableCell(DocumentTableColumns.Description) {
+        // Reference (mono)
+        DokusTableCell(DocumentTableColumns.Reference) {
             Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontStyle = if (isProcessing) FontStyle.Italic else FontStyle.Normal
+                text = reference,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 10.5.sp,
+                    fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
                 ),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.textMuted,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
 
-        // Counterparty (secondary text)
-        DokusTableCell(DocumentTableColumns.Counterparty) {
-            Text(
-                text = counterparty,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        // Amount (tabular numbers)
+        // Amount
         DokusTableCell(DocumentTableColumns.Amount) {
-            Text(
-                text = amount,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.End,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (amountDouble != null) {
+                Amt(value = amountDouble, size = 12.sp)
+            } else {
+                Text(
+                    text = "\u2014",
+                    color = MaterialTheme.colorScheme.textFaint,
+                )
+            }
         }
 
         // Date
         DokusTableCell(DocumentTableColumns.Date) {
             Text(
                 text = dateLabel,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                color = MaterialTheme.colorScheme.textMuted,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
 
-        // Chevron (only visible on hover)
-        DokusTableCell(DocumentTableColumns.Action) {
-            if (isHovered) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = stringResource(Res.string.documents_view_details),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+        // Source badge
+        DokusTableCell(DocumentTableColumns.Source) {
+            SourceBadge(source = source)
         }
     }
 }
@@ -229,102 +212,86 @@ internal fun DocumentMobileRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val description = resolveDescription(document, stringResource(Res.string.common_unknown))
-    val counterparty = resolveCounterparty(document)
-    val amount = extractAmount(document)
+    val vendorName = resolveCounterparty(document, stringResource(Res.string.common_unknown))
+    val reference = extractReference(document)
+    val amountDouble = extractAmountDouble(document)
     val dateLabel = formatShortDate(extractDocumentDate(document))
     val needsAttention = computeNeedsAttention(document)
     val isProcessing = computeIsProcessing(document)
+    val source = document.document.source.toUiSource()
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .background(MaterialTheme.colorScheme.surface)
-            .alpha(if (isProcessing) 0.5f else 1f)
-            .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.medium),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+    DokusCardSurface(
+        modifier = modifier,
+        accent = needsAttention,
     ) {
-        // Status dot
-        StatusDot(needsAttention = needsAttention)
-
-        // Content column
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .alpha(if (isProcessing) 0.5f else 1f)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Top row: Description + Amount
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontStyle = if (isProcessing) FontStyle.Italic else FontStyle.Normal
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(Constrains.Spacing.small))
-                Text(
-                    text = amount,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.End,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            StatusDot(
+                type = if (needsAttention) StatusDotType.Warning else StatusDotType.Confirmed,
+                size = 6.dp,
+            )
 
-            // Bottom row: Counterparty + Date
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+            // Content
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = counterparty,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = vendorName,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        fontStyle = if (isProcessing) FontStyle.Italic else FontStyle.Normal,
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
                 )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = reference,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 9.sp,
+                            fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                        ),
+                        color = MaterialTheme.colorScheme.textMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    SourceBadge(source = source, compact = true)
+                }
+            }
+
+            // Amount + Date
+            Column(horizontalAlignment = Alignment.End) {
+                if (amountDouble != null) {
+                    Amt(value = amountDouble, size = 13.sp)
+                }
                 Text(
                     text = dateLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
+                    color = MaterialTheme.colorScheme.textMuted,
                 )
             }
+
+            // Chevron
+            Text(
+                text = "\u203A",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                color = MaterialTheme.colorScheme.textFaint,
+            )
         }
     }
-}
-
-/**
- * Status indicator dot.
- * - Amber for documents needing attention
- * - Neutral (zinc) for all others
- */
-@Composable
-private fun StatusDot(
-    needsAttention: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val dotColor = if (needsAttention) {
-        MaterialTheme.colorScheme.statusWarning
-    } else {
-        // Neutral zinc dot
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-    }
-
-    Box(
-        modifier = modifier
-            .size(StatusDotSize)
-            .background(color = dotColor, shape = CircleShape)
-    )
 }
 
 // =============================================================================
@@ -333,11 +300,6 @@ private fun StatusDot(
 
 /**
  * Determines if a document needs user attention.
- * Mirrors backend `DocumentListFilter.NeedsAttention` semantics for row-level indicator:
- * - Excludes rejected documents
- * - Includes queued/processing/failed ingestion states
- * - Includes draft needs review
- * - Includes anomaly states (`Confirmed` draft without confirmed entity, succeeded without draft)
  */
 internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
@@ -366,7 +328,6 @@ internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
 
 /**
  * Determines if a document is currently processing.
- * Used for visual treatment (50% opacity, italic text).
  */
 internal fun computeIsProcessing(document: DocumentRecordDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
@@ -380,7 +341,6 @@ internal fun computeIsProcessing(document: DocumentRecordDto): Boolean {
 
 /**
  * Resolves the primary description for a document.
- * Priority: counterparty snapshot + document number > filename + number > counterparty > filename.
  */
 internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: String): String {
     val extractedData = document.draft?.extractedData
@@ -400,17 +360,54 @@ internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: Strin
         counterparty == null && documentNumber != null -> "Document — $documentNumber"
         counterparty != null -> counterparty
         ingestionStatus == IngestionStatus.Processing ||
-            ingestionStatus == IngestionStatus.Queued -> "Processing document…"
+            ingestionStatus == IngestionStatus.Queued -> "Processing document\u2026"
         else -> filename
             ?: unknownLabel
     }
 }
 
 /**
- * Resolves the counterparty name for display in secondary column.
+ * Resolves the counterparty name for display.
  */
-internal fun resolveCounterparty(document: DocumentRecordDto, emptyLabel: String = "—"): String {
-    return document.draft?.counterpartySnapshot?.name.nonBlank() ?: emptyLabel
+internal fun resolveCounterparty(document: DocumentRecordDto, emptyLabel: String = "\u2014"): String {
+    val snapshot = document.draft?.counterpartySnapshot?.name.nonBlank()
+    if (snapshot != null) return snapshot
+
+    val fromDraft = when (val data = document.draft?.extractedData) {
+        is InvoiceDraftData -> data.seller.name.nonBlank() ?: data.buyer.name.nonBlank()
+        is CreditNoteDraftData -> data.counterpartyName.nonBlank()
+        is ReceiptDraftData -> data.merchantName.nonBlank()
+        else -> null
+    }
+    return fromDraft ?: document.document.filename.nonBlank() ?: emptyLabel
+}
+
+/**
+ * Extracts the document reference number (invoice/receipt/credit note number).
+ */
+private fun extractReference(document: DocumentRecordDto): String {
+    val extractedData = document.draft?.extractedData
+    val number = when (extractedData) {
+        is InvoiceDraftData -> extractedData.invoiceNumber.nonBlank()
+        is ReceiptDraftData -> extractedData.receiptNumber.nonBlank()
+        is CreditNoteDraftData -> extractedData.creditNoteNumber.nonBlank()
+        else -> null
+    }
+    return number ?: document.document.filename.nonBlank() ?: "\u2014"
+}
+
+/**
+ * Extracts the total amount as a Double for the Amt component.
+ */
+private fun extractAmountDouble(document: DocumentRecordDto): Double? {
+    val extractedData = document.draft?.extractedData
+    val amount = when (extractedData) {
+        is InvoiceDraftData -> extractedData.totalAmount
+        is ReceiptDraftData -> extractedData.totalAmount
+        is CreditNoteDraftData -> extractedData.totalAmount
+        else -> null
+    }
+    return amount?.toDouble()
 }
 
 @Composable
@@ -432,7 +429,7 @@ private fun extractAmount(document: DocumentRecordDto): String {
     return if (amount != null) {
         "${currency?.displaySign ?: "\u20AC"}${amount.toDisplayStringSafe()}"
     } else {
-        "—"
+        "\u2014"
     }
 }
 
@@ -445,6 +442,13 @@ private fun extractDocumentDate(document: DocumentRecordDto): LocalDate {
         else -> null
     }
         ?: document.document.uploadedAt.date
+}
+
+private fun tech.dokus.domain.enums.DocumentSource.toUiSource(): UiDocumentSource {
+    return when (this) {
+        tech.dokus.domain.enums.DocumentSource.Peppol -> UiDocumentSource.Peppol
+        else -> UiDocumentSource.Pdf
+    }
 }
 
 private fun String?.nonBlank(): String? = this?.takeIf { it.isNotBlank() }

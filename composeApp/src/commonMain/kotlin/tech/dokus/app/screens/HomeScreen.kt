@@ -42,6 +42,7 @@ import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.mobileTabConfigs
 import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.local.HomeNavControllerProvided
+import tech.dokus.app.screens.documentdetail.DocumentDetailMode
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.HomeShellProfileData
@@ -59,10 +60,15 @@ import tech.dokus.domain.model.User
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.shell.DocDetailModeHost
+import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
+import tech.dokus.foundation.app.shell.LocalDocDetailModeHost
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
@@ -110,6 +116,41 @@ internal fun HomeScreen(
     val isLargeScreen = LocalScreenSize.current.isLarge
     var fallbackSearchQuery by rememberSaveable { mutableStateOf("") }
     var isMobileSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
+
+    // Document detail mode state
+    var docDetailDocuments by remember { mutableStateOf(emptyList<DocQueueItem>()) }
+    var docDetailSelectedId by remember { mutableStateOf<DocumentId?>(null) }
+    val isDocDetailMode = isLargeScreen && docDetailSelectedId != null
+
+    val docDetailModeHost = remember(homeNavController) {
+        object : DocDetailModeHost {
+            override fun enter(documentId: DocumentId, documents: List<DocQueueItem>) {
+                docDetailDocuments = documents
+                docDetailSelectedId = documentId
+                homeNavController.navigate(
+                    CashFlowDestination.DocumentReview(documentId.toString())
+                )
+            }
+
+            override fun select(documentId: DocumentId) {
+                docDetailSelectedId = documentId
+                homeNavController.navigate(
+                    CashFlowDestination.DocumentReview(documentId.toString())
+                ) {
+                    // Replace current DocumentReview with new one
+                    homeNavController.currentBackStackEntry?.destination?.route?.let { route ->
+                        popUpTo(route) { inclusive = true }
+                    }
+                }
+            }
+
+            override fun exit() {
+                docDetailDocuments = emptyList()
+                docDetailSelectedId = null
+                homeNavController.popBackStack()
+            }
+        }
+    }
     val registeredTopBarConfigs = remember { mutableStateMapOf<String, HomeShellTopBarConfig>() }
     val topBarHost = remember(allNavItems, sortedRoutes) {
         object : HomeShellTopBarHost {
@@ -176,9 +217,32 @@ internal fun HomeScreen(
         tierLabel = tenant?.subscription?.localized
     )
 
+    val navHostContent: @Composable () -> Unit = {
+        HomeNavControllerProvided(homeNavController) {
+            CompositionLocalProvider(
+                LocalHomeShellTopBarHost provides topBarHost,
+                LocalDocDetailModeHost provides docDetailModeHost,
+            ) {
+                HomeNavHost(
+                    navHostController = homeNavController,
+                    homeNavProviders = homeNavProviders,
+                    startDestination = startDestination
+                )
+            }
+        }
+    }
+
     Surface {
         Box(modifier = Modifier.fillMaxSize()) {
-            if (isLargeScreen) {
+            if (isDocDetailMode) {
+                DocumentDetailMode(
+                    documents = docDetailDocuments,
+                    selectedDocumentId = docDetailSelectedId!!,
+                    onSelectDocument = { docDetailModeHost.select(it) },
+                    onExit = { docDetailModeHost.exit() },
+                    content = navHostContent,
+                )
+            } else if (isLargeScreen) {
                 RailNavigationLayout(
                     navSections = navSections,
                     selectedRoute = currentRoute,
@@ -193,17 +257,7 @@ internal fun HomeScreen(
                     onNavItemClick = { navItem ->
                         homeNavController.navigateTo(navItem.destination)
                     },
-                    content = {
-                        HomeNavControllerProvided(homeNavController) {
-                            CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
-                                HomeNavHost(
-                                    navHostController = homeNavController,
-                                    homeNavProviders = homeNavProviders,
-                                    startDestination = startDestination
-                                )
-                            }
-                        }
-                    }
+                    content = navHostContent,
                 )
             } else {
                 BottomNavigationLayout(
@@ -222,17 +276,7 @@ internal fun HomeScreen(
                             homeNavController.navigateTo(destination)
                         }
                     },
-                    content = {
-                        HomeNavControllerProvided(homeNavController) {
-                            CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
-                                HomeNavHost(
-                                    navHostController = homeNavController,
-                                    homeNavProviders = homeNavProviders,
-                                    startDestination = startDestination
-                                )
-                            }
-                        }
-                    }
+                    content = navHostContent,
                 )
             }
 

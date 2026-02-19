@@ -1,13 +1,13 @@
 package tech.dokus.features.cashflow.presentation.ledger.screen
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -126,14 +125,6 @@ private fun CashflowLedgerContent(
     val listState = rememberLazyListState()
     val isLargeScreen = LocalScreenSize.current.isLarge
 
-    // Derive compression state from scroll offset (mobile only)
-    // Stable threshold: compress when scrolled beyond first item or offset > 48dp
-    val isCompressed by remember {
-        derivedStateOf {
-            !isLargeScreen && (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 48)
-        }
-    }
-
     // Trigger load more when near bottom
     val shouldLoadMore = rememberLoadMoreTrigger(
         listState = listState,
@@ -151,30 +142,35 @@ private fun CashflowLedgerContent(
     // Resolve selected entry from list
     val selectedEntry = state.entries.data.find { it.id == state.selectedEntryId }
 
+    // Derive spark data from visible entries (up to 8 amounts)
+    val sparkData = remember(state.entries.data) {
+        state.entries.data
+            .take(8)
+            .map { kotlin.math.abs(it.amountGross.toDouble()) }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            // Summary section (outside surface)
+            // Summary hero card
             CashflowSummarySection(
                 summary = state.summary,
                 balance = state.balance,
                 viewMode = state.filters.viewMode,
-                isCompressed = isCompressed
+                sparkData = sparkData,
             )
 
-            // Filters (outside surface)
+            // Filter tabs
             CashflowViewModeFilter(
                 viewMode = state.filters.viewMode,
                 direction = state.filters.direction,
                 onViewModeChange = { onIntent(CashflowLedgerIntent.SetViewMode(it)) },
                 onDirectionChange = { onIntent(CashflowLedgerIntent.SetDirectionFilter(it)) },
-                isCompact = isCompressed
             )
-
-            Spacer(Modifier.height(8.dp))
 
             // Table surface (data only)
             DokusTableSurface(

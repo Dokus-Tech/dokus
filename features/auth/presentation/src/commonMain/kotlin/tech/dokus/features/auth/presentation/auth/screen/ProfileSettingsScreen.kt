@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -24,20 +24,26 @@ import tech.dokus.aura.resources.profile_settings_title
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.features.auth.mvi.ProfileSettingsIntent
 import tech.dokus.features.auth.mvi.ProfileSettingsState
-import tech.dokus.features.auth.presentation.auth.components.CurrentServerSection
-import tech.dokus.features.auth.presentation.auth.components.DangerZoneSection
-import tech.dokus.features.auth.presentation.auth.components.LogoutSection
+import tech.dokus.features.auth.presentation.auth.components.AccountCard
+import tech.dokus.features.auth.presentation.auth.components.DangerZoneCard
+import tech.dokus.features.auth.presentation.auth.components.LogOutCard
 import tech.dokus.features.auth.presentation.auth.components.ProfileEditingSection
 import tech.dokus.features.auth.presentation.auth.components.ProfileErrorSection
+import tech.dokus.features.auth.presentation.auth.components.ProfileHero
 import tech.dokus.features.auth.presentation.auth.components.ProfileSavingSection
-import tech.dokus.features.auth.presentation.auth.components.ProfileViewingSection
+import tech.dokus.features.auth.presentation.auth.components.SecurityCard
+import tech.dokus.features.auth.presentation.auth.components.ServerCard
+import tech.dokus.features.auth.presentation.auth.components.VersionFooter
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.local.LocalScreenSize
+
+private val MaxContentWidth = 440.dp
+private val ContentPaddingH = 16.dp
+private val SectionSpacing = 14.dp
 
 /**
  * Profile settings screen with top bar and navigation.
- * For mobile navigation flow.
  */
 @Composable
 fun ProfileSettingsScreen(
@@ -79,7 +85,7 @@ fun ProfileSettingsScreen(
 }
 
 /**
- * Profile settings content without scaffold.
+ * Profile settings content — iOS Settings-style grouped cards, centered.
  * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
  */
 @Composable
@@ -95,74 +101,73 @@ fun ProfileSettingsContent(
     onResetToCloud: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    @Suppress("UNUSED_PARAMETER") contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(contentPadding)
-            .withContentPaddingForScrollable(),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // Profile content based on state
-        when (state) {
-            ProfileSettingsState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    DokusLoader()
+        Column(
+            modifier = Modifier
+                .widthIn(max = MaxContentWidth)
+                .padding(horizontal = ContentPaddingH)
+                .padding(top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(SectionSpacing),
+        ) {
+            when (state) {
+                ProfileSettingsState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        DokusLoader()
+                    }
+                }
+
+                is ProfileSettingsState.Viewing -> {
+                    ProfileHero(user = state.user)
+                    AccountCard(
+                        user = state.user,
+                        isResendingVerification = state.isResendingVerification,
+                        onResendVerification = onResendVerification,
+                        onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
+                    )
+                    SecurityCard(
+                        onChangePassword = onChangePassword,
+                        onMySessions = onMySessions,
+                    )
+                    ServerCard(
+                        currentServer = currentServer,
+                        onChangeServer = onChangeServer,
+                        onResetToCloud = onResetToCloud,
+                    )
+                    DangerZoneCard()
+                    LogOutCard(isLoggingOut = isLoggingOut, onLogout = onLogout)
+                    VersionFooter()
+                }
+
+                is ProfileSettingsState.Editing -> {
+                    ProfileEditingSection(
+                        state = state,
+                        onFirstNameChange = { onIntent(ProfileSettingsIntent.UpdateFirstName(it)) },
+                        onLastNameChange = { onIntent(ProfileSettingsIntent.UpdateLastName(it)) },
+                        onSave = { onIntent(ProfileSettingsIntent.SaveClicked) },
+                        onCancel = { onIntent(ProfileSettingsIntent.CancelEditing) }
+                    )
+                }
+
+                is ProfileSettingsState.Saving -> {
+                    ProfileSavingSection(state = state)
+                }
+
+                is ProfileSettingsState.Error -> {
+                    ProfileErrorSection()
                 }
             }
 
-            is ProfileSettingsState.Viewing -> {
-                ProfileViewingSection(
-                    state = state,
-                    onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
-                    onResendVerification = onResendVerification,
-                    onChangePasswordClick = onChangePassword,
-                    onMySessionsClick = onMySessions
-                )
-                DangerZoneSection()
-            }
-
-            is ProfileSettingsState.Editing -> {
-                ProfileEditingSection(
-                    state = state,
-                    onFirstNameChange = { onIntent(ProfileSettingsIntent.UpdateFirstName(it)) },
-                    onLastNameChange = { onIntent(ProfileSettingsIntent.UpdateLastName(it)) },
-                    onSave = { onIntent(ProfileSettingsIntent.SaveClicked) },
-                    onCancel = { onIntent(ProfileSettingsIntent.CancelEditing) }
-                )
-                DangerZoneSection()
-            }
-
-            is ProfileSettingsState.Saving -> {
-                ProfileSavingSection(state = state)
-                DangerZoneSection()
-            }
-
-            is ProfileSettingsState.Error -> {
-                ProfileErrorSection()
-            }
+            Spacer(Modifier.height(8.dp))
         }
-
-        // Server Connection Section - ALWAYS visible
-        CurrentServerSection(
-            currentServer = currentServer,
-            onChangeServer = onChangeServer,
-            onResetToCloud = onResetToCloud
-        )
-
-        // Logout Section - ALWAYS visible regardless of profile state
-        LogoutSection(
-            isLoggingOut = isLoggingOut,
-            onLogout = onLogout
-        )
-
-        Spacer(Modifier.height(16.dp))
     }
 }

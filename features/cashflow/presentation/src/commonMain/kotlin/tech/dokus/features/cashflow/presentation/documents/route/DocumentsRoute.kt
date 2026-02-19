@@ -15,17 +15,25 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.aura.resources.search_placeholder
+import tech.dokus.domain.Money
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.mvi.AddDocumentContainer
 import tech.dokus.features.cashflow.presentation.cashflow.components.AppDownloadQrDialog
 import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentUploadSidebar
 import tech.dokus.features.cashflow.presentation.cashflow.components.fileDropTarget
+import tech.dokus.features.cashflow.presentation.documents.components.computeNeedsAttention
+import tech.dokus.features.cashflow.presentation.documents.components.resolveCounterparty
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
@@ -33,9 +41,11 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.documents.screen.DocumentsScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
+import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
+import tech.dokus.foundation.app.shell.LocalDocDetailModeHost
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -68,15 +78,28 @@ internal fun DocumentsRoute(
         }
     }
 
+    val docDetailModeHost = LocalDocDetailModeHost.current
+    var latestDocuments by remember { mutableStateOf<List<DocumentRecordDto>>(emptyList()) }
+
     val state by documentsContainer.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is DocumentsAction.NavigateToDocumentReview -> {
-                navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId.toString()))
+                if (isLargeScreen && docDetailModeHost != null) {
+                    val queueItems = latestDocuments.map { it.toQueueItem() }
+                    docDetailModeHost.enter(action.documentId, queueItems)
+                } else {
+                    navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId.toString()))
+                }
             }
             is DocumentsAction.ShowError -> {
                 pendingError = action.error
             }
         }
+    }
+
+    // Track latest documents for queue item building
+    LaunchedEffect(state) {
+        latestDocuments = (state as? DocumentsState.Content)?.documents?.data ?: emptyList()
     }
 
     LaunchedEffect(isLargeScreen) {
@@ -209,4 +232,55 @@ internal fun DocumentsRoute(
         isVisible = isQrDialogVisible,
         onDismiss = { isQrDialogVisible = false }
     )
+}
+
+// =============================================================================
+// DocQueueItem conversion
+// =============================================================================
+
+private val MonthAbbreviations = listOf(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+)
+
+private fun DocumentRecordDto.toQueueItem(): DocQueueItem {
+    val vendorName = resolveCounterparty(this, "\u2014")
+    val date = extractQueueDate(this)
+    val amount = extractQueueAmount(this)
+    val isConfirmed = !computeNeedsAttention(this)
+    return DocQueueItem(
+        id = document.id,
+        vendorName = vendorName,
+        date = "${date.day} ${MonthAbbreviations[date.month.ordinal]}",
+        amount = amount,
+        isConfirmed = isConfirmed,
+    )
+}
+
+private fun extractQueueDate(doc: DocumentRecordDto): LocalDate {
+    val data = doc.draft?.extractedData
+    return when (data) {
+        is InvoiceDraftData -> data.issueDate
+        is ReceiptDraftData -> data.date
+        is CreditNoteDraftData -> data.issueDate
+        else -> null
+    } ?: doc.document.uploadedAt.date
+}
+
+private fun extractQueueAmount(doc: DocumentRecordDto): String {
+    val data = doc.draft?.extractedData
+    val amount: Money? = when (data) {
+        is InvoiceDraftData -> data.totalAmount
+        is ReceiptDraftData -> data.totalAmount
+        is CreditNoteDraftData -> data.totalAmount
+        else -> null
+    }
+    if (amount == null) return "\u2014"
+    val currency = when (data) {
+        is InvoiceDraftData -> data.currency
+        is ReceiptDraftData -> data.currency
+        is CreditNoteDraftData -> data.currency
+        else -> null
+    }
+    return "${currency?.displaySign ?: "\u20AC"}${amount.toDisplayString()}"
 }

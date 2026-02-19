@@ -18,15 +18,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.draw.alpha
-import androidx.compose.material.icons.automirrored.filled.TrendingDown
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -39,11 +34,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_action_mark_paid
@@ -54,40 +55,36 @@ import tech.dokus.aura.resources.cashflow_ledger_contact
 import tech.dokus.aura.resources.cashflow_ledger_description
 import tech.dokus.aura.resources.cashflow_ledger_due_date
 import tech.dokus.aura.resources.cashflow_ledger_status
-import tech.dokus.domain.enums.CashflowDirection
-import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
+import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.amberSoft
+import tech.dokus.foundation.aura.style.redSoft
 import tech.dokus.foundation.aura.style.surfaceHover
+import tech.dokus.foundation.aura.style.textMuted
 
 private val TableRowHeight = Constraints.Height.input
-private val DirectionIconSize = Constraints.IconSize.xSmall
-private val StatusIconSize = Constraints.IconSize.smallMedium
 
+/**
+ * v2 column specs: DueDate(80dp) | Contact(flex) | Description(flex 0.8) | Status(70dp) | Amount(90dp) | Actions
+ */
 @Immutable
 private object CashflowTableColumns {
-    val DueDate = DokusTableColumnSpec(weight = 0.8f)
-    val Counterparty = DokusTableColumnSpec(weight = 1.5f)
-    val Description = DokusTableColumnSpec(weight = 1.5f)
-    val Status =
-        DokusTableColumnSpec(
-            width = Constraints.IconSize.xxLarge,
-            horizontalAlignment = Alignment.CenterHorizontally
-        )
-    val Amount = DokusTableColumnSpec(weight = 1f, horizontalAlignment = Alignment.End)
-    val Actions =
-        DokusTableColumnSpec(
-            width = Constraints.IconSize.xxLarge,
-            horizontalAlignment = Alignment.CenterHorizontally
-        )
+    val DueDate = DokusTableColumnSpec(width = 80.dp)
+    val Contact = DokusTableColumnSpec(weight = 1f)
+    val Description = DokusTableColumnSpec(weight = 0.8f)
+    val Status = DokusTableColumnSpec(width = 70.dp)
+    val Amount = DokusTableColumnSpec(width = 90.dp, horizontalAlignment = Alignment.End)
+    val Actions = DokusTableColumnSpec(
+        width = Constraints.IconSize.xxLarge,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    )
 }
-
-private val HeaderRowHeight = Constraints.CropGuide.cornerLength
 
 @Composable
 internal fun CashflowLedgerHeaderRow(
@@ -95,31 +92,27 @@ internal fun CashflowLedgerHeaderRow(
 ) {
     DokusTableRow(
         modifier = modifier,
-        minHeight = HeaderRowHeight,
+        minHeight = Constraints.CropGuide.cornerLength,
         contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
     ) {
         DokusTableCell(CashflowTableColumns.DueDate) {
-            SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_due_date))
+            HeaderLabel(text = stringResource(Res.string.cashflow_ledger_due_date))
         }
-        DokusTableCell(CashflowTableColumns.Counterparty) {
-            SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_contact))
+        DokusTableCell(CashflowTableColumns.Contact) {
+            HeaderLabel(text = stringResource(Res.string.cashflow_ledger_contact))
         }
         DokusTableCell(CashflowTableColumns.Description) {
-            SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_description))
+            HeaderLabel(text = stringResource(Res.string.cashflow_ledger_description))
         }
         DokusTableCell(CashflowTableColumns.Status) {
-            SubtleHeaderLabel(
-                text = stringResource(Res.string.cashflow_ledger_status),
-                textAlign = TextAlign.Center
-            )
+            HeaderLabel(text = stringResource(Res.string.cashflow_ledger_status))
         }
         DokusTableCell(CashflowTableColumns.Amount) {
-            SubtleHeaderLabel(
+            HeaderLabel(
                 text = stringResource(Res.string.cashflow_ledger_amount),
-                textAlign = TextAlign.End
+                textAlign = TextAlign.End,
             )
         }
-        // Empty cell for actions column in header
         DokusTableCell(CashflowTableColumns.Actions) {
             Spacer(modifier = Modifier.width(Constraints.Stroke.thin))
         }
@@ -127,26 +120,25 @@ internal fun CashflowLedgerHeaderRow(
 }
 
 @Composable
-private fun SubtleHeaderLabel(
+private fun HeaderLabel(
     text: String,
     textAlign: TextAlign = TextAlign.Start
 ) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelSmall,
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.SemiBold,
+        ),
         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
         textAlign = textAlign,
         maxLines = 1,
-        overflow = TextOverflow.Ellipsis
+        overflow = TextOverflow.Ellipsis,
     )
 }
 
 /**
  * Desktop table row for cashflow entries.
- *
- * @param viewMode Current view mode - determines which actions are available:
- *                 - Upcoming: Record payment, Mark as paid, View document
- *                 - History: View document only
+ * v2: due date (mono) | contact (500) | description (muted) | status badge | Amt | actions
  */
 @Composable
 internal fun CashflowLedgerTableRow(
@@ -160,13 +152,12 @@ internal fun CashflowLedgerTableRow(
     onRecordPayment: () -> Unit,
     onMarkAsPaid: () -> Unit,
     onViewDocument: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    today: LocalDate = rememberToday(),
 ) {
-    // Hover state tracking
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    // Determine background color based on highlight and hover state
     val backgroundColor by animateColorAsState(
         targetValue = when {
             isHighlighted -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
@@ -177,6 +168,8 @@ internal fun CashflowLedgerTableRow(
         label = "cashflow-ledger-row-bg"
     )
 
+    val daysLate = (today.toEpochDays() - entry.eventDate.toEpochDays()).toInt()
+
     DokusTableRow(
         modifier = modifier
             .hoverable(interactionSource = interactionSource)
@@ -186,62 +179,59 @@ internal fun CashflowLedgerTableRow(
         onClick = onClick,
         contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
     ) {
+        // Due date (mono)
         DokusTableCell(CashflowTableColumns.DueDate) {
             Text(
                 text = formatShortDate(entry.eventDate),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 11.sp,
+                    fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                ),
+                color = MaterialTheme.colorScheme.textMuted,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        DokusTableCell(CashflowTableColumns.Counterparty) {
+
+        // Contact (500 weight)
+        DokusTableCell(CashflowTableColumns.Contact) {
             Text(
-                text = entry.contactName ?: "—",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onSurface,
+                text = entry.contactName ?: "\u2014",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.5.sp,
+                ),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
+
+        // Description (muted)
         DokusTableCell(CashflowTableColumns.Description) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = if (entry.direction == CashflowDirection.In) {
-                        Icons.AutoMirrored.Filled.TrendingUp
-                    } else {
-                        Icons.AutoMirrored.Filled.TrendingDown
-                    },
-                    contentDescription = null,
-                    tint = directionColor(entry.direction),
-                    modifier = Modifier.size(DirectionIconSize)
-                )
-                Spacer(modifier = Modifier.width(Constraints.Spacing.xSmall))
-                Text(
-                    text = entry.description ?: "—",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        DokusTableCell(CashflowTableColumns.Status) {
-            CashflowStatusIcon(status = entry.status)
-        }
-        DokusTableCell(CashflowTableColumns.Amount) {
             Text(
-                text = entry.amountGross.toDisplayString(),
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.End,
+                text = entry.description ?: "\u2014",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                color = MaterialTheme.colorScheme.textMuted,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        // Actions column - visible on hover only
+
+        // Status badge
+        DokusTableCell(CashflowTableColumns.Status) {
+            DaysLateBadge(daysLate = daysLate)
+        }
+
+        // Amount (Amt component)
+        DokusTableCell(CashflowTableColumns.Amount) {
+            Amt(
+                value = entry.amountGross.toDouble(),
+                size = 12.sp,
+            )
+        }
+
+        // Actions (hover)
         DokusTableCell(CashflowTableColumns.Actions) {
-            // Animate alpha for smooth fade in/out
             val actionsAlpha by animateFloatAsState(
                 targetValue = if (isHovered || showActionsMenu) 1f else 0f,
                 animationSpec = tween(durationMillis = 100),
@@ -264,12 +254,10 @@ internal fun CashflowLedgerTableRow(
                         )
                     }
                 }
-                // Dropdown menu - actions depend on view mode
                 DropdownMenu(
                     expanded = showActionsMenu,
                     onDismissRequest = onHideActions
                 ) {
-                    // Upcoming and Overdue modes: payment actions available
                     if (viewMode != CashflowViewMode.History) {
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.cashflow_action_record_payment)) },
@@ -280,7 +268,6 @@ internal fun CashflowLedgerTableRow(
                             onClick = onMarkAsPaid
                         )
                     }
-                    // All modes: view document
                     DropdownMenuItem(
                         text = { Text(stringResource(Res.string.cashflow_action_view_document)) },
                         onClick = onViewDocument
@@ -293,8 +280,6 @@ internal fun CashflowLedgerTableRow(
 
 /**
  * Mobile row for cashflow entries.
- *
- * @param viewMode Current view mode - passed for future use and consistency
  */
 @Composable
 internal fun CashflowLedgerMobileRow(
@@ -302,8 +287,11 @@ internal fun CashflowLedgerMobileRow(
     viewMode: CashflowViewMode,
     onClick: () -> Unit,
     onShowActions: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    today: LocalDate = rememberToday(),
 ) {
+    val daysLate = (today.toEpochDays() - entry.eventDate.toEpochDays()).toInt()
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -315,58 +303,39 @@ internal fun CashflowLedgerMobileRow(
                 bottom = Constraints.Spacing.medium,
                 end = Constraints.Spacing.small
             ),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
         ) {
+            Text(
+                text = entry.contactName ?: "\u2014",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
-            ) {
-                Icon(
-                    imageVector = if (entry.direction == CashflowDirection.In) {
-                        Icons.AutoMirrored.Filled.TrendingUp
-                    } else {
-                        Icons.AutoMirrored.Filled.TrendingDown
-                    },
-                    contentDescription = null,
-                    tint = directionColor(entry.direction),
-                    modifier = Modifier.size(DirectionIconSize)
-                )
-                Text(
-                    text = entry.contactName ?: "—",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
                 Text(
                     text = formatShortDate(entry.eventDate),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                    ),
+                    color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = entry.amountGross.toDisplayString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                DaysLateBadge(daysLate = daysLate)
             }
         }
 
-        CashflowStatusIcon(status = entry.status)
+        Amt(
+            value = entry.amountGross.toDouble(),
+            size = 12.sp,
+        )
 
-        // Always visible action button for mobile
         IconButton(
             onClick = onShowActions,
             modifier = Modifier.size(Constraints.CropGuide.cornerLength)
@@ -381,33 +350,53 @@ internal fun CashflowLedgerMobileRow(
     }
 }
 
+// =============================================================================
+// Status Badge
+// =============================================================================
+
+/**
+ * Badge showing days late/until due.
+ * - >30d late: red text, redSoft bg
+ * - >14d late: amber text, amberSoft bg
+ * - <=14d late or upcoming: muted text, surfaceVariant bg
+ */
 @Composable
-private fun CashflowStatusIcon(
-    status: CashflowEntryStatus,
-    modifier: Modifier = Modifier
+private fun DaysLateBadge(
+    daysLate: Int,
+    modifier: Modifier = Modifier,
 ) {
-    val (icon, color) = when (status) {
-        CashflowEntryStatus.Open -> Icons.Default.RadioButtonUnchecked to
-            MaterialTheme.colorScheme.onSurfaceVariant
-        CashflowEntryStatus.Paid -> Icons.Default.CheckCircle to
-            MaterialTheme.colorScheme.tertiary
-        CashflowEntryStatus.Overdue -> Icons.Default.Warning to
-            MaterialTheme.colorScheme.error
-        CashflowEntryStatus.Cancelled -> Icons.Default.Cancel to
-            MaterialTheme.colorScheme.outline
+    val text = if (daysLate > 0) "${daysLate}d late" else "in ${-daysLate}d"
+
+    val (textColor, bgColor) = when {
+        daysLate > 30 -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.redSoft
+        daysLate > 14 -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.amberSoft
+        else -> MaterialTheme.colorScheme.textMuted to MaterialTheme.colorScheme.surfaceVariant
     }
 
-    Icon(
-        imageVector = icon,
-        contentDescription = null,
-        tint = color,
-        modifier = modifier.size(StatusIconSize)
-    )
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(3.dp))
+            .background(bgColor)
+            .padding(horizontal = 7.dp, vertical = 2.dp),
+    ) {
+        Text(
+            text = text,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+            color = textColor,
+            maxLines = 1,
+        )
+    }
 }
 
+// =============================================================================
+// Helpers
+// =============================================================================
+
 @Composable
-private fun directionColor(direction: CashflowDirection) = when (direction) {
-    CashflowDirection.In -> MaterialTheme.colorScheme.tertiary
-    CashflowDirection.Out -> MaterialTheme.colorScheme.error
-    CashflowDirection.Neutral -> MaterialTheme.colorScheme.outline
+private fun rememberToday(): LocalDate {
+    return remember {
+        kotlinx.datetime.Clock.System.todayIn(TimeZone.currentSystemDefault())
+    }
 }

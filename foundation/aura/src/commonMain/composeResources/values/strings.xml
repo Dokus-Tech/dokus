@@ -51,6 +51,7 @@
     <string name="nav_team">Team</string>
     <string name="nav_vat">VAT</string>
     <string name="nav_reports">Reports</string>
+    <string name="nav_accountant">Accountant</string>
     <string name="nav_forecast">Forecast</string>
     <string name="nav_more">More</string>
     <string name="coming_soon">Coming soon</string>

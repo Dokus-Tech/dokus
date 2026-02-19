@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.presentation.documents.screen
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -117,21 +118,22 @@ private fun DocumentsContent(
         }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        // Filter buttons
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        // Filter tabs
         DocumentFilterButtons(
             currentFilter = state.filter,
+            totalCount = documents.size,
             needsAttentionCount = state.needsAttentionCount,
             onFilterSelected = { onIntent(DocumentsIntent.UpdateFilter(it)) },
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
         // Documents list or empty state
         when {
             documents.isEmpty() && state.searchQuery.isEmpty() && state.filter == DocumentFilter.All -> {
-                // No documents at all
                 DokusEmptyState(
                     title = stringResource(Res.string.documents_empty_title),
                     subtitle = stringResource(Res.string.documents_empty_upload_cta),
@@ -150,16 +152,7 @@ private fun DocumentsContent(
                 )
             }
 
-            documents.isEmpty() && state.searchQuery.isNotEmpty() -> {
-                // Search returned no results
-                DokusEmptyState(
-                    title = stringResource(Res.string.documents_filter_no_match),
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
             documents.isEmpty() -> {
-                // Filter returned no results
                 DokusEmptyState(
                     title = stringResource(Res.string.documents_filter_no_match),
                     modifier = Modifier.fillMaxSize()
@@ -167,19 +160,15 @@ private fun DocumentsContent(
             }
 
             else -> {
-                // Documents list in a card surface
-                DokusTableSurface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp),
-                    header = if (isLargeScreen) {
-                        { DocumentTableHeaderRow() }
-                    } else {
-                        null
-                    }
-                ) {
-                    if (isLargeScreen) {
+                if (isLargeScreen) {
+                    // Desktop: table in a card
+                    DokusTableSurface(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp),
+                        header = { DocumentTableHeaderRow() }
+                    ) {
                         LazyColumn(
                             state = listState,
                             modifier = Modifier
@@ -213,35 +202,35 @@ private fun DocumentsContent(
                                 }
                             }
                         }
-                    } else {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            itemsIndexed(
-                                items = documents,
-                                key = { _, doc -> doc.document.id.toString() }
-                            ) { index, document ->
-                                DocumentMobileRow(
-                                    document = document,
-                                    onClick = { onIntent(DocumentsIntent.OpenDocument(document.document.id)) }
-                                )
+                    }
+                } else {
+                    // Mobile: individual cards per document
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        itemsIndexed(
+                            items = documents,
+                            key = { _, doc -> doc.document.id.toString() }
+                        ) { _, document ->
+                            DocumentMobileRow(
+                                document = document,
+                                onClick = { onIntent(DocumentsIntent.OpenDocument(document.document.id)) }
+                            )
+                        }
 
-                                if (index < documents.size - 1) {
-                                    DokusTableDivider()
-                                }
-                            }
-
-                            if (state.documents.isLoadingMore) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        DokusLoader(size = DokusLoaderSize.Small)
-                                    }
+                        if (state.documents.isLoadingMore) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    DokusLoader(size = DokusLoaderSize.Small)
                                 }
                             }
                         }

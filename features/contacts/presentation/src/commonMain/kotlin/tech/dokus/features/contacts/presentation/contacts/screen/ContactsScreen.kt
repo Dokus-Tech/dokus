@@ -1,6 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,10 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -55,18 +51,11 @@ import tech.dokus.foundation.aura.local.isLarge
 
 // UI dimension constants
 private val ContentPaddingHorizontal = 16.dp
-private val SpacingSmall = 8.dp
 private val SpacingMedium = 12.dp
 private val SpacingDefault = 16.dp
-private val IconSize = 48.dp
+private val MasterPaneWidth = 240.dp
 private val DividerWidth = 1.dp
 private val BottomPadding = 16.dp
-
-// Layout weight constants
-private const val MasterPanelWeight = 0.4f
-private const val DetailPanelWeight = 0.6f
-private const val IconAlphaDisabled = 0.5f
-private const val TextAlphaSecondary = 0.7f
 
 /**
  * The main contacts screen showing a list of contacts with master-detail layout.
@@ -226,10 +215,10 @@ private fun DesktopContactsContent(
             .fillMaxSize()
             .padding(contentPadding)
     ) {
-        // Left panel: Contacts list with filters (40%)
+        // Left panel: Contacts list with filters (240dp)
         Column(
             modifier = Modifier
-                .weight(MasterPanelWeight)
+                .width(MasterPaneWidth)
                 .fillMaxHeight()
                 .padding(horizontal = ContentPaddingHorizontal)
         ) {
@@ -252,7 +241,9 @@ private fun DesktopContactsContent(
                 onLoadMore = onLoadMore,
                 onAddContactClick = onAddContactClick,
                 contentPadding = PaddingValues(bottom = BottomPadding),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                selectedContactId = selectedContactId,
+                isDesktop = true,
             )
         }
 
@@ -264,13 +255,11 @@ private fun DesktopContactsContent(
             color = MaterialTheme.colorScheme.outlineVariant
         )
 
-        // Right panel: Contact details or placeholder (60%)
-        // Create contact is now handled via CreateContactScreen navigation
+        // Right panel: Contact details or placeholder (flex)
         Box(
             modifier = Modifier
-                .weight(DetailPanelWeight)
+                .weight(1f)
                 .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
         ) {
             if (selectedContactId != null) {
                 // Show contact details
@@ -344,30 +333,10 @@ private fun NoContactSelectedPlaceholder(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                modifier = Modifier
-                    .height(IconSize)
-                    .width(IconSize),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = IconAlphaDisabled)
-            )
-            Spacer(modifier = Modifier.height(SpacingDefault))
-            Text(
-                text = stringResource(Res.string.contacts_select_contact),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(SpacingSmall))
-            Text(
-                text = stringResource(Res.string.contacts_select_contact_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = TextAlphaSecondary)
-            )
-        }
+        Text(
+            text = stringResource(Res.string.contacts_select_contact),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

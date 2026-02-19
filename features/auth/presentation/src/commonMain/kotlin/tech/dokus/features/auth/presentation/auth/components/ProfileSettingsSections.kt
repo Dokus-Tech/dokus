@@ -7,22 +7,27 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_empty_value
 import tech.dokus.aura.resources.profile_cancel
+import tech.dokus.aura.resources.profile_change_password
 import tech.dokus.aura.resources.profile_danger_zone
 import tech.dokus.aura.resources.profile_deactivate_account
 import tech.dokus.aura.resources.profile_deactivate_warning
@@ -34,115 +39,274 @@ import tech.dokus.aura.resources.profile_email_verified
 import tech.dokus.aura.resources.profile_first_name
 import tech.dokus.aura.resources.profile_last_name
 import tech.dokus.aura.resources.profile_load_failed
-import tech.dokus.aura.resources.profile_logging_out
 import tech.dokus.aura.resources.profile_logout
-import tech.dokus.aura.resources.profile_logout_description
 import tech.dokus.aura.resources.profile_personal_info
-import tech.dokus.aura.resources.profile_change_password
 import tech.dokus.aura.resources.profile_resend_verification
 import tech.dokus.aura.resources.profile_save
 import tech.dokus.aura.resources.profile_sessions
 import tech.dokus.domain.Name
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.model.User
 import tech.dokus.features.auth.mvi.ProfileSettingsState
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.badges.TierBadge
 import tech.dokus.foundation.aura.components.fields.PTextFieldName
-import tech.dokus.foundation.aura.style.dokusSizing
-import tech.dokus.foundation.aura.style.dokusSpacing
+import tech.dokus.foundation.aura.components.settings.SettingsRow
+import tech.dokus.foundation.aura.components.status.StatusDot
+import tech.dokus.foundation.aura.components.status.StatusDotType
+import tech.dokus.foundation.aura.components.text.DokusLabel
+import tech.dokus.foundation.aura.style.textFaint
+import tech.dokus.foundation.aura.style.textMuted
 
+// =============================================================================
+// v2 Profile Sections
+// =============================================================================
+
+/**
+ * Profile hero: centered avatar, name, email, tier badges.
+ */
 @Composable
-internal fun ProfileViewingSection(
-    state: ProfileSettingsState.Viewing,
-    onEditClick: () -> Unit,
-    onResendVerification: () -> Unit,
-    onChangePasswordClick: () -> Unit,
-    onMySessionsClick: () -> Unit
+internal fun ProfileHero(
+    user: User,
+    modifier: Modifier = Modifier,
 ) {
-    val spacing = MaterialTheme.dokusSpacing
-    DokusCard(
-        modifier = Modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
+    val name = userDisplayName(user)
+    val initials = userInitials(user)
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.fillMaxWidth().padding(bottom = 14.dp),
     ) {
+        MonogramAvatar(initials = initials, size = 72.dp, radius = 22.dp)
+        Spacer(Modifier.height(14.dp))
+        Text(
+            text = name,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = (-0.02).em,
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = user.email.value,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.textMuted,
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TierBadge(label = "Core")
+            TierBadge(label = "Owner")
+        }
+    }
+}
+
+/**
+ * Account card: email, name, verification status, verify/edit actions.
+ */
+@Composable
+internal fun AccountCard(
+    user: User,
+    isResendingVerification: Boolean,
+    onResendVerification: () -> Unit,
+    onEditClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val fullName = userDisplayName(user)
+    val isVerified = user.emailVerified
+
+    DokusCardSurface(modifier = modifier.fillMaxWidth()) {
         Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(Res.string.profile_personal_info),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                TextButton(onClick = onEditClick) {
-                    Text(stringResource(Res.string.profile_edit))
-                }
-            }
-
-            Spacer(Modifier.height(spacing.large))
-
-            ProfileField(
-                label = stringResource(Res.string.profile_email),
-                value = state.user.email.value
-            )
-
-            Spacer(Modifier.height(spacing.medium))
-
-            ProfileField(
-                label = stringResource(Res.string.profile_first_name),
-                value = state.user.firstName?.value
-                    ?: stringResource(Res.string.common_empty_value)
-            )
-
-            Spacer(Modifier.height(spacing.medium))
-
-            ProfileField(
-                label = stringResource(Res.string.profile_last_name),
-                value = state.user.lastName?.value
-                    ?: stringResource(Res.string.common_empty_value)
-            )
-
-            Spacer(Modifier.height(spacing.medium))
-
-            ProfileField(
+            SettingsRow(label = stringResource(Res.string.profile_email), value = user.email.value, mono = true)
+            SettingsRow(label = stringResource(Res.string.profile_personal_info), value = fullName)
+            SettingsRow(
                 label = stringResource(Res.string.profile_email_verification),
-                value = if (state.user.emailVerified) {
-                    stringResource(Res.string.profile_email_verified)
-                } else {
-                    stringResource(Res.string.profile_email_not_verified)
-                }
+                trailing = {
+                    StatusDot(
+                        type = if (isVerified) StatusDotType.Confirmed else StatusDotType.Warning,
+                    )
+                    Text(
+                        text = if (isVerified) {
+                            stringResource(Res.string.profile_email_verified)
+                        } else {
+                            stringResource(Res.string.profile_email_not_verified)
+                        },
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isVerified) {
+                            MaterialTheme.colorScheme.tertiary
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                    )
+                },
             )
-
-            Spacer(Modifier.height(spacing.large))
-
-            if (!state.user.emailVerified) {
-                POutlinedButton(
-                    text = stringResource(Res.string.profile_resend_verification),
-                    enabled = !state.isResendingVerification,
+            if (!isVerified) {
+                SettingsRow(
+                    label = stringResource(Res.string.profile_resend_verification),
+                    chevron = true,
                     onClick = onResendVerification,
-                    modifier = Modifier.fillMaxWidth()
                 )
-
-                Spacer(Modifier.height(spacing.small))
             }
-
-            POutlinedButton(
-                text = stringResource(Res.string.profile_change_password),
-                onClick = onChangePasswordClick,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(spacing.small))
-
-            POutlinedButton(
-                text = stringResource(Res.string.profile_sessions),
-                onClick = onMySessionsClick,
-                modifier = Modifier.fillMaxWidth()
+            SettingsRow(
+                label = stringResource(Res.string.profile_edit),
+                chevron = true,
+                showDivider = false,
+                onClick = onEditClick,
             )
         }
     }
 }
+
+/**
+ * Security card: change password, active sessions.
+ */
+@Composable
+internal fun SecurityCard(
+    onChangePassword: () -> Unit,
+    onMySessions: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    DokusCardSurface(modifier = modifier.fillMaxWidth()) {
+        Column {
+            SettingsRow(
+                label = stringResource(Res.string.profile_change_password),
+                chevron = true,
+                onClick = onChangePassword,
+            )
+            SettingsRow(
+                label = stringResource(Res.string.profile_sessions),
+                value = "1 device",
+                chevron = true,
+                showDivider = false,
+                onClick = onMySessions,
+            )
+        }
+    }
+}
+
+/**
+ * Server connection card with DokusLabel header + StatusDot + SettingsRows.
+ */
+@Composable
+internal fun ServerCard(
+    currentServer: ServerConfig,
+    onChangeServer: () -> Unit,
+    onResetToCloud: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val serverName = currentServer.name ?: if (currentServer.isCloud) "Dokus Cloud" else currentServer.host
+
+    DokusCardSurface(modifier = modifier.fillMaxWidth()) {
+        Column {
+            // Header with label + green pulse dot
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                DokusLabel(text = "Server")
+                StatusDot(type = StatusDotType.Confirmed, pulse = true)
+            }
+
+            SettingsRow(label = "Server", value = serverName)
+            SettingsRow(label = "URL", value = currentServer.baseUrl, mono = true)
+            if (currentServer.version != null) {
+                SettingsRow(label = "Version", value = currentServer.version!!, mono = true)
+            }
+            SettingsRow(
+                label = "Change Server",
+                chevron = true,
+                showDivider = !currentServer.isCloud,
+                onClick = onChangeServer,
+            )
+
+            // Reset to cloud (only on self-hosted)
+            if (!currentServer.isCloud) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "\u2601 Reset to Cloud",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Danger zone card with red label + deactivation action.
+ */
+@Composable
+internal fun DangerZoneCard(
+    modifier: Modifier = Modifier,
+) {
+    DokusCardSurface(modifier = modifier.fillMaxWidth()) {
+        Column {
+            Box(modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
+                DokusLabel(text = stringResource(Res.string.profile_danger_zone), color = MaterialTheme.colorScheme.error)
+            }
+            Box(modifier = Modifier.padding(horizontal = 18.dp).padding(bottom = 8.dp)) {
+                Text(
+                    text = stringResource(Res.string.profile_deactivate_warning),
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.textMuted,
+                )
+            }
+            SettingsRow(
+                label = stringResource(Res.string.profile_deactivate_account),
+                destructive = true,
+                showDivider = false,
+            )
+        }
+    }
+}
+
+/**
+ * Log out card: single destructive row.
+ */
+@Composable
+internal fun LogOutCard(
+    isLoggingOut: Boolean,
+    onLogout: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    DokusCardSurface(modifier = modifier.fillMaxWidth()) {
+        SettingsRow(
+            label = stringResource(Res.string.profile_logout),
+            destructive = true,
+            showDivider = false,
+            onClick = if (isLoggingOut) null else onLogout,
+        )
+    }
+}
+
+/**
+ * Version footer: "Dokus v0.1.0 · Core" centered mono textFaint.
+ */
+@Composable
+internal fun VersionFooter(
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = "Dokus v0.1.0 \u00b7 Core",
+        modifier = modifier.fillMaxWidth().padding(vertical = 10.dp),
+        textAlign = TextAlign.Center,
+        fontSize = 10.sp,
+        fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+        color = MaterialTheme.colorScheme.textFaint,
+    )
+}
+
+// =============================================================================
+// Editing / Saving / Error sections (kept for backward compat)
+// =============================================================================
 
 @Composable
 internal fun ProfileEditingSection(
@@ -152,25 +316,21 @@ internal fun ProfileEditingSection(
     onSave: () -> Unit,
     onCancel: () -> Unit
 ) {
-    val spacing = MaterialTheme.dokusSpacing
-    DokusCard(
-        modifier = Modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
-    ) {
-        Column {
+    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = stringResource(Res.string.profile_personal_info),
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Spacer(Modifier.height(spacing.large))
+            Spacer(Modifier.height(16.dp))
 
             ProfileField(
                 label = stringResource(Res.string.profile_email),
                 value = state.user.email.value
             )
 
-            Spacer(Modifier.height(spacing.medium))
+            Spacer(Modifier.height(12.dp))
 
             PTextFieldName(
                 fieldName = stringResource(Res.string.profile_first_name),
@@ -185,7 +345,7 @@ internal fun ProfileEditingSection(
                 onValueChange = onFirstNameChange
             )
 
-            Spacer(Modifier.height(spacing.medium))
+            Spacer(Modifier.height(12.dp))
 
             PTextFieldName(
                 fieldName = stringResource(Res.string.profile_last_name),
@@ -201,7 +361,7 @@ internal fun ProfileEditingSection(
                 onValueChange = onLastNameChange
             )
 
-            Spacer(Modifier.height(spacing.large))
+            Spacer(Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -211,7 +371,7 @@ internal fun ProfileEditingSection(
                     text = stringResource(Res.string.profile_cancel),
                     onClick = onCancel
                 )
-                Spacer(Modifier.width(spacing.small))
+                Spacer(Modifier.width(8.dp))
                 PPrimaryButton(
                     text = stringResource(Res.string.profile_save),
                     enabled = state.canSave,
@@ -226,52 +386,32 @@ internal fun ProfileEditingSection(
 internal fun ProfileSavingSection(
     state: ProfileSettingsState.Saving
 ) {
-    val spacing = MaterialTheme.dokusSpacing
-    val sizing = MaterialTheme.dokusSizing
-    DokusCard(
-        modifier = Modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
-    ) {
-        Column {
+    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = stringResource(Res.string.profile_personal_info),
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Spacer(Modifier.height(spacing.large))
+            Spacer(Modifier.height(16.dp))
 
-            ProfileField(
-                label = stringResource(Res.string.profile_email),
-                value = state.user.email.value
-            )
+            ProfileField(label = stringResource(Res.string.profile_email), value = state.user.email.value)
+            Spacer(Modifier.height(12.dp))
+            ProfileField(label = stringResource(Res.string.profile_first_name), value = state.editFirstName.value)
+            Spacer(Modifier.height(12.dp))
+            ProfileField(label = stringResource(Res.string.profile_last_name), value = state.editLastName.value)
 
-            Spacer(Modifier.height(spacing.medium))
-
-            ProfileField(
-                label = stringResource(Res.string.profile_first_name),
-                value = state.editFirstName.value
-            )
-
-            Spacer(Modifier.height(spacing.medium))
-
-            ProfileField(
-                label = stringResource(Res.string.profile_last_name),
-                value = state.editLastName.value
-            )
-
-            Spacer(Modifier.height(spacing.large))
+            Spacer(Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
                 Box(
-                    modifier = Modifier.height(sizing.buttonHeight).width(spacing.large * 5f),
+                    modifier = Modifier.height(40.dp).width(80.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.height(sizing.iconMedium).width(sizing.iconMedium)
-                    )
+                    CircularProgressIndicator(modifier = Modifier.height(24.dp).width(24.dp))
                 }
             }
         }
@@ -280,11 +420,11 @@ internal fun ProfileSavingSection(
 
 @Composable
 internal fun ProfileErrorSection() {
-    DokusCard(
-        modifier = Modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Text(
                 text = stringResource(Res.string.profile_load_failed),
                 style = MaterialTheme.typography.bodyLarge,
@@ -294,78 +434,9 @@ internal fun ProfileErrorSection() {
     }
 }
 
-@Composable
-internal fun DangerZoneSection() {
-    val spacing = MaterialTheme.dokusSpacing
-    DokusCard(
-        modifier = Modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
-    ) {
-        Column {
-            Text(
-                text = stringResource(Res.string.profile_danger_zone),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.error
-            )
-
-            Spacer(Modifier.height(spacing.medium))
-
-            Text(
-                text = stringResource(Res.string.profile_deactivate_warning),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(Modifier.height(spacing.medium))
-
-            POutlinedButton(
-                text = stringResource(Res.string.profile_deactivate_account),
-                onClick = { /* TODO: Implement deactivation dialog */ },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-internal fun LogoutSection(
-    isLoggingOut: Boolean,
-    onLogout: () -> Unit
-) {
-    val spacing = MaterialTheme.dokusSpacing
-    DokusCard(
-        modifier = Modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
-    ) {
-        Column {
-            Text(
-                text = stringResource(Res.string.profile_logout),
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(Modifier.height(spacing.small))
-
-            Text(
-                text = stringResource(Res.string.profile_logout_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(Modifier.height(spacing.medium))
-
-            POutlinedButton(
-                text = if (isLoggingOut) {
-                    stringResource(Res.string.profile_logging_out)
-                } else {
-                    stringResource(Res.string.profile_logout)
-                },
-                enabled = !isLoggingOut,
-                onClick = onLogout,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
+// =============================================================================
+// Helpers
+// =============================================================================
 
 @Composable
 internal fun ProfileField(
@@ -383,4 +454,23 @@ internal fun ProfileField(
             style = MaterialTheme.typography.bodyLarge
         )
     }
+}
+
+private fun userDisplayName(user: User): String {
+    return buildString {
+        user.firstName?.value?.let { append(it) }
+        if (user.firstName != null && user.lastName != null) append(" ")
+        user.lastName?.value?.let { append(it) }
+    }.ifEmpty { user.email.value }
+}
+
+private fun userInitials(user: User): String {
+    val first = user.firstName?.value?.firstOrNull()
+    val last = user.lastName?.value?.firstOrNull()
+    return when {
+        first != null && last != null -> "$first$last"
+        first != null -> "${first}${user.firstName?.value?.getOrNull(1) ?: ""}"
+        last != null -> "${last}${user.lastName?.value?.getOrNull(1) ?: ""}"
+        else -> user.email.value.take(2)
+    }.uppercase()
 }

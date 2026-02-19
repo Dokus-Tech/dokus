@@ -10,6 +10,8 @@ import androidx.navigation.compose.composable
 import org.koin.compose.koinInject
 import tech.dokus.app.navigation.local.LocalHomeNavController
 import tech.dokus.app.screens.MoreScreen
+import tech.dokus.app.screens.AccountantScreen
+import tech.dokus.app.screens.AiChatPlaceholder
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
 import tech.dokus.app.screens.settings.route.NotificationPreferencesRoute
@@ -54,6 +56,9 @@ internal object HomeNavigationProvider : NavigationProvider {
         composable<AuthDestination.MySessions> {
             MySessionsRoute()
         }
+        composable<HomeDestination.Accountant> {
+            AccountantScreen()
+        }
         composable<HomeDestination.More> {
             MoreScreen()
         }
@@ -81,8 +86,7 @@ internal object HomeNavigationProvider : NavigationProvider {
                     }
                 }
                 else -> {
-                    // Show Tomorrow content (AI/Forecast hub) - for now, placeholder
-                    UnderDevelopmentScreen()
+                    AiChatPlaceholder()
                 }
             }
         }

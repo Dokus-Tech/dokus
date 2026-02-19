@@ -1,6 +1,10 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,17 +23,27 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PersonAdd
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
@@ -37,16 +51,23 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_add_first
 import tech.dokus.aura.resources.contacts_add_first_hint
 import tech.dokus.aura.resources.contacts_empty
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.MonogramAvatar
+import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
+import tech.dokus.foundation.aura.components.badges.RoleBadge
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.borderAmber
+import tech.dokus.foundation.aura.style.surfaceHover
+import tech.dokus.foundation.aura.style.textMuted
 
 // UI dimension constants
 private val ErrorPaddingVertical = Constraints.Spacing.xxxLarge
@@ -87,6 +108,8 @@ private const val SkeletonEmailWidthFraction = 0.7f
  * @param onAddContactClick Callback when the empty state add button is clicked
  * @param contentPadding Optional content padding
  * @param modifier Optional modifier
+ * @param selectedContactId Currently selected contact for highlight (desktop)
+ * @param isDesktop Desktop mode renders simple list rows instead of cards
  */
 @Composable
 internal fun ContactsList(
@@ -95,7 +118,9 @@ internal fun ContactsList(
     onLoadMore: () -> Unit,
     onAddContactClick: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(Constraints.Elevation.none),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectedContactId: ContactId? = null,
+    isDesktop: Boolean = false,
 ) {
     val listState = rememberLazyListState()
 
@@ -139,7 +164,9 @@ internal fun ContactsList(
                     isLoadingMore = state.data.isLoadingMore,
                     onContactClick = onContactClick,
                     contentPadding = contentPadding,
-                    modifier = modifier
+                    modifier = modifier,
+                    selectedContactId = selectedContactId,
+                    isDesktop = isDesktop,
                 )
             }
         }
@@ -162,7 +189,8 @@ internal fun ContactsList(
 }
 
 /**
- * The actual list content showing contact cards.
+ * The actual list content showing contact items.
+ * Desktop: compact rows with avatar. Mobile: cards.
  */
 @Composable
 private fun ContactsListContent(
@@ -171,24 +199,34 @@ private fun ContactsListContent(
     isLoadingMore: Boolean,
     onContactClick: (ContactDto) -> Unit,
     contentPadding: PaddingValues,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectedContactId: ContactId? = null,
+    isDesktop: Boolean = false,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         state = listState,
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(ListItemSpacing)
+        verticalArrangement = if (isDesktop) Arrangement.Top else Arrangement.spacedBy(ListItemSpacing)
     ) {
         items(
             items = contacts,
             key = { it.id.toString() }
         ) { contact ->
-            ContactCard(
-                contact = contact,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onContactClick(contact) }
-            )
+            if (isDesktop) {
+                ContactListItem(
+                    contact = contact,
+                    isSelected = contact.id == selectedContactId,
+                    onClick = { onContactClick(contact) },
+                )
+            } else {
+                ContactCard(
+                    contact = contact,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onContactClick(contact) }
+                )
+            }
         }
 
         // Loading more indicator
@@ -199,6 +237,100 @@ private fun ContactsListContent(
         }
     }
 }
+
+// =============================================================================
+// Desktop List Item
+// =============================================================================
+
+/**
+ * Desktop master list row: MonogramAvatar + name + RoleBadge + doc count.
+ * Selected: warm bg + 2dp amber right border.
+ */
+@Composable
+private fun ContactListItem(
+    contact: ContactDto,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    val surfaceHover = MaterialTheme.colorScheme.surfaceHover
+    val borderAmberColor = MaterialTheme.colorScheme.borderAmber
+
+    val bgColor = when {
+        isSelected || isHovered -> surfaceHover
+        else -> Color.Transparent
+    }
+
+    val initials = remember(contact.name.value) { extractInitials(contact.name.value) }
+    val uiRole = remember(contact.derivedRoles) { mapToUiRole(contact.derivedRoles) }
+    val docCount = contact.invoiceCount + contact.inboundInvoiceCount + contact.expenseCount
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .hoverable(interactionSource = interactionSource)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .clickable(onClick = onClick)
+            .background(bgColor)
+            .then(
+                if (isSelected) {
+                    Modifier.drawWithContent {
+                        drawContent()
+                        drawRect(
+                            color = borderAmberColor,
+                            topLeft = Offset(size.width - 2.dp.toPx(), 0f),
+                            size = Size(2.dp.toPx(), size.height)
+                        )
+                    }
+                } else Modifier
+            )
+            .padding(horizontal = Constraints.Spacing.medium, vertical = Constraints.Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+    ) {
+        MonogramAvatar(
+            initials = initials,
+            size = 32.dp,
+            radius = 8.dp,
+            selected = isSelected,
+        )
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = contact.name.value,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.5.sp,
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (uiRole != null) {
+                RoleBadge(role = uiRole)
+            }
+        }
+
+        if (docCount > 0) {
+            Text(
+                text = docCount.toString(),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                ),
+                color = MaterialTheme.colorScheme.textMuted,
+            )
+        }
+    }
+}
+
+// =============================================================================
+// Empty State
+// =============================================================================
 
 /**
  * Empty state when no contacts exist.
@@ -276,6 +408,10 @@ private fun ContactsEmptyState(
     }
 }
 
+// =============================================================================
+// Skeletons
+// =============================================================================
+
 /**
  * Skeleton loading state for the contacts list.
  */
@@ -302,12 +438,13 @@ private fun ContactsListSkeleton(
 private fun ContactCardSkeleton(
     modifier: Modifier = Modifier
 ) {
-    DokusCard(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Constraints.Spacing.medium)
         ) {
             // Name and status row
             Row(
