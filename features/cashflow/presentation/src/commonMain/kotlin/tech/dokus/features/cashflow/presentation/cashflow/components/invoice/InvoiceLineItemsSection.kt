@@ -49,7 +49,7 @@ fun InvoiceLineItemsSection(
         ) {
             Text(
                 text = stringResource(Res.string.invoice_line_items),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
 

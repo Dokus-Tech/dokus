@@ -126,7 +126,7 @@ internal fun resolveMoreNavigationTarget(destination: NavigationDestination): Mo
 private fun MoreSectionHeader(section: NavSection) {
     Text(
         text = stringResource(section.titleRes),
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(vertical = Constrains.Spacing.small)
     )

@@ -184,13 +184,13 @@ private fun NoteItem(
                         )
                         Text(
                             text = formatDateTime(note.createdAt),
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         note.authorName?.let { author ->
                             Text(
                                 text = stringResource(Res.string.contacts_note_by, author),
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }

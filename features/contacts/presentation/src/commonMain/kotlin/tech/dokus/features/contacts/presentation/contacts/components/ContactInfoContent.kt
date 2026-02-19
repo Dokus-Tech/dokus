@@ -106,7 +106,7 @@ internal fun ContactInfoContent(
 
             Text(
                 text = stringResource(Res.string.contacts_business_info),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
@@ -140,7 +140,7 @@ internal fun ContactInfoContent(
 
             Text(
                 text = stringResource(Res.string.contacts_address),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
@@ -169,7 +169,7 @@ internal fun ContactInfoContent(
 
         Text(
             text = stringResource(Res.string.contacts_payment_defaults),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
@@ -194,7 +194,7 @@ internal fun ContactInfoContent(
 
                 Text(
                     text = stringResource(Res.string.contacts_tags),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 

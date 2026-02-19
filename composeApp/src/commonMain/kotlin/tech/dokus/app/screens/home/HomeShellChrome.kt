@@ -317,14 +317,14 @@ private fun ProfileMenuHeader(
         ) {
             Text(
                 text = fullName,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.titleLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             if (email.isNotBlank()) {
                 Text(
                     text = email,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

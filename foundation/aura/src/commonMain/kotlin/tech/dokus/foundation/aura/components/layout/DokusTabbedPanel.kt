@@ -191,7 +191,7 @@ private fun DokusTab(
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             color = textColor
         )
         Box(

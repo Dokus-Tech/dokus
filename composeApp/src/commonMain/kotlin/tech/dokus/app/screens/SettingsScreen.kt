@@ -283,7 +283,7 @@ private fun SettingsNavigationPanel(
             // Group header
             Text(
                 text = stringResource(groupTitle),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
