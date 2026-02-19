@@ -445,7 +445,7 @@ private fun NotesBottomSheetContent(
                         )
                         Text(
                             text = stringResource(Res.string.contacts_add_first_note_hint),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = TextAlphaSecondary)
                         )
                     }
@@ -541,7 +541,7 @@ private fun NotesBottomSheetListItem(
 
                     Text(
                         text = note.content,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
 
@@ -598,7 +598,7 @@ private fun NotesBottomSheetDeleteConfirmation(
             ) {
                 Text(
                     text = stringResource(Res.string.contacts_delete_note_confirm),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = ContainerAlphaDefault),
@@ -615,7 +615,7 @@ private fun NotesBottomSheetDeleteConfirmation(
                 }
                 Text(
                     text = stringResource(Res.string.contacts_delete_note_warning),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

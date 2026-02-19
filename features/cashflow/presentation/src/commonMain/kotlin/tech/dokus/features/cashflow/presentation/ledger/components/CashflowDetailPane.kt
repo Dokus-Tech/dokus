@@ -435,7 +435,7 @@ private fun CashflowDetailsSection(
             )
             Text(
                 text = formatShortDate(entry.eventDate),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -450,7 +450,7 @@ private fun CashflowDetailsSection(
                 )
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
@@ -550,7 +550,7 @@ private fun CashflowSourceDocumentCard(
             )
             Text(
                 text = stringResource(Res.string.cashflow_action_view_document),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary
             )
         }

@@ -292,7 +292,7 @@ private fun NotificationPreferenceRow(
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(0.5f)
             )
             Text(

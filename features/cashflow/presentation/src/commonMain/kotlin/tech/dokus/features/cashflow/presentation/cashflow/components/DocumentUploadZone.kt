@@ -158,7 +158,7 @@ fun DocumentUploadZone(
 
                 Text(
                     text = displayText,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleLarge,
                     color = borderColor,
                     textAlign = TextAlign.Center
                 )
@@ -252,7 +252,7 @@ fun DocumentUploadZone(
 
                 Text(
                     text = resolvedTitle,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleLarge,
                     color = borderColor,
                     textAlign = TextAlign.Center
                 )

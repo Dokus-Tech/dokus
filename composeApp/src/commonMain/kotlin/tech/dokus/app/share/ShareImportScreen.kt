@@ -116,7 +116,7 @@ private fun UploadingContent(state: ShareImportState.Uploading) {
     Spacer(modifier = Modifier.height(14.dp))
     Text(
         text = state.currentFileName,
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurface,
         textAlign = TextAlign.Center
     )

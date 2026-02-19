@@ -346,8 +346,7 @@ private fun TeamMemberItem(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = member.fullName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    style = MaterialTheme.typography.titleLarge,
                 )
                 if (isOwner) {
                     Spacer(Modifier.width(8.dp))
@@ -359,7 +358,7 @@ private fun TeamMemberItem(
             }
             Text(
                 text = member.email.value,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
@@ -401,8 +400,7 @@ private fun InvitationItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = invitation.email.value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.titleLarge,
             )
             Text(
                 text = stringResource(
@@ -529,7 +527,7 @@ private fun ConfirmationDialog(
         content = {
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },

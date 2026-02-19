@@ -264,7 +264,7 @@ private fun PdfPageImage(
                             )
                             Text(
                                 text = stringResource(Res.string.cashflow_preview_page_failed, page.page),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                             )
                         }
@@ -321,7 +321,7 @@ private fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
         )
         Text(
             text = stringResource(Res.string.cashflow_preview_highlight_hint),
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = HintTextAlpha),
             modifier = Modifier.padding(top = HintTopPadding)
         )

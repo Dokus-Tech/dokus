@@ -160,7 +160,7 @@ private fun MoreNavItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(item.titleRes),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             if (item.comingSoon) {

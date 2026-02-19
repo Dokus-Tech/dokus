@@ -76,8 +76,7 @@ fun InvoiceClientSection(
             // Client selected - show details
             Text(
                 text = client.name.value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -107,7 +106,7 @@ fun InvoiceClientSection(
             // No client selected - show placeholder
             Text(
                 text = stringResource(Res.string.invoice_click_to_select_client),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

@@ -349,7 +349,7 @@ private fun ClientListItem(
             ) {
                 Text(
                     text = client.name.value,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )

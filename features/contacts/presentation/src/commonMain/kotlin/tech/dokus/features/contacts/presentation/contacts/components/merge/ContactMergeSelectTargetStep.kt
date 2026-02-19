@@ -94,7 +94,7 @@ internal fun ContactMergeSelectTargetStep(
             searchQuery.length < 2 -> {
                 Text(
                     text = stringResource(Res.string.contacts_merge_search_min_length),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
@@ -102,7 +102,7 @@ internal fun ContactMergeSelectTargetStep(
             searchResults.isEmpty() -> {
                 Text(
                     text = stringResource(Res.string.contacts_merge_search_no_results, searchQuery),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )

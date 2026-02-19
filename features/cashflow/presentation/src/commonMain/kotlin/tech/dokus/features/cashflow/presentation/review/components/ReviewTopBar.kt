@@ -65,7 +65,7 @@ internal fun ReviewTopBar(
                     Text(
                         text = content?.description
                             ?: stringResource(Res.string.cashflow_document_review_title),
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        style = MaterialTheme.typography.titleLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )

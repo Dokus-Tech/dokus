@@ -111,8 +111,7 @@ fun InvoiceSummaryCard(
                         ?: stringResource(Res.string.invoice_select_client)
                     Text(
                         text = clientName,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleLarge,
                         color = if (formState.selectedClient != null) {
                             MaterialTheme.colorScheme.onSurface
                         } else {

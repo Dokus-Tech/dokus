@@ -169,7 +169,7 @@ internal fun LegalIdentitySection(
             ) {
                 Text(
                     text = stringResource(Res.string.workspace_company_logo),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.textMuted,
                     modifier = Modifier.width(140.dp),
                 )

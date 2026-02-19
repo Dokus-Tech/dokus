@@ -191,7 +191,7 @@ private fun WorkspaceSettingsContentScreen(
                 Spacer(Modifier.height(Constrains.Spacing.xSmall))
                 Text(
                     text = "${formState.legalName} · ${formState.vatNumber}",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
             }

@@ -74,7 +74,7 @@ internal fun ContactDropdownMenu(
                         Spacer(modifier = Modifier.width(ContentSpacing))
                         Text(
                             text = stringResource(Res.string.contacts_searching),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -95,7 +95,7 @@ internal fun ContactDropdownMenu(
                         )
                         Text(
                             text = stringResource(Res.string.contacts_autocomplete_no_results_for, searchQuery),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }

@@ -166,7 +166,7 @@ private fun MobilePdfPageImage(
                             )
                             Text(
                                 text = stringResource(Res.string.cashflow_preview_page_failed, page.page),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
                         }

@@ -78,7 +78,7 @@ internal fun CompanyNameStep(
             is LookupState.Error -> {
                 Text(
                     text = lookupState.exception.localized,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error
                 )
             }

@@ -69,7 +69,7 @@ fun InvoiceClientSelector(
                 ) {
                     Text(
                         text = selectedClient?.name?.value ?: stringResource(Res.string.invoice_select_client),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = if (selectedClient != null) {
                             MaterialTheme.colorScheme.onSurface
                         } else {
@@ -93,7 +93,7 @@ fun InvoiceClientSelector(
                             Column {
                                 Text(
                                     text = client.name.value,
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
                                 client.email?.let { email ->
                                     Text(
@@ -117,7 +117,7 @@ fun InvoiceClientSelector(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = exception.localized,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.error
             )
         }

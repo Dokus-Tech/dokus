@@ -206,7 +206,7 @@ internal fun SloganScreen() {
                 )
                 Text(
                     text = stringResource(Res.string.copyright),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = CopyrightTextAlpha)
                 )
             }

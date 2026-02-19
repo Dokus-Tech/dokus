@@ -489,7 +489,7 @@ private fun SuggestionChip(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = suggestion.name,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -667,7 +667,7 @@ private fun ContactListItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = contact.name.value,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )

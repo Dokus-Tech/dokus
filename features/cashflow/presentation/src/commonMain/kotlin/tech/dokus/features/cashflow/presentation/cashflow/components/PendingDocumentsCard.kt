@@ -332,7 +332,7 @@ private fun PendingDocumentItem(
         // Document name
         Text(
             text = documentName,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

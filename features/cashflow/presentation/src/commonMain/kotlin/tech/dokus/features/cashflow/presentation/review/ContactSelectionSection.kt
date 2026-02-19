@@ -89,7 +89,7 @@ fun ContactSelectionSection(
             ) {
                 Text(
                     text = validationError.localized,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(Constrains.Spacing.small),
                 )

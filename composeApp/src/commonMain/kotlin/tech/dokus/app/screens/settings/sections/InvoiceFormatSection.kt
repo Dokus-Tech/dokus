@@ -126,7 +126,7 @@ internal fun InvoiceFormatSection(
                 )
                 Text(
                     text = stringResource(Res.string.workspace_invoice_include_year),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -142,7 +142,7 @@ internal fun InvoiceFormatSection(
                 )
                 Text(
                     text = stringResource(Res.string.workspace_invoice_yearly_reset),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -221,7 +221,7 @@ private fun InvoicePreviewCard(previewNumber: String) {
             Spacer(Modifier.width(Constrains.Spacing.small))
             Text(
                 text = previewNumber,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary
             )
         }
