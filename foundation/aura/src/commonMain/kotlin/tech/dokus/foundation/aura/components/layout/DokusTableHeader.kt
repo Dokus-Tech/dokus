@@ -36,7 +36,7 @@ data class DokusHeaderColumn(
 )
 
 /**
- * Grid-based table column header row (v2 molecule).
+ * Grid-based table column header row.
  *
  * @param columns Column definitions with label, weight/width, and alignment
  */

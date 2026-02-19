@@ -33,7 +33,7 @@ val CashflowEntryStatus.localized: String
     }
 
 /**
- * Extension property to get the status color for Design System v2 dot + text pattern.
+ * Extension property to get the status color for dot + text pattern.
  *
  * Color mapping:
  * - Open: statusWarning (amber - action needed)

@@ -30,7 +30,7 @@ private val CompactPaddingV = 1.dp
 enum class DocumentSource { Pdf, Peppol }
 
 /**
- * Inline badge showing document origin — PDF or PEPPOL (v2 pattern).
+ * Inline badge showing document origin — PDF or PEPPOL.
  *
  * @param source Document origin
  * @param compact Smaller variant for mobile

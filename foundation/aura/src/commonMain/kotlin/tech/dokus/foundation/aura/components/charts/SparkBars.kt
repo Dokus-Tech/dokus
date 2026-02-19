@@ -33,7 +33,7 @@ private const val OpacityMax = 0.42f
 private val BarTopRadius = 1.5.dp
 
 /**
- * Mini bar chart for dashboard summary (v2 atom).
+ * Mini bar chart for dashboard summary.
  *
  * Each bar height is proportional to the max absolute value.
  * Opacity ramps from 0.12 (first) to 0.42 (last).

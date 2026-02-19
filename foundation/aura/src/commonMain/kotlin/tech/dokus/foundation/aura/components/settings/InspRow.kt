@@ -28,7 +28,7 @@ private val EditablePaddingH = 8.dp
 private val EditablePaddingV = 4.dp
 
 /**
- * Inspector panel key-value row with optional confidence indicator (v2 molecule).
+ * Inspector panel key-value row with optional confidence indicator.
  *
  * Uses: Document inspector invoice detail fields.
  *

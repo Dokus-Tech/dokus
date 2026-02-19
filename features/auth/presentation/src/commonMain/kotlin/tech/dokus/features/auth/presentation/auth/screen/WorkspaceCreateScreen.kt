@@ -49,7 +49,7 @@ import tech.dokus.features.auth.presentation.auth.components.steps.TypeSelection
 import tech.dokus.features.auth.presentation.auth.components.steps.VatAndAddressStep
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.background.CalmParticleField
+import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
 import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.components.text.CopyRightText
@@ -113,7 +113,7 @@ internal fun WorkspaceCreateScreen(
                 exit = fadeOut(animationSpec = tween(BackgroundFadeOutDurationMs))
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    CalmParticleField()
+                    AmbientBackground()
                 }
             }
 

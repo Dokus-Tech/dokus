@@ -49,7 +49,7 @@ enum class StatusDotType {
  * A small circular status indicator dot.
  *
  * @param type The status type determining color and fill
- * @param size Dot size (default 5dp per v2 spec)
+ * @param size Dot size (default 5dp)
  * @param pulse When true, renders an animated expanding ring behind the dot
  * @param modifier Optional modifier
  */

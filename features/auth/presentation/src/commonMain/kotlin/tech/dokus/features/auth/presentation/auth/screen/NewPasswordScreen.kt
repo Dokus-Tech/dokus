@@ -35,7 +35,7 @@ import tech.dokus.features.auth.mvi.NewPasswordIntent
 import tech.dokus.features.auth.mvi.NewPasswordState
 import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.background.CalmParticleField
+import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
 import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
@@ -50,7 +50,7 @@ internal fun NewPasswordScreen(
     Scaffold { contentPadding ->
         TwoPaneContainer(
             middleEffect = {
-                CalmParticleField()
+                AmbientBackground()
             },
             left = {
                 NewPasswordContent(

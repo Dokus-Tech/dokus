@@ -23,7 +23,7 @@ enum class ConfidenceLevel {
 }
 
 /**
- * Confidence level indicator dot (v2 atom).
+ * Confidence level indicator dot.
  *
  * Uses: Document inspector invoice detail fields.
  *

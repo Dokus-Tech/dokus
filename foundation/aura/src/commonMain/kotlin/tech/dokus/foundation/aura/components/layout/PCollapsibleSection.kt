@@ -29,7 +29,7 @@ private const val ChevronChar = "\u203A" // ›
 private const val ChevronRotation = 90f
 
 /**
- * Expandable section with toggle chevron (v2 molecule).
+ * Expandable section with toggle chevron.
  *
  * @param title Section title
  * @param isExpanded Current expanded state

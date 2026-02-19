@@ -12,7 +12,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import tech.dokus.foundation.aura.components.background.CalmParticleField
+import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper
 import tech.dokus.foundation.aura.screenshot.ScreenshotTestHelper.snapshotAllViewports
@@ -31,10 +31,10 @@ class BackgroundScreenshotTest(private val viewport: ScreenshotViewport) {
     val paparazzi = ScreenshotTestHelper.createPaparazzi(viewport)
 
     @Test
-    fun calmParticleField() {
-        paparazzi.snapshotAllViewports("CalmParticleField", viewport) {
+    fun ambientBackground() {
+        paparazzi.snapshotAllViewports("AmbientBackground", viewport) {
             BackgroundCanvas {
-                CalmParticleField()
+                AmbientBackground()
             }
         }
     }

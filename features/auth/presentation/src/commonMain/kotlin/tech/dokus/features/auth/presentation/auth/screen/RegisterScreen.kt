@@ -42,7 +42,7 @@ import tech.dokus.features.auth.presentation.auth.components.RegisterProfileFiel
 import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
 import tech.dokus.features.auth.presentation.auth.model.RegisterPage
 import tech.dokus.foundation.app.state.exceptionIfError
-import tech.dokus.foundation.aura.components.background.CalmParticleField
+import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
@@ -60,7 +60,7 @@ internal fun RegisterScreen(
     Scaffold { contentPadding ->
         TwoPaneContainer(
             middleEffect = {
-                CalmParticleField()
+                AmbientBackground()
             },
             left = {
                 RegisterContent(

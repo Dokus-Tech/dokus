@@ -221,7 +221,7 @@ fun POutlinedButton(
 }
 
 /**
- * Back button with amber chevron and optional label text (v2).
+ * Back button with amber chevron and optional label text.
  *
  * @param label Optional text label (e.g. "All docs", "Contacts")
  * @param onBackPress Back navigation callback

@@ -24,7 +24,7 @@ import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.textMuted
 
 /**
- * Copyable label/value row (Design System v1).
+ * Copyable label/value row.
  *
  * Useful for IDs, credentials, and other short values.
  */

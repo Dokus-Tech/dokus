@@ -42,7 +42,7 @@ import tech.dokus.foundation.aura.style.isDark
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.navigation.destinations.route
 
-// v2 nav rail: left border track, rotating chevron, amber active highlight
+
 
 private val ItemShape = RoundedCornerShape(
     topEnd = Constrains.CornerRadius.button, bottomEnd = Constrains.CornerRadius.button

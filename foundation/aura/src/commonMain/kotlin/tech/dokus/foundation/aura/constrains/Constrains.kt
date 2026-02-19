@@ -45,7 +45,7 @@ object Constrains {
     }
 
     /**
-     * Corner radius values (Design System v2).
+     * Corner radius values.
      */
     object CornerRadius {
         val badge = 4.dp    // Small badges, tags
@@ -56,7 +56,7 @@ object Constrains {
     }
 
     /**
-     * Shell layout dimensions (Design System v2).
+     * Shell layout dimensions.
      * Controls the floating-window desktop layout.
      */
     object Shell {
@@ -68,7 +68,7 @@ object Constrains {
     }
 
     /**
-     * Document detail layout dimensions (v2).
+     * Document detail layout dimensions.
      */
     object DocumentDetail {
         val queueWidth = 220.dp
@@ -77,7 +77,7 @@ object Constrains {
     }
 
     /**
-     * Status dot dimensions (v2).
+     * Status dot dimensions.
      */
     object StatusDot {
         val size = 5.dp
@@ -85,7 +85,7 @@ object Constrains {
     }
 
     /**
-     * Table layout dimensions (v2).
+     * Table layout dimensions.
      */
     object Table {
         val rowMinHeight = 42.dp
@@ -119,7 +119,7 @@ object Constrains {
     }
 
     /**
-     * Elevation values (Design System v1).
+     * Elevation values.
      * No shadows by default - use borders for separation.
      * Modal elevation only for dialogs/sheets.
      */

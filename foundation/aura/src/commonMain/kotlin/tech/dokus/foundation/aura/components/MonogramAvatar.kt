@@ -27,7 +27,7 @@ private val LargeBorderWidth = 1.5.dp
 private const val GradientEndAlpha = 0.12f
 
 /**
- * Initials-based avatar with amber gradient (v2 pattern).
+ * Initials-based avatar with amber gradient.
  *
  * Used for contacts, team members, user profile.
  * Distinct from [CompanyAvatarImage] which handles image URLs.

@@ -6,13 +6,9 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 
-// ============================================================
-// Dokus v2 Color Tokens — Warm Amber Identity
-// ============================================================
-// Source of truth: Obsidian → ui_v2/THEME.md
+// Dokus Color Tokens — Warm Amber Identity
 // Light: warm off-white canvas with amber accents
 // Dark: warm near-black with lifted amber
-// ============================================================
 
 // ─── Light Surfaces ───
 private const val BgLightHex = 0xFFF2F1EE              // bg — app canvas
@@ -171,12 +167,12 @@ val ColorScheme.rippleColor: Color get() = onSurface
 private const val DarkLuminanceThreshold = 0.5f
 val ColorScheme.isDark: Boolean get() = background.luminance() < DarkLuminanceThreshold
 
-// Semantic status colors (v2)
+// Semantic status colors
 val ColorScheme.statusConfirmed: Color get() = tertiary  // green
 val ColorScheme.statusWarning: Color get() = primary     // amber
 val ColorScheme.statusError: Color get() = error         // red
 
-// Text hierarchy tokens (v2)
+// Text hierarchy tokens
 val ColorScheme.textMuted: Color
     get() = if (isDark) Color(TextMutedDarkHex) else Color(TextMutedLightHex)
 val ColorScheme.textFaint: Color
@@ -186,11 +182,11 @@ val ColorScheme.textFaint: Color
 val ColorScheme.positionPositive: Color get() = tertiary  // green
 val ColorScheme.positionNegative: Color get() = error     // red
 
-// Interactive surface hover (desktop row hover, v2 "warm" token)
+// Interactive surface hover (desktop row hover)
 val ColorScheme.surfaceHover: Color
     get() = if (isDark) Color(WarmDarkHex) else Color(WarmLightHex)
 
-// Glass surface tokens (v2 floating windows)
+// Glass surface tokens (floating windows)
 val ColorScheme.glass: Color
     get() = if (isDark) Color(0xFF161412).copy(alpha = 0.65f)
             else Color.White.copy(alpha = 0.42f)
@@ -207,7 +203,7 @@ val ColorScheme.windowShadow: Color
     get() = if (isDark) Color.Black.copy(alpha = 0.30f)
             else Color.Black.copy(alpha = 0.06f)
 
-// Amber tints (v2 component tokens)
+// Amber tints
 val ColorScheme.amberSoft: Color get() = primaryContainer
 val ColorScheme.amberWhisper: Color
     get() = if (isDark) Color(AmberLightHex).copy(alpha = 0.05f)
@@ -216,11 +212,11 @@ val ColorScheme.borderAmber: Color
     get() = if (isDark) Color(AmberDarkHex).copy(alpha = 0.22f)
             else Color(0xFFB46400).copy(alpha = 0.18f)
 
-// Table & border tokens (v2)
+// Table & border tokens
 val ColorScheme.thText: Color
     get() = if (isDark) Color(0xFF9A928A) else Color(0xFF4A443D)
 val ColorScheme.borderStrong: Color get() = outline
 
-// Soft semantic background aliases (v2)
+// Soft semantic background aliases
 val ColorScheme.redSoft: Color get() = errorContainer
 val ColorScheme.greenSoft: Color get() = tertiaryContainer

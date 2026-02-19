@@ -29,7 +29,7 @@ import tech.dokus.foundation.aura.style.textMuted
 private const val ChevronChar = "\u203A" // ›
 
 /**
- * iOS Settings-style key-value row (v2 molecule).
+ * iOS Settings-style key-value row.
  *
  * Uses: Profile screen (Account, Security, Server, Danger Zone).
  *

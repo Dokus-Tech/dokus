@@ -22,7 +22,7 @@ private val PaddingH = 10.dp
 private val PaddingV = 3.dp
 
 /**
- * Subscription tier badge (v2 pattern).
+ * Subscription tier badge.
  *
  * Uses: Profile popover, team page.
  *

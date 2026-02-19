@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 import tech.dokus.foundation.aura.style.statusConfirmed
 
 /**
- * Animated success indicator (Design System v1).
+ * Animated success indicator.
  *
  * Draws a circle stroke, then a checkmark. Intended to be generic (not Peppol-specific).
  */

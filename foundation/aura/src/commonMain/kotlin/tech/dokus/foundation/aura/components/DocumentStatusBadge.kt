@@ -19,7 +19,7 @@ import tech.dokus.foundation.aura.extensions.localized
 
 /**
  * Displays a status indicator for document processing state.
- * Uses dot + text pattern (Design System v1).
+ * Uses dot + text pattern.
  *
  * Color mapping:
  * - Queued: onSurfaceVariant (neutral, waiting)
@@ -36,7 +36,7 @@ fun DocumentStatusBadge(
     status: DocumentUiStatus,
     modifier: Modifier = Modifier
 ) {
-    // Dot + text pattern (Design System v1)
+    // Dot + text pattern
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically

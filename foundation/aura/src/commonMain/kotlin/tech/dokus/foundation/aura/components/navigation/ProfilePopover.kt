@@ -58,7 +58,7 @@ private val AvatarRadius = 8.dp
 private val AvatarFontSize = 11.sp
 
 /**
- * Profile popover triggered by sidebar footer (v2 pattern).
+ * Profile popover triggered by sidebar footer.
  *
  * @param isVisible Controls visibility with animation
  * @param onDismiss Called when clicking outside

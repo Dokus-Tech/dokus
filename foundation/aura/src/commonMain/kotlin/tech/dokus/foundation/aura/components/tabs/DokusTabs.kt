@@ -46,7 +46,7 @@ data class DokusTab(
 )
 
 /**
- * Segmented pill-group tab switcher (v2 molecule).
+ * Segmented pill-group tab switcher.
  *
  * Container: canvas background, 7dp outer radius, 1px border.
  * Active tab: page background, shadow, 6dp radius, bold text.

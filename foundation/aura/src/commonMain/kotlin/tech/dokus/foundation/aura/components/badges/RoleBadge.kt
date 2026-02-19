@@ -33,7 +33,7 @@ enum class ContactRole {
 }
 
 /**
- * Contact role badge (v2 pattern).
+ * Contact role badge.
  *
  * Uses: Contact list, contact detail.
  *

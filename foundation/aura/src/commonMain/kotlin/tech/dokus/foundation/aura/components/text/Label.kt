@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.sp
 import tech.dokus.foundation.aura.style.textMuted
 
 /**
- * Uppercase section label (v2 atom).
+ * Uppercase section label.
  *
  * Style: 10sp, weight 600, uppercase, letter-spacing 0.1em.
  * Uses: stat card labels, server label in profile, danger zone label.

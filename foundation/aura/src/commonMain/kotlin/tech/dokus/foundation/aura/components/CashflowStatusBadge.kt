@@ -19,7 +19,7 @@ import tech.dokus.foundation.aura.extensions.statusColor
 
 /**
  * Displays a status indicator for cashflow entry state.
- * Uses dot + text pattern (Design System v1).
+ * Uses dot + text pattern.
  *
  * Color mapping:
  * - Open: tertiary (amber/warning - action needed)

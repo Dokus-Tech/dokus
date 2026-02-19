@@ -15,7 +15,7 @@ import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
- * Section header with optional right-side action (v2).
+ * Section header with optional right-side action.
  *
  * Style: 14sp, weight 700, onSurface color.
  * Uses: "Recent" on Today, "Previous periods" on Accountant, section headers everywhere.

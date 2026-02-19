@@ -17,7 +17,7 @@ import tech.dokus.foundation.aura.local.LocalThemeManager
 import tech.dokus.foundation.platform.activePlatform
 import tech.dokus.foundation.platform.isWeb
 
-// Dokus Design System v2 Shapes
+// Dokus Shape System
 private val dokusShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),  // badges, tags
     small = RoundedCornerShape(7.dp),       // buttons, inputs

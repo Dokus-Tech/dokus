@@ -29,7 +29,7 @@ import kotlinx.coroutines.delay
 import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
 import tech.dokus.features.auth.mvi.WorkspaceSelectState
 import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
-import tech.dokus.foundation.aura.components.background.CalmParticleField
+import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
 import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.components.text.CopyRightText
@@ -86,7 +86,7 @@ internal fun WorkspaceSelectScreen(
                 exit = fadeOut(animationSpec = tween(BackgroundFadeOutDurationMs))
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    CalmParticleField()
+                    AmbientBackground()
                 }
             }
 

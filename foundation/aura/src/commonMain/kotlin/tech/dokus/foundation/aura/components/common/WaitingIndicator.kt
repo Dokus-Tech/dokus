@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import tech.dokus.foundation.aura.style.textMuted
 
 /**
- * Subtle waiting indicator (Design System v1).
+ * Subtle waiting indicator.
  *
  * A thin outlined circle with a pulsing ring and a small center dot.
  * Intended to be generic (not Peppol-specific).

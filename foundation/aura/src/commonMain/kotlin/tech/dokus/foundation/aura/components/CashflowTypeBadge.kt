@@ -30,7 +30,7 @@ enum class CashflowType {
 
 /**
  * Status indicator for cashflow transaction types (CASH-IN/CASH-OUT).
- * Uses dot + text pattern (Design System v1).
+ * Uses dot + text pattern.
  *
  * @param type The cashflow transaction type
  * @param modifier Optional modifier for the indicator
@@ -51,7 +51,7 @@ fun CashflowTypeBadge(
         )
     }
 
-    // Dot + text pattern (Design System v1)
+    // Dot + text pattern
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically

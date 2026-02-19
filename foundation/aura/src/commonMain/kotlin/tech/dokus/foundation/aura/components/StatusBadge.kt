@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
- * Generic status indicator using dot + text pattern (v2).
+ * Generic status indicator using dot + text pattern.
  *
  * @param text The status text to display
  * @param color Status color for both dot and text
@@ -45,18 +45,4 @@ fun StatusBadge(
             color = color,
         )
     }
-}
-
-@Deprecated(
-    message = "Use StatusBadge(text, color) instead",
-    replaceWith = ReplaceWith("StatusBadge(text = text, color = textColor)"),
-)
-@Composable
-fun StatusBadge(
-    text: String,
-    @Suppress("UNUSED_PARAMETER") backgroundColor: Color,
-    textColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    StatusBadge(text = text, color = textColor, modifier = modifier)
 }

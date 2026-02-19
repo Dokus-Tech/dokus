@@ -21,7 +21,7 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.navigation.destinations.route
 
 /**
- * Standard mobile navigation bar with icons and labels, styled with v2 amber active state.
+ * Standard mobile navigation bar with icons and labels.
  */
 @Composable
 fun DokusNavigationBar(

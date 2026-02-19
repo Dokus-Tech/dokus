@@ -45,7 +45,7 @@ import tech.dokus.features.auth.mvi.LoginState
 import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.background.CalmParticleField
+import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
@@ -65,7 +65,7 @@ internal fun LoginScreen(
     Scaffold { contentPadding ->
         TwoPaneContainer(
             middleEffect = {
-                CalmParticleField()
+                AmbientBackground()
             },
             left = {
                 LoginContent(

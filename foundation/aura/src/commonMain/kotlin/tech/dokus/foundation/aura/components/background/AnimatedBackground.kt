@@ -32,9 +32,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-// ============================================================================
-// AMBIENT BACKGROUND — v2: Gradient orbs + connected particles + light sweep
-// ============================================================================
+// Ambient background: gradient orbs + connected particles + light sweep
 
 // --- Orb constants ---
 private const val OrbCount = 5
@@ -137,7 +135,7 @@ private fun generateParticles(
 }
 
 /**
- * v2 ambient background: 5 gradient orbs drifting slowly, 40 connected particles, light sweep.
+ * Ambient background: 5 gradient orbs drifting slowly, 40 connected particles, light sweep.
  *
  * Creates depth behind the floating glass windows. Theme-adaptive: warmer/bolder in light,
  * more subtle in dark.
@@ -316,11 +314,6 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
         )
     }
 }
-
-/** @deprecated Use [AmbientBackground] instead. Kept for binary compatibility. */
-@Deprecated("Replaced by AmbientBackground in v2", ReplaceWith("AmbientBackground()"))
-@Composable
-fun CalmParticleField() = AmbientBackground()
 
 // ============================================================================
 // WARP JUMP EFFECT - Space warp transition animation
