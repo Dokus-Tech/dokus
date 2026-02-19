@@ -24,11 +24,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
@@ -45,6 +42,7 @@ import tech.dokus.aura.resources.bootstrap_state_checking_account_status
 import tech.dokus.aura.resources.bootstrap_state_initializing
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.background.AmbientBackground
+import tech.dokus.foundation.aura.style.dokusSpacing
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
@@ -101,14 +99,11 @@ internal fun SplashScreen(
                 Text(
                     text = stringResource(Res.string.app_name),
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    style = TextStyle(
-                        fontSize = 64.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 16.sp
-                    )
+                    style = MaterialTheme.typography.displayLarge,
+                    fontWeight = FontWeight.SemiBold
                 )
 
-                Spacer(modifier = Modifier.height(80.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.dokusSpacing.xxxLarge))
 
                 // Bootstrap states as vertical list
                 BootstrapStatesList(state.steps)
@@ -121,8 +116,9 @@ internal fun SplashScreen(
 private fun BootstrapStatesList(
     steps: List<BootstrapStep>,
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing.large),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         steps.forEach { step ->
@@ -141,7 +137,9 @@ private fun BootstrapStateItem(
     isActive: Boolean,
     isCurrentStep: Boolean
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     val accent = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurface
 
     val infiniteTransition = rememberInfiniteTransition(label = "stateGlow")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -157,7 +155,7 @@ private fun BootstrapStateItem(
     Row(
         modifier = Modifier.width(300.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(spacing.large)
     ) {
         // Status indicator dot
         Box(
@@ -184,7 +182,7 @@ private fun BootstrapStateItem(
                 // Inactive dot
                 Canvas(modifier = Modifier.size(12.dp)) {
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.15f),
+                        color = onSurface.copy(alpha = 0.15f),
                         radius = 6.dp.toPx()
                     )
                 }
@@ -196,14 +194,11 @@ private fun BootstrapStateItem(
             text = step.type.localized,
             color = when {
                 isCurrentStep -> accent.copy(alpha = glowAlpha)
-                isActive -> Color.White.copy(alpha = 0.7f)
-                else -> Color.White.copy(alpha = 0.3f)
+                isActive -> onSurface.copy(alpha = 0.7f)
+                else -> onSurface.copy(alpha = 0.3f)
             },
-            style = TextStyle(
-                fontSize = 16.sp,
-                fontWeight = if (isCurrentStep) FontWeight.SemiBold else FontWeight.Normal,
-                letterSpacing = if (isCurrentStep) 1.5.sp else 0.5.sp
-            )
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = if (isCurrentStep) FontWeight.SemiBold else FontWeight.Normal
         )
     }
 }

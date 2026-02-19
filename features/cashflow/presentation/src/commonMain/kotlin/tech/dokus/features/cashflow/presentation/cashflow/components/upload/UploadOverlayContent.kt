@@ -11,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import tech.dokus.features.cashflow.presentation.cashflow.components.FlyingDocument
+import tech.dokus.foundation.aura.style.dokusEffects
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.pow
@@ -60,22 +62,6 @@ private const val ParticleSpeedRange = 1.5f
 private const val ParticleSizeMin = 1f
 private const val ParticleSizeRange = 3f
 
-// Particle color hex values
-private const val ParticleColorOrangeHex = 0xFFFF6B35
-private const val ParticleColorAmberHex = 0xFFFFAA00
-private const val ParticleColorRedHex = 0xFFFF4444
-private const val ParticleColorDarkOrangeHex = 0xFFCC3300
-private const val ParticleColorLightOrangeHex = 0xFFFFDD88
-
-// Particle colors
-private object ParticleColors {
-    val Orange = Color(ParticleColorOrangeHex)
-    val Amber = Color(ParticleColorAmberHex)
-    val Red = Color(ParticleColorRedHex)
-    val DarkOrange = Color(ParticleColorDarkOrangeHex)
-    val LightOrange = Color(ParticleColorLightOrangeHex)
-}
-
 // Lensing ring constants
 private const val LensingRingCount = 4
 private const val LensingRingBaseRadius = 0.9f
@@ -83,12 +69,6 @@ private const val LensingRingRadiusStep = 0.15f
 private const val LensingRingWaveStep = 0.25f
 private const val LensingRingMaxAlpha = 0.15f
 private const val LensingRingStrokeWidth = 1.5f
-
-// Lensing ring color
-private const val LensingRingColorHex = 0xFF4466AA
-private object LensingRingColors {
-    val Ring = Color(LensingRingColorHex)
-}
 
 // Accretion disk constants
 private const val OrbitSpeedMultiplier = 60f
@@ -105,31 +85,9 @@ private const val TrailStrokeWidthMultiplier = 0.5f
 private const val EventHorizonRadiusFactor = 0.35f
 private const val EventHorizonGlowMultiplier = 1.4f
 
-// Event horizon color hex values
-private const val EventHorizonInnerColorHex = 0xFFFF4400
-private const val EventHorizonMiddleColorHex = 0xFFFF6600
-private const val EventHorizonOuterColorHex = 0xFFFFAA00
-
-// Event horizon colors
-private object EventHorizonColors {
-    val Inner = Color(EventHorizonInnerColorHex)
-    val Middle = Color(EventHorizonMiddleColorHex)
-    val Outer = Color(EventHorizonOuterColorHex)
-}
-
 // Void constants
 private const val VoidEdgeAlpha = 0.95f
 private const val VoidOuterAlpha = 0.8f
-
-// Void color hex values
-private const val VoidEdgeColorHex = 0xFF110808
-private const val VoidOuterColorHex = 0xFF1a0505
-
-// Void colors
-private object VoidColors {
-    val Edge = Color(VoidEdgeColorHex)
-    val Outer = Color(VoidOuterColorHex)
-}
 
 // Core flicker constants
 private const val CoreFlickerSpeed = 3f
@@ -149,14 +107,6 @@ private const val LensingArcRadiusFactor = 1.5f
 private const val LensingArcSizeFactor = 3f
 private const val LensingArcStrokeWidth = 2f
 
-// Lensing arc color hex value
-private const val LensingArcColorHex = 0xFF6688CC
-
-// Lensing arc color
-private object LensingArcColors {
-    val Arc = Color(LensingArcColorHex)
-}
-
 // Document physics constants
 private const val SpinAngleMultiplier = 720f
 private const val StretchMultiplier = 2f
@@ -169,16 +119,6 @@ private const val TrailMaxAddition = 80f
 private const val TrailStrokeBase = 4f
 private const val TrailGlowAlphaFactor = 0.2f
 private const val TrailGlowAlphaOuter = 0.4f
-
-// Trail color hex values
-private const val TrailInnerColorHex = 0xFFFF6600
-private const val TrailOuterColorHex = 0xFFFFAA00
-
-// Trail colors
-private object TrailColors {
-    val Inner = Color(TrailInnerColorHex)
-    val Outer = Color(TrailOuterColorHex)
-}
 
 // Document icon constants
 private const val IconBaseWidth = 32f
@@ -193,16 +133,6 @@ private const val HeatGlowIntensityDivisor = 0.7f
 private const val HeatGlowAlphaInner = 0.3f
 private const val HeatGlowAlphaOuter = 0.15f
 private const val HeatGlowRadius = 40f
-
-// Heat glow color hex values
-private const val HeatGlowInnerColorHex = 0xFFFF4400
-private const val HeatGlowOuterColorHex = 0xFFFF6600
-
-// Heat glow colors
-private object HeatGlowColors {
-    val Inner = Color(HeatGlowInnerColorHex)
-    val Outer = Color(HeatGlowOuterColorHex)
-}
 
 // Canvas size
 private val CanvasSize = 320.dp
@@ -236,6 +166,7 @@ fun BlackHoleVortex(
     isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val effects = MaterialTheme.dokusEffects
     val infiniteTransition = rememberInfiniteTransition(label = "blackHole")
 
     // Slow rotation for the accretion disk
@@ -276,7 +207,7 @@ fun BlackHoleVortex(
     )
 
     // Generate accretion particles
-    val accretionParticles = remember {
+    val accretionParticles = remember(effects) {
         mutableStateListOf<AccretionParticle>().apply {
             repeat(AccretionParticleCount) { i ->
                 add(
@@ -286,11 +217,11 @@ fun BlackHoleVortex(
                         speed = ParticleSpeedMin + Random.nextFloat() * ParticleSpeedRange,
                         size = ParticleSizeMin + Random.nextFloat() * ParticleSizeRange,
                         color = when (i % ParticleColorModulo) {
-                            0 -> ParticleColors.Orange
-                            1 -> ParticleColors.Amber
-                            2 -> ParticleColors.Red
-                            3 -> ParticleColors.DarkOrange
-                            else -> ParticleColors.LightOrange
+                            0 -> effects.uploadParticleOrange
+                            1 -> effects.uploadParticleAmber
+                            2 -> effects.uploadParticleRed
+                            3 -> effects.uploadParticleDarkOrange
+                            else -> effects.uploadParticleLightOrange
                         },
                         orbitOffset = Random.nextFloat() * FullRotationDegrees
                     )
@@ -319,7 +250,7 @@ fun BlackHoleVortex(
             val ringAlpha = (LensingRingMaxAlpha - waveOffset * LensingRingMaxAlpha).coerceAtLeast(0f)
 
             drawCircle(
-                color = LensingRingColors.Ring.copy(alpha = ringAlpha),
+                color = effects.uploadLensingRing.copy(alpha = ringAlpha),
                 radius = ringRadius * (1f + waveOffset * SpiralFactor),
                 center = center,
                 style = Stroke(width = LensingRingStrokeWidth)
@@ -371,9 +302,9 @@ fun BlackHoleVortex(
             brush = Brush.radialGradient(
                 colors = listOf(
                     Color.Transparent,
-                    EventHorizonColors.Inner.copy(alpha = HeatGlowAlphaInner),
-                    EventHorizonColors.Middle.copy(alpha = CoreFlickerMaxAlpha),
-                    EventHorizonColors.Outer.copy(alpha = HeatGlowAlphaInner),
+                    effects.uploadEventHorizonInner.copy(alpha = HeatGlowAlphaInner),
+                    effects.uploadEventHorizonMiddle.copy(alpha = CoreFlickerMaxAlpha),
+                    effects.uploadEventHorizonOuter.copy(alpha = HeatGlowAlphaInner),
                     Color.Transparent
                 ),
                 center = center,
@@ -387,10 +318,10 @@ fun BlackHoleVortex(
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    Color.Black,
-                    Color.Black,
-                    VoidColors.Edge.copy(alpha = VoidEdgeAlpha),
-                    VoidColors.Outer.copy(alpha = VoidOuterAlpha),
+                    effects.uploadVoidCenter,
+                    effects.uploadVoidCenter,
+                    effects.uploadVoidEdge.copy(alpha = VoidEdgeAlpha),
+                    effects.uploadVoidOuter.copy(alpha = VoidOuterAlpha),
                     Color.Transparent
                 ),
                 center = center,
@@ -405,8 +336,8 @@ fun BlackHoleVortex(
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    Color.White.copy(alpha = coreFlicker * CoreWhiteAlphaMultiplier),
-                    EventHorizonColors.Outer.copy(alpha = coreFlicker * CoreAmberAlphaMultiplier),
+                    effects.uploadCoreHighlight.copy(alpha = coreFlicker * CoreWhiteAlphaMultiplier),
+                    effects.uploadEventHorizonOuter.copy(alpha = coreFlicker * CoreAmberAlphaMultiplier),
                     Color.Transparent
                 ),
                 center = center,
@@ -421,7 +352,7 @@ fun BlackHoleVortex(
             val arcAngle = diskRotation * LensingArcRotationFactor + i * LensingArcSpacing
             rotate(degrees = arcAngle, pivot = center) {
                 drawArc(
-                    color = LensingArcColors.Arc.copy(alpha = LensingArcAlpha),
+                    color = effects.uploadLensingArc.copy(alpha = LensingArcAlpha),
                     startAngle = LensingArcStartAngle,
                     sweepAngle = LensingArcSweepAngle,
                     useCenter = false,
@@ -455,6 +386,7 @@ fun BlackHoleVortex(
 fun GravitationalDocumentsLayer(
     documents: List<FlyingDocument>
 ) {
+    val effects = MaterialTheme.dokusEffects
     Canvas(modifier = Modifier.fillMaxSize()) {
         val center = Offset(size.width / 2f, size.height / 2f)
 
@@ -500,8 +432,8 @@ fun GravitationalDocumentsLayer(
                 brush = Brush.linearGradient(
                     colors = listOf(
                         Color.Transparent,
-                        TrailColors.Inner.copy(alpha = TrailGlowAlphaFactor * (1f - progress)),
-                        TrailColors.Outer.copy(alpha = TrailGlowAlphaOuter * (1f - progress))
+                        effects.uploadTrailInner.copy(alpha = TrailGlowAlphaFactor * (1f - progress)),
+                        effects.uploadTrailOuter.copy(alpha = TrailGlowAlphaOuter * (1f - progress))
                     ),
                     start = Offset(
                         x - directionX * trailLength,
@@ -546,7 +478,7 @@ fun GravitationalDocumentsLayer(
                 }
                 drawPath(
                     path = foldPath,
-                    color = TrailColors.Outer.copy(alpha = docColor.alpha * FoldAlphaMultiplier)
+                    color = effects.uploadTrailOuter.copy(alpha = docColor.alpha * FoldAlphaMultiplier)
                 )
             }
 
@@ -556,8 +488,8 @@ fun GravitationalDocumentsLayer(
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            HeatGlowColors.Inner.copy(alpha = glowIntensity * HeatGlowAlphaInner),
-                            HeatGlowColors.Outer.copy(alpha = glowIntensity * HeatGlowAlphaOuter),
+                            effects.uploadHeatGlowInner.copy(alpha = glowIntensity * HeatGlowAlphaInner),
+                            effects.uploadHeatGlowOuter.copy(alpha = glowIntensity * HeatGlowAlphaOuter),
                             Color.Transparent
                         ),
                         center = Offset(x, y),

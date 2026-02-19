@@ -27,28 +27,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.coming_soon
-import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
-import tech.dokus.foundation.aura.style.isDark
+import tech.dokus.foundation.aura.style.dokusEffects
+import tech.dokus.foundation.aura.style.dokusRadii
+import tech.dokus.foundation.aura.style.dokusSizing
+import tech.dokus.foundation.aura.style.dokusSpacing
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.navigation.destinations.route
-
-
-
-private val ItemShape = RoundedCornerShape(
-    topEnd = Constrains.CornerRadius.button, bottomEnd = Constrains.CornerRadius.button
-)
-private val ActiveBorderWidth = 2.dp
-private val TrackLineAlpha = 0.06f
 
 @Composable
 fun ColumnScope.DokusNavigationRailSectioned(
@@ -60,15 +51,17 @@ fun ColumnScope.DokusNavigationRailSectioned(
     onItemClick: (NavItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
         sections.forEach { section ->
             val isExpanded = expandedSections[section.id] ?: section.defaultExpanded
             val hasSelectedChild = section.items.any { it.destination.route == selectedRoute }
 
-            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(sizing.strokeThin)) {
                 NavSectionHeader(
                     section = section,
                     isExpanded = isExpanded,
@@ -81,20 +74,20 @@ fun ColumnScope.DokusNavigationRailSectioned(
                     enter = expandVertically(),
                     exit = shrinkVertically()
                 ) {
-                    val trackColor = Color.Black.copy(alpha = TrackLineAlpha)
+                    val trackColor = MaterialTheme.dokusEffects.railTrackLine
                     Column(
                         modifier = Modifier
-                            .padding(start = 12.dp)
+                            .padding(start = spacing.medium)
                             .drawBehind {
                                 // Left border track line
                                 drawLine(
                                     color = trackColor,
                                     start = Offset(0f, 0f),
                                     end = Offset(0f, size.height),
-                                    strokeWidth = 1.dp.toPx()
+                                    strokeWidth = sizing.strokeThin.toPx()
                                 )
                             },
-                        verticalArrangement = Arrangement.spacedBy(1.dp)
+                        verticalArrangement = Arrangement.spacedBy(sizing.strokeThin)
                     ) {
                         section.items.forEach { item ->
                             val isSelected = item.destination.route == selectedRoute
@@ -127,6 +120,8 @@ private fun NavSectionHeader(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     val rotation by animateFloatAsState(if (isExpanded) 90f else 0f)
     val textColor = if (isSelected) {
         MaterialTheme.colorScheme.primary
@@ -143,7 +138,7 @@ private fun NavSectionHeader(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Constrains.Spacing.small, vertical = Constrains.Spacing.small),
+            .padding(horizontal = spacing.small, vertical = spacing.small),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Rotating chevron
@@ -154,17 +149,17 @@ private fun NavSectionHeader(
             modifier = Modifier.rotate(rotation)
         )
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(spacing.xSmall))
 
         // Section icon
         androidx.compose.material3.Icon(
             painter = painterResource(section.iconRes),
             contentDescription = null,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(sizing.iconXSmall),
             tint = iconTint
         )
 
-        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.width(spacing.small))
 
         // Section title
         Text(
@@ -182,9 +177,12 @@ private fun NavItemRow(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val isDark = MaterialTheme.colorScheme.isDark
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
+    val radii = MaterialTheme.dokusRadii
     val itemAlpha = if (item.comingSoon) 0.5f else 1f
-    val activeBg = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.55f)
+    val itemShape = RoundedCornerShape(topEnd = radii.button, bottomEnd = radii.button)
+    val activeBg = MaterialTheme.dokusEffects.railActiveBackground
     val amberBorder = MaterialTheme.colorScheme.primary
 
     Row(
@@ -194,7 +192,7 @@ private fun NavItemRow(
             .then(
                 if (isSelected && !item.comingSoon) {
                     Modifier
-                        .clip(ItemShape)
+                        .clip(itemShape)
                         .background(activeBg)
                         .drawBehind {
                             // 2px amber left border
@@ -202,7 +200,7 @@ private fun NavItemRow(
                                 color = amberBorder,
                                 start = Offset(0f, 0f),
                                 end = Offset(0f, size.height),
-                                strokeWidth = ActiveBorderWidth.toPx()
+                                strokeWidth = sizing.navigationIndicatorHeight.toPx()
                             )
                         }
                 } else {
@@ -210,7 +208,12 @@ private fun NavItemRow(
                 }
             )
             .clickable(enabled = !item.comingSoon, onClick = onClick)
-            .padding(start = 12.dp, top = 7.dp, bottom = 7.dp, end = 8.dp),
+            .padding(
+                start = spacing.medium,
+                top = spacing.small,
+                bottom = spacing.small,
+                end = spacing.small
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -225,15 +228,15 @@ private fun NavItemRow(
         )
 
         if (item.comingSoon) {
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(spacing.xSmall))
             Text(
                 text = stringResource(Res.string.coming_soon),
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.textFaint,
                 modifier = Modifier
                     .clip(MaterialTheme.shapes.extraSmall)
-                    .background(Color.Black.copy(alpha = 0.03f))
-                    .padding(horizontal = 5.dp, vertical = 2.dp)
+                    .background(MaterialTheme.dokusEffects.railBadgeBackground)
+                    .padding(horizontal = spacing.xSmall, vertical = spacing.xxSmall)
             )
         }
     }
@@ -245,20 +248,22 @@ private fun SettingsRow(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(
-                horizontal = Constrains.Spacing.small,
-                vertical = Constrains.Spacing.small
+                horizontal = spacing.small,
+                vertical = spacing.small
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         androidx.compose.material3.Icon(
             painter = painterResource(item.iconRes),
             contentDescription = null,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(sizing.iconSmall),
             tint = if (isSelected) {
                 MaterialTheme.colorScheme.primary
             } else {
@@ -266,7 +271,7 @@ private fun SettingsRow(
             }
         )
 
-        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.width(spacing.small))
 
         Text(
             text = stringResource(item.titleRes),

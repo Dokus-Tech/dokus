@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalInspectionMode
+import tech.dokus.foundation.aura.style.dokusEffects
 import tech.dokus.foundation.aura.style.isDark
 import kotlin.math.cos
 import kotlin.math.sin
@@ -57,12 +58,6 @@ private const val OrbAlphaLightMax = 0.09f
 private const val OrbAlphaDarkMin = 0.03f
 private const val OrbAlphaDarkMax = 0.06f
 
-// Orb colors
-private val OrbAmberLight = Color(0xFFB8860B)
-private val OrbAmberDark = Color(0xFFD4A017)
-private val OrbGrayLight = Color(0xFF9C958C)
-private val OrbGrayDark = Color(0xFF3D3832)
-
 // --- Particle constants ---
 private const val ParticleCount = 40
 private const val ParticleGoldChance = 0.30f
@@ -84,15 +79,9 @@ private const val ConnectionAlphaLight = 0.08f
 private const val ConnectionAlphaDark = 0.06f
 private const val ConnectionStrokeWidth = 0.5f // dp
 
-// Particle colors
-private val ParticleGoldColor = Color(0xFFB8860B)
-private val ParticleNeutralColor = Color(0xFF9C8C7C)
-
 // --- Light sweep constants ---
 private const val SweepDurationMs = 16000
 private const val SweepWidthFraction = 0.40f
-private const val SweepAlphaLight = 0.06f
-private const val SweepAlphaDark = 0.03f
 
 // Math
 private const val TwoPI = 6.2831853f
@@ -145,6 +134,7 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
     if (LocalInspectionMode.current) return
 
     val isDark = MaterialTheme.colorScheme.isDark
+    val effects = MaterialTheme.dokusEffects
     val infiniteTransition = rememberInfiniteTransition(label = "ambient")
 
     // Orb drift animations (each orb has its own cycle)
@@ -219,9 +209,9 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
             val orbRadius = OrbSizeFractions[i] * minDim
 
             val orbColor = if (OrbIsAmber[i]) {
-                if (isDark) OrbAmberDark else OrbAmberLight
+                effects.ambientOrbAmber
             } else {
-                if (isDark) OrbGrayDark else OrbGrayLight
+                effects.ambientOrbNeutral
             }
             val orbAlpha = orbAlphaMin + (orbAlphaMax - orbAlphaMin) * ((i.toFloat() / OrbCount))
 
@@ -270,9 +260,9 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
                 if (dist < connectionDistPx) {
                     val lineAlpha = (1f - dist / connectionDistPx) * connectionAlpha
                     val lineColor = if (a.isGold || b.isGold) {
-                        ParticleGoldColor.copy(alpha = lineAlpha)
+                        effects.ambientParticleGold.copy(alpha = lineAlpha)
                     } else {
-                        ParticleNeutralColor.copy(alpha = lineAlpha)
+                        effects.ambientParticleNeutral.copy(alpha = lineAlpha)
                     }
                     drawLine(
                         color = lineColor,
@@ -286,7 +276,7 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
 
         // Draw particles
         for (p in particlesRef) {
-            val color = if (p.isGold) ParticleGoldColor else ParticleNeutralColor
+            val color = if (p.isGold) effects.ambientParticleGold else effects.ambientParticleNeutral
             drawCircle(
                 color = color.copy(alpha = p.alpha),
                 radius = p.radius * density,
@@ -295,8 +285,6 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
         }
 
         // ── Layer 3: Light Sweep ──
-        val sweepAlpha = if (isDark) SweepAlphaDark else SweepAlphaLight
-        val sweepColor = if (isDark) OrbAmberDark else Color.White
         val sweepStart = sweepProgress * (w + w * SweepWidthFraction * 2) - w * SweepWidthFraction
         val sweepEnd = sweepStart + w * SweepWidthFraction
 
@@ -304,7 +292,7 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
             brush = Brush.horizontalGradient(
                 colors = listOf(
                     Color.Transparent,
-                    sweepColor.copy(alpha = sweepAlpha),
+                    effects.ambientSweepColor.copy(alpha = effects.ambientSweepAlpha),
                     Color.Transparent
                 ),
                 startX = sweepStart,
@@ -338,16 +326,6 @@ private const val WarpPhase2Start = 0.2f
 private const val WarpPhase3Start = 0.5f
 private const val WarpFadeStart = 0.7f
 private const val WarpCompletionThreshold = 0.95f
-
-// Color palette for warp effect
-private val ColorSilver = Color(0xFFC0C0C0)
-private val ColorLightSilver = Color(0xFFE8E8E8)
-private val ColorGainsboro = Color(0xFFDCDCDC)
-private val ColorLightGray = Color(0xFFD3D3D3)
-private val ColorGray = Color(0xFFBDBDBD)
-private val ColorMediumSilver = Color(0xFFB8B8B8)
-private val ColorNeutralGray = Color(0xFFCCCCCC)
-private val ColorPaleGray = Color(0xFFE0E0E0)
 
 // Warp star generation constants
 private const val WarpStarAngleMax = 360f
@@ -397,6 +375,7 @@ fun WarpJumpEffect(
     onAnimationComplete: () -> Unit = {}
 ) {
     if (LocalInspectionMode.current) return
+    val effects = MaterialTheme.dokusEffects
     val infiniteTransition = rememberInfiniteTransition(label = "warpStars")
 
     // Animation values for the warp effect
@@ -446,10 +425,10 @@ fun WarpJumpEffect(
                 size = Random.nextFloat() * WarpStarSizeMax + WarpStarSizeMin,
                 speed = Random.nextFloat() * WarpStarSpeedRange + WarpStarSpeedMin,
                 color = listOf(
-                    Color.White,
-                    ColorLightSilver,
-                    ColorGainsboro,
-                    ColorLightGray
+                    effects.warpFlashColor,
+                    effects.warpLightSilver,
+                    effects.warpGainsboro,
+                    effects.warpLightGray
                 ).random()
             )
         }
@@ -469,9 +448,9 @@ fun WarpJumpEffect(
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = (1f - burstPhase) * WarpBurstHighAlpha),
-                        ColorPaleGray.copy(alpha = (1f - burstPhase) * WarpBurstMidAlpha),
-                        ColorSilver.copy(alpha = (1f - burstPhase) * WarpBurstLowAlpha),
+                        effects.warpFlashColor.copy(alpha = (1f - burstPhase) * WarpBurstHighAlpha),
+                        effects.warpPaleGray.copy(alpha = (1f - burstPhase) * WarpBurstMidAlpha),
+                        effects.warpSilver.copy(alpha = (1f - burstPhase) * WarpBurstLowAlpha),
                         Color.Transparent
                     ),
                     center = centerPoint,
@@ -541,7 +520,7 @@ fun WarpJumpEffect(
                         ringProgress * (1f - ring * WarpTunnelRingAlphaFade) * WarpTunnelRingAlphaMax
 
                     drawCircle(
-                        color = ColorGray.copy(alpha = ringAlpha),
+                        color = effects.warpGray.copy(alpha = ringAlpha),
                         radius = ringRadius,
                         center = warpCenter,
                         style = Stroke(
@@ -555,10 +534,10 @@ fun WarpJumpEffect(
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = tunnelPhase * WarpVortexHighAlpha),
-                        ColorPaleGray.copy(alpha = tunnelPhase * WarpVortexMidHighAlpha),
-                        ColorNeutralGray.copy(alpha = tunnelPhase * WarpVortexMidAlpha),
-                        ColorMediumSilver.copy(alpha = tunnelPhase * WarpVortexLowAlpha),
+                        effects.warpFlashColor.copy(alpha = tunnelPhase * WarpVortexHighAlpha),
+                        effects.warpPaleGray.copy(alpha = tunnelPhase * WarpVortexMidHighAlpha),
+                        effects.warpNeutralGray.copy(alpha = tunnelPhase * WarpVortexMidAlpha),
+                        effects.warpMediumSilver.copy(alpha = tunnelPhase * WarpVortexLowAlpha),
                         Color.Transparent
                     ),
                     center = warpCenter,
@@ -573,7 +552,7 @@ fun WarpJumpEffect(
                 val flashAlpha =
                     ((tunnelPhase - WarpFlashThreshold) / WarpFlashRange) * WarpFlashAlpha
                 drawRect(
-                    color = Color.White.copy(alpha = flashAlpha),
+                    color = effects.warpFlashColor.copy(alpha = flashAlpha),
                     size = size
                 )
             }
@@ -583,7 +562,7 @@ fun WarpJumpEffect(
         if (warpProgress > WarpFadeStart) {
             val fadePhase = ((warpProgress - WarpFadeStart) / WarpPhase1End).coerceIn(0f, 1f)
             drawRect(
-                color = Color.Black.copy(alpha = fadePhase * WarpFadeAlpha),
+                color = effects.warpFadeColor.copy(alpha = fadePhase * WarpFadeAlpha),
                 size = size
             )
         }

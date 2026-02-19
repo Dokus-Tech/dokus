@@ -89,15 +89,16 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.PaymentFormState
 import tech.dokus.foundation.aura.components.CashflowStatusBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.layout.DokusExpandableAction
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // UI dimension constants
-private val FormContentPadding = 16.dp
-private val FormContentSpacing = 16.dp
-private val HeaderPaddingStart = 16.dp
-private val HeaderPaddingEnd = 8.dp
-private val HeaderPaddingTop = 16.dp
-private val HeaderPaddingBottom = 8.dp
-private val PaneMinWidth = 400.dp
+private val FormContentPadding = Constraints.Spacing.large
+private val FormContentSpacing = Constraints.Spacing.large
+private val HeaderPaddingStart = Constraints.Spacing.large
+private val HeaderPaddingEnd = Constraints.Spacing.small
+private val HeaderPaddingTop = Constraints.Spacing.large
+private val HeaderPaddingBottom = Constraints.Spacing.small
+private val PaneMinWidth = Constraints.DialogSize.maxWidth
 private val PaneMaxWidth = 600.dp
 private const val AnimationDurationMs = 200
 private const val SlideAnimationDurationMs = 300

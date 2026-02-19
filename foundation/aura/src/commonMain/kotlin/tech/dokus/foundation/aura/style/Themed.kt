@@ -39,6 +39,7 @@ private val dokusShapes = Shapes(
  */
 @Composable
 fun Themed(
+    useDynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val themeManager = LocalThemeManager.current
@@ -53,7 +54,12 @@ fun Themed(
 
     SystemBarEffect(useDarkTheme)
 
-    val colorScheme = createColorScheme(useDarkTheme)
+    val colorScheme = resolvePlatformColorScheme(
+        useDarkTheme = useDarkTheme,
+        useDynamicColor = useDynamicColor,
+        fallback = createColorScheme(useDarkTheme),
+    )
+    val dokusEffects = createDokusEffects(colorScheme)
 
     val fontFamily = createFontFamily()
     val typography = if (activePlatform.isWeb) {
@@ -70,6 +76,10 @@ fun Themed(
         hoveredAlpha = 0.06f
     )
     CompositionLocalProvider(
+        LocalDokusSpacing provides DefaultDokusSpacing,
+        LocalDokusSizing provides DefaultDokusSizing,
+        LocalDokusRadii provides DefaultDokusRadii,
+        LocalDokusEffects provides dokusEffects,
         LocalRippleConfiguration provides RippleConfiguration(
             color = colorScheme.rippleColor,
             rippleAlpha = calmRippleAlpha
