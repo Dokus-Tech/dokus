@@ -21,7 +21,7 @@ interface TransitionsProvider {
         }
 
         fun forTabs(isLargeScreen: Boolean = false): TransitionsProvider {
-            return TabTransitionsProvider()
+            return if (isLargeScreen) TabTransitionsProvider() else MobileRiseTransitionsProvider()
         }
     }
 }

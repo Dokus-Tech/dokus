@@ -250,7 +250,10 @@ private fun HomeNavHost(
     homeNavProviders: List<NavigationProvider>,
     startDestination: NavigationDestination,
 ) {
-    val transitionsProvider: TransitionsProvider = remember { TransitionsProvider.forTabs() }
+    val isLargeScreen = LocalScreenSize.current.isLarge
+    val transitionsProvider: TransitionsProvider = remember(isLargeScreen) {
+        TransitionsProvider.forTabs(isLargeScreen)
+    }
     NavHost(
         navHostController,
         startDestination = startDestination,
