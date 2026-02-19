@@ -17,7 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import kotlinx.coroutines.delay
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constrains
@@ -67,7 +66,6 @@ fun PCopyRow(
                         text = "  $value",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontFamily = FontFamily.Monospace,
                     )
                 }
             }

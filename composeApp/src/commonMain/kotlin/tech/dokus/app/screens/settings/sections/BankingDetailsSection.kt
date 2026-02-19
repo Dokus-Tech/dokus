@@ -67,7 +67,6 @@ internal fun BankingDetailsSection(
             DataRow(
                 label = stringResource(Res.string.workspace_bic),
                 value = formState.bic,
-                mono = true,
             )
         }
     }
