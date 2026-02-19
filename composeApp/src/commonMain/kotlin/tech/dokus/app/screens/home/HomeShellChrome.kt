@@ -67,6 +67,7 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
@@ -548,94 +549,6 @@ private fun RowScope.RouteTopBarActions(
     }
 }
 
-@Composable
-private fun RowScope.MobileWorkspaceBadge(
-    tenantState: DokusState<Tenant>,
-    onClick: () -> Unit,
-) {
-    val tenant = (tenantState as? DokusState.Success<Tenant>)?.data
-    val isLoading = tenantState is DokusState.Loading
-
-    Row(
-        modifier = Modifier
-            .clip(MaterialTheme.shapes.small)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
-                shape = MaterialTheme.shapes.small
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        if (isLoading) {
-            ShimmerBox(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(MaterialTheme.shapes.extraSmall)
-            )
-            ShimmerLine(
-                modifier = Modifier.width(90.dp),
-                height = 12.dp
-            )
-        } else if (tenant != null) {
-            val name = tenant.displayName.value
-            val initial = tenant.displayName.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D"
-
-            CompanyAvatarImage(
-                avatarUrl = tenant.avatar?.small,
-                initial = initial,
-                size = AvatarSize.ExtraSmall,
-                shape = AvatarShape.RoundedSquare
-            )
-            Text(
-                text = name,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 140.dp)
-            )
-        } else {
-            Text(
-                text = stringResource(Res.string.settings_current_workspace),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textMuted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 140.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProfileIconButton(
-    onClick: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier
-            .size(30.dp)
-            .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.small,
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-        )
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                painter = painterResource(Res.drawable.user),
-                contentDescription = stringResource(Res.string.settings_profile),
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-    }
-}
-
 private val MonthNames = arrayOf(
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -660,24 +573,3 @@ private fun formattedCurrentDate(): String {
     return "$d ${MonthNames[m - 1]} $year"
 }
 
-@Composable
-private fun MobileMenuItem(
-    label: String,
-    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (enabled) color else color.copy(alpha = 0.45f)
-        )
-    }
-}
