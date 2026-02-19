@@ -106,6 +106,21 @@ fun DokusNavHost(
                         return@collect
                     }
 
+                    // share/import without batch= is just an iOS foreground ping;
+                    // consume any pending files and stop — don't navigate by URI.
+                    if (deepLink.path.startsWith(KnownDeepLinks.ShareImport.path.path)) {
+                        PlatformShareImportBridge.consumeBatch(batchId = null)
+                            .onSuccess { files ->
+                                if (files.isNotEmpty()) {
+                                    ExternalShareImportHandler.onNewSharedFiles(files)
+                                }
+                            }
+                            .onFailure { error ->
+                                logger.e(error) { "Failed to consume pending share batch" }
+                            }
+                        return@collect
+                    }
+
                     // Handle server connect deep links specially
                     if (deepLink.path.startsWith(KnownDeepLinks.ServerConnect.path.path)) {
                         val params = DeepLinks.extractServerConnect(deepLink)
