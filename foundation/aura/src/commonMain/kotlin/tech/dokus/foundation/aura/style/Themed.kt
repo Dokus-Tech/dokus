@@ -17,13 +17,13 @@ import tech.dokus.foundation.aura.local.LocalThemeManager
 import tech.dokus.foundation.platform.activePlatform
 import tech.dokus.foundation.platform.isWeb
 
-// Dokus Design System v1 Shapes - locked at 2/4/6dp
+// Dokus Design System v2 Shapes
 private val dokusShapes = Shapes(
-    extraSmall = RoundedCornerShape(2.dp),  // radius-xs: rare, tiny elements
-    small = RoundedCornerShape(4.dp),       // radius-sm: panels/surfaces
-    medium = RoundedCornerShape(6.dp),      // radius-md: inputs, buttons, modals
-    large = RoundedCornerShape(6.dp),       // capped at 6dp per design system
-    extraLarge = RoundedCornerShape(6.dp),  // capped at 6dp per design system
+    extraSmall = RoundedCornerShape(4.dp),  // badges, tags
+    small = RoundedCornerShape(7.dp),       // buttons, inputs
+    medium = RoundedCornerShape(10.dp),     // cards, panels
+    large = RoundedCornerShape(16.dp),      // floating windows
+    extraLarge = RoundedCornerShape(16.dp), // floating windows
 )
 
 /**

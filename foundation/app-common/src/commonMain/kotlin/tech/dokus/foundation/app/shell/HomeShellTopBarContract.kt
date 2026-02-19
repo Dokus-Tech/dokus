@@ -29,6 +29,7 @@ sealed interface HomeShellTopBarMode {
 
     data class Title(
         val title: String,
+        val subtitle: String? = null,
     ) : HomeShellTopBarMode
 }
 

@@ -23,7 +23,7 @@ internal fun DokusStatusChip(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(Constrains.CornerRadius.sm))
+            .clip(RoundedCornerShape(Constrains.CornerRadius.badge))
             .background(color.copy(alpha = 0.2f))
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {

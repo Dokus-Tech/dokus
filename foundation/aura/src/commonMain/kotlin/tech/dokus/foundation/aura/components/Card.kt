@@ -45,7 +45,7 @@ enum class DokusCardPadding(val padding: Int) {
 fun DokusCardSurface(
     modifier: Modifier = Modifier,
     variant: DokusCardVariant = DokusCardVariant.Default,
-    shape: Shape = MaterialTheme.shapes.small, // Design System v1: panels = 4dp
+    shape: Shape = MaterialTheme.shapes.medium, // Design System v2: cards = 10dp
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     content: @Composable () -> Unit
@@ -129,7 +129,7 @@ fun DokusGlassSurface(
     val colorScheme = MaterialTheme.colorScheme
     val containerColor = colorScheme.surface.copy(alpha = GlassSurfaceAlpha)
     val borderStroke = BorderStroke(BorderWidth, colorScheme.outlineVariant.copy(alpha = GlassBorderAlpha))
-    val shape = MaterialTheme.shapes.large
+    val shape = MaterialTheme.shapes.medium
 
     if (onClick != null) {
         Surface(

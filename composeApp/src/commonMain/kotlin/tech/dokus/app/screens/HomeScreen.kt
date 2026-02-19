@@ -63,10 +63,14 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
+import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
 import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.style.glass
+import tech.dokus.foundation.aura.style.glassBorder
+import tech.dokus.foundation.aura.style.glassContent
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.model.MobileTabConfig
@@ -287,22 +291,25 @@ private fun RailNavigationLayout(
         }
     }
 
-    // Detached, calm desktop shell (Revolut structure x Perplexity calm)
+    val colorScheme = MaterialTheme.colorScheme
+
+    // Floating glass windows desktop shell (v2)
     Row(
         Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .background(colorScheme.background)
+            .padding(Constrains.Shell.padding)
     ) {
-        // Detached glass rail panel
+        // Sidebar glass panel
         Surface(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(240.dp),
+                .width(Constrains.Shell.sidebarWidth),
             shape = MaterialTheme.shapes.large,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)),
+            color = colorScheme.glass,
+            border = BorderStroke(1.dp, colorScheme.glassBorder),
             tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
+            shadowElevation = 8.dp,
         ) {
             Column(
                 modifier = Modifier
@@ -345,16 +352,16 @@ private fun RailNavigationLayout(
             }
         }
 
-        // Main content area — detached glass container (clips app bars to rounded corners)
+        // Content glass panel
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 16.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+                .padding(start = Constrains.Shell.gap),
+            color = colorScheme.glassContent,
             shape = MaterialTheme.shapes.large,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)),
+            border = BorderStroke(1.dp, colorScheme.glassBorder),
             tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
+            shadowElevation = 8.dp,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 if (topBarConfig != null) {

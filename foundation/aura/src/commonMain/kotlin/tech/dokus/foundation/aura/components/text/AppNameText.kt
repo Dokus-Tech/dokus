@@ -17,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
+
 @Composable
 fun AppNameText(modifier: Modifier = Modifier) {
     val gold = MaterialTheme.colorScheme.primary
@@ -25,7 +27,7 @@ fun AppNameText(modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         // Sigil
         Surface(
-            shape = MaterialTheme.shapes.large,
+            shape = RoundedCornerShape(6.dp),
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
             border = BorderStroke(1.dp, gold.copy(alpha = 0.28f)),
             tonalElevation = 0.dp,

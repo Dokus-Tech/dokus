@@ -91,7 +91,7 @@ fun SettingsSection(
     val sectionModifier = if (primary) {
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Constrains.CornerRadius.sm))
+            .clip(RoundedCornerShape(Constrains.CornerRadius.badge))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(Constrains.Spacing.medium)
     } else {

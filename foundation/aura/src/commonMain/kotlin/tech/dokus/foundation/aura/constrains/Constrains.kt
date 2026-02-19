@@ -45,16 +45,26 @@ object Constrains {
     }
 
     /**
-     * Corner radius values (Design System v1).
-     * Locked at 2dp/4dp/6dp - large radii are not allowed.
-     * - xs (2dp): rare, tiny elements
-     * - sm (4dp): panels, surfaces (default)
-     * - md (6dp): inputs, buttons, modals
+     * Corner radius values (Design System v2).
      */
     object CornerRadius {
-        val xs = 2.dp   // Rare, tiny elements
-        val sm = 4.dp   // Panels, surfaces (default)
-        val md = 6.dp   // Inputs, buttons, modals
+        val badge = 4.dp    // Small badges, tags
+        val input = 6.dp    // Inspector editable fields (rare)
+        val button = 7.dp   // Buttons, inputs
+        val card = 10.dp    // Cards, surface containers
+        val window = 16.dp  // Floating glass windows
+    }
+
+    /**
+     * Shell layout dimensions (Design System v2).
+     * Controls the floating-window desktop layout.
+     */
+    object Shell {
+        val padding = 10.dp
+        val gap = 10.dp
+        val sidebarWidth = 220.dp
+        val contentPaddingV = 24.dp
+        val contentPaddingH = 28.dp
     }
 
     /**
@@ -169,8 +179,8 @@ fun Modifier.withContentPaddingForScrollable(): Modifier {
     if (LocalScreenSize.isLarge) {
         return then(
             Modifier.padding(
-                top = Constrains.Spacing.large
-            ).then(Modifier.padding(horizontal = Constrains.Spacing.xxLarge))
+                top = Constrains.Shell.contentPaddingV
+            ).then(Modifier.padding(horizontal = Constrains.Shell.contentPaddingH))
         )
     }
     return then(Modifier.padding(horizontal = Constrains.Spacing.large))
@@ -181,8 +191,8 @@ fun Modifier.withContentPadding(): Modifier {
     if (LocalScreenSize.isLarge) {
         return then(
             Modifier.padding(
-                vertical = Constrains.Spacing.large,
-                horizontal = Constrains.Spacing.xxLarge
+                vertical = Constrains.Shell.contentPaddingV,
+                horizontal = Constrains.Shell.contentPaddingH
             )
         )
     }

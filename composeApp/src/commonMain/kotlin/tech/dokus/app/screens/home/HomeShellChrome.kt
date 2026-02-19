@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -73,8 +74,10 @@ import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.style.glassHeader
 import tech.dokus.foundation.aura.style.statusError
 import tech.dokus.foundation.aura.style.surfaceHover
+import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 
 internal data class HomeShellProfileData(
@@ -347,14 +350,20 @@ private fun ProfileMenuHeader(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DesktopShellTopBar(
     topBarConfig: HomeShellTopBarConfig,
     modifier: Modifier = Modifier,
 ) {
-    PTopAppBarSearchAction(
-        searchContent = {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.glassHeader)
+                .padding(horizontal = 24.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Search or title slot
             when (val mode = topBarConfig.mode) {
                 is HomeShellTopBarMode.Search -> {
                     PSearchFieldCompact(
@@ -375,12 +384,23 @@ internal fun DesktopShellTopBar(
                     )
                 }
             }
-        },
-        actions = {
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Actions slot
             RouteTopBarActions(actions = topBarConfig.actions)
-        },
-        modifier = modifier
-    )
+
+            // Date display
+            val dateText = remember { formattedCurrentDate() }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = dateText,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.textFaint,
+            )
+        }
+        HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -624,6 +644,30 @@ private fun ProfileIconButton(
             )
         }
     }
+}
+
+private val MonthNames = arrayOf(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+)
+
+/** Format current date as "18 Feb 2026". Uses kotlin.time to avoid compat issues. */
+@OptIn(kotlin.time.ExperimentalTime::class)
+private fun formattedCurrentDate(): String {
+    val now = kotlin.time.Clock.System.now()
+    val epochDays = (now.epochSeconds / 86400).toInt()
+    // Civil date from epoch days (Meeus algorithm)
+    val z = epochDays + 719468
+    val era = (if (z >= 0) z else z - 146096) / 146097
+    val doe = z - era * 146097
+    val yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365
+    val y = yoe + era * 400
+    val doy = doe - (365 * yoe + yoe / 4 - yoe / 100)
+    val mp = (5 * doy + 2) / 153
+    val d = doy - (153 * mp + 2) / 5 + 1
+    val m = mp + (if (mp < 10) 3 else -9)
+    val year = y + (if (m <= 2) 1 else 0)
+    return "$d ${MonthNames[m - 1]} $year"
 }
 
 @Composable

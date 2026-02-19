@@ -189,3 +189,20 @@ val ColorScheme.positionNegative: Color get() = error     // red
 // Interactive surface hover (desktop row hover, v2 "warm" token)
 val ColorScheme.surfaceHover: Color
     get() = if (isDark) Color(WarmDarkHex) else Color(WarmLightHex)
+
+// Glass surface tokens (v2 floating windows)
+val ColorScheme.glass: Color
+    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.65f)
+            else Color.White.copy(alpha = 0.42f)
+val ColorScheme.glassContent: Color
+    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.78f)
+            else Color.White.copy(alpha = 0.58f)
+val ColorScheme.glassBorder: Color
+    get() = if (isDark) Color.White.copy(alpha = 0.06f)
+            else Color.White.copy(alpha = 0.5f)
+val ColorScheme.glassHeader: Color
+    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.55f)
+            else Color.White.copy(alpha = 0.35f)
+val ColorScheme.windowShadow: Color
+    get() = if (isDark) Color.Black.copy(alpha = 0.30f)
+            else Color.Black.copy(alpha = 0.06f)
