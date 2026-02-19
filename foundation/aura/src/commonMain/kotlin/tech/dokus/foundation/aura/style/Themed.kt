@@ -57,8 +57,8 @@ fun Themed(
 
     val fontFamily = createFontFamily()
     val typography = if (activePlatform.isWeb) {
-        // Web rendering for custom fonts is unstable; keep sizing/weights while using default family.
-        createDokusTypography(FontFamily.Default)
+        // Web rendering for custom fonts is unstable; use platform monospace to preserve character.
+        createDokusTypography(FontFamily.Monospace)
     } else {
         createDokusTypography(fontFamily)
     }
