@@ -62,6 +62,7 @@ import tech.dokus.features.cashflow.presentation.review.components.mobile.TAB_DE
 import tech.dokus.features.cashflow.presentation.review.components.mobile.TAB_PREVIEW
 import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
 import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
+import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.constrains.Constrains
@@ -278,12 +279,17 @@ private fun DesktopReviewContent(
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
 ) {
+    // In detail mode, content fills the glass pane with minimal padding (JSX: no outer padding)
+    val isInDetailMode = LocalIsInDocDetailMode.current
+    val outerPadding = if (isInDetailMode) 6.dp else Constrains.Spacing.large
+    val innerGap = if (isInDetailMode) 0.dp else Constrains.Spacing.large
+
     Row(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .padding(Constrains.Spacing.large),
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.large)
+            .padding(outerPadding),
+        horizontalArrangement = Arrangement.spacedBy(innerGap)
     ) {
         DocumentPreviewPane(
             previewState = state.previewState,
@@ -402,6 +408,11 @@ private fun ReviewDetailsPane(
             }
 
             if (scrollState.canScrollForward) {
+                val fadeColor = if (LocalIsInDocDetailMode.current) {
+                    Color.White.copy(alpha = 0.58f) // Match glassContent
+                } else {
+                    MaterialTheme.colorScheme.background
+                }
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -410,8 +421,8 @@ private fun ReviewDetailsPane(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                                    MaterialTheme.colorScheme.background,
+                                    fadeColor.copy(alpha = 0f),
+                                    fadeColor,
                                 ),
                             )
                         )

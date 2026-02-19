@@ -25,3 +25,9 @@ interface DocDetailModeHost {
 }
 
 val LocalDocDetailModeHost = staticCompositionLocalOf<DocDetailModeHost?> { null }
+
+/**
+ * True when the current composition is rendered inside the document detail mode content pane.
+ * Used by DocumentReviewScreen to suppress its own top bar and use transparent background.
+ */
+val LocalIsInDocDetailMode = staticCompositionLocalOf { false }

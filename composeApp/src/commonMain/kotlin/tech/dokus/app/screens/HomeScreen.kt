@@ -27,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -66,6 +67,7 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.LocalDocDetailModeHost
+import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.navigation.destinations.CashFlowDestination
@@ -305,7 +307,10 @@ private fun HomeNavHost(
         exitTransition = { with(transitionsProvider) { exitTransition } },
         popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
         popExitTransition = { with(transitionsProvider) { popExitTransition } },
-        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+        modifier = Modifier.background(
+            if (LocalIsInDocDetailMode.current) Color.Transparent
+            else MaterialTheme.colorScheme.background
+        ),
     ) {
         homeNavProviders.forEach { navProvider ->
             with(navProvider) {
