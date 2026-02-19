@@ -79,7 +79,7 @@ fun UploadOverlayHeader(
         Text(
             text = stringResource(Res.string.upload_documents_absorbed),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = alpha * SubtitleAlphaMultiplier),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * SubtitleAlphaMultiplier),
             textAlign = TextAlign.Center
         )
     }

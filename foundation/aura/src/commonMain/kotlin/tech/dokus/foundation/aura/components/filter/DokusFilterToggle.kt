@@ -46,7 +46,7 @@ fun DokusFilterToggle(
             containerColor = if (selected) {
                 MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
             } else {
-                Color.Transparent
+                MaterialTheme.colorScheme.surface.copy(alpha = 0f)
             },
             contentColor = if (selected) {
                 MaterialTheme.colorScheme.onSurface

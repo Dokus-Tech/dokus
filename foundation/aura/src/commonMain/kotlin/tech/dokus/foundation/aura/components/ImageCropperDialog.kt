@@ -141,7 +141,7 @@ fun ImageCropperDialog(
                         .fillMaxWidth()
                         .aspectRatio(SquareAspectRatio)
                         .clip(MaterialTheme.shapes.small)
-                        .background(Color.Black)
+                        .background(MaterialTheme.colorScheme.scrim)
                         .onSizeChanged { containerSize = it }
                         .clipToBounds()
                         .pointerInput(Unit) {
@@ -155,6 +155,9 @@ fun ImageCropperDialog(
                         },
                     contentAlignment = Alignment.Center
                 ) {
+                    val overlayColor = MaterialTheme.colorScheme.scrim.copy(alpha = CropOverlayAlpha)
+                    val guideColor = MaterialTheme.colorScheme.onSurface
+
                     // Image with transformations
                     AsyncImage(
                         model = imageData,
@@ -172,11 +175,12 @@ fun ImageCropperDialog(
 
                     // Square crop overlay
                     Canvas(modifier = Modifier.fillMaxSize()) {
-                        val overlayColor = Color.Black.copy(alpha = CropOverlayAlpha)
-
                         // Draw semi-transparent overlay around crop area
                         // The visible area in center is the crop region
-                        drawCropOverlay(overlayColor)
+                        drawCropOverlay(
+                            overlayColor = overlayColor,
+                            guideColor = guideColor
+                        )
                     }
                 }
 
@@ -228,7 +232,10 @@ fun ImageCropperDialog(
  * Draw a semi-transparent overlay with a clear square in the center.
  */
 @Suppress("UnusedParameter") // Reserved for future overlay customization
-private fun DrawScope.drawCropOverlay(overlayColor: Color) {
+private fun DrawScope.drawCropOverlay(
+    overlayColor: Color,
+    guideColor: Color,
+) {
     // For a simple implementation, we just draw corner guides
     val strokeWidth = Constrains.Stroke.cropGuide.toPx()
     val cornerLength = Constrains.CropGuide.cornerLength.toPx()
@@ -238,9 +245,6 @@ private fun DrawScope.drawCropOverlay(overlayColor: Color) {
     val top = padding
     val right = size.width - padding
     val bottom = size.height - padding
-
-    // Draw corner guides (white lines at corners)
-    val guideColor = Color.White
 
     // Top-left corner
     drawLine(guideColor, Offset(left, top), Offset(left + cornerLength, top), strokeWidth)

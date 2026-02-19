@@ -20,6 +20,7 @@ import kotlinx.coroutines.delay
 import tech.dokus.features.cashflow.presentation.cashflow.components.upload.BlackHoleVortex
 import tech.dokus.features.cashflow.presentation.cashflow.components.upload.GravitationalDocumentsLayer
 import tech.dokus.features.cashflow.presentation.cashflow.components.upload.UploadOverlayHeader
+import androidx.compose.material3.MaterialTheme
 
 // Animation constants
 private const val GravitationalFallDurationMs = 1400
@@ -86,7 +87,7 @@ fun SpaceUploadOverlay(
                 modifier = Modifier
                     .fillMaxSize()
                     .blur(BackdropBlur)
-                    .background(Color.Black.copy(alpha = BackdropAlpha))
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = BackdropAlpha))
             )
 
             // The Black Hole

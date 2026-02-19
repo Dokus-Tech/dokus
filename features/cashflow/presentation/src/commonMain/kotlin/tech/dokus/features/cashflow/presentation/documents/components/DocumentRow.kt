@@ -64,12 +64,18 @@ private val StatusDotSize = 8.dp
  * New structure: Dot | Description | Counterparty | Amount | Date | Chevron
  */
 private object DocumentTableColumns {
-    val Dot = DokusTableColumnSpec(width = 32.dp, horizontalAlignment = Alignment.CenterHorizontally)
+    val Dot = DokusTableColumnSpec(
+        width = 32.dp,
+        horizontalAlignment = Alignment.CenterHorizontally
+    )
     val Description = DokusTableColumnSpec(weight = 1f)
     val Counterparty = DokusTableColumnSpec(width = 180.dp)
     val Amount = DokusTableColumnSpec(width = 100.dp, horizontalAlignment = Alignment.End)
     val Date = DokusTableColumnSpec(width = 100.dp)
-    val Action = DokusTableColumnSpec(width = 40.dp, horizontalAlignment = Alignment.CenterHorizontally)
+    val Action = DokusTableColumnSpec(
+        width = 40.dp,
+        horizontalAlignment = Alignment.CenterHorizontally
+    )
 }
 
 @Composable
@@ -146,7 +152,7 @@ internal fun DocumentTableRow(
         backgroundColor = if (isHovered) {
             MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
         } else {
-            Color.Transparent
+            MaterialTheme.colorScheme.surface.copy(alpha = 0f)
         },
         contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
     ) {

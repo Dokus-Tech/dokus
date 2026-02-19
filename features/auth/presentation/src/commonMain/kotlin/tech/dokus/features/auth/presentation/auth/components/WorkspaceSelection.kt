@@ -24,7 +24,9 @@ import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
 import tech.dokus.foundation.aura.components.tiles.CompanyTile
 
 @Stable
-private fun Modifier.widthInWorkspaceItem(): Modifier = widthIn(min = 140.dp, max = 320.dp)
+@Composable
+private fun Modifier.widthInWorkspaceItem(): Modifier =
+    widthIn(min = 140.dp, max = 320.dp)
 
 @Composable
 fun WorkspaceSelectionBody(

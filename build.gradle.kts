@@ -147,7 +147,12 @@ tasks.register("detektKmp") {
 tasks.register("checkAll") {
     group = "verification"
     description = "Runs detekt and custom guardrails."
-    dependsOn("detektAll", "detektKmp", "checkKotlinFileSize", "checkNoNavInComponents")
+    dependsOn(
+        "detektAll",
+        "detektKmp",
+        "checkKotlinFileSize",
+        "checkNoNavInComponents"
+    )
 }
 
 // Screenshot Testing Tasks (Paparazzi)

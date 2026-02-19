@@ -174,7 +174,7 @@ private fun DokusTab(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val indicatorColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+    val indicatorColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(alpha = 0f)
     val textColor = if (selected) {
         MaterialTheme.colorScheme.onSurface
     } else {

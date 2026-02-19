@@ -242,7 +242,7 @@ private fun PdfPageImage(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(A4AspectRatio)
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.surface),
                         contentAlignment = Alignment.Center,
                     ) {
                         DokusLoader()

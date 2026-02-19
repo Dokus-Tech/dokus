@@ -32,7 +32,7 @@ fun DokusNavigationBar(
 ) {
     NavigationBar(
         modifier = modifier,
-        containerColor = Color.Transparent,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
         tonalElevation = 0.dp
     ) {
         tabs.forEach { tab ->
@@ -56,7 +56,7 @@ fun DokusNavigationBar(
                 selected = selectedRoute == tab.destination?.route,
                 alwaysShowLabel = true,
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = Color.Transparent,
+                    indicatorColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     selectedTextColor = MaterialTheme.colorScheme.primary,
                     unselectedIconColor = MaterialTheme.colorScheme.textMuted,

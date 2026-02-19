@@ -193,7 +193,7 @@ private fun AwaitingExtractionContent(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Transparent,
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0f),
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                                 MaterialTheme.colorScheme.surface,
                             ),
@@ -410,7 +410,7 @@ private fun ReviewDetailsPane(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.Transparent,
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0f),
                                     MaterialTheme.colorScheme.background,
                                 ),
                             )

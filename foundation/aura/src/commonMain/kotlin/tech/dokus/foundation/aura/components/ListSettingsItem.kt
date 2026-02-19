@@ -38,7 +38,7 @@ fun ListSettingsItem(
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)
             .background(
-                if (isSelected) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
+                if (isSelected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface.copy(alpha = 0f)
             )
             .clickable { onClick() }
             .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.small),

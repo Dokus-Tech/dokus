@@ -117,7 +117,7 @@ private fun ContactFactDisplay(
                 if (isHovered && !isReadOnly) {
                     MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha)
                 } else {
-                    Color.Transparent
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
                 }
             )
             .hoverable(interactionSource)
@@ -344,7 +344,7 @@ fun FactField(
                 if (isHovered && isClickable) {
                     MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha)
                 } else {
-                    Color.Transparent
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
                 }
             )
             .then(if (isClickable) Modifier.hoverable(interactionSource) else Modifier)

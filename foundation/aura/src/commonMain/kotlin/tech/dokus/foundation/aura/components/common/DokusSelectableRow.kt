@@ -70,7 +70,7 @@ fun DokusSelectableRow(
         targetValue = when {
             isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = SELECTED_ALPHA)
             isFocused -> MaterialTheme.colorScheme.primary.copy(alpha = FOCUS_RING_ALPHA)
-            else -> Color.Transparent
+            else -> MaterialTheme.colorScheme.surface.copy(alpha = 0f)
         },
         label = "backgroundColor"
     )

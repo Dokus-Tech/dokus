@@ -111,11 +111,10 @@ private fun DesktopSummarySection(
             if (balance != null) {
                 Text(
                     text = "$currencySymbol${balance.amount.toDisplayString()}",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 28.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 28.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
                     text = "${stringResource(Res.string.cashflow_balance_label)} · ${formatShortDate(balance.asOf)} · ${balance.accountName}",
@@ -126,11 +125,10 @@ private fun DesktopSummarySection(
                 // Balance unavailable
                 Text(
                     text = "—",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 28.sp
-                    ),
-                    color = MaterialTheme.colorScheme.textFaint
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 28.sp,
+                    color = MaterialTheme.colorScheme.textFaint,
                 )
                 Text(
                     text = stringResource(Res.string.cashflow_balance_unavailable),
@@ -151,10 +149,9 @@ private fun DesktopSummarySection(
 
             Text(
                 text = netAmountText,
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 32.sp
-                ),
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 32.sp,
                 color = netColor,
                 textAlign = TextAlign.End
             )
@@ -204,11 +201,10 @@ private fun ExpandedMobileSummarySection(
 
         Text(
             text = netAmountText,
-            style = MaterialTheme.typography.displayMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 36.sp
-            ),
-            color = netColor
+            style = MaterialTheme.typography.displayMedium,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 36.sp,
+            color = netColor,
         )
 
         Spacer(Modifier.height(2.dp))
@@ -221,8 +217,9 @@ private fun ExpandedMobileSummarySection(
         }
         Text(
             text = timeLabel,
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-            color = MaterialTheme.colorScheme.textMuted
+            style = MaterialTheme.typography.bodyMedium,
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.textMuted,
         )
 
         Spacer(Modifier.height(2.dp))
@@ -244,24 +241,25 @@ private fun ExpandedMobileSummarySection(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(Res.string.cashflow_balance_label),
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                color = MaterialTheme.colorScheme.textMuted
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.textMuted,
             )
             Spacer(Modifier.width(6.dp))
             if (balance != null) {
                 Text(
                     text = "$currencySymbol${balance.amount.toDisplayString()}",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
                 Text(
                     text = "—",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                    color = MaterialTheme.colorScheme.textFaint
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.textFaint,
                 )
             }
         }

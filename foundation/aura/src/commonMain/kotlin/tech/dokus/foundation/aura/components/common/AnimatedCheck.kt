@@ -42,6 +42,7 @@ fun AnimatedCheck(
     val circleProgress = remember { Animatable(0f) }
     val checkProgress = remember { Animatable(0f) }
     val glowAlpha = remember { Animatable(0f) }
+    val transparentColor = color.copy(alpha = 0f)
 
     LaunchedEffect(play) {
         circleProgress.snapTo(0f)
@@ -85,7 +86,7 @@ fun AnimatedCheck(
 
         val glowRadius = (minDim / 2f) + 20.dp.toPx()
         val glow = Brush.radialGradient(
-            colors = listOf(color.copy(alpha = 0.2f * glowAlpha.value), Color.Transparent),
+            colors = listOf(color.copy(alpha = 0.2f * glowAlpha.value), transparentColor),
             center = center,
             radius = glowRadius,
         )

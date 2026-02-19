@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.unit.dp
 
@@ -31,6 +30,7 @@ internal fun ScanningLineOverlay(modifier: Modifier = Modifier) {
 
     val lineColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
     val glowColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+    val transparentColor = lineColor.copy(alpha = 0f)
 
     Canvas(modifier = modifier) {
         val y = progress.value * size.height
@@ -39,7 +39,7 @@ internal fun ScanningLineOverlay(modifier: Modifier = Modifier) {
 
         drawRect(
             brush = Brush.verticalGradient(
-                colors = listOf(Color.Transparent, glowColor, Color.Transparent),
+                colors = listOf(transparentColor, glowColor, transparentColor),
                 startY = y - glowHeight / 2f,
                 endY = y + glowHeight / 2f
             ),
