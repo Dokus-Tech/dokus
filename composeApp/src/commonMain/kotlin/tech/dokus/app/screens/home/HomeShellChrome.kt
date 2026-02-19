@@ -403,7 +403,6 @@ internal fun DesktopShellTopBar(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MobileShellTopBar(
     topBarConfig: HomeShellTopBarConfig,
@@ -415,16 +414,59 @@ internal fun MobileShellTopBar(
     onAppearanceClick: () -> Unit,
     onLogoutClick: () -> Unit,
 ) {
-    var showProfileSheet by rememberSaveable { mutableStateOf(false) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.glassHeader)
+    ) {
+        // Row 1: Logo + avatar (always shown)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AppNameText(modifier = Modifier.weight(1f))
 
-    PTopAppBarSearchAction(
-        searchContent = {
+            // Avatar monogram → navigates to profile
+            val initials = profileData?.fullName
+                ?.split(" ")
+                ?.take(2)
+                ?.mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                ?.joinToString("") ?: ""
+            Surface(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clickable(onClick = onProfileClick),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = MaterialTheme.shapes.extraSmall,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = initials,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+        }
+
+        // Row 2: Search/title + actions (conditional — only when topBarConfig has content)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             when (val mode = topBarConfig.mode) {
                 is HomeShellTopBarMode.Search -> {
                     val onExpandSearch = mode.onExpandSearch
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
                         if (!mode.isSearchExpanded && onExpandSearch != null) {
                             IconButton(
@@ -447,7 +489,7 @@ internal fun MobileShellTopBar(
                                 onValueChange = mode.onQueryChange,
                                 onClear = mode.onClear,
                                 placeholder = mode.placeholder,
-                                modifier = Modifier.widthIn(min = 120.dp, max = 220.dp)
+                                modifier = Modifier.widthIn(min = 120.dp, max = 280.dp)
                             )
                         }
                     }
@@ -458,68 +500,16 @@ internal fun MobileShellTopBar(
                         text = mode.title,
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
-        },
-        actions = {
-            RouteTopBarActions(actions = topBarConfig.actions)
-            if (topBarConfig.actions.isNotEmpty()) {
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            MobileWorkspaceBadge(
-                tenantState = tenantState,
-                onClick = onWorkspaceClick
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            ProfileIconButton { showProfileSheet = true }
-        }
-    )
 
-    if (showProfileSheet) {
-        val sheetState = rememberModalBottomSheetState()
-        ModalBottomSheet(
-            onDismissRequest = { showProfileSheet = false },
-            sheetState = sheetState,
-            dragHandle = {
-                Box(
-                    modifier = Modifier
-                        .padding(top = 10.dp, bottom = 8.dp)
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(MaterialTheme.shapes.extraSmall)
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f))
-                )
-            }
-        ) {
-            ProfileMenuHeader(profileData = profileData)
-            HorizontalDivider()
-            MobileMenuItem(
-                label = stringResource(Res.string.settings_profile),
-                onClick = {
-                    showProfileSheet = false
-                    onProfileClick()
-                }
-            )
-            MobileMenuItem(
-                label = stringResource(Res.string.settings_appearance),
-                onClick = {
-                    showProfileSheet = false
-                    onAppearanceClick()
-                }
-            )
-            HorizontalDivider()
-            MobileMenuItem(
-                label = stringResource(Res.string.profile_logout),
-                color = MaterialTheme.colorScheme.statusError,
-                enabled = !isLoggingOut,
-                onClick = {
-                    showProfileSheet = false
-                    onLogoutClick()
-                }
-            )
-            Spacer(modifier = Modifier.height(24.dp))
+            RouteTopBarActions(actions = topBarConfig.actions)
         }
+
+        HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
     }
 }
 
