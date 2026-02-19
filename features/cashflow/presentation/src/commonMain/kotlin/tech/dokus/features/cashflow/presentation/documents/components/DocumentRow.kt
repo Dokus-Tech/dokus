@@ -54,6 +54,7 @@ import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.style.statusWarning
 
 private val TableRowHeight = 56.dp
 private val StatusDotSize = 8.dp
