@@ -46,6 +46,7 @@ import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.HomeShellProfileData
 import tech.dokus.app.screens.home.MobileShellTopBar
+import tech.dokus.app.screens.home.buildSortedRoutes
 import tech.dokus.app.screens.home.normalizeRoute
 import tech.dokus.app.screens.home.resolveHomeShellTopBarConfig
 import tech.dokus.app.viewmodel.HomeAction
@@ -96,6 +97,7 @@ internal fun HomeScreen(
     val navSections = remember(appModules) { appModules.navSectionsCombined }
     val mobileTabs = remember(appModules) { appModules.mobileTabConfigs }
     val allNavItems = remember(appModules) { appModules.allNavItems }
+    val sortedRoutes = remember(allNavItems) { buildSortedRoutes(allNavItems) }
     val startDestination = remember(navSections) { navSections.first().items.first().destination }
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
@@ -104,16 +106,16 @@ internal fun HomeScreen(
     var fallbackSearchQuery by rememberSaveable { mutableStateOf("") }
     var isMobileSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
     val registeredTopBarConfigs = remember { mutableStateMapOf<String, HomeShellTopBarConfig>() }
-    val topBarHost = remember(allNavItems) {
+    val topBarHost = remember(allNavItems, sortedRoutes) {
         object : HomeShellTopBarHost {
             override fun update(route: String, config: HomeShellTopBarConfig) {
-                val normalizedRoute = normalizeRoute(route, allNavItems) ?: return
+                val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return
                 if (registeredTopBarConfigs[normalizedRoute] == config) return
                 registeredTopBarConfigs[normalizedRoute] = config
             }
 
             override fun clear(route: String) {
-                val normalizedRoute = normalizeRoute(route, allNavItems) ?: return
+                val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return
                 registeredTopBarConfigs.remove(normalizedRoute)
             }
         }
@@ -144,7 +146,7 @@ internal fun HomeScreen(
     // Get current route directly from backstack
     val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val normalizedRoute = normalizeRoute(currentRoute, allNavItems)
+    val normalizedRoute = normalizeRoute(currentRoute, sortedRoutes)
 
     val shellState = state as? HomeState.Ready ?: HomeState.Ready()
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
@@ -160,6 +162,7 @@ internal fun HomeScreen(
     val topBarConfig = resolveHomeShellTopBarConfig(
         route = currentRoute,
         allNavItems = allNavItems,
+        sortedRoutes = sortedRoutes,
         registeredConfigs = registeredTopBarConfigs,
         fallback = { _, _ -> fallbackShellTopBarConfig }
     )

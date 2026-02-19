@@ -68,5 +68,48 @@ val NavigationDestination.route: String get() = when (this) {
         SettingsDestination.NotificationPreferences -> "settings/notifications"
         SettingsDestination.PeppolRegistration -> "settings/peppol"
     }
-    else -> this::class.simpleName ?: "unknown"
+    is AuthDestination -> when (this) {
+        AuthDestination.Login -> "login"
+        AuthDestination.Register -> "register"
+        AuthDestination.ForgotPassword -> "forgot-password"
+        AuthDestination.PasswordChangeRequested -> "password-change-requested"
+        is AuthDestination.ResetPassword -> "reset-password"
+        is AuthDestination.VerifyEmail -> "verify-email"
+        AuthDestination.ChangePassword -> "change-password"
+        AuthDestination.WorkspaceSelect -> "workspace/select"
+        AuthDestination.WorkspaceCreate -> "workspace/create"
+        AuthDestination.ProfileSettings -> "profile_settings"
+        is AuthDestination.Profile -> "profile"
+        AuthDestination.SelectProfile -> "select_profile"
+        AuthDestination.PendingConfirmAccount -> "pending_confirm_account"
+        AuthDestination.PendingConfirmAccountInstructions -> "pending_confirm_account/instructions"
+        AuthDestination.MySessions -> "sessions"
+        AuthDestination.QrLoginDisplay -> "auth/qr/display"
+        AuthDestination.QrLoginDisplayInstructions -> "auth/qr/display/instructions"
+        is AuthDestination.QrLoginDecision -> "auth/qr/decision"
+        is AuthDestination.ServerConnection -> "server/connect"
+    }
+    is CashFlowDestination -> when (this) {
+        CashFlowDestination.AddDocument -> "cashflow/add_document"
+        CashFlowDestination.CreateInvoice -> "cashflow/create_invoice"
+        is CashFlowDestination.DocumentReview -> "cashflow/document_review"
+        is CashFlowDestination.DocumentChat -> "cashflow/document_chat"
+        is CashFlowDestination.CashflowLedger -> "cashflow/ledger"
+    }
+    is ContactsDestination -> when (this) {
+        is ContactsDestination.CreateContact -> "contacts/create"
+        is ContactsDestination.EditContact -> "contacts/edit"
+        is ContactsDestination.ContactDetails -> "contacts/details"
+    }
+    is CoreDestination -> when (this) {
+        CoreDestination.Splash -> "splash"
+        CoreDestination.Home -> "home"
+        CoreDestination.UpdateRequired -> "update_required"
+    }
+    is AppDestination -> when (this) {
+        AppDestination.Notifications -> "notifications"
+        AppDestination.UnderDevelopment -> "app/under_development"
+        AppDestination.Empty -> "empty"
+        AppDestination.ShareImport -> "app/share_import"
+    }
 }

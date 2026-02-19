@@ -8,10 +8,11 @@ import tech.dokus.navigation.destinations.route
 internal fun resolveHomeShellTopBarConfig(
     route: String?,
     allNavItems: List<NavItem>,
+    sortedRoutes: List<String>,
     registeredConfigs: Map<String, HomeShellTopBarConfig>,
     fallback: (normalizedRoute: String, default: ShellTopBarDefault) -> HomeShellTopBarConfig?,
 ): HomeShellTopBarConfig? {
-    val normalizedRoute = normalizeRoute(route, allNavItems) ?: return null
+    val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return null
     val navItem = allNavItems.find { it.destination.route == normalizedRoute } ?: return null
     val default = navItem.shellTopBar ?: return null
     val registered = registeredConfigs[normalizedRoute]
@@ -19,9 +20,12 @@ internal fun resolveHomeShellTopBarConfig(
     return fallback(normalizedRoute, default)
 }
 
+/** Pre-compute sorted known routes (longest first) for normalizeRoute. Call once via remember. */
+internal fun buildSortedRoutes(allNavItems: List<NavItem>): List<String> =
+    allNavItems.map { it.destination.route }.sortedByDescending { it.length }
+
 /** Normalize a backstack route string to a known base route (strips query params and sub-paths). */
-internal fun normalizeRoute(route: String?, allNavItems: List<NavItem>): String? {
+internal fun normalizeRoute(route: String?, sortedRoutes: List<String>): String? {
     val cleaned = route?.substringBefore("?") ?: return null
-    val knownRoutes = allNavItems.map { it.destination.route }.sortedByDescending { it.length }
-    return knownRoutes.firstOrNull { cleaned == it || cleaned.startsWith("$it/") }
+    return sortedRoutes.firstOrNull { cleaned == it || cleaned.startsWith("$it/") }
 }

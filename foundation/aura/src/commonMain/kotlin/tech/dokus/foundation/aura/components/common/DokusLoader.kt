@@ -228,7 +228,7 @@ fun DokusLoader(
     }
 
     val particles = remember(particleCount) {
-        generateParticles(particleCount, Random)
+        generateParticles(particleCount, Random(seed = particleCount))
     }
 
     var elapsedSeconds by remember { mutableFloatStateOf(0f) }
