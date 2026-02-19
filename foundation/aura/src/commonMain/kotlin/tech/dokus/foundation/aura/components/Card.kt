@@ -15,14 +15,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.foundation.aura.style.isDark
 
-// Card UI constants (Design System v1: no shadows, use borders for separation)
 private val BorderWidth = 1.dp
-private val DefaultElevation = 0.dp
 private val GlassElevation = 0.dp
 private val HeaderFooterSpacing = 12.dp
 private const val SoftSurfaceAlpha = 0.97f
@@ -30,6 +33,11 @@ private const val GlassSurfaceAlpha = 0.93f
 private const val GlassBorderAlpha = 0.2f
 private const val DefaultCardPadding = 16
 private const val DenseCardPadding = 12
+private val AccentLineInset = 20.dp
+private val AccentLineHeight = 1.dp
+private val ShadowElevation = 2.dp
+private val AccentColor = Color(0xFFB8860B)
+private const val AccentAlpha = 0.2f
 
 enum class DokusCardVariant {
     Default,
@@ -45,10 +53,12 @@ enum class DokusCardPadding(val padding: Int) {
 fun DokusCardSurface(
     modifier: Modifier = Modifier,
     variant: DokusCardVariant = DokusCardVariant.Default,
-    shape: Shape = MaterialTheme.shapes.medium, // Design System v2: cards = 10dp
+    shape: Shape = MaterialTheme.shapes.medium,
+    accent: Boolean = false,
+    shadow: Boolean = false,
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val isDark = colorScheme.isDark
@@ -56,13 +66,41 @@ fun DokusCardSurface(
         DokusCardVariant.Default -> if (isDark) colorScheme.surfaceVariant else colorScheme.surface
         DokusCardVariant.Soft -> colorScheme.surface.copy(alpha = SoftSurfaceAlpha)
     }
-    val borderStroke = BorderStroke(BorderWidth, colorScheme.outlineVariant)
-    // Design System v1: no shadows, use borders for separation
-    val shadowElevation = 0.dp
+    val borderStroke = if (accent) {
+        BorderStroke(BorderWidth, colorScheme.borderAmber)
+    } else {
+        BorderStroke(BorderWidth, colorScheme.outlineVariant)
+    }
+    val shadowElevation = if (shadow) ShadowElevation else 0.dp
+
+    val accentModifier = if (accent) {
+        Modifier.drawBehind {
+            val insetPx = AccentLineInset.toPx()
+            val lineHeight = AccentLineHeight.toPx()
+            drawRect(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        AccentColor.copy(alpha = AccentAlpha),
+                        Color.Transparent,
+                    ),
+                    startX = insetPx,
+                    endX = size.width - insetPx,
+                ),
+                topLeft = Offset(insetPx, 0f),
+                size = androidx.compose.ui.geometry.Size(
+                    size.width - insetPx * 2,
+                    lineHeight,
+                ),
+            )
+        }
+    } else {
+        Modifier
+    }
 
     if (onClick != null) {
         Surface(
-            modifier = modifier,
+            modifier = modifier.then(accentModifier),
             shape = shape,
             color = containerColor,
             border = borderStroke,
@@ -75,7 +113,7 @@ fun DokusCardSurface(
         }
     } else {
         Surface(
-            modifier = modifier,
+            modifier = modifier.then(accentModifier),
             shape = shape,
             color = containerColor,
             border = borderStroke,
@@ -92,16 +130,20 @@ fun DokusCard(
     modifier: Modifier = Modifier,
     variant: DokusCardVariant = DokusCardVariant.Default,
     padding: DokusCardPadding = DokusCardPadding.Default,
+    accent: Boolean = false,
+    shadow: Boolean = false,
     header: (@Composable () -> Unit)? = null,
     footer: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val paddingValue = padding.padding.dp
     DokusCardSurface(
         modifier = modifier,
         variant = variant,
+        accent = accent,
+        shadow = shadow,
         onClick = onClick,
         enabled = enabled,
     ) {
@@ -124,7 +166,7 @@ fun DokusGlassSurface(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val containerColor = colorScheme.surface.copy(alpha = GlassSurfaceAlpha)
@@ -165,7 +207,7 @@ fun PCardPlusIcon(modifier: Modifier) {
             text = "+",
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }

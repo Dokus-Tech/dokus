@@ -68,6 +68,31 @@ object Constrains {
     }
 
     /**
+     * Document detail layout dimensions (v2).
+     */
+    object DocumentDetail {
+        val queueWidth = 220.dp
+        val inspectorWidth = 272.dp
+        val previewMaxWidth = 480.dp
+    }
+
+    /**
+     * Status dot dimensions (v2).
+     */
+    object StatusDot {
+        val size = 5.dp
+        const val pulseDuration = 2000
+    }
+
+    /**
+     * Table layout dimensions (v2).
+     */
+    object Table {
+        val rowMinHeight = 42.dp
+        val headerPaddingH = 22.dp
+    }
+
+    /**
      * Icon size values for consistent iconography.
      * Based on Material Design 3 icon sizing guidelines.
      */

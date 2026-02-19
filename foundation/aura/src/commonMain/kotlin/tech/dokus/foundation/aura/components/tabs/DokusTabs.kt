@@ -1,0 +1,157 @@
+package tech.dokus.foundation.aura.components.tabs
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.style.textFaint
+import tech.dokus.foundation.aura.style.textMuted
+
+private val ContainerPadding = 3.dp
+private val TabPaddingH = 16.dp
+private val TabPaddingV = 6.dp
+private val BadgePaddingH = 6.dp
+private val BadgePaddingV = 1.dp
+private val BadgeGap = 6.dp
+private val ActiveShadow = 2.dp
+
+/**
+ * Tab data for [DokusTabs].
+ */
+@Immutable
+data class DokusTab(
+    val id: String,
+    val label: String,
+    val count: Int? = null,
+    val countColor: Color = Color.Unspecified,
+    val countBackground: Color = Color.Unspecified,
+)
+
+/**
+ * Segmented pill-group tab switcher (v2 molecule).
+ *
+ * Container: canvas background, 7dp outer radius, 1px border.
+ * Active tab: page background, shadow, 6dp radius, bold text.
+ * Inactive tab: transparent, muted text.
+ *
+ * @param tabs Tab definitions
+ * @param activeId Currently selected tab id
+ * @param onTabSelected Callback when a tab is tapped
+ */
+@Composable
+fun DokusTabs(
+    tabs: List<DokusTab>,
+    activeId: String,
+    onTabSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(ContainerPadding),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            tabs.forEach { tab ->
+                val isActive = tab.id == activeId
+                TabItem(
+                    tab = tab,
+                    isActive = isActive,
+                    onClick = { onTabSelected(tab.id) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TabItem(
+    tab: DokusTab,
+    isActive: Boolean,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(Constrains.CornerRadius.input)
+
+    val backgroundModifier = if (isActive) {
+        Modifier
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface)
+    } else {
+        Modifier.clip(shape)
+    }
+
+    Row(
+        modifier = Modifier
+            .then(backgroundModifier)
+            .clickable(onClick = onClick)
+            .padding(horizontal = TabPaddingH, vertical = TabPaddingV),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = tab.label,
+            fontSize = 12.sp,
+            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isActive) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.textMuted
+            },
+        )
+
+        if (tab.count != null && tab.count > 0) {
+            val badgeColor = if (tab.countColor != Color.Unspecified) {
+                tab.countColor
+            } else {
+                MaterialTheme.colorScheme.textMuted
+            }
+            val badgeBg = if (tab.countBackground != Color.Unspecified) {
+                tab.countBackground
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+
+            Box(
+                modifier = Modifier
+                    .padding(start = BadgeGap)
+                    .background(
+                        badgeBg,
+                        RoundedCornerShape(Constrains.CornerRadius.badge),
+                    )
+                    .padding(horizontal = BadgePaddingH, vertical = BadgePaddingV),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = tab.count.toString(),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                    color = badgeColor,
+                )
+            }
+        }
+    }
+}

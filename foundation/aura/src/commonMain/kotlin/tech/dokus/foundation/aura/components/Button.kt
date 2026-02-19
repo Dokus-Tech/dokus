@@ -1,6 +1,10 @@
 package tech.dokus.foundation.aura.components
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -8,20 +12,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_back
-import tech.dokus.aura.resources.arrow_left
+import androidx.compose.ui.unit.sp
 import tech.dokus.foundation.aura.constrains.Constrains
 
 enum class PButtonVariant {
@@ -220,19 +220,39 @@ fun POutlinedButton(
     }
 }
 
+/**
+ * Back button with amber chevron and optional label text (v2).
+ *
+ * @param label Optional text label (e.g. "All docs", "Contacts")
+ * @param onBackPress Back navigation callback
+ */
 @Composable
 fun PBackButton(
     modifier: Modifier = Modifier,
+    label: String? = null,
     onBackPress: () -> Unit,
 ) {
-    IconButton(
-        onClick = onBackPress,
+    Row(
         modifier = modifier
+            .defaultMinSize(minHeight = 44.dp)
+            .clickable(onClick = onBackPress)
+            .padding(end = Constrains.Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
     ) {
-        Icon(
-            painter = painterResource(Res.drawable.arrow_left),
-            contentDescription = stringResource(Res.string.action_back),
-            modifier = Modifier.size(Constrains.IconSize.medium)
+        Text(
+            text = "\u2039",  // ‹
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
         )
+        if (label != null) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }

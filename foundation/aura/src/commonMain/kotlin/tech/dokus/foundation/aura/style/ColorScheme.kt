@@ -206,3 +206,21 @@ val ColorScheme.glassHeader: Color
 val ColorScheme.windowShadow: Color
     get() = if (isDark) Color.Black.copy(alpha = 0.30f)
             else Color.Black.copy(alpha = 0.06f)
+
+// Amber tints (v2 component tokens)
+val ColorScheme.amberSoft: Color get() = primaryContainer
+val ColorScheme.amberWhisper: Color
+    get() = if (isDark) Color(AmberLightHex).copy(alpha = 0.05f)
+            else Color(AmberLightHex).copy(alpha = 0.03f)
+val ColorScheme.borderAmber: Color
+    get() = if (isDark) Color(AmberDarkHex).copy(alpha = 0.22f)
+            else Color(0xFFB46400).copy(alpha = 0.18f)
+
+// Table & border tokens (v2)
+val ColorScheme.thText: Color
+    get() = if (isDark) Color(0xFF9A928A) else Color(0xFF4A443D)
+val ColorScheme.borderStrong: Color get() = outline
+
+// Soft semantic background aliases (v2)
+val ColorScheme.redSoft: Color get() = errorContainer
+val ColorScheme.greenSoft: Color get() = tertiaryContainer
