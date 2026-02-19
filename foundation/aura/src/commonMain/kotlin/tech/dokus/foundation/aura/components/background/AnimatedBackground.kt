@@ -12,274 +12,315 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalInspectionMode
+import tech.dokus.foundation.aura.style.isDark
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 // ============================================================================
-// CALM PARTICLE FIELD - Subtle ambient background animation
+// AMBIENT BACKGROUND — v2: Gradient orbs + connected particles + light sweep
 // ============================================================================
 
-// Particle counts per layer
-private const val CalmParticleTotal = 130
-private const val CalmBackgroundPercent = 0.40f
-private const val CalmMiddlePercent = 0.35f
+// --- Orb constants ---
+private const val OrbCount = 5
+private const val OrbFadeRadius = 0.6f // Radial gradient fades to transparent at 60%
 
-// Drift timing (particles take 30-60 seconds to cross screen)
-private const val CalmDriftDurationMs = 60000
+// Orb sizes (fraction of canvas min dimension)
+private val OrbSizeFractions = floatArrayOf(0.45f, 0.55f, 0.50f, 0.60f, 0.40f)
+// Orb drift durations (ms)
+private val OrbDriftDurations = intArrayOf(26000, 22000, 30000, 28000, 32000)
+// Orb starting positions (normalized 0-1)
+private val OrbStartX = floatArrayOf(0.2f, 0.7f, 0.5f, 0.15f, 0.85f)
+private val OrbStartY = floatArrayOf(0.3f, 0.2f, 0.7f, 0.6f, 0.5f)
+// Orb drift range (fraction of canvas)
+private val OrbDriftRangeX = floatArrayOf(0.15f, 0.12f, 0.10f, 0.14f, 0.11f)
+private val OrbDriftRangeY = floatArrayOf(0.10f, 0.13f, 0.12f, 0.08f, 0.10f)
+// Orb colors: true = amber, false = warm-gray
+private val OrbIsAmber = booleanArrayOf(true, false, true, false, false)
 
-// Layer speed multipliers for parallax
-private const val CalmBackgroundSpeed = 0.3f
-private const val CalmMiddleSpeed = 0.6f
-private const val CalmForegroundSpeed = 1.0f
+// Opacity ranges
+private const val OrbAlphaLightMin = 0.06f
+private const val OrbAlphaLightMax = 0.09f
+private const val OrbAlphaDarkMin = 0.03f
+private const val OrbAlphaDarkMax = 0.06f
 
-// Breathing animation
-private const val CalmBreathingAmplitudeDp = 1f
-private const val CalmBreathingPeriodMin = 4f
-private const val CalmBreathingPeriodMax = 6f
+// Orb colors
+private val OrbAmberLight = Color(0xFFB8860B)
+private val OrbAmberDark = Color(0xFFD4A017)
+private val OrbGrayLight = Color(0xFF9C958C)
+private val OrbGrayDark = Color(0xFF3D3832)
 
-// Size ranges per layer (dp)
-private const val CalmBackgroundSizeMin = 1f
-private const val CalmBackgroundSizeMax = 2f
-private const val CalmMiddleSizeMin = 2f
-private const val CalmMiddleSizeMax = 3f
-private const val CalmForegroundSizeMin = 3f
-private const val CalmForegroundSizeMax = 4f
+// --- Particle constants ---
+private const val ParticleCount = 40
+private const val ParticleGoldChance = 0.30f
+private const val ParticleConnectionDistance = 120f // dp
+private const val ParticleSpeed = 0.3f // dp/sec base speed
 
-// Opacity ranges per layer
-private const val CalmBackgroundAlphaMin = 0.15f
-private const val CalmBackgroundAlphaMax = 0.25f
-private const val CalmMiddleAlphaMin = 0.25f
-private const val CalmMiddleAlphaMax = 0.40f
-private const val CalmForegroundAlphaMin = 0.40f
-private const val CalmForegroundAlphaMax = 0.60f
+// Particle sizes (dp)
+private const val ParticleSizeMin = 0.5f
+private const val ParticleSizeMax = 2f
 
-// Amber particles get a brightness boost
-private const val CalmAmberAlphaBoost = 1.3f
+// Particle opacity
+private const val ParticleAlphaLightMin = 0.20f
+private const val ParticleAlphaLightMax = 0.25f
+private const val ParticleAlphaDarkMin = 0.12f
+private const val ParticleAlphaDarkMax = 0.30f
 
-// Color palette - Zinc tones with amber accents
-private val CalmZinc700 = Color(0xFF3f3f46)
-private val CalmZinc600 = Color(0xFF52525b)
-private val CalmZinc500 = Color(0xFF71717a)
-private val CalmZinc400 = Color(0xFFa1a1aa)
-private val CalmAmber500 = Color(0xFFf59e0b)
+// Connection line opacity
+private const val ConnectionAlphaLight = 0.08f
+private const val ConnectionAlphaDark = 0.06f
+private const val ConnectionStrokeWidth = 0.5f // dp
 
-// Weighted color distribution (30% zinc-700, 30% zinc-600, 25% zinc-500, 5% zinc-400, 10% amber)
-private val CalmColorWeights = listOf(
-    CalmZinc700 to 30,
-    CalmZinc600 to 30,
-    CalmZinc500 to 25,
-    CalmZinc400 to 5,
-    CalmAmber500 to 10
+// Particle colors
+private val ParticleGoldColor = Color(0xFFB8860B)
+private val ParticleNeutralColor = Color(0xFF9C8C7C)
+
+// --- Light sweep constants ---
+private const val SweepDurationMs = 16000
+private const val SweepWidthFraction = 0.40f
+private const val SweepAlphaLight = 0.06f
+private const val SweepAlphaDark = 0.03f
+
+// Math
+private const val TwoPI = 6.2831853f
+
+// --- Data classes ---
+
+private data class AmbientParticle(
+    var x: Float, // dp
+    var y: Float, // dp
+    val vx: Float, // dp/sec
+    val vy: Float, // dp/sec
+    val radius: Float, // dp
+    val isGold: Boolean,
+    val alpha: Float,
 )
 
-// Grid distribution for organic-but-structured feel
-private const val CalmGridCols = 12
-private const val CalmGridRows = 10
-private const val CalmGridJitter = 0.4f // How much particles can deviate from grid
+// --- Generation ---
 
-/**
- * A calm particle representing a single floating dot.
- */
-private data class CalmParticle(
-    val x: Float,           // 0-1 normalized position
-    val y: Float,           // 0-1 normalized position
-    val layer: Int,         // 0=background, 1=middle, 2=foreground
-    val size: Float,        // radius in dp
-    val color: Color,
-    val isAmber: Boolean,   // amber particles get brightness boost
-    val alpha: Float,       // base alpha for this particle
-    val driftAngle: Float,  // direction of drift (radians)
-    val driftSpeed: Float,  // speed multiplier based on layer
-    val breathPhase: Float, // 0-2π phase offset for breathing
-    val breathPeriod: Float // 4-6 seconds period
-)
+private fun generateParticles(
+    canvasWidthDp: Float,
+    canvasHeightDp: Float,
+    isDark: Boolean,
+    random: Random,
+): List<AmbientParticle> {
+    val alphaMin = if (isDark) ParticleAlphaDarkMin else ParticleAlphaLightMin
+    val alphaMax = if (isDark) ParticleAlphaDarkMax else ParticleAlphaLightMax
 
-/**
- * Selects a color based on weighted distribution.
- */
-private fun selectWeightedColor(random: Random): Pair<Color, Boolean> {
-    val totalWeight = CalmColorWeights.sumOf { it.second }
-    var roll = random.nextInt(totalWeight)
-    for ((color, weight) in CalmColorWeights) {
-        roll -= weight
-        if (roll < 0) {
-            return color to (color == CalmAmber500)
-        }
+    return List(ParticleCount) {
+        val isGold = random.nextFloat() < ParticleGoldChance
+        AmbientParticle(
+            x = random.nextFloat() * canvasWidthDp,
+            y = random.nextFloat() * canvasHeightDp,
+            vx = (random.nextFloat() - 0.5f) * 2f * ParticleSpeed,
+            vy = (random.nextFloat() - 0.5f) * 2f * ParticleSpeed,
+            radius = ParticleSizeMin + random.nextFloat() * (ParticleSizeMax - ParticleSizeMin),
+            isGold = isGold,
+            alpha = alphaMin + random.nextFloat() * (alphaMax - alphaMin),
+        )
     }
-    return CalmZinc600 to false
 }
 
 /**
- * Generates particles with loosely grid-like distribution.
- */
-private fun generateCalmParticles(random: Random): List<CalmParticle> {
-    val particles = mutableListOf<CalmParticle>()
-    val backgroundCount = (CalmParticleTotal * CalmBackgroundPercent).toInt()
-    val middleCount = (CalmParticleTotal * CalmMiddlePercent).toInt()
-    val foregroundCount = CalmParticleTotal - backgroundCount - middleCount
-
-    // Distribute particles across a loose grid
-    val cellWidth = 1f / CalmGridCols
-    val cellHeight = 1f / CalmGridRows
-    var particleIndex = 0
-
-    fun addParticle(
-        layer: Int,
-        sizeMin: Float,
-        sizeMax: Float,
-        alphaMin: Float,
-        alphaMax: Float,
-        speed: Float
-    ) {
-        // Calculate grid position with jitter
-        val gridX = particleIndex % CalmGridCols
-        val gridY = (particleIndex / CalmGridCols) % CalmGridRows
-        val baseX = (gridX + 0.5f) * cellWidth
-        val baseY = (gridY + 0.5f) * cellHeight
-        val jitterX = (random.nextFloat() - 0.5f) * cellWidth * CalmGridJitter * 2
-        val jitterY = (random.nextFloat() - 0.5f) * cellHeight * CalmGridJitter * 2
-
-        val (color, isAmber) = selectWeightedColor(random)
-        val baseAlpha = random.nextFloat() * (alphaMax - alphaMin) + alphaMin
-        val alpha = if (isAmber) (baseAlpha * CalmAmberAlphaBoost).coerceAtMost(0.8f) else baseAlpha
-
-        particles.add(
-            CalmParticle(
-                x = (baseX + jitterX).coerceIn(0f, 1f),
-                y = (baseY + jitterY).coerceIn(0f, 1f),
-                layer = layer,
-                size = random.nextFloat() * (sizeMax - sizeMin) + sizeMin,
-                color = color,
-                isAmber = isAmber,
-                alpha = alpha,
-                driftAngle = random.nextFloat() * TwoPI,
-                driftSpeed = speed,
-                breathPhase = random.nextFloat() * TwoPI,
-                breathPeriod = random.nextFloat() * (CalmBreathingPeriodMax - CalmBreathingPeriodMin) + CalmBreathingPeriodMin
-            )
-        )
-        particleIndex++
-    }
-
-    // Generate particles for each layer
-    repeat(backgroundCount) {
-        addParticle(
-            0,
-            CalmBackgroundSizeMin,
-            CalmBackgroundSizeMax,
-            CalmBackgroundAlphaMin,
-            CalmBackgroundAlphaMax,
-            CalmBackgroundSpeed
-        )
-    }
-    repeat(middleCount) {
-        addParticle(
-            1,
-            CalmMiddleSizeMin,
-            CalmMiddleSizeMax,
-            CalmMiddleAlphaMin,
-            CalmMiddleAlphaMax,
-            CalmMiddleSpeed
-        )
-    }
-    repeat(foregroundCount) {
-        addParticle(
-            2,
-            CalmForegroundSizeMin,
-            CalmForegroundSizeMax,
-            CalmForegroundAlphaMin,
-            CalmForegroundAlphaMax,
-            CalmForegroundSpeed
-        )
-    }
-
-    return particles.sortedBy { it.layer } // Draw background first
-}
-
-/**
- * A subtle, floating particle field that feels calm and professional.
+ * v2 ambient background: 5 gradient orbs drifting slowly, 40 connected particles, light sweep.
  *
- * Design intent: The user is entering an already-ordered space — no story, no drama,
- * just quiet presence. Like dust particles in sunlight — present but not demanding attention.
- *
- * Features:
- * - 130 particles across 3 depth layers with parallax
- * - Loosely grid-like distribution with organic variation
- * - Very slow drift (30-60 seconds to cross screen)
- * - Subtle breathing oscillation per particle
- * - 90% neutral zinc tones, 10% amber accents
+ * Creates depth behind the floating glass windows. Theme-adaptive: warmer/bolder in light,
+ * more subtle in dark.
  */
 @Composable
-fun CalmParticleField() {
+fun AmbientBackground(modifier: Modifier = Modifier) {
     if (LocalInspectionMode.current) return
-    val random = remember { Random }
-    val particles = remember { generateCalmParticles(random) }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "calmParticles")
+    val isDark = MaterialTheme.colorScheme.isDark
+    val infiniteTransition = rememberInfiniteTransition(label = "ambient")
 
-    // Global time for drift animation (0 to 1 over 60 seconds)
-    val globalTime by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
+    // Orb drift animations (each orb has its own cycle)
+    val orbOffsets = Array(OrbCount) { i ->
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = OrbDriftDurations[i], easing = LinearEasing)
+            ),
+            label = "orb$i"
+        )
+    }
+
+    // Light sweep
+    val sweepProgress by infiniteTransition.animateFloat(
+        initialValue = -SweepWidthFraction,
+        targetValue = 1f + SweepWidthFraction,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = CalmDriftDurationMs, easing = LinearEasing)
+            animation = tween(durationMillis = SweepDurationMs, easing = LinearEasing)
         ),
-        label = "calmDrift"
+        label = "sweep"
     )
 
-    // Breathing time (cycles faster for smooth oscillation)
-    val breathTime by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = TwoPI,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000, easing = LinearEasing)
-        ),
-        label = "calmBreath"
-    )
+    // Particle animation driven by frame time
+    var elapsedSec by remember { mutableFloatStateOf(0f) }
+    // Store particles in a mutable list for position updates
+    val particlesRef = remember { mutableListOf<AmbientParticle>() }
+    var particlesInitialized by remember { mutableFloatStateOf(0f) }
 
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val canvasWidth = size.width
-        val canvasHeight = size.height
-        val density = 1f // Assume 1dp = 1px for simplicity; scales naturally
-
-        particles.forEach { particle ->
-            // Calculate drift offset (wraps around screen)
-            val driftDistance = globalTime * particle.driftSpeed
-            val driftX = particle.x + cos(particle.driftAngle) * driftDistance
-            val driftY = particle.y + sin(particle.driftAngle) * driftDistance
-
-            // Wrap around edges seamlessly
-            val wrappedX = ((driftX % 1f) + 1f) % 1f
-            val wrappedY = ((driftY % 1f) + 1f) % 1f
-
-            // Calculate breathing offset (vertical sine wave)
-            val breathCycle = breathTime * (1f / particle.breathPeriod) + particle.breathPhase
-            val breathOffset = sin(breathCycle) * CalmBreathingAmplitudeDp * density
-
-            // Final position
-            val finalX = wrappedX * canvasWidth
-            val finalY = wrappedY * canvasHeight + breathOffset
-
-            // Draw simple circle
-            drawCircle(
-                color = particle.color.copy(alpha = particle.alpha),
-                radius = particle.size * density,
-                center = Offset(finalX, finalY)
-            )
+    LaunchedEffect(Unit) {
+        var lastNanos = 0L
+        while (true) {
+            withFrameNanos { nanos ->
+                if (lastNanos != 0L) {
+                    val dt = (nanos - lastNanos) / 1_000_000_000f
+                    elapsedSec += dt
+                }
+                lastNanos = nanos
+            }
         }
     }
+
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val w = size.width
+        val h = size.height
+        if (w <= 0f || h <= 0f) return@Canvas
+
+        val density = this.density
+        val wDp = w / density
+        val hDp = h / density
+
+        // Initialize particles on first draw (need canvas size)
+        if (particlesRef.isEmpty() || particlesInitialized == 0f) {
+            particlesRef.clear()
+            particlesRef.addAll(generateParticles(wDp, hDp, isDark, Random(42)))
+            particlesInitialized = 1f
+        }
+
+        // ── Layer 1: Gradient Orbs ──
+        val orbAlphaMin = if (isDark) OrbAlphaDarkMin else OrbAlphaLightMin
+        val orbAlphaMax = if (isDark) OrbAlphaDarkMax else OrbAlphaLightMax
+        val minDim = size.minDimension
+
+        for (i in 0 until OrbCount) {
+            val t = orbOffsets[i].value
+            // Sine-based drift for smooth looping
+            val driftX = sin(t * TwoPI) * OrbDriftRangeX[i]
+            val driftY = cos(t * TwoPI * 1.3f) * OrbDriftRangeY[i]
+            val cx = (OrbStartX[i] + driftX) * w
+            val cy = (OrbStartY[i] + driftY) * h
+            val orbRadius = OrbSizeFractions[i] * minDim
+
+            val orbColor = if (OrbIsAmber[i]) {
+                if (isDark) OrbAmberDark else OrbAmberLight
+            } else {
+                if (isDark) OrbGrayDark else OrbGrayLight
+            }
+            val orbAlpha = orbAlphaMin + (orbAlphaMax - orbAlphaMin) * ((i.toFloat() / OrbCount))
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        orbColor.copy(alpha = orbAlpha),
+                        Color.Transparent
+                    ),
+                    center = Offset(cx, cy),
+                    radius = orbRadius
+                ),
+                center = Offset(cx, cy),
+                radius = orbRadius
+            )
+        }
+
+        // ── Layer 2: Connected Particles ──
+        // Update positions based on elapsed time (simple velocity bounce)
+        val dtFrame = 1f / 60f // approximate, smoothed by withFrameNanos driving recomposition
+        val connectionDistPx = ParticleConnectionDistance * density
+        val connectionAlpha = if (isDark) ConnectionAlphaDark else ConnectionAlphaLight
+
+        for (p in particlesRef) {
+            p.x += p.vx * dtFrame
+            p.y += p.vy * dtFrame
+            // Bounce off edges
+            if (p.x < 0f) p.x = -p.x
+            if (p.x > wDp) p.x = 2f * wDp - p.x
+            if (p.y < 0f) p.y = -p.y
+            if (p.y > hDp) p.y = 2f * hDp - p.y
+        }
+
+        // Draw connection lines
+        for (i in particlesRef.indices) {
+            val a = particlesRef[i]
+            val ax = a.x * density
+            val ay = a.y * density
+            for (j in i + 1 until particlesRef.size) {
+                val b = particlesRef[j]
+                val bx = b.x * density
+                val by = b.y * density
+                val dx = ax - bx
+                val dy = ay - by
+                val dist = sqrt(dx * dx + dy * dy)
+                if (dist < connectionDistPx) {
+                    val lineAlpha = (1f - dist / connectionDistPx) * connectionAlpha
+                    val lineColor = if (a.isGold || b.isGold) {
+                        ParticleGoldColor.copy(alpha = lineAlpha)
+                    } else {
+                        ParticleNeutralColor.copy(alpha = lineAlpha)
+                    }
+                    drawLine(
+                        color = lineColor,
+                        start = Offset(ax, ay),
+                        end = Offset(bx, by),
+                        strokeWidth = ConnectionStrokeWidth * density
+                    )
+                }
+            }
+        }
+
+        // Draw particles
+        for (p in particlesRef) {
+            val color = if (p.isGold) ParticleGoldColor else ParticleNeutralColor
+            drawCircle(
+                color = color.copy(alpha = p.alpha),
+                radius = p.radius * density,
+                center = Offset(p.x * density, p.y * density)
+            )
+        }
+
+        // ── Layer 3: Light Sweep ──
+        val sweepAlpha = if (isDark) SweepAlphaDark else SweepAlphaLight
+        val sweepColor = if (isDark) OrbAmberDark else Color.White
+        val sweepStart = sweepProgress * (w + w * SweepWidthFraction * 2) - w * SweepWidthFraction
+        val sweepEnd = sweepStart + w * SweepWidthFraction
+
+        drawRect(
+            brush = Brush.horizontalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    sweepColor.copy(alpha = sweepAlpha),
+                    Color.Transparent
+                ),
+                startX = sweepStart,
+                endX = sweepEnd
+            ),
+            size = size
+        )
+    }
 }
+
+/** @deprecated Use [AmbientBackground] instead. Kept for binary compatibility. */
+@Deprecated("Replaced by AmbientBackground in v2", ReplaceWith("AmbientBackground()"))
+@Composable
+fun CalmParticleField() = AmbientBackground()
 
 // ============================================================================
 // WARP JUMP EFFECT - Space warp transition animation
@@ -296,7 +337,6 @@ private const val TunnelPulseDurationMs = 1000
 // Animation value constants
 private const val BreathingPulseMin = 0.8f
 private const val BreathingPulseMax = 1.2f
-private const val TwoPI = 6.28f
 private const val DegreesToRadians = 0.017453f
 
 // Warp effect thresholds

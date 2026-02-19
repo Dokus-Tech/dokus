@@ -63,6 +63,7 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
+import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
@@ -294,12 +295,13 @@ private fun RailNavigationLayout(
     val colorScheme = MaterialTheme.colorScheme
 
     // Floating glass windows desktop shell (v2)
-    Row(
+    Box(
         Modifier
             .fillMaxSize()
             .background(colorScheme.background)
-            .padding(Constrains.Shell.padding)
     ) {
+        AmbientBackground()
+        Row(Modifier.fillMaxSize().padding(Constrains.Shell.padding)) {
         // Sidebar glass panel
         Surface(
             modifier = Modifier
@@ -375,7 +377,8 @@ private fun RailNavigationLayout(
                 }
             }
         }
-    }
+    } // Row
+    } // Box
 }
 
 @Composable
