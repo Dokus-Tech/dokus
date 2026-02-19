@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
+import tech.dokus.foundation.aura.constrains.Constrains
 
 @Composable
 fun AppNameText(modifier: Modifier = Modifier) {
@@ -27,7 +28,7 @@ fun AppNameText(modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         // Sigil
         Surface(
-            shape = RoundedCornerShape(6.dp),
+            shape = RoundedCornerShape(Constrains.CornerRadius.input),
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
             border = BorderStroke(1.dp, gold.copy(alpha = 0.28f)),
             tonalElevation = 0.dp,

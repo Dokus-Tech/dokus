@@ -40,15 +40,15 @@ import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.foundation.aura.style.isDark
 import tech.dokus.foundation.aura.style.textFaint
-import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.navigation.destinations.route
 
 // v2 nav rail: left border track, rotating chevron, amber active highlight
 
-private val ItemShape = RoundedCornerShape(topEnd = 7.dp, bottomEnd = 7.dp)
+private val ItemShape = RoundedCornerShape(
+    topEnd = Constrains.CornerRadius.button, bottomEnd = Constrains.CornerRadius.button
+)
 private val ActiveBorderWidth = 2.dp
 private val TrackLineAlpha = 0.06f
-private val SoonBadgeShape = RoundedCornerShape(3.dp)
 
 @Composable
 fun ColumnScope.DokusNavigationRailSectioned(
@@ -231,7 +231,7 @@ private fun NavItemRow(
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
                 color = MaterialTheme.colorScheme.textFaint,
                 modifier = Modifier
-                    .clip(SoonBadgeShape)
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(Color.Black.copy(alpha = 0.03f))
                     .padding(horizontal = 5.dp, vertical = 2.dp)
             )
