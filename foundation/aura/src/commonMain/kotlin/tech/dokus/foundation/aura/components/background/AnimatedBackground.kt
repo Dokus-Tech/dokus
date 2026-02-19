@@ -307,7 +307,6 @@ private const val WarpFadeStart = 0.7f
 private const val WarpCompletionThreshold = 0.95f
 
 // Color palette for warp effect
-private val ColorGold = Color(0xFFD4AF37)
 private val ColorSilver = Color(0xFFC0C0C0)
 private val ColorLightSilver = Color(0xFFE8E8E8)
 private val ColorGainsboro = Color(0xFFDCDCDC)

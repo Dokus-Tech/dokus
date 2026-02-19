@@ -73,7 +73,6 @@ import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
-import tech.dokus.foundation.aura.style.brandGold
 import tech.dokus.foundation.aura.style.statusError
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textMuted
@@ -334,12 +333,12 @@ private fun ProfileMenuHeader(
         profileData?.tierLabel?.let { tier ->
             Text(
                 text = tier,
-                color = MaterialTheme.colorScheme.brandGold,
+                color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                 modifier = Modifier
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.brandGold.copy(alpha = 0.25f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
                         shape = MaterialTheme.shapes.extraSmall
                     )
                     .padding(horizontal = 8.dp, vertical = 3.dp)

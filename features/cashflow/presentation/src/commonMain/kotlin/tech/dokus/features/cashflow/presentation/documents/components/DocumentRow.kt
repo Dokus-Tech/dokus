@@ -307,8 +307,7 @@ private fun StatusDot(
     modifier: Modifier = Modifier
 ) {
     val dotColor = if (needsAttention) {
-        // Amber for attention - using statusWarning color
-        Color(0xFFD97706)
+        MaterialTheme.colorScheme.statusWarning
     } else {
         // Neutral zinc dot
         MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)

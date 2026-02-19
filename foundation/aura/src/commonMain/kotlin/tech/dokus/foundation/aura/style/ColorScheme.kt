@@ -6,194 +6,186 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 
-// Color hex constants - Brand
-private const val DokusGoldHex = 0xFFD4AF37
+// ============================================================
+// Dokus v2 Color Tokens — Warm Amber Identity
+// ============================================================
+// Source of truth: Obsidian → ui_v2/THEME.md
+// Light: warm off-white canvas with amber accents
+// Dark: warm near-black with lifted amber
+// ============================================================
 
-// Color hex constants - Primary
-private const val DokusPrimaryLightHex = 0xFF3B82F6
-private const val DokusPrimaryDarkHex = 0xFF60A5FA
+// ─── Light Surfaces ───
+private const val BgLightHex = 0xFFF2F1EE              // bg — app canvas
+private const val PageLightHex = 0xFFFFFFFF             // page — card surface
+private const val CanvasLightHex = 0xFFF0EFEC           // canvas — recessed areas
+private const val WarmLightHex = 0xFFF8F7F4             // warm — hover/selected
+private const val TextLightHex = 0xFF1A1815             // text — primary
+private const val TextSecLightHex = 0xFF5C5650          // textSec — secondary
+private const val TextMutedLightHex = 0xFF9C958C        // textMuted — labels
+private const val TextFaintLightHex = 0xFFD4D0CA        // textFaint — disabled
 
-// Color hex constants - Surfaces Light
-private const val DokusBackgroundLightHex = 0xFFF8F9FB
-private const val DokusOnBackgroundLightHex = 0xFF0F172A
-private const val DokusSurfaceLightHex = 0xFFFFFFFF
-private const val DokusOnSurfaceLightHex = 0xFF0F172A
-private const val DokusSurfaceVariantLightHex = 0xFFF1F5F9
-private const val DokusOnSurfaceVariantLightHex = 0xFF475569
-private const val DokusOutlineLightHex = 0xFFE2E8F0
-private const val DokusOutlineVariantLightHex = 0xFFEDF2F7
+// ─── Dark Surfaces ───
+private const val BgDarkHex = 0xFF0C0B09                // bg dark
+private const val PageDarkHex = 0xFF161412              // page dark
+private const val CanvasDarkHex = 0xFF1C1A17            // canvas dark
+private const val WarmDarkHex = 0xFF1E1C18              // warm dark
+private const val TextDarkHex = 0xFFE8E4DE              // text dark
+private const val TextSecDarkHex = 0xFFA69E94           // textSec dark
+private const val TextMutedDarkHex = 0xFF7A726A         // textMuted dark
+private const val TextFaintDarkHex = 0xFF3D3832         // textFaint dark
 
-// Color hex constants - Surfaces Dark
-private const val DokusBackgroundDarkHex = 0xFF020617
-private const val DokusOnBackgroundDarkHex = 0xFFE5E7EB
-private const val DokusSurfaceDarkHex = 0xFF020617
-private const val DokusOnSurfaceDarkHex = 0xFFE5E7EB
-private const val DokusSurfaceVariantDarkHex = 0xFF0B1220
-private const val DokusOnSurfaceVariantDarkHex = 0xFF9CA3AF
-private const val DokusOutlineDarkHex = 0xFF1F2937
-private const val DokusOutlineVariantDarkHex = 0xFF1E293B
+// ─── Amber (Primary / Identity) ───
+private const val AmberLightHex = 0xFFB8860B            // amber — primary
+private const val AmberDarkHex = 0xFFD4A017             // amber dark (lifted)
+private const val AmberMedDarkHex = 0xFFE0B028          // amberMed dark
+private const val PrimaryContainerLightHex = 0xFFFAF7EE // amberSoft on white
+private const val PrimaryContainerDarkHex = 0xFF292213  // amberSoft on dark page
 
-// Color hex constants - Secondary
-private const val DokusSecondaryLightHex = 0xFF64748B
-private const val DokusSecondaryDarkHex = 0xFF94A3B8
+// ─── Green (Tertiary / Success / Positive) ───
+private const val GreenLightHex = 0xFF1E8449            // green — confirmed
+private const val GreenDarkHex = 0xFF3CC98A             // green dark (brighter)
+private const val TertiaryContainerLightHex = 0xFFF2F8F4 // greenSoft on white
+private const val TertiaryContainerDarkHex = 0xFF19221C // greenSoft on dark page
 
-// Color hex constants - Primary Containers
-private const val DokusPrimaryContainerLightHex = 0xFFE8F0FF
-private const val DokusOnPrimaryContainerLightHex = 0xFF0B1B3F
-private const val DokusPrimaryContainerDarkHex = 0xFF1E3A8A
-private const val DokusOnPrimaryContainerDarkHex = 0xFFDBEAFE
+// ─── Red (Error / Negative) ───
+private const val RedLightHex = 0xFFC0392B              // red — errors
+private const val RedDarkHex = 0xFFE8435A               // red dark (brighter)
+private const val ErrorContainerLightHex = 0xFFFBF3F2   // redSoft on white
+private const val ErrorContainerDarkHex = 0xFF271818    // redSoft on dark page
 
-// Color hex constants - Error Light
-private const val DokusErrorLightHex = 0xFFDC2626
-private const val DokusOnErrorLightHex = 0xFFFFFFFF
-private const val DokusErrorContainerLightHex = 0xFFFEE2E2
-private const val DokusOnErrorContainerLightHex = 0xFF7F1D1D
+// ─── Color Instances ───
 
-// Color hex constants - Error Dark
-private const val DokusErrorDarkHex = 0xFFF87171
-private const val DokusOnErrorDarkHex = 0xFF020617
-private const val DokusErrorContainerDarkHex = 0xFF7F1D1D
-private const val DokusOnErrorContainerDarkHex = 0xFFFEE2E2
+// Surfaces - Light
+private val bgLight = Color(BgLightHex)
+private val pageLight = Color(PageLightHex)
+private val canvasLight = Color(CanvasLightHex)
+private val textLight = Color(TextLightHex)
+private val textSecLight = Color(TextSecLightHex)
 
-// Dokus brand accent (signature only)
-internal val dokusGold = Color(DokusGoldHex) // Brand accent only (never primary UI color)
+// Surfaces - Dark
+private val bgDark = Color(BgDarkHex)
+private val pageDark = Color(PageDarkHex)
+private val canvasDark = Color(CanvasDarkHex)
+private val textDark = Color(TextDarkHex)
+private val textSecDark = Color(TextSecDarkHex)
 
-// Canonical Dokus primary (trustworthy blue)
-private val dokusPrimaryLight = Color(DokusPrimaryLightHex)
-private val dokusPrimaryDark = Color(DokusPrimaryDarkHex)
+// Amber
+private val amberLight = Color(AmberLightHex)
+private val amberDark = Color(AmberDarkHex)
+private val amberMedDark = Color(AmberMedDarkHex)
+private val primaryContainerLight = Color(PrimaryContainerLightHex)
+private val primaryContainerDark = Color(PrimaryContainerDarkHex)
 
-// Canonical surfaces
-private val dokusBackgroundLight = Color(DokusBackgroundLightHex)
-private val dokusOnBackgroundLight = Color(DokusOnBackgroundLightHex)
-private val dokusSurfaceLight = Color(DokusSurfaceLightHex)
-private val dokusOnSurfaceLight = Color(DokusOnSurfaceLightHex)
-private val dokusSurfaceVariantLight = Color(DokusSurfaceVariantLightHex)
-private val dokusOnSurfaceVariantLight = Color(DokusOnSurfaceVariantLightHex)
-private val dokusOutlineLight = Color(DokusOutlineLightHex)
-private val dokusOutlineVariantLight = Color(DokusOutlineVariantLightHex)
+// Green
+private val greenLight = Color(GreenLightHex)
+private val greenDark = Color(GreenDarkHex)
+private val tertiaryContainerLight = Color(TertiaryContainerLightHex)
+private val tertiaryContainerDark = Color(TertiaryContainerDarkHex)
 
-private val dokusBackgroundDark = Color(DokusBackgroundDarkHex)
-private val dokusOnBackgroundDark = Color(DokusOnBackgroundDarkHex)
-private val dokusSurfaceDark = Color(DokusSurfaceDarkHex)
-private val dokusOnSurfaceDark = Color(DokusOnSurfaceDarkHex)
-private val dokusSurfaceVariantDark = Color(DokusSurfaceVariantDarkHex)
-private val dokusOnSurfaceVariantDark = Color(DokusOnSurfaceVariantDarkHex)
-private val dokusOutlineDark = Color(DokusOutlineDarkHex)
-private val dokusOutlineVariantDark = Color(DokusOutlineVariantDarkHex)
-
-// Secondary (neutral slate)
-private val dokusSecondaryLight = Color(DokusSecondaryLightHex)
-private val dokusSecondaryDark = Color(DokusSecondaryDarkHex)
-
-// Primary containers
-private val dokusPrimaryContainerLight = Color(DokusPrimaryContainerLightHex)
-private val dokusOnPrimaryContainerLight = Color(DokusOnPrimaryContainerLightHex)
-private val dokusPrimaryContainerDark = Color(DokusPrimaryContainerDarkHex)
-private val dokusOnPrimaryContainerDark = Color(DokusOnPrimaryContainerDarkHex)
-
-// Error tokens
-private val dokusErrorLight = Color(DokusErrorLightHex)
-private val dokusOnErrorLight = Color(DokusOnErrorLightHex)
-private val dokusErrorContainerLight = Color(DokusErrorContainerLightHex)
-private val dokusOnErrorContainerLight = Color(DokusOnErrorContainerLightHex)
-
-private val dokusErrorDark = Color(DokusErrorDarkHex)
-private val dokusOnErrorDark = Color(DokusOnErrorDarkHex)
-private val dokusErrorContainerDark = Color(DokusErrorContainerDarkHex)
-private val dokusOnErrorContainerDark = Color(DokusOnErrorContainerDarkHex)
+// Red
+private val redLight = Color(RedLightHex)
+private val redDark = Color(RedDarkHex)
+private val errorContainerLight = Color(ErrorContainerLightHex)
+private val errorContainerDark = Color(ErrorContainerDarkHex)
 
 fun createColorScheme(useDarkTheme: Boolean): ColorScheme = if (useDarkTheme) {
     darkColorScheme(
-        primary = dokusPrimaryDark,
-        onPrimary = dokusOnErrorDark, // near-black for contrast
-        primaryContainer = dokusPrimaryContainerDark,
-        onPrimaryContainer = dokusOnPrimaryContainerDark,
+        primary = amberDark,
+        onPrimary = bgDark,
+        primaryContainer = primaryContainerDark,
+        onPrimaryContainer = amberMedDark,
 
-        secondary = dokusSecondaryDark,
-        onSecondary = dokusOnErrorDark,
+        secondary = textSecDark,
+        onSecondary = bgDark,
 
-        background = dokusBackgroundDark,
-        onBackground = dokusOnBackgroundDark,
+        tertiary = greenDark,
+        onTertiary = bgDark,
+        tertiaryContainer = tertiaryContainerDark,
+        onTertiaryContainer = greenDark,
 
-        surface = dokusSurfaceDark,
-        onSurface = dokusOnSurfaceDark,
+        background = bgDark,
+        onBackground = textDark,
 
-        surfaceVariant = dokusSurfaceVariantDark,
-        onSurfaceVariant = dokusOnSurfaceVariantDark,
+        surface = pageDark,
+        onSurface = textDark,
 
-        outline = dokusOutlineDark,
-        outlineVariant = dokusOutlineVariantDark,
+        surfaceVariant = canvasDark,
+        onSurfaceVariant = textSecDark,
 
-        error = dokusErrorDark,
-        onError = dokusOnErrorDark,
-        errorContainer = dokusErrorContainerDark,
-        onErrorContainer = dokusOnErrorContainerDark,
+        outline = Color.White.copy(alpha = 0.10f),
+        outlineVariant = Color.White.copy(alpha = 0.06f),
+
+        error = redDark,
+        onError = bgDark,
+        errorContainer = errorContainerDark,
+        onErrorContainer = redDark,
+
+        inverseSurface = textDark,
+        inverseOnSurface = bgDark,
+        inversePrimary = amberLight,
     )
 } else {
     lightColorScheme(
-        primary = dokusPrimaryLight,
-        onPrimary = dokusOnErrorLight,
-        primaryContainer = dokusPrimaryContainerLight,
-        onPrimaryContainer = dokusOnPrimaryContainerLight,
+        primary = amberLight,
+        onPrimary = Color.White,
+        primaryContainer = primaryContainerLight,
+        onPrimaryContainer = amberLight,
 
-        secondary = dokusSecondaryLight,
-        onSecondary = dokusOnErrorLight,
+        secondary = textSecLight,
+        onSecondary = Color.White,
 
-        background = dokusBackgroundLight,
-        onBackground = dokusOnBackgroundLight,
+        tertiary = greenLight,
+        onTertiary = Color.White,
+        tertiaryContainer = tertiaryContainerLight,
+        onTertiaryContainer = greenLight,
 
-        surface = dokusSurfaceLight,
-        onSurface = dokusOnSurfaceLight,
+        background = bgLight,
+        onBackground = textLight,
 
-        surfaceVariant = dokusSurfaceVariantLight,
-        onSurfaceVariant = dokusOnSurfaceVariantLight,
+        surface = pageLight,
+        onSurface = textLight,
 
-        outline = dokusOutlineLight,
-        outlineVariant = dokusOutlineVariantLight,
+        surfaceVariant = canvasLight,
+        onSurfaceVariant = textSecLight,
 
-        error = dokusErrorLight,
-        onError = dokusOnErrorLight,
-        errorContainer = dokusErrorContainerLight,
-        onErrorContainer = dokusOnErrorContainerLight,
+        outline = Color.Black.copy(alpha = 0.10f),
+        outlineVariant = Color.Black.copy(alpha = 0.06f),
+
+        error = redLight,
+        onError = Color.White,
+        errorContainer = errorContainerLight,
+        onErrorContainer = redLight,
+
+        inverseSurface = textLight,
+        inverseOnSurface = bgLight,
+        inversePrimary = amberDark,
     )
 }
 
-// Calm ripple color - use onSurface for neutral ripple effects instead of primary (gold)
+// ─── Extension Properties ───
+
+// Calm ripple — neutral color for subtle feedback
 val ColorScheme.rippleColor: Color get() = onSurface
 
-// Helper for surface decisions that depend on theme brightness.
+// Theme brightness helper
 private const val DarkLuminanceThreshold = 0.5f
 val ColorScheme.isDark: Boolean get() = background.luminance() < DarkLuminanceThreshold
 
-// Brand accent access (use intentionally; do not map to primary)
-@Suppress("UnusedReceiverParameter")
-val ColorScheme.brandGold: Color get() = dokusGold
+// Semantic status colors (v2)
+val ColorScheme.statusConfirmed: Color get() = tertiary  // green
+val ColorScheme.statusWarning: Color get() = primary     // amber
+val ColorScheme.statusError: Color get() = error         // red
 
-// Semantic status colors (Design System v1)
-@Suppress("UnusedReceiverParameter")
-val ColorScheme.statusProcessing: Color get() = Color(0xFF64748B)
-@Suppress("UnusedReceiverParameter")
-val ColorScheme.statusConfirmed: Color get() = Color(0xFF16A34A)
-@Suppress("UnusedReceiverParameter")
-val ColorScheme.statusWarning: Color get() = Color(0xFFD97706)
-@Suppress("UnusedReceiverParameter")
-val ColorScheme.statusError: Color get() = Color(0xFFB91C1C)
-
-// Text hierarchy tokens (Design System v1)
+// Text hierarchy tokens (v2)
 val ColorScheme.textMuted: Color
-    get() = if (isDark) Color(0xFF6B7280) else Color(0xFF94A3B8)
-val ColorScheme.textDisabled: Color
-    get() = if (isDark) Color(0xFF4B5563) else Color(0xFFCBD5E1)
+    get() = if (isDark) Color(TextMutedDarkHex) else Color(TextMutedLightHex)
+val ColorScheme.textFaint: Color
+    get() = if (isDark) Color(TextFaintDarkHex) else Color(TextFaintLightHex)
 
 // Position colors (financial reality, NOT error/success semantics)
-// These are separate from statusError/statusConfirmed intentionally:
-// - positionNegative = "you'll spend more than receive" (neutral financial fact)
-// - statusError = "something is broken" (requires action)
-@Suppress("UnusedReceiverParameter")
-val ColorScheme.positionPositive: Color get() = Color(0xFF059669) // emerald-600
-@Suppress("UnusedReceiverParameter")
-val ColorScheme.positionNegative: Color get() = Color(0xFF991B1B) // red-800 (calmer than error)
+val ColorScheme.positionPositive: Color get() = tertiary  // green
+val ColorScheme.positionNegative: Color get() = error     // red
 
-// Interactive surface hover (for desktop row hover effects)
+// Interactive surface hover (desktop row hover, v2 "warm" token)
 val ColorScheme.surfaceHover: Color
-    get() = if (isDark) Color(0xFF0B1220) else Color(0xFFF1F5F9)
+    get() = if (isDark) Color(WarmDarkHex) else Color(WarmLightHex)

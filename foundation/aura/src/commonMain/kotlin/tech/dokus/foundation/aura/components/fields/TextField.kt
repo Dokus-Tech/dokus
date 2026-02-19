@@ -48,7 +48,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.aura.components.PErrorText
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.foundation.aura.style.brandGold
 
 @Suppress("LongParameterList") // UI styling function with necessary visual parameters
 private fun Modifier.dokusFocusGlow(
@@ -96,7 +95,7 @@ fun PTextField(
     val density = LocalDensity.current
     val iconSizeDp = with(density) { labelTextStyle.fontSize.toDp() }
 
-    val gold = MaterialTheme.colorScheme.brandGold
+    val gold = MaterialTheme.colorScheme.primary
 
     // Dokus Field tokens (glassy + calm)
     val fieldShape = MaterialTheme.shapes.medium

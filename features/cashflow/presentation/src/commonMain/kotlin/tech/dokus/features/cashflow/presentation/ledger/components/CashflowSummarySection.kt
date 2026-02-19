@@ -40,7 +40,7 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.positionNegative
 import tech.dokus.foundation.aura.style.positionPositive
-import tech.dokus.foundation.aura.style.textDisabled
+import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 
 /**
@@ -130,7 +130,7 @@ private fun DesktopSummarySection(
                         fontWeight = FontWeight.Medium,
                         fontSize = 28.sp
                     ),
-                    color = MaterialTheme.colorScheme.textDisabled
+                    color = MaterialTheme.colorScheme.textFaint
                 )
                 Text(
                     text = stringResource(Res.string.cashflow_balance_unavailable),
@@ -232,7 +232,7 @@ private fun ExpandedMobileSummarySection(
         Text(
             text = breakdownText,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.textDisabled
+            color = MaterialTheme.colorScheme.textFaint
         )
 
         // Separator
@@ -261,7 +261,7 @@ private fun ExpandedMobileSummarySection(
                 Text(
                     text = "—",
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                    color = MaterialTheme.colorScheme.textDisabled
+                    color = MaterialTheme.colorScheme.textFaint
                 )
             }
         }
@@ -273,13 +273,13 @@ private fun ExpandedMobileSummarySection(
             Text(
                 text = "${formatShortDate(balance.asOf)} · ${balance.accountName}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textDisabled
+                color = MaterialTheme.colorScheme.textFaint
             )
         } else {
             Text(
                 text = stringResource(Res.string.cashflow_balance_unavailable),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textDisabled
+                color = MaterialTheme.colorScheme.textFaint
             )
         }
     }

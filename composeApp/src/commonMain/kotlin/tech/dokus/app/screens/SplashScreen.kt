@@ -50,9 +50,6 @@ import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
 
-private const val GoldAccentHex = 0xFFD4AF37
-private val GoldAccent = Color(GoldAccentHex)
-
 private val BootstrapStepType.localized: String
     @Composable get() = when (this) {
         BootstrapStepType.InitializeApp -> stringResource(Res.string.bootstrap_state_initializing)
@@ -144,6 +141,8 @@ private fun BootstrapStateItem(
     isActive: Boolean,
     isCurrentStep: Boolean
 ) {
+    val accent = MaterialTheme.colorScheme.primary
+
     val infiniteTransition = rememberInfiniteTransition(label = "stateGlow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -169,7 +168,7 @@ private fun BootstrapStateItem(
                 // Outer glow
                 Canvas(modifier = Modifier.size(24.dp)) {
                     drawCircle(
-                        color = GoldAccent.copy(alpha = if (isCurrentStep) glowAlpha * 0.4f else 0.2f),
+                        color = accent.copy(alpha = if (isCurrentStep) glowAlpha * 0.4f else 0.2f),
                         radius = if (isCurrentStep) 12.dp.toPx() else 8.dp.toPx()
                     )
                 }
@@ -177,7 +176,7 @@ private fun BootstrapStateItem(
                 // Inner dot
                 Canvas(modifier = Modifier.size(12.dp)) {
                     drawCircle(
-                        color = GoldAccent.copy(alpha = if (isCurrentStep) 1f else 0.6f),
+                        color = accent.copy(alpha = if (isCurrentStep) 1f else 0.6f),
                         radius = 6.dp.toPx()
                     )
                 }
@@ -196,7 +195,7 @@ private fun BootstrapStateItem(
         Text(
             text = step.type.localized,
             color = when {
-                isCurrentStep -> GoldAccent.copy(alpha = glowAlpha)
+                isCurrentStep -> accent.copy(alpha = glowAlpha)
                 isActive -> Color.White.copy(alpha = 0.7f)
                 else -> Color.White.copy(alpha = 0.3f)
             },

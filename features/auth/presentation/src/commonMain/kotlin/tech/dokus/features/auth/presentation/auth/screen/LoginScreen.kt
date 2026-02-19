@@ -53,7 +53,6 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.constrains.withContentPadding
-import tech.dokus.foundation.aura.style.brandGold
 
 @Composable
 internal fun LoginScreen(
@@ -125,7 +124,7 @@ private fun LoginContent(
                     text = stringResource(Res.string.app_name),
                     style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.brandGold
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 Spacer(modifier = Modifier.height(48.dp))

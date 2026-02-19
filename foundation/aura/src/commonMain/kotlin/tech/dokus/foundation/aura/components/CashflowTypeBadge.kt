@@ -17,6 +17,8 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_cash_in
 import tech.dokus.aura.resources.cashflow_cash_out
+import tech.dokus.foundation.aura.style.positionNegative
+import tech.dokus.foundation.aura.style.positionPositive
 
 /**
  * Type of cashflow transaction
@@ -40,11 +42,11 @@ fun CashflowTypeBadge(
 ) {
     val (color, text) = when (type) {
         CashflowType.CashIn -> Pair(
-            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.positionPositive,
             stringResource(Res.string.cashflow_cash_in).uppercase()
         )
         CashflowType.CashOut -> Pair(
-            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.positionNegative,
             stringResource(Res.string.cashflow_cash_out).uppercase()
         )
     }

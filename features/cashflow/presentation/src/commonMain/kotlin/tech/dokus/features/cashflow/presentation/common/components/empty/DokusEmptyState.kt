@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import tech.dokus.foundation.aura.style.textDisabled
+import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
@@ -38,7 +38,7 @@ internal fun DokusEmptyState(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.textDisabled
+                    color = MaterialTheme.colorScheme.textFaint
                 )
             }
             if (action != null) {

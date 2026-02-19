@@ -17,11 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.dokus.foundation.aura.style.brandGold
-
 @Composable
 fun AppNameText(modifier: Modifier = Modifier) {
-    val gold = MaterialTheme.colorScheme.brandGold
+    val gold = MaterialTheme.colorScheme.primary
     val onSurface = MaterialTheme.colorScheme.onSurface
 
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
