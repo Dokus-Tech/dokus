@@ -188,7 +188,7 @@ private fun DesktopWorkspaceArea(
                 )
                 Text(
                     text = workspaceVat,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

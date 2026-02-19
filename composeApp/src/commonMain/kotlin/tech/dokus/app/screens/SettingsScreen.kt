@@ -325,7 +325,7 @@ private fun SettingsContentPane(
         ) {
             Text(
                 text = stringResource(section.title),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier
                     .padding(horizontal = 32.dp)
                     .padding(top = 24.dp, bottom = 16.dp)

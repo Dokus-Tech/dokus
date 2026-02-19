@@ -144,7 +144,7 @@ private fun SuccessContent(state: ShareImportState.SuccessPulse) {
 
     Text(
         text = uploadedLabel,
-        style = MaterialTheme.typography.headlineSmall,
+        style = MaterialTheme.typography.headlineMedium,
         color = MaterialTheme.colorScheme.onSurface
     )
     if (state.needsReviewCount > 0) {
@@ -172,7 +172,7 @@ private fun ErrorContent(
 ) {
     Text(
         text = stringResource(Res.string.state_error),
-        style = MaterialTheme.typography.headlineSmall,
+        style = MaterialTheme.typography.headlineMedium,
         color = MaterialTheme.colorScheme.error
     )
     Spacer(modifier = Modifier.height(8.dp))

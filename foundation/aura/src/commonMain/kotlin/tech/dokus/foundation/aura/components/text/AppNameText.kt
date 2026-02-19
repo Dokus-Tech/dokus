@@ -52,7 +52,7 @@ fun AppNameText(modifier: Modifier = Modifier) {
                 // Mystical accent (subtle): a tiny gold spark dot, not a second word.
                 withStyle(SpanStyle(color = gold.copy(alpha = 0.75f))) { append("·") }
             },
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = (-0.3).sp,
             color = onSurface

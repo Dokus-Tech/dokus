@@ -45,7 +45,7 @@ internal fun DocumentsPlaceholderScreen() {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = stringResource(Res.string.nav_documents),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )

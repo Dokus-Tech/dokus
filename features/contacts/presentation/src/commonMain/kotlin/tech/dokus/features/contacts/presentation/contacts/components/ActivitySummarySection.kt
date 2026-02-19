@@ -75,8 +75,7 @@ internal fun ActivitySummarySection(
         ) {
             Text(
                 text = stringResource(Res.string.contacts_activity_summary),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.headlineMedium,
             )
 
             when (state) {

@@ -107,8 +107,7 @@ private fun SingleResultContent(
 
     Text(
         text = stringResource(Res.string.auth_entity_single_prompt),
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.SemiBold,
+        style = MaterialTheme.typography.headlineMedium,
         textAlign = TextAlign.Center
     )
 
@@ -145,8 +144,7 @@ private fun MultipleResultsContent(
 ) {
     Text(
         text = stringResource(Res.string.auth_entity_multiple_title),
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.SemiBold,
+        style = MaterialTheme.typography.headlineMedium,
         textAlign = TextAlign.Center
     )
 

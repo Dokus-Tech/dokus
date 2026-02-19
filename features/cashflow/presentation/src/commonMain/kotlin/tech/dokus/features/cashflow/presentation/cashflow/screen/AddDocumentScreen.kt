@@ -150,8 +150,7 @@ private fun DesktopLayout(
         ) {
             Text(
                 text = stringResource(Res.string.upload_documents_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
 

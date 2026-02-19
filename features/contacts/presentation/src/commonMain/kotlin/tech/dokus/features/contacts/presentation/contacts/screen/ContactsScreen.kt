@@ -359,7 +359,7 @@ private fun NoContactSelectedPlaceholder(
             Spacer(modifier = Modifier.height(SpacingDefault))
             Text(
                 text = stringResource(Res.string.contacts_select_contact),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(SpacingSmall))

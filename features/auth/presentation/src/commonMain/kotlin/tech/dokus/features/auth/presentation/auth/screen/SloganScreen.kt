@@ -143,7 +143,7 @@ internal fun SloganScreen() {
             ) {
                 Text(
                     text = stringResource(Res.string.app_slogan),
-                    style = MaterialTheme.typography.headlineMedium.copy(
+                    style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Medium,
                         letterSpacing = HeadlineLetterSpacing
                     ),
