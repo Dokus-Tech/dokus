@@ -48,6 +48,7 @@ import tech.dokus.aura.resources.state_retry
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.model.NotificationPreferenceDto
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.app.navigation.local.resolveBackNavController
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.icons.LockIcon
@@ -73,7 +74,7 @@ internal fun NotificationPreferencesScreen(
     Scaffold(
         topBar = {
             if (!isLargeScreen) {
-                PTopAppBar(Res.string.settings_notifications)
+                PTopAppBar(Res.string.settings_notifications, navController = resolveBackNavController())
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

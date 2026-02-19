@@ -32,6 +32,7 @@ import tech.dokus.aura.resources.appearance_theme_light
 import tech.dokus.aura.resources.appearance_theme_system
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.app.navigation.local.resolveBackNavController
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -47,7 +48,7 @@ internal fun AppearanceSettingsScreen() {
     val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
         topBar = {
-            if (!isLargeScreen) PTopAppBar(Res.string.appearance_settings_title)
+            if (!isLargeScreen) PTopAppBar(Res.string.appearance_settings_title, navController = resolveBackNavController())
         }
     ) { contentPadding ->
         AppearanceSettingsContent(

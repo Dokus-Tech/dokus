@@ -31,7 +31,8 @@ inline fun <reified T : NavigationDestination> NavController.navigateTo(
     route: T,
     noinline builder: NavOptionsBuilder.() -> Unit = {},
 ) {
-    if (currentBackStackEntry?.destination?.hasRoute(route::class) == true) return
+    // Only dedupe singleton (data object) destinations; parameterized ones always navigate
+    if (route::class.simpleName != null && currentBackStackEntry?.destination?.hasRoute(route::class) == true) return
     navigate(route, builder)
 }
 

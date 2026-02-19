@@ -41,6 +41,7 @@ import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
@@ -118,6 +119,7 @@ internal enum class MoreNavigationTarget {
 internal fun resolveMoreNavigationTarget(destination: NavigationDestination): MoreNavigationTarget {
     return when (destination) {
         is HomeDestination -> MoreNavigationTarget.Home
+        SettingsDestination.WorkspaceSettings -> MoreNavigationTarget.Home
         else -> MoreNavigationTarget.Root
     }
 }
