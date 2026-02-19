@@ -265,14 +265,8 @@ internal fun HomeScreen(
                 BottomNavigationLayout(
                     mobileTabs = mobileTabs,
                     selectedRoute = currentRoute,
-                    topBarConfig = topBarConfig,
-                    tenantState = shellState.tenantState,
                     profileData = profileData,
-                    isLoggingOut = shellState.isLoggingOut,
-                    onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
                     onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
-                    onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
-                    onLogoutClick = { container.store.intent(HomeIntent.Logout) },
                     onTabClick = { tab ->
                         tab.destination?.let { destination ->
                             homeNavController.navigateTo(destination)
@@ -433,40 +427,32 @@ private fun RailNavigationLayout(
     } // Box
 }
 
+/** Routes where the shell header (Dokus + avatar) is shown. Other tabs provide their own top bar. */
+private val ShellHeaderRoutes = setOf("today", "documents", "cashflow", "more")
+
 @Composable
 private fun BottomNavigationLayout(
     mobileTabs: List<MobileTabConfig>,
     selectedRoute: String?,
-    topBarConfig: HomeShellTopBarConfig?,
-    tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
-    isLoggingOut: Boolean,
-    onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
-    onAppearanceClick: () -> Unit,
-    onLogoutClick: () -> Unit,
     onTabClick: (MobileTabConfig) -> Unit,
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val showShellHeader = selectedRoute in ShellHeaderRoutes
+
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (topBarConfig != null) {
+            if (showShellHeader) {
                 MobileShellTopBar(
-                    topBarConfig = topBarConfig,
-                    tenantState = tenantState,
                     profileData = profileData,
-                    isLoggingOut = isLoggingOut,
-                    onWorkspaceClick = onWorkspaceClick,
                     onProfileClick = onProfileClick,
-                    onAppearanceClick = onAppearanceClick,
-                    onLogoutClick = onLogoutClick
                 )
             }
         },
         bottomBar = {
-            // Calm, "Dokus" bottom shell: no tinted slab; keep accent only for the selected item.
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),

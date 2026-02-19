@@ -1,7 +1,6 @@
 package tech.dokus.app.screens
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +29,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.nav_accountant
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
@@ -81,7 +83,7 @@ fun AccountantScreen(
 
     Scaffold(
         topBar = {
-            if (!isLargeScreen) PTopAppBar("Accountant")
+            if (!isLargeScreen) PTopAppBar(Res.string.nav_accountant)
         }
     ) { contentPadding ->
         Column(
@@ -202,6 +204,7 @@ fun AccountantScreen(
 
 // =============================================================================
 // Current Period Card
+
 // =============================================================================
 
 @Composable

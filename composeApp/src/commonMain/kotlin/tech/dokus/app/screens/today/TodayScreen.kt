@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -33,16 +32,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.navigation.local.LocalHomeNavController
 import tech.dokus.app.viewmodel.TodayAction
 import tech.dokus.app.viewmodel.TodayContainer
 import tech.dokus.app.viewmodel.TodayIntent
 import tech.dokus.app.viewmodel.TodayState
-import tech.dokus.domain.Money
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.home_today
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -53,6 +53,7 @@ import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.components.text.DokusLabel
+import tech.dokus.foundation.aura.components.text.MobilePageTitle
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.extensions.localized
@@ -123,6 +124,8 @@ internal fun TodayScreen(
                 .padding(spacing),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            MobilePageTitle(title = stringResource(Res.string.home_today))
+
             // Stat cards (2-column grid)
             TodayStatCards(documents = documents)
 

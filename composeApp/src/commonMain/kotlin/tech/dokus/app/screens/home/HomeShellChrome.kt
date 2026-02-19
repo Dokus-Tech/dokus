@@ -300,24 +300,17 @@ internal fun DesktopShellTopBar(
 
 @Composable
 internal fun MobileShellTopBar(
-    topBarConfig: HomeShellTopBarConfig,
-    tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
-    isLoggingOut: Boolean,
-    onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
-    onAppearanceClick: () -> Unit,
-    onLogoutClick: () -> Unit,
 ) {
+    val effects = MaterialTheme.dokusEffects
     val spacing = MaterialTheme.dokusSpacing
     val sizing = MaterialTheme.dokusSizing
-    val effects = MaterialTheme.dokusEffects
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.glassHeader)
     ) {
-        // Row 1: Logo + avatar (always shown)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -332,66 +325,6 @@ internal fun MobileShellTopBar(
                 radius = sizing.avatarExtraSmall / 4,
                 modifier = Modifier.clickable(onClick = onProfileClick),
             )
-        }
-
-        // Row 2: Search/title + actions (conditional — only when topBarConfig has content)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = spacing.large)
-                .padding(bottom = spacing.medium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            when (val mode = topBarConfig.mode) {
-                is HomeShellTopBarMode.Search -> {
-                    val onExpandSearch = mode.onExpandSearch
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(spacing.small),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        if (!mode.isSearchExpanded && onExpandSearch != null) {
-                            IconButton(
-                                onClick = onExpandSearch,
-                                modifier = Modifier.size(sizing.buttonHeight)
-                            ) {
-                                Icon(
-                                    imageVector = FeatherIcons.Search,
-                                    contentDescription = stringResource(Res.string.action_search)
-                                )
-                            }
-                        }
-                        AnimatedVisibility(
-                            visible = mode.isSearchExpanded,
-                            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
-                            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut()
-                        ) {
-                            PSearchFieldCompact(
-                                value = mode.query,
-                                onValueChange = mode.onQueryChange,
-                                onClear = mode.onClear,
-                                placeholder = mode.placeholder,
-                                modifier = Modifier.widthIn(
-                                    min = spacing.large * 7.5f,
-                                    max = spacing.large * 17.5f
-                                )
-                            )
-                        }
-                    }
-                }
-
-                is HomeShellTopBarMode.Title -> {
-                    Text(
-                        text = mode.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            RouteTopBarActions(actions = topBarConfig.actions)
         }
 
         HorizontalDivider(color = effects.railTrackLine)
