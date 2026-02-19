@@ -44,7 +44,6 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_action_mark_paid
@@ -63,24 +62,32 @@ import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.surfaceHover
 
-private val TableRowHeight = 56.dp
-private val DirectionIconSize = 16.dp
-private val StatusIconSize = 20.dp
+private val TableRowHeight = Constraints.Height.input
+private val DirectionIconSize = Constraints.IconSize.xSmall
+private val StatusIconSize = Constraints.IconSize.smallMedium
 
 @Immutable
 private object CashflowTableColumns {
     val DueDate = DokusTableColumnSpec(weight = 0.8f)
     val Counterparty = DokusTableColumnSpec(weight = 1.5f)
     val Description = DokusTableColumnSpec(weight = 1.5f)
-    val Status = DokusTableColumnSpec(width = 48.dp, horizontalAlignment = Alignment.CenterHorizontally)
+    val Status =
+        DokusTableColumnSpec(
+            width = Constraints.IconSize.xxLarge,
+            horizontalAlignment = Alignment.CenterHorizontally
+        )
     val Amount = DokusTableColumnSpec(weight = 1f, horizontalAlignment = Alignment.End)
-    val Actions = DokusTableColumnSpec(width = 48.dp, horizontalAlignment = Alignment.CenterHorizontally)
+    val Actions =
+        DokusTableColumnSpec(
+            width = Constraints.IconSize.xxLarge,
+            horizontalAlignment = Alignment.CenterHorizontally
+        )
 }
 
-private val HeaderRowHeight = 40.dp
+private val HeaderRowHeight = Constraints.CropGuide.cornerLength
 
 @Composable
 internal fun CashflowLedgerHeaderRow(
@@ -89,7 +96,7 @@ internal fun CashflowLedgerHeaderRow(
     DokusTableRow(
         modifier = modifier,
         minHeight = HeaderRowHeight,
-        contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
+        contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
     ) {
         DokusTableCell(CashflowTableColumns.DueDate) {
             SubtleHeaderLabel(text = stringResource(Res.string.cashflow_ledger_due_date))
@@ -114,7 +121,7 @@ internal fun CashflowLedgerHeaderRow(
         }
         // Empty cell for actions column in header
         DokusTableCell(CashflowTableColumns.Actions) {
-            Spacer(modifier = Modifier.width(1.dp))
+            Spacer(modifier = Modifier.width(Constraints.Stroke.thin))
         }
     }
 }
@@ -177,7 +184,7 @@ internal fun CashflowLedgerTableRow(
         minHeight = TableRowHeight,
         backgroundColor = backgroundColor,
         onClick = onClick,
-        contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
+        contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
     ) {
         DokusTableCell(CashflowTableColumns.DueDate) {
             Text(
@@ -209,7 +216,7 @@ internal fun CashflowLedgerTableRow(
                     tint = directionColor(entry.direction),
                     modifier = Modifier.size(DirectionIconSize)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(Constraints.Spacing.xSmall))
                 Text(
                     text = entry.description ?: "—",
                     style = MaterialTheme.typography.bodyMedium,
@@ -246,14 +253,14 @@ internal fun CashflowLedgerTableRow(
                     IconButton(
                         onClick = { onShowActions() },
                         modifier = Modifier
-                            .size(32.dp)
+                            .size(Constraints.AvatarSize.small)
                             .alpha(actionsAlpha)
                     ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "Actions",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(Constraints.IconSize.smallMedium)
                         )
                     }
                 }
@@ -302,16 +309,21 @@ internal fun CashflowLedgerMobileRow(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .background(MaterialTheme.colorScheme.surface)
-            .padding(start = Constrains.Spacing.large, top = Constrains.Spacing.medium, bottom = Constrains.Spacing.medium, end = Constrains.Spacing.small),
+            .padding(
+                start = Constraints.Spacing.large,
+                top = Constraints.Spacing.medium,
+                bottom = Constraints.Spacing.medium,
+                end = Constraints.Spacing.small
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
             ) {
                 Icon(
                     imageVector = if (entry.direction == CashflowDirection.In) {
@@ -333,7 +345,7 @@ internal fun CashflowLedgerMobileRow(
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 Text(
                     text = formatShortDate(entry.eventDate),
@@ -357,13 +369,13 @@ internal fun CashflowLedgerMobileRow(
         // Always visible action button for mobile
         IconButton(
             onClick = onShowActions,
-            modifier = Modifier.size(40.dp)
+            modifier = Modifier.size(Constraints.CropGuide.cornerLength)
         ) {
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 contentDescription = "Actions",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(Constraints.IconSize.smallMedium)
             )
         }
     }

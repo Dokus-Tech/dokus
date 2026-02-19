@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_cancel
@@ -37,6 +36,7 @@ import tech.dokus.features.contacts.mvi.PotentialDuplicate
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.components.text.SectionTitle
 
 // ============================================================================
@@ -112,12 +112,12 @@ internal fun ContactFormContent(
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 800.dp)
+                .widthIn(max = Constraints.DialogSize.maxWidth * 2)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = Constraints.Spacing.large),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
             // Header with back button
             SectionTitle(
@@ -173,7 +173,7 @@ internal fun ContactFormContent(
                 showInitialNote = !isEditMode
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
             // Action buttons
             ContactFormActionButtons(
@@ -186,7 +186,7 @@ internal fun ContactFormContent(
                 onDelete = onDelete
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.xxLarge))
         }
     }
 }
@@ -233,8 +233,11 @@ internal fun ContactFormContentCompact(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(
+                horizontal = Constraints.Spacing.xLarge,
+                vertical = Constraints.Spacing.large
+            ),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large)
     ) {
         // Header with title (always show for inline detail panel use)
         SectionTitle(
@@ -290,7 +293,7 @@ internal fun ContactFormContentCompact(
             showInitialNote = !isEditMode
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
         // Action buttons (compact layout)
         ContactFormActionButtonsCompact(
@@ -303,7 +306,7 @@ internal fun ContactFormContentCompact(
             onDelete = onDelete
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.large))
     }
 }
 
@@ -350,7 +353,7 @@ internal fun ContactFormActionButtons(
 
         // Save/Cancel buttons (right side)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
         ) {
             PButton(
                 text = stringResource(Res.string.contacts_cancel),
@@ -391,7 +394,7 @@ internal fun ContactFormActionButtonsCompact(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         // Delete button (edit mode only, left-aligned)
         if (isEditMode) {

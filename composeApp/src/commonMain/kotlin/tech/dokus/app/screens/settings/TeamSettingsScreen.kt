@@ -35,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
@@ -81,6 +80,7 @@ import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
@@ -124,7 +124,7 @@ fun TeamSettingsContent(
     onShowInviteDialog: (Boolean) -> Unit,
     onIntent: (TeamSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(Constraints.Elevation.none)
 ) {
     TeamSettingsContentInternal(
         state = state,
@@ -163,7 +163,7 @@ internal fun TeamSettingsContentInternal(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .withContentPaddingForScrollable(),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xLarge)
     ) {
         // Invite Member Button
         PPrimaryButton(
@@ -183,12 +183,14 @@ internal fun TeamSettingsContentInternal(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Constraints.Spacing.large))
 
                 when {
                     membersLoading -> {
                         Box(
-                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(Constraints.SearchField.minWidth / 2),
                             contentAlignment = Alignment.Center
                         ) {
                             DokusLoader()
@@ -210,7 +212,9 @@ internal fun TeamSettingsContentInternal(
                                 onTransferOwnership = { showTransferOwnershipDialog = member }
                             )
                             if (index < members.lastIndex) {
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = Constraints.Spacing.small)
+                                )
                             }
                         }
                     }
@@ -229,12 +233,14 @@ internal fun TeamSettingsContentInternal(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Constraints.Spacing.large))
 
                 when {
                     invitationsLoading -> {
                         Box(
-                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(Constraints.SearchField.minWidth / 2),
                             contentAlignment = Alignment.Center
                         ) {
                             DokusLoader()
@@ -254,7 +260,9 @@ internal fun TeamSettingsContentInternal(
                                 onCancel = { onIntent(TeamSettingsIntent.CancelInvitation(invitation.id)) }
                             )
                             if (index < invitations.lastIndex) {
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = Constraints.Spacing.small)
+                                )
                             }
                         }
                     }
@@ -262,7 +270,7 @@ internal fun TeamSettingsContentInternal(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Constraints.Spacing.large))
     }
 
     // Invite Dialog
@@ -340,7 +348,7 @@ private fun TeamMemberItem(
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(Constraints.Spacing.medium))
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -349,7 +357,7 @@ private fun TeamMemberItem(
                     style = MaterialTheme.typography.titleLarge,
                 )
                 if (isOwner) {
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(Constraints.Spacing.small))
                     AssistChip(
                         onClick = {},
                         label = { Text(stringResource(Res.string.team_owner_badge)) }
@@ -440,7 +448,7 @@ private fun InviteDialog(
         title = stringResource(Res.string.team_invite_member),
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large)
             ) {
                 PTextFieldStandard(
                     fieldName = stringResource(Res.string.team_invite_email),

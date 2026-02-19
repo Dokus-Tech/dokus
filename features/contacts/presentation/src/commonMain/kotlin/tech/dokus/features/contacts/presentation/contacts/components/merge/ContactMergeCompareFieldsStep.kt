@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -25,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_merge_move_items_info
@@ -36,6 +34,7 @@ import tech.dokus.aura.resources.contacts_merge_source_archive
 import tech.dokus.aura.resources.contacts_merge_target_keep
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.presentation.contacts.model.MergeFieldConflict
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun ContactMergeCompareFieldsStep(
@@ -46,7 +45,10 @@ internal fun ContactMergeCompareFieldsStep(
 ) {
     Column(
         modifier = Modifier
-            .heightIn(min = 200.dp, max = 400.dp)
+            .heightIn(
+                min = Constraints.SearchField.minWidth,
+                max = Constraints.DialogSize.maxWidth
+            )
             .verticalScroll(rememberScrollState())
     ) {
         Row(
@@ -72,8 +74,8 @@ internal fun ContactMergeCompareFieldsStep(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .size(20.dp),
+                    .padding(horizontal = Constraints.Spacing.small)
+                    .size(Constraints.IconSize.smallMedium),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
@@ -93,25 +95,25 @@ internal fun ContactMergeCompareFieldsStep(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
         if (conflicts.isEmpty()) {
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(8.dp),
+                shape = MaterialTheme.shapes.small,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.padding(Constraints.Spacing.medium),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(Constraints.IconSize.smallMedium)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Constraints.Spacing.small))
                     Text(
                         text = stringResource(Res.string.contacts_merge_no_conflicts),
                         style = MaterialTheme.typography.bodySmall
@@ -130,7 +132,7 @@ internal fun ContactMergeCompareFieldsStep(
                 fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
             conflicts.forEachIndexed { index, conflict ->
                 ContactMergeConflictRow(
@@ -142,25 +144,25 @@ internal fun ContactMergeCompareFieldsStep(
 
                 if (index < conflicts.lastIndex) {
                     HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        modifier = Modifier.padding(vertical = Constraints.Spacing.small),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
         Surface(
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            shape = RoundedCornerShape(8.dp),
+            shape = MaterialTheme.shapes.small,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 text = stringResource(Res.string.contacts_merge_move_items_info),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(Constraints.Spacing.medium)
             )
         }
     }

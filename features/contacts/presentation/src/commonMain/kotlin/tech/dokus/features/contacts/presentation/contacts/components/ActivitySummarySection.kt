@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_activity_summary
@@ -41,23 +40,25 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // UI dimension constants
-private val SectionSpacing = 16.dp
-private val ContentSpacing = 12.dp
-private val StatCardIconSize = 24.dp
-private val StatCardSpacing = 4.dp
-private val LastActivityIconSize = 16.dp
-private val LastActivitySpacing = 8.dp
-private val PendingPadding = 12.dp
-private val SkeletonIconSize = 24.dp
-private val SkeletonCountWidth = 40.dp
-private val SkeletonCountHeight = 28.dp
-private val SkeletonLabelWidth = 50.dp
-private val SkeletonLabelHeight = 12.dp
-private val SkeletonTotalWidth = 60.dp
-private val SkeletonTotalHeight = 12.dp
-private val ErrorPaddingVertical = 32.dp
+private val SectionSpacing = Constraints.Spacing.large
+private val ContentSpacing = Constraints.Spacing.medium
+private val StatCardIconSize = Constraints.IconSize.medium
+private val StatCardSpacing = Constraints.Spacing.xSmall
+private val LastActivityIconSize = Constraints.IconSize.xSmall
+private val LastActivitySpacing = Constraints.Spacing.small
+private val PendingPadding = Constraints.Spacing.medium
+private val SkeletonIconSize = Constraints.IconSize.medium
+private val SkeletonCountWidth = Constraints.CropGuide.cornerLength
+private val SkeletonCountHeight = Constraints.IconSize.medium + Constraints.Spacing.xSmall
+private val SkeletonLabelWidth =
+    Constraints.CropGuide.cornerLength + Constraints.Spacing.small + Constraints.Spacing.xxSmall
+private val SkeletonLabelHeight = Constraints.Spacing.medium
+private val SkeletonTotalWidth = Constraints.IconSize.xxLarge - Constraints.Spacing.xSmall
+private val SkeletonTotalHeight = Constraints.Spacing.medium
+private val ErrorPaddingVertical = Constraints.Spacing.xxLarge
 private const val SkeletonRepeatCount = 3
 
 @Composable

@@ -57,7 +57,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
@@ -85,18 +84,18 @@ private const val SlideAnimationDurationMs = 300
 private const val ScrimAlpha = 0.32f
 
 // Sizing constants
-private val SidebarWidth = 420.dp
-private val ContentPadding = 16.dp
-private val ItemSpacing = 4.dp
-private val ListItemPadding = 12.dp
-private val ListItemSpacing = 12.dp
-private val ContactIconSize = 24.dp
-private val SelectedIndicatorSize = 20.dp
-private val DragHandleWidth = 32.dp
-private val DragHandleHeight = 4.dp
-private val DragHandlePadding = 12.dp
-private val ContentMinHeight = 200.dp
-private val SuggestionChipCornerRadius = 8.dp
+private val SidebarWidth = Constrains.centeredContentMaxWidth
+private val ContentPadding = Constrains.Spacing.large
+private val ItemSpacing = Constrains.Spacing.xSmall
+private val ListItemPadding = Constrains.Spacing.medium
+private val ListItemSpacing = Constrains.Spacing.medium
+private val ContactIconSize = Constrains.IconSize.medium
+private val SelectedIndicatorSize = Constrains.IconSize.smallMedium
+private val DragHandleWidth = Constrains.Spacing.xxLarge
+private val DragHandleHeight = Constrains.Spacing.xSmall
+private val DragHandlePadding = Constrains.Spacing.medium
+private val ContentMinHeight = Constrains.SearchField.minWidth
+private val SuggestionChipCornerRadius = Constrains.Spacing.small
 
 // Alpha constants
 private const val SelectedAlpha = 0.5f
@@ -384,7 +383,7 @@ private fun ContactSheetContent(
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(Constrains.IconSize.small),
                 tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))

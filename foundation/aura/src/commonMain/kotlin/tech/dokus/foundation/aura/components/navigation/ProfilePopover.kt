@@ -35,27 +35,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.badges.TierBadge
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 
-private val PopoverWidth = 220.dp
-private val PopoverRadius = 12.dp
-private val PopoverShadow = 12.dp
+private val PopoverWidth = Constraints.Shell.sidebarWidth
+private val PopoverRadius = Constraints.Spacing.medium
+private val PopoverShadow = Constraints.Spacing.medium
 private const val AnimDuration = 150
 private const val ChevronChar = "\u203A" // ›
 
 // Avatar in popover
-private val AvatarSize = 32.dp
-private val AvatarRadius = 8.dp
-private val AvatarFontSize = 11.sp
+private val AvatarSize = Constraints.AvatarSize.small
+private val AvatarRadius = Constraints.Spacing.small
 
 /**
  * Profile popover triggered by sidebar footer.
@@ -111,8 +108,8 @@ fun ProfilePopover(
                     modifier = modifier
                         .align(Alignment.BottomStart)
                         .padding(
-                            start = Constrains.Spacing.medium,
-                            bottom = 60.dp,
+                            start = Constraints.Spacing.medium,
+                            bottom = Constraints.IconSize.xxLarge - Constraints.Spacing.xSmall,
                         ),
                 ) {
                     PopoverContent(
@@ -149,42 +146,45 @@ private fun PopoverContent(
         shape = RoundedCornerShape(PopoverRadius),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = PopoverShadow,
-        tonalElevation = 0.dp,
+        tonalElevation = Constraints.Elevation.none,
     ) {
         Column {
             // User card
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .padding(
+                        horizontal = Constraints.Spacing.large,
+                        vertical = Constraints.Spacing.medium + Constraints.Spacing.xxSmall
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
             ) {
                 MonogramAvatar(
                     initials = userInitials,
                     size = AvatarSize,
                     radius = AvatarRadius,
-                    fontSize = AvatarFontSize,
+                    fontSize = MaterialTheme.typography.labelSmall.fontSize,
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = userName,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = userEmail,
-                        fontSize = 10.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.textMuted,
                     )
-                    Spacer(Modifier.height(Constrains.Spacing.xSmall))
+                    Spacer(Modifier.height(Constraints.Spacing.xSmall))
                     TierBadge(label = tierLabel)
                 }
             }
 
             HorizontalDivider(
-                thickness = Constrains.Stroke.thin,
+                thickness = Constraints.Stroke.thin,
                 color = MaterialTheme.colorScheme.outlineVariant,
             )
 
@@ -192,7 +192,7 @@ private fun PopoverContent(
             PopoverMenuItem(label = "Profile", onClick = onProfileClick)
 
             HorizontalDivider(
-                thickness = Constrains.Stroke.thin,
+                thickness = Constraints.Stroke.thin,
                 color = MaterialTheme.colorScheme.outlineVariant,
             )
 
@@ -202,8 +202,11 @@ private fun PopoverContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onLogoutClick)
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                fontSize = 12.5.sp,
+                    .padding(
+                        horizontal = Constraints.Spacing.large,
+                        vertical = Constraints.Spacing.small + Constraints.Spacing.xxSmall
+                    ),
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -230,18 +233,21 @@ private fun PopoverMenuItem(
                 onClick = onClick,
             )
             .drawBehind { if (isHovered) drawRect(hoverColor) }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(
+                horizontal = Constraints.Spacing.large,
+                vertical = Constraints.Spacing.small + Constraints.Spacing.xxSmall
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
             text = label,
-            fontSize = 12.5.sp,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
             text = ChevronChar,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.textFaint,
         )
     }
