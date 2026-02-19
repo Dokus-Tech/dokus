@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -43,6 +42,7 @@ import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.DokusGlassSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +64,7 @@ internal fun EntityConfirmationDialog(
         DokusGlassSurface {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(Constraints.Spacing.xLarge)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -100,10 +100,10 @@ private fun SingleResultContent(
         imageVector = Icons.Outlined.Business,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.height(48.dp)
+        modifier = Modifier.height(Constraints.Spacing.xxxLarge)
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
     Text(
         text = stringResource(Res.string.auth_entity_single_prompt),
@@ -111,7 +111,7 @@ private fun SingleResultContent(
         textAlign = TextAlign.Center
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
 
     EntityCard(
         entity = entity,
@@ -119,7 +119,7 @@ private fun SingleResultContent(
         onClick = {}
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
 
     PPrimaryButton(
         text = stringResource(Res.string.auth_entity_single_confirm),
@@ -127,7 +127,7 @@ private fun SingleResultContent(
         modifier = Modifier.fillMaxWidth()
     )
 
-    Spacer(modifier = Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
     POutlinedButton(
         text = stringResource(Res.string.auth_entity_manual_entry),
@@ -148,7 +148,7 @@ private fun MultipleResultsContent(
         textAlign = TextAlign.Center
     )
 
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
     Text(
         text = stringResource(Res.string.auth_entity_multiple_subtitle),
@@ -157,13 +157,17 @@ private fun MultipleResultsContent(
         textAlign = TextAlign.Center
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 300.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .heightIn(
+                max = Constraints.DialogSize.cropAreaMax -
+                    Constraints.Spacing.large -
+                    Constraints.Spacing.xSmall
+            ),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         items(entities) { entity ->
             EntityCard(
@@ -174,7 +178,7 @@ private fun MultipleResultsContent(
         }
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -186,7 +190,7 @@ private fun MultipleResultsContent(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.small))
         Text(
             text = stringResource(Res.string.auth_entity_manual_entry),
             style = MaterialTheme.typography.bodyMedium,
@@ -211,7 +215,7 @@ private fun EntityCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(Constraints.Spacing.large)
                 .fillMaxWidth()
         ) {
             Text(
@@ -223,7 +227,7 @@ private fun EntityCard(
             )
 
             entity.vatNumber?.let { vat ->
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
                 Text(
                     text = stringResource(Res.string.common_vat_value, vat.value),
                     style = MaterialTheme.typography.bodySmall,
@@ -232,7 +236,7 @@ private fun EntityCard(
             }
 
             entity.address?.let { address ->
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
                 Text(
                     text = buildString {
                         append(address.streetLine1)

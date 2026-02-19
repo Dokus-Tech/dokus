@@ -253,7 +253,7 @@ private fun FinancialDocumentTableHeader(
             text = stringResource(Res.string.document_table_invoice),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(140.dp)
+            modifier = Modifier.width(spacing.large * 8.75f)
         )
 
         // Contact column (grows to fill space)
@@ -269,7 +269,7 @@ private fun FinancialDocumentTableHeader(
             text = stringResource(Res.string.document_table_amount),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(100.dp)
+            modifier = Modifier.width(spacing.large * 6.25f)
         )
 
         // Date column
@@ -277,14 +277,14 @@ private fun FinancialDocumentTableHeader(
             text = stringResource(Res.string.document_table_date),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(120.dp)
+            modifier = Modifier.width(spacing.large * 7.5f)
         )
 
         // Type column (moved to second line based on Figma)
-        Spacer(modifier = Modifier.width(100.dp))
+        Spacer(modifier = Modifier.width(spacing.large * 6.25f))
 
         // Actions column
-        Spacer(modifier = Modifier.width(72.dp))
+        Spacer(modifier = Modifier.width(spacing.large * 4.5f))
     }
 }
 
@@ -311,7 +311,7 @@ private fun FinancialDocumentTableRow(
     ) {
         // Invoice column with alert indicator
         Row(
-            modifier = Modifier.width(140.dp),
+            modifier = Modifier.width(spacing.large * 8.75f),
             horizontalArrangement = Arrangement.spacedBy(spacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -319,7 +319,7 @@ private fun FinancialDocumentTableRow(
             if (row.hasAlert) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(sizing.strokeCropGuide * 2f)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.error) // Red alert indicator
                 )
@@ -341,7 +341,7 @@ private fun FinancialDocumentTableRow(
             // Avatar
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(sizing.buttonHeight)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.secondaryContainer), // Light background
                 contentAlignment = Alignment.Center
@@ -382,12 +382,12 @@ private fun FinancialDocumentTableRow(
             text = row.amount,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(100.dp)
+            modifier = Modifier.width(spacing.large * 6.25f)
         )
 
         // Date column
         Column(
-            modifier = Modifier.width(120.dp),
+            modifier = Modifier.width(spacing.large * 7.5f),
             verticalArrangement = Arrangement.spacedBy(spacing.xSmall)
         ) {
             Text(
@@ -399,7 +399,7 @@ private fun FinancialDocumentTableRow(
 
         // Type badge
         Box(
-            modifier = Modifier.width(100.dp),
+            modifier = Modifier.width(spacing.large * 6.25f),
             contentAlignment = Alignment.CenterStart
         ) {
             CashflowTypeBadge(type = row.cashflowType)
@@ -407,7 +407,7 @@ private fun FinancialDocumentTableRow(
 
         // Actions column
         Row(
-            modifier = Modifier.width(72.dp),
+            modifier = Modifier.width(spacing.large * 4.5f),
             horizontalArrangement = Arrangement.spacedBy(spacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -506,7 +506,7 @@ private fun FinancialDocumentListItem(
             if (row.hasAlert) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(sizing.strokeCropGuide * 2f)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.error)
                 )

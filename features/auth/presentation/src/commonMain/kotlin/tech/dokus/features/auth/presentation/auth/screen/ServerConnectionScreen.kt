@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.auth_checking_server
@@ -67,6 +66,8 @@ import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.constrains.withContentPadding
+import tech.dokus.foundation.aura.style.dokusSizing
+import tech.dokus.foundation.aura.style.dokusSpacing
 
 /**
  * Screen for connecting to a self-hosted Dokus server.
@@ -137,6 +138,8 @@ private fun ServerConnectionContent(
     currentServer: ServerConfig?,
     onIntent: (ServerConnectionIntent) -> Unit,
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -150,7 +153,7 @@ private fun ServerConnectionContent(
             // Current server info (if not cloud)
             currentServer?.takeIf { !it.isCloud }?.let { server ->
                 CurrentServerCard(server)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(spacing.xLarge))
             }
 
             // Server details card
@@ -165,7 +168,7 @@ private fun ServerConnectionContent(
                         fontWeight = FontWeight.SemiBold
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(spacing.large))
 
                     // Protocol selector
                     Text(
@@ -173,14 +176,14 @@ private fun ServerConnectionContent(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(spacing.small))
                     ProtocolSelector(
                         selectedProtocol = state.protocol,
                         onProtocolSelected = { onIntent(ServerConnectionIntent.UpdateProtocol(it)) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(spacing.large))
 
                     // Host input
                     val hostError = (state as? ServerConnectionState.Input)?.hostError
@@ -196,7 +199,7 @@ private fun ServerConnectionContent(
                         onValueChange = { onIntent(ServerConnectionIntent.UpdateHost(it)) }
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(spacing.large))
 
                     // Port input
                     val portError = (state as? ServerConnectionState.Input)?.portError
@@ -212,7 +215,7 @@ private fun ServerConnectionContent(
                         onValueChange = { onIntent(ServerConnectionIntent.UpdatePort(it)) }
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(spacing.xLarge))
 
                     // Validate button
                     PPrimaryButton(
@@ -232,7 +235,7 @@ private fun ServerConnectionContent(
             // Error display
             val errorState = state as? ServerConnectionState.Error
             if (errorState != null) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(spacing.large))
                 DokusErrorContent(
                     exception = errorState.exception,
                     retryHandler = RetryHandler { onIntent(ServerConnectionIntent.ValidateClicked) },
@@ -242,14 +245,14 @@ private fun ServerConnectionContent(
 
             // Loading indicator
             if (state is ServerConnectionState.Validating || state is ServerConnectionState.Connecting) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(spacing.xLarge))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     DokusLoader(size = DokusLoaderSize.Small)
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(spacing.medium))
                     Text(
                         text = if (state is ServerConnectionState.Validating) {
                             stringResource(Res.string.auth_checking_server)
@@ -262,12 +265,12 @@ private fun ServerConnectionContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(spacing.xLarge))
 
             // Help section
             HelpCard()
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(spacing.xLarge))
 
             // Reset to cloud option
             TextButton(
@@ -277,9 +280,9 @@ private fun ServerConnectionContent(
                 Icon(
                     imageVector = Icons.Default.Cloud,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(sizing.iconSmall)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(spacing.small))
                 Text(text = stringResource(Res.string.auth_use_cloud))
             }
         }
@@ -288,21 +291,23 @@ private fun ServerConnectionContent(
 
 @Composable
 private fun CurrentServerCard(currentServer: ServerConfig) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     DokusCardSurface(
         modifier = Modifier.fillMaxWidth(),
         variant = DokusCardVariant.Soft,
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(spacing.large),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Info,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(sizing.iconSmallMedium)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(spacing.medium))
             Column {
                 Text(
                     text = stringResource(Res.string.auth_currently_connected_to),
@@ -321,27 +326,29 @@ private fun CurrentServerCard(currentServer: ServerConfig) {
 
 @Composable
 private fun HelpCard() {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     DokusGlassSurface(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(spacing.large),
             verticalAlignment = Alignment.Top
         ) {
             Icon(
                 imageVector = Icons.Default.HelpOutline,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(sizing.iconSmallMedium)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(spacing.medium))
             Column {
                 Text(
                     text = stringResource(Res.string.auth_need_help),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(spacing.xSmall))
                 Text(
                     text = stringResource(Res.string.auth_help_description),
                     style = MaterialTheme.typography.bodyMedium,

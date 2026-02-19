@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.share_import_file_progress
@@ -40,6 +39,8 @@ import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.style.dokusSizing
+import tech.dokus.foundation.aura.style.dokusSpacing
 import tech.dokus.domain.exceptions.DokusException
 
 @Composable
@@ -47,6 +48,8 @@ internal fun ShareImportScreen(
     state: ShareImportState,
     onIntent: (ShareImportIntent) -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     ShareImportBackHandler(
         enabled = state is ShareImportState.Uploading || state is ShareImportState.SuccessPulse
     )
@@ -63,8 +66,8 @@ internal fun ShareImportScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(24.dp)
-                .widthIn(max = 720.dp),
+                .padding(spacing.xLarge)
+                .widthIn(max = sizing.documentPreviewMaxWidth * 1.5f),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -80,8 +83,9 @@ internal fun ShareImportScreen(
 
 @Composable
 private fun LoadingContextContent() {
+    val spacing = MaterialTheme.dokusSpacing
     DokusLoader()
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(spacing.large))
     Text(
         text = stringResource(Res.string.share_import_preparing),
         style = MaterialTheme.typography.bodyMedium,
@@ -91,12 +95,14 @@ private fun LoadingContextContent() {
 
 @Composable
 private fun UploadingContent(state: ShareImportState.Uploading) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Text(
         text = stringResource(Res.string.share_import_uploading_to, state.workspaceName),
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface
     )
-    Spacer(modifier = Modifier.height(6.dp))
+    Spacer(modifier = Modifier.height(spacing.small - spacing.xxSmall))
     Text(
         text = stringResource(
             Res.string.share_import_file_progress,
@@ -106,21 +112,21 @@ private fun UploadingContent(state: ShareImportState.Uploading) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
-    Spacer(modifier = Modifier.height(18.dp))
+    Spacer(modifier = Modifier.height(spacing.large + spacing.xxSmall))
 
     LinearProgressIndicator(
         progress = { state.overallProgress },
         modifier = Modifier.fillMaxWidth()
     )
 
-    Spacer(modifier = Modifier.height(14.dp))
+    Spacer(modifier = Modifier.height(sizing.shimmerLineHeight))
     Text(
         text = state.currentFileName,
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurface,
         textAlign = TextAlign.Center
     )
-    Spacer(modifier = Modifier.height(6.dp))
+    Spacer(modifier = Modifier.height(spacing.small - spacing.xxSmall))
     Text(
         text = stringResource(
             Res.string.share_import_overall_progress,
@@ -133,8 +139,9 @@ private fun UploadingContent(state: ShareImportState.Uploading) {
 
 @Composable
 private fun SuccessContent(state: ShareImportState.SuccessPulse) {
+    val spacing = MaterialTheme.dokusSpacing
     AnimatedCheck(play = true)
-    Spacer(modifier = Modifier.height(18.dp))
+    Spacer(modifier = Modifier.height(spacing.large + spacing.xxSmall))
 
     val uploadedLabel = if (state.uploadedCount == 1) {
         stringResource(Res.string.share_import_success_single)
@@ -148,7 +155,7 @@ private fun SuccessContent(state: ShareImportState.SuccessPulse) {
         color = MaterialTheme.colorScheme.onSurface
     )
     if (state.needsReviewCount > 0) {
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(spacing.small))
         Text(
             text = stringResource(Res.string.share_import_needs_review_count, state.needsReviewCount),
             style = MaterialTheme.typography.bodySmall,
@@ -156,7 +163,7 @@ private fun SuccessContent(state: ShareImportState.SuccessPulse) {
             textAlign = TextAlign.Center
         )
     }
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(spacing.small))
     Text(
         text = sharedFilesSummary(state.primaryFileName, state.additionalFileCount),
         style = MaterialTheme.typography.bodyMedium,
@@ -170,19 +177,20 @@ private fun ErrorContent(
     state: ShareImportState.Error,
     onIntent: (ShareImportIntent) -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     Text(
         text = stringResource(Res.string.state_error),
         style = MaterialTheme.typography.headlineMedium,
         color = MaterialTheme.colorScheme.error
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(spacing.small))
     Text(
         text = state.exception.localized,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
     )
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(spacing.xLarge))
 
     if (state.retryHandler != null) {
         POutlinedButton(
@@ -193,7 +201,7 @@ private fun ErrorContent(
     }
     if (state.canOpenApp) {
         if (state.retryHandler != null) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.medium))
         }
         POutlinedButton(
             text = stringResource(Res.string.share_import_open_app),
@@ -201,7 +209,7 @@ private fun ErrorContent(
             onClick = { onIntent(OpenApp) }
         )
         if (state.exception is DokusException.WorkspaceContextUnavailable) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.medium))
             Text(
                 text = stringResource(Res.string.share_import_workspace_switch_hint),
                 style = MaterialTheme.typography.bodySmall,
@@ -212,7 +220,7 @@ private fun ErrorContent(
     }
     if (state.canNavigateToLogin) {
         if (state.retryHandler != null) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.medium))
         }
         POutlinedButton(
             text = stringResource(Res.string.share_import_go_to_login),

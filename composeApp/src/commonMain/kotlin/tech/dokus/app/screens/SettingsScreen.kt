@@ -37,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
@@ -72,6 +71,8 @@ import tech.dokus.foundation.aura.components.ListSettingsItem
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.style.dokusSizing
+import tech.dokus.foundation.aura.style.dokusSpacing
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.local.LocalNavController
@@ -138,6 +139,8 @@ private fun SettingsSplitPaneLayout(
     state: SettingsState,
     snackbarHostState: SnackbarHostState
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
 
@@ -162,10 +165,10 @@ private fun SettingsSplitPaneLayout(
                 Surface(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(280.dp),
+                        .width(sizing.documentInspectorWidth + spacing.small),
                     color = MaterialTheme.colorScheme.surface,
                     border = BorderStroke(
-                        1.dp,
+                        sizing.strokeThin,
                         MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                     )
                 ) {
@@ -181,7 +184,7 @@ private fun SettingsSplitPaneLayout(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(start = 8.dp),
+                        .padding(start = spacing.small),
                     contentAlignment = Alignment.TopStart
                 ) {
                     selectedSection?.let { section ->
@@ -203,6 +206,7 @@ private fun SettingsSplitPaneLayout(
 private fun SettingsMobileLayout(
     state: SettingsState,
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     val navController = LocalNavController.current
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
@@ -228,7 +232,7 @@ private fun SettingsMobileLayout(
                 }
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(spacing.xLarge))
 
             // Settings Groups
             settingsGroups.forEach { (groupTitle, groups) ->
@@ -239,7 +243,7 @@ private fun SettingsMobileLayout(
                         navController.navigateTo(section.destination)
                     }
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(spacing.large))
             }
         }
     }
@@ -255,6 +259,7 @@ private fun SettingsNavigationPanel(
     selectedSection: ModuleSettingsSection?,
     onSectionSelected: (ModuleSettingsSection) -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     val navController = LocalNavController.current
 
     // Extract tenant from state
@@ -265,7 +270,7 @@ private fun SettingsNavigationPanel(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .padding(spacing.large)
     ) {
         // Workspace Picker
         WorkspacePickerCard(
@@ -276,7 +281,7 @@ private fun SettingsNavigationPanel(
             }
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(spacing.xLarge))
 
         // Settings Groups (flat list with headers)
         settingsGroups.forEach { (groupTitle, groups) ->
@@ -286,8 +291,8 @@ private fun SettingsNavigationPanel(
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 16.dp, bottom = 8.dp)
+                    .padding(horizontal = spacing.large)
+                    .padding(top = spacing.large, bottom = spacing.small)
             )
 
             // Section items
@@ -302,7 +307,7 @@ private fun SettingsNavigationPanel(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(spacing.large))
     }
 }
 
@@ -313,6 +318,8 @@ private fun SettingsNavigationPanel(
 private fun SettingsContentPane(
     section: ModuleSettingsSection
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     // Add a title header for the content pane
     Column(
         modifier = Modifier.fillMaxSize()
@@ -321,19 +328,19 @@ private fun SettingsContentPane(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 0.dp
+            tonalElevation = sizing.elevationNone
         ) {
             Text(
                 text = stringResource(section.title),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier
-                    .padding(horizontal = 32.dp)
-                    .padding(top = 24.dp, bottom = 16.dp)
+                    .padding(horizontal = spacing.xxLarge)
+                    .padding(top = spacing.xLarge, bottom = spacing.large)
             )
         }
 
         HorizontalDivider(
-            thickness = 1.dp,
+            thickness = sizing.strokeThin,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
         )
 
@@ -388,20 +395,22 @@ private fun SettingsContentPane(
  */
 @Composable
 private fun SettingsEmptyState() {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(spacing.xxLarge),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(spacing.large)
         ) {
             Icon(
                 imageVector = Icons.Outlined.Settings,
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(sizing.iconXXLarge),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
             Text(
@@ -466,6 +475,7 @@ private fun SettingsGroupCard(
     sections: List<ModuleSettingsSection>,
     onSectionClick: (ModuleSettingsSection) -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
         Column {
             Text(
@@ -474,7 +484,7 @@ private fun SettingsGroupCard(
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(horizontal = spacing.large, vertical = spacing.medium)
             )
 
             sections.forEach { section ->
@@ -487,4 +497,3 @@ private fun SettingsGroupCard(
         }
     }
 }
-

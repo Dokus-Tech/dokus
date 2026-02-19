@@ -14,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_no_documents
@@ -23,33 +22,35 @@ import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // Section layout dimensions
-private val SectionItemSpacing = 16.dp
-private val DesktopErrorVerticalPadding = 48.dp
-private val MobileErrorVerticalPadding = 32.dp
+private val SectionItemSpacing = Constraints.Spacing.large
+private val DesktopErrorVerticalPadding = Constraints.Spacing.xxxLarge
+private val MobileErrorVerticalPadding = Constraints.Spacing.xxLarge
 
 // Table skeleton dimensions
-private val SkeletonRowSpacing = 8.dp
-private val SkeletonHeaderVerticalPadding = 12.dp
-private val SkeletonHeaderHorizontalSpacing = 16.dp
-private val SkeletonHeaderLineHeight = 14.dp
-private val SkeletonRowVerticalPadding = 16.dp
-private val SkeletonRowLineHeight = 16.dp
+private val SkeletonRowSpacing = Constraints.Spacing.small
+private val SkeletonHeaderVerticalPadding = Constraints.Spacing.medium
+private val SkeletonHeaderHorizontalSpacing = Constraints.Spacing.large
+private val SkeletonHeaderLineHeight = Constraints.Height.shimmerLine
+private val SkeletonRowVerticalPadding = Constraints.Spacing.large
+private val SkeletonRowLineHeight = Constraints.Spacing.large
 private const val TableColumnCount = 5
 private const val TableRowCount = 5
 
 // Mobile skeleton dimensions
 private const val MobileSkeletonRowCount = 6
-private val MobileSkeletonHorizontalPadding = 16.dp
-private val MobileSkeletonSpacerWidth = 16.dp
-private val MobileSkeletonDateWidth = 60.dp
-private val MobileSkeletonAmountWidth = 70.dp
-private val MobileSkeletonAmountHeight = 22.dp
+private val MobileSkeletonHorizontalPadding = Constraints.Spacing.large
+private val MobileSkeletonSpacerWidth = Constraints.Spacing.large
+private val MobileSkeletonDateWidth = Constraints.IconSize.xxLarge - Constraints.Spacing.xSmall
+private val MobileSkeletonAmountWidth =
+    Constraints.IconSize.xxLarge + Constraints.Spacing.small - Constraints.Spacing.xxSmall
+private val MobileSkeletonAmountHeight = Constraints.IconSize.smallMedium + Constraints.Spacing.xxSmall
 
 // Empty and loading states
-private val EmptyStateVerticalPadding = 48.dp
-private val LoadingMoreVerticalPadding = 16.dp
+private val EmptyStateVerticalPadding = Constraints.Spacing.xxxLarge
+private val LoadingMoreVerticalPadding = Constraints.Spacing.large
 
 /**
  * Documents table section with its own loading/error handling.

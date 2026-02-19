@@ -46,7 +46,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -99,7 +98,7 @@ private val HeaderPaddingEnd = Constraints.Spacing.small
 private val HeaderPaddingTop = Constraints.Spacing.large
 private val HeaderPaddingBottom = Constraints.Spacing.small
 private val PaneMinWidth = Constraints.DialogSize.maxWidth
-private val PaneMaxWidth = 600.dp
+private val PaneMaxWidth = Constraints.DialogSize.maxWidth * 1.5f
 private const val AnimationDurationMs = 200
 private const val SlideAnimationDurationMs = 300
 private const val ScrimAlpha = 0.32f
@@ -286,7 +285,7 @@ private fun CashflowDetailContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
         }
 
         // Payment footer (if status != Paid)
@@ -375,7 +374,7 @@ private fun CashflowAmountSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         Text(
             text = if (entry.direction == CashflowDirection.Out) {
@@ -402,7 +401,7 @@ private fun CashflowContactSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         Text(
             text = stringResource(Res.string.cashflow_ledger_contact),
@@ -425,10 +424,10 @@ private fun CashflowDetailsSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
     ) {
         // Due Date
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)) {
             Text(
                 text = stringResource(Res.string.cashflow_ledger_due_date),
                 style = MaterialTheme.typography.labelSmall,
@@ -443,7 +442,7 @@ private fun CashflowDetailsSection(
 
         // Description
         entry.description?.let { description ->
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)) {
                 Text(
                     text = stringResource(Res.string.cashflow_ledger_description),
                     style = MaterialTheme.typography.labelSmall,
@@ -470,7 +469,7 @@ private fun CashflowBreakdownSection(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         Text(
             text = stringResource(Res.string.cashflow_detail_breakdown),
@@ -486,7 +485,7 @@ private fun CashflowBreakdownSection(
             label = stringResource(Res.string.invoice_vat),
             value = "${entry.currency.displaySign}${entry.amountVat.toDisplayString()}"
         )
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall))
         BreakdownRow(
             label = stringResource(Res.string.invoice_total),
             value = "${entry.currency.displaySign}${entry.amountGross.toDisplayString()}",
@@ -528,7 +527,7 @@ private fun CashflowSourceDocumentCard(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         Text(
             text = stringResource(Res.string.cashflow_detail_source_document),
@@ -539,15 +538,15 @@ private fun CashflowSourceDocumentCard(
         Row(
             modifier = Modifier
                 .clickable(onClick = onClick)
-                .padding(vertical = 4.dp),
+                .padding(vertical = Constraints.Spacing.xSmall),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
         ) {
             Icon(
                 imageVector = Icons.Default.Description,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(Constraints.IconSize.small)
             )
             Text(
                 text = stringResource(Res.string.cashflow_action_view_document),
@@ -624,8 +623,8 @@ private fun PaymentOptionsForm(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(top = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = modifier.padding(top = Constraints.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
     ) {
         // Date (read-only for now)
         Text(
@@ -663,7 +662,7 @@ private fun PaymentOptionsForm(
         // Action buttons - side by side
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small, Alignment.End)
         ) {
             TextButton(onClick = onCancel) {
                 Text(stringResource(Res.string.cancel))

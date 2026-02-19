@@ -49,6 +49,8 @@ import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldName
+import tech.dokus.foundation.aura.style.dokusSizing
+import tech.dokus.foundation.aura.style.dokusSpacing
 
 @Composable
 internal fun ProfileViewingSection(
@@ -58,6 +60,7 @@ internal fun ProfileViewingSection(
     onChangePasswordClick: () -> Unit,
     onMySessionsClick: () -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     DokusCard(
         modifier = Modifier.fillMaxWidth(),
         padding = DokusCardPadding.Default,
@@ -77,14 +80,14 @@ internal fun ProfileViewingSection(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(spacing.large))
 
             ProfileField(
                 label = stringResource(Res.string.profile_email),
                 value = state.user.email.value
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             ProfileField(
                 label = stringResource(Res.string.profile_first_name),
@@ -92,7 +95,7 @@ internal fun ProfileViewingSection(
                     ?: stringResource(Res.string.common_empty_value)
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             ProfileField(
                 label = stringResource(Res.string.profile_last_name),
@@ -100,7 +103,7 @@ internal fun ProfileViewingSection(
                     ?: stringResource(Res.string.common_empty_value)
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             ProfileField(
                 label = stringResource(Res.string.profile_email_verification),
@@ -111,7 +114,7 @@ internal fun ProfileViewingSection(
                 }
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(spacing.large))
 
             if (!state.user.emailVerified) {
                 POutlinedButton(
@@ -121,7 +124,7 @@ internal fun ProfileViewingSection(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(spacing.small))
             }
 
             POutlinedButton(
@@ -130,7 +133,7 @@ internal fun ProfileViewingSection(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(spacing.small))
 
             POutlinedButton(
                 text = stringResource(Res.string.profile_sessions),
@@ -149,6 +152,7 @@ internal fun ProfileEditingSection(
     onSave: () -> Unit,
     onCancel: () -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     DokusCard(
         modifier = Modifier.fillMaxWidth(),
         padding = DokusCardPadding.Default,
@@ -159,14 +163,14 @@ internal fun ProfileEditingSection(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(spacing.large))
 
             ProfileField(
                 label = stringResource(Res.string.profile_email),
                 value = state.user.email.value
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             PTextFieldName(
                 fieldName = stringResource(Res.string.profile_first_name),
@@ -181,7 +185,7 @@ internal fun ProfileEditingSection(
                 onValueChange = onFirstNameChange
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             PTextFieldName(
                 fieldName = stringResource(Res.string.profile_last_name),
@@ -197,7 +201,7 @@ internal fun ProfileEditingSection(
                 onValueChange = onLastNameChange
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(spacing.large))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -207,7 +211,7 @@ internal fun ProfileEditingSection(
                     text = stringResource(Res.string.profile_cancel),
                     onClick = onCancel
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(spacing.small))
                 PPrimaryButton(
                     text = stringResource(Res.string.profile_save),
                     enabled = state.canSave,
@@ -222,6 +226,8 @@ internal fun ProfileEditingSection(
 internal fun ProfileSavingSection(
     state: ProfileSettingsState.Saving
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     DokusCard(
         modifier = Modifier.fillMaxWidth(),
         padding = DokusCardPadding.Default,
@@ -232,39 +238,39 @@ internal fun ProfileSavingSection(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(spacing.large))
 
             ProfileField(
                 label = stringResource(Res.string.profile_email),
                 value = state.user.email.value
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             ProfileField(
                 label = stringResource(Res.string.profile_first_name),
                 value = state.editFirstName.value
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             ProfileField(
                 label = stringResource(Res.string.profile_last_name),
                 value = state.editLastName.value
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(spacing.large))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
                 Box(
-                    modifier = Modifier.height(42.dp).width(80.dp),
+                    modifier = Modifier.height(sizing.buttonHeight).width(spacing.large * 5f),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.height(24.dp).width(24.dp)
+                        modifier = Modifier.height(sizing.iconMedium).width(sizing.iconMedium)
                     )
                 }
             }
@@ -290,6 +296,7 @@ internal fun ProfileErrorSection() {
 
 @Composable
 internal fun DangerZoneSection() {
+    val spacing = MaterialTheme.dokusSpacing
     DokusCard(
         modifier = Modifier.fillMaxWidth(),
         padding = DokusCardPadding.Default,
@@ -301,7 +308,7 @@ internal fun DangerZoneSection() {
                 color = MaterialTheme.colorScheme.error
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             Text(
                 text = stringResource(Res.string.profile_deactivate_warning),
@@ -309,7 +316,7 @@ internal fun DangerZoneSection() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             POutlinedButton(
                 text = stringResource(Res.string.profile_deactivate_account),
@@ -325,6 +332,7 @@ internal fun LogoutSection(
     isLoggingOut: Boolean,
     onLogout: () -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     DokusCard(
         modifier = Modifier.fillMaxWidth(),
         padding = DokusCardPadding.Default,
@@ -335,7 +343,7 @@ internal fun LogoutSection(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(spacing.small))
 
             Text(
                 text = stringResource(Res.string.profile_logout_description),
@@ -343,7 +351,7 @@ internal fun LogoutSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.medium))
 
             POutlinedButton(
                 text = if (isLoggingOut) {

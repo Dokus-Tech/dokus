@@ -44,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_cancel
@@ -71,21 +70,21 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldFree
 import tech.dokus.foundation.aura.constrains.Constrains
 
 // UI dimension constants
-private val ContentPadding = 16.dp
-private val SpacingSmall = 8.dp
-private val SpacingMedium = 12.dp
-private val SpacingDefault = 16.dp
-private val DragHandlePadding = 12.dp
-private val DragHandleWidth = 32.dp
-private val DragHandleHeight = 4.dp
-private val DragHandleCornerRadius = 2.dp
-private val IconSizeSmall = 16.dp
-private val IconSizeMedium = 18.dp
-private val IconSizeLarge = 48.dp
-private val CardCornerRadius = 8.dp
-private val ButtonSpacing = 4.dp
-private val NoteItemPadding = 12.dp
-private val ContentMinHeight = 200.dp
+private val ContentPadding = Constrains.Spacing.large
+private val SpacingSmall = Constrains.Spacing.small
+private val SpacingMedium = Constrains.Spacing.medium
+private val SpacingDefault = Constrains.Spacing.large
+private val DragHandlePadding = Constrains.Spacing.medium
+private val DragHandleWidth = Constrains.Spacing.xxLarge
+private val DragHandleHeight = Constrains.Spacing.xSmall
+private val DragHandleCornerRadius = Constrains.Spacing.xxSmall
+private val IconSizeSmall = Constrains.IconSize.xSmall
+private val IconSizeMedium = Constrains.IconSize.small
+private val IconSizeLarge = Constrains.IconSize.xLarge
+private val CardCornerRadius = Constrains.Spacing.small
+private val ButtonSpacing = Constrains.Spacing.xSmall
+private val NoteItemPadding = Constrains.Spacing.medium
+private val ContentMinHeight = Constrains.SearchField.minWidth
 
 // Alpha constants
 private const val DragHandleAlpha = 0.4f

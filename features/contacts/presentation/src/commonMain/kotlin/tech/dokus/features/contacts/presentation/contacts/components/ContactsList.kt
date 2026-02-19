@@ -30,7 +30,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
@@ -47,29 +46,30 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // UI dimension constants
-private val ErrorPaddingVertical = 48.dp
-private val ListItemSpacing = 12.dp
-private val EmptyStatePadding = 32.dp
-private val EmptyStateIconSize = 64.dp
-private val EmptyStateSpacingMedium = 16.dp
-private val EmptyStateSpacingSmall = 8.dp
-private val EmptyStateSpacingLarge = 24.dp
-private val CtaCardPadding = 16.dp
-private val CtaIconSpacing = 8.dp
-private val SkeletonShimmerLineHeight = 20.dp
-private val SkeletonShimmerBoxWidth = 50.dp
-private val SkeletonShimmerBoxHeight = 16.dp
-private val SkeletonCornerRadius = 4.dp
-private val SkeletonRowSpacing = 16.dp
-private val SkeletonSpacingSmall = 8.dp
-private val SkeletonEmailHeight = 14.dp
-private val SkeletonTagWidth = 60.dp
-private val SkeletonTagWidthSmall = 50.dp
-private val SkeletonTagHeight = 20.dp
-private val SkeletonTagSpacing = 4.dp
-private val LoadingMorePadding = 16.dp
+private val ErrorPaddingVertical = Constraints.Spacing.xxxLarge
+private val ListItemSpacing = Constraints.Spacing.medium
+private val EmptyStatePadding = Constraints.Spacing.xxLarge
+private val EmptyStateIconSize = Constraints.IconSize.xxLarge
+private val EmptyStateSpacingMedium = Constraints.Spacing.large
+private val EmptyStateSpacingSmall = Constraints.Spacing.small
+private val EmptyStateSpacingLarge = Constraints.Spacing.xLarge
+private val CtaCardPadding = Constraints.Spacing.large
+private val CtaIconSpacing = Constraints.Spacing.small
+private val SkeletonShimmerLineHeight = Constraints.IconSize.smallMedium
+private val SkeletonShimmerBoxWidth = Constraints.IconSize.xLarge + Constraints.Spacing.xxSmall
+private val SkeletonShimmerBoxHeight = Constraints.Spacing.large
+private val SkeletonCornerRadius = Constraints.CornerRadius.badge
+private val SkeletonRowSpacing = Constraints.Spacing.large
+private val SkeletonSpacingSmall = Constraints.Spacing.small
+private val SkeletonEmailHeight = Constraints.Height.shimmerLine
+private val SkeletonTagWidth = Constraints.IconSize.xxLarge - Constraints.Spacing.xSmall
+private val SkeletonTagWidthSmall = Constraints.IconSize.xLarge + Constraints.Spacing.xxSmall
+private val SkeletonTagHeight = Constraints.IconSize.smallMedium
+private val SkeletonTagSpacing = Constraints.Spacing.xSmall
+private val LoadingMorePadding = Constraints.Spacing.large
 private const val SkeletonItemCount = 6
 private const val InfiniteScrollThreshold = 5
 private const val EmptyStateIconAlpha = 0.6f
@@ -94,7 +94,7 @@ internal fun ContactsList(
     onContactClick: (ContactDto) -> Unit,
     onLoadMore: () -> Unit,
     onAddContactClick: () -> Unit,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentPadding: PaddingValues = PaddingValues(Constraints.Elevation.none),
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()

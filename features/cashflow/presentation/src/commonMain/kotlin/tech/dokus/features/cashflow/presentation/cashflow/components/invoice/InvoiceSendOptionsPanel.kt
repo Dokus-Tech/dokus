@@ -30,8 +30,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
@@ -61,6 +59,7 @@ import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -84,7 +83,7 @@ fun InvoiceSendOptionsPanel(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large)
         ) {
             Text(
                 text = stringResource(Res.string.invoice_send_options),
@@ -104,14 +103,14 @@ fun InvoiceSendOptionsPanel(
             }
 
             HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
+                modifier = Modifier.padding(vertical = Constraints.Spacing.small),
                 color = MaterialTheme.colorScheme.outlineVariant
             )
 
             // Invoice summary
             InvoiceMiniSummary(formState = formState)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
             // Save as Draft button
             PButton(
@@ -141,15 +140,15 @@ private fun PeppolWarningBanner(
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)
             .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f))
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(Constraints.Spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.Warning,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(Constraints.IconSize.smallMedium)
         )
         Column {
             Text(
@@ -190,7 +189,7 @@ private fun DeliveryMethodOptionRow(
                 }
             )
             .border(
-                width = 1.dp,
+                width = Constraints.Stroke.thin,
                 color = if (isSelected && enabled) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -211,8 +210,8 @@ private fun DeliveryMethodOptionRow(
                     Modifier
                 }
             )
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(Constraints.Spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(
@@ -229,12 +228,12 @@ private fun DeliveryMethodOptionRow(
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             },
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(Constraints.IconSize.medium)
         )
 
         Column(modifier = Modifier.weight(1f)) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -257,7 +256,7 @@ private fun DeliveryMethodOptionRow(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(Constraints.Height.shimmerLine)
                     )
                 }
             }
@@ -283,13 +282,15 @@ private fun ComingSoonBadge(
         modifier = modifier
             .clip(MaterialTheme.shapes.extraSmall)
             .background(MaterialTheme.colorScheme.tertiaryContainer)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .padding(
+                horizontal = Constraints.Spacing.small - Constraints.Spacing.xxSmall,
+                vertical = Constraints.Spacing.xxSmall
+            )
     ) {
         Text(
             text = stringResource(Res.string.invoice_coming_soon),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onTertiaryContainer,
-            letterSpacing = 0.5.sp
+            color = MaterialTheme.colorScheme.onTertiaryContainer
         )
     }
 }
@@ -302,7 +303,7 @@ private fun InvoiceMiniSummary(
     val itemCount = formState.items.count { it.isValid }
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         Text(
             text = stringResource(Res.string.invoice_summary),
@@ -378,7 +379,7 @@ fun InvoiceSendOptionsPanelPreview(
             onMethodSelected = {},
             onSaveAsDraft = {},
             isSaving = false,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(Constraints.Spacing.large)
         )
     }
 }

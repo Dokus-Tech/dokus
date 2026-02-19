@@ -10,18 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.amberSoft
 import tech.dokus.foundation.aura.style.textMuted
 
-private val PaddingH = 7.dp
-private val PaddingV = 2.dp
-private val BankColor = Color(0xFF5B7BB4)
-private const val BankBgAlpha = 0.08f
+private val PaddingH = Constraints.Spacing.small
+private val PaddingV = Constraints.Spacing.xxSmall
 
 /**
  * Contact role type.
@@ -44,7 +39,7 @@ fun RoleBadge(
     role: ContactRole,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(Constrains.CornerRadius.badge)
+    val shape = RoundedCornerShape(Constraints.CornerRadius.badge)
 
     val (textColor, bgColor) = when (role) {
         ContactRole.Vendor -> Pair(
@@ -52,8 +47,8 @@ fun RoleBadge(
             MaterialTheme.colorScheme.surfaceVariant,
         )
         ContactRole.Bank -> Pair(
-            BankColor,
-            BankColor.copy(alpha = BankBgAlpha),
+            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.tertiaryContainer,
         )
         ContactRole.Accountant -> Pair(
             MaterialTheme.colorScheme.primary,
@@ -70,7 +65,7 @@ fun RoleBadge(
     ) {
         Text(
             text = role.name,
-            fontSize = 10.sp,
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = textColor,
             maxLines = 1,

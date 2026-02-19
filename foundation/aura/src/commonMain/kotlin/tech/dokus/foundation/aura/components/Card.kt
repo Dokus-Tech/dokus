@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,7 +35,6 @@ private const val DenseCardPadding = 12
 private val AccentLineInset = 20.dp
 private val AccentLineHeight = 1.dp
 private val ShadowElevation = 2.dp
-private val AccentColor = Color(0xFFB8860B)
 private const val AccentAlpha = 0.2f
 
 enum class DokusCardVariant {
@@ -74,15 +72,16 @@ fun DokusCardSurface(
     val shadowElevation = if (shadow) ShadowElevation else 0.dp
 
     val accentModifier = if (accent) {
+        val accentColor = colorScheme.primary
         Modifier.drawBehind {
             val insetPx = AccentLineInset.toPx()
             val lineHeight = AccentLineHeight.toPx()
             drawRect(
                 brush = Brush.horizontalGradient(
                     colors = listOf(
-                        Color.Transparent,
-                        AccentColor.copy(alpha = AccentAlpha),
-                        Color.Transparent,
+                        accentColor.copy(alpha = 0f),
+                        accentColor.copy(alpha = AccentAlpha),
+                        accentColor.copy(alpha = 0f),
                     ),
                     startX = insetPx,
                     endX = size.width - insetPx,
