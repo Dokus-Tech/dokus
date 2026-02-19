@@ -122,6 +122,7 @@ class HomeShellTopBarResolverTest {
         val resolved = resolveHomeShellTopBarConfig(
             route = "documents",
             allNavItems = testNavItems,
+            sortedRoutes = testSortedRoutes,
             registeredConfigs = registered,
             fallback = ::fallbackConfig
         )
