@@ -188,7 +188,6 @@ internal fun InvoiceFormatSection(
             DataRow(
                 label = stringResource(Res.string.workspace_invoice_preview),
                 value = previewNumber,
-                mono = true,
             )
 
             DataRow(

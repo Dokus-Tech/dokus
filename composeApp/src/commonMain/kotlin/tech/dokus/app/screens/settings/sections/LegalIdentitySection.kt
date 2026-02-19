@@ -102,7 +102,6 @@ internal fun LegalIdentitySection(
                 DataRow(
                     label = stringResource(Res.string.workspace_vat_number),
                     value = formState.vatNumber,
-                    mono = true,
                     locked = true,
                     status = DataRowStatus("Verified", StatusDotType.Confirmed),
                 )

@@ -82,7 +82,6 @@ internal fun PeppolConnectionSection(
             DataRow(
                 label = stringResource(Res.string.peppol_conn_label_participant_id),
                 value = peppolRegistration.peppolId,
-                mono = true,
                 locked = true,
                 status = if (status == PeppolRegistrationStatus.Active) {
                     DataRowStatus(stringResource(Res.string.peppol_conn_status_verified), StatusDotType.Confirmed)

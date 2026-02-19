@@ -208,7 +208,6 @@ internal fun TransferEmailCard(
                 text = template,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
-                fontFamily = FontFamily.Monospace,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 160.dp)

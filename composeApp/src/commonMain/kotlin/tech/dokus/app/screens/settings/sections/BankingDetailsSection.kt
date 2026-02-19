@@ -62,7 +62,6 @@ internal fun BankingDetailsSection(
             DataRow(
                 label = stringResource(Res.string.workspace_iban),
                 value = formState.iban,
-                mono = true,
             )
 
             DataRow(

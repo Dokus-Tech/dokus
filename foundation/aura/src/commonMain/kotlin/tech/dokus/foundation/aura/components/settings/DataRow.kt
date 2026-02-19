@@ -14,7 +14,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
+
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -48,7 +48,6 @@ data class DataRowStatus(
  * @param label The field label
  * @param value The field value
  * @param modifier Optional modifier
- * @param mono Use monospace font for identifiers (IBAN, VAT numbers, etc.)
  * @param locked Show lock icon and hide edit action
  * @param status Optional status indicator
  * @param onEdit Edit action callback (hidden if locked or null)
@@ -58,7 +57,6 @@ fun DataRow(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    mono: Boolean = false,
     locked: Boolean = false,
     status: DataRowStatus? = null,
     onEdit: (() -> Unit)? = null,
@@ -69,7 +67,6 @@ fun DataRow(
         DataRowDesktop(
             label = label,
             value = value,
-            mono = mono,
             locked = locked,
             status = status,
             onEdit = onEdit,
@@ -79,7 +76,6 @@ fun DataRow(
         DataRowMobile(
             label = label,
             value = value,
-            mono = mono,
             locked = locked,
             status = status,
             onEdit = onEdit,
@@ -92,7 +88,6 @@ fun DataRow(
 private fun DataRowDesktop(
     label: String,
     value: String,
-    mono: Boolean,
     locked: Boolean,
     status: DataRowStatus?,
     onEdit: (() -> Unit)?,
@@ -116,7 +111,6 @@ private fun DataRowDesktop(
         Text(
             text = value.ifEmpty { "-" },
             style = MaterialTheme.typography.bodyMedium,
-            fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default,
             modifier = Modifier.weight(1f),
         )
 
@@ -155,7 +149,6 @@ private fun DataRowDesktop(
 private fun DataRowMobile(
     label: String,
     value: String,
-    mono: Boolean,
     locked: Boolean,
     status: DataRowStatus?,
     onEdit: (() -> Unit)?,
@@ -208,7 +201,6 @@ private fun DataRowMobile(
         Text(
             text = value.ifEmpty { "-" },
             style = MaterialTheme.typography.bodyMedium,
-            fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default,
             modifier = Modifier.padding(top = Constrains.Spacing.xxSmall),
         )
     }
