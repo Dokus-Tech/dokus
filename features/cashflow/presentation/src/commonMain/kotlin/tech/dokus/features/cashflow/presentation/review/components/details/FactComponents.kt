@@ -150,9 +150,7 @@ private fun ContactFactDisplay(
                 contact.vatNumber?.let { vat ->
                     Text(
                         text = vat,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

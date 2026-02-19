@@ -497,9 +497,7 @@ private fun SuggestionChip(
                 suggestion.vatNumber?.let { vat ->
                     Text(
                         text = vat,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
