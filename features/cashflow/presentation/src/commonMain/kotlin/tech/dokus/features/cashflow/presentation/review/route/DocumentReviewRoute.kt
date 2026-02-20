@@ -21,6 +21,7 @@ import tech.dokus.aura.resources.cashflow_discard_changes_message
 import tech.dokus.aura.resources.cashflow_discard_changes_title
 import tech.dokus.aura.resources.cashflow_document_confirmed
 import tech.dokus.aura.resources.cashflow_draft_saved
+import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -33,10 +34,13 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
+import tech.dokus.features.cashflow.presentation.review.components.DocumentReviewDesktopSplit
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
+import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
@@ -49,14 +53,17 @@ import tech.dokus.navigation.destinations.ContactCreateOrigin
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.replace
 
 private const val CONTACT_RESULT_KEY = "documentReview_contactId"
+private const val DOCUMENT_REVIEW_QUEUE_PAGE_SIZE = 100
 
 @Composable
 internal fun DocumentReviewRoute(
     documentId: DocumentId,
     container: DocumentReviewContainer = container(),
     listContacts: ListContactsUseCase = koinInject(),
+    loadDocumentRecords: LoadDocumentRecordsUseCase = koinInject(),
 ) {
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -82,6 +89,7 @@ internal fun DocumentReviewRoute(
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var contactsState by remember { mutableStateOf<DokusState<List<ContactDto>>>(DokusState.idle()) }
+    var queueDocuments by remember { mutableStateOf<List<DocQueueItem>>(emptyList()) }
 
     val successMessage = pendingSuccess?.let { success ->
         when (success) {
@@ -157,6 +165,32 @@ internal fun DocumentReviewRoute(
 
     val isLargeScreen = LocalScreenSize.isLarge
     val contentState = state as? DocumentReviewState.Content
+    val currentQueueItem = contentState
+        ?.takeIf { it.document.document.id == documentId }
+        ?.document
+        ?.toDocQueueItem()
+    val reviewQueueItems = remember(queueDocuments, currentQueueItem, documentId) {
+        mergeQueueItemsWithCurrent(
+            queueItems = queueDocuments,
+            currentItem = currentQueueItem,
+            currentDocumentId = documentId
+        )
+    }
+
+    LaunchedEffect(documentId) {
+        loadDocumentRecords(
+            page = 0,
+            pageSize = DOCUMENT_REVIEW_QUEUE_PAGE_SIZE,
+            filter = DocumentListFilter.All
+        ).fold(
+            onSuccess = { response ->
+                queueDocuments = response.items.map { it.toDocQueueItem() }
+            },
+            onFailure = {
+                queueDocuments = emptyList()
+            }
+        )
+    }
 
     // Load contacts when contact sheet opens
     LaunchedEffect(contentState?.showContactSheet) {
@@ -176,32 +210,53 @@ internal fun DocumentReviewRoute(
         }
     }
 
-    DocumentReviewScreen(
-        state = state,
-        isLargeScreen = isLargeScreen,
-        onIntent = { container.store.intent(it) },
-        onBackClick = {
-            markDocumentsRefreshRequired()
-            navController.popBackStack()
-        },
-        onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
-        onCorrectContact = { _ ->
-            // Open the contact sheet instead of navigating away
-            container.store.intent(DocumentReviewIntent.OpenContactSheet)
-        },
-        onCreateContact = { counterparty ->
-            container.store.intent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
-            navController.navigateTo(
-                ContactsDestination.CreateContact(
-                    prefillCompanyName = counterparty.name,
-                    prefillVat = counterparty.vatNumber,
-                    prefillAddress = counterparty.address,
-                    origin = ContactCreateOrigin.DocumentReview.name
+    val reviewContent: @Composable () -> Unit = {
+        DocumentReviewScreen(
+            state = state,
+            isLargeScreen = isLargeScreen,
+            onIntent = { container.store.intent(it) },
+            onBackClick = {
+                markDocumentsRefreshRequired()
+                navController.popBackStack()
+            },
+            onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
+            onCorrectContact = { _ ->
+                // Open the contact sheet instead of navigating away
+                container.store.intent(DocumentReviewIntent.OpenContactSheet)
+            },
+            onCreateContact = { counterparty ->
+                container.store.intent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
+                navController.navigateTo(
+                    ContactsDestination.CreateContact(
+                        prefillCompanyName = counterparty.name,
+                        prefillVat = counterparty.vatNumber,
+                        prefillAddress = counterparty.address,
+                        origin = ContactCreateOrigin.DocumentReview.name
+                    )
                 )
-            )
-        },
-        snackbarHostState = snackbarHostState,
-    )
+            },
+            snackbarHostState = snackbarHostState,
+        )
+    }
+
+    if (isLargeScreen && reviewQueueItems.size > 1) {
+        DocumentReviewDesktopSplit(
+            documents = reviewQueueItems,
+            selectedDocumentId = documentId,
+            onSelectDocument = { selectedDocumentId ->
+                if (selectedDocumentId != documentId) {
+                    navController.replace(CashFlowDestination.DocumentReview(selectedDocumentId.toString()))
+                }
+            },
+            onExit = {
+                markDocumentsRefreshRequired()
+                navController.popBackStack()
+            },
+            content = reviewContent,
+        )
+    } else {
+        reviewContent()
+    }
 
     // Contact Edit Sheet
     contentState?.let { content ->
@@ -299,4 +354,14 @@ internal fun DocumentReviewRoute(
             }
         )
     }
+}
+
+private fun mergeQueueItemsWithCurrent(
+    queueItems: List<DocQueueItem>,
+    currentItem: DocQueueItem?,
+    currentDocumentId: DocumentId,
+): List<DocQueueItem> {
+    if (queueItems.any { it.id == currentDocumentId }) return queueItems
+    if (currentItem == null) return queueItems
+    return listOf(currentItem) + queueItems
 }

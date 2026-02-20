@@ -28,7 +28,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -46,7 +45,6 @@ import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.navigation.executeHomeNavigationCommand
 import tech.dokus.app.navigation.local.HomeNavControllerProvided
-import tech.dokus.app.screens.documentdetail.DocumentDetailMode
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.HomeShellProfileData
@@ -64,16 +62,10 @@ import tech.dokus.domain.model.User
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
-import tech.dokus.foundation.app.shell.DocDetailModeHost
-import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
-import tech.dokus.foundation.app.shell.LocalDocDetailModeHost
-import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
@@ -123,41 +115,6 @@ internal fun HomeScreen(
     val isLargeScreen = LocalScreenSize.current.isLarge
     var fallbackSearchQuery by rememberSaveable { mutableStateOf("") }
     var isMobileSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
-
-    // Document detail mode state
-    var docDetailDocuments by remember { mutableStateOf(emptyList<DocQueueItem>()) }
-    var docDetailSelectedId by remember { mutableStateOf<DocumentId?>(null) }
-    val isDocDetailMode = isLargeScreen && docDetailSelectedId != null
-
-    val docDetailModeHost = remember(homeNavController) {
-        object : DocDetailModeHost {
-            override fun enter(documentId: DocumentId, documents: List<DocQueueItem>) {
-                docDetailDocuments = documents
-                docDetailSelectedId = documentId
-                homeNavController.navigate(
-                    CashFlowDestination.DocumentReview(documentId.toString())
-                )
-            }
-
-            override fun select(documentId: DocumentId) {
-                docDetailSelectedId = documentId
-                homeNavController.navigate(
-                    CashFlowDestination.DocumentReview(documentId.toString())
-                ) {
-                    // Replace current DocumentReview with new one
-                    homeNavController.currentBackStackEntry?.destination?.route?.let { route ->
-                        popUpTo(route) { inclusive = true }
-                    }
-                }
-            }
-
-            override fun exit() {
-                docDetailDocuments = emptyList()
-                docDetailSelectedId = null
-                homeNavController.popBackStack()
-            }
-        }
-    }
     val registeredTopBarConfigs = remember { mutableStateMapOf<String, HomeShellTopBarConfig>() }
     val topBarHost = remember(allNavItems, sortedRoutes) {
         object : HomeShellTopBarHost {
@@ -234,7 +191,6 @@ internal fun HomeScreen(
         HomeNavControllerProvided(homeNavController) {
             CompositionLocalProvider(
                 LocalHomeShellTopBarHost provides topBarHost,
-                LocalDocDetailModeHost provides docDetailModeHost,
             ) {
                 HomeNavHost(
                     navHostController = homeNavController,
@@ -247,15 +203,7 @@ internal fun HomeScreen(
 
     Surface {
         Box(modifier = Modifier.fillMaxSize()) {
-            if (isDocDetailMode) {
-                DocumentDetailMode(
-                    documents = docDetailDocuments,
-                    selectedDocumentId = docDetailSelectedId!!,
-                    onSelectDocument = { docDetailModeHost.select(it) },
-                    onExit = { docDetailModeHost.exit() },
-                    content = navHostContent,
-                )
-            } else if (isLargeScreen) {
+            if (isLargeScreen) {
                 RailNavigationLayout(
                     navSections = navSections,
                     selectedRoute = currentRoute,
@@ -312,10 +260,7 @@ private fun HomeNavHost(
         exitTransition = { with(transitionsProvider) { exitTransition } },
         popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
         popExitTransition = { with(transitionsProvider) { popExitTransition } },
-        modifier = Modifier.background(
-            if (LocalIsInDocDetailMode.current) Color.Transparent
-            else MaterialTheme.colorScheme.background
-        ),
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
     ) {
         homeNavProviders.forEach { navProvider ->
             with(navProvider) {
