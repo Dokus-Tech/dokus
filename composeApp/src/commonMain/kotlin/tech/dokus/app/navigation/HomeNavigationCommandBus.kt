@@ -1,6 +1,7 @@
 package tech.dokus.app.navigation
 
-import kotlin.concurrent.AtomicLong
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -17,6 +18,7 @@ internal data class HomeNavigationEnvelope(
  * Each command is wrapped in an [HomeNavigationEnvelope] with a unique ID to ensure
  * StateFlow conflation doesn't silently drop re-dispatches of the same command type.
  */
+@OptIn(ExperimentalAtomicApi::class)
 internal object HomeNavigationCommandBus {
     private val nextId = AtomicLong(0L)
     private val pending = MutableStateFlow<HomeNavigationEnvelope?>(null)
@@ -24,7 +26,7 @@ internal object HomeNavigationCommandBus {
     val pendingCommand = pending.asStateFlow()
 
     fun dispatch(command: HomeNavigationCommand) {
-        val id = nextId.incrementAndGet()
+        val id = nextId.addAndFetch(1)
         pending.value = HomeNavigationEnvelope(id = id, command = command)
     }
 
