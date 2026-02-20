@@ -30,6 +30,10 @@ sealed interface HomeDestination : NavigationDestination {
     data object Team : HomeDestination
 
     @Serializable
+    @SerialName("home/workspace_details")
+    data object WorkspaceDetails : HomeDestination
+
+    @Serializable
     @SerialName("accountant")
     data object Accountant : HomeDestination
 
@@ -60,6 +64,7 @@ val NavigationDestination.route: String get() = when (this) {
         HomeDestination.Cashflow -> "cashflow"
         HomeDestination.Contacts -> "contacts"
         HomeDestination.Team -> "team"
+        HomeDestination.WorkspaceDetails -> "home/workspace_details"
         HomeDestination.Accountant -> "accountant"
         HomeDestination.AiChat -> "ai-chat"
         HomeDestination.Settings -> "settings"

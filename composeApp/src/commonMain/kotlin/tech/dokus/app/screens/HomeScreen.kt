@@ -19,6 +19,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -42,6 +43,8 @@ import tech.dokus.app.allNavItems
 import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.mobileTabConfigs
 import tech.dokus.app.navSectionsCombined
+import tech.dokus.app.navigation.HomeNavigationCommandBus
+import tech.dokus.app.navigation.executeHomeNavigationCommand
 import tech.dokus.app.navigation.local.HomeNavControllerProvided
 import tech.dokus.app.screens.documentdetail.DocumentDetailMode
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
@@ -94,6 +97,7 @@ import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.navigateToTopLevelTab
 
 /**
  * Home screen using FlowMVI Container pattern.
@@ -112,6 +116,7 @@ internal fun HomeScreen(
     val allNavItems = remember(appModules) { appModules.allNavItems }
     val sortedRoutes = remember(allNavItems) { buildSortedRoutes(allNavItems) }
     val startDestination = remember(navSections) { navSections.first().items.first().destination }
+    val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val errorMessage = pendingError?.localized
@@ -178,6 +183,12 @@ internal fun HomeScreen(
 
     LaunchedEffect(isLargeScreen) {
         isMobileSearchExpanded = isLargeScreen
+    }
+
+    LaunchedEffect(pendingHomeCommand?.id, homeNavController) {
+        val pending = pendingHomeCommand ?: return@LaunchedEffect
+        homeNavController.executeHomeNavigationCommand(pending.command)
+        HomeNavigationCommandBus.consume(pending.id)
     }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
@@ -257,7 +268,7 @@ internal fun HomeScreen(
                     onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
                     onLogoutClick = { container.store.intent(HomeIntent.Logout) },
                     onNavItemClick = { navItem ->
-                        homeNavController.navigateTo(navItem.destination)
+                        homeNavController.navigateToTopLevelTab(navItem.destination)
                     },
                     content = navHostContent,
                 )
@@ -269,7 +280,7 @@ internal fun HomeScreen(
                     onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
                     onTabClick = { tab ->
                         tab.destination?.let { destination ->
-                            homeNavController.navigateTo(destination)
+                            homeNavController.navigateToTopLevelTab(destination)
                         }
                     },
                     content = navHostContent,

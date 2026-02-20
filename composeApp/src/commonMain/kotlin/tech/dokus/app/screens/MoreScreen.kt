@@ -29,7 +29,6 @@ import androidx.compose.ui.draw.alpha
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import tech.dokus.app.navigation.local.LocalHomeNavController
 import tech.dokus.app.navSectionsCombined
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
@@ -42,8 +41,6 @@ import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.SettingsDestination
-import tech.dokus.navigation.local.LocalNavController
-import tech.dokus.navigation.navigateTo
 
 /**
  * More screen for mobile navigation.
@@ -52,10 +49,10 @@ import tech.dokus.navigation.navigateTo
  */
 @Composable
 internal fun MoreScreen(
+    onNavigateHome: (NavigationDestination) -> Unit,
+    onNavigateRoot: (NavigationDestination) -> Unit,
     tokenManager: TokenManager = koinInject()
 ) {
-    val rootNavController = LocalNavController.current
-    val homeNavController = LocalHomeNavController.current ?: rootNavController
     val scrollState = rememberScrollState()
     val appModules = LocalAppModules.current
     val navSections = remember(appModules) { appModules.navSectionsCombined }
@@ -96,11 +93,11 @@ internal fun MoreScreen(
                     item = item,
                     onClick = {
                         if (!item.comingSoon) {
-                            val navController = when (resolveMoreNavigationTarget(item.destination)) {
-                                MoreNavigationTarget.Home -> homeNavController
-                                MoreNavigationTarget.Root -> rootNavController
-                            }
-                            navController.navigateTo(item.destination)
+                            dispatchMoreNavigation(
+                                destination = item.destination,
+                                onNavigateHome = onNavigateHome,
+                                onNavigateRoot = onNavigateRoot,
+                            )
                         }
                     }
                 )
@@ -111,16 +108,20 @@ internal fun MoreScreen(
     }
 }
 
-internal enum class MoreNavigationTarget {
-    Home,
-    Root,
+@Suppress("UNUSED_PARAMETER")
+internal fun dispatchMoreNavigation(
+    destination: NavigationDestination,
+    onNavigateHome: (NavigationDestination) -> Unit,
+    onNavigateRoot: (NavigationDestination) -> Unit,
+) {
+    onNavigateRoot(resolveRootMoreDestination(destination))
 }
 
-internal fun resolveMoreNavigationTarget(destination: NavigationDestination): MoreNavigationTarget {
+internal fun resolveRootMoreDestination(destination: NavigationDestination): NavigationDestination {
     return when (destination) {
-        is HomeDestination -> MoreNavigationTarget.Home
-        SettingsDestination.WorkspaceSettings -> MoreNavigationTarget.Home
-        else -> MoreNavigationTarget.Root
+        HomeDestination.WorkspaceDetails -> SettingsDestination.WorkspaceSettings
+        HomeDestination.Team -> SettingsDestination.TeamSettings
+        else -> destination
     }
 }
 

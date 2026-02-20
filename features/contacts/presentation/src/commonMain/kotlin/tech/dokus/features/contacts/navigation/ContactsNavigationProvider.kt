@@ -6,18 +6,18 @@ import androidx.navigation.toRoute
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.features.contacts.presentation.contacts.route.ContactDetailsRoute
 import tech.dokus.features.contacts.presentation.contacts.route.ContactFormRoute
+import tech.dokus.features.contacts.presentation.contacts.route.ContactsRoute
 import tech.dokus.features.contacts.presentation.contacts.route.CreateContactRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.ContactCreateOrigin
 import tech.dokus.navigation.destinations.ContactsDestination
+import tech.dokus.navigation.destinations.HomeDestination
 
-/**
- * Navigation provider for the Contacts feature.
- *
- * Routes handle navigation and side-effects for Contacts destinations.
- */
 internal object ContactsNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {
+        composable<HomeDestination.Contacts> {
+            ContactsRoute()
+        }
         composable<ContactsDestination.CreateContact> { backStackEntry ->
             val route = backStackEntry.toRoute<ContactsDestination.CreateContact>()
             CreateContactRoute(

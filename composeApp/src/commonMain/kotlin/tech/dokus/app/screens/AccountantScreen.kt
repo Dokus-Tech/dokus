@@ -34,7 +34,6 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.nav_accountant
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.app.navigation.local.resolveBackNavController
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
@@ -84,7 +83,7 @@ fun AccountantScreen(
 
     Scaffold(
         topBar = {
-            if (!isLargeScreen) PTopAppBar(Res.string.nav_accountant, navController = resolveBackNavController())
+            if (!isLargeScreen) PTopAppBar(Res.string.nav_accountant)
         }
     ) { contentPadding ->
         Column(

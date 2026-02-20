@@ -34,7 +34,7 @@ fun PTopAppBar(
         TopAppBar(
             navigationIcon = {
                 val showNav = navController != null &&
-                    navController.currentBackStackEntry != null &&
+                    navController.previousBackStackEntry != null &&
                     showBackButton
                 if (!showNav) return@TopAppBar
                 IconButton(

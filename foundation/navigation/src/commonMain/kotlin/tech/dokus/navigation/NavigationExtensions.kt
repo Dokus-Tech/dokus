@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavUri
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -31,9 +32,33 @@ inline fun <reified T : NavigationDestination> NavController.navigateTo(
     route: T,
     noinline builder: NavOptionsBuilder.() -> Unit = {},
 ) {
-    // Only dedupe singleton (data object) destinations; parameterized ones always navigate
-    if (route::class.simpleName != null && currentBackStackEntry?.destination?.hasRoute(route::class) == true) return
     navigate(route, builder)
+}
+
+data class TopLevelTabNavigationPolicy(
+    val saveState: Boolean,
+    val restoreState: Boolean,
+    val launchSingleTop: Boolean,
+)
+
+val defaultTopLevelTabNavigationPolicy = TopLevelTabNavigationPolicy(
+    saveState = true,
+    restoreState = true,
+    launchSingleTop = true,
+)
+
+@MainThread
+fun <T : NavigationDestination> NavController.navigateToTopLevelTab(
+    route: T,
+    policy: TopLevelTabNavigationPolicy = defaultTopLevelTabNavigationPolicy,
+) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) {
+            saveState = policy.saveState
+        }
+        launchSingleTop = policy.launchSingleTop
+        restoreState = policy.restoreState
+    }
 }
 
 @MainThread

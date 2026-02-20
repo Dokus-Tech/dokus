@@ -10,15 +10,14 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 /**
- * Verifies that `objectInstance` correctly distinguishes singleton (data object)
- * destinations from parameterized (data class) destinations.
+ * Verifies destination shape assumptions used by navigation policy tests.
  *
- * This matters because [navigateTo] uses `objectInstance != null` to decide
- * whether to dedupe: singletons are deduped, parameterized ones are not.
+ * `navigateTo` no longer performs class-based dedupe. Top-level dedupe/state-restore
+ * is now explicit via `navigateToTopLevelTab`.
  */
 class NavigationDestinationPolicyTest {
 
-    // -- Singleton destinations: should be deduped --
+    // -- Singleton destinations --
 
     @Test
     fun `HomeDestination members are singletons`() {
@@ -47,7 +46,7 @@ class NavigationDestinationPolicyTest {
         assertNotNull(AuthDestination.Register::class.objectInstance)
     }
 
-    // -- Parameterized destinations: should NOT be deduped --
+    // -- Parameterized destinations --
 
     @Test
     fun `ContactsDestination members are parameterized`() {

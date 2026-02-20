@@ -42,7 +42,6 @@ import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.app.navigation.local.resolveBackNavController
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -62,7 +61,7 @@ internal fun WorkspaceSettingsScreen(
     val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
         topBar = {
-            if (!isLargeScreen) PTopAppBar(Res.string.workspace_settings_title, navController = resolveBackNavController())
+            if (!isLargeScreen) PTopAppBar(Res.string.workspace_settings_title)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->

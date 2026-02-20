@@ -68,7 +68,6 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
-import tech.dokus.app.navigation.local.resolveBackNavController
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.badges.TierBadge
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
@@ -100,7 +99,7 @@ internal fun TeamSettingsScreen(
     val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
         topBar = {
-            if (!isLargeScreen) PTopAppBar(Res.string.team_settings_title, navController = resolveBackNavController())
+            if (!isLargeScreen) PTopAppBar(Res.string.team_settings_title)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->

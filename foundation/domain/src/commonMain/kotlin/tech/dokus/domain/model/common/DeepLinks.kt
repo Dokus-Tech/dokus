@@ -57,7 +57,11 @@ enum class KnownDeepLinks(val path: DeepLink, val pattern: DeepLink) {
     AuthVerifyEmail(
         DeepLink("auth/verify-email"),
         DeepLink("auth/verify-email?token={token}")
-    )
+    ),
+    DocumentReview(
+        DeepLink("documents/review"),
+        DeepLink("documents/review?documentId={documentId}")
+    ),
 }
 
 object DeepLinks {
@@ -141,6 +145,16 @@ object DeepLinks {
         val path = normalizeRoutePath(deepLink.path)
         if (!path.startsWith(KnownDeepLinks.AuthVerifyEmail.path.path)) return null
         return extractQueryParam(path, "token")
+    }
+
+    fun extractDocumentReviewId(deepLink: DeepLink): String? {
+        val path = normalizeRoutePath(deepLink.path)
+        val matchesKnownPath = path.startsWith(KnownDeepLinks.DocumentReview.path.path)
+        val matchesLegacyPath = path.startsWith("cashflow/document_review")
+        if (!matchesKnownPath && !matchesLegacyPath) return null
+
+        return extractQueryParam(path, "documentId")
+            ?: extractQueryParam(path, "id")
     }
 
     /**

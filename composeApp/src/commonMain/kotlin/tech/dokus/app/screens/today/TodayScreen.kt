@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.navigation.local.LocalHomeNavController
+import tech.dokus.app.navigation.local.LocalRootNavController
 import tech.dokus.app.viewmodel.TodayAction
 import tech.dokus.app.viewmodel.TodayContainer
 import tech.dokus.app.viewmodel.TodayIntent
@@ -65,6 +66,7 @@ import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.navigateToTopLevelTab
 import tech.dokus.foundation.aura.components.badges.DocumentSource as UiDocumentSource
 
 @Composable
@@ -72,7 +74,8 @@ internal fun TodayScreen(
     container: TodayContainer = container()
 ) {
     val navController = LocalNavController.current
-    val homeNavController = LocalHomeNavController.current
+    val homeNavController = LocalHomeNavController.current ?: navController
+    val rootNavController = LocalRootNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -93,11 +96,11 @@ internal fun TodayScreen(
             }
 
             TodayAction.NavigateToCashflow -> {
-                navController.navigateTo(CashFlowDestination.CashflowLedger())
+                homeNavController.navigateToTopLevelTab(HomeDestination.Cashflow)
             }
 
             TodayAction.NavigateToWorkspaceSelect -> {
-                navController.navigateTo(AuthDestination.WorkspaceSelect)
+                rootNavController.navigateTo(AuthDestination.WorkspaceSelect)
             }
 
             is TodayAction.ShowError -> {
@@ -152,7 +155,7 @@ internal fun TodayScreen(
                         )
                     },
                     onViewAllClick = {
-                        homeNavController?.navigateTo(HomeDestination.Documents)
+                        homeNavController.navigateToTopLevelTab(HomeDestination.Documents)
                     }
                 )
             }
