@@ -11,7 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
@@ -21,7 +21,6 @@ import tech.dokus.aura.resources.cashflow_discard_changes_message
 import tech.dokus.aura.resources.cashflow_discard_changes_title
 import tech.dokus.aura.resources.cashflow_document_confirmed
 import tech.dokus.aura.resources.cashflow_draft_saved
-import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -31,6 +30,7 @@ import tech.dokus.features.cashflow.presentation.documents.route.DOCUMENTS_REFRE
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
@@ -38,9 +38,7 @@ import tech.dokus.features.cashflow.presentation.review.components.DocumentRevie
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
-import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
-import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
@@ -53,20 +51,24 @@ import tech.dokus.navigation.destinations.ContactCreateOrigin
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
-import tech.dokus.navigation.replace
 
 private const val CONTACT_RESULT_KEY = "documentReview_contactId"
-private const val DOCUMENT_REVIEW_QUEUE_PAGE_SIZE = 100
 
 @Composable
 internal fun DocumentReviewRoute(
-    documentId: DocumentId,
-    container: DocumentReviewContainer = container(),
-    listContacts: ListContactsUseCase = koinInject(),
-    loadDocumentRecords: LoadDocumentRecordsUseCase = koinInject(),
+    route: CashFlowDestination.DocumentReview,
+    container: DocumentReviewContainer = container {
+        parametersOf(
+            DocumentId.parse(route.documentId),
+            route.toRouteContextOrNull(),
+        )
+    },
+    listContacts: ListContactsUseCase = org.koin.compose.koinInject(),
 ) {
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val initialDocumentId = remember(route.documentId) { DocumentId.parse(route.documentId) }
+
     fun markDocumentsRefreshRequired() {
         navController.previousBackStackEntry
             ?.savedStateHandle
@@ -89,7 +91,6 @@ internal fun DocumentReviewRoute(
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var contactsState by remember { mutableStateOf<DokusState<List<ContactDto>>>(DokusState.idle()) }
-    var queueDocuments by remember { mutableStateOf<List<DocQueueItem>>(emptyList()) }
 
     val successMessage = pendingSuccess?.let { success ->
         when (success) {
@@ -144,10 +145,6 @@ internal fun DocumentReviewRoute(
         }
     }
 
-    LaunchedEffect(documentId) {
-        container.store.intent(DocumentReviewIntent.LoadDocument(documentId))
-    }
-
     // Auto-poll every 3s while processing so the UI transitions when extraction completes/fails
     val shouldPoll = when (state) {
         is DocumentReviewState.AwaitingExtraction -> true
@@ -165,32 +162,6 @@ internal fun DocumentReviewRoute(
 
     val isLargeScreen = LocalScreenSize.isLarge
     val contentState = state as? DocumentReviewState.Content
-    val currentQueueItem = contentState
-        ?.takeIf { it.document.document.id == documentId }
-        ?.document
-        ?.toDocQueueItem()
-    val reviewQueueItems = remember(queueDocuments, currentQueueItem, documentId) {
-        mergeQueueItemsWithCurrent(
-            queueItems = queueDocuments,
-            currentItem = currentQueueItem,
-            currentDocumentId = documentId
-        )
-    }
-
-    LaunchedEffect(documentId) {
-        loadDocumentRecords(
-            page = 0,
-            pageSize = DOCUMENT_REVIEW_QUEUE_PAGE_SIZE,
-            filter = DocumentListFilter.All
-        ).fold(
-            onSuccess = { response ->
-                queueDocuments = response.items.map { it.toDocQueueItem() }
-            },
-            onFailure = {
-                queueDocuments = emptyList()
-            }
-        )
-    }
 
     // Load contacts when contact sheet opens
     LaunchedEffect(contentState?.showContactSheet) {
@@ -203,9 +174,9 @@ internal fun DocumentReviewRoute(
                 onFailure = { error ->
                     contactsState = DokusState.error(
                         exception = tech.dokus.domain.exceptions.DokusException.Unknown(error),
-                        retryHandler = { /* no retry */ }
+                        retryHandler = { /* no retry */ },
                     )
-                }
+                },
             )
         }
     }
@@ -231,7 +202,7 @@ internal fun DocumentReviewRoute(
                         prefillCompanyName = counterparty.name,
                         prefillVat = counterparty.vatNumber,
                         prefillAddress = counterparty.address,
-                        origin = ContactCreateOrigin.DocumentReview.name
+                        origin = ContactCreateOrigin.DocumentReview.name,
                     )
                 )
             },
@@ -239,14 +210,25 @@ internal fun DocumentReviewRoute(
         )
     }
 
-    if (isLargeScreen && reviewQueueItems.size > 1) {
+    val queueState = state.queueStateOrNull()
+    val showDesktopSplit = isLargeScreen && queueState?.items?.isNotEmpty() == true
+    val selectedDocumentId = state.selectedQueueDocumentIdOrDefault(initialDocumentId)
+
+    if (showDesktopSplit) {
         DocumentReviewDesktopSplit(
-            documents = reviewQueueItems,
-            selectedDocumentId = documentId,
-            onSelectDocument = { selectedDocumentId ->
-                if (selectedDocumentId != documentId) {
-                    navController.replace(CashFlowDestination.DocumentReview(selectedDocumentId.toString()))
+            documents = queueState?.items.orEmpty(),
+            selectedDocumentId = selectedDocumentId,
+            hasMore = queueState?.hasMore == true,
+            isLoadingMore = queueState?.isLoadingMore == true,
+            onSelectDocument = { selectedDocumentIdCandidate ->
+                if (selectedDocumentIdCandidate != selectedDocumentId) {
+                    container.store.intent(
+                        DocumentReviewIntent.SelectQueueDocument(selectedDocumentIdCandidate)
+                    )
                 }
+            },
+            onLoadMore = {
+                container.store.intent(DocumentReviewIntent.LoadMoreQueue)
             },
             onExit = {
                 markDocumentsRefreshRequired()
@@ -286,7 +268,7 @@ internal fun DocumentReviewRoute(
                         prefillCompanyName = counterparty.name,
                         prefillVat = counterparty.vatNumber,
                         prefillAddress = counterparty.address,
-                        origin = ContactCreateOrigin.DocumentReview.name
+                        origin = ContactCreateOrigin.DocumentReview.name,
                     )
                 )
             },
@@ -307,12 +289,12 @@ internal fun DocumentReviewRoute(
                     showDiscardDialog = false
                     container.store.intent(DocumentReviewIntent.ConfirmDiscardChanges)
                 },
-                isDestructive = true
+                isDestructive = true,
             ),
             secondaryAction = DokusDialogAction(
                 text = stringResource(Res.string.action_cancel),
-                onClick = { showDiscardDialog = false }
-            )
+                onClick = { showDiscardDialog = false },
+            ),
         )
     }
 
@@ -332,7 +314,7 @@ internal fun DocumentReviewRoute(
             },
             onDismiss = {
                 container.store.intent(DocumentReviewIntent.DismissFeedbackDialog)
-            }
+            },
         )
     }
 
@@ -351,17 +333,21 @@ internal fun DocumentReviewRoute(
             },
             onDismiss = {
                 container.store.intent(DocumentReviewIntent.DismissRejectDialog)
-            }
+            },
         )
     }
 }
 
-private fun mergeQueueItemsWithCurrent(
-    queueItems: List<DocQueueItem>,
-    currentItem: DocQueueItem?,
-    currentDocumentId: DocumentId,
-): List<DocQueueItem> {
-    if (queueItems.any { it.id == currentDocumentId }) return queueItems
-    if (currentItem == null) return queueItems
-    return listOf(currentItem) + queueItems
+private fun DocumentReviewState.queueStateOrNull(): DocumentReviewQueueState? = when (this) {
+    is DocumentReviewState.Loading -> queueState
+    is DocumentReviewState.AwaitingExtraction -> queueState
+    is DocumentReviewState.Content -> queueState
+    is DocumentReviewState.Error -> null
+}
+
+private fun DocumentReviewState.selectedQueueDocumentIdOrDefault(defaultDocumentId: DocumentId): DocumentId = when (this) {
+    is DocumentReviewState.Loading -> selectedQueueDocumentId ?: defaultDocumentId
+    is DocumentReviewState.AwaitingExtraction -> selectedQueueDocumentId ?: documentId
+    is DocumentReviewState.Content -> selectedQueueDocumentId ?: documentId
+    is DocumentReviewState.Error -> defaultDocumentId
 }

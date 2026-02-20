@@ -25,8 +25,7 @@ internal object CashflowNavigationProvider : NavigationProvider {
         }
         composable<CashFlowDestination.DocumentReview> { backStackEntry ->
             val route = backStackEntry.toRoute<CashFlowDestination.DocumentReview>()
-            val documentId = DocumentId.parse(route.documentId)
-            DocumentReviewRoute(documentId = documentId)
+            DocumentReviewRoute(route = route)
         }
         composable<CashFlowDestination.DocumentChat> { backStackEntry ->
             val route = backStackEntry.toRoute<CashFlowDestination.DocumentChat>()

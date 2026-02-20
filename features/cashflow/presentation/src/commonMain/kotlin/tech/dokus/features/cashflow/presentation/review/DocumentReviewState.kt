@@ -50,13 +50,18 @@ data class FeedbackDialogState(
 @Immutable
 sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 
-    data object Loading : DocumentReviewState
+    data class Loading(
+        val queueState: DocumentReviewQueueState? = null,
+        val selectedQueueDocumentId: DocumentId? = null,
+    ) : DocumentReviewState
 
     data class AwaitingExtraction(
         val documentId: DocumentId,
         val document: DocumentRecordDto,
         val previewUrl: String? = null,
         val previewState: DocumentPreviewState = DocumentPreviewState.Loading,
+        val queueState: DocumentReviewQueueState? = null,
+        val selectedQueueDocumentId: DocumentId? = null,
     ) : DocumentReviewState
 
     data class Content(
@@ -91,6 +96,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val showContactSheet: Boolean = false,
         val contactSheetSearchQuery: String = "",
         val contactSheetContacts: DokusState<List<ContactDto>> = DokusState.idle(),
+        val queueState: DocumentReviewQueueState? = null,
+        val selectedQueueDocumentId: DocumentId? = null,
     ) : DocumentReviewState {
 
         /** True when AI extraction is still in progress (Queued or Processing). */

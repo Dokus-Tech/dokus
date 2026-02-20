@@ -18,7 +18,13 @@ internal class DocumentReviewLoader(
 ) {
     suspend fun DocumentReviewCtx.handleLoadDocument(documentId: DocumentId) {
         logger.d { "Loading document: $documentId" }
-        updateState { DocumentReviewState.Loading }
+        val queueSnapshot = currentQueueSnapshot()
+        updateState {
+            DocumentReviewState.Loading(
+                queueState = queueSnapshot.queueState,
+                selectedQueueDocumentId = if (queueSnapshot.queueState != null) documentId else null
+            )
+        }
 
         fetchDocumentProcessing(documentId)
     }
@@ -56,6 +62,7 @@ internal class DocumentReviewLoader(
         documentId: DocumentId,
         document: DocumentRecordDto
     ) {
+        val queueSnapshot = currentQueueSnapshot()
         val draft = document.draft
         val extractedData = draft?.extractedData
         if (extractedData == null) {
@@ -70,17 +77,21 @@ internal class DocumentReviewLoader(
                         originalData = null,
                         previewUrl = document.document.downloadUrl,
                         previewState = DocumentPreviewState.Loading,
+                        queueState = queueSnapshot.queueState,
+                        selectedQueueDocumentId = if (queueSnapshot.queueState != null) documentId else null,
                     )
                 }
                 intent(DocumentReviewIntent.LoadPreviewPages)
                 return
             }
             updateState {
-                DocumentReviewState.AwaitingExtraction(
-                    documentId = documentId,
-                    document = document,
-                    previewUrl = document.document.downloadUrl
-                )
+                    DocumentReviewState.AwaitingExtraction(
+                        documentId = documentId,
+                        document = document,
+                        previewUrl = document.document.downloadUrl,
+                        queueState = queueSnapshot.queueState,
+                        selectedQueueDocumentId = if (queueSnapshot.queueState != null) documentId else null,
+                    )
             }
             intent(DocumentReviewIntent.LoadPreviewPages)
             return
@@ -121,6 +132,8 @@ internal class DocumentReviewLoader(
                 isDocumentConfirmed = isDocumentConfirmed,
                 isDocumentRejected = isDocumentRejected,
                 counterpartyIntent = counterpartyIntent,
+                queueState = queueSnapshot.queueState,
+                selectedQueueDocumentId = if (queueSnapshot.queueState != null) documentId else null,
             )
         }
 
@@ -180,5 +193,24 @@ internal class DocumentReviewLoader(
             }
         )
     }
+
+    private suspend fun DocumentReviewCtx.currentQueueSnapshot(): QueueSnapshot {
+        var snapshot = QueueSnapshot()
+        withState<DocumentReviewState.Loading, _> {
+            snapshot = QueueSnapshot(queueState = queueState, selectedQueueDocumentId = selectedQueueDocumentId)
+        }
+        withState<DocumentReviewState.AwaitingExtraction, _> {
+            snapshot = QueueSnapshot(queueState = queueState, selectedQueueDocumentId = selectedQueueDocumentId)
+        }
+        withState<DocumentReviewState.Content, _> {
+            snapshot = QueueSnapshot(queueState = queueState, selectedQueueDocumentId = selectedQueueDocumentId)
+        }
+        return snapshot
+    }
+
+    private data class QueueSnapshot(
+        val queueState: DocumentReviewQueueState? = null,
+        val selectedQueueDocumentId: DocumentId? = null,
+    )
 
 }

@@ -13,17 +13,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.aura.components.status.StatusDot
@@ -39,7 +45,10 @@ private val QueuePaneWidth = 248.dp
 internal fun DocumentReviewDesktopSplit(
     documents: List<DocQueueItem>,
     selectedDocumentId: DocumentId,
+    hasMore: Boolean,
+    isLoadingMore: Boolean,
     onSelectDocument: (DocumentId) -> Unit,
+    onLoadMore: () -> Unit,
     onExit: () -> Unit,
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier,
@@ -58,7 +67,10 @@ internal fun DocumentReviewDesktopSplit(
             DocumentReviewQueuePane(
                 documents = documents,
                 selectedDocumentId = selectedDocumentId,
+                hasMore = hasMore,
+                isLoadingMore = isLoadingMore,
                 onSelectDocument = onSelectDocument,
+                onLoadMore = onLoadMore,
                 onExit = onExit,
             )
         }
@@ -77,11 +89,26 @@ internal fun DocumentReviewDesktopSplit(
 private fun DocumentReviewQueuePane(
     documents: List<DocQueueItem>,
     selectedDocumentId: DocumentId,
+    hasMore: Boolean,
+    isLoadingMore: Boolean,
     onSelectDocument: (DocumentId) -> Unit,
+    onLoadMore: () -> Unit,
     onExit: () -> Unit,
 ) {
+    val listState = rememberLazyListState()
     val selectedIndex = documents.indexOfFirst { it.id == selectedDocumentId }
     val positionText = if (selectedIndex >= 0) "${selectedIndex + 1}/${documents.size}" else ""
+
+    LaunchedEffect(documents.size, hasMore, isLoadingMore) {
+        if (documents.isEmpty()) return@LaunchedEffect
+        snapshotFlow {
+            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            hasMore && !isLoadingMore && lastVisibleIndex >= (documents.lastIndex - 2)
+        }
+            .distinctUntilChanged()
+            .filter { it }
+            .collect { onLoadMore() }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -107,6 +134,7 @@ private fun DocumentReviewQueuePane(
         HorizontalDivider()
 
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),

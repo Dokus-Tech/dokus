@@ -10,6 +10,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.navigation.destinations.CashFlowDestination
 
 /**
  * Contract for the Documents screen.
@@ -104,7 +105,13 @@ sealed interface DocumentsIntent : MVIIntent {
 sealed interface DocumentsAction : MVIAction {
 
     /** Navigate to document review screen */
-    data class NavigateToDocumentReview(val documentId: DocumentId) : DocumentsAction
+    data class NavigateToDocumentReview(
+        val documentId: DocumentId,
+        val sourceFilter: DocumentFilter,
+        val sourceSearch: String?,
+        val sourceSort: CashFlowDestination.DocumentReviewSourceSort =
+            CashFlowDestination.DocumentReviewSourceSort.NewestFirst,
+    ) : DocumentsAction
 
     /** Show error message */
     data class ShowError(val error: DokusException) : DocumentsAction

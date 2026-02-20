@@ -31,6 +31,7 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContaine
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.documents.screen.DocumentsScreen
+import tech.dokus.features.cashflow.presentation.review.route.toRouteFilterToken
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
@@ -71,7 +72,7 @@ internal fun DocumentsRoute(
     val state by documentsContainer.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is DocumentsAction.NavigateToDocumentReview -> {
-                navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId.toString()))
+                navController.navigateTo(toDocumentReviewDestination(action))
             }
             is DocumentsAction.ShowError -> {
                 pendingError = action.error
@@ -208,5 +209,16 @@ internal fun DocumentsRoute(
     AppDownloadQrDialog(
         isVisible = isQrDialogVisible,
         onDismiss = { isQrDialogVisible = false }
+    )
+}
+
+internal fun toDocumentReviewDestination(
+    action: DocumentsAction.NavigateToDocumentReview,
+): CashFlowDestination.DocumentReview {
+    return CashFlowDestination.DocumentReview(
+        documentId = action.documentId.toString(),
+        sourceFilter = action.sourceFilter.toRouteFilterToken(),
+        sourceSearch = action.sourceSearch,
+        sourceSort = action.sourceSort.token,
     )
 }

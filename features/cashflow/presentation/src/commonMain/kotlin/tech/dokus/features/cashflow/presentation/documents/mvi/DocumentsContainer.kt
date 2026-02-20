@@ -233,7 +233,13 @@ internal class DocumentsContainer(
     }
 
     private suspend fun DocumentsCtx.handleOpenDocument(documentId: tech.dokus.domain.ids.DocumentId) {
-        action(DocumentsAction.NavigateToDocumentReview(documentId))
+        action(
+            DocumentsAction.NavigateToDocumentReview(
+                documentId = documentId,
+                sourceFilter = currentFilter,
+                sourceSearch = currentSearchQuery.takeIf { it.isNotBlank() },
+            )
+        )
     }
 
     private fun buildPaginationState(): PaginationState<DocumentRecordDto> {

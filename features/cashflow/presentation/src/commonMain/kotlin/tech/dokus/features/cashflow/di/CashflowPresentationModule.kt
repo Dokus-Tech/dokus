@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.di
 
 import org.koin.dsl.module
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.mvi.AddDocumentAction
 import tech.dokus.features.cashflow.mvi.AddDocumentContainer
 import tech.dokus.features.cashflow.mvi.AddDocumentIntent
@@ -9,6 +10,12 @@ import tech.dokus.features.cashflow.mvi.CreateInvoiceAction
 import tech.dokus.features.cashflow.mvi.CreateInvoiceContainer
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
+import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
+import tech.dokus.features.cashflow.presentation.chat.ChatAction
+import tech.dokus.features.cashflow.presentation.chat.ChatContainer
+import tech.dokus.features.cashflow.presentation.chat.ChatIntent
+import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
@@ -17,12 +24,6 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerAction
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerContainer
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
-import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
-import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
-import tech.dokus.features.cashflow.presentation.chat.ChatAction
-import tech.dokus.features.cashflow.presentation.chat.ChatContainer
-import tech.dokus.features.cashflow.presentation.chat.ChatIntent
-import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationAction
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationContainer
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
@@ -30,6 +31,7 @@ import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationSt
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewRouteContext
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.app.mvi.container
 
@@ -54,7 +56,7 @@ val cashflowViewModelModule = module {
             submitInvoice = get()
         )
     }
-    container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
+    container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, routeContext: DocumentReviewRouteContext?) ->
         DocumentReviewContainer(
             getDocumentRecord = get(),
             updateDocumentDraft = get(),
@@ -64,7 +66,10 @@ val cashflowViewModelModule = module {
             reprocessDocument = get(),
             resolveDocumentMatchReview = get(),
             getDocumentPages = get(),
-            getContact = get()
+            getContact = get(),
+            loadDocumentRecords = get(),
+            initialDocumentId = initialDocumentId,
+            routeContext = routeContext,
         )
     }
     container<ChatContainer, ChatState, ChatIntent, ChatAction> {
@@ -80,8 +85,7 @@ val cashflowViewModelModule = module {
             loadDocumentRecords = get()
         )
     }
-    container<CashflowLedgerContainer, CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> {
-            (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
+    container<CashflowLedgerContainer, CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> { (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
         CashflowLedgerContainer(
             loadCashflowEntries = get(),
             getCashflowOverview = get(),

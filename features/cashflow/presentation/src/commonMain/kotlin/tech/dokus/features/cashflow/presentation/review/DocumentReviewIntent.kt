@@ -15,6 +15,8 @@ sealed interface DocumentReviewIntent : MVIIntent {
 
     data class LoadDocument(val documentId: DocumentId) : DocumentReviewIntent
     data object Refresh : DocumentReviewIntent
+    data class SelectQueueDocument(val documentId: DocumentId) : DocumentReviewIntent
+    data object LoadMoreQueue : DocumentReviewIntent
 
     data object LoadPreviewPages : DocumentReviewIntent
     data class LoadMorePages(val maxPages: Int) : DocumentReviewIntent
