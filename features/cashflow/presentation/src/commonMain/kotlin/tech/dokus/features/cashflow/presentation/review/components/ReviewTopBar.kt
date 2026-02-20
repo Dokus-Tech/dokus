@@ -39,7 +39,7 @@ import tech.dokus.aura.resources.state_confirming
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -94,7 +94,7 @@ internal fun ReviewTopBar(
                         content.isBindingContact ||
                         content.isRejecting
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // "Something's wrong" text link (replaces Reject button)
@@ -140,7 +140,7 @@ internal fun ReviewTopBar(
         )
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
-            thickness = Constrains.Stroke.thin
+            thickness = Constraints.Stroke.thin
         )
     }
 }
@@ -160,7 +160,7 @@ private fun UnderstandingLine(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         // Amount
         Text(
@@ -190,7 +190,7 @@ private fun UnderstandingLine(
                         .size(StatusDotSize)
                         .background(MaterialTheme.colorScheme.statusWarning, CircleShape)
                 )
-                Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                Spacer(Modifier.width(Constraints.Spacing.xSmall))
                 Text(
                     text = stringResource(Res.string.cashflow_needs_input),
                     style = MaterialTheme.typography.bodyMedium,
@@ -204,7 +204,7 @@ private fun UnderstandingLine(
                         .size(StatusDotSize)
                         .background(MaterialTheme.colorScheme.statusWarning.copy(alpha = 0.6f), CircleShape)
                 )
-                Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                Spacer(Modifier.width(Constraints.Spacing.xSmall))
                 Text(
                     text = stringResource(Res.string.cashflow_needs_attention),
                     style = MaterialTheme.typography.bodyMedium,

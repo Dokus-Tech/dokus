@@ -23,7 +23,7 @@ import tech.dokus.aura.resources.cashflow_analysis_retry
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Calm failure banner shown when AI extraction fails.
@@ -50,17 +50,17 @@ internal fun AnalysisFailedBanner(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Constrains.Spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                .padding(Constraints.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Info,
                     contentDescription = null,
-                    modifier = Modifier.size(Constrains.IconSize.medium),
+                    modifier = Modifier.size(Constraints.IconSize.medium),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
@@ -80,7 +80,7 @@ internal fun AnalysisFailedBanner(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
                 PPrimaryButton(
                     text = stringResource(Res.string.cashflow_analysis_retry),

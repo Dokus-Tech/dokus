@@ -67,24 +67,24 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.fields.PTextFieldFree
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // UI dimension constants
-private val ContentPadding = Constrains.Spacing.large
-private val SpacingSmall = Constrains.Spacing.small
-private val SpacingMedium = Constrains.Spacing.medium
-private val SpacingDefault = Constrains.Spacing.large
-private val DragHandlePadding = Constrains.Spacing.medium
-private val DragHandleWidth = Constrains.Spacing.xxLarge
-private val DragHandleHeight = Constrains.Spacing.xSmall
-private val DragHandleCornerRadius = Constrains.Spacing.xxSmall
-private val IconSizeSmall = Constrains.IconSize.xSmall
-private val IconSizeMedium = Constrains.IconSize.small
-private val IconSizeLarge = Constrains.IconSize.xLarge
-private val CardCornerRadius = Constrains.Spacing.small
-private val ButtonSpacing = Constrains.Spacing.xSmall
-private val NoteItemPadding = Constrains.Spacing.medium
-private val ContentMinHeight = Constrains.SearchField.minWidth
+private val ContentPadding = Constraints.Spacing.large
+private val SpacingSmall = Constraints.Spacing.small
+private val SpacingMedium = Constraints.Spacing.medium
+private val SpacingDefault = Constraints.Spacing.large
+private val DragHandlePadding = Constraints.Spacing.medium
+private val DragHandleWidth = Constraints.Spacing.xxLarge
+private val DragHandleHeight = Constraints.Spacing.xSmall
+private val DragHandleCornerRadius = Constraints.Spacing.xxSmall
+private val IconSizeSmall = Constraints.IconSize.xSmall
+private val IconSizeMedium = Constraints.IconSize.small
+private val IconSizeLarge = Constraints.IconSize.xLarge
+private val CardCornerRadius = Constraints.Spacing.small
+private val ButtonSpacing = Constraints.Spacing.xSmall
+private val NoteItemPadding = Constraints.Spacing.medium
+private val ContentMinHeight = Constraints.SearchField.minWidth
 
 // Alpha constants
 private const val DragHandleAlpha = 0.4f
@@ -593,7 +593,7 @@ private fun NotesBottomSheetDeleteConfirmation(
         },
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 Text(
                     text = stringResource(Res.string.contacts_delete_note_confirm),

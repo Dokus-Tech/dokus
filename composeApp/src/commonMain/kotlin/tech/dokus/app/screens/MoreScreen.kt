@@ -35,7 +35,7 @@ import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.coming_soon
 import tech.dokus.foundation.app.local.LocalAppModules
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.navigation.destinations.HomeDestination
@@ -49,7 +49,6 @@ import tech.dokus.navigation.destinations.SettingsDestination
  */
 @Composable
 internal fun MoreScreen(
-    onNavigateHome: (NavigationDestination) -> Unit,
     onNavigateRoot: (NavigationDestination) -> Unit,
     tokenManager: TokenManager = koinInject()
 ) {
@@ -82,11 +81,11 @@ internal fun MoreScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(Constrains.Spacing.large)
+            .padding(Constraints.Spacing.large)
     ) {
         filteredSections.forEach { section ->
             MoreSectionHeader(section = section)
-            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
             section.items.forEach { item ->
                 MoreNavItem(
@@ -95,7 +94,6 @@ internal fun MoreScreen(
                         if (!item.comingSoon) {
                             dispatchMoreNavigation(
                                 destination = item.destination,
-                                onNavigateHome = onNavigateHome,
                                 onNavigateRoot = onNavigateRoot,
                             )
                         }
@@ -103,15 +101,13 @@ internal fun MoreScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
         }
     }
 }
 
-@Suppress("UNUSED_PARAMETER")
 internal fun dispatchMoreNavigation(
     destination: NavigationDestination,
-    onNavigateHome: (NavigationDestination) -> Unit,
     onNavigateRoot: (NavigationDestination) -> Unit,
 ) {
     onNavigateRoot(resolveRootMoreDestination(destination))
@@ -131,7 +127,7 @@ private fun MoreSectionHeader(section: NavSection) {
         text = stringResource(section.titleRes),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(vertical = Constrains.Spacing.small)
+        modifier = Modifier.padding(vertical = Constraints.Spacing.small)
     )
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
@@ -148,7 +144,7 @@ private fun MoreNavItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = !item.comingSoon, onClick = onClick)
-            .padding(vertical = Constrains.Spacing.medium)
+            .padding(vertical = Constraints.Spacing.medium)
             .alpha(alpha),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
@@ -156,10 +152,10 @@ private fun MoreNavItem(
         Icon(
             painter = painterResource(item.iconRes),
             contentDescription = null,
-            modifier = Modifier.size(Constrains.IconSize.medium),
+            modifier = Modifier.size(Constraints.IconSize.medium),
             tint = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(modifier = Modifier.width(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.medium))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(item.titleRes),

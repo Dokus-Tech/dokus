@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import tech.dokus.foundation.aura.components.PBackButton
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Section header with optional right-side action.
@@ -39,11 +39,11 @@ fun SectionTitle(
         horizontalArrangement = arrangement,
         modifier = modifier
             .fillMaxWidth()
-            .then(Modifier.padding(bottom = Constrains.Spacing.medium)),
+            .then(Modifier.padding(bottom = Constraints.Spacing.medium)),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
             if (onBackPress != null) {
                 PBackButton(onBackPress = onBackPress)

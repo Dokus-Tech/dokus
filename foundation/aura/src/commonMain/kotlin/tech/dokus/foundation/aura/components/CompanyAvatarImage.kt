@@ -22,7 +22,7 @@ import coil3.compose.SubcomposeAsyncImage
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.company_avatar_content_description
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import kotlin.math.abs
 
 // Avatar font sizes for fallback display
@@ -39,14 +39,14 @@ private const val AvatarColorLightness = 0.7f
 
 /**
  * Size variants for company avatars.
- * References centralized values from [Constrains.AvatarSize].
+ * References centralized values from [Constraints.AvatarSize].
  */
 enum class AvatarSize(val value: Dp) {
-    ExtraSmall(Constrains.AvatarSize.extraSmall),
-    Small(Constrains.AvatarSize.small),
-    Medium(Constrains.AvatarSize.medium),
-    Large(Constrains.AvatarSize.large),
-    ExtraLarge(Constrains.AvatarSize.extraLarge)
+    ExtraSmall(Constraints.AvatarSize.extraSmall),
+    Small(Constraints.AvatarSize.small),
+    Medium(Constraints.AvatarSize.medium),
+    Large(Constraints.AvatarSize.large),
+    ExtraLarge(Constraints.AvatarSize.extraLarge)
 }
 
 /**

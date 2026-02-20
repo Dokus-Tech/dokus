@@ -33,7 +33,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.presentation.review.components.details.ContactBlock
 import tech.dokus.features.cashflow.presentation.review.components.details.MicroLabel
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 
 // UI dimension constants
@@ -85,13 +85,13 @@ fun ContactSelectionSection(
                 shape = RoundedCornerShape(ErrorSurfaceCornerRadius),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = Constrains.Spacing.small),
+                    .padding(bottom = Constraints.Spacing.small),
             ) {
                 Text(
                     text = validationError.localized,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.padding(Constrains.Spacing.small),
+                    modifier = Modifier.padding(Constraints.Spacing.small),
                 )
             }
         }
@@ -124,7 +124,7 @@ private fun ContactLoadingState(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Constrains.Spacing.medium),
+            .padding(Constraints.Spacing.medium),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -132,7 +132,7 @@ private fun ContactLoadingState(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             DokusLoader(size = DokusLoaderSize.Small)
-            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.small))
             Text(
                 text = stringResource(Res.string.cashflow_saving_contact),
                 style = MaterialTheme.typography.bodyMedium,

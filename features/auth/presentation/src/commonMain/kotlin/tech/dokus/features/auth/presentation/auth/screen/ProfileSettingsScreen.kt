@@ -101,7 +101,6 @@ fun ProfileSettingsContent(
     onResetToCloud: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
-    @Suppress("UNUSED_PARAMETER") contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     Column(
         modifier = modifier

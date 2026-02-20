@@ -27,9 +27,14 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.aura.components.background.AmbientBackground
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.document_detail_confirmed
+import tech.dokus.aura.resources.document_detail_needs_review
+import tech.dokus.aura.resources.document_detail_vendor_fallback
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.glass
 import tech.dokus.foundation.aura.style.glassBorder
 import tech.dokus.foundation.aura.style.glassContent
@@ -51,6 +56,7 @@ internal fun DocumentDetailMode(
     selectedDocumentId: DocumentId,
     onSelectDocument: (DocumentId) -> Unit,
     onExit: () -> Unit,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -68,7 +74,7 @@ internal fun DocumentDetailMode(
         Row(
             Modifier
                 .fillMaxSize()
-                .padding(Constrains.Shell.padding)
+                .padding(Constraints.Shell.padding)
         ) {
             // LEFT: Queue window — JSX: width 220, glass background, borderRadius 16
             Surface(
@@ -94,7 +100,7 @@ internal fun DocumentDetailMode(
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start = Constrains.Shell.gap),
+                    .padding(start = Constraints.Shell.gap),
                 color = colorScheme.glassContent,
                 shape = MaterialTheme.shapes.large,
                 border = BorderStroke(1.dp, colorScheme.glassBorder),
@@ -104,7 +110,7 @@ internal fun DocumentDetailMode(
                 Column(modifier = Modifier.fillMaxSize()) {
                     // Title bar — JSX: padding "10px 18px", borderBottom, background glassHeader
                     DetailModeTitleBar(
-                        vendorName = selectedDoc?.vendorName ?: "\u2014",
+                        vendorName = selectedDoc?.vendorName ?: stringResource(Res.string.document_detail_vendor_fallback),
                         amount = selectedDoc?.amount ?: "",
                         isConfirmed = selectedDoc?.isConfirmed ?: false,
                     )
@@ -175,7 +181,10 @@ private fun DetailModeTitleBar(
                 size = 5.dp,
             )
             Text(
-                text = if (isConfirmed) "Confirmed" else "Needs review",
+                text = stringResource(
+                    if (isConfirmed) Res.string.document_detail_confirmed
+                    else Res.string.document_detail_needs_review
+                ),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = statusColor,

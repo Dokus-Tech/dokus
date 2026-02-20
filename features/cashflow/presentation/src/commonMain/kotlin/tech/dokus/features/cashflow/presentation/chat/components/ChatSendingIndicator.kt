@@ -18,7 +18,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_thinking
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun SendingIndicator(
@@ -36,10 +36,10 @@ internal fun SendingIndicator(
         ) {
             Row(
                 modifier = Modifier.padding(
-                    horizontal = Constrains.Spacing.medium,
-                    vertical = Constrains.Spacing.small
+                    horizontal = Constraints.Spacing.medium,
+                    vertical = Constraints.Spacing.small
                 ),
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 DokusLoader(size = DokusLoaderSize.Small)

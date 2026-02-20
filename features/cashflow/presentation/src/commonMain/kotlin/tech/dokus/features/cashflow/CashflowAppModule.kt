@@ -23,6 +23,7 @@ import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.ShellTopBarDefault
+import tech.dokus.navigation.NavSectionIds
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.HomeDestination
 
@@ -37,7 +38,7 @@ object CashflowAppModule : AppModule {
     override val homeNavigationProvider: NavigationProvider = CashflowHomeNavigationProvider
     override val navGroups: List<ModuleNavGroup> = listOf(
         ModuleNavGroup(
-            sectionId = "accounting",
+            sectionId = NavSectionIds.ACCOUNTING,
             sectionTitle = Res.string.nav_section_accounting,
             sectionIcon = Res.drawable.cashflow,
             sectionOrder = 0,
@@ -54,7 +55,7 @@ object CashflowAppModule : AppModule {
             ),
         ),
         ModuleNavGroup(
-            sectionId = "tomorrow",
+            sectionId = NavSectionIds.TOMORROW,
             sectionTitle = Res.string.nav_tomorrow,
             sectionIcon = Res.drawable.ml,
             sectionOrder = 2,

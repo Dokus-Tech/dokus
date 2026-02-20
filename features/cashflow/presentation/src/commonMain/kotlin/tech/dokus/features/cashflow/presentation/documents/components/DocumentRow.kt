@@ -49,7 +49,7 @@ import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.text.Amt
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
@@ -76,7 +76,7 @@ internal fun DocumentTableHeaderRow(
     DokusTableRow(
         modifier = modifier,
         minHeight = 40.dp,
-        contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
+        contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
     ) {
         DokusTableCell(DocumentTableColumns.Vendor) {
             HeaderLabel(text = stringResource(Res.string.documents_table_counterparty))
@@ -137,7 +137,7 @@ internal fun DocumentTableRow(
         } else {
             MaterialTheme.colorScheme.surface.copy(alpha = 0f)
         },
-        contentPadding = PaddingValues(horizontal = Constrains.Spacing.large)
+        contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
     ) {
         // Vendor: dot + name
         DokusTableCell(DocumentTableColumns.Vendor) {

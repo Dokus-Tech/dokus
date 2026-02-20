@@ -36,7 +36,7 @@ import tech.dokus.features.contacts.presentation.contacts.components.autocomplet
 import tech.dokus.features.contacts.presentation.contacts.components.autocomplete.SearchLimit
 import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
 import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.platform.Logger
 
 /**
@@ -163,7 +163,7 @@ fun ContactAutocomplete(
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = Constrains.Spacing.small)
+            modifier = Modifier.padding(bottom = Constraints.Spacing.small)
         )
 
         // Input field with dropdown
@@ -242,7 +242,7 @@ fun ContactAutocomplete(
                 text = errorMessage,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = Constrains.Spacing.xSmall)
+                modifier = Modifier.padding(top = Constraints.Spacing.xSmall)
             )
         }
     }

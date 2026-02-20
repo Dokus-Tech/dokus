@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * A settings list item with icon, text, and optional selection state.
@@ -41,7 +41,7 @@ fun ListSettingsItem(
                 if (isSelected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface.copy(alpha = 0f)
             )
             .clickable { onClick() }
-            .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.small),
+            .padding(horizontal = Constraints.Spacing.large, vertical = Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
@@ -53,9 +53,9 @@ fun ListSettingsItem(
             } else {
                 MaterialTheme.colorScheme.onSurface
             },
-            modifier = Modifier.size(Constrains.IconSize.small)
+            modifier = Modifier.size(Constraints.IconSize.small)
         )
-        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.small))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,

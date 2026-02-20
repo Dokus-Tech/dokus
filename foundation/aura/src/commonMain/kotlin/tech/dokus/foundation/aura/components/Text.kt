@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 
 object PTitleDefaults {
@@ -24,7 +24,7 @@ fun PTitle(
 }
 
 @Composable
-fun PErrorText(text: String, modifier: Modifier = Modifier.padding(all = Constrains.Spacing.large)) {
+fun PErrorText(text: String, modifier: Modifier = Modifier.padding(all = Constraints.Spacing.large)) {
     Text(
         text,
         modifier = modifier,
@@ -34,6 +34,6 @@ fun PErrorText(text: String, modifier: Modifier = Modifier.padding(all = Constra
 }
 
 @Composable
-fun PErrorText(exception: DokusException, modifier: Modifier = Modifier.padding(all = Constrains.Spacing.large)) {
+fun PErrorText(exception: DokusException, modifier: Modifier = Modifier.padding(all = Constraints.Spacing.large)) {
     PErrorText(exception.localized, modifier)
 }

@@ -20,7 +20,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
@@ -103,7 +103,7 @@ fun SettingsRow(
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
             if (trailing != null) {
                 trailing()
@@ -130,7 +130,7 @@ fun SettingsRow(
 
     if (showDivider) {
         HorizontalDivider(
-            thickness = Constrains.Stroke.thin,
+            thickness = Constraints.Stroke.thin,
             color = MaterialTheme.colorScheme.outlineVariant,
         )
     }

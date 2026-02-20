@@ -21,7 +21,7 @@ import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Small square tile showing a company's avatar (or initial if no avatar) with its name below.
@@ -50,11 +50,11 @@ fun CompanyTile(
                 initial = initial,
                 size = AvatarSize.Medium,
                 shape = AvatarShape.RoundedSquare,
-                modifier = Modifier.size(Constrains.AvatarSize.tile)
+                modifier = Modifier.size(Constraints.AvatarSize.tile)
             )
         }
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
         Text(
             text = label,
             color = MaterialTheme.colorScheme.onBackground,
@@ -78,7 +78,7 @@ fun AddCompanyTile(
             onClick = onClick,
         ) {
             Box(
-                modifier = Modifier.size(Constrains.AvatarSize.tile),
+                modifier = Modifier.size(Constraints.AvatarSize.tile),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -89,7 +89,7 @@ fun AddCompanyTile(
             }
         }
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
         Text(
             text = label,
             color = MaterialTheme.colorScheme.onBackground,

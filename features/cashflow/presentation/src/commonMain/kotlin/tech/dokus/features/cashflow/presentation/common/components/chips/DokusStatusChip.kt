@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun DokusStatusChip(
@@ -23,7 +23,7 @@ internal fun DokusStatusChip(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(Constrains.CornerRadius.badge))
+            .clip(RoundedCornerShape(Constraints.CornerRadius.badge))
             .background(color.copy(alpha = 0.2f))
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {

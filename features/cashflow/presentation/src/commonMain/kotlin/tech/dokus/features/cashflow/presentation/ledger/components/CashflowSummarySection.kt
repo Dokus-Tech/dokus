@@ -30,7 +30,6 @@ import tech.dokus.aura.resources.currency_symbol_eur
 import tech.dokus.domain.Money
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowSummary
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
-import tech.dokus.features.cashflow.presentation.ledger.mvi.BalanceState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.charts.SparkBars
 import tech.dokus.foundation.aura.components.text.DokusLabel
@@ -46,10 +45,8 @@ import tech.dokus.foundation.aura.style.textMuted
 @Composable
 internal fun CashflowSummarySection(
     summary: CashflowSummary,
-    balance: BalanceState?,
     viewMode: CashflowViewMode,
     modifier: Modifier = Modifier,
-    @Suppress("UNUSED_PARAMETER") isCompressed: Boolean = false,
     sparkData: List<Double> = emptyList(),
 ) {
     val currencySymbol = stringResource(Res.string.currency_symbol_eur)

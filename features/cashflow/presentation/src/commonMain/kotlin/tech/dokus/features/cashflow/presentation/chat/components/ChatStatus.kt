@@ -16,7 +16,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_loading
 import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun LoadingContent(contentPadding: PaddingValues) {
@@ -28,7 +28,7 @@ internal fun LoadingContent(contentPadding: PaddingValues) {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
         ) {
             DokusLoader()
             Text(
@@ -49,7 +49,7 @@ internal fun ErrorContent(
         modifier = androidx.compose.ui.Modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .padding(Constrains.Spacing.large),
+            .padding(Constraints.Spacing.large),
         contentAlignment = Alignment.Center
     ) {
         DokusErrorContent(

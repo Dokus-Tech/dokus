@@ -27,7 +27,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_select_date
 import tech.dokus.foundation.aura.components.PDatePickerDialog
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 fun PDateField(
@@ -42,7 +42,7 @@ fun PDateField(
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
         Text(
             text = label,
@@ -55,14 +55,14 @@ fun PDateField(
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.small)
                 .border(
-                    width = Constrains.Stroke.thin,
+                    width = Constraints.Stroke.thin,
                     color = MaterialTheme.colorScheme.outline,
                     shape = MaterialTheme.shapes.small,
                 )
                 .clickable(enabled = enabled) { showDatePicker = true }
                 .padding(
-                    horizontal = Constrains.Spacing.large,
-                    vertical = Constrains.Spacing.medium,
+                    horizontal = Constraints.Spacing.large,
+                    vertical = Constraints.Spacing.medium,
                 ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -79,7 +79,7 @@ fun PDateField(
             Icon(
                 imageVector = FeatherIcons.Calendar,
                 contentDescription = placeholder,
-                modifier = Modifier.size(Constrains.IconSize.small),
+                modifier = Modifier.size(Constraints.IconSize.small),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

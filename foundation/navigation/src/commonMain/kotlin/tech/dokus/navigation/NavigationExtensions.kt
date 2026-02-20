@@ -32,6 +32,7 @@ inline fun <reified T : NavigationDestination> NavController.navigateTo(
     route: T,
     noinline builder: NavOptionsBuilder.() -> Unit = {},
 ) {
+    if (currentBackStackEntry?.destination?.hasRoute<T>() == true) return
     navigate(route, builder)
 }
 

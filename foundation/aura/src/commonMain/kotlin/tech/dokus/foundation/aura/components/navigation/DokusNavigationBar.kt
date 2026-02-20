@@ -15,7 +15,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.navigation.destinations.route
@@ -41,7 +41,7 @@ fun DokusNavigationBar(
                     Icon(
                         painter = painterResource(tab.iconRes),
                         contentDescription = stringResource(tab.titleRes),
-                        modifier = Modifier.size(Constrains.IconSize.small)
+                        modifier = Modifier.size(Constraints.IconSize.small)
                     )
                 },
                 label = {

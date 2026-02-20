@@ -59,7 +59,7 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // Desktop layout constants
 private val DesktopHorizontalPadding = 32.dp
@@ -257,7 +257,7 @@ fun ContactSelectionPanel(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(Constrains.Spacing.medium)
+                            .padding(Constraints.Spacing.medium)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -279,7 +279,7 @@ fun ContactSelectionPanel(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+                        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
                         ContactAutocomplete(
                             value = searchQuery,
@@ -292,7 +292,7 @@ fun ContactSelectionPanel(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+                        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
                         Text(
                             text = stringResource(Res.string.invoice_contact_search_help),
@@ -303,7 +303,7 @@ fun ContactSelectionPanel(
                         )
 
                         if (selectedContact != null) {
-                            Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+                            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
                             Text(
                                 text = stringResource(Res.string.invoice_selected_contact),
                                 style = MaterialTheme.typography.titleSmall,

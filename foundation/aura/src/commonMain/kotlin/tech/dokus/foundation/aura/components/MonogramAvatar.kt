@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +48,7 @@ fun MonogramAvatar(
     modifier: Modifier = Modifier,
     fontSize: TextUnit = TextUnit.Unspecified,
     selected: Boolean = false,
+    contentDescription: String? = null,
 ) {
     val shape = RoundedCornerShape(radius)
     val borderWidth = if (size > LargeSizeThreshold) LargeBorderWidth else SmallBorderWidth
@@ -69,8 +72,14 @@ fun MonogramAvatar(
         fontSize
     }
 
+    val semanticsModifier = if (contentDescription != null) {
+        modifier.semantics { this.contentDescription = contentDescription }
+    } else {
+        modifier
+    }
+
     Box(
-        modifier = modifier
+        modifier = semanticsModifier
             .size(size)
             .clip(shape)
             .background(background, shape)

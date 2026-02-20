@@ -74,7 +74,7 @@ import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -84,18 +84,18 @@ private const val SlideAnimationDurationMs = 300
 private const val ScrimAlpha = 0.32f
 
 // Sizing constants
-private val SidebarWidth = Constrains.centeredContentMaxWidth
-private val ContentPadding = Constrains.Spacing.large
-private val ItemSpacing = Constrains.Spacing.xSmall
-private val ListItemPadding = Constrains.Spacing.medium
-private val ListItemSpacing = Constrains.Spacing.medium
-private val ContactIconSize = Constrains.IconSize.medium
-private val SelectedIndicatorSize = Constrains.IconSize.smallMedium
-private val DragHandleWidth = Constrains.Spacing.xxLarge
-private val DragHandleHeight = Constrains.Spacing.xSmall
-private val DragHandlePadding = Constrains.Spacing.medium
-private val ContentMinHeight = Constrains.SearchField.minWidth
-private val SuggestionChipCornerRadius = Constrains.Spacing.small
+private val SidebarWidth = Constraints.centeredContentMaxWidth
+private val ContentPadding = Constraints.Spacing.large
+private val ItemSpacing = Constraints.Spacing.xSmall
+private val ListItemPadding = Constraints.Spacing.medium
+private val ListItemSpacing = Constraints.Spacing.medium
+private val ContactIconSize = Constraints.IconSize.medium
+private val SelectedIndicatorSize = Constraints.IconSize.smallMedium
+private val DragHandleWidth = Constraints.Spacing.xxLarge
+private val DragHandleHeight = Constraints.Spacing.xSmall
+private val DragHandlePadding = Constraints.Spacing.medium
+private val ContentMinHeight = Constraints.SearchField.minWidth
+private val SuggestionChipCornerRadius = Constraints.Spacing.small
 
 // Alpha constants
 private const val SelectedAlpha = 0.5f
@@ -373,7 +373,7 @@ private fun ContactSheetContent(
         // Create new contact button
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
-            modifier = Modifier.padding(vertical = Constrains.Spacing.small)
+            modifier = Modifier.padding(vertical = Constraints.Spacing.small)
         )
 
         TextButton(
@@ -383,10 +383,10 @@ private fun ContactSheetContent(
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = null,
-                modifier = Modifier.size(Constrains.IconSize.small),
+                modifier = Modifier.size(Constraints.IconSize.small),
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.small))
             Text(
                 text = stringResource(Res.string.cashflow_contact_create_new),
                 color = MaterialTheme.colorScheme.primary
@@ -433,7 +433,7 @@ private fun SuggestionsSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         Text(
             text = stringResource(Res.string.cashflow_contact_suggestions),
@@ -542,7 +542,7 @@ private fun ContactList(
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                    verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Warning,

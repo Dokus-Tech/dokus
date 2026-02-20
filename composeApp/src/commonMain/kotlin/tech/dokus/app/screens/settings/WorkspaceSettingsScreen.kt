@@ -81,7 +81,6 @@ fun WorkspaceSettingsContent(
     state: WorkspaceSettingsState,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
-    @Suppress("UNUSED_PARAMETER") contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     // Image picker - uploads directly without cropping
     val avatarPicker = rememberImagePicker { pickedImage ->

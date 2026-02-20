@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.delay
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -50,8 +50,8 @@ fun PCopyRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = Constrains.Spacing.medium,
-                    vertical = Constrains.Spacing.medium
+                    horizontal = Constraints.Spacing.medium,
+                    vertical = Constraints.Spacing.medium
                 ),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {

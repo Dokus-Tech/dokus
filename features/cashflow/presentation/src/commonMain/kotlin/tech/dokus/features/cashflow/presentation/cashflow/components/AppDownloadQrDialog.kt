@@ -29,7 +29,7 @@ import tech.dokus.aura.resources.app_download_qr_code
 import tech.dokus.aura.resources.app_download_title
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Dialog showing a QR code for downloading the mobile application.
@@ -50,7 +50,7 @@ fun AppDownloadQrDialog(
         content = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
             ) {
                 Text(
                     text = stringResource(Res.string.app_download_description),

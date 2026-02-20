@@ -37,7 +37,6 @@ internal fun CashflowViewModeFilter(
     onViewModeChange: (CashflowViewMode) -> Unit,
     onDirectionChange: (DirectionFilter) -> Unit,
     modifier: Modifier = Modifier,
-    @Suppress("UNUSED_PARAMETER") isCompact: Boolean = false
 ) {
     Row(
         modifier = modifier

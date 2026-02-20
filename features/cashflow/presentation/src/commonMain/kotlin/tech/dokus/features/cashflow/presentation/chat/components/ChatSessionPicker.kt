@@ -36,7 +36,7 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun SessionPickerDialog(
@@ -61,7 +61,7 @@ internal fun SessionPickerDialog(
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
-                    Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+                    Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
                     Text(
                         text = stringResource(Res.string.chat_history_empty),
                         style = MaterialTheme.typography.bodyMedium,
@@ -70,7 +70,7 @@ internal fun SessionPickerDialog(
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                    verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
                 ) {
                     items(sessions) { session ->
                         SessionListItem(
@@ -109,8 +109,8 @@ private fun SessionListItem(
         onClick = onClick,
     ) {
         Column(
-            modifier = Modifier.padding(Constrains.Spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+            modifier = Modifier.padding(Constraints.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

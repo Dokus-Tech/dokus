@@ -45,7 +45,7 @@ import tech.dokus.foundation.aura.components.settings.DataRow
 import tech.dokus.foundation.aura.components.settings.DataRowStatus
 import tech.dokus.foundation.aura.components.settings.SettingsSection
 import tech.dokus.foundation.aura.components.status.StatusDotType
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -86,7 +86,7 @@ internal fun LegalIdentitySection(
                 locked = true,
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
 
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.workspace_company_name),
@@ -95,7 +95,7 @@ internal fun LegalIdentitySection(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
 
             // VAT Number: show as DataRow if locked, editable field otherwise
             if (isLocked) {
@@ -114,7 +114,7 @@ internal fun LegalIdentitySection(
                 )
             }
 
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
 
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.workspace_address),
@@ -123,7 +123,7 @@ internal fun LegalIdentitySection(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.medium))
+            Spacer(Modifier.height(Constraints.Spacing.medium))
 
             // Avatar section
             CompanyAvatarSection(
@@ -164,7 +164,7 @@ internal fun LegalIdentitySection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = Constrains.Spacing.small),
+                    .padding(vertical = Constraints.Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -207,7 +207,7 @@ private fun CompanyAvatarSection(
             onClick = { avatarPicker.launch() }
         )
 
-        Spacer(Modifier.width(Constrains.Spacing.large))
+        Spacer(Modifier.width(Constraints.Spacing.large))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -216,13 +216,13 @@ private fun CompanyAvatarSection(
                 color = MaterialTheme.colorScheme.textMuted
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.xSmall))
+            Spacer(Modifier.height(Constraints.Spacing.xSmall))
 
             // Avatar action buttons
             val isActionInProgress =
                 avatarState is WorkspaceSettingsState.Content.AvatarState.Uploading ||
                     avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
-            Row(horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
                 TextButton(
                     onClick = { avatarPicker.launch() },
                     enabled = !isActionInProgress
@@ -230,9 +230,9 @@ private fun CompanyAvatarSection(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = null,
-                        modifier = Modifier.size(Constrains.IconSize.small)
+                        modifier = Modifier.size(Constraints.IconSize.small)
                     )
-                    Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                    Spacer(Modifier.width(Constraints.Spacing.xSmall))
                     Text(
                         if (currentAvatar != null) {
                             stringResource(Res.string.action_change)
@@ -250,9 +250,9 @@ private fun CompanyAvatarSection(
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = null,
-                            modifier = Modifier.size(Constrains.IconSize.small)
+                            modifier = Modifier.size(Constraints.IconSize.small)
                         )
-                        Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                        Spacer(Modifier.width(Constraints.Spacing.xSmall))
                         Text(stringResource(Res.string.action_remove))
                     }
                 }
@@ -279,11 +279,11 @@ private fun AvatarStateIndicator(
         is WorkspaceSettingsState.Content.AvatarState.Uploading -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 CircularProgressIndicator(
                     progress = { avatarState.progress },
-                    modifier = Modifier.size(Constrains.IconSize.xSmall),
+                    modifier = Modifier.size(Constraints.IconSize.xSmall),
                     strokeWidth = 2.dp
                 )
                 Text(
@@ -297,10 +297,10 @@ private fun AvatarStateIndicator(
         is WorkspaceSettingsState.Content.AvatarState.Deleting -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(Constrains.IconSize.xSmall),
+                    modifier = Modifier.size(Constraints.IconSize.xSmall),
                     strokeWidth = 2.dp
                 )
                 Text(

@@ -34,7 +34,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
@@ -55,7 +55,7 @@ internal fun DocumentReviewDesktopSplit(
 ) {
     Row(
         modifier = modifier.fillMaxSize(),
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Shell.gap),
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Shell.gap),
     ) {
         Surface(
             modifier = Modifier

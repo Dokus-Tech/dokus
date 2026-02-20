@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 fun AppNameText(modifier: Modifier = Modifier) {
@@ -28,7 +28,7 @@ fun AppNameText(modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         // Sigil
         Surface(
-            shape = RoundedCornerShape(Constrains.CornerRadius.input),
+            shape = RoundedCornerShape(Constraints.CornerRadius.input),
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
             border = BorderStroke(1.dp, gold.copy(alpha = 0.28f)),
             tonalElevation = 0.dp,

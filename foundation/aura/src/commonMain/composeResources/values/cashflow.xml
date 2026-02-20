@@ -324,6 +324,13 @@
     <string name="cashflow_amount_with_currency">%1$s %2$s</string>
     <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
 
+    <!-- Document Detail Mode -->
+    <string name="document_detail_confirmed">Confirmed</string>
+    <string name="document_detail_needs_review">Needs review</string>
+    <string name="document_detail_vendor_fallback">\u2014</string>
+    <string name="document_queue_all_docs">All docs</string>
+    <string name="document_queue_navigate">navigate</string>
+
     <!-- Document Review -->
     <string name="cashflow_document_review_title">Document Review</string>
     <string name="cashflow_chat_with_document">Chat with Document</string>

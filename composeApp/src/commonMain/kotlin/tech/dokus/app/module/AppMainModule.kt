@@ -43,6 +43,7 @@ import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.SettingsPriority
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.ShellTopBarDefault
+import tech.dokus.navigation.NavSectionIds
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 
@@ -52,7 +53,7 @@ internal object AppMainModule : AppModule {
     override val homeNavigationProvider = HomeNavigationProvider
     override val navGroups: List<ModuleNavGroup> = listOf(
         ModuleNavGroup(
-            sectionId = "accounting",
+            sectionId = NavSectionIds.ACCOUNTING,
             sectionTitle = Res.string.nav_section_accounting,
             sectionIcon = Res.drawable.chart_bar_trend_up,
             sectionOrder = 0,
@@ -103,7 +104,7 @@ internal object AppMainModule : AppModule {
             ),
         ),
         ModuleNavGroup(
-            sectionId = "company",
+            sectionId = NavSectionIds.COMPANY,
             sectionTitle = Res.string.nav_section_company,
             sectionIcon = Res.drawable.users,
             sectionOrder = 1,

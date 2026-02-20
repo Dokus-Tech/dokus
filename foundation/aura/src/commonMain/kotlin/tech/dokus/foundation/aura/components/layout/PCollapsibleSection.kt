@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
 private const val ChevronChar = "\u203A" // ›
@@ -53,9 +53,9 @@ fun PCollapsibleSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onToggle)
-                .padding(vertical = Constrains.Spacing.large),
+                .padding(vertical = Constraints.Spacing.large),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
         ) {
             Text(
                 text = ChevronChar,
@@ -82,7 +82,7 @@ fun PCollapsibleSection(
 
         // Bottom border
         HorizontalDivider(
-            thickness = Constrains.Stroke.thin,
+            thickness = Constraints.Stroke.thin,
             color = MaterialTheme.colorScheme.outlineVariant,
         )
 
@@ -92,7 +92,7 @@ fun PCollapsibleSection(
             enter = expandVertically() + fadeIn(),
             exit = shrinkVertically() + fadeOut(),
         ) {
-            Column(modifier = Modifier.padding(bottom = Constrains.Spacing.large)) {
+            Column(modifier = Modifier.padding(bottom = Constraints.Spacing.large)) {
                 content()
             }
         }

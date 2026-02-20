@@ -15,6 +15,7 @@ import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.aura.model.NavItem
+import tech.dokus.navigation.NavSectionIds
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.HomeDestination
 
@@ -29,7 +30,7 @@ object ContactsAppModule : AppModule {
     override val homeNavigationProvider: NavigationProvider = ContactsHomeNavigationProvider
     override val navGroups: List<ModuleNavGroup> = listOf(
         ModuleNavGroup(
-            sectionId = "company",
+            sectionId = NavSectionIds.COMPANY,
             sectionTitle = Res.string.nav_section_company,
             sectionIcon = Res.drawable.users,
             sectionOrder = 1,

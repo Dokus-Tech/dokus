@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.borderStrong
 import tech.dokus.foundation.aura.style.thText
 
@@ -48,7 +48,7 @@ fun DokusTableHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Constrains.Table.headerPaddingH),
+            .padding(horizontal = Constraints.Table.headerPaddingH),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         columns.forEach { column ->

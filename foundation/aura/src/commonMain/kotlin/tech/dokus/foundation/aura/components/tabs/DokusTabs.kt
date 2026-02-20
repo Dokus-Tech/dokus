@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -93,7 +93,7 @@ private fun TabItem(
     isActive: Boolean,
     onClick: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(Constrains.CornerRadius.input)
+    val shape = RoundedCornerShape(Constraints.CornerRadius.input)
 
     val backgroundModifier = if (isActive) {
         Modifier
@@ -139,7 +139,7 @@ private fun TabItem(
                     .padding(start = BadgeGap)
                     .background(
                         badgeBg,
-                        RoundedCornerShape(Constrains.CornerRadius.badge),
+                        RoundedCornerShape(Constraints.CornerRadius.badge),
                     )
                     .padding(horizontal = BadgePaddingH, vertical = BadgePaddingV),
                 contentAlignment = Alignment.Center,

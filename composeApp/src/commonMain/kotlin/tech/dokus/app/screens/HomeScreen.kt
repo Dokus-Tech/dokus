@@ -67,7 +67,7 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
 import tech.dokus.foundation.aura.components.background.AmbientBackground
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
 import tech.dokus.foundation.aura.components.text.AppNameText
@@ -303,12 +303,12 @@ private fun RailNavigationLayout(
             .background(colorScheme.background)
     ) {
         AmbientBackground()
-        Row(Modifier.fillMaxSize().padding(Constrains.Shell.padding)) {
+        Row(Modifier.fillMaxSize().padding(Constraints.Shell.padding)) {
         // Sidebar glass panel
         Surface(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(Constrains.Shell.sidebarWidth),
+                .width(Constraints.Shell.sidebarWidth),
             shape = MaterialTheme.shapes.large,
             color = colorScheme.glass,
             border = BorderStroke(1.dp, colorScheme.glassBorder),
@@ -360,7 +360,7 @@ private fun RailNavigationLayout(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = Constrains.Shell.gap),
+                .padding(start = Constraints.Shell.gap),
             color = colorScheme.glassContent,
             shape = MaterialTheme.shapes.large,
             border = BorderStroke(1.dp, colorScheme.glassBorder),

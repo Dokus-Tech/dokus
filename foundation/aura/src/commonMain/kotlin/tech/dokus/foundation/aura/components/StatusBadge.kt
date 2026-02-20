@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Generic status indicator using dot + text pattern.
@@ -34,10 +34,10 @@ fun StatusBadge(
     ) {
         Box(
             modifier = Modifier
-                .size(Constrains.StatusDot.size)
+                .size(Constraints.StatusDot.size)
                 .background(color, CircleShape),
         )
-        Spacer(modifier = Modifier.width(Constrains.StatusDot.size))
+        Spacer(modifier = Modifier.width(Constraints.StatusDot.size))
         Text(
             text = text,
             fontSize = 11.sp,

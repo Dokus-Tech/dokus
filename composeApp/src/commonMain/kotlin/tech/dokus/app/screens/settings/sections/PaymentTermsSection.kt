@@ -22,7 +22,7 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldFree
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.settings.DataRow
 import tech.dokus.foundation.aura.components.settings.SettingsSection
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
@@ -55,7 +55,7 @@ internal fun PaymentTermsSection(
                 color = MaterialTheme.colorScheme.textMuted
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.medium))
+            Spacer(Modifier.height(Constraints.Spacing.medium))
 
             // Payment Terms (Days)
             Text(
@@ -63,7 +63,7 @@ internal fun PaymentTermsSection(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted
             )
-            Spacer(Modifier.height(Constrains.Spacing.xSmall))
+            Spacer(Modifier.height(Constraints.Spacing.xSmall))
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.workspace_payment_terms),
                 value = formState.defaultPaymentTerms.toString(),
@@ -72,7 +72,7 @@ internal fun PaymentTermsSection(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.medium))
+            Spacer(Modifier.height(Constraints.Spacing.medium))
 
             // Payment Terms Text
             PTextFieldFree(

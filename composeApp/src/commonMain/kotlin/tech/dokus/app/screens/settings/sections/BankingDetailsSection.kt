@@ -15,7 +15,7 @@ import tech.dokus.aura.resources.workspace_iban
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.settings.DataRow
 import tech.dokus.foundation.aura.components.settings.SettingsSection
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun BankingDetailsSection(
@@ -50,7 +50,7 @@ internal fun BankingDetailsSection(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
 
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.workspace_bic),

@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Immutable
 data class DokusTableColumnSpec(
@@ -34,8 +34,8 @@ fun DokusTableRow(
     modifier: Modifier = Modifier,
     minHeight: Dp = 48.dp,
     backgroundColor: Color = MaterialTheme.colorScheme.surface,
-    contentPadding: PaddingValues = PaddingValues(horizontal = Constrains.Spacing.large),
-    cellSpacing: Dp = Constrains.Spacing.large,
+    contentPadding: PaddingValues = PaddingValues(horizontal = Constraints.Spacing.large),
+    cellSpacing: Dp = Constraints.Spacing.large,
     onClick: (() -> Unit)? = null,
     content: @Composable RowScope.() -> Unit
 ) {

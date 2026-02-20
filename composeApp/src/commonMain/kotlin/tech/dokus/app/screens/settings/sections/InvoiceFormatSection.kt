@@ -34,7 +34,7 @@ import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.settings.DataRow
 import tech.dokus.foundation.aura.components.settings.SettingsSection
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
 // Invoice padding configuration options (number of digits)
@@ -84,7 +84,7 @@ internal fun InvoiceFormatSection(
                 color = MaterialTheme.colorScheme.textMuted
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.medium))
+            Spacer(Modifier.height(Constraints.Spacing.medium))
 
             // Invoice Prefix
             Text(
@@ -92,7 +92,7 @@ internal fun InvoiceFormatSection(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted
             )
-            Spacer(Modifier.height(Constrains.Spacing.xSmall))
+            Spacer(Modifier.height(Constraints.Spacing.xSmall))
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.workspace_invoice_prefix),
                 value = formState.invoicePrefix,
@@ -100,7 +100,7 @@ internal fun InvoiceFormatSection(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.medium))
+            Spacer(Modifier.height(Constraints.Spacing.medium))
 
             // Invoice Numbering Subsection
             Text(
@@ -113,7 +113,7 @@ internal fun InvoiceFormatSection(
                 color = MaterialTheme.colorScheme.textMuted
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
 
             // Include Year in Number
             Row(
@@ -147,7 +147,7 @@ internal fun InvoiceFormatSection(
                 )
             }
 
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
 
             // Number Padding Selector
             Text(
@@ -157,7 +157,7 @@ internal fun InvoiceFormatSection(
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 InvoicePaddingOptions.forEach { padding ->
                     TextButton(
@@ -175,7 +175,7 @@ internal fun InvoiceFormatSection(
                 }
             }
 
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
 
             // Preview in highlighted card
             InvoicePreviewCard(previewNumber)
@@ -210,7 +210,7 @@ private fun InvoicePreviewCard(previewNumber: String) {
         variant = DokusCardVariant.Soft,
     ) {
         Row(
-            modifier = Modifier.padding(Constrains.Spacing.medium),
+            modifier = Modifier.padding(Constraints.Spacing.medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -218,7 +218,7 @@ private fun InvoicePreviewCard(previewNumber: String) {
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.textMuted
             )
-            Spacer(Modifier.width(Constrains.Spacing.small))
+            Spacer(Modifier.width(Constraints.Spacing.small))
             Text(
                 text = previewNumber,
                 style = MaterialTheme.typography.bodyLarge,

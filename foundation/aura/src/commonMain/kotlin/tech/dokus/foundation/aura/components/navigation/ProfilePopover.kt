@@ -37,6 +37,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.profile_logout
+import tech.dokus.aura.resources.profile_popover_profile
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.badges.TierBadge
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -189,7 +193,7 @@ private fun PopoverContent(
             )
 
             // Menu items
-            PopoverMenuItem(label = "Profile", onClick = onProfileClick)
+            PopoverMenuItem(label = stringResource(Res.string.profile_popover_profile), onClick = onProfileClick)
 
             HorizontalDivider(
                 thickness = Constraints.Stroke.thin,
@@ -198,7 +202,7 @@ private fun PopoverContent(
 
             // Log out
             Text(
-                text = "Log Out",
+                text = stringResource(Res.string.profile_logout),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onLogoutClick)

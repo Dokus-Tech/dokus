@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.amberSoft
@@ -41,25 +42,25 @@ fun RoleBadge(
 ) {
     val shape = RoundedCornerShape(Constraints.CornerRadius.badge)
 
-    val (textColor, bgColor) = when (role) {
-        ContactRole.Vendor -> Pair(
-            MaterialTheme.colorScheme.textMuted,
-            MaterialTheme.colorScheme.surfaceVariant,
+    val colors = when (role) {
+        ContactRole.Vendor -> BadgeColors(
+            text = MaterialTheme.colorScheme.textMuted,
+            background = MaterialTheme.colorScheme.surfaceVariant,
         )
-        ContactRole.Bank -> Pair(
-            MaterialTheme.colorScheme.tertiary,
-            MaterialTheme.colorScheme.tertiaryContainer,
+        ContactRole.Bank -> BadgeColors(
+            text = MaterialTheme.colorScheme.tertiary,
+            background = MaterialTheme.colorScheme.tertiaryContainer,
         )
-        ContactRole.Accountant -> Pair(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.amberSoft,
+        ContactRole.Accountant -> BadgeColors(
+            text = MaterialTheme.colorScheme.primary,
+            background = MaterialTheme.colorScheme.amberSoft,
         )
     }
 
     Box(
         modifier = modifier
             .clip(shape)
-            .background(bgColor)
+            .background(colors.background)
             .padding(horizontal = PaddingH, vertical = PaddingV),
         contentAlignment = Alignment.Center,
     ) {
@@ -67,8 +68,10 @@ fun RoleBadge(
             text = role.name,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
-            color = textColor,
+            color = colors.text,
             maxLines = 1,
         )
     }
 }
+
+private data class BadgeColors(val text: Color, val background: Color)

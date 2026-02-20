@@ -18,7 +18,7 @@ import tech.dokus.aura.resources.cashflow_feedback_title
 import tech.dokus.features.cashflow.presentation.review.FeedbackDialogState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Dialog for providing correction feedback before re-analysis.
@@ -40,7 +40,7 @@ internal fun FeedbackDialog(
         title = stringResource(Res.string.cashflow_feedback_title),
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 OutlinedTextField(
                     value = state.feedbackText,

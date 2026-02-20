@@ -49,7 +49,7 @@ import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Confirm step content - review company data and add billing email.
@@ -64,7 +64,7 @@ fun ConfirmStepContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(Constrains.Spacing.large)
+            .padding(Constraints.Spacing.large)
     ) {
         // Header with back button
         ConfirmHeader(
@@ -72,14 +72,14 @@ fun ConfirmStepContent(
             onBack = { onIntent(CreateContactIntent.BackToLookup) }
         )
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
         // Scrollable content
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
         ) {
             Text(
                 text = stringResource(Res.string.contacts_confirm_company),
@@ -94,7 +94,7 @@ fun ConfirmStepContent(
                 onToggleAddress = { onIntent(CreateContactIntent.ToggleAddressDetails) }
             )
 
-            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
             // Form fields
             Text(
@@ -139,7 +139,7 @@ fun ConfirmStepContent(
             onClick = { onIntent(CreateContactIntent.ConfirmAndCreate) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(Constrains.Height.button)
+                .height(Constraints.Height.button)
         )
     }
 }
@@ -181,7 +181,7 @@ private fun CompanyInfoCard(
         variant = DokusCardVariant.Soft,
     ) {
         Column(
-            modifier = Modifier.padding(Constrains.Spacing.medium)
+            modifier = Modifier.padding(Constraints.Spacing.medium)
         ) {
             // Company name
             Text(
@@ -190,7 +190,7 @@ private fun CompanyInfoCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
             // VAT number
             val vatNumber = entity.vatNumber
@@ -213,7 +213,7 @@ private fun CompanyInfoCard(
 
             // Address toggle
             if (address != null) {
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                 Row(
                     modifier = Modifier
@@ -243,7 +243,7 @@ private fun CompanyInfoCard(
 
                 AnimatedVisibility(visible = showAddress) {
                     Column(
-                        modifier = Modifier.padding(top = Constrains.Spacing.small)
+                        modifier = Modifier.padding(top = Constraints.Spacing.small)
                     ) {
                         Text(
                             text = address.streetLine1,

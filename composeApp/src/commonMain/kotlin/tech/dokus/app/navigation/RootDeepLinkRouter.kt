@@ -4,7 +4,6 @@ import tech.dokus.domain.model.common.DeepLink
 import tech.dokus.domain.model.common.DeepLinks
 import tech.dokus.domain.model.common.KnownDeepLinks
 import tech.dokus.navigation.destinations.AuthDestination
-import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.NavigationDestination
 
 internal enum class DeepLinkTargetOwner {
@@ -52,8 +51,8 @@ internal fun resolveDeepLinkNavigationTarget(deepLink: DeepLink): DeepLinkNaviga
     }
 
     DeepLinks.extractDocumentReviewId(deepLink)?.let { documentId ->
-        return DeepLinkNavigationTarget.RootDestination(
-            CashFlowDestination.DocumentReview(documentId)
+        return DeepLinkNavigationTarget.HomeCommand(
+            HomeNavigationCommand.OpenDocumentReview(documentId)
         )
     }
 

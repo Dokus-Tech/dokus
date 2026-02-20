@@ -47,7 +47,7 @@ import tech.dokus.aura.resources.action_clear
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.aura.components.PErrorText
 import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Suppress("LongParameterList") // UI styling function with necessary visual parameters
 private fun Modifier.dokusFocusGlow(
@@ -108,7 +108,7 @@ fun PTextField(
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         horizontalAlignment = Alignment.Start
     ) {
         Row(
@@ -119,7 +119,7 @@ fun PTextField(
                 PIcon(
                     it,
                     "",
-                    modifier = Modifier.padding(end = Constrains.Spacing.xSmall).size(iconSizeDp)
+                    modifier = Modifier.padding(end = Constraints.Spacing.xSmall).size(iconSizeDp)
                 )
             }
             Text(
@@ -151,7 +151,7 @@ fun PTextField(
                     width = when {
                         error != null -> 2.dp
                         isFocused -> 2.dp
-                        else -> Constrains.Stroke.thin
+                        else -> Constraints.Stroke.thin
                     },
                     color = when {
                         error != null -> errorBorder
@@ -161,11 +161,11 @@ fun PTextField(
                     shape = fieldShape
                 )
                 .padding(
-                    horizontal = Constrains.Spacing.large,
-                    vertical = Constrains.Spacing.medium
+                    horizontal = Constraints.Spacing.large,
+                    vertical = Constraints.Spacing.medium
                 ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
         ) {
             BasicTextField(
                 value = value,
@@ -203,7 +203,7 @@ fun PTextField(
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = stringResource(Res.string.action_clear),
-                        modifier = Modifier.size(Constrains.IconSize.xSmall),
+                        modifier = Modifier.size(Constraints.IconSize.xSmall),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
                     )
                 }

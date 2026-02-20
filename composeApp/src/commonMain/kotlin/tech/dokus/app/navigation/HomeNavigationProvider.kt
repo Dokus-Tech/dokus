@@ -21,7 +21,6 @@ import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.HomeDestination
-import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
 internal object HomeNavigationProvider : NavigationProvider {
@@ -39,12 +38,8 @@ internal object HomeNavigationProvider : NavigationProvider {
             AccountantScreen()
         }
         composable<HomeDestination.More> {
-            val homeNavController = LocalHomeNavController.current ?: LocalNavController.current
             val rootNavController = LocalRootNavController.current
             MoreScreen(
-                onNavigateHome = { destination ->
-                    homeNavController.navigateTo(destination)
-                },
                 onNavigateRoot = { destination ->
                     rootNavController.navigateTo(destination)
                 }
@@ -53,7 +48,7 @@ internal object HomeNavigationProvider : NavigationProvider {
         composable<HomeDestination.Tomorrow> {
             // Tomorrow is One-tier only - redirect Core users to Today
             val tokenManager: TokenManager = koinInject()
-            val homeNavController = LocalHomeNavController.current ?: LocalNavController.current
+            val homeNavController = LocalHomeNavController.current
             var userTier by remember { mutableStateOf<SubscriptionTier?>(null) }
 
             LaunchedEffect(Unit) {

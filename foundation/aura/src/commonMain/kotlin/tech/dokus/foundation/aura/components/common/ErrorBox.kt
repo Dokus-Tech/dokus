@@ -27,7 +27,7 @@ import tech.dokus.aura.resources.state_retry
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.aura.components.POutlinedButton
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -36,7 +36,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 fun DokusErrorText(
     text: String,
-    modifier: Modifier = Modifier.padding(all = Constrains.Spacing.large)
+    modifier: Modifier = Modifier.padding(all = Constraints.Spacing.large)
 ) {
     Text(
         text,
@@ -85,10 +85,10 @@ private fun DokusErrorContentFull(
         Icon(
             imageVector = Icons.Default.ErrorOutline,
             contentDescription = null,
-            modifier = Modifier.size(Constrains.IconSize.xxLarge),
+            modifier = Modifier.size(Constraints.IconSize.xxLarge),
             tint = MaterialTheme.colorScheme.error
         )
-        Spacer(modifier = Modifier.height(Constrains.Spacing.xLarge))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
         if (title != null) {
             Text(
                 text = title,
@@ -96,7 +96,7 @@ private fun DokusErrorContentFull(
                 color = MaterialTheme.colorScheme.error,
                 fontWeight = FontWeight.Medium
             )
-            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
         }
         Text(
             text = text,
@@ -105,7 +105,7 @@ private fun DokusErrorContentFull(
             textAlign = TextAlign.Center
         )
         if (retryHandler != null) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
             POutlinedButton(
                 text = stringResource(Res.string.state_retry),
                 onClick = { retryHandler.retry() }
@@ -126,13 +126,13 @@ private fun DokusErrorContentCompact(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         modifier = modifier
     ) {
         Icon(
             imageVector = Icons.Default.ErrorOutline,
             contentDescription = null,
-            modifier = Modifier.size(Constrains.IconSize.medium),
+            modifier = Modifier.size(Constraints.IconSize.medium),
             tint = MaterialTheme.colorScheme.error
         )
         Text(
@@ -168,7 +168,7 @@ fun DokusErrorContent(
 }
 
 @Composable
-fun DokusErrorText(exception: DokusException, modifier: Modifier = Modifier.padding(all = Constrains.Spacing.large)) {
+fun DokusErrorText(exception: DokusException, modifier: Modifier = Modifier.padding(all = Constraints.Spacing.large)) {
     DokusErrorText(text = exception.localized, modifier)
 }
 

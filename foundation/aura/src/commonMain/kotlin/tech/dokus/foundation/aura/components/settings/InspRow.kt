@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dokus.foundation.aura.components.status.ConfDot
 import tech.dokus.foundation.aura.components.status.ConfidenceLevel
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
@@ -49,7 +49,7 @@ fun InspRow(
     editable: Boolean = false,
     warn: Boolean = false,
 ) {
-    val shape = RoundedCornerShape(Constrains.CornerRadius.input)
+    val shape = RoundedCornerShape(Constraints.CornerRadius.input)
 
     Column(
         modifier = modifier.padding(vertical = 7.dp),
@@ -57,8 +57,8 @@ fun InspRow(
         // Label row with optional confidence dot
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
-            modifier = Modifier.padding(bottom = Constrains.Spacing.xxSmall),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+            modifier = Modifier.padding(bottom = Constraints.Spacing.xxSmall),
         ) {
             Text(
                 text = label,

@@ -43,7 +43,7 @@ import tech.dokus.features.contacts.presentation.contacts.components.DuplicateWa
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
@@ -315,7 +315,7 @@ private fun DeleteContactConfirmationDialog(
         },
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 Text(
                     text = stringResource(Res.string.contacts_delete_confirmation, contactName),

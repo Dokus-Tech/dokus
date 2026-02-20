@@ -47,7 +47,7 @@ import tech.dokus.aura.resources.chat_page_number
 import tech.dokus.aura.resources.chat_sources_count
 import tech.dokus.aura.resources.chat_view_source_document
 import tech.dokus.aura.resources.common_percent_value
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // Animation constants
 private const val ExpandedRotation = 180f
@@ -123,8 +123,8 @@ fun ChatSourceCitation(
                 .fillMaxWidth()
                 .clickable { isExpanded = !isExpanded }
                 .padding(
-                    horizontal = Constrains.Spacing.medium,
-                    vertical = Constrains.Spacing.small
+                    horizontal = Constraints.Spacing.medium,
+                    vertical = Constraints.Spacing.small
                 ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -139,7 +139,7 @@ fun ChatSourceCitation(
                     modifier = Modifier.size(ChatSourceCitationDefaults.iconSize),
                     tint = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.width(Constraints.Spacing.small))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = citation.documentName ?: stringResource(Res.string.chat_document_fallback),
@@ -162,7 +162,7 @@ fun ChatSourceCitation(
             if (citation.relevanceScore != null) {
                 RelevanceScoreBadge(
                     score = citation.relevanceScore,
-                    modifier = Modifier.padding(end = Constrains.Spacing.small)
+                    modifier = Modifier.padding(end = Constraints.Spacing.small)
                 )
             }
 
@@ -177,7 +177,7 @@ fun ChatSourceCitation(
                     }
                 ),
                 modifier = Modifier
-                    .size(Constrains.IconSize.medium)
+                    .size(Constraints.IconSize.medium)
                     .rotate(rotationAngle),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -193,9 +193,9 @@ fun ChatSourceCitation(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = Constrains.Spacing.medium,
-                        end = Constrains.Spacing.medium,
-                        bottom = Constrains.Spacing.medium
+                        start = Constraints.Spacing.medium,
+                        end = Constraints.Spacing.medium,
+                        bottom = Constraints.Spacing.medium
                     )
             ) {
                 // Divider
@@ -205,7 +205,7 @@ fun ChatSourceCitation(
                         .height(DividerHeight)
                         .background(MaterialTheme.colorScheme.outlineVariant)
                 )
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                 // Excerpt text
                 Text(
@@ -219,19 +219,19 @@ fun ChatSourceCitation(
                             MaterialTheme.colorScheme.surfaceContainerHighest,
                             MaterialTheme.shapes.extraSmall
                         )
-                        .padding(Constrains.Spacing.small)
+                        .padding(Constraints.Spacing.small)
                 )
 
                 // View document link (if callback provided)
                 if (onDocumentClick != null) {
-                    Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                    Spacer(modifier = Modifier.height(Constraints.Spacing.small))
                     Text(
                         text = stringResource(Res.string.chat_view_source_document),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .clickable { onDocumentClick(citation.documentId) }
-                            .padding(vertical = Constrains.Spacing.xSmall)
+                            .padding(vertical = Constraints.Spacing.xSmall)
                     )
                 }
             }
@@ -270,8 +270,8 @@ private fun RelevanceScoreBadge(
         modifier = modifier
             .background(backgroundColor, MaterialTheme.shapes.extraSmall)
             .padding(
-                horizontal = Constrains.Spacing.xSmall,
-                vertical = Constrains.Spacing.xxSmall
+                horizontal = Constraints.Spacing.xSmall,
+                vertical = Constraints.Spacing.xxSmall
             )
     )
 }
@@ -309,7 +309,7 @@ fun ChatSourceCitationList(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { isExpanded = !isExpanded }
-                .padding(Constrains.Spacing.medium),
+                .padding(Constraints.Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -328,7 +328,7 @@ fun ChatSourceCitationList(
                     }
                 ),
                 modifier = Modifier
-                    .size(Constrains.IconSize.medium)
+                    .size(Constraints.IconSize.medium)
                     .rotate(rotationAngle),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -344,11 +344,11 @@ fun ChatSourceCitationList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = Constrains.Spacing.medium,
-                        end = Constrains.Spacing.medium,
-                        bottom = Constrains.Spacing.medium
+                        start = Constraints.Spacing.medium,
+                        end = Constraints.Spacing.medium,
+                        bottom = Constraints.Spacing.medium
                     ),
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 citations.forEachIndexed { index, citation ->
                     ChatSourceCitation(
@@ -389,18 +389,18 @@ fun PInlineCitation(
                 }
             )
             .padding(
-                horizontal = Constrains.Spacing.small,
-                vertical = Constrains.Spacing.xSmall
+                horizontal = Constraints.Spacing.small,
+                vertical = Constraints.Spacing.xSmall
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.Description,
             contentDescription = null,
-            modifier = Modifier.size(Constrains.IconSize.xSmall),
+            modifier = Modifier.size(Constraints.IconSize.xSmall),
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.width(Constrains.Spacing.xSmall))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.xSmall))
         Text(
             text = if (pageNumber != null) "$documentName, p.$pageNumber" else documentName,
             style = MaterialTheme.typography.labelSmall,

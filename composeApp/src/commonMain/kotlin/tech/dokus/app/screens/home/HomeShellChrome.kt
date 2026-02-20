@@ -1,10 +1,5 @@
 package tech.dokus.app.screens.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,26 +32,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Search
+import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_search
+import tech.dokus.aura.resources.a11y_profile_menu
+import tech.dokus.aura.resources.date_month_short_apr
+import tech.dokus.aura.resources.date_month_short_aug
+import tech.dokus.aura.resources.date_month_short_dec
+import tech.dokus.aura.resources.date_month_short_feb
+import tech.dokus.aura.resources.date_month_short_jan
+import tech.dokus.aura.resources.date_month_short_jul
+import tech.dokus.aura.resources.date_month_short_jun
+import tech.dokus.aura.resources.date_month_short_mar
+import tech.dokus.aura.resources.date_month_short_may
+import tech.dokus.aura.resources.date_month_short_nov
+import tech.dokus.aura.resources.date_month_short_oct
+import tech.dokus.aura.resources.date_month_short_sep
 import tech.dokus.aura.resources.settings_current_workspace
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.MonogramAvatar
-import tech.dokus.foundation.aura.components.navigation.ProfilePopover
-import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.components.navigation.ProfilePopover
+import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.style.dokusEffects
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
@@ -222,6 +227,7 @@ private fun DesktopProfileMenuButton(
             size = sizing.avatarExtraSmall,
             radius = sizing.avatarExtraSmall / 4,
             modifier = Modifier.clickable { popoverVisible = true },
+            contentDescription = stringResource(Res.string.a11y_profile_menu),
         )
 
         ProfilePopover(
@@ -286,7 +292,7 @@ internal fun DesktopShellTopBar(
             RouteTopBarActions(actions = topBarConfig.actions)
 
             // Date display
-            val dateText = remember { formattedCurrentDate() }
+            val dateText = formattedCurrentDate()
             Spacer(modifier = Modifier.width(spacing.medium))
             Text(
                 text = dateText,
@@ -324,6 +330,7 @@ internal fun MobileShellTopBar(
                 size = sizing.avatarExtraSmall,
                 radius = sizing.avatarExtraSmall / 4,
                 modifier = Modifier.clickable(onClick = onProfileClick),
+                contentDescription = stringResource(Res.string.a11y_profile_menu),
             )
         }
 
@@ -368,26 +375,28 @@ private fun RowScope.RouteTopBarActions(
     }
 }
 
-private val MonthNames = arrayOf(
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-)
-
-/** Format current date as "18 Feb 2026". Uses kotlin.time to avoid compat issues. */
-@OptIn(kotlin.time.ExperimentalTime::class)
+/** Format current date as "18 Feb 2026" using localized month names. */
+@Composable
 private fun formattedCurrentDate(): String {
-    val now = kotlin.time.Clock.System.now()
-    val epochDays = (now.epochSeconds / 86400).toInt()
-    // Civil date from epoch days (Meeus algorithm)
-    val z = epochDays + 719468
-    val era = (if (z >= 0) z else z - 146096) / 146097
-    val doe = z - era * 146097
-    val yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365
-    val y = yoe + era * 400
-    val doy = doe - (365 * yoe + yoe / 4 - yoe / 100)
-    val mp = (5 * doy + 2) / 153
-    val d = doy - (153 * mp + 2) / 5 + 1
-    val m = mp + (if (mp < 10) 3 else -9)
-    val year = y + (if (m <= 2) 1 else 0)
-    return "$d ${MonthNames[m - 1]} $year"
+    val today = remember {
+        kotlinx.datetime.Clock.System.todayIn(kotlinx.datetime.TimeZone.currentSystemDefault())
+    }
+    val monthName = shortMonthName(today.month)
+    return "${today.dayOfMonth} $monthName ${today.year}"
+}
+
+@Composable
+private fun shortMonthName(month: kotlinx.datetime.Month): String = when (month) {
+    kotlinx.datetime.Month.JANUARY -> stringResource(Res.string.date_month_short_jan)
+    kotlinx.datetime.Month.FEBRUARY -> stringResource(Res.string.date_month_short_feb)
+    kotlinx.datetime.Month.MARCH -> stringResource(Res.string.date_month_short_mar)
+    kotlinx.datetime.Month.APRIL -> stringResource(Res.string.date_month_short_apr)
+    kotlinx.datetime.Month.MAY -> stringResource(Res.string.date_month_short_may)
+    kotlinx.datetime.Month.JUNE -> stringResource(Res.string.date_month_short_jun)
+    kotlinx.datetime.Month.JULY -> stringResource(Res.string.date_month_short_jul)
+    kotlinx.datetime.Month.AUGUST -> stringResource(Res.string.date_month_short_aug)
+    kotlinx.datetime.Month.SEPTEMBER -> stringResource(Res.string.date_month_short_sep)
+    kotlinx.datetime.Month.OCTOBER -> stringResource(Res.string.date_month_short_oct)
+    kotlinx.datetime.Month.NOVEMBER -> stringResource(Res.string.date_month_short_nov)
+    kotlinx.datetime.Month.DECEMBER -> stringResource(Res.string.date_month_short_dec)
 }

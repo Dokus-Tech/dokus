@@ -23,7 +23,7 @@ import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.status.toColor
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -96,7 +96,7 @@ private fun DataRowDesktop(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Constrains.Spacing.small),
+            .padding(vertical = Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Label (fixed width)
@@ -116,10 +116,10 @@ private fun DataRowDesktop(
 
         // Status (if present)
         if (status != null) {
-            Spacer(Modifier.width(Constrains.Spacing.medium))
+            Spacer(Modifier.width(Constraints.Spacing.medium))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
             ) {
                 StatusDot(type = status.type)
                 Text(
@@ -131,7 +131,7 @@ private fun DataRowDesktop(
         }
 
         // Lock or Edit action
-        Spacer(Modifier.width(Constrains.Spacing.small))
+        Spacer(Modifier.width(Constraints.Spacing.small))
         if (locked) {
             LockIcon()
         } else if (onEdit != null) {
@@ -163,7 +163,7 @@ private fun DataRowMobile(
     Column(
         modifier = rowModifier
             .fillMaxWidth()
-            .padding(vertical = Constrains.Spacing.small),
+            .padding(vertical = Constraints.Spacing.small),
     ) {
         // First line: Label + Status + Lock
         Row(
@@ -180,7 +180,7 @@ private fun DataRowMobile(
             if (status != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                 ) {
                     StatusDot(type = status.type)
                     Text(
@@ -192,7 +192,7 @@ private fun DataRowMobile(
             }
 
             if (locked) {
-                Spacer(Modifier.width(Constrains.Spacing.small))
+                Spacer(Modifier.width(Constraints.Spacing.small))
                 LockIcon()
             }
         }
@@ -201,7 +201,7 @@ private fun DataRowMobile(
         Text(
             text = value.ifEmpty { "-" },
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = Constrains.Spacing.xxSmall),
+            modifier = Modifier.padding(top = Constraints.Spacing.xxSmall),
         )
     }
 }

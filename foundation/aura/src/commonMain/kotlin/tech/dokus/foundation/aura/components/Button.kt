@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 enum class PButtonVariant {
     Default,
@@ -68,11 +68,11 @@ fun PButton(
             OutlinedButton(
                 onClick = onClick,
                 enabled = isEnabled && !isLoading,
-                modifier = modifier.height(Constrains.Height.button),
+                modifier = modifier.height(Constraints.Height.button),
                 shape = MaterialTheme.shapes.small,
                 contentPadding = PaddingValues(
-                    horizontal = Constrains.Spacing.large,
-                    vertical = Constrains.Spacing.small
+                    horizontal = Constraints.Spacing.large,
+                    vertical = Constraints.Spacing.small
                 ),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colorScheme.onSurface
@@ -80,7 +80,7 @@ fun PButton(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                        modifier = Modifier.size(Constraints.IconSize.buttonLoading),
                         color = MaterialTheme.colorScheme.primary,
                         strokeWidth = 2.dp
                     )
@@ -89,7 +89,7 @@ fun PButton(
                         Icon(
                             imageVector = icon,
                             contentDescription = contentDescription,
-                            modifier = Modifier.size(Constrains.IconSize.medium).padding(end = Constrains.Spacing.small)
+                            modifier = Modifier.size(Constraints.IconSize.medium).padding(end = Constraints.Spacing.small)
                         )
                     }
                     Text(
@@ -101,8 +101,8 @@ fun PButton(
                             imageVector = icon,
                             contentDescription = contentDescription,
                             modifier = Modifier.size(
-                                Constrains.IconSize.medium
-                            ).padding(start = Constrains.Spacing.small)
+                                Constraints.IconSize.medium
+                            ).padding(start = Constraints.Spacing.small)
                         )
                     }
                 }
@@ -129,7 +129,7 @@ private fun PButtonDefault(
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                modifier = Modifier.size(Constraints.IconSize.buttonLoading),
                 color = MaterialTheme.colorScheme.onPrimary,
                 strokeWidth = 2.dp
             )
@@ -137,15 +137,15 @@ private fun PButtonDefault(
             if (icon != null && iconPosition == PIconPosition.Leading) {
                 Icon(
                     icon,
-                    modifier = Modifier.padding(end = Constrains.Spacing.small),
+                    modifier = Modifier.padding(end = Constraints.Spacing.small),
                     contentDescription = contentDescription
                 )
             }
-            Text(text, modifier = Modifier.padding(Constrains.Spacing.xSmall))
+            Text(text, modifier = Modifier.padding(Constraints.Spacing.xSmall))
             if (icon != null && iconPosition == PIconPosition.Trailing) {
                 Icon(
                     icon,
-                    modifier = Modifier.padding(start = Constrains.Spacing.small),
+                    modifier = Modifier.padding(start = Constraints.Spacing.small),
                     contentDescription = contentDescription
                 )
             }
@@ -163,7 +163,7 @@ fun PPrimaryButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(Constrains.Height.button),
+        modifier = modifier.height(Constraints.Height.button),
         shape = MaterialTheme.shapes.small,
         enabled = enabled && !isLoading,
         colors = ButtonDefaults.buttonColors(
@@ -173,7 +173,7 @@ fun PPrimaryButton(
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                modifier = Modifier.size(Constraints.IconSize.buttonLoading),
                 color = MaterialTheme.colorScheme.onPrimary,
                 strokeWidth = 2.dp
             )
@@ -197,7 +197,7 @@ fun POutlinedButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(Constrains.Height.button),
+        modifier = modifier.height(Constraints.Height.button),
         shape = MaterialTheme.shapes.small,
         enabled = enabled && !isLoading,
         colors = ButtonDefaults.outlinedButtonColors(
@@ -206,7 +206,7 @@ fun POutlinedButton(
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                modifier = Modifier.size(Constraints.IconSize.buttonLoading),
                 color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 2.dp
             )
@@ -236,9 +236,9 @@ fun PBackButton(
         modifier = modifier
             .defaultMinSize(minHeight = 44.dp)
             .clickable(onClick = onBackPress)
-            .padding(end = Constrains.Spacing.small),
+            .padding(end = Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
     ) {
         Text(
             text = "\u2039",  // ‹

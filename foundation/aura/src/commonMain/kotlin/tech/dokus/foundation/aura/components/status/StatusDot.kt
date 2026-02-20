@@ -19,7 +19,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.statusError
 import tech.dokus.foundation.aura.style.statusWarning
@@ -57,7 +57,7 @@ enum class StatusDotType {
 fun StatusDot(
     type: StatusDotType,
     modifier: Modifier = Modifier,
-    size: Dp = Constrains.StatusDot.size,
+    size: Dp = Constraints.StatusDot.size,
     pulse: Boolean = false,
 ) {
     val color = type.toColor()
@@ -68,7 +68,7 @@ fun StatusDot(
             initialValue = 1f,
             targetValue = PulseMaxScale,
             animationSpec = infiniteRepeatable(
-                animation = tween(Constrains.StatusDot.pulseDuration),
+                animation = tween(Constraints.StatusDot.pulseDuration),
                 repeatMode = RepeatMode.Restart,
             ),
         )
@@ -76,7 +76,7 @@ fun StatusDot(
             initialValue = PulseMaxAlpha,
             targetValue = PulseMinAlpha,
             animationSpec = infiniteRepeatable(
-                animation = tween(Constrains.StatusDot.pulseDuration),
+                animation = tween(Constraints.StatusDot.pulseDuration),
                 repeatMode = RepeatMode.Restart,
             ),
         )

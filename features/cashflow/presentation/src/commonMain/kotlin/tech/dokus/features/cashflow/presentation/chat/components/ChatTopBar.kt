@@ -37,7 +37,7 @@ import tech.dokus.aura.resources.chat_title_all_documents
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.foundation.aura.components.PBackButton
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,7 +143,7 @@ internal fun ChatTopBar(
         )
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
-            thickness = Constrains.Stroke.thin
+            thickness = Constraints.Stroke.thin
         )
     }
 }

@@ -34,7 +34,7 @@ import tech.dokus.aura.resources.workspace_type_freelancer
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun TypeSelectionStep(
@@ -60,7 +60,7 @@ internal fun TypeSelectionStep(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            val isWide = maxWidth > Constrains.Breakpoint.SMALL.dp
+            val isWide = maxWidth > Constraints.Breakpoint.SMALL.dp
 
             if (isWide) {
                 Row(

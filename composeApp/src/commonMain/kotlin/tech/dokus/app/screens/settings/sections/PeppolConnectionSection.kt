@@ -38,7 +38,7 @@ import tech.dokus.foundation.aura.components.settings.DataRow
 import tech.dokus.foundation.aura.components.settings.DataRowStatus
 import tech.dokus.foundation.aura.components.settings.SettingsSection
 import tech.dokus.foundation.aura.components.status.StatusDotType
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
@@ -131,7 +131,7 @@ internal fun PeppolConnectionSection(
 
             // Compliance note
             if (status == PeppolRegistrationStatus.Active) {
-                Spacer(Modifier.height(Constrains.Spacing.medium))
+                Spacer(Modifier.height(Constraints.Spacing.medium))
                 Text(
                     text = stringResource(Res.string.peppol_conn_compliant_note),
                     style = MaterialTheme.typography.bodySmall,
@@ -144,7 +144,7 @@ internal fun PeppolConnectionSection(
                 text = stringResource(Res.string.peppol_conn_not_configured_text),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
             Text(
                 text = stringResource(Res.string.peppol_conn_mandate_note),
                 style = MaterialTheme.typography.bodySmall,

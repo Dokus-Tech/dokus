@@ -39,7 +39,7 @@ import tech.dokus.aura.resources.action_save
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.status.toColor
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
 /**
@@ -91,13 +91,13 @@ fun SettingsSection(
     val sectionModifier = if (primary) {
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Constrains.CornerRadius.badge))
+            .clip(RoundedCornerShape(Constraints.CornerRadius.badge))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(Constrains.Spacing.medium)
+            .padding(Constraints.Spacing.medium)
     } else {
         modifier
             .fillMaxWidth()
-            .padding(vertical = Constrains.Spacing.small)
+            .padding(vertical = Constraints.Spacing.small)
     }
 
     Column(modifier = sectionModifier) {
@@ -112,7 +112,7 @@ fun SettingsSection(
                         Modifier
                     }
                 )
-                .padding(vertical = Constrains.Spacing.small),
+                .padding(vertical = Constraints.Spacing.small),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Collapse chevron (only if collapsible)
@@ -123,11 +123,11 @@ fun SettingsSection(
                         if (expanded) Res.string.action_collapse else Res.string.action_expand
                     ),
                     modifier = Modifier
-                        .size(Constrains.IconSize.xSmall)
+                        .size(Constraints.IconSize.xSmall)
                         .rotate(rotation),
                     tint = MaterialTheme.colorScheme.textMuted,
                 )
-                Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                Spacer(Modifier.width(Constraints.Spacing.xSmall))
             }
 
             // Title
@@ -139,7 +139,7 @@ fun SettingsSection(
 
             // Subtitle (only when collapsed)
             if (!expanded && subtitle != null) {
-                Spacer(Modifier.width(Constrains.Spacing.medium))
+                Spacer(Modifier.width(Constraints.Spacing.medium))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -183,10 +183,10 @@ fun SettingsSection(
 
             // Status badge
             if (status != null) {
-                Spacer(Modifier.width(Constrains.Spacing.small))
+                Spacer(Modifier.width(Constraints.Spacing.small))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                 ) {
                     StatusDot(type = status.type)
                     Text(
@@ -205,7 +205,7 @@ fun SettingsSection(
             exit = shrinkVertically() + fadeOut(),
         ) {
             Column(
-                modifier = Modifier.padding(top = Constrains.Spacing.small),
+                modifier = Modifier.padding(top = Constraints.Spacing.small),
             ) {
                 content()
             }

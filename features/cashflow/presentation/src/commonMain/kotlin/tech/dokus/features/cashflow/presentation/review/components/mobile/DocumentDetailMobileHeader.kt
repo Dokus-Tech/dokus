@@ -29,7 +29,7 @@ import tech.dokus.aura.resources.cashflow_needs_attention
 import tech.dokus.aura.resources.cashflow_needs_input
 import tech.dokus.aura.resources.currency_symbol_eur
 import tech.dokus.domain.Money
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusWarning
 
 /**
@@ -57,8 +57,8 @@ internal fun DocumentDetailMobileHeader(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = Constrains.Spacing.small,
-                    vertical = Constrains.Spacing.small
+                    horizontal = Constraints.Spacing.small,
+                    vertical = Constraints.Spacing.small
                 ),
             verticalAlignment = Alignment.CenterVertically
         ) {

@@ -20,7 +20,7 @@ import tech.dokus.foundation.aura.components.chat.ChatMessageBubble
 import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.ChatSourceCitationList
 import tech.dokus.foundation.aura.components.chat.CitationDisplayData
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun MessagesList(
@@ -35,10 +35,10 @@ internal fun MessagesList(
         state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = if (isLargeScreen) Constrains.Spacing.xLarge else Constrains.Spacing.medium,
-            vertical = Constrains.Spacing.medium
+            horizontal = if (isLargeScreen) Constraints.Spacing.xLarge else Constraints.Spacing.medium,
+            vertical = Constraints.Spacing.medium
         ),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
     ) {
         items(
             items = messages,
@@ -63,7 +63,7 @@ private fun MessageItem(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         ChatMessageBubble(
             message = message.content,
@@ -91,7 +91,7 @@ private fun MessageItem(
             ChatSourceCitationList(
                 citations = citationDisplayData,
                 onDocumentClick = onDocumentClick,
-                modifier = Modifier.padding(start = Constrains.Spacing.large)
+                modifier = Modifier.padding(start = Constraints.Spacing.large)
             )
         }
     }

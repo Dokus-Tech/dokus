@@ -24,7 +24,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
 /**
@@ -54,7 +54,7 @@ internal fun MobileFooter(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Constrains.Spacing.medium),
+                .padding(Constraints.Spacing.medium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

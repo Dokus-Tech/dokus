@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -88,7 +89,7 @@ private const val TwoPI = 6.2831853f
 
 // --- Data classes ---
 
-private data class AmbientParticle(
+private class AmbientParticle(
     var x: Float, // dp
     var y: Float, // dp
     val vx: Float, // dp/sec
@@ -163,7 +164,7 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
     var elapsedSec by remember { mutableFloatStateOf(0f) }
     // Store particles in a mutable list for position updates
     val particlesRef = remember { mutableListOf<AmbientParticle>() }
-    var particlesInitialized by remember { mutableFloatStateOf(0f) }
+    var particlesInitialized by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         var lastNanos = 0L
@@ -188,10 +189,10 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
         val hDp = h / density
 
         // Initialize particles on first draw (need canvas size)
-        if (particlesRef.isEmpty() || particlesInitialized == 0f) {
+        if (particlesRef.isEmpty() || !particlesInitialized) {
             particlesRef.clear()
             particlesRef.addAll(generateParticles(wDp, hDp, isDark, Random(42)))
-            particlesInitialized = 1f
+            particlesInitialized = true
         }
 
         // ── Layer 1: Gradient Orbs ──
@@ -231,7 +232,9 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
 
         // ── Layer 2: Connected Particles ──
         // Update positions based on elapsed time (simple velocity bounce)
-        val dtFrame = 1f / 60f // approximate, smoothed by withFrameNanos driving recomposition
+        // Fixed timestep approximation: recomposition is driven by withFrameNanos (~60fps),
+        // so using a constant dt avoids jitter from variable frame deltas on particle positions.
+        val dtFrame = 1f / 60f
         val connectionDistPx = ParticleConnectionDistance * density
         val connectionAlpha = if (isDark) ConnectionAlphaDark else ConnectionAlphaLight
 

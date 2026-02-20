@@ -24,7 +24,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_view
 import tech.dokus.aura.resources.contacts_duplicate_exists
 import tech.dokus.features.contacts.mvi.DuplicateVatUi
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Banner shown when a contact with the same VAT number already exists.
@@ -40,7 +40,7 @@ fun DuplicateVatBanner(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.errorContainer)
-            .padding(Constrains.Spacing.medium),
+            .padding(Constraints.Spacing.medium),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -50,7 +50,7 @@ fun DuplicateVatBanner(
             modifier = Modifier.size(24.dp)
         )
 
-        Spacer(modifier = Modifier.width(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.medium))
 
         Column(
             modifier = Modifier.weight(1f)

@@ -42,6 +42,15 @@ import tech.dokus.app.viewmodel.TodayIntent
 import tech.dokus.app.viewmodel.TodayState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.home_today
+import tech.dokus.aura.resources.today_awaiting_processing
+import tech.dokus.aura.resources.today_document_needs_review
+import tech.dokus.aura.resources.today_documents
+import tech.dokus.aura.resources.today_invoice_pending
+import tech.dokus.aura.resources.today_invoices_pending
+import tech.dokus.aura.resources.today_needs_review
+import tech.dokus.aura.resources.today_recent
+import tech.dokus.aura.resources.today_review_button
+import tech.dokus.aura.resources.today_view_all
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
@@ -56,7 +65,7 @@ import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.components.text.DokusLabel
 import tech.dokus.foundation.aura.components.text.MobilePageTitle
 import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textFaint
@@ -74,7 +83,7 @@ internal fun TodayScreen(
     container: TodayContainer = container()
 ) {
     val navController = LocalNavController.current
-    val homeNavController = LocalHomeNavController.current ?: navController
+    val homeNavController = LocalHomeNavController.current
     val rootNavController = LocalRootNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
@@ -115,7 +124,7 @@ internal fun TodayScreen(
 
     val contentState = state as? TodayState.Content
     val documents = contentState?.allPendingDocuments ?: emptyList()
-    val spacing = if (isLargeScreen) Constrains.Spacing.xLarge else Constrains.Spacing.large
+    val spacing = if (isLargeScreen) Constraints.Spacing.xLarge else Constraints.Spacing.large
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -183,7 +192,7 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 DokusLabel(
-                    text = "Needs review",
+                    text = stringResource(Res.string.today_needs_review),
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(Modifier.height(10.dp))
@@ -200,7 +209,11 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "$count ${if (count == 1) "invoice" else "invoices"} pending",
+                    text = stringResource(
+                        if (count == 1) Res.string.today_invoice_pending
+                        else Res.string.today_invoices_pending,
+                        count,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
@@ -211,7 +224,7 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
         DokusCardSurface(modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.padding(20.dp)) {
                 DokusLabel(
-                    text = "Documents",
+                    text = stringResource(Res.string.today_documents),
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(Modifier.height(10.dp))
@@ -228,7 +241,7 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "awaiting processing",
+                    text = stringResource(Res.string.today_awaiting_processing),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
@@ -246,7 +259,7 @@ private fun TodayAttentionCard(
 ) {
     val vendorName = document.vendorName()
     val dateText = document.formattedDate()
-    val description = document.draft?.aiDescription ?: "Document needs review"
+    val description = document.draft?.aiDescription ?: stringResource(Res.string.today_document_needs_review)
 
     DokusCardSurface(accent = true) {
         Row(
@@ -300,7 +313,7 @@ private fun TodayAttentionCard(
                 shape = MaterialTheme.shapes.small,
             ) {
                 Text(
-                    text = "Review",
+                    text = stringResource(Res.string.today_review_button),
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                     ),
@@ -320,10 +333,10 @@ private fun TodayRecentSection(
 ) {
     Column {
         SectionTitle(
-            text = "Recent",
+            text = stringResource(Res.string.today_recent),
             right = {
                 Text(
-                    text = "View all \u2192",
+                    text = stringResource(Res.string.today_view_all),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     modifier = Modifier.clickable(onClick = onViewAllClick),

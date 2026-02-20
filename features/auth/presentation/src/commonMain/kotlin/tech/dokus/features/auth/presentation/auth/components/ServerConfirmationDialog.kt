@@ -39,7 +39,7 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Confirmation dialog shown after server validation.
@@ -74,21 +74,21 @@ fun ServerConfirmationDialog(
         },
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
             ) {
                 // Server info card
                 DokusCardSurface(
                     modifier = Modifier.fillMaxWidth(),
                     variant = DokusCardVariant.Soft,
                 ) {
-                    Column(modifier = Modifier.padding(Constrains.Spacing.medium)) {
+                    Column(modifier = Modifier.padding(Constraints.Spacing.medium)) {
                         ServerInfoRow(stringResource(Res.string.auth_server_name_label), serverInfo.name)
-                        Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
                         ServerInfoRow(stringResource(Res.string.auth_server_version), serverInfo.version)
-                        Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
                         ServerInfoRow(stringResource(Res.string.auth_server_url), config.baseUrl)
                         if (serverInfo.features.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
                             ServerInfoRow(
                                 stringResource(Res.string.auth_server_features_label),
                                 serverInfo.features.joinToString(", ")
@@ -109,7 +109,7 @@ fun ServerConfirmationDialog(
                         tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.size(20.dp)
                     )
-                    Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+                    Spacer(modifier = Modifier.width(Constraints.Spacing.small))
                     Column {
                         Text(
                             text = stringResource(Res.string.auth_server_connecting_will),
@@ -117,7 +117,7 @@ fun ServerConfirmationDialog(
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(Constrains.Spacing.xSmall))
+                        Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
                         Text(
                             text = stringResource(Res.string.auth_server_logout_warning),
                             style = MaterialTheme.typography.bodySmall,

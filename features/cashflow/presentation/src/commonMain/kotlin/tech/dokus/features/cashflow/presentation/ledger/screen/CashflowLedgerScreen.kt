@@ -162,7 +162,6 @@ private fun CashflowLedgerContent(
             // Summary hero card
             CashflowSummarySection(
                 summary = state.summary,
-                balance = state.balance,
                 viewMode = state.filters.viewMode,
                 sparkData = sparkData,
             )

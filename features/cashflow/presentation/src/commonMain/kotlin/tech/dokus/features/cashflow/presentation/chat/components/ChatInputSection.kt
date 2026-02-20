@@ -19,7 +19,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_input_placeholder
 import tech.dokus.aura.resources.chat_message_too_long
 import tech.dokus.foundation.aura.components.chat.PChatInputField
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun ChatInputSection(
@@ -42,7 +42,7 @@ internal fun ChatInputSection(
                 text = stringResource(Res.string.chat_message_too_long, maxLength),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(bottom = Constrains.Spacing.xSmall)
+                modifier = Modifier.padding(bottom = Constraints.Spacing.xSmall)
             )
         }
 

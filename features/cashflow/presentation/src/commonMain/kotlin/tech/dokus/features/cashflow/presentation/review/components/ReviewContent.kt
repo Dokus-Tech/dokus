@@ -65,7 +65,7 @@ import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.withContentPadding
 
 @Composable
@@ -128,7 +128,7 @@ private fun LoadingContent(contentPadding: PaddingValues) {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
         ) {
             DokusLoader()
             Text(
@@ -151,8 +151,8 @@ private fun AwaitingExtractionContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .padding(Constrains.Spacing.large),
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.large)
+                .padding(Constraints.Spacing.large),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large)
         ) {
             DokusCardSurface(
                 modifier = Modifier
@@ -200,9 +200,9 @@ private fun AwaitingExtractionContent(
                             ),
                         )
                     )
-                    .padding(Constrains.Spacing.large),
+                    .padding(Constraints.Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
                 DokusLoader()
                 Text(
@@ -233,7 +233,7 @@ private fun AwaitingExtractionStatusPanel(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
         ) {
             DokusLoader()
             Text(
@@ -261,7 +261,7 @@ private fun ErrorContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .padding(Constrains.Spacing.large),
+            .padding(Constraints.Spacing.large),
         contentAlignment = Alignment.Center
     ) {
         DokusErrorContent(
@@ -281,8 +281,8 @@ private fun DesktopReviewContent(
 ) {
     // In detail mode, content fills the glass pane with minimal padding (JSX: no outer padding)
     val isInDetailMode = LocalIsInDocDetailMode.current
-    val outerPadding = if (isInDetailMode) 6.dp else Constrains.Spacing.large
-    val innerGap = if (isInDetailMode) 0.dp else Constrains.Spacing.large
+    val outerPadding = if (isInDetailMode) 6.dp else Constraints.Spacing.large
+    val innerGap = if (isInDetailMode) 0.dp else Constraints.Spacing.large
 
     Row(
         modifier = Modifier
@@ -347,7 +347,7 @@ private fun ReviewDetailsPane(
             text = stringResource(Res.string.cashflow_contact_details_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = Constrains.Spacing.small),
+            modifier = Modifier.padding(bottom = Constraints.Spacing.small),
         )
 
         val scrollState = rememberScrollState()
@@ -360,8 +360,8 @@ private fun ReviewDetailsPane(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .padding(bottom = Constrains.Spacing.large),
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium),
+                    .padding(bottom = Constraints.Spacing.large),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
             ) {
                 // Show failure banner at top when extraction failed
                 AnimatedVisibility(

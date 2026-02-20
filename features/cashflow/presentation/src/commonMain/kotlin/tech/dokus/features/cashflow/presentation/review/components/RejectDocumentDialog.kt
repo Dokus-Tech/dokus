@@ -32,7 +32,7 @@ import tech.dokus.features.cashflow.presentation.review.RejectDialogState
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Dialog for rejecting a document with reason selection.
@@ -67,7 +67,7 @@ internal fun RejectDocumentDialog(
         title = stringResource(Res.string.cashflow_reject_title),
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 Text(
                     text = stringResource(Res.string.cashflow_reject_prompt),
@@ -75,7 +75,7 @@ internal fun RejectDocumentDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                 DokusSelectableRowGroup(
                     items = reasons,
@@ -93,7 +93,7 @@ internal fun RejectDocumentDialog(
                     exit = shrinkVertically() + fadeOut()
                 ) {
                     Column {
-                        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+                        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
                         OutlinedTextField(
                             value = state.otherNote,
                             onValueChange = onNoteChanged,

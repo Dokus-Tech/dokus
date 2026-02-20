@@ -30,7 +30,7 @@ import tech.dokus.domain.model.NotificationDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.layout.DokusPanelListItem
 import tech.dokus.foundation.aura.components.layout.DokusTabbedPanel
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.icon
 import tech.dokus.foundation.aura.extensions.iconTint
 import tech.dokus.foundation.aura.extensions.localized
@@ -71,7 +71,7 @@ internal fun TodayNotificationsPanel(
                 } else {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
                     ) {
                         items.forEach { notification ->
                             DokusPanelListItem(

@@ -67,7 +67,7 @@ import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PCopyRow
 import tech.dokus.foundation.aura.components.common.WaitingIndicator
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -106,7 +106,7 @@ internal fun PeppolRegistrationScreen(
                 is PeppolRegistrationState.Error -> DokusErrorContent(
                     exception = state.exception,
                     retryHandler = state.retryHandler,
-                    modifier = Modifier.fillMaxWidth().padding(Constrains.Spacing.large)
+                    modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large)
                 )
             }
         }
@@ -225,7 +225,7 @@ private fun BlockedContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = Constrains.Spacing.medium)
+                modifier = Modifier.padding(top = Constraints.Spacing.medium)
             )
         },
         primary = {
@@ -280,7 +280,7 @@ private fun WaitingTransferContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = Constrains.Spacing.large)
+                modifier = Modifier.padding(top = Constraints.Spacing.large)
             )
         },
         primary = {

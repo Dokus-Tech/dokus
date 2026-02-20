@@ -51,17 +51,26 @@ import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.cancel
 import tech.dokus.aura.resources.state_sending
 import tech.dokus.aura.resources.team_cancel_invitation
+import tech.dokus.aura.resources.team_cancel_invitation_confirm
 import tech.dokus.aura.resources.team_change_role
+import tech.dokus.aura.resources.team_footer_note
 import tech.dokus.aura.resources.team_invite_email
 import tech.dokus.aura.resources.team_invite_member
 import tech.dokus.aura.resources.team_invite_role
+import tech.dokus.aura.resources.team_load_failed
+import tech.dokus.aura.resources.team_owner_badge
+import tech.dokus.aura.resources.team_pending_label
 import tech.dokus.aura.resources.team_remove_confirm
 import tech.dokus.aura.resources.team_remove_member
+import tech.dokus.aura.resources.team_seats_available
 import tech.dokus.aura.resources.team_send_invitation
 import tech.dokus.aura.resources.team_settings_title
+import tech.dokus.aura.resources.team_since
 import tech.dokus.aura.resources.team_transfer_confirm
 import tech.dokus.aura.resources.team_transfer_ownership
+import tech.dokus.aura.resources.team_you
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -123,12 +132,12 @@ fun TeamSettingsContent(
     onShowInviteDialog: (Boolean) -> Unit,
     onIntent: (TeamSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
-    @Suppress("UNUSED_PARAMETER") contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     // Dialog states
     var showRemoveConfirmDialog by remember { mutableStateOf<TeamMember?>(null) }
     var showChangeRoleDialog by remember { mutableStateOf<TeamMember?>(null) }
     var showTransferOwnershipDialog by remember { mutableStateOf<TeamMember?>(null) }
+    var showCancelInvitationDialog by remember { mutableStateOf<InvitationId?>(null) }
 
     // Extract data from state
     val contentState = state as? TeamSettingsState.Content
@@ -138,6 +147,7 @@ fun TeamSettingsContent(
     val inviteEmail = contentState?.inviteEmail ?: ""
     val inviteRole = contentState?.inviteRole ?: UserRole.Editor
     val isInviting = contentState?.actionState is TeamSettingsState.Content.ActionState.Inviting
+    val currentUserId = contentState?.currentUserId
 
     val owner = members.find { it.role == UserRole.Owner }
     val nonOwnerMembers = members.filter { it.role != UserRole.Owner }
@@ -171,7 +181,7 @@ fun TeamSettingsContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Failed to load team",
+                            text = stringResource(Res.string.team_load_failed),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -193,7 +203,7 @@ fun TeamSettingsContent(
                             if (owner != null) {
                                 MemberRow(
                                     member = owner,
-                                    isCurrentUser = true,
+                                    isCurrentUser = currentUserId != null && owner.userId == currentUserId,
                                     showDivider = nonOwnerMembers.isNotEmpty() || invitations.isNotEmpty(),
                                 )
                             }
@@ -202,7 +212,7 @@ fun TeamSettingsContent(
                             nonOwnerMembers.forEachIndexed { index, member ->
                                 MemberRow(
                                     member = member,
-                                    isCurrentUser = false,
+                                    isCurrentUser = currentUserId != null && member.userId == currentUserId,
                                     showDivider = index < nonOwnerMembers.lastIndex || invitations.isNotEmpty(),
                                     onChangeRole = { showChangeRoleDialog = member },
                                     onRemove = { showRemoveConfirmDialog = member },
@@ -214,18 +224,21 @@ fun TeamSettingsContent(
                                 InvitationRow(
                                     invitation = invitation,
                                     showDivider = index < invitations.lastIndex,
-                                    onCancel = { onIntent(TeamSettingsIntent.CancelInvitation(invitation.id)) }
+                                    onCancel = { showCancelInvitationDialog = invitation.id }
                                 )
                             }
 
                             // Invite row
-                            InviteRow(onClick = { onShowInviteDialog(true) })
+                            InviteRow(
+                                availableSeats = contentState?.availableSeats ?: 0,
+                                onClick = { onShowInviteDialog(true) },
+                            )
                         }
                     }
 
                     // Footer note
                     Text(
-                        text = "Accountants get read-only export access.\nCore includes 3 seats.",
+                        text = stringResource(Res.string.team_footer_note, contentState?.maxSeats ?: 3),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
                         textAlign = TextAlign.Center,
                         fontSize = 11.sp,
@@ -252,6 +265,19 @@ fun TeamSettingsContent(
                 onIntent(TeamSettingsIntent.ResetInviteForm)
             },
             onInvite = { onIntent(TeamSettingsIntent.SendInvitation) }
+        )
+    }
+
+    // Cancel Invitation Confirmation Dialog
+    showCancelInvitationDialog?.let { invitationId ->
+        ConfirmationDialog(
+            title = stringResource(Res.string.team_cancel_invitation),
+            message = stringResource(Res.string.team_cancel_invitation_confirm),
+            onDismiss = { showCancelInvitationDialog = null },
+            onConfirm = {
+                onIntent(TeamSettingsIntent.CancelInvitation(invitationId))
+                showCancelInvitationDialog = null
+            }
         )
     }
 
@@ -325,9 +351,9 @@ private fun OwnerHero(
         )
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            TierBadge(label = "Owner")
+            TierBadge(label = stringResource(Res.string.team_owner_badge))
             Text(
-                text = "since ${formatDate(owner.joinedAt)}",
+                text = stringResource(Res.string.team_since, formatDate(owner.joinedAt)),
                 fontSize = 10.sp,
                 fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
                 color = MaterialTheme.colorScheme.textFaint,
@@ -369,7 +395,7 @@ private fun MemberRow(
                     if (isCurrentUser) {
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = "You",
+                            text = stringResource(Res.string.team_you),
                             fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.textMuted,
                         )
@@ -421,7 +447,7 @@ private fun InvitationRow(
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    text = "Pending \u00b7 ${invitation.role.localized}",
+                    text = "${stringResource(Res.string.team_pending_label)} \u00b7 ${invitation.role.localized}",
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.textFaint,
                 )
@@ -439,6 +465,7 @@ private fun InvitationRow(
 
 @Composable
 private fun InviteRow(
+    availableSeats: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -476,7 +503,7 @@ private fun InviteRow(
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = "2 seats available",
+                text = stringResource(Res.string.team_seats_available, availableSeats),
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.textFaint,
             )

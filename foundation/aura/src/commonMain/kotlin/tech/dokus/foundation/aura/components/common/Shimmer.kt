@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // Shimmer animation constants
 private const val ShimmerDurationMs = 1200
@@ -115,7 +115,7 @@ fun ShimmerCircle(
 @Composable
 fun ShimmerLine(
     modifier: Modifier = Modifier,
-    height: Dp = Constrains.Height.shimmerLine
+    height: Dp = Constraints.Height.shimmerLine
 ) {
     ShimmerBox(
         modifier = modifier.height(height),
@@ -127,6 +127,6 @@ fun ShimmerLine(
  * A spacer that can be used between shimmer elements.
  */
 @Composable
-fun ShimmerSpacer(height: Dp = Constrains.Spacing.small) {
+fun ShimmerSpacer(height: Dp = Constraints.Spacing.small) {
     Spacer(modifier = Modifier.height(height))
 }

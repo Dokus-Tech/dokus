@@ -32,7 +32,7 @@ import tech.dokus.aura.resources.contacts_merge
 import tech.dokus.features.contacts.mvi.DuplicateReason
 import tech.dokus.features.contacts.mvi.PotentialDuplicate
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * A warning banner displayed when potential duplicate contacts are detected
@@ -63,12 +63,12 @@ internal fun DuplicateWarningBanner(
         modifier = modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(Constrains.Spacing.large)
+            modifier = Modifier.padding(Constraints.Spacing.large)
         ) {
             // Warning header
             DuplicateWarningHeader()
 
-            Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // List of potential duplicates
             duplicates.forEach { duplicate ->
@@ -76,10 +76,10 @@ internal fun DuplicateWarningBanner(
                     duplicate = duplicate,
                     onMerge = { onMergeWithExisting(duplicate) }
                 )
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
             }
 
-            Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // Action buttons
             DuplicateWarningActions(
@@ -105,10 +105,10 @@ private fun DuplicateWarningHeader(
             imageVector = Icons.Default.Warning,
             contentDescription = stringResource(Res.string.contacts_duplicate_warning),
             tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(Constrains.IconSize.medium)
+            modifier = Modifier.size(Constraints.IconSize.medium)
         )
 
-        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.small))
 
         Text(
             text = stringResource(Res.string.contacts_duplicate_warning),
@@ -133,7 +133,7 @@ private fun DuplicateContactItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Constrains.Spacing.medium),
+                .padding(Constraints.Spacing.medium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -149,7 +149,7 @@ private fun DuplicateContactItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.xxSmall))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.xxSmall))
 
                 // Email (if available)
                 duplicate.contact.email?.let { email ->
@@ -160,14 +160,14 @@ private fun DuplicateContactItem(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.height(Constrains.Spacing.xxSmall))
+                    Spacer(modifier = Modifier.height(Constraints.Spacing.xxSmall))
                 }
 
                 // Match reason badge
                 DuplicateReasonBadge(reason = duplicate.matchReason)
             }
 
-            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.small))
 
             // Merge button
             TextButton(onClick = onMerge) {
@@ -207,8 +207,8 @@ private fun DuplicateReasonBadge(
                 shape = MaterialTheme.shapes.small
             )
             .padding(
-                horizontal = Constrains.Spacing.small,
-                vertical = Constrains.Spacing.xxSmall
+                horizontal = Constraints.Spacing.small,
+                vertical = Constraints.Spacing.xxSmall
             )
     )
 }
@@ -232,7 +232,7 @@ private fun DuplicateWarningActions(
             Text(text = stringResource(Res.string.action_cancel))
         }
 
-        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.small))
 
         // Continue anyway button
         OutlinedButton(

@@ -35,14 +35,14 @@ import tech.dokus.aura.resources.cashflow_page_plural
 import tech.dokus.aura.resources.cashflow_page_single
 import tech.dokus.aura.resources.state_loading
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
-private val ThumbnailWidth = Constrains.IconSize.xxLarge + Constrains.Spacing.large
+private val ThumbnailWidth = Constraints.IconSize.xxLarge + Constraints.Spacing.large
 private val ThumbnailHeight =
-    Constrains.IconSize.xxLarge +
-        Constrains.AvatarSize.small +
-        Constrains.Spacing.large +
-        Constrains.Stroke.thin
+    Constraints.IconSize.xxLarge +
+        Constraints.AvatarSize.small +
+        Constraints.Spacing.large +
+        Constraints.Stroke.thin
 
 /**
  * Small clickable thumbnail preview for mobile Document Review.
@@ -108,14 +108,14 @@ fun PdfThumbnail(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(Constrains.Spacing.xSmall)
+                        .padding(Constraints.Spacing.xSmall)
                         .background(
                             color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f),
                             shape = MaterialTheme.shapes.extraSmall,
                         )
                         .padding(
-                            horizontal = Constrains.Spacing.xSmall,
-                            vertical = Constrains.Spacing.xxSmall
+                            horizontal = Constraints.Spacing.xSmall,
+                            vertical = Constraints.Spacing.xxSmall
                         ),
                 ) {
                     Text(
@@ -135,7 +135,7 @@ private fun PlaceholderIcon() {
     Icon(
         imageVector = Icons.Default.Description,
         contentDescription = null,
-        modifier = Modifier.size(Constrains.AvatarSize.small),
+        modifier = Modifier.size(Constraints.AvatarSize.small),
         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
     )
 }
@@ -166,9 +166,9 @@ fun PdfPreviewRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(Constrains.Spacing.medium),
+            .padding(Constraints.Spacing.medium),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
         PdfThumbnail(
             firstPageUrl = firstPageUrl,
@@ -184,7 +184,7 @@ fun PdfPreviewRow(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Spacer(modifier = Modifier.height(Constrains.Spacing.xxSmall))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.xxSmall))
             Text(
                 text = when {
                     isLoading -> stringResource(Res.string.state_loading)
@@ -202,7 +202,7 @@ fun PdfPreviewRow(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(Constrains.IconSize.medium),
+            modifier = Modifier.size(Constraints.IconSize.medium),
         )
     }
 }

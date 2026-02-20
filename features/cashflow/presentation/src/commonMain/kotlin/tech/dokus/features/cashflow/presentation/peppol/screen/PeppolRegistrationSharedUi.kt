@@ -41,7 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.peppol_reg_copied
 import tech.dokus.aura.resources.peppol_reg_copy_email
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.textMuted
@@ -63,12 +63,12 @@ internal fun PeppolCenteredFlow(
         modifier = modifier
             .limitWidthCenteredContent()
             .verticalScroll(rememberScrollState())
-            .padding(Constrains.Spacing.xxLarge),
+            .padding(Constraints.Spacing.xxLarge),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         icon()
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.xxLarge))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.xxLarge))
 
         Text(
             text = title,
@@ -77,7 +77,7 @@ internal fun PeppolCenteredFlow(
             textAlign = TextAlign.Center,
         )
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
         Text(
             text = subtitle,
@@ -86,21 +86,21 @@ internal fun PeppolCenteredFlow(
             textAlign = TextAlign.Center,
         )
         if (body != null) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
             body()
         }
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.xxLarge))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.xxLarge))
 
         primary()
 
         if (secondary != null) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
             secondary()
         }
 
         if (footnote != null) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.xLarge))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
             Text(
                 text = footnote,
                 style = MaterialTheme.typography.bodySmall,
@@ -110,7 +110,7 @@ internal fun PeppolCenteredFlow(
         }
 
         if (details != null) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
             details()
         }
     }
@@ -211,7 +211,7 @@ internal fun TransferEmailCard(
                     .fillMaxWidth()
                     .heightIn(max = 160.dp)
                     .verticalScroll(rememberScrollState())
-                    .padding(Constrains.Spacing.medium)
+                    .padding(Constraints.Spacing.medium)
             )
 
             Row(
@@ -222,7 +222,7 @@ internal fun TransferEmailCard(
                         MaterialTheme.colorScheme.outlineVariant,
                         MaterialTheme.shapes.small
                     )
-                    .padding(horizontal = Constrains.Spacing.medium),
+                    .padding(horizontal = Constraints.Spacing.medium),
                 horizontalArrangement = Arrangement.End,
             ) {
                 TextButton(

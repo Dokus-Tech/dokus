@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,32 +61,34 @@ fun SparkBars(
         verticalAlignment = Alignment.Bottom,
     ) {
         data.forEachIndexed { index, value ->
-            val fraction = (abs(value) / maxAbs).toFloat().coerceIn(0f, 1f)
-            val barHeight = (height - BarMinHeight) * fraction + BarMinHeight
-            val opacity = OpacityMin + (OpacityMax - OpacityMin) * (index.toFloat() / (data.size - 1).coerceAtLeast(1))
+            key(index) {
+                val fraction = (abs(value) / maxAbs).toFloat().coerceIn(0f, 1f)
+                val barHeight = (height - BarMinHeight) * fraction + BarMinHeight
+                val opacity = OpacityMin + (OpacityMax - OpacityMin) * (index.toFloat() / (data.size - 1).coerceAtLeast(1))
 
-            val animatable = remember { Animatable(0f) }
-            LaunchedEffect(Unit) {
-                animatable.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(
-                        durationMillis = BarAnimDuration,
-                        delayMillis = index * BarStaggerDelay,
-                    ),
+                val animatable = remember { Animatable(0f) }
+                LaunchedEffect(Unit) {
+                    animatable.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(
+                            durationMillis = BarAnimDuration,
+                            delayMillis = index * BarStaggerDelay,
+                        ),
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .width(BarWidth)
+                        .height(barHeight)
+                        .graphicsLayer {
+                            scaleY = animatable.value
+                            transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+                        }
+                        .clip(RoundedCornerShape(topStart = BarTopRadius, topEnd = BarTopRadius))
+                        .background(color.copy(alpha = opacity)),
                 )
             }
-
-            Box(
-                modifier = Modifier
-                    .width(BarWidth)
-                    .height(barHeight)
-                    .graphicsLayer {
-                        scaleY = animatable.value
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
-                    }
-                    .clip(RoundedCornerShape(topStart = BarTopRadius, topEnd = BarTopRadius))
-                    .background(color.copy(alpha = opacity)),
-            )
         }
     }
 }

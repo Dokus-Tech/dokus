@@ -52,6 +52,28 @@ fun Amt(
 }
 
 /**
+ * Formatted currency amount from minor units (cents).
+ *
+ * @param minorUnits Amount in minor units (e.g. 130612 = €1.306,12)
+ * @param size Font size (default 13sp)
+ * @param weight Font weight (default SemiBold/600)
+ */
+@Composable
+fun Amt(
+    minorUnits: Long,
+    modifier: Modifier = Modifier,
+    size: TextUnit = 13.sp,
+    weight: FontWeight = FontWeight.SemiBold,
+) {
+    Amt(
+        value = minorUnits / 100.0,
+        modifier = modifier,
+        size = size,
+        weight = weight,
+    )
+}
+
+/**
  * Formats a Double as Euro currency in German locale: `€1.306,12` or `−€1.306,12`.
  */
 internal fun formatEuroCurrency(value: Double): String {

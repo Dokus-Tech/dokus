@@ -23,13 +23,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
-private val CardPadding = Constrains.Spacing.large
-private val HeaderSpacing = Constrains.Spacing.medium
-private val TabSpacing = Constrains.Spacing.large
+private val CardPadding = Constraints.Spacing.large
+private val HeaderSpacing = Constraints.Spacing.medium
+private val TabSpacing = Constraints.Spacing.large
 private val TabIndicatorHeight = 2.dp
-private val ContentSpacing = Constrains.Spacing.medium
+private val ContentSpacing = Constraints.Spacing.medium
 private const val ListItemBackgroundAlpha = 0.6f
 
 @Composable
@@ -72,7 +72,7 @@ fun <T> DokusTabbedPanel(
                     onTabSelected = onTabSelected,
                     tabLabel = tabLabel
                 )
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
 
@@ -107,19 +107,19 @@ fun DokusPanelListItem(
             .background(backgroundColor)
             .then(clickableModifier)
             .padding(
-                horizontal = Constrains.Spacing.medium,
-                vertical = Constrains.Spacing.small
+                horizontal = Constraints.Spacing.medium,
+                vertical = Constraints.Spacing.small
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (leading != null) {
             leading()
-            Spacer(modifier = Modifier.width(Constrains.Spacing.medium))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.medium))
         }
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xxSmall)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)
         ) {
             Text(
                 text = title,
@@ -140,7 +140,7 @@ fun DokusPanelListItem(
         }
 
         if (trailing != null) {
-            Spacer(modifier = Modifier.width(Constrains.Spacing.medium))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.medium))
             trailing()
         }
     }
@@ -186,7 +186,7 @@ private fun DokusTab(
             .width(IntrinsicSize.Min)
             .clip(MaterialTheme.shapes.small)
             .clickable(onClick = onClick)
-            .padding(vertical = Constrains.Spacing.xxSmall),
+            .padding(vertical = Constraints.Spacing.xxSmall),
         horizontalAlignment = Alignment.Start
     ) {
         Text(
@@ -196,7 +196,7 @@ private fun DokusTab(
         )
         Box(
             modifier = Modifier
-                .padding(top = Constrains.Spacing.xSmall)
+                .padding(top = Constraints.Spacing.xSmall)
                 .height(TabIndicatorHeight)
                 .fillMaxWidth()
                 .background(indicatorColor)

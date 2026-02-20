@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
 import tech.dokus.features.cashflow.presentation.chat.ChatState
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun ChatContent(
@@ -40,8 +40,8 @@ internal fun ChatContent(
                     }
                 },
                 modifier = Modifier.padding(
-                    horizontal = Constrains.Spacing.medium,
-                    vertical = Constrains.Spacing.small
+                    horizontal = Constraints.Spacing.medium,
+                    vertical = Constraints.Spacing.small
                 )
             )
         }
@@ -76,7 +76,7 @@ internal fun ChatContent(
                 isSending = state.isSending,
                 modifier = Modifier
                     .align(androidx.compose.ui.Alignment.BottomCenter)
-                    .padding(bottom = Constrains.Spacing.medium)
+                    .padding(bottom = Constraints.Spacing.medium)
             )
         }
 
@@ -90,7 +90,7 @@ internal fun ChatContent(
             onSend = { onIntent(ChatIntent.SendMessage) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Constrains.Spacing.medium)
+                .padding(Constraints.Spacing.medium)
         )
     }
 

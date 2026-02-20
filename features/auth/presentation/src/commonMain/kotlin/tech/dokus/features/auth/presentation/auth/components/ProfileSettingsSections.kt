@@ -41,6 +41,14 @@ import tech.dokus.aura.resources.profile_last_name
 import tech.dokus.aura.resources.profile_load_failed
 import tech.dokus.aura.resources.profile_logout
 import tech.dokus.aura.resources.profile_personal_info
+import tech.dokus.aura.resources.profile_server_change
+import tech.dokus.aura.resources.profile_server_dokus_cloud
+import tech.dokus.aura.resources.profile_server_label
+import tech.dokus.aura.resources.profile_server_reset_to_cloud
+import tech.dokus.aura.resources.profile_server_url
+import tech.dokus.aura.resources.profile_server_version
+import tech.dokus.aura.resources.profile_sessions_device_count
+import tech.dokus.aura.resources.profile_version_footer
 import tech.dokus.aura.resources.profile_resend_verification
 import tech.dokus.aura.resources.profile_save
 import tech.dokus.aura.resources.profile_sessions
@@ -177,7 +185,7 @@ internal fun SecurityCard(
             )
             SettingsRow(
                 label = stringResource(Res.string.profile_sessions),
-                value = "1 device",
+                value = stringResource(Res.string.profile_sessions_device_count),
                 chevron = true,
                 showDivider = false,
                 onClick = onMySessions,
@@ -196,7 +204,8 @@ internal fun ServerCard(
     onResetToCloud: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val serverName = currentServer.name ?: if (currentServer.isCloud) "Dokus Cloud" else currentServer.host
+    val cloudName = stringResource(Res.string.profile_server_dokus_cloud)
+    val serverName = currentServer.name ?: if (currentServer.isCloud) cloudName else currentServer.host
 
     DokusCardSurface(modifier = modifier.fillMaxWidth()) {
         Column {
@@ -206,17 +215,17 @@ internal fun ServerCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                DokusLabel(text = "Server")
+                DokusLabel(text = stringResource(Res.string.profile_server_label))
                 StatusDot(type = StatusDotType.Confirmed, pulse = true)
             }
 
-            SettingsRow(label = "Server", value = serverName)
-            SettingsRow(label = "URL", value = currentServer.baseUrl, mono = true)
+            SettingsRow(label = stringResource(Res.string.profile_server_label), value = serverName)
+            SettingsRow(label = stringResource(Res.string.profile_server_url), value = currentServer.baseUrl, mono = true)
             if (currentServer.version != null) {
-                SettingsRow(label = "Version", value = currentServer.version!!, mono = true)
+                SettingsRow(label = stringResource(Res.string.profile_server_version), value = currentServer.version!!, mono = true)
             }
             SettingsRow(
-                label = "Change Server",
+                label = stringResource(Res.string.profile_server_change),
                 chevron = true,
                 showDivider = !currentServer.isCloud,
                 onClick = onChangeServer,
@@ -229,7 +238,7 @@ internal fun ServerCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "\u2601 Reset to Cloud",
+                        text = stringResource(Res.string.profile_server_reset_to_cloud),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary,
@@ -295,7 +304,7 @@ internal fun VersionFooter(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = "Dokus v0.1.0 \u00b7 Core",
+        text = stringResource(Res.string.profile_version_footer, "0.1.0", "Core"),
         modifier = modifier.fillMaxWidth().padding(vertical = 10.dp),
         textAlign = TextAlign.Center,
         fontSize = 10.sp,

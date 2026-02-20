@@ -157,14 +157,8 @@ private fun cubicEaseInOut(t: Float): Float {
 }
 
 /** Linearly interpolate between two colors. */
-private fun lerpColor(a: Color, b: Color, fraction: Float): Color {
-    return Color(
-        red = a.red + (b.red - a.red) * fraction,
-        green = a.green + (b.green - a.green) * fraction,
-        blue = a.blue + (b.blue - a.blue) * fraction,
-        alpha = a.alpha + (b.alpha - a.alpha) * fraction,
-    )
-}
+private fun lerpColor(a: Color, b: Color, fraction: Float): Color =
+    androidx.compose.ui.graphics.lerp(a, b, fraction)
 
 /**
  * Standard sizes for the Dokus loading animation.

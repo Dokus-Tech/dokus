@@ -22,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -33,6 +35,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.foundation.app.shell.DocQueueItem
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.a11y_back_to_all_documents
+import tech.dokus.aura.resources.document_queue_all_docs
+import tech.dokus.aura.resources.document_queue_navigate
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.style.surfaceHover
@@ -67,10 +74,13 @@ internal fun DocumentQueueWindow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // JSX: chevron SVG + "All docs", 12sp 500 weight, amber color, gap 4
+            val backDescription = stringResource(Res.string.a11y_back_to_all_documents)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.clickable(onClick = onExit),
+                modifier = Modifier
+                    .semantics { contentDescription = backDescription }
+                    .clickable(onClick = onExit),
             ) {
                 Text(
                     text = "\u2039",
@@ -79,7 +89,7 @@ internal fun DocumentQueueWindow(
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = "All docs",
+                    text = stringResource(Res.string.document_queue_all_docs),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary,
@@ -150,7 +160,7 @@ internal fun DocumentQueueWindow(
             )
             Spacer(Modifier.width(4.dp))
             Text(
-                text = "navigate",
+                text = stringResource(Res.string.document_queue_navigate),
                 fontSize = 9.sp,
                 color = faintColor,
             )

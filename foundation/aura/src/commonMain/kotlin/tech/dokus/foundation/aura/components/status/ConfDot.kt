@@ -7,7 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.statusError
 import tech.dokus.foundation.aura.style.statusWarning
@@ -43,7 +43,7 @@ fun ConfDot(
 
     Box(
         modifier = modifier
-            .size(Constrains.StatusDot.size)
+            .size(Constraints.StatusDot.size)
             .background(color, CircleShape),
     )
 }

@@ -3,6 +3,13 @@ package tech.dokus.navigation.destinations
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/**
+ * Destinations reachable within the home NavHost (bottom bar / rail).
+ *
+ * `@SerialName` values use a `"home/"` prefix only when the bare name would
+ * collide with a destination in another sealed hierarchy (e.g. `"home/workspace_details"`
+ * vs [SettingsDestination.WorkspaceSettings]).
+ */
 sealed interface HomeDestination : NavigationDestination {
 
     @Serializable

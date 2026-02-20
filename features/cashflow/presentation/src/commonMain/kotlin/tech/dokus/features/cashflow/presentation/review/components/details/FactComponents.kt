@@ -41,7 +41,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_tap_to_identify
 import tech.dokus.aura.resources.cashflow_who_issued_document
 import tech.dokus.features.cashflow.presentation.review.ContactSnapshot
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
@@ -128,7 +128,7 @@ private fun ContactFactDisplay(
                     Modifier
                 }
             )
-            .padding(Constrains.Spacing.small)
+            .padding(Constraints.Spacing.small)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -211,7 +211,7 @@ private fun ContactMissingPrompt(
                     Modifier
                 }
             )
-            .padding(Constrains.Spacing.small),
+            .padding(Constraints.Spacing.small),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -225,7 +225,7 @@ private fun ContactMissingPrompt(
                     .size(StatusDotSize)
                     .background(attentionColor, CircleShape)
             )
-            Spacer(Modifier.width(Constrains.Spacing.small))
+            Spacer(Modifier.width(Constraints.Spacing.small))
             Column {
                 Text(
                     text = stringResource(Res.string.cashflow_who_issued_document),
@@ -270,7 +270,7 @@ fun AmountRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Constrains.Spacing.xSmall),
+            .padding(vertical = Constraints.Spacing.xSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -317,7 +317,7 @@ fun MicroLabel(
         text = text,
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.textMuted,
-        modifier = modifier.padding(bottom = Constrains.Spacing.xSmall)
+        modifier = modifier.padding(bottom = Constraints.Spacing.xSmall)
     )
 }
 
@@ -349,7 +349,7 @@ fun FactField(
             )
             .then(if (isClickable) Modifier.hoverable(interactionSource) else Modifier)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = Constrains.Spacing.xSmall),
+            .padding(vertical = Constraints.Spacing.xSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -369,7 +369,7 @@ fun FactField(
                 }
             )
             if (isClickable && (!isLargeScreen || isHovered)) {
-                Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                Spacer(Modifier.width(Constraints.Spacing.xSmall))
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = null,

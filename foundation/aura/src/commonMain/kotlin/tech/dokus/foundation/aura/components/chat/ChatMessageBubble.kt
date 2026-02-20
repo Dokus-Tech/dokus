@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Represents the role of a message sender in a chat conversation.
@@ -58,16 +58,16 @@ fun ChatMessageBubble(
     val isUser = role == ChatMessageRole.User
     val bubbleShape = when (role) {
         ChatMessageRole.User -> RoundedCornerShape(
-            topStart = Constrains.Spacing.large,
-            topEnd = Constrains.Spacing.large,
-            bottomStart = Constrains.Spacing.large,
-            bottomEnd = Constrains.Spacing.xSmall
+            topStart = Constraints.Spacing.large,
+            topEnd = Constraints.Spacing.large,
+            bottomStart = Constraints.Spacing.large,
+            bottomEnd = Constraints.Spacing.xSmall
         )
         ChatMessageRole.Assistant -> RoundedCornerShape(
-            topStart = Constrains.Spacing.xSmall,
-            topEnd = Constrains.Spacing.large,
-            bottomStart = Constrains.Spacing.large,
-            bottomEnd = Constrains.Spacing.large
+            topStart = Constraints.Spacing.xSmall,
+            topEnd = Constraints.Spacing.large,
+            bottomStart = Constraints.Spacing.large,
+            bottomEnd = Constraints.Spacing.large
         )
     }
     val backgroundColor = when (role) {
@@ -84,7 +84,7 @@ fun ChatMessageBubble(
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
     ) {
         if (isUser) {
-            Spacer(modifier = Modifier.width(Constrains.Spacing.xxLarge))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.xxLarge))
         }
 
         Column(
@@ -99,8 +99,8 @@ fun ChatMessageBubble(
                     .clip(bubbleShape)
                     .background(backgroundColor)
                     .padding(
-                        horizontal = Constrains.Spacing.medium,
-                        vertical = Constrains.Spacing.small
+                        horizontal = Constraints.Spacing.medium,
+                        vertical = Constraints.Spacing.small
                     )
             ) {
                 Text(
@@ -116,15 +116,15 @@ fun ChatMessageBubble(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     modifier = Modifier.padding(
-                        horizontal = Constrains.Spacing.xSmall,
-                        vertical = Constrains.Spacing.xxSmall
+                        horizontal = Constraints.Spacing.xSmall,
+                        vertical = Constraints.Spacing.xxSmall
                     )
                 )
             }
         }
 
         if (!isUser) {
-            Spacer(modifier = Modifier.width(Constrains.Spacing.xxLarge))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.xxLarge))
         }
     }
 }
