@@ -27,10 +27,9 @@ import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
-import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
 import tech.dokus.domain.enums.CounterpartyIntent
-import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
