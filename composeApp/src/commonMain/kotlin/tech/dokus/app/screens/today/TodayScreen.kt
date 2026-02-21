@@ -228,11 +228,10 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = stringResource(
+                    text = "$count ${stringResource(
                         if (count == 1) Res.string.today_invoice_pending
                         else Res.string.today_invoices_pending,
-                        count,
-                    ),
+                    )}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )

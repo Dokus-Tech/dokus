@@ -126,8 +126,8 @@ private fun DocumentsContent(
     }
 
     Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = modifier.fillMaxSize().padding(top = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         MobilePageTitle(
             title = stringResource(Res.string.nav_documents),

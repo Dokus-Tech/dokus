@@ -159,8 +159,8 @@ private fun CashflowLedgerContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             MobilePageTitle(title = stringResource(Res.string.cashflow_title))
 
