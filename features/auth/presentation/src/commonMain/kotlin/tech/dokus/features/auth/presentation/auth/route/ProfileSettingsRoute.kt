@@ -19,6 +19,8 @@ import tech.dokus.aura.resources.profile_reset_to_cloud_failed
 import tech.dokus.aura.resources.profile_save_success
 import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.aura.resources.profile_settings_title
+import tech.dokus.aura.resources.profile_subtitle
 import tech.dokus.features.auth.mvi.ProfileSettingsAction
 import tech.dokus.features.auth.mvi.ProfileSettingsContainer
 import tech.dokus.features.auth.mvi.ProfileSettingsIntent
@@ -26,6 +28,9 @@ import tech.dokus.features.auth.presentation.auth.screen.ProfileSettingsScreen
 import tech.dokus.features.auth.usecases.ConnectToServerUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCase
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
+import tech.dokus.foundation.app.shell.HomeShellTopBarMode
+import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.platform.Logger
 import tech.dokus.navigation.destinations.AuthDestination
@@ -49,6 +54,21 @@ fun ProfileSettingsRoute(
     var pendingVerificationSent by remember { mutableStateOf(false) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var isLoggingOut by remember { mutableStateOf(false) }
+
+    // Register shell top bar for desktop (Profile is inside home NavHost)
+    val profileTitle = stringResource(Res.string.profile_settings_title)
+    val profileSubtitle = stringResource(Res.string.profile_subtitle)
+    RegisterHomeShellTopBar(
+        route = "home/profile",
+        config = remember(profileTitle, profileSubtitle) {
+            HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title(
+                    title = profileTitle,
+                    subtitle = profileSubtitle
+                )
+            )
+        }
+    )
 
     val saveSuccessMessage = if (pendingSuccess) {
         stringResource(Res.string.profile_save_success)

@@ -2,6 +2,7 @@ package tech.dokus.features.cashflow
 
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow
+import tech.dokus.aura.resources.cashflow_subtitle
 import tech.dokus.aura.resources.cashflow_title
 import tech.dokus.aura.resources.chat_title
 import tech.dokus.aura.resources.ml
@@ -51,6 +52,7 @@ object CashflowAppModule : AppModule {
                     priority = 20,
                     mobileTabOrder = 2,
                     shellTopBar = ShellTopBarDefault.Title,
+                    subtitleRes = Res.string.cashflow_subtitle,
                 ),
             ),
         ),

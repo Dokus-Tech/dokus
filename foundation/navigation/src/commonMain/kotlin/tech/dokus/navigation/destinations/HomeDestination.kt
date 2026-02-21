@@ -60,6 +60,10 @@ sealed interface HomeDestination : NavigationDestination {
     @SerialName("home/under_development")
     data object UnderDevelopment : HomeDestination
 
+    @Serializable
+    @SerialName("home/profile")
+    data object Profile : HomeDestination
+
 }
 
 /** Route string matching the @SerialName value for backstack matching. */
@@ -77,6 +81,7 @@ val NavigationDestination.route: String get() = when (this) {
         HomeDestination.Settings -> "settings"
         HomeDestination.More -> "more"
         HomeDestination.UnderDevelopment -> "home/under_development"
+        HomeDestination.Profile -> "home/profile"
     }
     is SettingsDestination -> when (this) {
         SettingsDestination.WorkspaceSettings -> "settings/workspace"

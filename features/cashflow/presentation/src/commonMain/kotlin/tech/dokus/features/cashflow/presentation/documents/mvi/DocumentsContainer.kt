@@ -40,6 +40,7 @@ internal class DocumentsContainer(
     private var currentFilter: DocumentFilter = DocumentFilter.All
     private var currentSearchQuery: String = ""
     private var needsAttentionCount: Int = 0
+    private var confirmedCount: Int = 0
 
     override val store: Store<DocumentsState, DocumentsIntent, DocumentsAction> =
         store(DocumentsState.Loading) {
@@ -64,6 +65,7 @@ internal class DocumentsContainer(
         updateState { DocumentsState.Loading }
 
         needsAttentionCount = loadNeedsAttentionCount()
+        confirmedCount = loadConfirmedCount()
         loadDocumentRecords(
             page = 0,
             pageSize = PAGE_SIZE,
@@ -82,7 +84,8 @@ internal class DocumentsContainer(
                         documents = buildPaginationState(),
                         filter = currentFilter,
                         searchQuery = currentSearchQuery,
-                        needsAttentionCount = this@DocumentsContainer.needsAttentionCount
+                        needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
+                        confirmedCount = this@DocumentsContainer.confirmedCount
                     )
                 }
             },
@@ -122,7 +125,8 @@ internal class DocumentsContainer(
                     updateState {
                         copy(
                             documents = buildPaginationState(),
-                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount
+                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
+                            confirmedCount = this@DocumentsContainer.confirmedCount
                         )
                     }
                 },
@@ -174,7 +178,8 @@ internal class DocumentsContainer(
                                 documents = buildPaginationState(),
                                 searchQuery = trimmed,
                                 filter = currentFilter,
-                                needsAttentionCount = this@DocumentsContainer.needsAttentionCount
+                                needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
+                                confirmedCount = this@DocumentsContainer.confirmedCount
                             )
                         }
                     },
@@ -203,6 +208,7 @@ internal class DocumentsContainer(
             }
 
             this@DocumentsContainer.needsAttentionCount = loadNeedsAttentionCount()
+            this@DocumentsContainer.confirmedCount = loadConfirmedCount()
             loadDocumentRecords(
                 page = 0,
                 pageSize = PAGE_SIZE,
@@ -221,7 +227,8 @@ internal class DocumentsContainer(
                             documents = buildPaginationState(),
                             searchQuery = currentSearchQuery,
                             filter = filter,
-                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount
+                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
+                            confirmedCount = this@DocumentsContainer.confirmedCount
                         )
                     }
                 },
@@ -270,6 +277,16 @@ internal class DocumentsContainer(
             pageSize = 1,
             filter = DocumentListFilter.NeedsAttention
         ).getOrNull() ?: return needsAttentionCount
+
+        return response.total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    private suspend fun loadConfirmedCount(): Int {
+        val response = loadDocumentRecords(
+            page = 0,
+            pageSize = 1,
+            filter = DocumentListFilter.Confirmed
+        ).getOrNull() ?: return confirmedCount
 
         return response.total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }

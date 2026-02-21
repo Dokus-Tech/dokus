@@ -139,6 +139,7 @@ private fun DocumentsContent(
             currentFilter = state.filter,
             totalCount = documents.size,
             needsAttentionCount = state.needsAttentionCount,
+            confirmedCount = state.confirmedCount,
             onFilterSelected = { onIntent(DocumentsIntent.UpdateFilter(it)) },
             modifier = Modifier.padding(horizontal = 16.dp)
         )

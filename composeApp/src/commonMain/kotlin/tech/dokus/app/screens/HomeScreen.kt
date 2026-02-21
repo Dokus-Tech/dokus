@@ -89,6 +89,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
 import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.destinations.route
@@ -210,7 +211,7 @@ internal fun HomeRoute(
         isLoggingOut = shellState.isLoggingOut,
         snackbarHostState = snackbarHostState,
         onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
-        onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
+        onProfileClick = { homeNavController.navigateToTopLevelTab(HomeDestination.Profile) },
         onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
         onLogoutClick = { container.store.intent(HomeIntent.Logout) },
         onNavItemClick = { navItem ->
@@ -348,14 +349,14 @@ private fun RailNavigationLayout(
                 color = colorScheme.glass,
                 border = BorderStroke(1.dp, colorScheme.glassBorder),
                 tonalElevation = 0.dp,
-                shadowElevation = 8.dp,
+                shadowElevation = 2.dp,
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
                         .padding(16.dp)
                 ) {
-                    AppNameText(modifier = Modifier.padding(bottom = 24.dp))
+                    AppNameText(modifier = Modifier.padding(bottom = 28.dp))
 
                     DokusNavigationRailSectioned(
                         sections = navSections,
@@ -398,7 +399,7 @@ private fun RailNavigationLayout(
                 shape = MaterialTheme.shapes.large,
                 border = BorderStroke(1.dp, colorScheme.glassBorder),
                 tonalElevation = 0.dp,
-                shadowElevation = 8.dp,
+                shadowElevation = 2.dp,
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     if (topBarConfig != null) {
@@ -515,9 +516,11 @@ private fun rememberFallbackShellTopBarConfig(
         }
 
         ShellTopBarDefault.Title -> {
+            val subtitle = navItem.subtitleRes?.let { stringResource(it) }
             HomeShellTopBarConfig(
                 mode = HomeShellTopBarMode.Title(
-                    title = stringResource(navItem.titleRes)
+                    title = stringResource(navItem.titleRes),
+                    subtitle = subtitle
                 )
             )
         }

@@ -1,6 +1,7 @@
 package tech.dokus.features.contacts
 
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_subtitle
 import tech.dokus.aura.resources.nav_contacts
 import tech.dokus.aura.resources.nav_section_company
 import tech.dokus.aura.resources.users
@@ -15,6 +16,7 @@ import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.aura.model.NavItem
+import tech.dokus.foundation.aura.model.ShellTopBarDefault
 import tech.dokus.navigation.NavSectionIds
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.HomeDestination
@@ -41,6 +43,8 @@ object ContactsAppModule : AppModule {
                     iconRes = Res.drawable.users,
                     destination = HomeDestination.Contacts,
                     priority = 10,
+                    shellTopBar = ShellTopBarDefault.Title,
+                    subtitleRes = Res.string.contacts_subtitle,
                 ),
             ),
         ),

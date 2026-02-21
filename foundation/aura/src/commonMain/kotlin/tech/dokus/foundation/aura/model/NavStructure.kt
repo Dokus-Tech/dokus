@@ -45,6 +45,8 @@ data class NavItem(
     val mobileTabOrder: Int? = null,
     /** Non-null = shell renders a top bar for this item. null = screen manages its own top bar. */
     val shellTopBar: ShellTopBarDefault? = null,
+    /** Subtitle shown in the desktop shell top bar (e.g. "Financial overview") */
+    val subtitleRes: StringResource? = null,
 )
 
 /**

@@ -62,16 +62,6 @@ internal fun ContactDetailsContent(
                 )
 
                 OfflineOverlay(isOffline = !isOnline) {
-                    ActivitySummarySection(
-                        state = if (!isOnline && activityState is DokusState.Error) {
-                            DokusState.loading()
-                        } else {
-                            activityState
-                        }
-                    )
-                }
-
-                OfflineOverlay(isOffline = !isOnline) {
                     NotesSection(
                         state = if (!isOnline && notesState is DokusState.Error) {
                             DokusState.loading()

@@ -6,6 +6,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_group_account
 import tech.dokus.aura.resources.settings_profile
 import tech.dokus.features.auth.di.authPresentationModule
+import tech.dokus.features.auth.navigation.AuthHomeNavigationProvider
 import tech.dokus.features.auth.navigation.AuthNavigationProvider
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
@@ -22,7 +23,7 @@ import tech.dokus.navigation.destinations.AuthDestination
 object AuthAppModule : AppModule {
     // Presentation layer
     override val navigationProvider: NavigationProvider? = AuthNavigationProvider
-    override val homeNavigationProvider: NavigationProvider? = null
+    override val homeNavigationProvider: NavigationProvider? = AuthHomeNavigationProvider
     override val navGroups: List<ModuleNavGroup> = emptyList()
     override val settingsGroups: List<ModuleSettingsGroup> = listOf(
         ModuleSettingsGroup(

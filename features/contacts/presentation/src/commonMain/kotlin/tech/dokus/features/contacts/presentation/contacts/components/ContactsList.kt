@@ -50,7 +50,11 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_add_first
 import tech.dokus.aura.resources.contacts_add_first_hint
+import tech.dokus.aura.resources.contacts_customer
+import tech.dokus.aura.resources.contacts_doc_count_plural
+import tech.dokus.aura.resources.contacts_doc_count_single
 import tech.dokus.aura.resources.contacts_empty
+import tech.dokus.aura.resources.contacts_vendor
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
@@ -311,19 +315,33 @@ private fun ContactListItem(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (uiRole != null) {
-                RoleBadge(role = uiRole)
+            // Subtitle: "Vendor · 2 docs"
+            val roleName = when (uiRole) {
+                UiContactRole.Vendor -> stringResource(Res.string.contacts_vendor)
+                UiContactRole.Bank, UiContactRole.Accountant -> null
+                null -> null
             }
-        }
-
-        if (docCount > 0) {
-            Text(
-                text = docCount.toString(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
-                ),
-                color = MaterialTheme.colorScheme.textMuted,
-            )
+            val docLabel = if (docCount == 1L) {
+                stringResource(Res.string.contacts_doc_count_single)
+            } else {
+                stringResource(Res.string.contacts_doc_count_plural)
+            }
+            val subtitle = buildString {
+                if (roleName != null) append(roleName)
+                if (docCount > 0L) {
+                    if (isNotEmpty()) append(" \u00b7 ")
+                    append("$docCount $docLabel")
+                }
+            }
+            if (subtitle.isNotEmpty()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

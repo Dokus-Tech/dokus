@@ -27,6 +27,7 @@ internal fun DocumentFilterButtons(
     currentFilter: DocumentFilter,
     totalCount: Int,
     needsAttentionCount: Int,
+    confirmedCount: Int,
     onFilterSelected: (DocumentFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -46,6 +47,7 @@ internal fun DocumentFilterButtons(
         DokusTab(
             id = DocumentFilter.Confirmed.name,
             label = stringResource(Res.string.documents_filter_confirmed),
+            count = confirmedCount.takeIf { it > 0 },
         ),
     )
 
@@ -74,6 +76,7 @@ private fun DocumentFilterButtonsPreview(
             currentFilter = DocumentFilter.All,
             totalCount = 12,
             needsAttentionCount = 3,
+            confirmedCount = 9,
             onFilterSelected = {},
         )
     }

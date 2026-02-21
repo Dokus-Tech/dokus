@@ -59,6 +59,7 @@ sealed interface DocumentsState : MVIState, DokusState<Nothing> {
         val searchQuery: String = "",
         val filter: DocumentFilter = DocumentFilter.All,
         val needsAttentionCount: Int = 0,
+        val confirmedCount: Int = 0,
     ) : DocumentsState
 
     /**

@@ -47,9 +47,11 @@ import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.today_awaiting_processing
 import tech.dokus.aura.resources.today_document_needs_review
 import tech.dokus.aura.resources.today_documents
+import tech.dokus.aura.resources.today_due_this_week
 import tech.dokus.aura.resources.today_invoice_pending
 import tech.dokus.aura.resources.today_invoices_pending
 import tech.dokus.aura.resources.today_needs_review
+import tech.dokus.aura.resources.today_overdue
 import tech.dokus.aura.resources.today_recent
 import tech.dokus.aura.resources.today_review_button
 import tech.dokus.aura.resources.today_view_all
@@ -211,8 +213,8 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 DokusLabel(
-                    text = stringResource(Res.string.today_needs_review),
-                    color = MaterialTheme.colorScheme.primary,
+                    text = stringResource(Res.string.today_overdue),
+                    color = MaterialTheme.colorScheme.error,
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
@@ -241,7 +243,7 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
         DokusCardSurface(modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.padding(20.dp)) {
                 DokusLabel(
-                    text = stringResource(Res.string.today_documents),
+                    text = stringResource(Res.string.today_due_this_week),
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(Modifier.height(10.dp))
@@ -290,7 +292,7 @@ private fun TodayAttentionCard(
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = vendorName,
+                    text = description,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                     ),
@@ -314,7 +316,7 @@ private fun TodayAttentionCard(
                         )
                     }
                     Text(
-                        text = description,
+                        text = vendorName,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.textMuted,
                         maxLines = 1,
@@ -389,6 +391,8 @@ private fun TodayRecentRow(
     val dateText = document.formattedDate()
     val amount = document.extractedTotalDouble()
 
+    val isLargeScreen = LocalScreenSize.current.isLarge
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -396,7 +400,11 @@ private fun TodayRecentRow(
             .padding(horizontal = 18.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SourceBadge(source = source)
+        if (isLargeScreen) {
+            StatusDot(type = StatusDotType.Warning, size = 8.dp)
+        } else {
+            SourceBadge(source = source)
+        }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -417,7 +425,7 @@ private fun TodayRecentRow(
             }
         }
         if (amount != null) {
-            Amt(value = amount, size = 12.sp)
+            Amt(value = -amount, size = 12.sp)
         }
     }
 }

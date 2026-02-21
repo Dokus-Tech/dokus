@@ -39,14 +39,14 @@
 
     <!-- Profile Settings -->
     <string name="profile_settings_title">Profile</string>
-    <string name="profile_personal_info">Personal Information</string>
+    <string name="profile_personal_info">Name</string>
     <string name="profile_first_name">First Name</string>
     <string name="profile_last_name">Last Name</string>
     <string name="profile_email">Email</string>
     <string name="profile_email_verification">Email Verification</string>
     <string name="profile_email_verified">Verified</string>
     <string name="profile_email_not_verified">Not verified</string>
-    <string name="profile_resend_verification">Resend verification email</string>
+    <string name="profile_resend_verification">Verify email</string>
     <string name="profile_verification_email_sent">Verification email sent</string>
     <string name="profile_verification_email_failed">Failed to resend verification email</string>
     <string name="profile_change_password">Change Password</string>
@@ -72,9 +72,9 @@
     <string name="profile_save_error">Failed to update profile</string>
     <string name="profile_load_failed">Failed to load profile</string>
     <string name="profile_reset_to_cloud_failed">Failed to reset to cloud</string>
-    <string name="profile_sessions">My Sessions</string>
+    <string name="profile_sessions">Active Sessions</string>
     <string name="profile_sessions_description">Review and revoke your active sessions.</string>
-    <string name="profile_sessions_title">My Sessions</string>
+    <string name="profile_sessions_title">Active Sessions</string>
     <string name="profile_sessions_empty">No active sessions found</string>
     <string name="profile_revoke_session">Revoke</string>
     <string name="profile_revoke_other_sessions">Revoke Other Sessions</string>

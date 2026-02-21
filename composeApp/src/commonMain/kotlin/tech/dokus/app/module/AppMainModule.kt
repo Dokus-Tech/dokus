@@ -14,7 +14,9 @@ import tech.dokus.aura.resources.bar_chart
 import tech.dokus.aura.resources.calculator
 import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.file_text
+import tech.dokus.aura.resources.documents_subtitle
 import tech.dokus.aura.resources.home_today
+import tech.dokus.aura.resources.today_subtitle
 import tech.dokus.aura.resources.nav_accountant
 import tech.dokus.aura.resources.nav_documents
 import tech.dokus.aura.resources.nav_reports
@@ -66,7 +68,8 @@ internal object AppMainModule : AppModule {
                     destination = HomeDestination.Today,
                     priority = 0,
                     mobileTabOrder = 0,
-                    shellTopBar = ShellTopBarDefault.Search,
+                    shellTopBar = ShellTopBarDefault.Title,
+                    subtitleRes = Res.string.today_subtitle,
                 ),
                 NavItem(
                     id = "documents",
@@ -75,7 +78,8 @@ internal object AppMainModule : AppModule {
                     destination = HomeDestination.Documents,
                     priority = 10,
                     mobileTabOrder = 1,
-                    shellTopBar = ShellTopBarDefault.Search,
+                    shellTopBar = ShellTopBarDefault.Title,
+                    subtitleRes = Res.string.documents_subtitle,
                 ),
                 NavItem(
                     id = "accountant",

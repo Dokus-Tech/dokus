@@ -141,9 +141,9 @@
     <string name="documents_table_document">Document</string>
     <string name="documents_table_status">Status</string>
     <string name="documents_table_open">Open</string>
-    <string name="documents_table_description">Description</string>
-    <string name="documents_table_counterparty">Counterparty</string>
-    <string name="documents_filter_needs_attention">Needs attention</string>
+    <string name="documents_table_description">Reference</string>
+    <string name="documents_table_counterparty">Vendor</string>
+    <string name="documents_filter_needs_attention">Attention</string>
 
     <!-- Document Table -->
     <string name="document_table_invoice">Invoice</string>

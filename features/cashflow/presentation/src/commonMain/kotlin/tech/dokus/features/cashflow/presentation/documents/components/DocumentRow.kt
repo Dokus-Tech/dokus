@@ -181,10 +181,10 @@ internal fun DocumentTableRow(
             )
         }
 
-        // Amount
+        // Amount (negative = expense)
         DokusTableCell(DocumentTableColumns.Amount) {
             if (amountDouble != null) {
-                Amt(value = amountDouble, size = 12.sp)
+                Amt(value = -amountDouble, size = 12.sp)
             } else {
                 Text(
                     text = "\u2014",
@@ -280,7 +280,7 @@ internal fun DocumentMobileRow(
             // Amount + Date
             Column(horizontalAlignment = Alignment.End) {
                 if (amountDouble != null) {
-                    Amt(value = amountDouble, size = 13.sp)
+                    Amt(value = -amountDouble, size = 13.sp)
                 }
                 Text(
                     text = dateLabel,

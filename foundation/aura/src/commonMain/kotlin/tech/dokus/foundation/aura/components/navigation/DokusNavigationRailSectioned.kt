@@ -93,7 +93,7 @@ fun ColumnScope.DokusNavigationRailSectioned(
                     val trackColor = MaterialTheme.dokusEffects.railTrackLine
                     Column(
                         modifier = Modifier
-                            .padding(start = spacing.medium)
+                            .padding(start = spacing.large)
                             .drawBehind {
                                 // Left border track line
                                 drawLine(
@@ -154,7 +154,7 @@ private fun NavSectionHeader(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = spacing.small, vertical = spacing.small),
+            .padding(horizontal = spacing.small, vertical = spacing.medium),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Rotating chevron
@@ -225,9 +225,9 @@ private fun NavItemRow(
             )
             .clickable(enabled = !item.comingSoon, onClick = onClick)
             .padding(
-                start = spacing.medium,
-                top = spacing.small,
-                bottom = spacing.small,
+                start = spacing.large,
+                top = spacing.medium,
+                bottom = spacing.medium,
                 end = spacing.small
             ),
         verticalAlignment = Alignment.CenterVertically

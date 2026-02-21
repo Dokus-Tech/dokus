@@ -154,15 +154,10 @@ internal fun AccountCard(
                 SettingsRow(
                     label = stringResource(Res.string.profile_resend_verification),
                     chevron = true,
+                    showDivider = false,
                     onClick = onResendVerification,
                 )
             }
-            SettingsRow(
-                label = stringResource(Res.string.profile_edit),
-                chevron = true,
-                showDivider = false,
-                onClick = onEditClick,
-            )
         }
     }
 }
@@ -220,7 +215,13 @@ internal fun ServerCard(
             }
 
             SettingsRow(label = stringResource(Res.string.profile_server_label), value = serverName)
-            SettingsRow(label = stringResource(Res.string.profile_server_url), value = currentServer.baseUrl, mono = true)
+            SettingsRow(
+                label = stringResource(Res.string.profile_server_url),
+                value = currentServer.baseUrl
+                    .removePrefix("https://")
+                    .removePrefix("http://"),
+                mono = true
+            )
             if (currentServer.version != null) {
                 SettingsRow(label = stringResource(Res.string.profile_server_version), value = currentServer.version!!, mono = true)
             }

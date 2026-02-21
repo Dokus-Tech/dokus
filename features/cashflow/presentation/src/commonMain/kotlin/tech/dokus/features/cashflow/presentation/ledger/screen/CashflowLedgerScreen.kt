@@ -80,6 +80,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 internal fun CashflowLedgerScreen(
     state: CashflowLedgerState,
     onIntent: (CashflowLedgerIntent) -> Unit,
+    onCreateInvoiceClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -104,7 +105,8 @@ internal fun CashflowLedgerScreen(
                 is CashflowLedgerState.Content -> {
                     CashflowLedgerContent(
                         state = state,
-                        onIntent = onIntent
+                        onIntent = onIntent,
+                        onCreateInvoiceClick = onCreateInvoiceClick
                     )
                 }
 
@@ -126,7 +128,8 @@ internal fun CashflowLedgerScreen(
 @Composable
 private fun CashflowLedgerContent(
     state: CashflowLedgerState.Content,
-    onIntent: (CashflowLedgerIntent) -> Unit
+    onIntent: (CashflowLedgerIntent) -> Unit,
+    onCreateInvoiceClick: (() -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -177,6 +180,7 @@ private fun CashflowLedgerContent(
                 direction = state.filters.direction,
                 onViewModeChange = { onIntent(CashflowLedgerIntent.SetViewMode(it)) },
                 onDirectionChange = { onIntent(CashflowLedgerIntent.SetDirectionFilter(it)) },
+                onCreateInvoiceClick = if (isLargeScreen) onCreateInvoiceClick else null,
             )
 
             // Table surface (data only)

@@ -227,10 +227,10 @@ internal fun CashflowLedgerTableRow(
             DaysLateBadge(daysLate = daysLate)
         }
 
-        // Amount (Amt component)
+        // Amount (negative = expense)
         DokusTableCell(CashflowTableColumns.Amount) {
             Amt(
-                value = entry.amountGross.toDouble(),
+                value = -entry.amountGross.toDouble(),
                 size = 12.sp,
             )
         }
@@ -337,7 +337,7 @@ internal fun CashflowLedgerMobileRow(
         }
 
         Amt(
-            value = entry.amountGross.toDouble(),
+            value = -entry.amountGross.toDouble(),
             size = 12.sp,
         )
 

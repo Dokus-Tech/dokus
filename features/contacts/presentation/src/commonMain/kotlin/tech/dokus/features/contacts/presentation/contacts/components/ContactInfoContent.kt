@@ -28,12 +28,10 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_percent_value
 import tech.dokus.aura.resources.contacts_address
-import tech.dokus.aura.resources.contacts_business_info
 import tech.dokus.aura.resources.contacts_company_number
 import tech.dokus.aura.resources.contacts_contact_person
 import tech.dokus.aura.resources.contacts_default_vat_rate
 import tech.dokus.aura.resources.contacts_email
-import tech.dokus.aura.resources.contacts_payment_defaults
 import tech.dokus.aura.resources.contacts_payment_terms
 import tech.dokus.aura.resources.contacts_payment_terms_value
 import tech.dokus.aura.resources.contacts_phone
@@ -101,30 +99,20 @@ internal fun ContactInfoContent(
             )
         }
 
-        if (contact.vatNumber != null || contact.companyNumber != null) {
-            HorizontalDivider()
-
-            Text(
-                text = stringResource(Res.string.contacts_business_info),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        contact.vatNumber?.let {
+            ContactInfoRow(
+                icon = Icons.Default.Receipt,
+                label = stringResource(Res.string.contacts_vat_number),
+                value = it.value
             )
+        }
 
-            contact.vatNumber?.let {
-                ContactInfoRow(
-                    icon = Icons.Default.Receipt,
-                    label = stringResource(Res.string.contacts_vat_number),
-                    value = it.value
-                )
-            }
-
-            contact.companyNumber?.let {
-                ContactInfoRow(
-                    icon = Icons.Default.Business,
-                    label = stringResource(Res.string.contacts_company_number),
-                    value = it
-                )
-            }
+        contact.companyNumber?.let {
+            ContactInfoRow(
+                icon = Icons.Default.Business,
+                label = stringResource(Res.string.contacts_company_number),
+                value = it
+            )
         }
 
         val hasAddress = listOfNotNull(
@@ -136,14 +124,6 @@ internal fun ContactInfoContent(
         ).isNotEmpty()
 
         if (hasAddress) {
-            HorizontalDivider()
-
-            Text(
-                text = stringResource(Res.string.contacts_address),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
             val addressLines = buildList {
                 contact.addressLine1?.let { add(it) }
                 contact.addressLine2?.let { add(it) }
@@ -164,14 +144,6 @@ internal fun ContactInfoContent(
 
         // NOTE: PEPPOL Settings section removed - PEPPOL status is now discovery data
         // in PeppolDirectoryCacheTable, resolved via /contacts/{id}/peppol-status endpoint
-
-        HorizontalDivider()
-
-        Text(
-            text = stringResource(Res.string.contacts_payment_defaults),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
 
         ContactInfoRow(
             icon = Icons.Default.Schedule,

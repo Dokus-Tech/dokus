@@ -12,7 +12,7 @@ import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import org.koin.core.parameter.parametersOf
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_create_invoice
+import tech.dokus.aura.resources.cashflow_subtitle
 import tech.dokus.aura.resources.cashflow_title
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
@@ -22,7 +22,6 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
 import tech.dokus.features.cashflow.presentation.ledger.screen.CashflowLedgerScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
-import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
@@ -87,22 +86,17 @@ internal fun CashflowLedgerRoute(
 
     ConnectionSnackbarEffect(snackbarHostState)
     val cashflowTitle = stringResource(Res.string.cashflow_title)
-    val createInvoiceLabel = stringResource(Res.string.cashflow_create_invoice)
+    val cashflowSubtitle = stringResource(Res.string.cashflow_subtitle)
     val onCreateInvoiceClick = remember(navController) {
         {
             navController.navigateTo(CashFlowDestination.CreateInvoice)
         }
     }
-    val topBarConfig = remember(cashflowTitle, createInvoiceLabel, onCreateInvoiceClick) {
+    val topBarConfig = remember(cashflowTitle, cashflowSubtitle) {
         HomeShellTopBarConfig(
             mode = HomeShellTopBarMode.Title(
-                title = cashflowTitle
-            ),
-            actions = listOf(
-                HomeShellTopBarAction.Text(
-                    label = createInvoiceLabel,
-                    onClick = onCreateInvoiceClick
-                )
+                title = cashflowTitle,
+                subtitle = cashflowSubtitle
             )
         )
     }
@@ -114,6 +108,7 @@ internal fun CashflowLedgerRoute(
 
     CashflowLedgerScreen(
         state = state,
-        onIntent = { container.store.intent(it) }
+        onIntent = { container.store.intent(it) },
+        onCreateInvoiceClick = onCreateInvoiceClick
     )
 }

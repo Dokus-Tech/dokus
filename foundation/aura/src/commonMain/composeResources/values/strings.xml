@@ -34,6 +34,13 @@
     <string name="key_cmd">CMD</string>
     <string name="key_ctrl">CTRL</string>
 
+    <!-- Navigation subtitles (desktop shell top bar) -->
+    <string name="today_subtitle">Financial overview</string>
+    <string name="documents_subtitle">Invoices &amp; receipts</string>
+    <string name="cashflow_subtitle">Money in &amp; out</string>
+    <string name="contacts_subtitle">Vendors &amp; clients</string>
+    <string name="profile_subtitle">Account settings</string>
+
     <!-- Navigation -->
     <string name="nav_simulations">Simulations</string>
     <string name="nav_items">Items</string>
