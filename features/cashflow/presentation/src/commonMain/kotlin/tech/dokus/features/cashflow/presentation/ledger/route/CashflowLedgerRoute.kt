@@ -35,9 +35,12 @@ private const val HOME_ROUTE_CASHFLOW = "cashflow"
 
 @Composable
 internal fun CashflowLedgerRoute(
-    highlightEntryId: CashflowEntryId? = null,
+    highlightEntryId: String? = null,
     container: CashflowLedgerContainer = container {
-        parametersOf(highlightEntryId)
+        val parsedId = highlightEntryId?.let {
+            runCatching { CashflowEntryId.parse(it) }.getOrNull()
+        }
+        parametersOf(parsedId)
     },
 ) {
     val navController = LocalNavController.current

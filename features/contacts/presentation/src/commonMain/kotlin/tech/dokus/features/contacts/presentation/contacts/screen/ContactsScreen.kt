@@ -269,7 +269,7 @@ private fun DesktopContactsContent(
             if (selectedContactId != null) {
                 // Show contact details
                 ContactDetailsRoute(
-                    contactId = selectedContactId,
+                    contactId = selectedContactId.toString(),
                     showBackButton = false
                 )
             } else {

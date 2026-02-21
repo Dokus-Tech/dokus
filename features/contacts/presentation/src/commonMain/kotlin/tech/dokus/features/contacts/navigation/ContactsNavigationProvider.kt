@@ -3,13 +3,11 @@ package tech.dokus.features.contacts.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.features.contacts.presentation.contacts.route.ContactDetailsRoute
 import tech.dokus.features.contacts.presentation.contacts.route.ContactFormRoute
 import tech.dokus.features.contacts.presentation.contacts.route.ContactsRoute
 import tech.dokus.features.contacts.presentation.contacts.route.CreateContactRoute
 import tech.dokus.navigation.NavigationProvider
-import tech.dokus.navigation.destinations.ContactCreateOrigin
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.destinations.HomeDestination
 
@@ -24,18 +22,16 @@ internal object ContactsNavigationProvider : NavigationProvider {
                 prefillCompanyName = route.prefillCompanyName,
                 prefillVat = route.prefillVat,
                 prefillAddress = route.prefillAddress,
-                origin = ContactCreateOrigin.fromString(route.origin),
+                origin = route.origin,
             )
         }
         composable<ContactsDestination.EditContact> { backStackEntry ->
             val route = backStackEntry.toRoute<ContactsDestination.EditContact>()
-            val contactId = ContactId.parse(route.contactId)
-            ContactFormRoute(contactId = contactId)
+            ContactFormRoute(contactId = route.contactId)
         }
         composable<ContactsDestination.ContactDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<ContactsDestination.ContactDetails>()
-            val contactId = ContactId.parse(route.contactId)
-            ContactDetailsRoute(contactId = contactId, showBackButton = true)
+            ContactDetailsRoute(contactId = route.contactId, showBackButton = true)
         }
     }
 }

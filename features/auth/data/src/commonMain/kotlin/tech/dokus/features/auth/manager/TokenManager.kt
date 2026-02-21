@@ -1,5 +1,3 @@
-@file:Suppress("TooGenericExceptionCaught") // Token parsing can fail in various ways
-
 package tech.dokus.features.auth.manager
 
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -153,15 +151,6 @@ class TokenManagerImpl(
     }
 
     /**
-     * Checks if the user is currently authenticated.
-     */
-    suspend fun isAuthenticated(): Boolean {
-        val token = tokenStorage.getAccessToken() ?: return false
-        val status = jwtDecoder.validateToken(token)
-        return status == TokenStatus.VALID || status == TokenStatus.REFRESH_NEEDED
-    }
-
-    /**
      * Gets the current user's JWT claims.
      */
     override suspend fun getCurrentClaims(): JwtClaims? {
@@ -172,7 +161,7 @@ class TokenManagerImpl(
     /**
      * Validates token and updates authentication state.
      */
-    private suspend fun validateAndUpdateState(token: String) {
+    private fun validateAndUpdateState(token: String) {
         val status = jwtDecoder.validateToken(token)
         val isAuth = status == TokenStatus.VALID || status == TokenStatus.REFRESH_NEEDED
         updateAuthenticationState(isAuth)
@@ -183,20 +172,5 @@ class TokenManagerImpl(
      */
     private fun updateAuthenticationState(isAuthenticated: Boolean) {
         _isAuthenticated.value = isAuthenticated
-    }
-
-    /**
-     * Checks if a token refresh is needed.
-     */
-    suspend fun needsRefresh(): Boolean {
-        val token = tokenStorage.getAccessToken() ?: return true
-        return jwtDecoder.needsRefresh(token)
-    }
-
-    /**
-     * Gets the token expiry time.
-     */
-    suspend fun getTokenExpiryTime(): Long? {
-        return tokenStorage.getTokenExpiry()
     }
 }

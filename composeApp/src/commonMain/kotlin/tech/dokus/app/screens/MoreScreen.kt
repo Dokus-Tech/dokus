@@ -32,10 +32,11 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import tech.dokus.app.navSectionsCombined
-import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.app.navigation.local.LocalRootNavController
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.coming_soon
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.model.NavItem
@@ -46,25 +47,27 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.SettingsDestination
+import tech.dokus.navigation.navigateTo
 
 @Composable
 internal fun MoreRoute(
-    onNavigateRoot: (NavigationDestination) -> Unit,
     tokenManager: TokenManager = koinInject()
 ) {
+    val rootNavController = LocalRootNavController.current
     val appModules = LocalAppModules.current
     val navSections = remember(appModules) { appModules.navSectionsCombined }
 
     var userTier by remember { mutableStateOf(SubscriptionTier.Core) }
     LaunchedEffect(Unit) {
-        userTier = tokenManager.getCurrentClaims()?.tenant?.subscriptionTier ?: SubscriptionTier.Core
+        userTier =
+            tokenManager.getCurrentClaims()?.tenant?.subscriptionTier ?: SubscriptionTier.Core
     }
 
     val filteredSections = remember(navSections, userTier) {
         navSections.mapNotNull { section ->
             val accessibleItems = section.items.filter { item ->
                 item.mobileTabOrder == null &&
-                    (item.requiredTier == null || SubscriptionTier.hasTomorrowAccess(userTier))
+                        (item.requiredTier == null || SubscriptionTier.hasTomorrowAccess(userTier))
             }
             if (accessibleItems.isNotEmpty()) {
                 section.copy(items = accessibleItems)
@@ -80,7 +83,7 @@ internal fun MoreRoute(
             if (!item.comingSoon) {
                 dispatchMoreNavigation(
                     destination = item.destination,
-                    onNavigateRoot = onNavigateRoot,
+                    onNavigateRoot = { rootNavController.navigateTo(it) },
                 )
             }
         }
