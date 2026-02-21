@@ -19,7 +19,7 @@ plugins {
 
 subprojects {
     val detektConfig = files("$rootDir/config/detekt/detekt.yml")
-    fun org.gradle.api.Project.configureDetekt() {
+    fun Project.configureDetekt() {
         extensions.configure<DetektExtension> {
             buildUponDefaultConfig = true
             config.setFrom(detektConfig)
