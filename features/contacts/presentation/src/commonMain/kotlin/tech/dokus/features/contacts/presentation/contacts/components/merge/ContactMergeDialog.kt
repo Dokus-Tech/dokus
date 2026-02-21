@@ -133,3 +133,4 @@ internal fun ContactMergeDialog(
         dismissOnClickOutside = !state.isMerging
     )
 }
+

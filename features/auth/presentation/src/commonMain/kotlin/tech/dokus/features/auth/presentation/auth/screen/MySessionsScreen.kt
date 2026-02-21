@@ -170,3 +170,37 @@ private fun SessionCard(
         }
     }
 }
+
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun MySessionsScreenPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        MySessionsScreen(
+            state = MySessionsState.Loaded(
+                sessions = listOf(
+                    SessionDto(
+                        id = SessionId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                        deviceType = tech.dokus.domain.DeviceType.Desktop,
+                        userAgent = "Chrome on macOS",
+                        ipAddress = "192.168.1.1",
+                        isCurrent = true,
+                    ),
+                    SessionDto(
+                        id = SessionId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000002")),
+                        deviceType = tech.dokus.domain.DeviceType.Android,
+                        userAgent = "Dokus Android App",
+                        ipAddress = "10.0.0.5",
+                        isCurrent = false,
+                    ),
+                ),
+            ),
+            snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
+            onIntent = {},
+        )
+    }
+}

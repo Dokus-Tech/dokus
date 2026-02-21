@@ -18,7 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 fun AppNameText(modifier: Modifier = Modifier) {
@@ -58,5 +63,15 @@ fun AppNameText(modifier: Modifier = Modifier) {
             letterSpacing = (-0.3).sp,
             color = onSurface
         )
+    }
+}
+
+@Preview
+@Composable
+private fun AppNameTextPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AppNameText()
     }
 }

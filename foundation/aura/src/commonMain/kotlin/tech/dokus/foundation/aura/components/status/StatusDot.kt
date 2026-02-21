@@ -19,11 +19,16 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.statusError
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val PulseMaxScale = 1.8f
 private const val PulseMinAlpha = 0f
@@ -121,4 +126,14 @@ fun StatusDotType.toColor(): Color = when (this) {
     StatusDotType.Error -> MaterialTheme.colorScheme.statusError
     StatusDotType.Neutral -> MaterialTheme.colorScheme.textMuted
     StatusDotType.Empty -> MaterialTheme.colorScheme.textMuted
+}
+
+@Preview
+@Composable
+private fun StatusDotPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        StatusDot(type = StatusDotType.Confirmed)
+    }
 }

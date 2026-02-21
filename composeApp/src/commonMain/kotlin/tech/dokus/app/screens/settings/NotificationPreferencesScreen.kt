@@ -59,6 +59,11 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val MaxContentWidth = 820.dp
 
@@ -364,5 +369,41 @@ private fun RequiredBadge() {
             color = StatusDotType.Confirmed.toColor()
         )
         LockIcon(tint = StatusDotType.Confirmed.toColor())
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun NotificationPreferencesContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val samplePreferences = mapOf(
+        NotificationType.PeppolReceived to NotificationPreferenceDto(
+            type = NotificationType.PeppolReceived,
+            emailEnabled = true,
+            emailLocked = false,
+        ),
+        NotificationType.ComplianceBlocker to NotificationPreferenceDto(
+            type = NotificationType.ComplianceBlocker,
+            emailEnabled = true,
+            emailLocked = true,
+        ),
+        NotificationType.PaymentConfirmed to NotificationPreferenceDto(
+            type = NotificationType.PaymentConfirmed,
+            emailEnabled = false,
+            emailLocked = false,
+        ),
+    )
+    TestWrapper(parameters) {
+        NotificationPreferencesContent(
+            state = NotificationPreferencesState.Content(
+                preferences = samplePreferences,
+            ),
+            onIntent = {},
+        )
     }
 }

@@ -11,6 +11,11 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Phone
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.exceptions.DokusException
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 object PTextFieldPhoneDefaults {
     val icon = FeatherIcons.Phone
@@ -53,4 +58,18 @@ fun PTextFieldPhone(
         showClearButton = showClearButton,
         onValueChange = { onValueChange(PhoneNumber(it)) }
     )
+}
+
+@Preview
+@Composable
+private fun PTextFieldPhonePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTextFieldPhone(
+            fieldName = "Phone",
+            value = PhoneNumber("+32 470 123 456"),
+            onValueChange = {}
+        )
+    }
 }

@@ -30,7 +30,12 @@ import tech.dokus.aura.resources.cashflow_needs_input
 import tech.dokus.aura.resources.currency_symbol_eur
 import tech.dokus.domain.Money
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.statusWarning
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Mobile header for document detail screen.
@@ -126,5 +131,25 @@ private fun UnderstandingLine(
                 color = MaterialTheme.colorScheme.statusWarning
             )
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DocumentDetailMobileHeaderPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentDetailMobileHeader(
+            description = "Invoice INV-2024-001",
+            total = Money.parseOrThrow("1250.00"),
+            hasAttention = true,
+            isBlocking = false,
+            onBackClick = {}
+        )
     }
 }

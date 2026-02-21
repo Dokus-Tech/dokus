@@ -11,8 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun DokusEmptyState(
@@ -47,5 +52,22 @@ internal fun DokusEmptyState(
                 }
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DokusEmptyStatePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusEmptyState(
+            title = "No items found",
+            subtitle = "Try adjusting your filters"
+        )
     }
 }

@@ -22,7 +22,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.positionNegative
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val BarWidth = 5.dp
 private val BarGap = 3.dp
@@ -90,5 +95,15 @@ fun SparkBars(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun SparkBarsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SparkBars(data = listOf(10.0, 25.0, 15.0, 30.0, 20.0, 35.0))
     }
 }

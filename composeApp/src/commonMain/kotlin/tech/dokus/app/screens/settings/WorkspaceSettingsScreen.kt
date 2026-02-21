@@ -45,6 +45,11 @@ import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val MaxContentWidth = 640.dp
 private val ContentPaddingH = 16.dp
@@ -265,6 +270,23 @@ private fun WorkspaceSettingsContentScreen(
 
             Spacer(Modifier.height(24.dp))
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun WorkspaceSettingsContentLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        WorkspaceSettingsContent(
+            state = WorkspaceSettingsState.Loading,
+            onIntent = {},
+        )
     }
 }
 

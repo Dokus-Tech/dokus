@@ -14,7 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 fun <T> PChoiceChips(
@@ -66,5 +71,21 @@ fun <T> PChoiceChips(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PChoiceChipsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PChoiceChips(
+            options = listOf("Monthly", "Quarterly", "Yearly"),
+            selected = "Monthly",
+            onSelect = {},
+            optionLabel = { it },
+            label = "Period"
+        )
     }
 }

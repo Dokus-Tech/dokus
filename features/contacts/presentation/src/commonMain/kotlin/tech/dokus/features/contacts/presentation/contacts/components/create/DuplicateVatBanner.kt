@@ -75,3 +75,26 @@ fun DuplicateVatBanner(
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun DuplicateVatBannerPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        DuplicateVatBanner(
+            duplicate = DuplicateVatUi(
+                contactId = tech.dokus.domain.ids.ContactId.generate(),
+                displayName = "Acme Corporation",
+                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789")
+            ),
+            onViewContact = {}
+        )
+    }
+}

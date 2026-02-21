@@ -513,3 +513,60 @@ private fun ContactsLoadingMoreIndicator(
         DokusLoader(size = DokusLoaderSize.Small)
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactsListPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    val contacts = listOf(
+        ContactDto(
+            id = tech.dokus.domain.ids.ContactId.generate(),
+            tenantId = tech.dokus.domain.ids.TenantId.generate(),
+            name = tech.dokus.domain.Name("Acme Corporation"),
+            email = tech.dokus.domain.Email("info@acme.be"),
+            vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+            isActive = true,
+            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(
+                isCustomer = true,
+                isSupplier = false
+            ),
+            createdAt = now,
+            updatedAt = now
+        ),
+        ContactDto(
+            id = tech.dokus.domain.ids.ContactId.generate(),
+            tenantId = tech.dokus.domain.ids.TenantId.generate(),
+            name = tech.dokus.domain.Name("TechStart BVBA"),
+            email = tech.dokus.domain.Email("hello@techstart.be"),
+            isActive = true,
+            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(
+                isCustomer = true,
+                isSupplier = true
+            ),
+            createdAt = now,
+            updatedAt = now
+        )
+    )
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactsList(
+            state = DokusState.success(
+                PaginationState(
+                    data = contacts,
+                    currentPage = 1,
+                    hasMorePages = false
+                )
+            ),
+            onContactClick = {},
+            onLoadMore = {},
+            onAddContactClick = {}
+        )
+    }
+}

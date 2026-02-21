@@ -282,3 +282,38 @@ private fun SourceBadge(source: String) {
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun EnrichmentSuggestionsDialogPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        EnrichmentSuggestionsDialog(
+            suggestions = listOf(
+                EnrichmentSuggestion(
+                    field = "Phone",
+                    currentValue = "+32 2 123 45 67",
+                    suggestedValue = "+32 2 987 65 43",
+                    source = "KBO/BCE",
+                    confidence = 0.92f
+                ),
+                EnrichmentSuggestion(
+                    field = "Address",
+                    currentValue = null,
+                    suggestedValue = "Rue de la Loi 16, 1000 Brussels",
+                    source = "KBO/BCE",
+                    confidence = 0.85f
+                )
+            ),
+            onApply = {},
+            onDismiss = {}
+        )
+    }
+}

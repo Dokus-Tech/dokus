@@ -86,3 +86,20 @@ internal fun CompanyNameStep(
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun CompanyNameStepPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        CompanyNameStep(
+            companyName = "Acme Corp",
+            lookupState = LookupState.Idle,
+            onCompanyNameChanged = {},
+            onBackPress = {},
+        )
+    }
+}

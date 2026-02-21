@@ -62,7 +62,12 @@ import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Full-screen send options step for mobile invoice creation.
@@ -392,6 +397,27 @@ private fun MobileComingSoonBadge(
             text = stringResource(Res.string.invoice_coming_soon),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onTertiaryContainer
+        )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceSendOptionsStepPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceSendOptionsStep(
+            formState = Mocks.sampleFormState,
+            selectedMethod = InvoiceDeliveryMethod.PDF_EXPORT,
+            onMethodSelected = {},
+            onBackToEdit = {},
+            onSaveAsDraft = {},
+            isSaving = false
         )
     }
 }

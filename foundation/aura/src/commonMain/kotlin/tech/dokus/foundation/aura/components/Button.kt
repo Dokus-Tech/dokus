@@ -22,7 +22,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 enum class PButtonVariant {
     Default,
@@ -254,5 +259,45 @@ fun PBackButton(
                 color = MaterialTheme.colorScheme.primary,
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PButtonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PButton(text = "Submit", onClick = {})
+    }
+}
+
+@Preview
+@Composable
+private fun PPrimaryButtonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PPrimaryButton(text = "Continue", onClick = {})
+    }
+}
+
+@Preview
+@Composable
+private fun POutlinedButtonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        POutlinedButton(text = "Cancel", onClick = {})
+    }
+}
+
+@Preview
+@Composable
+private fun PBackButtonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PBackButton(label = "All docs", onBackPress = {})
     }
 }

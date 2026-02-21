@@ -226,3 +226,20 @@ private fun RegisterContent(
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun RegisterScreenPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        RegisterScreen(
+            state = RegisterState.Idle(),
+            onIntent = {},
+            onNavigateUp = {},
+            onNavigateToLogin = {},
+        )
+    }
+}

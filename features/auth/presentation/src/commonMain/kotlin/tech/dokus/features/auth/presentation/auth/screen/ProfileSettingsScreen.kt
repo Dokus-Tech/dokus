@@ -170,3 +170,37 @@ fun ProfileSettingsContent(
         }
     }
 }
+
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ProfileSettingsContentPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ProfileSettingsContent(
+            state = ProfileSettingsState.Viewing(
+                user = tech.dokus.domain.model.User(
+                    id = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                    email = tech.dokus.domain.Email("john@dokus.tech"),
+                    firstName = tech.dokus.domain.Name("John"),
+                    lastName = tech.dokus.domain.Name("Doe"),
+                    emailVerified = true,
+                    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                ),
+            ),
+            currentServer = ServerConfig.Cloud,
+            isLoggingOut = false,
+            onIntent = {},
+            onResendVerification = {},
+            onChangePassword = {},
+            onMySessions = {},
+            onChangeServer = {},
+            onResetToCloud = {},
+            onLogout = {},
+        )
+    }
+}

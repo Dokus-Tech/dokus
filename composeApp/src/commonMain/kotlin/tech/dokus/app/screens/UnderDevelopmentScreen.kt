@@ -37,6 +37,11 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.under_development_subtitle
 import tech.dokus.aura.resources.under_development_title
 import tech.dokus.foundation.aura.constrains.withContentPadding
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -313,5 +318,15 @@ internal fun UnderDevelopmentScreen() {
                 modifier = Modifier.alpha(subtitleAlpha.value)
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun UnderDevelopmentScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        UnderDevelopmentScreen()
     }
 }

@@ -170,3 +170,32 @@ private fun ServerInfoRow(
         )
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@androidx.compose.runtime.Composable
+private fun ServerConfirmationDialogPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ServerConfirmationDialog(
+            config = ServerConfig(
+                host = "192.168.1.100",
+                port = 8000,
+                protocol = "http",
+                name = "My Server",
+                isCloud = false,
+            ),
+            serverInfo = ServerInfo(
+                name = "My Dokus Server",
+                version = "1.0.0",
+                environment = "production",
+                status = tech.dokus.domain.config.ServerStatus.UP,
+                features = listOf("invoicing", "expenses"),
+            ),
+            onConfirm = {},
+            onDismiss = {},
+        )
+    }
+}

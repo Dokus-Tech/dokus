@@ -102,3 +102,35 @@ private fun ContactMergeMiniRow(label: String, value: String) {
         )
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactMergeMiniCardPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactMergeMiniCard(
+            contact = ContactDto(
+                id = tech.dokus.domain.ids.ContactId.generate(),
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Acme Corporation"),
+                email = tech.dokus.domain.Email("info@acme.be"),
+                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                companyNumber = "0123.456.789",
+                contactPerson = "John Doe",
+                phone = tech.dokus.domain.PhoneNumber("+32 2 123 45 67"),
+                createdAt = now,
+                updatedAt = now
+            ),
+            isSelected = true,
+            onClick = {}
+        )
+    }
+}

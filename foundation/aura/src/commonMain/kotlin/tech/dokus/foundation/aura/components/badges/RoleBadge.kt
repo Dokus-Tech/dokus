@@ -13,8 +13,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.amberSoft
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val PaddingH = Constraints.Spacing.small
 private val PaddingV = Constraints.Spacing.xxSmall
@@ -71,6 +76,16 @@ fun RoleBadge(
             color = colors.text,
             maxLines = 1,
         )
+    }
+}
+
+@Preview
+@Composable
+private fun RoleBadgePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        RoleBadge(role = ContactRole.Vendor)
     }
 }
 

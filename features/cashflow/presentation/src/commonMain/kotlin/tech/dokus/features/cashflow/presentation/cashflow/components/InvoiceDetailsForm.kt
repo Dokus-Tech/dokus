@@ -37,7 +37,12 @@ import tech.dokus.aura.resources.invoice_vat
 import tech.dokus.foundation.aura.components.CashflowType
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Form a component for invoice details.
@@ -223,5 +228,19 @@ private fun FormField(
             color = MaterialTheme.colorScheme.onSurface
         )
         content()
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceDetailsFormPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceDetailsForm()
     }
 }

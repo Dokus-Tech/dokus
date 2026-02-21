@@ -20,8 +20,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.amberSoft
 import tech.dokus.foundation.aura.style.borderAmber
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val LargeSizeThreshold = 48.dp
 private val SmallBorderWidth = 1.dp
@@ -93,5 +98,15 @@ fun MonogramAvatar(
             fontWeight = FontWeight.Bold,
             fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
         )
+    }
+}
+
+@Preview
+@Composable
+private fun MonogramAvatarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MonogramAvatar(initials = "JD", size = 48.dp, radius = 8.dp)
     }
 }

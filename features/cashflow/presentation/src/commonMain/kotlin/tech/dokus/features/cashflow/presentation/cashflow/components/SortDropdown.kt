@@ -35,6 +35,11 @@ import tech.dokus.aura.resources.cashflow_sort_default
 import tech.dokus.aura.resources.cashflow_sort_label
 import tech.dokus.aura.resources.cashflow_sort_type
 import tech.dokus.aura.resources.sort_expand
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Sort options for financial documents.
@@ -130,5 +135,22 @@ fun SortDropdown(
                 )
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun SortDropdownPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SortDropdown(
+            selectedOption = DocumentSortOption.Default,
+            onOptionSelected = {}
+        )
     }
 }

@@ -34,7 +34,12 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_send_message
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Default values for ChatInputField components.
@@ -164,5 +169,20 @@ fun PChatInputField(
                 modifier = Modifier.size(Constraints.IconSize.medium)
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PChatInputFieldPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PChatInputField(
+            value = "",
+            onValueChange = {},
+            onSend = {},
+            placeholder = "Ask a question..."
+        )
     }
 }

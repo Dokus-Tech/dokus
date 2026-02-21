@@ -293,3 +293,21 @@ private fun WorkspaceCreateContent(
         CopyRightText()
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun WorkspaceCreateScreenPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        WorkspaceCreateScreen(
+            state = WorkspaceCreateState.Wizard(),
+            onIntent = {},
+            onNavigateUp = {},
+            triggerWarp = false,
+            onWarpComplete = {},
+        )
+    }
+}

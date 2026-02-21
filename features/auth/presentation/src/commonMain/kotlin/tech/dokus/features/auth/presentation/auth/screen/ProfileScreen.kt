@@ -22,3 +22,15 @@ fun ProfileScreen() {
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ProfileScreenPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ProfileScreen()
+    }
+}

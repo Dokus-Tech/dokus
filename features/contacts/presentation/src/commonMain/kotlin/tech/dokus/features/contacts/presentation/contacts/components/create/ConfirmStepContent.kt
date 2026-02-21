@@ -277,3 +277,36 @@ private fun Country.localizedName(): String =
         Country.Netherlands -> stringResource(Res.string.country_netherlands)
         Country.France -> stringResource(Res.string.country_france)
     }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ConfirmStepContentPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ConfirmStepContent(
+            state = CreateContactState.ConfirmStep(
+                selectedEntity = EntityLookup(
+                    enterpriseNumber = "0123.456.789",
+                    vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                    name = tech.dokus.domain.LegalName("Acme Corporation NV"),
+                    address = tech.dokus.domain.model.entity.EntityAddress(
+                        streetLine1 = "Rue de la Loi 16",
+                        city = "Brussels",
+                        postalCode = "1000",
+                        country = Country.Belgium
+                    ),
+                    status = tech.dokus.domain.model.entity.EntityStatus.Active
+                )
+            ),
+            headerTitle = "New Contact",
+            onIntent = {}
+        )
+    }
+}

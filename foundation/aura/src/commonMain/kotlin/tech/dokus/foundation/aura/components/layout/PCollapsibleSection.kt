@@ -22,8 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val ChevronChar = "\u203A" // ›
 private const val ChevronRotation = 90f
@@ -95,6 +100,23 @@ fun PCollapsibleSection(
             Column(modifier = Modifier.padding(bottom = Constraints.Spacing.large)) {
                 content()
             }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PCollapsibleSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PCollapsibleSection(
+            title = "Details",
+            isExpanded = true,
+            onToggle = {},
+            right = "3 items"
+        ) {
+            Text("Section content")
         }
     }
 }

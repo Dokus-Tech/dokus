@@ -41,7 +41,12 @@ import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.PDashedDivider
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Card spacing
 private val CardOuterPadding = 8.dp
@@ -345,4 +350,18 @@ private fun formatDecimal(value: Double): String {
     val intPart = rounded.toLong()
     val decPart = ((kotlin.math.abs(rounded - intPart) * CentsMultiplier) + RoundingOffset).toInt()
     return "$intPart.${decPart.toString().padStart(DecimalPadLength, '0')}"
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceSummaryCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceSummaryCard(formState = Mocks.sampleFormState)
+    }
 }

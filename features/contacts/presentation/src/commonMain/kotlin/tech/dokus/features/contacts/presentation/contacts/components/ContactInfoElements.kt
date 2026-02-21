@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -194,5 +196,75 @@ internal fun ContactInfoTagBadge(
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(horizontal = BadgePaddingHorizontal, vertical = BadgePaddingVertical)
         )
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactInfoRowPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactInfoRow(
+            icon = Icons.Filled.Email,
+            label = "Email",
+            value = "info@acme.be"
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactStatusLabelPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+            ContactStatusLabel(isActive = true)
+            ContactStatusLabel(isActive = false)
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactInfoRoleBadgesPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+            ContactInfoRoleBadges(
+                roles = DerivedContactRoles(
+                    isCustomer = true,
+                    isSupplier = true,
+                    isVendor = true
+                )
+            )
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactInfoTagBadgePreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+            ContactInfoTagBadge(text = "client")
+            ContactInfoTagBadge(text = "vip")
+        }
     }
 }

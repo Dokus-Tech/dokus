@@ -21,9 +21,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val ContainerPadding = 3.dp
 private val TabPaddingH = 16.dp
@@ -153,5 +158,23 @@ private fun TabItem(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun DokusTabsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusTabs(
+            tabs = listOf(
+                DokusTab(id = "all", label = "All", count = 12),
+                DokusTab(id = "open", label = "Open", count = 3),
+                DokusTab(id = "paid", label = "Paid")
+            ),
+            activeId = "all",
+            onTabSelected = {}
+        )
     }
 }

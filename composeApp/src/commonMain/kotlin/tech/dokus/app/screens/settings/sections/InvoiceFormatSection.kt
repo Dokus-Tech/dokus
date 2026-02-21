@@ -36,6 +36,11 @@ import tech.dokus.foundation.aura.components.settings.DataRow
 import tech.dokus.foundation.aura.components.settings.SettingsSection
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Invoice padding configuration options (number of digits)
 private const val InvoicePaddingMin = 3
@@ -200,6 +205,30 @@ internal fun InvoiceFormatSection(
                 value = if (formState.invoiceYearlyReset) "Yes" else "No",
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun InvoiceFormatSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceFormatSection(
+            formState = WorkspaceSettingsState.Content.FormState(
+                invoicePrefix = "INV",
+                invoiceIncludeYear = true,
+                invoicePadding = 4,
+                invoiceYearlyReset = true,
+            ),
+            expanded = true,
+            onToggle = {},
+            editMode = false,
+            onEdit = {},
+            onSave = {},
+            onCancel = {},
+            onIntent = {},
+        )
     }
 }
 

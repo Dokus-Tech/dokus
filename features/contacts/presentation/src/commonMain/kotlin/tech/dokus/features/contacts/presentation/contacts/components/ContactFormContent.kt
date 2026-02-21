@@ -435,3 +435,68 @@ internal fun ContactFormActionButtonsCompact(
         )
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactFormContentPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactFormContent(
+            isEditMode = false,
+            formData = ContactFormData(),
+            isSaving = false,
+            isDeleting = false,
+            duplicates = emptyList(),
+            onBackPress = {},
+            onNameChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onContactPersonChange = {},
+            onVatNumberChange = {},
+            onCompanyNumberChange = {},
+            onBusinessTypeChange = {},
+            onAddressLine1Change = {},
+            onAddressLine2Change = {},
+            onCityChange = {},
+            onPostalCodeChange = {},
+            onCountryChange = {},
+            onDefaultPaymentTermsChange = {},
+            onDefaultVatRateChange = {},
+            onTagsChange = {},
+            onInitialNoteChange = {},
+            onIsActiveChange = {},
+            onSave = {},
+            onCancel = {},
+            onDelete = {},
+            onDismissDuplicates = {},
+            onMergeWithExisting = {}
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactFormActionButtonsPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactFormActionButtons(
+            isEditMode = true,
+            isSaving = false,
+            isDeleting = false,
+            isValid = true,
+            onSave = {},
+            onCancel = {},
+            onDelete = {}
+        )
+    }
+}

@@ -28,7 +28,12 @@ import tech.dokus.aura.resources.invoice_amount
 import tech.dokus.aura.resources.invoice_description
 import tech.dokus.aura.resources.invoice_price
 import tech.dokus.aura.resources.invoice_qty
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Table component for invoice line items.
@@ -142,5 +147,30 @@ private fun LineItemsTableHeader(
         )
         // Spacer for expand icon column
         Spacer(modifier = Modifier.width(32.dp))
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceLineItemsTablePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceLineItemsTable(
+            items = Mocks.sampleLineItems,
+            expandedItemId = null,
+            onItemClick = {},
+            onItemCollapse = {},
+            onAddItem = {},
+            onRemoveItem = {},
+            onUpdateDescription = { _, _ -> },
+            onUpdateQuantity = { _, _ -> },
+            onUpdateUnitPrice = { _, _ -> },
+            onUpdateVatRate = { _, _ -> }
+        )
     }
 }

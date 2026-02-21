@@ -16,6 +16,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * AI Chat placeholder — minimal centered text per v2 spec.
@@ -44,5 +49,15 @@ fun AiChatPlaceholder() {
                 textAlign = TextAlign.Center,
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun AiChatPlaceholderPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AiChatPlaceholder()
     }
 }

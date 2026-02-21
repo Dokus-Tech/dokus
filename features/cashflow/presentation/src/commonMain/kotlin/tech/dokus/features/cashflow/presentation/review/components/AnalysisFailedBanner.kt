@@ -23,7 +23,12 @@ import tech.dokus.aura.resources.cashflow_analysis_retry
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Calm failure banner shown when AI extraction fails.
@@ -100,5 +105,24 @@ internal fun AnalysisFailedBanner(
                 }
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun AnalysisFailedBannerPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AnalysisFailedBanner(
+            reason = "Could not extract document data",
+            isRetrying = false,
+            onRetry = {},
+            onContinueManually = {}
+        )
     }
 }

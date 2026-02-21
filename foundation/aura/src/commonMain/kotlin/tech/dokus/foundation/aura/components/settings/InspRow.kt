@@ -19,10 +19,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dokus.foundation.aura.components.status.ConfDot
 import tech.dokus.foundation.aura.components.status.ConfidenceLevel
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val EditablePaddingH = 8.dp
 private val EditablePaddingV = 4.dp
@@ -105,6 +110,20 @@ fun InspRow(
             fontWeight = FontWeight.Medium,
             color = valueColor,
             fontFamily = valueFamily,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun InspRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InspRow(
+            label = "Invoice Number",
+            value = "INV-2024-001",
+            confidence = ConfidenceLevel.High
         )
     }
 }

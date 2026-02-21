@@ -21,6 +21,11 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.coming_soon
 import tech.dokus.aura.resources.file_text
 import tech.dokus.aura.resources.nav_documents
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Placeholder screen for Documents.
@@ -57,5 +62,15 @@ internal fun DocumentsPlaceholderScreen() {
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun DocumentsPlaceholderScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentsPlaceholderScreen()
     }
 }

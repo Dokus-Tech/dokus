@@ -23,6 +23,11 @@ import tech.dokus.aura.resources.action_fit
 import tech.dokus.aura.resources.action_zoom_in
 import tech.dokus.aura.resources.action_zoom_out
 import tech.dokus.aura.resources.common_percent_value
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Layout dimensions
 private val ControlsCornerRadius = 8.dp
@@ -96,5 +101,22 @@ fun ZoomControls(
         ) {
             Text(stringResource(Res.string.action_fit))
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun ZoomControlsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ZoomControls(
+            zoomLevel = 1.0f,
+            onZoomChange = {}
+        )
     }
 }

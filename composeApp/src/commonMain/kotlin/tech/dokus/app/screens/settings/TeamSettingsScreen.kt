@@ -89,6 +89,11 @@ import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val MaxContentWidth = 400.dp
 private val ContentPaddingH = 16.dp
@@ -665,5 +670,49 @@ private fun formatDate(dateTime: LocalDateTime): String {
         dateTime.format(format)
     } catch (_: Exception) {
         dateTime.toString()
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@Preview
+@Composable
+private fun TeamSettingsContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val ownerId = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.random())
+    val sampleMembers = listOf(
+        TeamMember(
+            userId = ownerId,
+            email = tech.dokus.domain.Email("jane@dokus.be"),
+            firstName = tech.dokus.domain.Name("Jane"),
+            lastName = tech.dokus.domain.Name("Smith"),
+            role = UserRole.Owner,
+            joinedAt = LocalDateTime(2024, 6, 1, 10, 0),
+            lastActiveAt = null,
+        ),
+        TeamMember(
+            userId = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.random()),
+            email = tech.dokus.domain.Email("john@dokus.be"),
+            firstName = tech.dokus.domain.Name("John"),
+            lastName = tech.dokus.domain.Name("Doe"),
+            role = UserRole.Editor,
+            joinedAt = LocalDateTime(2025, 1, 15, 14, 30),
+            lastActiveAt = null,
+        ),
+    )
+    TestWrapper(parameters) {
+        TeamSettingsContent(
+            state = TeamSettingsState.Content(
+                members = sampleMembers,
+                currentUserId = ownerId,
+            ),
+            showInviteDialog = false,
+            onShowInviteDialog = {},
+            onIntent = {},
+        )
     }
 }

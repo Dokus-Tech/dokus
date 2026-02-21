@@ -358,3 +358,19 @@ private fun HelpCard() {
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ServerConnectionScreenPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ServerConnectionScreen(
+            state = ServerConnectionState.Input(),
+            currentServer = ServerConfig.Cloud,
+            onIntent = {},
+        )
+    }
+}

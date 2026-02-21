@@ -274,3 +274,46 @@ private fun NotesSkeleton() {
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun NotesSectionPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        NotesSection(
+            state = DokusState.success(
+                listOf(
+                    ContactNoteDto(
+                        id = tech.dokus.domain.ids.ContactNoteId.generate(),
+                        contactId = tech.dokus.domain.ids.ContactId.generate(),
+                        tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                        content = "Called about invoice #2024-001. Will pay by end of month.",
+                        authorName = "John Doe",
+                        createdAt = now,
+                        updatedAt = now
+                    ),
+                    ContactNoteDto(
+                        id = tech.dokus.domain.ids.ContactNoteId.generate(),
+                        contactId = tech.dokus.domain.ids.ContactId.generate(),
+                        tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                        content = "Prefers email communication over phone.",
+                        authorName = null,
+                        createdAt = now,
+                        updatedAt = now
+                    )
+                )
+            ),
+            onAddNote = {},
+            onEditNote = {},
+            onDeleteNote = {}
+        )
+    }
+}

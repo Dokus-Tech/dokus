@@ -47,7 +47,12 @@ import tech.dokus.aura.resources.chat_page_number
 import tech.dokus.aura.resources.chat_sources_count
 import tech.dokus.aura.resources.chat_view_source_document
 import tech.dokus.aura.resources.common_percent_value
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Animation constants
 private const val ExpandedRotation = 180f
@@ -407,6 +412,26 @@ fun PInlineCitation(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ChatSourceCitationPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ChatSourceCitation(
+            citation = CitationDisplayData(
+                chunkId = "chunk-1",
+                documentId = "doc-1",
+                documentName = "Invoice_2024.pdf",
+                pageNumber = 3,
+                excerpt = "Total amount due: EUR 1,250.00",
+                relevanceScore = 0.85f
+            ),
+            initiallyExpanded = true
         )
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,8 +22,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.foundation.aura.style.isDark
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val BorderWidth = 1.dp
 private val GlassElevation = 0.dp
@@ -226,5 +232,27 @@ fun POutlinedCard(modifier: Modifier = Modifier, content: @Composable BoxScope.(
         Box(modifier = Modifier.fillMaxSize()) {
             content()
         }
+    }
+}
+
+@Preview
+@Composable
+private fun DokusCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusCard {
+            Text("Card content", style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PCardPlusIconPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PCardPlusIcon(modifier = Modifier.size(48.dp))
     }
 }

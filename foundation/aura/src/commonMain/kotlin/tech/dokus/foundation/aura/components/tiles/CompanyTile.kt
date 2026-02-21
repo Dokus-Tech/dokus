@@ -20,8 +20,13 @@ import tech.dokus.aura.resources.workspace_add
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Small square tile showing a company's avatar (or initial if no avatar) with its name below.
@@ -60,6 +65,20 @@ fun CompanyTile(
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CompanyTilePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CompanyTile(
+            initial = "D",
+            label = "Dokus Tech",
+            onClick = {}
         )
     }
 }

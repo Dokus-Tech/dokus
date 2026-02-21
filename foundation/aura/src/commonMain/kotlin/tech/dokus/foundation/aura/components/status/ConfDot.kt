@@ -7,10 +7,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.statusError
 import tech.dokus.foundation.aura.style.statusWarning
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Confidence level for AI-extracted document fields.
@@ -46,4 +51,14 @@ fun ConfDot(
             .size(Constraints.StatusDot.size)
             .background(color, CircleShape),
     )
+}
+
+@Preview
+@Composable
+private fun ConfDotPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ConfDot(level = ConfidenceLevel.High)
+    }
 }

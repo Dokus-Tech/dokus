@@ -22,8 +22,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val CardPadding = Constraints.Spacing.large
 private val HeaderSpacing = Constraints.Spacing.medium
@@ -78,6 +83,24 @@ fun <T> DokusTabbedPanel(
 
             Spacer(modifier = Modifier.height(ContentSpacing))
             content()
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun DokusTabbedPanelPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusTabbedPanel(
+            title = "Activity",
+            tabs = listOf("All", "Invoices", "Bills"),
+            selectedTab = "All",
+            onTabSelected = {},
+            tabLabel = { it },
+        ) {
+            Text("Panel content")
         }
     }
 }

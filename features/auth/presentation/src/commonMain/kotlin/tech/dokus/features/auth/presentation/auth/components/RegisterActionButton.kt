@@ -42,3 +42,20 @@ internal fun RegisterActionButton(
         modifier = modifier,
     ) { onContinueClick(page) }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun RegisterActionButtonPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        RegisterActionButton(
+            page = RegisterPage.Profile,
+            fields = RegisterFormFields(),
+            onContinueClick = {},
+            isLoading = false,
+        )
+    }
+}

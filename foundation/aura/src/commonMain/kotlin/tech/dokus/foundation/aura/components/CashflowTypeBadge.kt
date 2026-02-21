@@ -17,8 +17,13 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_cash_in
 import tech.dokus.aura.resources.cashflow_cash_out
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.positionNegative
 import tech.dokus.foundation.aura.style.positionPositive
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Type of cashflow transaction
@@ -67,5 +72,15 @@ fun CashflowTypeBadge(
             style = MaterialTheme.typography.labelMedium,
             color = color
         )
+    }
+}
+
+@Preview
+@Composable
+private fun CashflowTypeBadgePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowTypeBadge(type = CashflowType.CashIn)
     }
 }

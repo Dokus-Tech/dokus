@@ -47,7 +47,12 @@ import tech.dokus.aura.resources.action_clear
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.aura.components.PErrorText
 import tech.dokus.foundation.aura.components.PIcon
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Suppress("LongParameterList") // UI styling function with necessary visual parameters
 private fun Modifier.dokusFocusGlow(
@@ -213,5 +218,26 @@ fun PTextField(
         if (error != null) {
             PErrorText(error)
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PTextFieldPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTextField(
+            fieldName = "Company Name",
+            value = "Dokus Tech",
+            icon = null,
+            singleLine = true,
+            minLines = 1,
+            onAction = {},
+            keyboardOptions = KeyboardOptions.Default,
+            error = null,
+            visualTransformation = VisualTransformation.None,
+            onValueChange = {}
+        )
     }
 }

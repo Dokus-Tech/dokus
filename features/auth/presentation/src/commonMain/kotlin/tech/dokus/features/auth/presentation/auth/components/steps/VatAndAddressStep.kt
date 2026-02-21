@@ -204,3 +204,26 @@ private fun Country.localizedName(): String =
         Country.Netherlands -> stringResource(Res.string.country_netherlands)
         Country.France -> stringResource(Res.string.country_france)
     }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun VatAndAddressStepPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        VatAndAddressStep(
+            vatNumber = VatNumber("BE0123456789"),
+            address = AddressFormState(
+                streetLine1 = "Rue de la Loi 16",
+                city = "Brussels",
+                postalCode = "1000",
+                country = Country.Belgium,
+            ),
+            onVatNumberChanged = {},
+            onAddressChanged = {},
+            onBackPress = {},
+        )
+    }
+}

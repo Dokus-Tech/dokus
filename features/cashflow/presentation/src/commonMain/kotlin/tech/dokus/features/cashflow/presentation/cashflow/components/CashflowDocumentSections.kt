@@ -23,6 +23,11 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Section layout dimensions
 private val SectionItemSpacing = Constraints.Spacing.large
@@ -284,5 +289,29 @@ fun LoadingMoreIndicator(
         verticalAlignment = Alignment.CenterVertically
     ) {
         CircularProgressIndicator()
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun EmptyDocumentsStatePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        EmptyDocumentsState()
+    }
+}
+
+@Preview
+@Composable
+private fun LoadingMoreIndicatorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        LoadingMoreIndicator()
     }
 }

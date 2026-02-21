@@ -104,3 +104,17 @@ internal fun RegistrationConfirmationForm(
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun RegistrationConfirmationFormPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        RegistrationConfirmationForm(
+            onContinueClick = {},
+        )
+    }
+}

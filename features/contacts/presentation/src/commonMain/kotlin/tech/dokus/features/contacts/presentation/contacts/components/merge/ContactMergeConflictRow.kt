@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_merge_source_archive
 import tech.dokus.aura.resources.contacts_merge_target_keep
 import tech.dokus.features.contacts.presentation.contacts.model.MergeFieldConflict
@@ -73,5 +74,30 @@ internal fun ContactMergeConflictRow(
                 )
             }
         }
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactMergeConflictRowPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactMergeConflictRow(
+            conflict = MergeFieldConflict(
+                fieldName = "email",
+                fieldLabelRes = Res.string.contacts_email,
+                sourceValue = "old@company.be",
+                targetValue = "info@acme.be",
+                keepSource = false
+            ),
+            onKeepSourceChange = {}
+        )
     }
 }

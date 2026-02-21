@@ -210,3 +210,40 @@ internal fun ContactInfoContent(
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactInfoContentPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactInfoContent(
+            contact = ContactDto(
+                id = tech.dokus.domain.ids.ContactId.generate(),
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Acme Corporation"),
+                email = tech.dokus.domain.Email("info@acme.be"),
+                phone = tech.dokus.domain.PhoneNumber("+32 2 123 45 67"),
+                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                companyNumber = "0123.456.789",
+                contactPerson = "John Doe",
+                defaultPaymentTerms = 30,
+                tags = "client,vip",
+                isActive = true,
+                derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(
+                    isCustomer = true,
+                    isSupplier = true
+                ),
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+    }
+}

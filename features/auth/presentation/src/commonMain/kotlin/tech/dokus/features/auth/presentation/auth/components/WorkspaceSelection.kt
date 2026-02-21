@@ -92,3 +92,19 @@ private fun StateDrivenContent(
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun WorkspaceSelectionBodyPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        WorkspaceSelectionBody(
+            state = tech.dokus.foundation.app.state.DokusStateSimple.Success(emptyList()),
+            onTenantClick = {},
+            onAddTenantClick = {},
+        )
+    }
+}

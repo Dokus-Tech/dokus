@@ -43,6 +43,11 @@ import tech.dokus.foundation.aura.style.amberSoft
 import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val MaxContentWidth = 560.dp
 private val ContentPaddingH = 16.dp
@@ -343,3 +348,17 @@ private fun samplePreviousPeriods() = listOf(
     PreviousPeriod(name = "Q4 2025", status = "No data"),
     PreviousPeriod(name = "Q3 2025", status = "No data"),
 )
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun AccountantScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AccountantScreen()
+    }
+}

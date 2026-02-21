@@ -40,6 +40,11 @@ import tech.dokus.foundation.aura.style.glassBorder
 import tech.dokus.foundation.aura.style.glassContent
 import tech.dokus.foundation.aura.style.glassHeader
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val QueueWindowWidth = 220.dp
 
@@ -194,4 +199,50 @@ private fun DetailModeTitleBar(
 
     // JSX: borderBottom "1px solid rgba(0,0,0,0.05)"
     HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@Preview
+@Composable
+private fun DocumentDetailModePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val docId1 = DocumentId(kotlin.uuid.Uuid.random())
+    val docId2 = DocumentId(kotlin.uuid.Uuid.random())
+    val sampleDocuments = listOf(
+        DocQueueItem(
+            id = docId1,
+            vendorName = "Acme Corp",
+            amount = "1,250.00",
+            date = "Feb 15",
+            isConfirmed = false,
+        ),
+        DocQueueItem(
+            id = docId2,
+            vendorName = "Tech Solutions",
+            amount = "890.50",
+            date = "Feb 14",
+            isConfirmed = true,
+        ),
+    )
+    TestWrapper(parameters) {
+        DocumentDetailMode(
+            documents = sampleDocuments,
+            selectedDocumentId = docId1,
+            onSelectDocument = {},
+            onExit = {},
+            content = {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Document content area")
+                }
+            }
+        )
+    }
 }

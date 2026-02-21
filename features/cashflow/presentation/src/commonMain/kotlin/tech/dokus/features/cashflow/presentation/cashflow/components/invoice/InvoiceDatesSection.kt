@@ -38,10 +38,15 @@ import tech.dokus.aura.resources.date_month_short_may
 import tech.dokus.aura.resources.date_month_short_nov
 import tech.dokus.aura.resources.date_month_short_oct
 import tech.dokus.aura.resources.date_month_short_sep
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.aura.resources.invoice_click_to_change
 import tech.dokus.aura.resources.invoice_click_to_set
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Dates section in the invoice document.
@@ -154,4 +159,23 @@ private fun LocalDate.formatDate(): String {
     )
     val monthName = monthNames.getOrElse(month.ordinal) { stringResource(Res.string.common_unknown) }
     return stringResource(Res.string.date_format_short, monthName, day, year)
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceDatesSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceDatesSection(
+            issueDate = LocalDate(2024, 12, 13),
+            dueDate = LocalDate(2025, 1, 13),
+            onIssueDateClick = {},
+            onDueDateClick = {}
+        )
+    }
 }

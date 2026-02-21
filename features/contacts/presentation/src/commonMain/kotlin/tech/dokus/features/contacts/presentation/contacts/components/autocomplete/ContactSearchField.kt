@@ -138,3 +138,28 @@ internal fun ContactSearchField(
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactSearchFieldPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactSearchField(
+            value = "Acme Corp",
+            onValueChange = {},
+            placeholder = "Search contacts...",
+            isError = false,
+            enabled = true,
+            selectedContact = null,
+            onClear = {},
+            onFocusChanged = {}
+        )
+    }
+}

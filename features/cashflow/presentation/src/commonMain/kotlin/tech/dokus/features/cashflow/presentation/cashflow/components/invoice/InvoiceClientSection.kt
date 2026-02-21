@@ -25,7 +25,12 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.invoice_recipient
 import tech.dokus.aura.resources.invoice_click_to_change
 import tech.dokus.aura.resources.invoice_click_to_select_client
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Clickable client section in the invoice document.
@@ -119,5 +124,35 @@ fun InvoiceClientSection(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             )
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceClientSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceClientSection(
+            client = Mocks.sampleClient,
+            onClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun InvoiceClientSectionEmptyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceClientSection(
+            client = null,
+            onClick = {}
+        )
     }
 }

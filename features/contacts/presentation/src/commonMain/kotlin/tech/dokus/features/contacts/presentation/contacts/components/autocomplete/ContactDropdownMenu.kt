@@ -151,3 +151,25 @@ internal fun ContactDropdownMenu(
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactDropdownMenuPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactDropdownMenu(
+            searchQuery = "Acme",
+            searchResults = emptyList(),
+            isSearching = false,
+            onContactSelected = {},
+            onAddNewContact = {}
+        )
+    }
+}

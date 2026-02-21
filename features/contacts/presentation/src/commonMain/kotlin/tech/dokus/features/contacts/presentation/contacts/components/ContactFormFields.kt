@@ -422,3 +422,41 @@ private fun BusinessTypeSelector(
         modifier = modifier,
     )
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactFormFieldsPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactFormFields(
+            formData = ContactFormData(
+                name = tech.dokus.domain.Name("Acme Corp"),
+                email = tech.dokus.domain.Email("info@acme.be"),
+            ),
+            onNameChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onContactPersonChange = {},
+            onVatNumberChange = {},
+            onCompanyNumberChange = {},
+            onBusinessTypeChange = {},
+            onAddressLine1Change = {},
+            onAddressLine2Change = {},
+            onCityChange = {},
+            onPostalCodeChange = {},
+            onCountryChange = {},
+            onDefaultPaymentTermsChange = {},
+            onDefaultVatRateChange = {},
+            onTagsChange = {},
+            onInitialNoteChange = {},
+            onIsActiveChange = {}
+        )
+    }
+}

@@ -27,9 +27,14 @@ import tech.dokus.aura.resources.app_download_description
 import tech.dokus.aura.resources.app_download_platforms
 import tech.dokus.aura.resources.app_download_qr_code
 import tech.dokus.aura.resources.app_download_title
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Dialog showing a QR code for downloading the mobile application.
@@ -76,6 +81,23 @@ fun AppDownloadQrDialog(
             onClick = onDismiss
         )
     )
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun AppDownloadQrDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AppDownloadQrDialog(
+            isVisible = true,
+            onDismiss = {}
+        )
+    }
 }
 
 @Composable

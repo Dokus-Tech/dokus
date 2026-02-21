@@ -21,7 +21,12 @@ import tech.dokus.aura.resources.invoice_add_line_item
 import tech.dokus.aura.resources.invoice_line_items
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Section containing all invoice line items with add/remove functionality.
@@ -83,5 +88,28 @@ fun InvoiceLineItemsSection(
                 color = MaterialTheme.colorScheme.error
             )
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceLineItemsSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceLineItemsSection(
+            items = Mocks.sampleLineItems,
+            onAddItem = {},
+            onRemoveItem = {},
+            onUpdateDescription = { _, _ -> },
+            onUpdateQuantity = { _, _ -> },
+            onUpdateUnitPrice = { _, _ -> },
+            onUpdateVatRate = { _, _ -> },
+            error = null
+        )
     }
 }

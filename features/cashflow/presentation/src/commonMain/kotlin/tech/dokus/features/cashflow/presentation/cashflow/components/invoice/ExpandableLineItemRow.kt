@@ -58,7 +58,12 @@ import tech.dokus.aura.resources.invoice_remove
 import tech.dokus.aura.resources.invoice_vat_rate
 import tech.dokus.aura.resources.invoice_vat_with_rate
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val ExpandedBackgroundAlpha = 0.3f
 private const val HoveredBackgroundAlpha = 0.5f
@@ -392,4 +397,29 @@ private fun formatDecimal(value: Double): String {
     val intPart = rounded.toLong()
     val decPart = ((kotlin.math.abs(rounded - intPart) * DecimalMultiplier) + RoundingOffset).toInt()
     return "$intPart.${decPart.toString().padStart(DecimalPadLength, '0')}"
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun ExpandableLineItemRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ExpandableLineItemRow(
+            item = Mocks.sampleLineItems.first(),
+            isExpanded = false,
+            onExpand = {},
+            onCollapse = {},
+            onRemove = {},
+            onUpdateDescription = {},
+            onUpdateQuantity = {},
+            onUpdateUnitPrice = {},
+            onUpdateVatRate = {},
+            showRemove = true
+        )
+    }
 }

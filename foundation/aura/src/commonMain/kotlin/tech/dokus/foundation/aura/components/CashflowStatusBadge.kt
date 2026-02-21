@@ -14,8 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import tech.dokus.domain.enums.CashflowEntryStatus
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.extensions.statusColor
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Displays a status indicator for cashflow entry state.
@@ -53,5 +58,15 @@ fun CashflowStatusBadge(
             color = status.statusColor,
             maxLines = 1
         )
+    }
+}
+
+@Preview
+@Composable
+private fun CashflowStatusBadgePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowStatusBadge(status = CashflowEntryStatus.Open)
     }
 }

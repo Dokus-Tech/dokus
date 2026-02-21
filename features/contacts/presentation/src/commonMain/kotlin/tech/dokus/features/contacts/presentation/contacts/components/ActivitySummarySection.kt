@@ -261,3 +261,32 @@ private fun ActivitySummarySkeleton() {
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ActivitySummarySectionPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ActivitySummarySection(
+            state = DokusState.success(
+                tech.dokus.domain.model.contact.ContactActivitySummary(
+                    contactId = tech.dokus.domain.ids.ContactId.generate(),
+                    invoiceCount = 12,
+                    invoiceTotal = "15,430.00",
+                    inboundInvoiceCount = 5,
+                    inboundInvoiceTotal = "3,200.00",
+                    expenseCount = 8,
+                    expenseTotal = "1,050.00",
+                    pendingApprovalCount = 2
+                )
+            )
+        )
+    }
+}

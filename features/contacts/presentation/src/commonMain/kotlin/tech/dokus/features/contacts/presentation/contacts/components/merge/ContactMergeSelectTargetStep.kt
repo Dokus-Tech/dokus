@@ -134,3 +134,34 @@ internal fun ContactMergeSelectTargetStep(
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactMergeSelectTargetStepPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactMergeSelectTargetStep(
+            sourceContact = ContactDto(
+                id = tech.dokus.domain.ids.ContactId.generate(),
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Old Company NV"),
+                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                createdAt = now,
+                updatedAt = now
+            ),
+            searchQuery = "",
+            searchResults = emptyList(),
+            isSearching = false,
+            onSearchQueryChange = {},
+            onTargetSelected = {}
+        )
+    }
+}

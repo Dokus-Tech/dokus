@@ -44,7 +44,12 @@ import tech.dokus.aura.resources.peppol_reg_copy_email
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.style.statusConfirmed
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -239,5 +244,34 @@ internal fun TransferEmailCard(
                 }
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun PeppolCirclePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PeppolCircle {
+            PeppolSpinner()
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun TransferEmailCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        TransferEmailCard(
+            companyName = "Acme Corporation",
+            peppolId = "0208:BE0123456789"
+        )
     }
 }

@@ -233,3 +233,28 @@ private fun WorkspaceTypeSelector(
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun WorkspaceCreateContentPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        WorkspaceCreateContent(
+            tenantType = TenantType.Company,
+            legalName = LegalName("Acme Corp"),
+            displayName = DisplayName("Acme"),
+            vatNumber = VatNumber("BE0123456789"),
+            userName = "John Doe",
+            isSubmitting = false,
+            hasFreelancerWorkspace = false,
+            onTenantTypeChange = {},
+            onLegalNameChange = {},
+            onDisplayNameChange = {},
+            onVatNumberChange = {},
+            onSubmit = {},
+        )
+    }
+}

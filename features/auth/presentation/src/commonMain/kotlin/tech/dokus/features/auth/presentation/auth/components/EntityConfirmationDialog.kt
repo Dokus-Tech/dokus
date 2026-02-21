@@ -252,3 +252,28 @@ private fun EntityCard(
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun EntityConfirmationDialogPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        EntityConfirmationDialog(
+            state = EntityConfirmationState.SingleResult(
+                entity = EntityLookup(
+                    enterpriseNumber = "0123.456.789",
+                    vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                    name = tech.dokus.domain.LegalName("Acme Corporation"),
+                    address = null,
+                    status = tech.dokus.domain.model.entity.EntityStatus.Active,
+                ),
+            ),
+            onEntitySelected = {},
+            onEnterManually = {},
+            onDismiss = {},
+        )
+    }
+}

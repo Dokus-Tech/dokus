@@ -245,3 +245,37 @@ private fun DuplicateWarningActions(
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun DuplicateWarningBannerPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        DuplicateWarningBanner(
+            duplicates = listOf(
+                PotentialDuplicate(
+                    contact = tech.dokus.domain.model.contact.ContactDto(
+                        id = tech.dokus.domain.ids.ContactId.generate(),
+                        tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                        name = tech.dokus.domain.Name("Acme Corporation"),
+                        email = tech.dokus.domain.Email("info@acme.be"),
+                        createdAt = now,
+                        updatedAt = now
+                    ),
+                    matchReason = DuplicateReason.VatNumber
+                )
+            ),
+            onContinueAnyway = {},
+            onMergeWithExisting = {},
+            onCancel = {}
+        )
+    }
+}

@@ -14,9 +14,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.amberWhisper
 import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val BadgeRadius = 3.dp
 private val StandardPaddingH = 6.dp
@@ -77,6 +82,16 @@ fun SourceBadge(
             color = textColor,
             maxLines = 1,
         )
+    }
+}
+
+@Preview
+@Composable
+private fun SourceBadgePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SourceBadge(source = DocumentSource.Peppol)
     }
 }
 

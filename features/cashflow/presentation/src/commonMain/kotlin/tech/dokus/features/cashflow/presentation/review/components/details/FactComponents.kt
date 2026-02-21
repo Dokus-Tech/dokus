@@ -44,7 +44,12 @@ import tech.dokus.features.cashflow.presentation.review.ContactSnapshot
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.statusWarning
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val ContactBlockCornerRadius = 6.dp
 private val StatusDotSize = 6.dp
@@ -378,5 +383,59 @@ fun FactField(
                 )
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun AmountRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AmountRow(
+            label = "Subtotal",
+            value = "1,250.00"
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MicroLabelPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MicroLabel(text = "AMOUNTS")
+    }
+}
+
+@Preview
+@Composable
+private fun FactFieldPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        FactField(
+            label = "Invoice Number",
+            value = "INV-2024-001",
+            onClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ContactBlockEmptyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactBlock(
+            contact = null,
+            onEditClick = {}
+        )
     }
 }

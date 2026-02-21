@@ -145,3 +145,33 @@ internal fun mapToUiRole(roles: DerivedContactRoles?): UiContactRole? {
         else -> null
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactCardPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactCard(
+            contact = ContactDto(
+                id = tech.dokus.domain.ids.ContactId.generate(),
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Acme Corporation"),
+                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                derivedRoles = DerivedContactRoles(isSupplier = true),
+                invoiceCount = 5,
+                inboundInvoiceCount = 3,
+                expenseCount = 2,
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+    }
+}

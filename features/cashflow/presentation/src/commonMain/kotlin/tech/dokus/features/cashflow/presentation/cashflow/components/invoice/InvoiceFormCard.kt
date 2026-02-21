@@ -27,7 +27,12 @@ import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Main form card for creating an invoice.
@@ -123,5 +128,32 @@ fun InvoiceFormCard(
                 )
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceFormCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceFormCard(
+            formState = Mocks.sampleFormState,
+            clientsState = DokusState.success<List<ContactDto>>(listOf(Mocks.sampleClient)),
+            saveState = DokusState.idle<Unit>(),
+            onSelectClient = {},
+            onUpdateNotes = {},
+            onAddLineItem = {},
+            onRemoveLineItem = {},
+            onUpdateItemDescription = { _, _ -> },
+            onUpdateItemQuantity = { _, _ -> },
+            onUpdateItemUnitPrice = { _, _ -> },
+            onUpdateItemVatRate = { _, _ -> },
+            onSaveAsDraft = {}
+        )
     }
 }

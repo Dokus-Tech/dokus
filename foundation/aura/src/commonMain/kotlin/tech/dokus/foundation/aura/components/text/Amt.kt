@@ -10,9 +10,14 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 import kotlin.math.roundToLong
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.positionNegative
 import tech.dokus.foundation.aura.style.positionPositive
 import tech.dokus.foundation.aura.style.textFaint
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val TypographicMinus = '\u2212' // −
 
@@ -71,6 +76,16 @@ fun Amt(
         size = size,
         weight = weight,
     )
+}
+
+@Preview
+@Composable
+private fun AmtPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        Amt(value = 1306.12)
+    }
 }
 
 /**

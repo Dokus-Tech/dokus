@@ -21,7 +21,12 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_percent_value
 import tech.dokus.aura.resources.invoice_vat_rate
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Belgian VAT rates
 private const val VatRateStandard = 21
@@ -82,5 +87,22 @@ fun InvoiceVatRateSelector(
                 }
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceVatRateSelectorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceVatRateSelector(
+            selectedRatePercent = 21,
+            onSelectRate = {}
+        )
     }
 }

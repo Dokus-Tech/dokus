@@ -16,7 +16,12 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.upload_action_cancel
 import tech.dokus.aura.resources.upload_action_delete
 import tech.dokus.aura.resources.upload_action_retry
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.aura.resources.upload_action_undo
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Cancel action button for pending/uploading items.
@@ -140,5 +145,23 @@ fun FailedUploadActions(
             RetryUploadAction(onClick = onRetry)
         }
         CancelUploadAction(onClick = onCancel)
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun FailedUploadActionsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        FailedUploadActions(
+            canRetry = true,
+            onRetry = {},
+            onCancel = {}
+        )
     }
 }

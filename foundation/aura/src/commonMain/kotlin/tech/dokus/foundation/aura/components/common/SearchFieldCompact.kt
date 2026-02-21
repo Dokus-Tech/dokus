@@ -32,8 +32,13 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_clear_field
 import tech.dokus.aura.resources.action_search
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Compact search field for top bars; independent of PTextField.
@@ -99,5 +104,19 @@ fun PSearchFieldCompact(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PSearchFieldCompactPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PSearchFieldCompact(
+            value = "",
+            onValueChange = {},
+            placeholder = "Search contacts..."
+        )
     }
 }

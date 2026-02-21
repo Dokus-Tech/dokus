@@ -5,13 +5,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalInspectionMode
-import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.navigation.compose.rememberNavController
 import tech.dokus.domain.enums.Language
 import tech.dokus.foundation.aura.local.ScreenSizeProvided
 import tech.dokus.foundation.aura.local.ThemeManagerProvided
-import tech.dokus.foundation.aura.style.ThemeManager
-import tech.dokus.foundation.aura.style.ThemeMode
+import tech.dokus.foundation.aura.style.FixedThemeManager
 import tech.dokus.foundation.aura.style.Themed
+import tech.dokus.navigation.local.LocalNavController
 
 data class PreviewParameters(
     val isDarkMode: Boolean,
@@ -43,19 +44,19 @@ class PreviewParametersProvider : PreviewParameterProvider<PreviewParameters> {
 
 @Composable
 fun TestWrapper(parameters: PreviewParameters, content: @Composable () -> Unit) {
-    // Create a ThemeManager with explicit mode for previews
+    // Use FixedThemeManager to avoid accessing persistence in test/preview context
     val themeManager = remember(parameters.isDarkMode) {
-        ThemeManager().apply {
-            setThemeMode(if (parameters.isDarkMode) ThemeMode.DARK else ThemeMode.LIGHT)
-        }
+        FixedThemeManager(isDarkMode = parameters.isDarkMode)
     }
 
     PreviewWrapper {
         ThemeManagerProvided(themeManager) {
             Themed {
                 ScreenSizeProvided {
-                    Surface {
-                        content()
+                    CompositionLocalProvider(LocalNavController provides rememberNavController()) {
+                        Surface {
+                            content()
+                        }
                     }
                 }
             }

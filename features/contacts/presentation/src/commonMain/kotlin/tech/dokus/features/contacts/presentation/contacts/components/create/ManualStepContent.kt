@@ -319,3 +319,28 @@ private fun isFormValid(type: ClientType, data: ManualContactFormData): Boolean 
         data.fullName.value.isNotBlank() && (data.personEmail.value.isNotBlank() || data.personPhone.value.isNotBlank())
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ManualStepContentPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ManualStepContent(
+            state = CreateContactState.ManualStep(
+                contactType = ClientType.Business,
+                formData = ManualContactFormData(
+                    companyName = tech.dokus.domain.LegalName("Acme Corp")
+                )
+            ),
+            headerTitle = "New Contact",
+            onIntent = {}
+        )
+    }
+}

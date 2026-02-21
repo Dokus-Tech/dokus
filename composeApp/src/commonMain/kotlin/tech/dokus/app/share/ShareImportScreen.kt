@@ -42,6 +42,11 @@ import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
 import tech.dokus.domain.exceptions.DokusException
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ShareImportScreen(
@@ -236,5 +241,48 @@ private fun sharedFilesSummary(primaryFileName: String, additionalFileCount: Int
         primaryFileName
     } else {
         stringResource(Res.string.share_import_success_summary_multiple, primaryFileName, additionalFileCount)
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun ShareImportScreenUploadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ShareImportScreen(
+            state = ShareImportState.Uploading(
+                currentFileName = "invoice-2026-001.pdf",
+                currentFileIndex = 1,
+                totalFiles = 3,
+                workspaceName = "Dokus BV",
+                currentFileProgress = 0.65f,
+                overallProgress = 0.4f,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ShareImportScreenSuccessPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ShareImportScreen(
+            state = ShareImportState.SuccessPulse(
+                primaryFileName = "invoice-2026-001.pdf",
+                additionalFileCount = 2,
+                uploadedCount = 3,
+                needsReviewCount = 1,
+                uploadedDocumentIds = listOf("doc-1", "doc-2", "doc-3"),
+            ),
+            onIntent = {},
+        )
     }
 }

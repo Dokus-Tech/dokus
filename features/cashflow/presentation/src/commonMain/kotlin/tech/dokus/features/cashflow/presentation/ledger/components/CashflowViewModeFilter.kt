@@ -21,7 +21,12 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
 import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.redSoft
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * View mode and direction filter for cashflow ledger.
@@ -91,6 +96,25 @@ internal fun CashflowViewModeFilter(
                 val dir = DirectionFilter.entries.first { it.name == id }
                 onDirectionChange(dir)
             },
+        )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun CashflowViewModeFilterPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowViewModeFilter(
+            viewMode = CashflowViewMode.Upcoming,
+            direction = DirectionFilter.All,
+            onViewModeChange = {},
+            onDirectionChange = {}
         )
     }
 }

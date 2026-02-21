@@ -17,7 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val SkeletonBorderRadius = Constraints.CornerRadius.badge
 
@@ -153,5 +158,22 @@ internal fun CashflowLedgerSkeleton(
                 DokusTableDivider()
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun CashflowLedgerSkeletonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowLedgerSkeleton(
+            showHeader = true,
+            rowCount = 3
+        )
     }
 }

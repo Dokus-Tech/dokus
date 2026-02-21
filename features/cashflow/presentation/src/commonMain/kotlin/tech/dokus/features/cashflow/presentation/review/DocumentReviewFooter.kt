@@ -47,7 +47,12 @@ import tech.dokus.aura.resources.cashflow_view_cashflow
 import tech.dokus.aura.resources.cashflow_view_document
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Redesigned approval footer for Document Review screen.
@@ -317,5 +322,36 @@ private fun ConfirmedFooter(
                 Text(stringResource(Res.string.cashflow_chat_with_document))
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DocumentReviewFooterPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentReviewFooter(
+            canConfirm = true,
+            isConfirming = false,
+            isSaving = false,
+            isBindingContact = false,
+            isRejecting = false,
+            hasUnsavedChanges = false,
+            isDocumentConfirmed = false,
+            isDocumentRejected = false,
+            hasCashflowEntry = false,
+            confirmBlockedReason = null,
+            onConfirm = {},
+            onSaveChanges = {},
+            onReject = {},
+            onOpenChat = {},
+            onViewEntity = {},
+            onViewCashflowEntry = {}
+        )
     }
 }

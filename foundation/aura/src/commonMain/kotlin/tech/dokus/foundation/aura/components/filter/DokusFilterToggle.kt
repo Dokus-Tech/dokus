@@ -16,7 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.statusWarning
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * A subtle filter toggle button with minimal styling.
@@ -69,6 +74,21 @@ fun DokusFilterToggle(
                 color = MaterialTheme.colorScheme.statusWarning
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun DokusFilterTogglePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusFilterToggle(
+            selected = true,
+            onClick = {},
+            label = "Open",
+            badge = 3
+        )
     }
 }
 

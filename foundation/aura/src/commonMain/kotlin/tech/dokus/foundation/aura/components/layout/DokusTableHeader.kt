@@ -18,9 +18,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.borderStrong
 import tech.dokus.foundation.aura.style.thText
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val DividerThickness = 1.5.dp
 
@@ -59,6 +64,22 @@ fun DokusTableHeader(
         thickness = DividerThickness,
         color = MaterialTheme.colorScheme.borderStrong,
     )
+}
+
+@Preview
+@Composable
+private fun DokusTableHeaderPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusTableHeader(
+            columns = listOf(
+                DokusHeaderColumn(label = "Date", weight = 1f),
+                DokusHeaderColumn(label = "Description", weight = 2f),
+                DokusHeaderColumn(label = "Amount", weight = 1f, alignment = Alignment.End)
+            )
+        )
+    }
 }
 
 @Composable

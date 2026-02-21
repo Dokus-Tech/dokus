@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_merge_move_items_info
 import tech.dokus.aura.resources.contacts_merge_no_conflicts
 import tech.dokus.aura.resources.contacts_merge_resolve_conflict_plural
@@ -165,5 +166,49 @@ internal fun ContactMergeCompareFieldsStep(
                 modifier = Modifier.padding(Constraints.Spacing.medium)
             )
         }
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactMergeCompareFieldsStepPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactMergeCompareFieldsStep(
+            sourceContact = ContactDto(
+                id = tech.dokus.domain.ids.ContactId.generate(),
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Old Company Name"),
+                email = tech.dokus.domain.Email("old@acme.be"),
+                createdAt = now,
+                updatedAt = now
+            ),
+            targetContact = ContactDto(
+                id = tech.dokus.domain.ids.ContactId.generate(),
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Acme Corporation"),
+                email = tech.dokus.domain.Email("info@acme.be"),
+                createdAt = now,
+                updatedAt = now
+            ),
+            conflicts = listOf(
+                MergeFieldConflict(
+                    fieldName = "email",
+                    fieldLabelRes = Res.string.contacts_email,
+                    sourceValue = "old@acme.be",
+                    targetValue = "info@acme.be",
+                    keepSource = false
+                )
+            ),
+            onConflictResolutionChange = { _, _ -> }
+        )
     }
 }

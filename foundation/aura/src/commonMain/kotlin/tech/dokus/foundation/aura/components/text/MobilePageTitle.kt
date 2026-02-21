@@ -8,8 +8,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Page title rendered inside scrollable content on mobile.
@@ -31,4 +36,14 @@ fun MobilePageTitle(
         color = MaterialTheme.colorScheme.onSurface,
         modifier = modifier.padding(bottom = 16.dp),
     )
+}
+
+@Preview
+@Composable
+private fun MobilePageTitlePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MobilePageTitle(title = "Dashboard")
+    }
 }

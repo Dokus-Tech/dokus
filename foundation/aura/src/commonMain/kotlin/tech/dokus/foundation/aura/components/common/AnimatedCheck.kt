@@ -24,7 +24,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.statusConfirmed
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Animated success indicator.
@@ -131,5 +136,15 @@ fun AnimatedCheck(
                 join = StrokeJoin.Round
             )
         )
+    }
+}
+
+@Preview
+@Composable
+private fun AnimatedCheckPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AnimatedCheck(play = true)
     }
 }

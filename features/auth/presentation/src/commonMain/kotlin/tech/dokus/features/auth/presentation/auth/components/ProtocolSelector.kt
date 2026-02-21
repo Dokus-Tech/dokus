@@ -145,3 +145,18 @@ fun ProtocolSelector(
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ProtocolSelectorPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ProtocolSelector(
+            selectedProtocol = "https",
+            onProtocolSelected = {},
+        )
+    }
+}

@@ -70,6 +70,11 @@ import tech.dokus.foundation.aura.style.glassHeader
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 internal data class HomeShellProfileData(
     val fullName: String,
@@ -399,4 +404,39 @@ private fun shortMonthName(month: kotlinx.datetime.Month): String = when (month)
     kotlinx.datetime.Month.OCTOBER -> stringResource(Res.string.date_month_short_oct)
     kotlinx.datetime.Month.NOVEMBER -> stringResource(Res.string.date_month_short_nov)
     kotlinx.datetime.Month.DECEMBER -> stringResource(Res.string.date_month_short_dec)
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DesktopShellTopBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DesktopShellTopBar(
+            topBarConfig = HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title(title = "Documents")
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MobileShellTopBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MobileShellTopBar(
+            profileData = HomeShellProfileData(
+                fullName = "John Doe",
+                email = "john@dokus.be",
+                tierLabel = "Core"
+            ),
+            onProfileClick = {}
+        )
+    }
 }

@@ -131,3 +131,35 @@ private fun DuplicateItem(
         }
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun SoftDuplicateDialogPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        SoftDuplicateDialog(
+            duplicates = listOf(
+                SoftDuplicateUi(
+                    contactId = tech.dokus.domain.ids.ContactId.generate(),
+                    displayName = "Acme Corporation NV",
+                    matchReason = SoftDuplicateReason.NameAndCountry
+                ),
+                SoftDuplicateUi(
+                    contactId = tech.dokus.domain.ids.ContactId.generate(),
+                    displayName = "ACME Corp",
+                    matchReason = SoftDuplicateReason.Name
+                )
+            ),
+            onDismiss = {},
+            onContinue = {},
+            onViewContact = {}
+        )
+    }
+}

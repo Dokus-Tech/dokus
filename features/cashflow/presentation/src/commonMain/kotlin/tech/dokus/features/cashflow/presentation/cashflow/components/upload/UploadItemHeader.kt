@@ -26,7 +26,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.upload_status_deleting
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val UploadRowHeight = Constraints.IconSize.xxLarge - Constraints.Spacing.xSmall
 private val UploadRowPadding = Constraints.Spacing.small + Constraints.Spacing.xxSmall
@@ -246,5 +251,34 @@ fun DeletingFileInfo(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error
         )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun UploadItemRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        UploadItemRow(
+            fileName = "invoice_2024_001.pdf",
+            subtitle = "1.2 MB",
+            icon = { FileIconWithOverlay { UploadingOverlay() } },
+            actions = { CancelUploadAction(onClick = {}) }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DeletingFileInfoPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DeletingFileInfo(fileName = "invoice_2024_001.pdf")
     }
 }

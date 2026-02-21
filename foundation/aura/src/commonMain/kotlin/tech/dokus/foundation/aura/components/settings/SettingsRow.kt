@@ -20,11 +20,16 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val ChevronChar = "\u203A" // ›
 
@@ -132,6 +137,21 @@ fun SettingsRow(
         HorizontalDivider(
             thickness = Constraints.Stroke.thin,
             color = MaterialTheme.colorScheme.outlineVariant,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SettingsRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SettingsRow(
+            label = "Language",
+            value = "English",
+            chevron = true,
+            onClick = {}
         )
     }
 }

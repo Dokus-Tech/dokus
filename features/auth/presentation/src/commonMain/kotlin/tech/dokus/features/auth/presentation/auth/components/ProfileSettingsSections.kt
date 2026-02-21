@@ -483,3 +483,123 @@ private fun userInitials(user: User): String {
         else -> user.email.value.take(2)
     }.uppercase()
 }
+
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+private val previewUser = User(
+    id = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000001")),
+    email = tech.dokus.domain.Email("john@dokus.tech"),
+    firstName = Name("John"),
+    lastName = Name("Doe"),
+    emailVerified = true,
+    isActive = true,
+    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+)
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ProfileHeroPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ProfileHero(user = previewUser)
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun AccountCardPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        AccountCard(
+            user = previewUser,
+            isResendingVerification = false,
+            onResendVerification = {},
+            onEditClick = {},
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun SecurityCardPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        SecurityCard(
+            onChangePassword = {},
+            onMySessions = {},
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ServerCardPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ServerCard(
+            currentServer = ServerConfig.Cloud,
+            onChangeServer = {},
+            onResetToCloud = {},
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun DangerZoneCardPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        DangerZoneCard()
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun LogOutCardPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        LogOutCard(isLoggingOut = false, onLogout = {})
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun VersionFooterPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        VersionFooter()
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ProfileErrorSectionPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ProfileErrorSection()
+    }
+}

@@ -24,8 +24,13 @@ import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.status.toColor
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Status configuration for a DataRow.
@@ -202,6 +207,19 @@ private fun DataRowMobile(
             text = value.ifEmpty { "-" },
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = Constraints.Spacing.xxSmall),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DataRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DataRow(
+            label = "Company Name",
+            value = "Dokus Tech BV"
         )
     }
 }

@@ -25,7 +25,12 @@ import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Simplified mobile footer for document review.
@@ -92,5 +97,25 @@ internal fun MobileFooter(
                 Text(stringResource(Res.string.action_confirm))
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun MobileFooterPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MobileFooter(
+            canConfirm = true,
+            isConfirming = false,
+            isBindingContact = false,
+            onConfirm = {},
+            onSomethingsWrong = {}
+        )
     }
 }

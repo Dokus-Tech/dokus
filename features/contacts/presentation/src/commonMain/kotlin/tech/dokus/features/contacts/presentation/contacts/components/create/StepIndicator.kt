@@ -188,3 +188,23 @@ private fun StepLine(
         )
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun StepIndicatorPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            StepIndicator(currentStep = CreateContactStep.Search)
+            StepIndicator(currentStep = CreateContactStep.Confirm)
+            StepIndicator(currentStep = CreateContactStep.Details)
+        }
+    }
+}
