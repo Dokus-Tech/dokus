@@ -59,6 +59,8 @@ import tech.dokus.aura.resources.peppol_reg_transfer_request
 import tech.dokus.aura.resources.peppol_reg_waiting_body
 import tech.dokus.aura.resources.peppol_reg_waiting_subtitle
 import tech.dokus.aura.resources.peppol_reg_waiting_title
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
 import tech.dokus.foundation.aura.components.POutlinedButton
@@ -70,6 +72,9 @@ import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun PeppolRegistrationScreen(
@@ -401,4 +406,18 @@ private fun FailedContent(
         },
         footnote = stringResource(Res.string.peppol_reg_failed_footnote),
     )
+}
+
+@Preview
+@Composable
+private fun PeppolRegistrationScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PeppolRegistrationScreen(
+            state = PeppolRegistrationState.Loading,
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+        )
+    }
 }

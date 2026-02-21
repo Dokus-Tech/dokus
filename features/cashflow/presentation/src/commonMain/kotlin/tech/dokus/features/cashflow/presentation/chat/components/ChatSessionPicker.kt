@@ -36,7 +36,12 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun SessionPickerDialog(
@@ -143,5 +148,20 @@ private fun SessionListItem(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun SessionPickerDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SessionPickerDialog(
+            sessions = emptyList(),
+            onSessionSelect = {},
+            onNewSession = {},
+            onDismiss = {},
+        )
     }
 }

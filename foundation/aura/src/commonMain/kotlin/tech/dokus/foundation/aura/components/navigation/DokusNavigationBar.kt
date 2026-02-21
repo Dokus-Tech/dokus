@@ -13,11 +13,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.file_text
+import tech.dokus.aura.resources.more_horizontal
+import tech.dokus.aura.resources.nav_contacts
+import tech.dokus.aura.resources.nav_documents
+import tech.dokus.aura.resources.nav_more
+import tech.dokus.aura.resources.users
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.route
 
 /**
@@ -65,5 +78,38 @@ fun DokusNavigationBar(
                 onClick = { onTabClick(tab) }
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun DokusNavigationBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusNavigationBar(
+            tabs = listOf(
+                MobileTabConfig(
+                    id = "documents",
+                    titleRes = Res.string.nav_documents,
+                    iconRes = Res.drawable.file_text,
+                    destination = HomeDestination.Documents,
+                ),
+                MobileTabConfig(
+                    id = "contacts",
+                    titleRes = Res.string.nav_contacts,
+                    iconRes = Res.drawable.users,
+                    destination = HomeDestination.Contacts,
+                ),
+                MobileTabConfig(
+                    id = "more",
+                    titleRes = Res.string.nav_more,
+                    iconRes = Res.drawable.more_horizontal,
+                    destination = null,
+                ),
+            ),
+            selectedRoute = "documents",
+            onTabClick = {},
+        )
     }
 }

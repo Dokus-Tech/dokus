@@ -33,6 +33,11 @@ import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Dialog for rejecting a document with reason selection.
@@ -135,5 +140,21 @@ private fun DocumentRejectReason.toDisplayString(): String {
         DocumentRejectReason.Spam -> stringResource(Res.string.cashflow_reject_reason_spam)
         DocumentRejectReason.Test -> stringResource(Res.string.cashflow_reject_reason_test)
         DocumentRejectReason.Other -> stringResource(Res.string.cashflow_reject_reason_other)
+    }
+}
+
+@Preview
+@Composable
+private fun RejectDocumentDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        RejectDocumentDialog(
+            state = RejectDialogState(),
+            onReasonSelected = {},
+            onNoteChanged = {},
+            onConfirm = {},
+            onDismiss = {},
+        )
     }
 }

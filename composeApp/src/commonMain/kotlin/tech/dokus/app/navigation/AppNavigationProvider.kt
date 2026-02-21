@@ -3,8 +3,8 @@ package tech.dokus.app.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import tech.dokus.app.screens.EmptyScreen
-import tech.dokus.app.screens.HomeScreen
-import tech.dokus.app.screens.SplashScreen
+import tech.dokus.app.screens.HomeRoute
+import tech.dokus.app.screens.SplashRoute
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.AccountantScreen
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
@@ -21,10 +21,10 @@ import tech.dokus.navigation.destinations.SettingsDestination
 internal object AppNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {
         composable<CoreDestination.Splash> {
-            SplashScreen()
+            SplashRoute()
         }
         composable<CoreDestination.Home> {
-            HomeScreen()
+            HomeRoute()
         }
         composable<AppDestination.UnderDevelopment> {
             UnderDevelopmentScreen()

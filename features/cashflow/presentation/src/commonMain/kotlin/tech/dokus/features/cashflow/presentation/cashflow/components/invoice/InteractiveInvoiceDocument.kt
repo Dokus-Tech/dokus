@@ -15,6 +15,11 @@ import androidx.compose.ui.unit.dp
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // A4-like proportions with slightly wider width for better readability
 private val MAX_PAPER_WIDTH = 680.dp
@@ -110,5 +115,29 @@ fun InteractiveInvoiceDocument(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun InteractiveInvoiceDocumentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InteractiveInvoiceDocument(
+            formState = Mocks.sampleFormState,
+            uiState = Mocks.sampleUiState,
+            onClientClick = {},
+            onIssueDateClick = {},
+            onDueDateClick = {},
+            onItemClick = {},
+            onItemCollapse = {},
+            onAddItem = {},
+            onRemoveItem = {},
+            onUpdateItemDescription = { _, _ -> },
+            onUpdateItemQuantity = { _, _ -> },
+            onUpdateItemUnitPrice = { _, _ -> },
+            onUpdateItemVatRate = { _, _ -> }
+        )
     }
 }

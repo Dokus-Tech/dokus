@@ -21,8 +21,11 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -45,6 +48,9 @@ import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Screen for editing an existing contact.
@@ -343,4 +349,19 @@ private fun DeleteContactConfirmationDialog(
         dismissOnBackPress = !isDeleting,
         dismissOnClickOutside = !isDeleting
     )
+}
+
+@Preview
+@Composable
+private fun ContactFormScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactFormScreen(
+            state = ContactFormState.Editing(),
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+            onNavigateToDuplicate = {}
+        )
+    }
 }

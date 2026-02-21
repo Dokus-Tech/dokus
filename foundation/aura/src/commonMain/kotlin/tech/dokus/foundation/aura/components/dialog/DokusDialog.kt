@@ -38,8 +38,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.DokusGlassSurface
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Represents an action button in a DokusDialog.
@@ -283,4 +288,39 @@ fun DokusConfirmDialog(
         dismissOnBackPress = !isConfirming,
         dismissOnClickOutside = !isConfirming
     )
+}
+
+@Preview
+@Composable
+private fun DokusDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusDialog(
+            onDismissRequest = {},
+            title = "Confirm Action",
+            content = { Text("Are you sure you want to proceed?") },
+            primaryAction = DokusDialogAction(
+                text = "Confirm",
+                onClick = {},
+            ),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DokusConfirmDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusConfirmDialog(
+            onDismissRequest = {},
+            title = "Delete Item",
+            message = "This action cannot be undone.",
+            confirmText = "Delete",
+            cancelText = "Cancel",
+            onConfirm = {},
+        )
+    }
 }

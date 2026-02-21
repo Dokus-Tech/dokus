@@ -16,7 +16,13 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_loading
 import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun LoadingContent(contentPadding: PaddingValues) {
@@ -56,5 +62,15 @@ internal fun ErrorContent(
             exception = error.exception,
             retryHandler = error.retryHandler
         )
+    }
+}
+
+@Preview
+@Composable
+private fun LoadingContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        LoadingContent(contentPadding = PaddingValues(0.dp))
     }
 }

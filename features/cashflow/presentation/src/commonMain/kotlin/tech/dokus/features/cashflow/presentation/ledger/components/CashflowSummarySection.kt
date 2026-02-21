@@ -35,7 +35,12 @@ import tech.dokus.foundation.aura.components.charts.SparkBars
 import tech.dokus.foundation.aura.components.text.DokusLabel
 import tech.dokus.foundation.aura.style.positionNegative
 import tech.dokus.foundation.aura.style.positionPositive
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Summary hero card showing cashflow position with SparkBars.
@@ -149,4 +154,17 @@ private fun formatBreakdown(
         CashflowViewMode.History -> stringResource(Res.string.cashflow_summary_paid)
     }
     return "$inLabel $currencySymbol${summary.totalIn.toDisplayString()} \u00b7 $outLabel $currencySymbol${summary.totalOut.toDisplayString()}"
+}
+
+@Preview
+@Composable
+private fun CashflowSummarySectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowSummarySection(
+            summary = CashflowSummary.EMPTY,
+            viewMode = CashflowViewMode.Upcoming,
+        )
+    }
 }

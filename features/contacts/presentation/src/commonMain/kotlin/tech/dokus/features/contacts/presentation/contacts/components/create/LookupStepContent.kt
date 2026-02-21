@@ -72,7 +72,12 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val SEARCH_DEBOUNCE_MS = 500L
 private const val MIN_SEARCH_LENGTH = 3
@@ -614,5 +619,26 @@ private fun nameScore(query: String?, name: String): Int {
         normalizedName.startsWith(normalizedQuery) -> 2
         normalizedName.contains(normalizedQuery) -> 1
         else -> 0
+    }
+}
+
+@Preview
+@Composable
+private fun LookupStepContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        LookupStepContent(
+            state = CreateContactState.LookupStep(),
+            onIntent = {},
+            headerTitle = "Add Contact",
+            isResolveFlow = false,
+            findContactsByName = object : FindContactsByNameUseCase {
+                override suspend fun invoke(query: String, limit: Int) = Result.success(emptyList<ContactDto>())
+            },
+            findContactsByVat = object : FindContactsByVatUseCase {
+                override suspend fun invoke(vat: VatNumber, limit: Int) = Result.success(emptyList<ContactDto>())
+            },
+        )
     }
 }

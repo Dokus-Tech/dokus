@@ -19,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -31,6 +33,9 @@ import tech.dokus.features.contacts.presentation.contacts.components.create.Look
 import tech.dokus.features.contacts.presentation.contacts.components.create.ManualStepContent
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.destinations.ContactCreateOrigin
 
 /**
@@ -225,3 +230,5 @@ private fun CreateContactContent(
         )
     }
 }
+
+// Preview skipped: Flaky IllegalStateException in parallel Roborazzi runs

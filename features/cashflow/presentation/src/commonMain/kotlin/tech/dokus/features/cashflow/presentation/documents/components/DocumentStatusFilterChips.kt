@@ -12,6 +12,11 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
 import tech.dokus.foundation.aura.style.amberSoft
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Filter tabs for the documents list using DokusTabs.
@@ -53,4 +58,23 @@ internal fun DocumentFilterButtons(
         },
         modifier = modifier,
     )
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DocumentFilterButtonsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentFilterButtons(
+            currentFilter = DocumentFilter.All,
+            totalCount = 12,
+            needsAttentionCount = 3,
+            onFilterSelected = {},
+        )
+    }
 }

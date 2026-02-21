@@ -49,6 +49,11 @@ import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * A card component displaying a cash flow list with financial document items and navigation controls.
@@ -299,4 +304,18 @@ private fun FinancialDocumentDto.typeIcon(): String = when (this) {
     is FinancialDocumentDto.ProFormaDto -> stringResource(Res.string.document_type_pro_forma)
     is FinancialDocumentDto.QuoteDto -> stringResource(Res.string.document_type_quote)
     is FinancialDocumentDto.PurchaseOrderDto -> stringResource(Res.string.document_type_purchase_order)
+}
+
+@Preview
+@Composable
+private fun CashflowCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowCard(
+            documents = emptyList(),
+            onPreviousClick = {},
+            onNextClick = {}
+        )
+    }
 }

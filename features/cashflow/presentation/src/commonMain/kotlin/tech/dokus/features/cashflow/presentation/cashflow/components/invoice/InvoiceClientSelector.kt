@@ -30,8 +30,14 @@ import tech.dokus.aura.resources.invoice_select_client
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.DokusStateSimple
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.extensions.localized
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Client selector dropdown for invoice creation.
@@ -121,5 +127,20 @@ fun InvoiceClientSelector(
                 color = MaterialTheme.colorScheme.error
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun InvoiceClientSelectorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceClientSelector(
+            selectedClient = null,
+            clientsState = DokusStateSimple.Loading(),
+            onSelectClient = {},
+            error = null
+        )
     }
 }

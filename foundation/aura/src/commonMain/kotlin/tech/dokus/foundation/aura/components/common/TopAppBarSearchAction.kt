@@ -9,9 +9,15 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Generic top app bar that accepts two composable slots: one for search content (title area)
@@ -44,6 +50,19 @@ fun PTopAppBarSearchAction(
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
             thickness = Constraints.Stroke.thin
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PTopAppBarSearchActionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTopAppBarSearchAction(
+            searchContent = { Text("Search...") },
+            actions = { Text("Action") },
         )
     }
 }

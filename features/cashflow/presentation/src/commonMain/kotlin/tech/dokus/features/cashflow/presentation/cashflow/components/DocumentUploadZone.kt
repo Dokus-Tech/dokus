@@ -31,6 +31,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.aura.resources.upload_drag_hint
 import tech.dokus.aura.resources.upload_drop_files
 import tech.dokus.aura.resources.upload_select_or_drag
@@ -277,4 +282,21 @@ fun DocumentUploadZone(
 enum class UploadIcon {
     Camera,
     Document
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DocumentUploadZonePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentUploadZone(
+            onUploadClick = {},
+            isUploading = false,
+        )
+    }
 }

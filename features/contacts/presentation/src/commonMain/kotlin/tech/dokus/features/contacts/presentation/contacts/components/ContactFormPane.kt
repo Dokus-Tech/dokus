@@ -41,10 +41,15 @@ import tech.dokus.aura.resources.contacts_create_contact
 import tech.dokus.aura.resources.contacts_edit_contact
 import tech.dokus.aura.resources.contacts_required_fields_hint
 import tech.dokus.aura.resources.contacts_update_mobile_hint
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.features.contacts.mvi.ContactFormData
 import tech.dokus.features.contacts.mvi.PotentialDuplicate
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // UI dimension constants
 private val FormContentPadding = 16.dp
@@ -271,6 +276,46 @@ fun ContactFormPane(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ContactFormPanePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactFormPane(
+            isVisible = true,
+            isEditMode = false,
+            formData = ContactFormData(),
+            isSaving = false,
+            isDeleting = false,
+            duplicates = emptyList(),
+            onDismiss = {},
+            onNameChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onContactPersonChange = {},
+            onVatNumberChange = {},
+            onCompanyNumberChange = {},
+            onBusinessTypeChange = {},
+            onAddressLine1Change = {},
+            onAddressLine2Change = {},
+            onCityChange = {},
+            onPostalCodeChange = {},
+            onCountryChange = {},
+            onDefaultPaymentTermsChange = {},
+            onDefaultVatRateChange = {},
+            onTagsChange = {},
+            onInitialNoteChange = {},
+            onIsActiveChange = {},
+            onSave = {},
+            onCancel = {},
+            onDelete = {},
+            onDismissDuplicates = {},
+            onMergeWithExisting = {},
+        )
     }
 }
 

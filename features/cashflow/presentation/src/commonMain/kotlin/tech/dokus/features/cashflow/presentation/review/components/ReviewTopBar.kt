@@ -42,6 +42,11 @@ import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val StatusDotSize = 6.dp
 
@@ -220,5 +225,22 @@ private fun UnderstandingLine(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ReviewTopBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ReviewTopBar(
+            state = DocumentReviewState.Loading(),
+            isLargeScreen = false,
+            onBackClick = {},
+            onChatClick = {},
+            onConfirmClick = {},
+            onRejectClick = {},
+        )
     }
 }

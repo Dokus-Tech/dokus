@@ -66,7 +66,12 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.amberSoft
 import tech.dokus.foundation.aura.style.redSoft
 import tech.dokus.foundation.aura.style.surfaceHover
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val TableRowHeight = Constraints.Height.input
 
@@ -398,5 +403,15 @@ private fun DaysLateBadge(
 private fun rememberToday(): LocalDate {
     return remember {
         kotlinx.datetime.Clock.System.todayIn(TimeZone.currentSystemDefault())
+    }
+}
+
+@Preview
+@Composable
+private fun CashflowLedgerHeaderRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowLedgerHeaderRow()
     }
 }

@@ -19,11 +19,21 @@ import tech.dokus.aura.resources.contacts_merge_confirm
 import tech.dokus.aura.resources.contacts_merge_dialog_title
 import tech.dokus.aura.resources.contacts_merge_select_target
 import tech.dokus.aura.resources.contacts_merge_success
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.Name
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.mvi.ContactMergeIntent
 import tech.dokus.features.contacts.mvi.ContactMergeState
 import tech.dokus.features.contacts.presentation.contacts.model.MergeDialogStep
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ContactMergeDialog(
@@ -133,4 +143,6 @@ internal fun ContactMergeDialog(
         dismissOnClickOutside = !state.isMerging
     )
 }
+
+// Preview skipped: Dialog animation causes AppNotIdleException in Roborazzi
 

@@ -13,14 +13,20 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Immutable
 data class DokusTableColumnSpec(
@@ -82,5 +88,19 @@ private fun Alignment.Horizontal.toBoxAlignment(): Alignment {
         Alignment.CenterHorizontally -> Alignment.Center
         Alignment.End -> Alignment.CenterEnd
         else -> Alignment.CenterStart
+    }
+}
+
+@Preview
+@Composable
+private fun DokusTableRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusTableRow {
+            Text("Name")
+            Text("Amount")
+            Text("Status")
+        }
     }
 }

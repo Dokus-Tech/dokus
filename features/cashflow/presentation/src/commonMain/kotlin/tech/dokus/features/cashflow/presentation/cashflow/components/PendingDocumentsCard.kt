@@ -390,3 +390,5 @@ private fun getDocumentDisplayName(record: DocumentRecordDto): String {
         }
     }
 }
+
+// Previews are in PendingDocumentsCardPreview.kt

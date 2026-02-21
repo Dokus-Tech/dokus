@@ -37,6 +37,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.profile_logout
@@ -47,6 +49,9 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val PopoverWidth = Constraints.Shell.sidebarWidth
 private val PopoverRadius = Constraints.Spacing.medium
@@ -253,6 +258,25 @@ private fun PopoverMenuItem(
             text = ChevronChar,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.textFaint,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ProfilePopoverPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ProfilePopover(
+            isVisible = true,
+            onDismiss = {},
+            userName = "John Doe",
+            userEmail = "john.doe@dokus.be",
+            userInitials = "JD",
+            tierLabel = "Core",
+            onProfileClick = {},
+            onLogoutClick = {},
         )
     }
 }

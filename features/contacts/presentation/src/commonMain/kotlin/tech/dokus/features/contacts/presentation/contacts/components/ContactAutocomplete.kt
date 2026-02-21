@@ -37,6 +37,11 @@ import tech.dokus.features.contacts.presentation.contacts.components.autocomplet
 import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
 import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.foundation.platform.Logger
 
 /**
@@ -294,4 +299,26 @@ fun ContactAutocompleteSimple(
         findContactsByName = findContactsByName,
         findContactsByVat = findContactsByVat
     )
+}
+
+@Preview
+@Composable
+private fun ContactAutocompletePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactAutocomplete(
+            value = "",
+            onValueChange = {},
+            selectedContact = null,
+            onContactSelected = {},
+            onAddNewContact = {},
+            findContactsByName = object : FindContactsByNameUseCase {
+                override suspend fun invoke(query: String, limit: Int) = Result.success(emptyList<ContactDto>())
+            },
+            findContactsByVat = object : FindContactsByVatUseCase {
+                override suspend fun invoke(vat: VatNumber, limit: Int) = Result.success(emptyList<ContactDto>())
+            },
+        )
+    }
 }

@@ -62,9 +62,14 @@ import tech.dokus.aura.resources.contacts_note_by
 import tech.dokus.aura.resources.contacts_note_content
 import tech.dokus.aura.resources.contacts_notes
 import tech.dokus.aura.resources.contacts_saving
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.fields.PTextFieldFree
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -634,4 +639,28 @@ private fun NotesBottomSheetDeleteConfirmation(
         dismissOnBackPress = !isDeleting,
         dismissOnClickOutside = !isDeleting
     )
+}
+
+@Preview
+@Composable
+private fun NotesBottomSheetPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        NotesBottomSheet(
+            isVisible = true,
+            onDismiss = {},
+            notesState = DokusState.success(emptyList()),
+            noteContent = "",
+            onNoteContentChange = {},
+            isSavingNote = false,
+            isDeletingNote = false,
+            editingNote = null,
+            onAddNote = {},
+            onUpdateNote = {},
+            onDeleteNote = {},
+            onEditNoteClick = {},
+            onCancelEdit = {},
+        )
+    }
 }

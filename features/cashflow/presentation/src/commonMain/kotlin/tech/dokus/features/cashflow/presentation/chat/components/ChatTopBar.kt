@@ -37,7 +37,12 @@ import tech.dokus.aura.resources.chat_title_all_documents
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.foundation.aura.components.PBackButton
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -144,6 +149,22 @@ internal fun ChatTopBar(
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
             thickness = Constraints.Stroke.thin
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ChatTopBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ChatTopBar(
+            state = ChatState.Loading,
+            onBackClick = {},
+            onNewChat = {},
+            onShowHistory = {},
+            onSwitchScope = {},
         )
     }
 }

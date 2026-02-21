@@ -28,10 +28,22 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.calculator
 import tech.dokus.aura.resources.coming_soon
+import tech.dokus.aura.resources.file_text
+import tech.dokus.aura.resources.nav_contacts
+import tech.dokus.aura.resources.nav_documents
+import tech.dokus.aura.resources.nav_profile
+import tech.dokus.aura.resources.nav_section_accounting
+import tech.dokus.aura.resources.nav_section_company
+import tech.dokus.aura.resources.nav_vat
+import tech.dokus.aura.resources.settings
+import tech.dokus.aura.resources.users
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.foundation.aura.style.dokusEffects
@@ -39,6 +51,10 @@ import tech.dokus.foundation.aura.style.dokusRadii
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
 import tech.dokus.foundation.aura.style.textFaint
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.route
 
 @Composable
@@ -282,5 +298,63 @@ private fun SettingsRow(
                 MaterialTheme.colorScheme.onSurface
             }
         )
+    }
+}
+
+@Preview
+@Composable
+private fun DokusNavigationRailSectionedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        Column {
+            DokusNavigationRailSectioned(
+                sections = listOf(
+                    NavSection(
+                        id = "accounting",
+                        titleRes = Res.string.nav_section_accounting,
+                        iconRes = Res.drawable.file_text,
+                        items = listOf(
+                            NavItem(
+                                id = "documents",
+                                titleRes = Res.string.nav_documents,
+                                iconRes = Res.drawable.file_text,
+                                destination = HomeDestination.Documents,
+                            ),
+                            NavItem(
+                                id = "vat",
+                                titleRes = Res.string.nav_vat,
+                                iconRes = Res.drawable.calculator,
+                                destination = HomeDestination.Tomorrow,
+                                comingSoon = true,
+                            ),
+                        ),
+                    ),
+                    NavSection(
+                        id = "company",
+                        titleRes = Res.string.nav_section_company,
+                        iconRes = Res.drawable.users,
+                        items = listOf(
+                            NavItem(
+                                id = "contacts",
+                                titleRes = Res.string.nav_contacts,
+                                iconRes = Res.drawable.users,
+                                destination = HomeDestination.Contacts,
+                            ),
+                        ),
+                    ),
+                ),
+                expandedSections = mapOf("accounting" to true, "company" to true),
+                selectedRoute = "documents",
+                settingsItem = NavItem(
+                    id = "settings",
+                    titleRes = Res.string.nav_profile,
+                    iconRes = Res.drawable.settings,
+                    destination = HomeDestination.Settings,
+                ),
+                onSectionToggle = {},
+                onItemClick = {},
+            )
+        }
     }
 }

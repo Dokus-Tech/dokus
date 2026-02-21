@@ -18,6 +18,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -25,6 +27,9 @@ import tech.dokus.aura.resources.settings_appearance
 import tech.dokus.aura.resources.settings_notifications
 import tech.dokus.aura.resources.settings_profile
 import tech.dokus.aura.resources.user
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.local.LocalNavController
@@ -85,5 +90,15 @@ fun UserPreferencesMenu(
                 }
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun UserPreferencesMenuPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        UserPreferencesMenu()
     }
 }

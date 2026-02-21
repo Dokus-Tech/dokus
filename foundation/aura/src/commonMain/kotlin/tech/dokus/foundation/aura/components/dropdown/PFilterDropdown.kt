@@ -25,9 +25,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_expand_options
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Default values for [PFilterDropdown] component.
@@ -209,4 +217,24 @@ inline fun <reified T> PFilterDropdown(
         modifier = modifier,
         contentDescription = contentDescription
     )
+}
+
+private enum class PreviewFilterOption(override val labelRes: StringResource) : FilterOption {
+    OptionA(Res.string.action_confirm),
+    OptionB(Res.string.action_cancel),
+}
+
+@Preview
+@Composable
+private fun PFilterDropdownPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PFilterDropdown(
+            label = "Filter:",
+            selectedOption = PreviewFilterOption.OptionA,
+            options = PreviewFilterOption.entries,
+            onOptionSelected = {},
+        )
+    }
 }

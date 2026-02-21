@@ -24,6 +24,17 @@ import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.Money
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.InvoiceNumber
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun InvoiceCard(
@@ -95,4 +106,31 @@ private fun InvoiceStatusBadge(
         color = color,
         modifier = modifier
     )
+}
+
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@Preview
+@Composable
+private fun InvoiceCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val now = LocalDateTime(2024, 12, 13, 12, 0)
+    TestWrapper(parameters) {
+        InvoiceCard(
+            invoice = FinancialDocumentDto.InvoiceDto(
+                id = InvoiceId.generate(),
+                tenantId = TenantId.generate(),
+                contactId = ContactId.generate(),
+                invoiceNumber = InvoiceNumber("INV-001"),
+                issueDate = kotlinx.datetime.LocalDate(2024, 12, 13),
+                dueDate = kotlinx.datetime.LocalDate(2025, 1, 13),
+                subtotalAmount = Money(340000),
+                vatAmount = Money(71400),
+                totalAmount = Money(411400),
+                status = InvoiceStatus.Draft,
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+    }
 }

@@ -37,6 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
@@ -73,20 +75,18 @@ import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
-/**
- * Settings screen using FlowMVI Container pattern.
- * Displays settings navigation with split-pane (desktop) or list (mobile) layout.
- */
 @Composable
-internal fun SettingsScreen(
+internal fun SettingsRoute(
     container: SettingsContainer = container()
 ) {
-    val screenSize = LocalScreenSize.current
     val navController = LocalNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
@@ -112,44 +112,57 @@ internal fun SettingsScreen(
         }
     }
 
-    // Load tenant when screen appears
     LaunchedEffect(Unit) {
         container.store.intent(SettingsIntent.Load)
     }
 
+    SettingsScreen(
+        state = state,
+        snackbarHostState = snackbarHostState,
+        onWorkspaceSelectClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
+        onSectionClick = { section -> navController.navigateTo(section.destination) },
+    )
+}
+
+@Composable
+internal fun SettingsScreen(
+    state: SettingsState,
+    snackbarHostState: SnackbarHostState,
+    onWorkspaceSelectClick: () -> Unit,
+    onSectionClick: (ModuleSettingsSection) -> Unit,
+) {
+    val screenSize = LocalScreenSize.current
+
     if (screenSize.isLarge) {
-        // Desktop: Split-pane layout
         SettingsSplitPaneLayout(
             state = state,
-            snackbarHostState = snackbarHostState
+            snackbarHostState = snackbarHostState,
+            onWorkspaceSelectClick = onWorkspaceSelectClick,
         )
     } else {
-        // Mobile: Traditional navigation layout
         SettingsMobileLayout(
             state = state,
+            onWorkspaceSelectClick = onWorkspaceSelectClick,
+            onSectionClick = onSectionClick,
         )
     }
 }
 
-/**
- * Desktop split-pane layout with navigation on left and content on right.
- */
 @Composable
 private fun SettingsSplitPaneLayout(
     state: SettingsState,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    onWorkspaceSelectClick: () -> Unit,
 ) {
     val spacing = MaterialTheme.dokusSpacing
     val sizing = MaterialTheme.dokusSizing
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
 
-    // Get all sections flattened for selection tracking
     val allSections = remember(settingsGroups) {
         settingsGroups.values.flatten().flatMap { it.sections }
     }
 
-    // Track selected section (first section selected by default)
     var selectedSection by remember { mutableStateOf(allSections.firstOrNull()) }
 
     Scaffold(
@@ -161,7 +174,6 @@ private fun SettingsSplitPaneLayout(
                     .fillMaxSize()
                     .padding(contentPadding)
             ) {
-                // Left Navigation Panel - matches HomeScreen's RailNavigationLayout pattern
                 Surface(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -176,11 +188,11 @@ private fun SettingsSplitPaneLayout(
                         state = state,
                         settingsGroups = settingsGroups,
                         selectedSection = selectedSection,
-                        onSectionSelected = { selectedSection = it }
+                        onSectionSelected = { selectedSection = it },
+                        onWorkspaceSelectClick = onWorkspaceSelectClick,
                     )
                 }
 
-                // Right Content Panel (fills remaining space)
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -190,7 +202,6 @@ private fun SettingsSplitPaneLayout(
                     selectedSection?.let { section ->
                         SettingsContentPane(section = section)
                     } ?: run {
-                        // Empty state when no section selected
                         SettingsEmptyState()
                     }
                 }
@@ -199,19 +210,16 @@ private fun SettingsSplitPaneLayout(
     }
 }
 
-/**
- * Mobile layout with traditional vertical list and navigation.
- */
 @Composable
 private fun SettingsMobileLayout(
     state: SettingsState,
+    onWorkspaceSelectClick: () -> Unit,
+    onSectionClick: (ModuleSettingsSection) -> Unit,
 ) {
     val spacing = MaterialTheme.dokusSpacing
-    val navController = LocalNavController.current
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
 
-    // Extract tenant from state
     val currentTenant = if (state.isSuccess()) state.data else null
     val isLoading = state.isLoading()
 
@@ -223,25 +231,19 @@ private fun SettingsMobileLayout(
                 .verticalScroll(rememberScrollState())
                 .withContentPaddingForScrollable()
         ) {
-            // Workspace Picker Card
             WorkspacePickerCard(
                 workspaceName = currentTenant?.displayName?.value,
                 isLoading = isLoading,
-                onClick = {
-                    navController.navigateTo(AuthDestination.WorkspaceSelect)
-                }
+                onClick = onWorkspaceSelectClick,
             )
 
             Spacer(Modifier.height(spacing.xLarge))
 
-            // Settings Groups
             settingsGroups.forEach { (groupTitle, groups) ->
                 SettingsGroupCard(
                     title = groupTitle,
                     sections = groups.flatMap { group -> group.sections },
-                    onSectionClick = { section ->
-                        navController.navigateTo(section.destination)
-                    }
+                    onSectionClick = onSectionClick,
                 )
                 Spacer(Modifier.height(spacing.large))
             }
@@ -249,20 +251,16 @@ private fun SettingsMobileLayout(
     }
 }
 
-/**
- * Navigation panel for desktop split-pane layout.
- */
 @Composable
 private fun SettingsNavigationPanel(
     state: SettingsState,
     settingsGroups: Map<StringResource, List<ModuleSettingsGroup>>,
     selectedSection: ModuleSettingsSection?,
-    onSectionSelected: (ModuleSettingsSection) -> Unit
+    onSectionSelected: (ModuleSettingsSection) -> Unit,
+    onWorkspaceSelectClick: () -> Unit,
 ) {
     val spacing = MaterialTheme.dokusSpacing
-    val navController = LocalNavController.current
 
-    // Extract tenant from state
     val currentTenant = if (state.isSuccess()) state.data else null
     val isLoading = state.isLoading()
 
@@ -272,20 +270,15 @@ private fun SettingsNavigationPanel(
             .verticalScroll(rememberScrollState())
             .padding(spacing.large)
     ) {
-        // Workspace Picker
         WorkspacePickerCard(
             workspaceName = currentTenant?.displayName?.value,
             isLoading = isLoading,
-            onClick = {
-                navController.navigateTo(AuthDestination.WorkspaceSelect)
-            }
+            onClick = onWorkspaceSelectClick,
         )
 
         Spacer(Modifier.height(spacing.xLarge))
 
-        // Settings Groups (flat list with headers)
         settingsGroups.forEach { (groupTitle, groups) ->
-            // Group header
             Text(
                 text = stringResource(groupTitle),
                 style = MaterialTheme.typography.titleSmall,
@@ -295,7 +288,6 @@ private fun SettingsNavigationPanel(
                     .padding(top = spacing.large, bottom = spacing.small)
             )
 
-            // Section items
             groups.flatMap { group -> group.sections }.forEach { section ->
                 val isSelected = selectedSection == section
                 ListSettingsItem(
@@ -311,20 +303,15 @@ private fun SettingsNavigationPanel(
     }
 }
 
-/**
- * Content pane that renders the appropriate settings content based on destination.
- */
 @Composable
 private fun SettingsContentPane(
     section: ModuleSettingsSection
 ) {
     val spacing = MaterialTheme.dokusSpacing
     val sizing = MaterialTheme.dokusSizing
-    // Add a title header for the content pane
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Content header with section title
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.surface,
@@ -344,7 +331,6 @@ private fun SettingsContentPane(
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
         )
 
-        // Route to appropriate content composable based on destination
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -352,7 +338,6 @@ private fun SettingsContentPane(
         ) {
             when (section.destination) {
                 is AuthDestination.ProfileSettings -> {
-                    // Use the full screen as embedded content for now
                     ProfileSettingsRoute()
                 }
 
@@ -373,7 +358,6 @@ private fun SettingsContentPane(
                 }
 
                 else -> {
-                    // Fallback for unknown destinations
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -390,9 +374,6 @@ private fun SettingsContentPane(
     }
 }
 
-/**
- * Empty state shown when no section is selected.
- */
 @Composable
 private fun SettingsEmptyState() {
     val spacing = MaterialTheme.dokusSpacing
@@ -495,5 +476,20 @@ private fun SettingsGroupCard(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun SettingsScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SettingsScreen(
+            state = SettingsState.Loading,
+            snackbarHostState = remember { SnackbarHostState() },
+            onWorkspaceSelectClick = {},
+            onSectionClick = {},
+        )
     }
 }

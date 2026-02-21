@@ -25,6 +25,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
@@ -43,6 +45,9 @@ import tech.dokus.aura.resources.bootstrap_state_initializing
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.style.dokusSpacing
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
@@ -56,12 +61,8 @@ private val BootstrapStepType.localized: String
         BootstrapStepType.CheckingAccountStatus -> stringResource(Res.string.bootstrap_state_checking_account_status)
     }
 
-/**
- * Splash screen using FlowMVI Container pattern.
- * Handles app initialization and navigation to appropriate destination.
- */
 @Composable
-internal fun SplashScreen(
+internal fun SplashRoute(
     container: BootstrapContainer = container()
 ) {
     val navController = LocalNavController.current
@@ -78,19 +79,23 @@ internal fun SplashScreen(
         }
     }
 
-    // Start bootstrap process when screen appears
     LaunchedEffect(Unit) {
         container.store.intent(BootstrapIntent.Load)
     }
 
+    SplashScreen(steps = state.steps)
+}
+
+@Composable
+internal fun SplashScreen(
+    steps: List<BootstrapStep>,
+) {
     Scaffold { contentPadding ->
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Calm ambient particle field background
             AmbientBackground()
 
-            // Main content
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -105,8 +110,7 @@ internal fun SplashScreen(
 
                 Spacer(modifier = Modifier.height(MaterialTheme.dokusSpacing.xxxLarge))
 
-                // Bootstrap states as vertical list
-                BootstrapStatesList(state.steps)
+                BootstrapStatesList(steps)
             }
         }
     }
@@ -157,13 +161,11 @@ private fun BootstrapStateItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(spacing.large)
     ) {
-        // Status indicator dot
         Box(
             modifier = Modifier.size(12.dp),
             contentAlignment = Alignment.Center
         ) {
             if (isActive) {
-                // Outer glow
                 Canvas(modifier = Modifier.size(24.dp)) {
                     drawCircle(
                         color = accent.copy(alpha = if (isCurrentStep) glowAlpha * 0.4f else 0.2f),
@@ -171,7 +173,6 @@ private fun BootstrapStateItem(
                     )
                 }
 
-                // Inner dot
                 Canvas(modifier = Modifier.size(12.dp)) {
                     drawCircle(
                         color = accent.copy(alpha = if (isCurrentStep) 1f else 0.6f),
@@ -179,7 +180,6 @@ private fun BootstrapStateItem(
                     )
                 }
             } else {
-                // Inactive dot
                 Canvas(modifier = Modifier.size(12.dp)) {
                     drawCircle(
                         color = onSurface.copy(alpha = 0.15f),
@@ -189,7 +189,6 @@ private fun BootstrapStateItem(
             }
         }
 
-        // State text
         Text(
             text = step.type.localized,
             color = when {
@@ -199,6 +198,22 @@ private fun BootstrapStateItem(
             },
             style = MaterialTheme.typography.titleMedium,
             fontWeight = if (isCurrentStep) FontWeight.SemiBold else FontWeight.Normal
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SplashScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SplashScreen(
+            steps = listOf(
+                BootstrapStep(BootstrapStepType.InitializeApp, isActive = true, isCurrent = false),
+                BootstrapStep(BootstrapStepType.CheckUpdate, isActive = true, isCurrent = true),
+                BootstrapStep(BootstrapStepType.CheckingLogin, isActive = false, isCurrent = false),
+            )
         )
     }
 }

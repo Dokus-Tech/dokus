@@ -60,6 +60,11 @@ import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Desktop layout constants
 private val DesktopHorizontalPadding = 32.dp
@@ -193,6 +198,39 @@ fun MobileInvoiceEditLayout(
                 isEnabled = isNextEnabled
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun DesktopInvoiceLayoutPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DesktopInvoiceLayout(
+            contentPadding = PaddingValues(0.dp),
+            invoiceNumberPreview = "INV-001",
+            onBackPress = {},
+            invoiceContent = { Text("Invoice content") },
+            sendOptionsContent = { Text("Send options") }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MobileInvoiceEditLayoutPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MobileInvoiceEditLayout(
+            contentPadding = PaddingValues(0.dp),
+            invoiceNumberPreview = "INV-001",
+            onBackPress = {},
+            invoiceContent = { Text("Invoice content") },
+            onNextClick = {},
+            isNextEnabled = true
+        )
     }
 }
 

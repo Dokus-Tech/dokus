@@ -14,12 +14,17 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavController
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.back
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.local.LocalNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,4 +90,14 @@ fun PTopAppBar(
         showBackButton = showBackButton,
         modifier = modifier
     )
+}
+
+@Preview
+@Composable
+private fun PTopAppBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTopAppBar(title = "Settings")
+    }
 }

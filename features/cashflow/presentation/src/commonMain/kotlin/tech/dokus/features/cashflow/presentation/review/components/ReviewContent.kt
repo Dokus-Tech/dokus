@@ -67,6 +67,11 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.withContentPadding
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ReviewContent(
@@ -553,5 +558,23 @@ private fun MobileReviewContent(
                     .navigationBarsPadding()
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ReviewContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ReviewContent(
+            state = DocumentReviewState.Loading(),
+            isLargeScreen = false,
+            contentPadding = PaddingValues(),
+            onIntent = {},
+            onCorrectContact = {},
+            onCreateContact = {},
+            onBackClick = {},
+        )
     }
 }

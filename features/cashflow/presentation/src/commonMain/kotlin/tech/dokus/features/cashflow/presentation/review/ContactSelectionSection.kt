@@ -35,6 +35,11 @@ import tech.dokus.features.cashflow.presentation.review.components.details.Conta
 import tech.dokus.features.cashflow.presentation.review.components.details.MicroLabel
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // UI dimension constants
 private val ErrorSurfaceCornerRadius = 8.dp
@@ -114,6 +119,28 @@ fun ContactSelectionSection(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ContactSelectionSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactSelectionSection(
+            documentType = DocumentType.Invoice,
+            selectionState = ContactSelectionState.NoContact,
+            selectedContactSnapshot = null,
+            isBindingContact = false,
+            isReadOnly = false,
+            validationError = null,
+            onAcceptSuggestion = {},
+            onChooseDifferent = {},
+            onSelectContact = {},
+            onClearContact = {},
+            onCreateNewContact = {},
+        )
     }
 }
 

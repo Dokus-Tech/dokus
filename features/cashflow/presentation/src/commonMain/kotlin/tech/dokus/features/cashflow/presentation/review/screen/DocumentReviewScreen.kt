@@ -5,14 +5,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.ReviewContent
 import tech.dokus.features.cashflow.presentation.review.components.ReviewTopBar
 import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun DocumentReviewScreen(
@@ -55,6 +61,25 @@ internal fun DocumentReviewScreen(
             onCorrectContact = onCorrectContact,
             onCreateContact = onCreateContact,
             onBackClick = onBackClick,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DocumentReviewScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentReviewScreen(
+            state = DocumentReviewState.Loading(),
+            isLargeScreen = false,
+            onIntent = {},
+            onBackClick = {},
+            onOpenChat = {},
+            onCorrectContact = {},
+            onCreateContact = {},
+            snackbarHostState = remember { SnackbarHostState() },
         )
     }
 }

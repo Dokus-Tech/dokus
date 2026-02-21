@@ -38,6 +38,11 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val QueuePaneWidth = 248.dp
 
@@ -182,5 +187,34 @@ private fun DocumentReviewQueuePane(
                 HorizontalDivider()
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun DocumentReviewDesktopSplitPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val mockId = DocumentId.generate()
+    val mockDocuments = listOf(
+        DocQueueItem(
+            id = mockId,
+            vendorName = "Acme Corp",
+            date = "2026-01-15",
+            amount = "1,234.56",
+            isConfirmed = false,
+        ),
+    )
+    TestWrapper(parameters) {
+        DocumentReviewDesktopSplit(
+            documents = mockDocuments,
+            selectedDocumentId = mockId,
+            hasMore = false,
+            isLoadingMore = false,
+            onSelectDocument = {},
+            onLoadMore = {},
+            onExit = {},
+            content = {},
+        )
     }
 }

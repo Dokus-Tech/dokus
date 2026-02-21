@@ -58,8 +58,14 @@ import tech.dokus.aura.resources.invoice_search_clients
 import tech.dokus.aura.resources.invoice_select_client
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.DokusStateSimple
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val AnimationDurationMs = 200
 private const val SlideAnimationDurationMs = 300
@@ -381,5 +387,23 @@ private fun ClientListItem(
                 modifier = Modifier.size(SelectedIndicatorSize)
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun InvoiceClientSidePanelPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceClientSidePanel(
+            isVisible = true,
+            onDismiss = {},
+            clientsState = DokusStateSimple.Loading(),
+            selectedClient = null,
+            searchQuery = "",
+            onSearchQueryChange = {},
+            onSelectClient = {}
+        )
     }
 }

@@ -10,13 +10,13 @@ import androidx.navigation.compose.composable
 import org.koin.compose.koinInject
 import tech.dokus.app.navigation.local.LocalRootNavController
 import tech.dokus.app.navigation.local.LocalHomeNavController
-import tech.dokus.app.screens.MoreScreen
+import tech.dokus.app.screens.MoreRoute
 import tech.dokus.app.screens.AccountantScreen
 import tech.dokus.app.screens.AiChatPlaceholder
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
-import tech.dokus.app.screens.today.TodayScreen
+import tech.dokus.app.screens.today.TodayRoute
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.navigation.NavigationProvider
@@ -26,7 +26,7 @@ import tech.dokus.navigation.navigateTo
 internal object HomeNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {
         composable<HomeDestination.Today> {
-            TodayScreen()
+            TodayRoute()
         }
         composable<HomeDestination.Team> {
             TeamSettingsRoute()
@@ -39,7 +39,7 @@ internal object HomeNavigationProvider : NavigationProvider {
         }
         composable<HomeDestination.More> {
             val rootNavController = LocalRootNavController.current
-            MoreScreen(
+            MoreRoute(
                 onNavigateRoot = { destination ->
                     rootNavController.navigateTo(destination)
                 }

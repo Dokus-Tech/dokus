@@ -29,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -70,6 +72,9 @@ import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.HomeDestination
@@ -79,7 +84,7 @@ import tech.dokus.navigation.navigateToTopLevelTab
 import tech.dokus.foundation.aura.components.badges.DocumentSource as UiDocumentSource
 
 @Composable
-internal fun TodayScreen(
+internal fun TodayRoute(
     container: TodayContainer = container()
 ) {
     val navController = LocalNavController.current
@@ -87,7 +92,6 @@ internal fun TodayScreen(
     val rootNavController = LocalRootNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
-    val isLargeScreen = LocalScreenSize.current.isLarge
 
     val errorMessage = pendingError?.localized
 
@@ -124,6 +128,35 @@ internal fun TodayScreen(
 
     val contentState = state as? TodayState.Content
     val documents = contentState?.allPendingDocuments ?: emptyList()
+
+    TodayScreen(
+        documents = documents,
+        snackbarHostState = snackbarHostState,
+        onReviewClick = { doc ->
+            navController.navigateTo(
+                CashFlowDestination.DocumentReview(doc.document.id.toString())
+            )
+        },
+        onDocumentClick = { doc ->
+            navController.navigateTo(
+                CashFlowDestination.DocumentReview(doc.document.id.toString())
+            )
+        },
+        onViewAllClick = {
+            homeNavController.navigateToTopLevelTab(HomeDestination.Documents)
+        }
+    )
+}
+
+@Composable
+internal fun TodayScreen(
+    documents: List<DocumentRecordDto>,
+    snackbarHostState: SnackbarHostState,
+    onReviewClick: (DocumentRecordDto) -> Unit,
+    onDocumentClick: (DocumentRecordDto) -> Unit,
+    onViewAllClick: () -> Unit,
+) {
+    val isLargeScreen = LocalScreenSize.current.isLarge
     val spacing = if (isLargeScreen) Constraints.Spacing.xLarge else Constraints.Spacing.large
 
     Scaffold(
@@ -138,34 +171,21 @@ internal fun TodayScreen(
         ) {
             MobilePageTitle(title = stringResource(Res.string.home_today))
 
-            // Stat cards (2-column grid)
             TodayStatCards(documents = documents)
 
-            // Attention card (first pending document)
             val attentionDoc = documents.firstOrNull()
             if (attentionDoc != null) {
                 TodayAttentionCard(
                     document = attentionDoc,
-                    onReviewClick = {
-                        navController.navigateTo(
-                            CashFlowDestination.DocumentReview(attentionDoc.document.id.toString())
-                        )
-                    }
+                    onReviewClick = { onReviewClick(attentionDoc) }
                 )
             }
 
-            // Recent documents section
             if (documents.isNotEmpty()) {
                 TodayRecentSection(
                     documents = documents.take(5),
-                    onDocumentClick = { doc ->
-                        navController.navigateTo(
-                            CashFlowDestination.DocumentReview(doc.document.id.toString())
-                        )
-                    },
-                    onViewAllClick = {
-                        homeNavController.navigateToTopLevelTab(HomeDestination.Documents)
-                    }
+                    onDocumentClick = onDocumentClick,
+                    onViewAllClick = onViewAllClick,
                 )
             }
         }
@@ -185,7 +205,6 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Overdue card (accent)
         DokusCardSurface(
             modifier = Modifier.weight(1f),
             accent = true,
@@ -220,7 +239,6 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
             }
         }
 
-        // Due this week card
         DokusCardSurface(modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.padding(20.dp)) {
                 DokusLabel(
@@ -475,5 +493,21 @@ private fun formatStatAmount(totalMinor: Long): String {
         append(withDots)
         append(',')
         append(decStr)
+    }
+}
+
+@Preview
+@Composable
+private fun TodayScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        TodayScreen(
+            documents = emptyList(),
+            snackbarHostState = remember { SnackbarHostState() },
+            onReviewClick = {},
+            onDocumentClick = {},
+            onViewAllClick = {},
+        )
     }
 }

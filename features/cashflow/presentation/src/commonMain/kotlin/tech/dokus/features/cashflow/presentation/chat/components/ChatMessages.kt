@@ -20,7 +20,13 @@ import tech.dokus.foundation.aura.components.chat.ChatMessageBubble
 import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.ChatSourceCitationList
 import tech.dokus.foundation.aura.components.chat.CitationDisplayData
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun MessagesList(
@@ -101,4 +107,21 @@ private fun formatTimestamp(dateTime: LocalDateTime): String {
     val hour = dateTime.hour.toString().padStart(2, '0')
     val minute = dateTime.minute.toString().padStart(2, '0')
     return "$hour:$minute"
+}
+
+@Preview
+@Composable
+private fun MessagesListPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MessagesList(
+            messages = emptyList(),
+            expandedCitationIds = emptySet(),
+            listState = rememberLazyListState(),
+            isLargeScreen = false,
+            onToggleCitation = {},
+            onDocumentClick = {},
+        )
+    }
 }

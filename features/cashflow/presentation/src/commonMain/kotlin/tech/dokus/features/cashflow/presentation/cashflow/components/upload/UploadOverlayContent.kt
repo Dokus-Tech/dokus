@@ -30,6 +30,11 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import tech.dokus.features.cashflow.presentation.cashflow.components.FlyingDocument
 import tech.dokus.foundation.aura.style.dokusEffects
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.pow
@@ -500,5 +505,19 @@ fun GravitationalDocumentsLayer(
                 )
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun BlackHoleVortexPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        BlackHoleVortex(isActive = true)
     }
 }

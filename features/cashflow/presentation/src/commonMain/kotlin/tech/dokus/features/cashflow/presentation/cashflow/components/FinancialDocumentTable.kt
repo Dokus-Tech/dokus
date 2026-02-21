@@ -62,6 +62,11 @@ import tech.dokus.foundation.aura.components.CashflowTypeBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Data class representing a financial document table row.
@@ -546,3 +551,6 @@ private fun FinancialDocumentListItem(
         )
     }
 }
+
+// Preview skipped: Flaky IllegalStateException in parallel Roborazzi runs
+// FinancialDocumentTable already has a preview in FinancialDocumentTablePreview.kt

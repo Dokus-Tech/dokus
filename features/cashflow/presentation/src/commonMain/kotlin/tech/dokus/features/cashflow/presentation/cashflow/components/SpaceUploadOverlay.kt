@@ -21,6 +21,11 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.upload.Blac
 import tech.dokus.features.cashflow.presentation.cashflow.components.upload.GravitationalDocumentsLayer
 import tech.dokus.features.cashflow.presentation.cashflow.components.upload.UploadOverlayHeader
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Animation constants
 private const val GravitationalFallDurationMs = 1400
@@ -108,5 +113,24 @@ fun SpaceUploadOverlay(
                 documents = flyingDocuments
             )
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun SpaceUploadOverlayPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SpaceUploadOverlay(
+            isVisible = true,
+            isDragging = false,
+            flyingDocuments = emptyList(),
+            onAnimationComplete = {},
+        )
     }
 }

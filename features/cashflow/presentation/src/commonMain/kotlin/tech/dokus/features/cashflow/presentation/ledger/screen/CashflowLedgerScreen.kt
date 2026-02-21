@@ -49,6 +49,8 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
 import tech.dokus.aura.resources.cashflow_title
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
@@ -69,6 +71,9 @@ import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.text.MobilePageTitle
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -371,5 +376,18 @@ private fun getEmptyStateTitle(
         DirectionFilter.All -> stringResource(Res.string.cashflow_empty_history)
         DirectionFilter.In -> stringResource(Res.string.cashflow_empty_history_in)
         DirectionFilter.Out -> stringResource(Res.string.cashflow_empty_history_out)
+    }
+}
+
+@Preview
+@Composable
+private fun CashflowLedgerScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowLedgerScreen(
+            state = CashflowLedgerState.Loading,
+            onIntent = {},
+        )
     }
 }

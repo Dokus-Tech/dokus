@@ -10,7 +10,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -22,6 +25,9 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
 import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun RegisterCredentialsFields(
@@ -58,5 +64,22 @@ internal fun RegisterCredentialsFields(
                 onRegisterClick()
             },
         ) { onFieldsUpdate(fields.copy(password = it)) }
+    }
+}
+
+@Preview
+@Composable
+private fun RegisterCredentialsFieldsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        val focusManager = LocalFocusManager.current
+        RegisterCredentialsFields(
+            focusManager = focusManager,
+            fields = RegisterFormFields(),
+            onFieldsUpdate = {},
+            onRegisterClick = {},
+            error = null,
+        )
     }
 }

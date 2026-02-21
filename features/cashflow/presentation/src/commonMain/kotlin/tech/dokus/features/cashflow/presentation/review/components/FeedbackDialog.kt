@@ -19,6 +19,11 @@ import tech.dokus.features.cashflow.presentation.review.FeedbackDialogState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Dialog for providing correction feedback before re-analysis.
@@ -73,4 +78,20 @@ internal fun FeedbackDialog(
         dismissOnBackPress = !state.isSubmitting,
         dismissOnClickOutside = !state.isSubmitting,
     )
+}
+
+@Preview
+@Composable
+private fun FeedbackDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        FeedbackDialog(
+            state = FeedbackDialogState(),
+            onFeedbackChanged = {},
+            onSubmit = {},
+            onRejectInstead = {},
+            onDismiss = {},
+        )
+    }
 }

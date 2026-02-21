@@ -28,6 +28,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -89,14 +91,13 @@ import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.navigateToTopLevelTab
 
-/**
- * Home screen using FlowMVI Container pattern.
- * Main navigation shell containing bottom navigation (mobile) or navigation rail (desktop).
- */
 @Composable
-internal fun HomeScreen(
+internal fun HomeRoute(
     appModules: List<AppModule> = LocalAppModules.current,
     container: HomeContainer = container(),
 ) {
@@ -154,12 +155,10 @@ internal fun HomeScreen(
         }
     }
 
-    // Notify container when screen appears
     LaunchedEffect(Unit) {
         container.store.intent(HomeIntent.ScreenAppeared)
     }
 
-    // Get current route directly from backstack
     val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val normalizedRoute = normalizeRoute(currentRoute, sortedRoutes)
@@ -201,37 +200,76 @@ internal fun HomeScreen(
         }
     }
 
+    HomeScreen(
+        navSections = navSections,
+        mobileTabs = mobileTabs,
+        selectedRoute = currentRoute,
+        topBarConfig = topBarConfig,
+        tenantState = shellState.tenantState,
+        profileData = profileData,
+        isLoggingOut = shellState.isLoggingOut,
+        snackbarHostState = snackbarHostState,
+        onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
+        onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
+        onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
+        onLogoutClick = { container.store.intent(HomeIntent.Logout) },
+        onNavItemClick = { navItem ->
+            homeNavController.navigateToTopLevelTab(navItem.destination)
+        },
+        onTabClick = { tab ->
+            tab.destination?.let { destination ->
+                homeNavController.navigateToTopLevelTab(destination)
+            }
+        },
+        content = navHostContent,
+    )
+}
+
+@Composable
+internal fun HomeScreen(
+    navSections: List<NavSection>,
+    mobileTabs: List<MobileTabConfig>,
+    selectedRoute: String?,
+    topBarConfig: HomeShellTopBarConfig?,
+    tenantState: DokusState<Tenant>,
+    profileData: HomeShellProfileData?,
+    isLoggingOut: Boolean,
+    snackbarHostState: SnackbarHostState,
+    onWorkspaceClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    onAppearanceClick: () -> Unit,
+    onLogoutClick: () -> Unit,
+    onNavItemClick: (NavItem) -> Unit,
+    onTabClick: (MobileTabConfig) -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val isLargeScreen = LocalScreenSize.current.isLarge
+
     Surface {
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLargeScreen) {
                 RailNavigationLayout(
                     navSections = navSections,
-                    selectedRoute = currentRoute,
+                    selectedRoute = selectedRoute,
                     topBarConfig = topBarConfig,
-                    tenantState = shellState.tenantState,
+                    tenantState = tenantState,
                     profileData = profileData,
-                    isLoggingOut = shellState.isLoggingOut,
-                    onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
-                    onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
-                    onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
-                    onLogoutClick = { container.store.intent(HomeIntent.Logout) },
-                    onNavItemClick = { navItem ->
-                        homeNavController.navigateToTopLevelTab(navItem.destination)
-                    },
-                    content = navHostContent,
+                    isLoggingOut = isLoggingOut,
+                    onWorkspaceClick = onWorkspaceClick,
+                    onProfileClick = onProfileClick,
+                    onAppearanceClick = onAppearanceClick,
+                    onLogoutClick = onLogoutClick,
+                    onNavItemClick = onNavItemClick,
+                    content = content,
                 )
             } else {
                 BottomNavigationLayout(
                     mobileTabs = mobileTabs,
-                    selectedRoute = currentRoute,
+                    selectedRoute = selectedRoute,
                     profileData = profileData,
-                    onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
-                    onTabClick = { tab ->
-                        tab.destination?.let { destination ->
-                            homeNavController.navigateToTopLevelTab(destination)
-                        }
-                    },
-                    content = navHostContent,
+                    onProfileClick = onProfileClick,
+                    onTabClick = onTabClick,
+                    content = content,
                 )
             }
 
@@ -285,7 +323,6 @@ private fun RailNavigationLayout(
     onNavItemClick: (NavItem) -> Unit,
     content: @Composable () -> Unit
 ) {
-    // Track expanded sections (accordion behavior: only one expanded at a time)
     val expandedSections = remember(navSections) {
         mutableStateMapOf<String, Boolean>().apply {
             navSections.forEach { section ->
@@ -296,7 +333,6 @@ private fun RailNavigationLayout(
 
     val colorScheme = MaterialTheme.colorScheme
 
-    // Floating glass windows desktop shell (v2)
     Box(
         Modifier
             .fillMaxSize()
@@ -304,7 +340,6 @@ private fun RailNavigationLayout(
     ) {
         AmbientBackground()
         Row(Modifier.fillMaxSize().padding(Constraints.Shell.padding)) {
-        // Sidebar glass panel
         Surface(
             modifier = Modifier
                 .fillMaxHeight()
@@ -328,7 +363,6 @@ private fun RailNavigationLayout(
                     selectedRoute = selectedRoute,
                     settingsItem = null,
                     onSectionToggle = { sectionId ->
-                        // Accordion behavior: collapse all, expand clicked
                         val currentlyExpanded = expandedSections[sectionId] ?: false
                         if (!currentlyExpanded) {
                             expandedSections.keys.forEach { id ->
@@ -356,7 +390,6 @@ private fun RailNavigationLayout(
             }
         }
 
-        // Content glass panel
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -488,5 +521,31 @@ private fun rememberFallbackShellTopBarConfig(
                 )
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun HomeScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        HomeScreen(
+            navSections = emptyList(),
+            mobileTabs = emptyList(),
+            selectedRoute = null,
+            topBarConfig = null,
+            tenantState = DokusState.loading(),
+            profileData = null,
+            isLoggingOut = false,
+            snackbarHostState = remember { SnackbarHostState() },
+            onWorkspaceClick = {},
+            onProfileClick = {},
+            onAppearanceClick = {},
+            onLogoutClick = {},
+            onNavItemClick = {},
+            onTabClick = {},
+            content = {},
+        )
     }
 }

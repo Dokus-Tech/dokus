@@ -12,7 +12,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
 import tech.dokus.features.cashflow.presentation.chat.ChatState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ChatContent(
@@ -102,6 +110,25 @@ internal fun ChatContent(
             },
             onNewSession = { onIntent(ChatIntent.StartNewConversation) },
             onDismiss = { onIntent(ChatIntent.HideSessionPicker) }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ChatContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ChatContent(
+            state = ChatState.Content(
+                scope = ChatScope.AllDocs,
+                messages = emptyList(),
+            ),
+            contentPadding = PaddingValues(0.dp),
+            listState = rememberLazyListState(),
+            isLargeScreen = false,
+            onIntent = {},
         )
     }
 }
