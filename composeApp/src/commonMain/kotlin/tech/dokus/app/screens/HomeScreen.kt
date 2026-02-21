@@ -21,8 +21,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -38,8 +38,6 @@ import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.app.allNavItems
 import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.mobileTabConfigs
@@ -47,8 +45,8 @@ import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.navigation.executeHomeNavigationCommand
 import tech.dokus.app.navigation.local.HomeNavControllerProvided
-import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.DesktopShellTopBar
+import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.HomeShellProfileData
 import tech.dokus.app.screens.home.MobileShellTopBar
 import tech.dokus.app.screens.home.buildSortedRoutes
@@ -58,6 +56,8 @@ import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
 import tech.dokus.app.viewmodel.HomeState
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
@@ -68,21 +68,24 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.background.AmbientBackground
-import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
 import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.style.glass
-import tech.dokus.foundation.aura.style.glassBorder
-import tech.dokus.foundation.aura.style.glassContent
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.foundation.aura.model.ShellTopBarDefault
+import tech.dokus.foundation.aura.style.glass
+import tech.dokus.foundation.aura.style.glassBorder
+import tech.dokus.foundation.aura.style.glassContent
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
 import tech.dokus.navigation.destinations.AuthDestination
@@ -91,9 +94,6 @@ import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.navigateToTopLevelTab
 
 @Composable
@@ -340,79 +340,79 @@ private fun RailNavigationLayout(
     ) {
         AmbientBackground()
         Row(Modifier.fillMaxSize().padding(Constraints.Shell.padding)) {
-        Surface(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(Constraints.Shell.sidebarWidth),
-            shape = MaterialTheme.shapes.large,
-            color = colorScheme.glass,
-            border = BorderStroke(1.dp, colorScheme.glassBorder),
-            tonalElevation = 0.dp,
-            shadowElevation = 8.dp,
-        ) {
-            Column(
+            Surface(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(16.dp)
+                    .width(Constraints.Shell.sidebarWidth),
+                shape = MaterialTheme.shapes.large,
+                color = colorScheme.glass,
+                border = BorderStroke(1.dp, colorScheme.glassBorder),
+                tonalElevation = 0.dp,
+                shadowElevation = 8.dp,
             ) {
-                AppNameText(modifier = Modifier.padding(bottom = 24.dp))
-
-                DokusNavigationRailSectioned(
-                    sections = navSections,
-                    expandedSections = expandedSections,
-                    selectedRoute = selectedRoute,
-                    settingsItem = null,
-                    onSectionToggle = { sectionId ->
-                        val currentlyExpanded = expandedSections[sectionId] ?: false
-                        if (!currentlyExpanded) {
-                            expandedSections.keys.forEach { id ->
-                                expandedSections[id] = (id == sectionId)
-                            }
-                        } else {
-                            expandedSections[sectionId] = false
-                        }
-                    },
-                    onItemClick = onNavItemClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                DesktopSidebarBottomControls(
-                    tenantState = tenantState,
-                    profileData = profileData,
-                    isLoggingOut = isLoggingOut,
-                    onWorkspaceClick = onWorkspaceClick,
-                    onProfileClick = onProfileClick,
-                    onAppearanceClick = onAppearanceClick,
-                    onLogoutClick = onLogoutClick
-                )
-            }
-        }
-
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = Constraints.Shell.gap),
-            color = colorScheme.glassContent,
-            shape = MaterialTheme.shapes.large,
-            border = BorderStroke(1.dp, colorScheme.glassBorder),
-            tonalElevation = 0.dp,
-            shadowElevation = 8.dp,
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                if (topBarConfig != null) {
-                    DesktopShellTopBar(topBarConfig = topBarConfig)
-                }
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopStart
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(16.dp)
                 ) {
-                    content()
+                    AppNameText(modifier = Modifier.padding(bottom = 24.dp))
+
+                    DokusNavigationRailSectioned(
+                        sections = navSections,
+                        expandedSections = expandedSections,
+                        selectedRoute = selectedRoute,
+                        settingsItem = null,
+                        onSectionToggle = { sectionId ->
+                            val currentlyExpanded = expandedSections[sectionId] ?: false
+                            if (!currentlyExpanded) {
+                                expandedSections.keys.forEach { id ->
+                                    expandedSections[id] = (id == sectionId)
+                                }
+                            } else {
+                                expandedSections[sectionId] = false
+                            }
+                        },
+                        onItemClick = onNavItemClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    DesktopSidebarBottomControls(
+                        tenantState = tenantState,
+                        profileData = profileData,
+                        isLoggingOut = isLoggingOut,
+                        onWorkspaceClick = onWorkspaceClick,
+                        onProfileClick = onProfileClick,
+                        onAppearanceClick = onAppearanceClick,
+                        onLogoutClick = onLogoutClick
+                    )
                 }
             }
-        }
-    } // Row
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = Constraints.Shell.gap),
+                color = colorScheme.glassContent,
+                shape = MaterialTheme.shapes.large,
+                border = BorderStroke(1.dp, colorScheme.glassBorder),
+                tonalElevation = 0.dp,
+                shadowElevation = 8.dp,
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    if (topBarConfig != null) {
+                        DesktopShellTopBar(topBarConfig = topBarConfig)
+                    }
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopStart
+                    ) {
+                        content()
+                    }
+                }
+            }
+        } // Row
     } // Box
 }
 
