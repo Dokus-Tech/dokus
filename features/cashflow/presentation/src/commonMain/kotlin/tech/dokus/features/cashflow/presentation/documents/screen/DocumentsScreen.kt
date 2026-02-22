@@ -129,11 +129,6 @@ private fun DocumentsContent(
         modifier = modifier.fillMaxSize().padding(top = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        MobilePageTitle(
-            title = stringResource(Res.string.nav_documents),
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
-
         // Filter tabs
         DocumentFilterButtons(
             currentFilter = state.filter,

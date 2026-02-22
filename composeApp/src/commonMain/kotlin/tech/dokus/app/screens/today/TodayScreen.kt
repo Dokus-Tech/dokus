@@ -171,8 +171,6 @@ internal fun TodayScreen(
                 .padding(spacing),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            MobilePageTitle(title = stringResource(Res.string.home_today))
-
             TodayStatCards(documents = documents)
 
             val attentionDoc = documents.firstOrNull()
