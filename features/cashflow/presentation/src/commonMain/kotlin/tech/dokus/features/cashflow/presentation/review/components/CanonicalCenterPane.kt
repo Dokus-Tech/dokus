@@ -97,7 +97,7 @@ internal fun CanonicalCenterPane(
                         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                     ) {
                         Text(
-                            text = counterparty.name ?: state.document.document.filename ?: "Unknown vendor",
+                            text = counterparty.name ?: state.document.document.filename,
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -398,8 +398,7 @@ private sealed interface CanonicalDraft {
 }
 
 private fun itemLineAmount(item: FinancialLineItem, currencySign: String): String {
-    val amountMinor = item.netAmount
-        ?: item.unitPrice?.let { unit -> (item.quantity ?: 1L) * unit }
+    val amountMinor = item.netAmount ?: item.unitPrice?.let { unit -> (item.quantity ?: 1L) * unit }
     return amountMinor?.let { "$currencySign${Money(it).toDisplayString()}" } ?: "\u2014"
 }
 
@@ -411,23 +410,6 @@ private fun CanonicalCenterPanePreview(
     TestWrapper(parameters) {
         CanonicalCenterPane(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Open),
-            onIntent = {},
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun CanonicalCenterPanePdfFallbackPreview(
-    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
-) {
-    TestWrapper(parameters) {
-        CanonicalCenterPane(
-            state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false).copy(
-                draftData = null,
-                originalData = null,
-            ),
             onIntent = {},
             modifier = Modifier.fillMaxSize(),
         )
