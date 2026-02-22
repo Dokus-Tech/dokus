@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,6 +69,7 @@ import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.components.navigation.ProfilePopover
 import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.dokusEffects
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
@@ -89,6 +93,9 @@ internal data class HomeShellProfileData(
             .mapNotNull { it.firstOrNull()?.uppercaseChar() }
             .joinToString("")
 }
+
+// Cashflow desktop baseline: 42dp control height + 12dp breathing room.
+private val DesktopShellTopBarHeight = Constraints.Height.button + Constraints.Spacing.medium
 
 @Composable
 internal fun DesktopSidebarBottomControls(
@@ -252,61 +259,28 @@ private fun DesktopProfileMenuButton(
 }
 
 @Composable
-internal fun DesktopShellTopBar(
-    topBarConfig: HomeShellTopBarConfig,
+private fun DesktopShellTopBarFrame(
+    actions: List<HomeShellTopBarAction>,
     modifier: Modifier = Modifier,
+    leadingContent: @Composable RowScope.() -> Unit,
 ) {
     val spacing = MaterialTheme.dokusSpacing
-    val sizing = MaterialTheme.dokusSizing
     val effects = MaterialTheme.dokusEffects
     Column(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(DesktopShellTopBarHeight)
                 .background(MaterialTheme.colorScheme.glassHeader)
-                .padding(horizontal = spacing.xLarge, vertical = spacing.medium),
+                .padding(horizontal = spacing.xLarge),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Search or title slot
-            when (val mode = topBarConfig.mode) {
-                is HomeShellTopBarMode.Search -> {
-                    PSearchFieldCompact(
-                        value = mode.query,
-                        onValueChange = mode.onQueryChange,
-                        placeholder = mode.placeholder,
-                        onClear = mode.onClear,
-                        modifier = Modifier.widthIn(
-                            min = sizing.searchFieldMinWidth,
-                            max = sizing.searchFieldMaxWidth
-                        )
-                    )
-                }
-
-                is HomeShellTopBarMode.Title -> {
-                    Column {
-                        Text(
-                            text = mode.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (mode.subtitle != null) {
-                            Text(
-                                text = mode.subtitle!!,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.textMuted,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
-            }
+            leadingContent()
 
             Spacer(modifier = Modifier.weight(1f))
 
             // Actions slot
-            RouteTopBarActions(actions = topBarConfig.actions)
+            RouteTopBarActions(actions = actions)
 
             // Date display
             val dateText = formattedCurrentDate()
@@ -318,6 +292,54 @@ internal fun DesktopShellTopBar(
             )
         }
         HorizontalDivider(color = effects.railTrackLine)
+    }
+}
+
+@Composable
+internal fun DesktopShellTopBar(
+    topBarConfig: HomeShellTopBarConfig,
+    modifier: Modifier = Modifier,
+) {
+    val sizing = MaterialTheme.dokusSizing
+    DesktopShellTopBarFrame(
+        actions = topBarConfig.actions,
+        modifier = modifier
+    ) {
+        // Search or title slot
+        when (val mode = topBarConfig.mode) {
+            is HomeShellTopBarMode.Search -> {
+                PSearchFieldCompact(
+                    value = mode.query,
+                    onValueChange = mode.onQueryChange,
+                    placeholder = mode.placeholder,
+                    onClear = mode.onClear,
+                    modifier = Modifier.widthIn(
+                        min = sizing.searchFieldMinWidth,
+                        max = sizing.searchFieldMaxWidth
+                    )
+                )
+            }
+
+            is HomeShellTopBarMode.Title -> {
+                Column {
+                    Text(
+                        text = mode.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    mode.subtitle?.let { subtitle ->
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -425,13 +447,55 @@ private fun shortMonthName(month: kotlinx.datetime.Month): String = when (month)
 
 @Preview
 @Composable
-private fun DesktopShellTopBarPreview(
+private fun DesktopShellTopBarSearchPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         DesktopShellTopBar(
             topBarConfig = HomeShellTopBarConfig(
-                mode = HomeShellTopBarMode.Title(title = "Documents")
+                mode = HomeShellTopBarMode.Search(
+                    query = "",
+                    placeholder = "Search documents",
+                    onQueryChange = {}
+                ),
+                actions = listOf(
+                    HomeShellTopBarAction.Icon(
+                        icon = Icons.Default.Upload,
+                        contentDescription = "Upload",
+                        onClick = {}
+                    )
+                )
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DesktopShellTopBarTitleOnlyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DesktopShellTopBar(
+            topBarConfig = HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title(title = "Accountant")
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DesktopShellTopBarTitleSubtitlePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DesktopShellTopBar(
+            topBarConfig = HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title(
+                    title = "Cashflow",
+                    subtitle = "Track incoming and outgoing payments"
+                )
             )
         )
     }
