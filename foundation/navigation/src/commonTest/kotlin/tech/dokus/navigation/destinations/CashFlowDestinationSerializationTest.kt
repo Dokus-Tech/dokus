@@ -41,4 +41,23 @@ class CashFlowDestinationSerializationTest {
             destination.sourceSort,
         )
     }
+
+    @Test
+    fun `document source viewer destination serializes parameters`() {
+        val destination = CashFlowDestination.DocumentSourceViewer(
+            documentId = "doc-201",
+            sourceId = "src-301",
+        )
+
+        val encoded = json.encodeToString(
+            CashFlowDestination.DocumentSourceViewer.serializer(),
+            destination,
+        )
+        val decoded = json.decodeFromString(
+            CashFlowDestination.DocumentSourceViewer.serializer(),
+            encoded,
+        )
+
+        assertEquals(destination, decoded)
+    }
 }

@@ -1,10 +1,5 @@
 package tech.dokus.features.cashflow.presentation.review.route
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
@@ -47,7 +42,6 @@ import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialo
 import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
 import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceDialog
-import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileSourceViewerScreen
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.app.mvi.container
@@ -202,6 +196,18 @@ internal fun DocumentReviewRoute(
                 navController.popBackStack()
             },
             onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
+            onOpenSource = { sourceId ->
+                val activeDocumentId = (state as? DocumentReviewState.Content)
+                    ?.documentId
+                    ?.toString()
+                    ?: route.documentId
+                navController.navigateTo(
+                    CashFlowDestination.DocumentSourceViewer(
+                        documentId = activeDocumentId,
+                        sourceId = sourceId.toString(),
+                    )
+                )
+            },
             onCorrectContact = { _ ->
                 // Open the contact sheet instead of navigating away
                 container.store.intent(DocumentReviewIntent.OpenContactSheet)
@@ -252,32 +258,6 @@ internal fun DocumentReviewRoute(
             )
         } else {
             reviewContent()
-        }
-
-        if (!isLargeScreen) {
-            AnimatedVisibility(
-                visible = contentState?.sourceViewerState != null,
-                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                val activeContentState = contentState
-                val viewerState = activeContentState?.sourceViewerState
-                if (activeContentState != null && viewerState != null) {
-                    MobileSourceViewerScreen(
-                        contentState = activeContentState,
-                        viewerState = viewerState,
-                        onBack = { container.store.intent(DocumentReviewIntent.CloseSourceModal) },
-                        onToggleTechnicalDetails = {
-                            container.store.intent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
-                        },
-                        onRetry = {
-                            container.store.intent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId))
-                        },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            }
         }
     }
 

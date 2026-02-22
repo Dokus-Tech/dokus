@@ -16,17 +16,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -346,36 +348,36 @@ internal fun DesktopShellTopBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MobileShellTopBar(
     profileData: HomeShellProfileData?,
     onProfileClick: () -> Unit,
 ) {
     val effects = MaterialTheme.dokusEffects
-    val spacing = MaterialTheme.dokusSpacing
     val sizing = MaterialTheme.dokusSizing
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.glassHeader)
-            .statusBarsPadding()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = spacing.large, vertical = spacing.medium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AppNameText(modifier = Modifier.weight(1f))
-
-            MonogramAvatar(
-                initials = profileData?.initials ?: "",
-                size = sizing.avatarExtraSmall,
-                radius = sizing.avatarExtraSmall / 4,
-                modifier = Modifier.clickable(onClick = onProfileClick),
-                contentDescription = stringResource(Res.string.a11y_profile_menu),
-            )
-        }
+        TopAppBar(
+            title = { AppNameText() },
+            actions = {
+                MonogramAvatar(
+                    initials = profileData?.initials ?: "",
+                    size = sizing.avatarExtraSmall,
+                    radius = sizing.avatarExtraSmall / 4,
+                    modifier = Modifier.clickable(onClick = onProfileClick),
+                    contentDescription = stringResource(Res.string.a11y_profile_menu),
+                )
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.glassHeader,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+        )
 
         HorizontalDivider(color = effects.railTrackLine)
     }

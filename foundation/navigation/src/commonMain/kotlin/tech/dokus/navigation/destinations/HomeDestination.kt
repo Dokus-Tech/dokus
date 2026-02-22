@@ -115,6 +115,7 @@ val NavigationDestination.route: String get() = when (this) {
         CashFlowDestination.AddDocument -> "cashflow/add_document"
         CashFlowDestination.CreateInvoice -> "cashflow/create_invoice"
         is CashFlowDestination.DocumentReview -> "cashflow/document_review"
+        is CashFlowDestination.DocumentSourceViewer -> "cashflow/document_source_viewer"
         is CashFlowDestination.DocumentChat -> "cashflow/document_chat"
         is CashFlowDestination.CashflowLedger -> "cashflow/ledger"
     }

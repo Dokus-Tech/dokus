@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.previewReviewContentState
@@ -29,6 +30,7 @@ internal fun MobileCanonicalContent(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
+    onOpenSource: (DocumentSourceId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val accordionState = remember {
@@ -76,6 +78,7 @@ internal fun MobileCanonicalContent(
                 expanded = accordionState["sources"] == true,
                 onToggle = { accordionState["sources"] = accordionState["sources"] != true },
                 onIntent = onIntent,
+                onOpenSource = onOpenSource,
             )
 
             MobileBankDetailsAccordion(
@@ -90,8 +93,7 @@ internal fun MobileCanonicalContent(
                 onToggle = { accordionState["notes"] = accordionState["notes"] != true },
             )
 
-            MobilePagerDots()
-            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
         }
     }
 }
@@ -106,6 +108,7 @@ private fun MobileCanonicalContentPaidPreview(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Paid),
             onIntent = {},
             onBackClick = {},
+            onOpenSource = {},
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -121,6 +124,7 @@ private fun MobileCanonicalContentUnpaidPreview(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Open),
             onIntent = {},
             onBackClick = {},
+            onOpenSource = {},
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -136,6 +140,7 @@ private fun MobileCanonicalContentOverduePreview(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Overdue),
             onIntent = {},
             onBackClick = {},
+            onOpenSource = {},
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -151,6 +156,7 @@ private fun MobileCanonicalContentReviewPreview(
             state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false),
             onIntent = {},
             onBackClick = {},
+            onOpenSource = {},
             modifier = Modifier.fillMaxSize(),
         )
     }

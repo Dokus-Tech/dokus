@@ -28,6 +28,7 @@ import tech.dokus.aura.resources.cashflow_match_review_different_document
 import tech.dokus.aura.resources.cashflow_match_review_same_document
 import tech.dokus.aura.resources.document_sources_independently_verified
 import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.hasCrossMatchedSources
@@ -96,6 +97,7 @@ internal fun MobileSourcesAccordion(
     expanded: Boolean,
     onToggle: () -> Unit,
     onIntent: (DocumentReviewIntent) -> Unit,
+    onOpenSource: (DocumentSourceId) -> Unit,
 ) {
     MobileAccordionCard(
         title = "Sources",
@@ -107,7 +109,7 @@ internal fun MobileSourcesAccordion(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onIntent(DocumentReviewIntent.OpenSourceModal(source.id)) }
+                    .clickable { onOpenSource(source.id) }
                     .padding(vertical = Constraints.Spacing.xSmall),
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
@@ -232,33 +234,6 @@ internal fun MobileNotesAccordion(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
-    }
-}
-
-@Composable
-internal fun MobilePagerDots(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = Constraints.Spacing.xSmall),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        repeat(5) { index ->
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 3.dp)
-                    .size(width = if (index == 1) 16.dp else 8.dp, height = 8.dp)
-                    .background(
-                        color = if (index == 1) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                        shape = RoundedCornerShape(999.dp),
-                    )
-            )
-        }
     }
 }
 

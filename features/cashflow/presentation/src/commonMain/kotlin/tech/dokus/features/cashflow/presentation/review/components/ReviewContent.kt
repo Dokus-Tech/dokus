@@ -30,6 +30,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_awaiting_extraction
 import tech.dokus.aura.resources.cashflow_loading_document
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileCanonicalContent
@@ -53,6 +54,7 @@ internal fun ReviewContent(
     onCorrectContact: (CounterpartyInfo) -> Unit,
     onCreateContact: (CounterpartyInfo) -> Unit,
     onBackClick: () -> Unit,
+    onOpenSource: (DocumentSourceId) -> Unit,
 ) {
     when (state) {
         is DocumentReviewState.Loading -> LoadingContent(contentPadding)
@@ -74,6 +76,7 @@ internal fun ReviewContent(
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                     onBackClick = onBackClick,
+                    onOpenSource = onOpenSource,
                 )
             }
         }
@@ -209,6 +212,7 @@ private fun MobileReviewContent(
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
+    onOpenSource: (DocumentSourceId) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val adjustedContentPadding = contentPadding.withTopRemoved(layoutDirection)
@@ -226,6 +230,7 @@ private fun MobileReviewContent(
         state = state,
         onIntent = onIntent,
         onBackClick = onBackClick,
+        onOpenSource = onOpenSource,
         modifier = Modifier
             .fillMaxSize()
             .withContentPadding(adjustedContentPadding, layoutDirection)

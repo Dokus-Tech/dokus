@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.ReviewContent
@@ -27,6 +28,7 @@ internal fun DocumentReviewScreen(
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
     onOpenChat: () -> Unit,
+    onOpenSource: (DocumentSourceId) -> Unit,
     onCorrectContact: (CounterpartyInfo) -> Unit,
     onCreateContact: (CounterpartyInfo) -> Unit,
     snackbarHostState: SnackbarHostState,
@@ -64,6 +66,7 @@ internal fun DocumentReviewScreen(
             onCorrectContact = onCorrectContact,
             onCreateContact = onCreateContact,
             onBackClick = onBackClick,
+            onOpenSource = onOpenSource,
         )
     }
 }
@@ -80,6 +83,7 @@ private fun DocumentReviewScreenPreview(
             onIntent = {},
             onBackClick = {},
             onOpenChat = {},
+            onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
             snackbarHostState = remember { SnackbarHostState() },

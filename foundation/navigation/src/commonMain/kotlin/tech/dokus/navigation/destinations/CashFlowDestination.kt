@@ -58,6 +58,18 @@ sealed interface CashFlowDestination : NavigationDestination {
     ) : CashFlowDestination
 
     /**
+     * Source evidence viewer screen for a specific document source.
+     * @param documentId The parent document ID (UUID string)
+     * @param sourceId The source ID (UUID string)
+     */
+    @Serializable
+    @SerialName("cashflow/document_source_viewer")
+    data class DocumentSourceViewer(
+        val documentId: String,
+        val sourceId: String,
+    ) : CashFlowDestination
+
+    /**
      * Single-document chat screen for RAG-powered Q&A about a specific document.
      * @param documentId The document ID (UUID string)
      */

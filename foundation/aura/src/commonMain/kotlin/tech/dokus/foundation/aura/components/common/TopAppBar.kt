@@ -15,9 +15,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavController
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
