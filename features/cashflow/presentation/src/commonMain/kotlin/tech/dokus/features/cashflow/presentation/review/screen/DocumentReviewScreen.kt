@@ -49,8 +49,11 @@ internal fun DocumentReviewScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         // In detail mode, use transparent so the glass content Surface shows through
-        containerColor = if (isInDetailMode) Color.Transparent
-            else MaterialTheme.colorScheme.background,
+        containerColor = if (isInDetailMode) {
+            Color.Transparent
+        } else {
+            MaterialTheme.colorScheme.background
+        },
         modifier = Modifier,
     ) { contentPadding ->
         ReviewContent(

@@ -19,20 +19,20 @@ import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Money
+import tech.dokus.domain.config.BuildKonfig
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.enums.CashflowViewMode as DomainViewMode
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.common.PaginationState
-import tech.dokus.domain.config.BuildKonfig
 import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.foundation.platform.Logger
+import tech.dokus.domain.enums.CashflowViewMode as DomainViewMode
 
 internal typealias CashflowLedgerCtx = PipelineContext<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction>
 
@@ -98,7 +98,9 @@ internal class CashflowLedgerContainer(
 
     private suspend fun CashflowLedgerCtx.handleRefresh() {
         loadJob?.cancel()
-        logger.d { "Refreshing cashflow entries with viewMode=${currentFilters.viewMode}, direction=${currentFilters.direction}" }
+        logger.d {
+            "Refreshing cashflow entries with viewMode=${currentFilters.viewMode}, direction=${currentFilters.direction}"
+        }
 
         loadedEntries = emptyList()
         paginationInfo = LocalPaginationInfo()
@@ -296,11 +298,13 @@ internal class CashflowLedgerContainer(
         withState<CashflowLedgerState.Content, _> {
             val parsed = Money.parse(text)
             updateState {
-                copy(paymentFormState = paymentFormState.copy(
-                    amountText = text,
-                    amount = parsed,
-                    amountError = null
-                ))
+                copy(
+                    paymentFormState = paymentFormState.copy(
+                        amountText = text,
+                        amount = parsed,
+                        amountError = null
+                    )
+                )
             }
         }
     }
@@ -381,10 +385,12 @@ internal class CashflowLedgerContainer(
     private suspend fun CashflowLedgerCtx.handleTogglePaymentOptions() {
         withState<CashflowLedgerState.Content, _> {
             updateState {
-                copy(paymentFormState = paymentFormState.copy(
-                    isOptionsExpanded = !paymentFormState.isOptionsExpanded,
-                    amountError = null
-                ))
+                copy(
+                    paymentFormState = paymentFormState.copy(
+                        isOptionsExpanded = !paymentFormState.isOptionsExpanded,
+                        amountError = null
+                    )
+                )
             }
         }
     }
@@ -396,10 +402,12 @@ internal class CashflowLedgerContainer(
 
             // Set defaults
             updateState {
-                copy(paymentFormState = PaymentFormState.withAmount(entry.remainingAmount).copy(
-                    paidAt = today,
-                    note = ""
-                ))
+                copy(
+                    paymentFormState = PaymentFormState.withAmount(entry.remainingAmount).copy(
+                        paidAt = today,
+                        note = ""
+                    )
+                )
             }
         }
         // Dispatch SubmitPayment intent (same validation path)
@@ -410,9 +418,11 @@ internal class CashflowLedgerContainer(
         withState<CashflowLedgerState.Content, _> {
             val entry = entries.data.find { it.id == selectedEntryId } ?: return@withState
             updateState {
-                copy(paymentFormState = PaymentFormState.withAmount(entry.remainingAmount).copy(
-                    isOptionsExpanded = false
-                ))
+                copy(
+                    paymentFormState = PaymentFormState.withAmount(entry.remainingAmount).copy(
+                        isOptionsExpanded = false
+                    )
+                )
             }
         }
     }

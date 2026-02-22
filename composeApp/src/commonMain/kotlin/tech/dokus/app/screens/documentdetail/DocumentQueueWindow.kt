@@ -6,23 +6,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import kotlinx.datetime.LocalDate
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.shell.DocQueueStatus
+import tech.dokus.foundation.app.shell.DocQueueStatusDetail
+import tech.dokus.foundation.app.shell.amountLocalized
+import tech.dokus.foundation.app.shell.colorized
+import tech.dokus.foundation.app.shell.dateLocalized
+import tech.dokus.foundation.app.shell.dotType
+import tech.dokus.foundation.app.shell.statusLocalized
 import tech.dokus.foundation.aura.components.common.KeyboardNavigationHint
 import tech.dokus.foundation.aura.components.queue.DocQueueHeader
 import tech.dokus.foundation.aura.components.queue.DocQueueItemRow
-import tech.dokus.foundation.aura.components.status.StatusDotType
-import tech.dokus.foundation.aura.style.statusConfirmed
-import tech.dokus.foundation.aura.style.statusError
-import tech.dokus.foundation.aura.style.statusWarning
-import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -58,12 +62,12 @@ internal fun DocumentQueueWindow(
                 key = { _, item -> item.id.toString() }
             ) { _, item ->
                 DocQueueItemRow(
-                    vendorName = item.vendorName,
-                    date = item.date,
-                    amount = item.amount,
-                    statusDotType = item.status.dotType(),
-                    statusTextColor = item.status.color(),
-                    statusDetail = item.statusDetail,
+                    vendorName = item.vendorName.value,
+                    date = item.dateLocalized,
+                    amount = item.amountLocalized,
+                    statusDotType = item.status.dotType,
+                    statusTextColor = item.status.colorized,
+                    statusDetail = item.statusLocalized,
                     isSelected = item.id == selectedDocumentId,
                     onClick = { onSelectDocument(item.id) },
                 )
@@ -73,23 +77,6 @@ internal fun DocumentQueueWindow(
         HorizontalDivider(color = Color.Black.copy(alpha = 0.06f))
         KeyboardNavigationHint()
     }
-}
-
-@Composable
-private fun DocQueueStatus.color() = when (this) {
-    DocQueueStatus.Paid -> MaterialTheme.colorScheme.statusConfirmed
-    DocQueueStatus.Overdue -> MaterialTheme.colorScheme.statusError
-    DocQueueStatus.Review -> MaterialTheme.colorScheme.statusWarning
-    DocQueueStatus.Unpaid -> MaterialTheme.colorScheme.textMuted
-    DocQueueStatus.Processing -> MaterialTheme.colorScheme.statusWarning
-}
-
-private fun DocQueueStatus.dotType(): StatusDotType = when (this) {
-    DocQueueStatus.Paid -> StatusDotType.Confirmed
-    DocQueueStatus.Overdue -> StatusDotType.Error
-    DocQueueStatus.Review -> StatusDotType.Warning
-    DocQueueStatus.Unpaid -> StatusDotType.Empty
-    DocQueueStatus.Processing -> StatusDotType.Warning
 }
 
 // =============================================================================
@@ -108,27 +95,28 @@ private fun DocumentQueueWindowPreview(
     val sampleDocuments = listOf(
         DocQueueItem(
             id = docId1,
-            vendorName = "Acme Corp",
-            amount = "1,250.00",
-            date = "Feb 15",
+            vendorName = DisplayName("Acme Corp"),
+            amount = Money.from("1250.00")!!,
+            currency = Currency.Eur,
+            date = LocalDate(2026, 2, 15),
             status = DocQueueStatus.Review,
-            statusDetail = "Review",
         ),
         DocQueueItem(
             id = docId2,
-            vendorName = "Tech Solutions",
-            amount = "890.50",
-            date = "Feb 14",
+            vendorName = DisplayName("Tech Solutions"),
+            amount = Money.from("890.50")!!,
+            currency = Currency.Eur,
+            date = LocalDate(2026, 2, 14),
             status = DocQueueStatus.Paid,
-            statusDetail = "Paid",
         ),
         DocQueueItem(
             id = docId3,
-            vendorName = "Cloud Services Ltd",
-            amount = "3,200.00",
-            date = "Feb 13",
+            vendorName = DisplayName("Cloud Services Ltd"),
+            amount = Money.from("3200.00")!!,
+            currency = Currency.Eur,
+            date = LocalDate(2026, 2, 13),
             status = DocQueueStatus.Overdue,
-            statusDetail = "13d",
+            statusDetail = DocQueueStatusDetail.OverdueDays(13),
         ),
     )
     TestWrapper(parameters) {

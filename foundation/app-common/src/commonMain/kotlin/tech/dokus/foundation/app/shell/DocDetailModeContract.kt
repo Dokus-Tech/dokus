@@ -1,6 +1,10 @@
 package tech.dokus.foundation.app.shell
 
 import androidx.compose.runtime.staticCompositionLocalOf
+import kotlinx.datetime.LocalDate
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.DocumentId
 
 /**
@@ -14,13 +18,19 @@ enum class DocQueueStatus {
     Processing,
 }
 
+sealed interface DocQueueStatusDetail {
+    data object Processing : DocQueueStatusDetail
+    data class OverdueDays(val days: Int) : DocQueueStatusDetail
+}
+
 data class DocQueueItem(
     val id: DocumentId,
-    val vendorName: String,
-    val date: String,
-    val amount: String,
+    val vendorName: DisplayName,
+    val date: LocalDate,
+    val amount: Money?,
+    val currency: Currency = Currency.default,
     val status: DocQueueStatus,
-    val statusDetail: String? = null,
+    val statusDetail: DocQueueStatusDetail? = null,
 )
 
 /**

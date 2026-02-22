@@ -19,23 +19,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
+import tech.dokus.features.cashflow.presentation.review.dotType
+import tech.dokus.features.cashflow.presentation.review.localized
 import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.status.StatusDot
-import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.constrains.Constraints
-import tech.dokus.foundation.aura.style.statusConfirmed
-import tech.dokus.foundation.aura.style.statusError
-import tech.dokus.foundation.aura.style.statusWarning
+import tech.dokus.foundation.aura.extensions.colorized
+import tech.dokus.foundation.aura.extensions.localizedUppercase
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.features.cashflow.presentation.review.colorized as financialStatusColorized
 
 @Composable
 internal fun ReviewInspectorPane(
@@ -73,15 +80,11 @@ internal fun ReviewInspectorPane(
             InspectorSectionCard(title = "Status") {
                 ValueRow(
                     label = "State",
-                    value = when (state.financialStatus) {
-                        ReviewFinancialStatus.Paid -> "Paid"
-                        ReviewFinancialStatus.Unpaid -> "Unpaid"
-                        ReviewFinancialStatus.Overdue -> "Overdue"
-                        ReviewFinancialStatus.Review -> "Review required"
-                    }
+                    value = state.financialStatus.localized
                 )
                 if (!state.isDocumentConfirmed && !state.isDocumentRejected &&
-                    state.financialStatus == ReviewFinancialStatus.Review) {
+                    state.financialStatus == ReviewFinancialStatus.Review
+                ) {
                     Button(
                         onClick = { onIntent(DocumentReviewIntent.Confirm) },
                         enabled = state.canConfirm,
@@ -191,17 +194,12 @@ private fun InspectorHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                StatusDot(type = state.financialStatus.dotType(), size = 6.dp)
+                StatusDot(type = state.financialStatus.dotType, size = 6.dp)
                 Text(
-                    text = when (state.financialStatus) {
-                        ReviewFinancialStatus.Paid -> "Payment received"
-                        ReviewFinancialStatus.Unpaid -> "Awaiting payment"
-                        ReviewFinancialStatus.Overdue -> "Overdue"
-                        ReviewFinancialStatus.Review -> "Review required"
-                    },
+                    text = state.financialStatus.localized,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = state.financialStatus.color(),
+                    color = state.financialStatus.financialStatusColorized,
                 )
             }
             Text(
@@ -300,9 +298,9 @@ private fun SourceRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = type.shortLabel(),
+            text = type.localizedUppercase,
             style = MaterialTheme.typography.labelSmall,
-            color = if (type == DocumentSource.Peppol) MaterialTheme.colorScheme.statusWarning else MaterialTheme.colorScheme.textMuted,
+            color = type.colorized,
         )
         Text(
             text = title,
@@ -318,28 +316,6 @@ private fun SourceRow(
             color = MaterialTheme.colorScheme.textMuted,
         )
     }
-}
-
-@Composable
-private fun ReviewFinancialStatus.color() = when (this) {
-    ReviewFinancialStatus.Paid -> MaterialTheme.colorScheme.statusConfirmed
-    ReviewFinancialStatus.Unpaid -> MaterialTheme.colorScheme.statusWarning
-    ReviewFinancialStatus.Overdue -> MaterialTheme.colorScheme.statusError
-    ReviewFinancialStatus.Review -> MaterialTheme.colorScheme.statusWarning
-}
-
-private fun ReviewFinancialStatus.dotType(): StatusDotType = when (this) {
-    ReviewFinancialStatus.Paid -> StatusDotType.Confirmed
-    ReviewFinancialStatus.Unpaid -> StatusDotType.Warning
-    ReviewFinancialStatus.Overdue -> StatusDotType.Error
-    ReviewFinancialStatus.Review -> StatusDotType.Warning
-}
-
-private fun DocumentSource.shortLabel(): String = when (this) {
-    DocumentSource.Peppol -> "PEPPOL"
-    DocumentSource.Email -> "EMAIL"
-    DocumentSource.Upload -> "PDF"
-    DocumentSource.Manual -> "MANUAL"
 }
 
 private fun DocumentReviewState.Content.referenceNumber(): String? = when (val data = draftData) {
@@ -379,4 +355,30 @@ private fun currencySign(state: DocumentReviewState.Content): String = when (val
 
 private fun prefixedAmount(state: DocumentReviewState.Content, value: tech.dokus.domain.Money?): String {
     return value?.let { "${currencySign(state)}${it.toDisplayString()}" } ?: "\u2014"
+}
+
+@Preview
+@Composable
+private fun ReviewInspectorPanePaidPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ReviewInspectorPane(
+            state = previewReviewContentState(entryStatus = CashflowEntryStatus.Paid),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ReviewInspectorPaneReviewPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ReviewInspectorPane(
+            state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false),
+            onIntent = {},
+        )
+    }
 }

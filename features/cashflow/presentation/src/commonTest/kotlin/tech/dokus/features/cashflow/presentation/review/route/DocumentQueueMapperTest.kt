@@ -22,10 +22,11 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.foundation.app.shell.DocQueueStatus
+import tech.dokus.foundation.app.shell.DocQueueStatusDetail
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.assertNull
 
 class DocumentQueueMapperTest {
 
@@ -41,7 +42,7 @@ class DocumentQueueMapperTest {
         val item = record.toDocQueueItem()
 
         assertEquals(DocQueueStatus.Paid, item.status)
-        assertEquals("Paid", item.statusDetail)
+        assertNull(item.statusDetail)
     }
 
     @Test
@@ -56,7 +57,7 @@ class DocumentQueueMapperTest {
         val item = record.toDocQueueItem()
 
         assertEquals(DocQueueStatus.Unpaid, item.status)
-        assertEquals("Unpaid", item.statusDetail)
+        assertNull(item.statusDetail)
     }
 
     @Test
@@ -72,7 +73,8 @@ class DocumentQueueMapperTest {
 
         assertEquals(DocQueueStatus.Overdue, item.status)
         val statusDetail = assertNotNull(item.statusDetail)
-        assertTrue(statusDetail.endsWith("d"))
+        require(statusDetail is DocQueueStatusDetail.OverdueDays)
+        assertEquals(true, statusDetail.days > 0)
     }
 
     @Test
@@ -88,7 +90,7 @@ class DocumentQueueMapperTest {
         val item = record.toDocQueueItem()
 
         assertEquals(DocQueueStatus.Review, item.status)
-        assertEquals("Processing", item.statusDetail)
+        assertEquals(DocQueueStatusDetail.Processing, item.statusDetail)
     }
 
     @Test
@@ -104,7 +106,7 @@ class DocumentQueueMapperTest {
         val item = record.toDocQueueItem()
 
         assertEquals(DocQueueStatus.Review, item.status)
-        assertEquals("Review", item.statusDetail)
+        assertNull(item.statusDetail)
     }
 
     private fun record(

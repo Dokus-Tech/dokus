@@ -14,23 +14,23 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 
@@ -74,7 +74,7 @@ data class PaymentSheetState(
     val paidAt: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     val note: String = "",
     val isSubmitting: Boolean = false,
-    val amountError: String? = null,
+    val amountError: DokusException? = null,
 )
 
 @Immutable
@@ -228,7 +228,10 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 
                 // Contact uncertainty
                 if (contactMatchStatus == ContactMatchStatus.Uncertain ||
-                    contactMatchStatus == ContactMatchStatus.MissingButRequired) return true
+                    contactMatchStatus == ContactMatchStatus.MissingButRequired
+                ) {
+                    return true
+                }
 
                 // Due date missing for invoices (only when not confirmed)
                 val needsDueDate = (draftData is InvoiceDraftData) &&
@@ -288,8 +291,11 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                     CashflowEntryStatus.Open -> ReviewFinancialStatus.Unpaid
                     CashflowEntryStatus.Cancelled,
                     null -> {
-                        if (isDocumentConfirmed) ReviewFinancialStatus.Unpaid
-                        else ReviewFinancialStatus.Review
+                        if (isDocumentConfirmed) {
+                            ReviewFinancialStatus.Unpaid
+                        } else {
+                            ReviewFinancialStatus.Review
+                        }
                     }
                 }
             }
@@ -399,10 +405,13 @@ private val DocumentDraftData?.dueDate: kotlinx.datetime.LocalDate?
 enum class ContactMatchStatus {
     /** Bound via explicit user selection. */
     Matched,
+
     /** Suggested but not yet confirmed. */
     Uncertain,
+
     /** No contact, and document type requires one (Invoice/CreditNote). */
     MissingButRequired,
+
     /** No contact, but acceptable for this document type (Receipt). */
     NotRequired
 }

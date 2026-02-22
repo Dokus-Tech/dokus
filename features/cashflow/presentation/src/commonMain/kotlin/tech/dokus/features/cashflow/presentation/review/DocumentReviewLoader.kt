@@ -85,13 +85,13 @@ internal class DocumentReviewLoader(
                 return
             }
             updateState {
-                    DocumentReviewState.AwaitingExtraction(
-                        documentId = documentId,
-                        document = document,
-                        previewUrl = document.document.downloadUrl,
-                        queueState = queueSnapshot.queueState,
-                        selectedQueueDocumentId = if (queueSnapshot.queueState != null) documentId else null,
-                    )
+                DocumentReviewState.AwaitingExtraction(
+                    documentId = documentId,
+                    document = document,
+                    previewUrl = document.document.downloadUrl,
+                    queueState = queueSnapshot.queueState,
+                    selectedQueueDocumentId = if (queueSnapshot.queueState != null) documentId else null,
+                )
             }
             intent(DocumentReviewIntent.LoadPreviewPages)
             return
@@ -216,5 +216,4 @@ internal class DocumentReviewLoader(
         val queueState: DocumentReviewQueueState? = null,
         val selectedQueueDocumentId: DocumentId? = null,
     )
-
 }

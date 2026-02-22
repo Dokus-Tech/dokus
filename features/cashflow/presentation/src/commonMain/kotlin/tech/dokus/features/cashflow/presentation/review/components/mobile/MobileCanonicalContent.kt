@@ -24,20 +24,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
+import tech.dokus.features.cashflow.presentation.review.components.previewReviewContentState
+import tech.dokus.features.cashflow.presentation.review.localized
 import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.colorized
+import tech.dokus.foundation.aura.extensions.localizedUppercase
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.features.cashflow.presentation.review.colorized as financialStatusColorized
 
 @Composable
 internal fun MobileCanonicalContent(
@@ -46,7 +57,14 @@ internal fun MobileCanonicalContent(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accordion = rememberSaveable { mutableStateMapOf("items" to true, "sources" to false, "bank" to false, "notes" to false) }
+    val accordion = rememberSaveable {
+        mutableStateMapOf(
+            "items" to true,
+            "sources" to false,
+            "bank" to false,
+            "notes" to false
+        )
+    }
     val counterparty = counterpartyInfo(state)
     val currencySign = currencySign(state)
     val lineItems = lineItems(state)
@@ -145,13 +163,9 @@ internal fun MobileCanonicalContent(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = source.sourceChannel.shortLabel(),
+                        text = source.sourceChannel.localizedUppercase,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (source.sourceChannel == tech.dokus.domain.enums.DocumentSource.Peppol) {
-                            MaterialTheme.colorScheme.statusWarning
-                        } else {
-                            MaterialTheme.colorScheme.textMuted
-                        },
+                        color = source.sourceChannel.colorized,
                     )
                     Text(
                         text = source.filename ?: "Original document",
@@ -225,15 +239,15 @@ private fun MobileTopHeader(
         Box(
             modifier = Modifier
                 .background(
-                    color = status.color().copy(alpha = 0.12f),
+                    color = status.financialStatusColorized.copy(alpha = 0.12f),
                     shape = RoundedCornerShape(8.dp)
                 )
                 .padding(horizontal = Constraints.Spacing.small, vertical = 6.dp)
         ) {
             Text(
-                text = status.label(),
+                text = status.localized,
                 style = MaterialTheme.typography.labelMedium,
-                color = status.color(),
+                color = status.financialStatusColorized,
             )
         }
     }
@@ -251,17 +265,18 @@ private fun MobileStateCard(
                 .padding(Constraints.Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
-            val statusTitle = when (state.financialStatus) {
-                ReviewFinancialStatus.Paid -> "Payment received"
-                ReviewFinancialStatus.Unpaid -> "Awaiting payment"
-                ReviewFinancialStatus.Overdue -> "Overdue"
-                ReviewFinancialStatus.Review -> "Review required"
-            }
-            Text(text = statusTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            val statusTitle = state.financialStatus.localized
+            Text(
+                text = statusTitle,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
 
             val subtitle = when (state.financialStatus) {
                 ReviewFinancialStatus.Paid -> {
-                    val entry = (state.cashflowEntryState as? DokusState.Success<*>)?.data as? tech.dokus.domain.model.CashflowEntry
+                    val entry =
+                        (state.cashflowEntryState as? DokusState.Success<*>)?.data
+                            as? tech.dokus.domain.model.CashflowEntry
                     val paidAt = entry?.paidAt
                     if (paidAt != null) "${paidAt.date} \u00B7 Bank transfer" else "Payment recorded"
                 }
@@ -394,4 +409,34 @@ private fun ValueText(value: String) {
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurface,
     )
+}
+
+@Preview
+@Composable
+private fun MobileCanonicalContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MobileCanonicalContent(
+            state = previewReviewContentState(entryStatus = CashflowEntryStatus.Open),
+            onIntent = {},
+            onBackClick = {},
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MobileCanonicalContentReviewPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MobileCanonicalContent(
+            state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false),
+            onIntent = {},
+            onBackClick = {},
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
 }

@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.MessageRole
@@ -20,9 +23,6 @@ import tech.dokus.foundation.aura.components.chat.ChatMessageBubble
 import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.ChatSourceCitationList
 import tech.dokus.foundation.aura.components.chat.CitationDisplayData
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider

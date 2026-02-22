@@ -28,8 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.Button
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,11 +49,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
-import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CashflowDirection
-import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.CashflowEntry
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cancel
@@ -83,10 +76,17 @@ import tech.dokus.aura.resources.cashflow_ledger_due_date
 import tech.dokus.aura.resources.cashflow_ledger_net
 import tech.dokus.aura.resources.invoice_total
 import tech.dokus.aura.resources.invoice_vat
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.CashflowDirection
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.ledger.mvi.PaymentFormState
 import tech.dokus.foundation.aura.components.CashflowStatusBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.layout.DokusExpandableAction
 import tech.dokus.foundation.aura.constrains.Constraints
 
@@ -354,8 +354,15 @@ private fun CashflowStatusBanner(
     val detail: String? = when {
         entry.status == CashflowEntryStatus.Paid -> null
         entry.status == CashflowEntryStatus.Cancelled -> null
-        entry.status == CashflowEntryStatus.Overdue -> stringResource(Res.string.cashflow_detail_days_overdue, -daysUntilDue)
-        isPartiallyPaid -> stringResource(Res.string.cashflow_detail_remaining, entry.currency.displaySign, entry.remainingAmount.toDisplayString())
+        entry.status == CashflowEntryStatus.Overdue -> stringResource(
+            Res.string.cashflow_detail_days_overdue,
+            -daysUntilDue
+        )
+        isPartiallyPaid -> stringResource(
+            Res.string.cashflow_detail_remaining,
+            entry.currency.displaySign,
+            entry.remainingAmount.toDisplayString()
+        )
         daysUntilDue >= 0 -> stringResource(Res.string.cashflow_detail_due_in_days, daysUntilDue)
         else -> null
     }
@@ -570,7 +577,10 @@ private fun CashflowPaymentFooter(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val defaultSubtext = stringResource(Res.string.cashflow_detail_amount_today, entry.remainingAmount.toDisplayString())
+    val defaultSubtext = stringResource(
+        Res.string.cashflow_detail_amount_today,
+        entry.remainingAmount.toDisplayString()
+    )
 
     DokusExpandableAction(
         isExpanded = formState.isOptionsExpanded,

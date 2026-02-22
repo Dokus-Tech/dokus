@@ -1,9 +1,9 @@
 package tech.dokus.features.cashflow.presentation.documents.route
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Upload
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -90,7 +90,8 @@ internal fun DocumentsRoute(
     val uploadContentDescription = stringResource(Res.string.documents_upload)
     val searchQuery = (state as? DocumentsState.Content)?.searchQuery.orEmpty()
     val onSearchQueryChange = remember(documentsContainer) {
-        { query: String ->
+        {
+                query: String ->
             documentsContainer.store.intent(DocumentsIntent.UpdateSearchQuery(query))
         }
     }

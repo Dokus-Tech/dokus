@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -62,11 +61,6 @@ import tech.dokus.foundation.aura.components.CashflowTypeBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Data class representing a financial document table row.

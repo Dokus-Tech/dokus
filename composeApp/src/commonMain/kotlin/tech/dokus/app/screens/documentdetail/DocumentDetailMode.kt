@@ -23,24 +23,28 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.LocalDate
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.shell.DocQueueStatus
+import tech.dokus.foundation.app.shell.amountLocalized
+import tech.dokus.foundation.app.shell.colorized
+import tech.dokus.foundation.app.shell.dotType
+import tech.dokus.foundation.app.shell.localized
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_detail_vendor_fallback
 import tech.dokus.foundation.aura.components.status.StatusDot
-import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.glass
 import tech.dokus.foundation.aura.style.glassBorder
 import tech.dokus.foundation.aura.style.glassContent
 import tech.dokus.foundation.aura.style.glassHeader
-import tech.dokus.foundation.aura.style.statusConfirmed
-import tech.dokus.foundation.aura.style.statusError
-import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -117,10 +121,12 @@ internal fun DocumentDetailMode(
                 Column(modifier = Modifier.fillMaxSize()) {
                     // Title bar — JSX: padding "10px 18px", borderBottom, background glassHeader
                     DetailModeTitleBar(
-                        vendorName = selectedDoc?.vendorName ?: stringResource(Res.string.document_detail_vendor_fallback),
-                        amount = selectedDoc?.amount ?: "",
+                        vendorName = selectedDoc?.vendorName?.value
+                            ?: stringResource(Res.string.document_detail_vendor_fallback),
+                        amount = selectedDoc?.amountLocalized ?: "",
                         status = selectedDoc?.status ?: DocQueueStatus.Review,
-                        statusDetail = selectedDoc?.statusDetail,
+                        statusLabel = selectedDoc?.status?.localized
+                            ?: DocQueueStatus.Review.localized,
                     )
 
                     // Content (NavHost rendering DocumentReviewRoute)
@@ -147,11 +153,10 @@ private fun DetailModeTitleBar(
     vendorName: String,
     amount: String,
     status: DocQueueStatus,
-    statusDetail: String?,
+    statusLabel: String,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val statusColor = status.color()
-    val statusText = statusDetail ?: status.defaultLabel()
+    val statusColor = status.colorized
 
     Row(
         modifier = Modifier
@@ -187,11 +192,11 @@ private fun DetailModeTitleBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             StatusDot(
-                type = status.dotType(),
+                type = status.dotType,
                 size = 5.dp,
             )
             Text(
-                text = statusText,
+                text = statusLabel,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = statusColor,
@@ -218,19 +223,19 @@ private fun DocumentDetailModePreview(
     val sampleDocuments = listOf(
         DocQueueItem(
             id = docId1,
-            vendorName = "Acme Corp",
-            amount = "1,250.00",
-            date = "Feb 15",
+            vendorName = DisplayName("Acme Corp"),
+            amount = Money.from("1250.00")!!,
+            currency = Currency.Eur,
+            date = LocalDate(2026, 2, 15),
             status = DocQueueStatus.Review,
-            statusDetail = "Review",
         ),
         DocQueueItem(
             id = docId2,
-            vendorName = "Tech Solutions",
-            amount = "890.50",
-            date = "Feb 14",
+            vendorName = DisplayName("Tech Solutions"),
+            amount = Money.from("890.50")!!,
+            currency = Currency.Eur,
+            date = LocalDate(2026, 2, 14),
             status = DocQueueStatus.Paid,
-            statusDetail = "Paid",
         ),
     )
     TestWrapper(parameters) {
@@ -249,29 +254,4 @@ private fun DocumentDetailModePreview(
             }
         )
     }
-}
-
-@Composable
-private fun DocQueueStatus.color() = when (this) {
-    DocQueueStatus.Paid -> MaterialTheme.colorScheme.statusConfirmed
-    DocQueueStatus.Overdue -> MaterialTheme.colorScheme.statusError
-    DocQueueStatus.Review -> MaterialTheme.colorScheme.statusWarning
-    DocQueueStatus.Unpaid -> MaterialTheme.colorScheme.textMuted
-    DocQueueStatus.Processing -> MaterialTheme.colorScheme.statusWarning
-}
-
-private fun DocQueueStatus.dotType(): StatusDotType = when (this) {
-    DocQueueStatus.Paid -> StatusDotType.Confirmed
-    DocQueueStatus.Overdue -> StatusDotType.Error
-    DocQueueStatus.Review -> StatusDotType.Warning
-    DocQueueStatus.Unpaid -> StatusDotType.Empty
-    DocQueueStatus.Processing -> StatusDotType.Warning
-}
-
-private fun DocQueueStatus.defaultLabel(): String = when (this) {
-    DocQueueStatus.Paid -> "Paid"
-    DocQueueStatus.Unpaid -> "Unpaid"
-    DocQueueStatus.Overdue -> "Overdue"
-    DocQueueStatus.Review -> "Review"
-    DocQueueStatus.Processing -> "Processing"
 }

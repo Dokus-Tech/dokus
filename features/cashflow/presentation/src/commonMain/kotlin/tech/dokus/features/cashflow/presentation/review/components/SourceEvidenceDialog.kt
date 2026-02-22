@@ -19,8 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -28,8 +30,13 @@ import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.SourceEvidenceModalState
 import tech.dokus.foundation.aura.constrains.Constraints
-import tech.dokus.foundation.aura.style.statusWarning
+import tech.dokus.foundation.aura.extensions.colorized
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.extensions.localizedUppercase
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun SourceEvidenceDialog(
@@ -93,13 +100,9 @@ private fun Header(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = modalState.sourceType.label(),
+                text = modalState.sourceType.localizedUppercase,
                 style = MaterialTheme.typography.labelSmall,
-                color = if (modalState.sourceType == DocumentSource.Peppol) {
-                    MaterialTheme.colorScheme.statusWarning
-                } else {
-                    MaterialTheme.colorScheme.textMuted
-                },
+                color = modalState.sourceType.colorized,
             )
             Text(
                 text = modalState.sourceName,
@@ -145,7 +148,7 @@ private fun SourcePreviewPane(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "Failed to load source preview",
+                    text = previewState.exception.localized,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -242,7 +245,7 @@ private fun RawContentPane(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "Failed to load raw source data",
+                    text = modalState.rawContentError.localized,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -284,9 +287,41 @@ private fun Value(label: String, value: String) {
     }
 }
 
-private fun DocumentSource.label(): String = when (this) {
-    DocumentSource.Peppol -> "PEPPOL"
-    DocumentSource.Email -> "Email"
-    DocumentSource.Upload -> "PDF"
-    DocumentSource.Manual -> "Manual"
+@Preview
+@Composable
+private fun SourceEvidenceDialogStructuredPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SourceEvidenceDialog(
+            contentState = previewReviewContentState(),
+            modalState = previewSourceEvidenceModalState(
+                sourceType = DocumentSource.Peppol,
+                previewState = DocumentPreviewState.NotPdf,
+            ),
+            onClose = {},
+            onToggleRawView = {},
+            onRetry = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SourceEvidenceDialogRawPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SourceEvidenceDialog(
+            contentState = previewReviewContentState(),
+            modalState = previewSourceEvidenceModalState(
+                sourceType = DocumentSource.Peppol,
+                showRawContent = true,
+                rawContent = "<Invoice>\n  <ID>INV-8847291</ID>\n</Invoice>",
+            ),
+            onClose = {},
+            onToggleRawView = {},
+            onRetry = {},
+        )
+    }
 }

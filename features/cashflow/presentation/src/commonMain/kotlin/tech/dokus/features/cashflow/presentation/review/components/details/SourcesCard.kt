@@ -14,8 +14,8 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_match_review_different_document
 import tech.dokus.aura.resources.cashflow_match_review_same_document
 import tech.dokus.domain.enums.DocumentMatchReviewReasonType
-import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.foundation.aura.extensions.localized
 
 @Composable
 internal fun SourcesCard(
@@ -32,7 +32,7 @@ internal fun SourcesCard(
         MicroLabel(text = "Sources")
 
         sources.forEach { source ->
-            val sourceTitle = source.sourceChannel.displayLabel()
+            val sourceTitle = source.sourceChannel.localized
             val sourceValue = buildString {
                 append(source.filename ?: "Source file")
                 append(" · ")
@@ -78,11 +78,4 @@ internal fun SourcesCard(
             }
         }
     }
-}
-
-private fun DocumentSource.displayLabel(): String = when (this) {
-    DocumentSource.Peppol -> "PEPPOL"
-    DocumentSource.Email -> "Email"
-    DocumentSource.Upload -> "Upload"
-    DocumentSource.Manual -> "Manual"
 }

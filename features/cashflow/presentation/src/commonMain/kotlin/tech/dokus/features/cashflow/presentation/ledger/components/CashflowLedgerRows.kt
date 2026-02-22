@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,12 +33,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
@@ -56,8 +58,8 @@ import tech.dokus.aura.resources.cashflow_ledger_description
 import tech.dokus.aura.resources.cashflow_ledger_due_date
 import tech.dokus.aura.resources.cashflow_ledger_status
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
+import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
@@ -66,8 +68,6 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.amberSoft
 import tech.dokus.foundation.aura.style.redSoft
 import tech.dokus.foundation.aura.style.surfaceHover
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider

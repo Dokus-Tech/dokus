@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -24,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -59,13 +60,12 @@ import tech.dokus.aura.resources.peppol_reg_transfer_request
 import tech.dokus.aura.resources.peppol_reg_waiting_body
 import tech.dokus.aura.resources.peppol_reg_waiting_subtitle
 import tech.dokus.aura.resources.peppol_reg_waiting_title
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PCopyRow
 import tech.dokus.foundation.aura.components.common.WaitingIndicator
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection

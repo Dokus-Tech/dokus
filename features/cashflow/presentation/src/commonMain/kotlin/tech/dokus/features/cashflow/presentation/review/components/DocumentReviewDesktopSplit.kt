@@ -32,19 +32,28 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_detail_vendor_fallback
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.shell.DocQueueStatus
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
+import tech.dokus.foundation.app.shell.amountLocalized
+import tech.dokus.foundation.app.shell.colorized
+import tech.dokus.foundation.app.shell.dateLocalized
+import tech.dokus.foundation.app.shell.dotType
+import tech.dokus.foundation.app.shell.localized
+import tech.dokus.foundation.app.shell.statusLocalized
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.common.KeyboardNavigationHint
 import tech.dokus.foundation.aura.components.queue.DocQueueHeader
 import tech.dokus.foundation.aura.components.queue.DocQueueItemRow
 import tech.dokus.foundation.aura.components.status.StatusDot
-import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.dokusEffects
 import tech.dokus.foundation.aura.style.dokusSpacing
@@ -52,9 +61,6 @@ import tech.dokus.foundation.aura.style.glass
 import tech.dokus.foundation.aura.style.glassBorder
 import tech.dokus.foundation.aura.style.glassContent
 import tech.dokus.foundation.aura.style.glassHeader
-import tech.dokus.foundation.aura.style.statusConfirmed
-import tech.dokus.foundation.aura.style.statusError
-import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -125,11 +131,12 @@ internal fun DocumentReviewDesktopSplit(
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     DetailTitleBar(
-                        vendorName = selectedDoc?.vendorName
+                        vendorName = selectedDoc?.vendorName?.value
                             ?: stringResource(Res.string.document_detail_vendor_fallback),
-                        amount = selectedDoc?.amount ?: "",
+                        amount = selectedDoc?.amountLocalized ?: "",
                         status = selectedDoc?.status ?: DocQueueStatus.Review,
-                        statusDetail = selectedDoc?.statusDetail,
+                        statusLabel = selectedDoc?.status?.localized
+                            ?: DocQueueStatus.Review.localized,
                     )
 
                     CompositionLocalProvider(LocalIsInDocDetailMode provides true) {
@@ -152,13 +159,12 @@ private fun DetailTitleBar(
     vendorName: String,
     amount: String,
     status: DocQueueStatus,
-    statusDetail: String?,
+    statusLabel: String,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val spacing = MaterialTheme.dokusSpacing
     val effects = MaterialTheme.dokusEffects
-    val statusColor = status.color()
-    val statusLabel = statusDetail ?: status.defaultLabel()
+    val statusColor = status.colorized
 
     Column {
         Row(
@@ -195,7 +201,7 @@ private fun DetailTitleBar(
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
                 StatusDot(
-                    type = status.dotType(),
+                    type = status.dotType,
                     size = 5.dp,
                 )
                 Text(
@@ -256,12 +262,12 @@ private fun DocumentReviewQueuePane(
         ) {
             items(items = documents, key = { it.id.toString() }) { item ->
                 DocQueueItemRow(
-                    vendorName = item.vendorName,
-                    date = item.date,
-                    amount = item.amount,
-                    statusDotType = item.status.dotType(),
-                    statusTextColor = item.status.color(),
-                    statusDetail = item.statusDetail,
+                    vendorName = item.vendorName.value,
+                    date = item.dateLocalized,
+                    amount = item.amountLocalized,
+                    statusDotType = item.status.dotType,
+                    statusTextColor = item.status.colorized,
+                    statusDetail = item.statusLocalized,
                     isSelected = item.id == selectedDocumentId,
                     onClick = { onSelectDocument(item.id) },
                 )
@@ -285,21 +291,21 @@ private fun DocumentReviewDesktopSplitPreview(
     val mockId = DocumentId.generate()
     val mockDoc = DocQueueItem(
         id = mockId,
-        vendorName = "Acme Corp",
-        date = "Feb 15",
-        amount = "1,234.56",
+        vendorName = DisplayName("Acme Corp"),
+        date = LocalDate(2026, 2, 15),
+        amount = Money.from("1234.56")!!,
+        currency = Currency.Eur,
         status = DocQueueStatus.Review,
-        statusDetail = "Review",
     )
     val mockDocuments = listOf(
         mockDoc,
         DocQueueItem(
             id = DocumentId.generate(),
-            vendorName = "Tech Solutions",
-            date = "Feb 14",
-            amount = "890.50",
+            vendorName = DisplayName("Tech Solutions"),
+            date = LocalDate(2026, 2, 14),
+            amount = Money.from("890.50")!!,
+            currency = Currency.Eur,
             status = DocQueueStatus.Paid,
-            statusDetail = "Paid",
         ),
     )
     TestWrapper(parameters) {
@@ -322,29 +328,4 @@ private fun DocumentReviewDesktopSplitPreview(
             },
         )
     }
-}
-
-@Composable
-private fun DocQueueStatus.color() = when (this) {
-    DocQueueStatus.Paid -> MaterialTheme.colorScheme.statusConfirmed
-    DocQueueStatus.Overdue -> MaterialTheme.colorScheme.statusError
-    DocQueueStatus.Review -> MaterialTheme.colorScheme.statusWarning
-    DocQueueStatus.Unpaid -> MaterialTheme.colorScheme.textMuted
-    DocQueueStatus.Processing -> MaterialTheme.colorScheme.statusWarning
-}
-
-private fun DocQueueStatus.dotType(): StatusDotType = when (this) {
-    DocQueueStatus.Paid -> StatusDotType.Confirmed
-    DocQueueStatus.Overdue -> StatusDotType.Error
-    DocQueueStatus.Review -> StatusDotType.Warning
-    DocQueueStatus.Unpaid -> StatusDotType.Empty
-    DocQueueStatus.Processing -> StatusDotType.Warning
-}
-
-private fun DocQueueStatus.defaultLabel(): String = when (this) {
-    DocQueueStatus.Paid -> "Paid"
-    DocQueueStatus.Unpaid -> "Unpaid"
-    DocQueueStatus.Overdue -> "Overdue"
-    DocQueueStatus.Review -> "Review"
-    DocQueueStatus.Processing -> "Processing"
 }

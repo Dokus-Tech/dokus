@@ -23,14 +23,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
-import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.SubcomposeAsyncImage
 import compose.icons.FeatherIcons
@@ -55,6 +53,7 @@ import tech.dokus.features.cashflow.presentation.review.components.details.Peppo
 import tech.dokus.features.cashflow.presentation.review.components.details.SourcesCard
 import tech.dokus.features.cashflow.presentation.review.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.constrains.Constraints
 
 private const val A4_ASPECT_RATIO = 0.707f
@@ -281,7 +280,8 @@ internal fun DetailsTabContent(
 
         // Line items (if invoice with items)
         if (state.draftData is InvoiceDraftData &&
-            state.draftData.lineItems.isNotEmpty()) {
+            state.draftData.lineItems.isNotEmpty()
+        ) {
             // LineItemsSection would go here if needed
         }
 

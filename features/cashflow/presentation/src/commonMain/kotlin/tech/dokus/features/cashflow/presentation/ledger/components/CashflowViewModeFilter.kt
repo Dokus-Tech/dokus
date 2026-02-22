@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -28,8 +30,6 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
 import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.redSoft
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider

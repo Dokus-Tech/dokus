@@ -5,85 +5,83 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
+import tech.dokus.domain.DisplayName
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.documents.components.computeNeedsAttention
 import tech.dokus.features.cashflow.presentation.documents.components.resolveCounterparty
 import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.app.shell.DocQueueStatus
-
-private val MonthAbbreviations = listOf(
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-)
+import tech.dokus.foundation.app.shell.DocQueueStatusDetail
 
 internal fun DocumentRecordDto.toDocQueueItem(): DocQueueItem {
-    val vendorName = resolveCounterparty(this, "\u2014")
-    val date = extractQueueDate(this)
-    val amount = extractQueueAmount(this)
+    val vendorName = resolveCounterparty(this, "\u2014").ifBlank { "\u2014" }
+    val queueAmount = extractQueueAmount(this)
     val status = extractQueueStatus(this)
     val statusDetail = extractQueueStatusDetail(this, status)
     return DocQueueItem(
         id = document.id,
-        vendorName = vendorName,
-        date = "${date.day} ${MonthAbbreviations[date.month.ordinal]}",
-        amount = amount,
+        vendorName = DisplayName(vendorName),
+        date = extractQueueDate(this),
+        amount = queueAmount?.amount,
+        currency = queueAmount?.currency ?: Currency.default,
         status = status,
         statusDetail = statusDetail,
     )
 }
 
 private fun extractQueueStatus(doc: DocumentRecordDto): DocQueueStatus {
-    if (computeNeedsAttention(doc)) return DocQueueStatus.Review
-
     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
     val invoiceEntity = doc.confirmedEntity as? FinancialDocumentDto.InvoiceDto
-    if (invoiceEntity != null) {
-        if (invoiceEntity.paidAt != null || invoiceEntity.paidAmount >= invoiceEntity.totalAmount) {
-            return DocQueueStatus.Paid
-        }
-        return if (invoiceEntity.dueDate < today) {
-            DocQueueStatus.Overdue
-        } else {
-            DocQueueStatus.Unpaid
-        }
-    }
+    val draftDueDate = (doc.draft?.extractedData as? InvoiceDraftData)?.dueDate
+    val ingestionStatus = doc.latestIngestion?.status
 
-    val dueDate = (doc.draft?.extractedData as? InvoiceDraftData)?.dueDate
-    if (dueDate != null && dueDate < today) {
-        return DocQueueStatus.Overdue
+    return when {
+        computeNeedsAttention(doc) -> DocQueueStatus.Review
+        invoiceEntity != null &&
+            (invoiceEntity.paidAt != null || invoiceEntity.paidAmount >= invoiceEntity.totalAmount) ->
+            DocQueueStatus.Paid
+        invoiceEntity != null && invoiceEntity.dueDate < today -> DocQueueStatus.Overdue
+        invoiceEntity != null -> DocQueueStatus.Unpaid
+        draftDueDate != null && draftDueDate < today -> DocQueueStatus.Overdue
+        ingestionStatus == IngestionStatus.Queued || ingestionStatus == IngestionStatus.Processing ->
+            DocQueueStatus.Processing
+        else -> DocQueueStatus.Unpaid
     }
-    return DocQueueStatus.Unpaid
 }
 
-private fun extractQueueStatusDetail(doc: DocumentRecordDto, status: DocQueueStatus): String {
+private fun extractQueueStatusDetail(
+    doc: DocumentRecordDto,
+    status: DocQueueStatus
+): DocQueueStatusDetail? {
     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
     return when (status) {
-        DocQueueStatus.Paid -> "Paid"
-        DocQueueStatus.Unpaid -> "Unpaid"
+        DocQueueStatus.Paid,
+        DocQueueStatus.Unpaid -> null
         DocQueueStatus.Review -> {
             val ingestion = doc.latestIngestion?.status
             if (ingestion == IngestionStatus.Queued || ingestion == IngestionStatus.Processing) {
-                "Processing"
+                DocQueueStatusDetail.Processing
             } else {
-                "Review"
+                null
             }
         }
         DocQueueStatus.Overdue -> {
             val dueDate = (doc.confirmedEntity as? FinancialDocumentDto.InvoiceDto)?.dueDate
                 ?: (doc.draft?.extractedData as? InvoiceDraftData)?.dueDate
             if (dueDate != null && dueDate < today) {
-                "${dueDate.daysUntil(today)}d"
+                DocQueueStatusDetail.OverdueDays(dueDate.daysUntil(today))
             } else {
-                "Overdue"
+                null
             }
         }
-        DocQueueStatus.Processing -> "Processing"
+        DocQueueStatus.Processing -> DocQueueStatusDetail.Processing
     }
 }
 
@@ -97,7 +95,12 @@ private fun extractQueueDate(doc: DocumentRecordDto): LocalDate {
     } ?: doc.document.uploadedAt.date
 }
 
-private fun extractQueueAmount(doc: DocumentRecordDto): String {
+private data class QueueAmount(
+    val amount: Money,
+    val currency: Currency,
+)
+
+private fun extractQueueAmount(doc: DocumentRecordDto): QueueAmount? {
     val data = doc.draft?.extractedData
     val amount: Money? = when (data) {
         is InvoiceDraftData -> data.totalAmount
@@ -105,12 +108,15 @@ private fun extractQueueAmount(doc: DocumentRecordDto): String {
         is CreditNoteDraftData -> data.totalAmount
         else -> null
     }
-    if (amount == null) return "\u2014"
+    if (amount == null) return null
     val currency = when (data) {
         is InvoiceDraftData -> data.currency
         is ReceiptDraftData -> data.currency
         is CreditNoteDraftData -> data.currency
         else -> null
     }
-    return "${currency?.displaySign ?: "\u20AC"}${amount.toDisplayString()}"
+    return QueueAmount(
+        amount = amount,
+        currency = currency ?: Currency.default,
+    )
 }

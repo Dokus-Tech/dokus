@@ -23,6 +23,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
@@ -51,13 +53,11 @@ import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.surfaceHover
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.textFaint
+import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.components.badges.DocumentSource as UiDocumentSource
 
 private val TableRowHeight = 48.dp
@@ -366,8 +366,9 @@ internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: Strin
         counterparty != null -> counterparty
         ingestionStatus == IngestionStatus.Processing ||
             ingestionStatus == IngestionStatus.Queued -> "Processing document\u2026"
-        else -> filename
-            ?: unknownLabel
+        else ->
+            filename
+                ?: unknownLabel
     }
 }
 

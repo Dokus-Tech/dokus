@@ -32,6 +32,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -49,8 +51,6 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
 import tech.dokus.aura.resources.cashflow_title
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
@@ -191,7 +191,9 @@ private fun CashflowLedgerContent(
                     .padding(bottom = 16.dp),
                 header = if (isLargeScreen) {
                     { CashflowLedgerHeaderRow() }
-                } else null
+                } else {
+                    null
+                }
             ) {
                 // Table body OR empty state
                 if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {

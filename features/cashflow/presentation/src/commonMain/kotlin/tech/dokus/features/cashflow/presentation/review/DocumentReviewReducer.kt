@@ -58,12 +58,21 @@ internal class DocumentReviewReducer(
         updateDocumentDraft,
         confirmDocument,
         rejectDocument,
-        reprocessDocument,
-        resolveDocumentMatchReview,
         getDocumentRecord,
-        getCashflowEntry,
-        recordCashflowPayment,
         logger
+    )
+    private val paymentActions = DocumentReviewPaymentActions(
+        getCashflowEntry = getCashflowEntry,
+        recordCashflowPayment = recordCashflowPayment,
+        logger = logger,
+    )
+    private val feedbackActions = DocumentReviewFeedbackActions(
+        reprocessDocument = reprocessDocument,
+        resolveDocumentMatchReview = resolveDocumentMatchReview,
+        refreshAfterDraftUpdate = { documentId ->
+            with(actions) { refreshAfterDraftUpdate(documentId) }
+        },
+        logger = logger,
     )
 
     suspend fun DocumentReviewCtx.handleLoadDocument(documentId: DocumentId) =
@@ -214,52 +223,52 @@ internal class DocumentReviewReducer(
         with(actions) { handleViewEntity() }
 
     suspend fun DocumentReviewCtx.handleLoadCashflowEntry() =
-        with(actions) { handleLoadCashflowEntry() }
+        with(paymentActions) { handleLoadCashflowEntry() }
 
     suspend fun DocumentReviewCtx.handleOpenPaymentSheet() =
-        with(actions) { handleOpenPaymentSheet() }
+        with(paymentActions) { handleOpenPaymentSheet() }
 
     suspend fun DocumentReviewCtx.handleClosePaymentSheet() =
-        with(actions) { handleClosePaymentSheet() }
+        with(paymentActions) { handleClosePaymentSheet() }
 
     suspend fun DocumentReviewCtx.handleUpdatePaymentAmountText(text: String) =
-        with(actions) { handleUpdatePaymentAmountText(text) }
+        with(paymentActions) { handleUpdatePaymentAmountText(text) }
 
     suspend fun DocumentReviewCtx.handleUpdatePaymentPaidAt(date: kotlinx.datetime.LocalDate) =
-        with(actions) { handleUpdatePaymentPaidAt(date) }
+        with(paymentActions) { handleUpdatePaymentPaidAt(date) }
 
     suspend fun DocumentReviewCtx.handleUpdatePaymentNote(note: String) =
-        with(actions) { handleUpdatePaymentNote(note) }
+        with(paymentActions) { handleUpdatePaymentNote(note) }
 
     suspend fun DocumentReviewCtx.handleSubmitPayment() =
-        with(actions) { handleSubmitPayment() }
+        with(paymentActions) { handleSubmitPayment() }
 
     // Feedback dialog handlers
     suspend fun DocumentReviewCtx.handleShowFeedbackDialog() =
-        with(actions) { handleShowFeedbackDialog() }
+        with(feedbackActions) { handleShowFeedbackDialog() }
 
     suspend fun DocumentReviewCtx.handleDismissFeedbackDialog() =
-        with(actions) { handleDismissFeedbackDialog() }
+        with(feedbackActions) { handleDismissFeedbackDialog() }
 
     suspend fun DocumentReviewCtx.handleUpdateFeedbackText(text: String) =
-        with(actions) { handleUpdateFeedbackText(text) }
+        with(feedbackActions) { handleUpdateFeedbackText(text) }
 
     suspend fun DocumentReviewCtx.handleSubmitFeedback() =
-        with(actions) { handleSubmitFeedback() }
+        with(feedbackActions) { handleSubmitFeedback() }
 
     suspend fun DocumentReviewCtx.handleRequestAmendment() =
-        with(actions) { handleRequestAmendment() }
+        with(feedbackActions) { handleRequestAmendment() }
 
     // Failed analysis handlers
     suspend fun DocumentReviewCtx.handleRetryAnalysis() =
-        with(actions) { handleRetryAnalysis() }
+        with(feedbackActions) { handleRetryAnalysis() }
 
     suspend fun DocumentReviewCtx.handleDismissFailureBanner() =
-        with(actions) { handleDismissFailureBanner() }
+        with(feedbackActions) { handleDismissFailureBanner() }
 
     suspend fun DocumentReviewCtx.handleResolvePossibleMatchSame() =
-        with(actions) { handleResolvePossibleMatchSame() }
+        with(feedbackActions) { handleResolvePossibleMatchSame() }
 
     suspend fun DocumentReviewCtx.handleResolvePossibleMatchDifferent() =
-        with(actions) { handleResolvePossibleMatchDifferent() }
+        with(feedbackActions) { handleResolvePossibleMatchDifferent() }
 }

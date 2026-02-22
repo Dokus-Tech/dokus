@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Description
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,6 +33,8 @@ import tech.dokus.aura.resources.cashflow_page_plural
 import tech.dokus.aura.resources.cashflow_page_single
 import tech.dokus.aura.resources.state_loading
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.constrains.Constraints
 
 private val ThumbnailWidth = Constraints.IconSize.xxLarge + Constraints.Spacing.large

@@ -215,6 +215,18 @@ sealed class DokusException(
         )
 
         @Serializable
+        @SerialName("DokusException.Validation.PaymentAmountMustBePositive")
+        data object PaymentAmountMustBePositive : Validation(
+            message = "Amount must be positive",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.PaymentAmountExceedsRemaining")
+        data object PaymentAmountExceedsRemaining : Validation(
+            message = "Amount exceeds remaining",
+        )
+
+        @Serializable
         @SerialName("DokusException.Validation.InvalidVatRate")
         data object InvalidVatRate : Validation(
             message = "Invalid VAT rate",

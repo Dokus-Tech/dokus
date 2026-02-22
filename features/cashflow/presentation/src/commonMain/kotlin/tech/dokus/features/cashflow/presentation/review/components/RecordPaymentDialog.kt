@@ -13,9 +13,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun RecordPaymentDialog(
@@ -47,7 +53,7 @@ internal fun RecordPaymentDialog(
                     supportingText = {
                         val error = sheetState.amountError
                         if (error != null) {
-                            Text(error)
+                            Text(error.localized)
                         }
                     },
                     singleLine = true,
@@ -76,4 +82,38 @@ internal fun RecordPaymentDialog(
             }
         },
     )
+}
+
+@Preview
+@Composable
+private fun RecordPaymentDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        RecordPaymentDialog(
+            sheetState = previewPaymentSheetState(),
+            currencySign = "\u20AC",
+            onAmountChange = {},
+            onNoteChange = {},
+            onSubmit = {},
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun RecordPaymentDialogErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        RecordPaymentDialog(
+            sheetState = previewPaymentSheetState(withError = true),
+            currencySign = "\u20AC",
+            onAmountChange = {},
+            onNoteChange = {},
+            onSubmit = {},
+            onDismiss = {},
+        )
+    }
 }

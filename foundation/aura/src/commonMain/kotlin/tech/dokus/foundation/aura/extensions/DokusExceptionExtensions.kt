@@ -72,6 +72,8 @@ import tech.dokus.aura.resources.exception_not_authorized
 import tech.dokus.aura.resources.exception_not_found
 import tech.dokus.aura.resources.exception_not_implemented
 import tech.dokus.aura.resources.exception_password_do_not_match
+import tech.dokus.aura.resources.exception_payment_amount_exceeds_remaining
+import tech.dokus.aura.resources.exception_payment_amount_must_be_positive
 import tech.dokus.aura.resources.exception_password_reset_token_expired
 import tech.dokus.aura.resources.exception_password_reset_token_invalid
 import tech.dokus.aura.resources.exception_refresh_token_expired
@@ -154,6 +156,10 @@ val DokusException.localized: String
         is DokusException.Validation.PeppolIdRequired -> stringResource(Res.string.contacts_peppol_id_required)
         is DokusException.Validation.InvalidInvoiceNumber -> stringResource(Res.string.exception_invalid_invoice_number)
         is DokusException.Validation.InvalidMoney -> stringResource(Res.string.exception_invalid_money)
+        is DokusException.Validation.PaymentAmountMustBePositive ->
+            stringResource(Res.string.exception_payment_amount_must_be_positive)
+        is DokusException.Validation.PaymentAmountExceedsRemaining ->
+            stringResource(Res.string.exception_payment_amount_exceeds_remaining)
         is DokusException.Validation.InvalidVatRate -> stringResource(Res.string.exception_invalid_vat_rate)
         is DokusException.Validation.InvalidPercentage -> stringResource(Res.string.exception_invalid_percentage)
         is DokusException.Validation.InvalidQuantity -> stringResource(Res.string.exception_invalid_quantity)

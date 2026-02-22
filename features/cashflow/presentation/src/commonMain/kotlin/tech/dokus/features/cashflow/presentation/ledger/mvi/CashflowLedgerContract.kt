@@ -10,8 +10,6 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.Money
 import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.enums.CashflowDirection
-import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
@@ -29,8 +27,8 @@ import tech.dokus.foundation.app.state.DokusState
 @Immutable
 enum class CashflowViewMode {
     Upcoming, // Open + Overdue in next 30 days
-    Overdue,  // Open + Overdue with due date < today
-    History   // Paid (money already moved, requires paidAt != null)
+    Overdue, // Open + Overdue with due date < today
+    History // Paid (money already moved, requires paidAt != null)
 }
 
 /**
@@ -39,8 +37,8 @@ enum class CashflowViewMode {
 @Immutable
 enum class DirectionFilter {
     All, // Show both in and out
-    In,  // Only incoming (invoices, refunds)
-    Out  // Only outgoing (inbound invoices, expenses)
+    In, // Only incoming (invoices, refunds)
+    Out // Only outgoing (inbound invoices, expenses)
 }
 
 /**
@@ -70,10 +68,10 @@ data class BalanceState(
  */
 @Immutable
 data class CashflowSummary(
-    val periodLabel: String,  // "NEXT 30 DAYS" or "LAST 30 DAYS"
-    val netAmount: Money,     // The answer: totalIn - totalOut
-    val totalIn: Money,       // Sum of IN entries
-    val totalOut: Money       // Sum of OUT entries
+    val periodLabel: String, // "NEXT 30 DAYS" or "LAST 30 DAYS"
+    val netAmount: Money, // The answer: totalIn - totalOut
+    val totalIn: Money, // Sum of IN entries
+    val totalOut: Money // Sum of OUT entries
 ) {
     companion object {
         val EMPTY = CashflowSummary(
@@ -121,7 +119,7 @@ sealed interface CashflowLedgerState : MVIState, DokusState<Nothing> {
         val entries: PaginationState<CashflowEntry>,
         val filters: CashflowFilters = CashflowFilters(),
         val summary: CashflowSummary = CashflowSummary.EMPTY,
-        val balance: BalanceState? = null,  // null when no banking integration
+        val balance: BalanceState? = null, // null when no banking integration
         val highlightedEntryId: CashflowEntryId? = null,
         val isRefreshing: Boolean = false,
         val selectedEntryId: CashflowEntryId? = null,

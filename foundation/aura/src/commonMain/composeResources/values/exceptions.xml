@@ -14,6 +14,8 @@
     <string name="exception_invalid_peppol_id">Invalid Peppol ID</string>
     <string name="exception_invalid_invoice_number">Invalid invoice number</string>
     <string name="exception_invalid_money">Invalid monetary amount</string>
+    <string name="exception_payment_amount_must_be_positive">Amount must be positive</string>
+    <string name="exception_payment_amount_exceeds_remaining">Amount exceeds remaining amount</string>
     <string name="exception_invalid_vat_rate">Invalid VAT rate</string>
     <string name="exception_invalid_percentage">Invalid percentage value</string>
     <string name="exception_invalid_quantity">Invalid quantity</string>

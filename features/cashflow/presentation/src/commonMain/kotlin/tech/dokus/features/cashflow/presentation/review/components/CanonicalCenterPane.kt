@@ -18,10 +18,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
@@ -32,6 +34,9 @@ import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun CanonicalCenterPane(
@@ -396,4 +401,35 @@ private fun itemLineAmount(item: FinancialLineItem, currencySign: String): Strin
     val amountMinor = item.netAmount
         ?: item.unitPrice?.let { unit -> (item.quantity ?: 1L) * unit }
     return amountMinor?.let { "$currencySign${Money(it).toDisplayString()}" } ?: "\u2014"
+}
+
+@Preview
+@Composable
+private fun CanonicalCenterPanePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CanonicalCenterPane(
+            state = previewReviewContentState(entryStatus = CashflowEntryStatus.Open),
+            onIntent = {},
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CanonicalCenterPanePdfFallbackPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CanonicalCenterPane(
+            state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false).copy(
+                draftData = null,
+                originalData = null,
+            ),
+            onIntent = {},
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
 }

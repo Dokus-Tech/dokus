@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.statusError
@@ -125,40 +126,42 @@ fun DocQueueItemRow(
                         }
                 } else Modifier
             )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+                .clickable(onClick = onClick)
+                .padding(
+                    horizontal = Constraints.Spacing.medium,
+                    vertical = Constraints.Spacing.small,
+                ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
         StatusDot(
             type = statusDotType,
-            size = 5.dp,
+            size = Constraints.StatusDot.size,
         )
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = vendorName,
-                fontSize = 11.sp,
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.height(1.dp))
+            Spacer(Modifier.height(Constraints.Spacing.xxSmall))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
             ) {
                 Text(
                     text = date,
-                    fontSize = 9.sp,
-                    fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
                 statusDetail?.takeIf { it.isNotBlank() }?.let { detail ->
                     Text(
                         text = detail,
-                        fontSize = 8.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = statusTextColor,
                         maxLines = 1,
@@ -170,7 +173,7 @@ fun DocQueueItemRow(
 
         Text(
             text = amount,
-            fontSize = 11.sp,
+            style = MaterialTheme.typography.labelMedium,
             fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,

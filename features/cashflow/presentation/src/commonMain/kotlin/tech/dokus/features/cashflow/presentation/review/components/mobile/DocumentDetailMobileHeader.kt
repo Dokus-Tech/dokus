@@ -19,6 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
@@ -30,8 +32,6 @@ import tech.dokus.aura.resources.cashflow_needs_input
 import tech.dokus.aura.resources.currency_symbol_eur
 import tech.dokus.domain.Money
 import tech.dokus.foundation.aura.constrains.Constraints
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -124,8 +124,11 @@ private fun UnderstandingLine(
             Text(
                 // Different label based on severity
                 text = stringResource(
-                    if (isBlocking) Res.string.cashflow_needs_input
-                    else Res.string.cashflow_needs_attention
+                    if (isBlocking) {
+                        Res.string.cashflow_needs_input
+                    } else {
+                        Res.string.cashflow_needs_attention
+                    }
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.statusWarning

@@ -33,8 +33,10 @@ import tech.dokus.navigation.destinations.CashFlowDestination
 enum class DocumentFilter {
     /** Show all documents */
     All,
+
     /** Documents requiring user attention (processing, needs review, failed) */
     NeedsAttention,
+
     /** Confirmed documents only */
     Confirmed
 }

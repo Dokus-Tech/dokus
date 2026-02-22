@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.enums.DocumentIntakeOutcome
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadDisplayState

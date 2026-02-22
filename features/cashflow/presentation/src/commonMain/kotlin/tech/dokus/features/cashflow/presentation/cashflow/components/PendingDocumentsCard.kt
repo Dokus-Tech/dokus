@@ -17,8 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,12 +37,14 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.features.cashflow.presentation.model.toUiStatus
-import tech.dokus.foundation.aura.components.DocumentStatusBadge
 import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DocumentStatusBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -350,7 +350,6 @@ private fun PendingDocumentItem(
         DocumentStatusBadge(status = processing.toUiStatus())
     }
 }
-
 
 /**
  * Get a display name for a pending document.

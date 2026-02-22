@@ -135,18 +135,22 @@ private fun DocumentUploadItemContent(
                         fadeIn(tween(FadeInDurationMs)) togetherWith fadeOut(tween(FadeOutDurationMs))
 
                     // Uploaded → Deleting: slide right
-                    (initialState is DocumentUploadDisplayState.Uploaded ||
-                        initialState is DocumentUploadDisplayState.Linked ||
-                        initialState is DocumentUploadDisplayState.NeedsReview) &&
+                    (
+                        initialState is DocumentUploadDisplayState.Uploaded ||
+                            initialState is DocumentUploadDisplayState.Linked ||
+                            initialState is DocumentUploadDisplayState.NeedsReview
+                        ) &&
                         targetState is DocumentUploadDisplayState.Deleting ->
                         (slideInHorizontally { it } + fadeIn()) togetherWith
                             (slideOutHorizontally { -it } + fadeOut())
 
                     // Deleting → Uploaded: slide back (undo)
                     initialState is DocumentUploadDisplayState.Deleting &&
-                        (targetState is DocumentUploadDisplayState.Uploaded ||
-                            targetState is DocumentUploadDisplayState.Linked ||
-                            targetState is DocumentUploadDisplayState.NeedsReview) ->
+                        (
+                            targetState is DocumentUploadDisplayState.Uploaded ||
+                                targetState is DocumentUploadDisplayState.Linked ||
+                                targetState is DocumentUploadDisplayState.NeedsReview
+                            ) ->
                         (slideInHorizontally { -it } + fadeIn()) togetherWith
                             (slideOutHorizontally { it } + fadeOut())
 

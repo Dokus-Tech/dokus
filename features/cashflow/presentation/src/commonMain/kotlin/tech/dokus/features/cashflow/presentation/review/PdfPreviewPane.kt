@@ -19,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
-import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -27,7 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
@@ -43,6 +41,7 @@ import tech.dokus.aura.resources.state_retry
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.extensions.localized
 
 // Layout dimensions

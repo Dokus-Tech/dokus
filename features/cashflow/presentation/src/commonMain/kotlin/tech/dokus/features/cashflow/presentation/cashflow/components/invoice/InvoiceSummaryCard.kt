@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
@@ -26,13 +28,13 @@ import tech.dokus.aura.resources.cashflow_amount_with_currency
 import tech.dokus.aura.resources.common_empty_value
 import tech.dokus.aura.resources.currency_symbol_eur
 import tech.dokus.aura.resources.invoice_amount
-import tech.dokus.aura.resources.invoice_recipient
 import tech.dokus.aura.resources.invoice_description
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.invoice_no_items
 import tech.dokus.aura.resources.invoice_price
 import tech.dokus.aura.resources.invoice_qty
+import tech.dokus.aura.resources.invoice_recipient
 import tech.dokus.aura.resources.invoice_select_client
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total
@@ -41,8 +43,6 @@ import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.PDashedDivider
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider

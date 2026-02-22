@@ -50,4 +50,3 @@ private fun PeppolStatus.displayLabel(): String = when (this) {
     PeppolStatus.Failed -> "Failed"
     PeppolStatus.Rejected -> "Rejected"
 }
-
