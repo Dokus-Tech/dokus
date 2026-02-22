@@ -211,7 +211,17 @@ internal fun HomeRoute(
         isLoggingOut = shellState.isLoggingOut,
         snackbarHostState = snackbarHostState,
         onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
-        onProfileClick = { homeNavController.navigateToTopLevelTab(HomeDestination.Profile) },
+        onProfileClick = {
+            dispatchProfileNavigation(
+                isLargeScreen = isLargeScreen,
+                onNavigateHomeProfile = {
+                    homeNavController.navigateToTopLevelTab(HomeDestination.Profile)
+                },
+                onNavigateRootProfile = {
+                    navController.navigateTo(AuthDestination.ProfileSettings)
+                }
+            )
+        },
         onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
         onLogoutClick = { container.store.intent(HomeIntent.Logout) },
         onNavItemClick = { navItem ->
@@ -419,6 +429,18 @@ private fun RailNavigationLayout(
 
 /** Routes where the shell header (Dokus + avatar) is shown. Other tabs provide their own top bar. */
 private val ShellHeaderRoutes = setOf("today", "documents", "cashflow", "more")
+
+internal fun dispatchProfileNavigation(
+    isLargeScreen: Boolean,
+    onNavigateHomeProfile: () -> Unit,
+    onNavigateRootProfile: () -> Unit,
+) {
+    if (isLargeScreen) {
+        onNavigateHomeProfile()
+    } else {
+        onNavigateRootProfile()
+    }
+}
 
 @Composable
 private fun BottomNavigationLayout(
