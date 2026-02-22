@@ -187,19 +187,21 @@ val ColorScheme.surfaceHover: Color
     get() = if (isDark) Color(WarmDarkHex) else Color(WarmLightHex)
 
 // Glass surface tokens (floating windows)
-// Opacity raised vs reference JSX to compensate for missing CSS backdrop-filter: blur(60px).
+// Light mode uses warm base (not pure white) to match the warm #F2F1EE background.
+// Reference JSX uses backdrop-filter: blur(60px) which blends the warm bg into the glass;
+// without blur we simulate this by using WarmLightHex / PageDarkHex as the base color.
 val ColorScheme.glass: Color
-    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.88f)
-            else Color.White.copy(alpha = 0.90f)
+    get() = if (isDark) Color(PageDarkHex).copy(alpha = 0.88f)
+            else Color(WarmLightHex)                       // opaque #F8F7F4
 val ColorScheme.glassContent: Color
-    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.95f)
-            else Color.White.copy(alpha = 0.95f)
+    get() = if (isDark) Color(PageDarkHex).copy(alpha = 0.95f)
+            else Color(0xFFFCFBF9)                         // opaque, slightly lighter warm
 val ColorScheme.glassBorder: Color
     get() = if (isDark) Color.White.copy(alpha = 0.06f)
             else Color.White.copy(alpha = 0.30f)
 val ColorScheme.glassHeader: Color
-    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.70f)
-            else Color.White.copy(alpha = 0.65f)
+    get() = if (isDark) Color(PageDarkHex).copy(alpha = 0.70f)
+            else Color.White.copy(alpha = 0.35f)           // subtle lighter overlay
 val ColorScheme.windowShadow: Color
     get() = if (isDark) Color.Black.copy(alpha = 0.30f)
             else Color.Black.copy(alpha = 0.06f)
