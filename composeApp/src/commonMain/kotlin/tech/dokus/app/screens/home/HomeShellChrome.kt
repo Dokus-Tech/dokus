@@ -38,6 +38,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import kotlinx.datetime.Month
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -80,6 +82,7 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import kotlin.time.Clock
 
 internal data class HomeShellProfileData(
     val fullName: String,
@@ -419,26 +422,26 @@ private fun RowScope.RouteTopBarActions(
 @Composable
 private fun formattedCurrentDate(): String {
     val today = remember {
-        kotlinx.datetime.Clock.System.todayIn(kotlinx.datetime.TimeZone.currentSystemDefault())
+        Clock.System.todayIn(TimeZone.currentSystemDefault())
     }
     val monthName = shortMonthName(today.month)
     return "${today.day} $monthName ${today.year}"
 }
 
 @Composable
-private fun shortMonthName(month: kotlinx.datetime.Month): String = when (month) {
-    kotlinx.datetime.Month.JANUARY -> stringResource(Res.string.date_month_short_jan)
-    kotlinx.datetime.Month.FEBRUARY -> stringResource(Res.string.date_month_short_feb)
-    kotlinx.datetime.Month.MARCH -> stringResource(Res.string.date_month_short_mar)
-    kotlinx.datetime.Month.APRIL -> stringResource(Res.string.date_month_short_apr)
-    kotlinx.datetime.Month.MAY -> stringResource(Res.string.date_month_short_may)
-    kotlinx.datetime.Month.JUNE -> stringResource(Res.string.date_month_short_jun)
-    kotlinx.datetime.Month.JULY -> stringResource(Res.string.date_month_short_jul)
-    kotlinx.datetime.Month.AUGUST -> stringResource(Res.string.date_month_short_aug)
-    kotlinx.datetime.Month.SEPTEMBER -> stringResource(Res.string.date_month_short_sep)
-    kotlinx.datetime.Month.OCTOBER -> stringResource(Res.string.date_month_short_oct)
-    kotlinx.datetime.Month.NOVEMBER -> stringResource(Res.string.date_month_short_nov)
-    kotlinx.datetime.Month.DECEMBER -> stringResource(Res.string.date_month_short_dec)
+private fun shortMonthName(month: Month): String = when (month) {
+    Month.JANUARY -> stringResource(Res.string.date_month_short_jan)
+    Month.FEBRUARY -> stringResource(Res.string.date_month_short_feb)
+    Month.MARCH -> stringResource(Res.string.date_month_short_mar)
+    Month.APRIL -> stringResource(Res.string.date_month_short_apr)
+    Month.MAY -> stringResource(Res.string.date_month_short_may)
+    Month.JUNE -> stringResource(Res.string.date_month_short_jun)
+    Month.JULY -> stringResource(Res.string.date_month_short_jul)
+    Month.AUGUST -> stringResource(Res.string.date_month_short_aug)
+    Month.SEPTEMBER -> stringResource(Res.string.date_month_short_sep)
+    Month.OCTOBER -> stringResource(Res.string.date_month_short_oct)
+    Month.NOVEMBER -> stringResource(Res.string.date_month_short_nov)
+    Month.DECEMBER -> stringResource(Res.string.date_month_short_dec)
 }
 
 // =============================================================================

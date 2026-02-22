@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +21,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -205,10 +210,13 @@ private fun MobileReviewContent(
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
 ) {
+    val layoutDirection = LocalLayoutDirection.current
+    val adjustedContentPadding = contentPadding.withTopRemoved(layoutDirection)
+
     if (state.shouldUsePdfFallback) {
         MobileFallbackContent(
             state = state,
-            contentPadding = contentPadding,
+            contentPadding = adjustedContentPadding,
             onBackClick = onBackClick,
         )
         return
@@ -220,7 +228,7 @@ private fun MobileReviewContent(
         onBackClick = onBackClick,
         modifier = Modifier
             .fillMaxSize()
-            .withContentPadding(contentPadding, androidx.compose.ui.platform.LocalLayoutDirection.current)
+            .withContentPadding(adjustedContentPadding, layoutDirection)
             .imePadding()
             .navigationBarsPadding(),
     )
@@ -284,3 +292,10 @@ private fun ErrorContent(
         )
     }
 }
+
+private fun PaddingValues.withTopRemoved(layoutDirection: LayoutDirection): PaddingValues = PaddingValues(
+    start = calculateStartPadding(layoutDirection),
+    top = 0.dp,
+    end = calculateEndPadding(layoutDirection),
+    bottom = calculateBottomPadding(),
+)
