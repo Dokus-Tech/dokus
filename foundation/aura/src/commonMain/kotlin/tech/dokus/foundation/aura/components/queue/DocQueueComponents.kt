@@ -24,7 +24,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.a11y_back_to_all_documents
@@ -56,35 +55,38 @@ fun DocQueueHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 10.dp),
+            .padding(
+                horizontal = Constraints.Spacing.medium,
+                vertical = Constraints.Spacing.small,
+            ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val backDescription = stringResource(Res.string.a11y_back_to_all_documents)
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
             modifier = Modifier
                 .semantics { contentDescription = backDescription }
                 .clickable(onClick = onExit),
         ) {
             Text(
                 text = "\u2039",
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
                 text = stringResource(Res.string.document_queue_all_docs),
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
             )
         }
         Text(
             text = positionText,
-            fontSize = 10.sp,
-            fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.textFaint,
         )
     }
@@ -174,7 +176,6 @@ fun DocQueueItemRow(
         Text(
             text = amount,
             style = MaterialTheme.typography.labelMedium,
-            fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
         )

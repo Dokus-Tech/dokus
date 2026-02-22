@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.document_detail_locked
 import tech.dokus.aura.resources.document_detail_vendor_fallback
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.Money
@@ -47,10 +49,10 @@ import tech.dokus.foundation.app.shell.amountLocalized
 import tech.dokus.foundation.app.shell.colorized
 import tech.dokus.foundation.app.shell.dateLocalized
 import tech.dokus.foundation.app.shell.dotType
-import tech.dokus.foundation.app.shell.localized
 import tech.dokus.foundation.app.shell.statusLocalized
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.common.KeyboardNavigationHint
+import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.components.queue.DocQueueHeader
 import tech.dokus.foundation.aura.components.queue.DocQueueItemRow
 import tech.dokus.foundation.aura.components.status.StatusDot
@@ -133,10 +135,6 @@ internal fun DocumentReviewDesktopSplit(
                     DetailTitleBar(
                         vendorName = selectedDoc?.vendorName?.value
                             ?: stringResource(Res.string.document_detail_vendor_fallback),
-                        amount = selectedDoc?.amountLocalized ?: "",
-                        status = selectedDoc?.status ?: DocQueueStatus.Review,
-                        statusLabel = selectedDoc?.status?.localized
-                            ?: DocQueueStatus.Review.localized,
                     )
 
                     CompositionLocalProvider(LocalIsInDocDetailMode provides true) {
@@ -157,14 +155,10 @@ internal fun DocumentReviewDesktopSplit(
 @Composable
 private fun DetailTitleBar(
     vendorName: String,
-    amount: String,
-    status: DocQueueStatus,
-    statusLabel: String,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val spacing = MaterialTheme.dokusSpacing
     val effects = MaterialTheme.dokusEffects
-    val statusColor = status.colorized
 
     Column {
         Row(
@@ -178,7 +172,7 @@ private fun DetailTitleBar(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
                 Text(
                     text = vendorName,
@@ -188,27 +182,18 @@ private fun DetailTitleBar(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text = amount,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
-                    color = colorScheme.textMuted,
-                )
             }
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
-                StatusDot(
-                    type = status.dotType,
-                    size = 5.dp,
-                )
+                LockIcon(modifier = Modifier.size(12.dp))
                 Text(
-                    text = statusLabel,
+                    text = stringResource(Res.string.document_detail_locked),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = statusColor,
+                    color = colorScheme.textMuted,
                 )
             }
         }

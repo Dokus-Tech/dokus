@@ -164,8 +164,8 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleCloseSourceModal() =
         with(preview) { handleCloseSourceModal() }
 
-    suspend fun DocumentReviewCtx.handleToggleSourceRawView() =
-        with(preview) { handleToggleSourceRawView() }
+    suspend fun DocumentReviewCtx.handleToggleSourceTechnicalDetails() =
+        with(preview) { handleToggleSourceTechnicalDetails() }
 
     suspend fun DocumentReviewCtx.handleAddLineItem() =
         with(lineItems) { handleAddLineItem() }

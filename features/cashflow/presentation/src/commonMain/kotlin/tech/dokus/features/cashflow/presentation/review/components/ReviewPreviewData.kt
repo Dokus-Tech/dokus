@@ -11,12 +11,17 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.DocumentMatchReviewStatus
+import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowEntry
@@ -25,6 +30,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.DocumentSourceDto
+import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
@@ -32,7 +38,7 @@ import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
-import tech.dokus.features.cashflow.presentation.review.SourceEvidenceModalState
+import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
 import tech.dokus.foundation.app.state.DokusState
 
 private val previewNow = LocalDateTime(2026, 2, 14, 9, 41, 0)
@@ -50,8 +56,10 @@ internal fun previewReviewContentState(
         dpi = 180,
         hasMore = false,
     ),
-    sourceModalState: SourceEvidenceModalState? = null,
+    sourceViewerState: SourceEvidenceViewerState? = null,
     paymentSheetState: PaymentSheetState? = null,
+    hasCrossMatchedSource: Boolean = true,
+    showPendingMatchReview: Boolean = false,
 ): DocumentReviewState.Content {
     val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
     val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
@@ -145,6 +153,16 @@ internal fun previewReviewContentState(
         latestIngestion = null,
         confirmedEntity = null,
         cashflowEntryId = cashflowEntry?.id,
+        pendingMatchReview = if (showPendingMatchReview) {
+            DocumentMatchReviewSummaryDto(
+                reviewId = DocumentMatchReviewId.generate(),
+                reasonType = DocumentMatchReviewReasonType.MaterialConflict,
+                status = DocumentMatchReviewStatus.Pending,
+                createdAt = previewNow,
+            )
+        } else {
+            null
+        },
         sources = listOf(
             DocumentSourceDto(
                 id = DocumentSourceId.generate(),
@@ -156,6 +174,8 @@ internal fun previewReviewContentState(
                 filename = "KBC_384421507.pdf",
                 contentType = "application/pdf",
                 sizeBytes = 248_200,
+                status = DocumentSourceStatus.Linked,
+                matchType = if (hasCrossMatchedSource) DocumentMatchType.SameContent else null,
             ),
             DocumentSourceDto(
                 id = DocumentSourceId.generate(),
@@ -167,6 +187,8 @@ internal fun previewReviewContentState(
                 filename = "UBL Invoice",
                 contentType = "application/xml",
                 sizeBytes = 4_800,
+                status = DocumentSourceStatus.Linked,
+                matchType = if (hasCrossMatchedSource) DocumentMatchType.SameDocument else null,
             ),
         ),
     )
@@ -183,23 +205,24 @@ internal fun previewReviewContentState(
         isDocumentRejected = false,
         confirmedCashflowEntryId = cashflowEntry?.id,
         cashflowEntryState = cashflowEntry?.let { DokusState.success(it) } ?: DokusState.idle(),
-        sourceModalState = sourceModalState,
+        sourceViewerState = sourceViewerState,
         paymentSheetState = paymentSheetState,
         counterpartyIntent = CounterpartyIntent.None,
     )
 }
 
-internal fun previewSourceEvidenceModalState(
+internal fun previewSourceEvidenceViewerState(
     sourceType: DocumentSource = DocumentSource.Peppol,
     previewState: DocumentPreviewState = DocumentPreviewState.NotPdf,
-    showRawContent: Boolean = false,
+    isTechnicalDetailsExpanded: Boolean = false,
     rawContent: String? = "<Invoice>...</Invoice>",
-): SourceEvidenceModalState = SourceEvidenceModalState(
+): SourceEvidenceViewerState = SourceEvidenceViewerState(
     sourceId = DocumentSourceId.generate(),
     sourceName = if (sourceType == DocumentSource.Peppol) "UBL Invoice" else "Original document",
     sourceType = sourceType,
+    sourceReceivedAt = previewNow,
     previewState = previewState,
-    showRawContent = showRawContent,
+    isTechnicalDetailsExpanded = isTechnicalDetailsExpanded,
     rawContent = rawContent,
 )
 

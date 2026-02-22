@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.CreditNoteDraftData
@@ -83,8 +84,8 @@ internal fun CanonicalCenterPane(
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(
-                        horizontal = Constraints.Spacing.xLarge,
-                        vertical = Constraints.Spacing.xLarge
+                        horizontal = Constraints.Spacing.xxxLarge,
+                        vertical = Constraints.Spacing.xxxLarge
                     ),
                 verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
             ) {
@@ -98,7 +99,7 @@ internal fun CanonicalCenterPane(
                     ) {
                         Text(
                             text = counterparty.name ?: state.document.document.filename,
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.displaySmall.copy(fontSize = 20.sp),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
                         )

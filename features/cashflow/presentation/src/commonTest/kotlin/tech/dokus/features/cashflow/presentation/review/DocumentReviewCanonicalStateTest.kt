@@ -7,13 +7,20 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.DocumentMatchReviewStatus
+import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowEntry
@@ -22,7 +29,9 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.foundation.app.state.DokusState
@@ -91,11 +100,62 @@ class DocumentReviewCanonicalStateTest {
         assertEquals(ReviewFinancialStatus.Review, state.financialStatus)
     }
 
+    @Test
+    fun `overdue days are derived from due date`() {
+        val state = contentState(
+            draftData = invoiceDraft(dueDate = LocalDate(2000, 1, 1)),
+            isDocumentConfirmed = true,
+            cashflowEntryState = DokusState.idle(),
+        )
+
+        assertEquals(ReviewFinancialStatus.Overdue, state.financialStatus)
+        assertTrue((state.overdueDays ?: 0) > 0)
+    }
+
+    @Test
+    fun `cross-match is visible when linked source has trusted match type and no pending review`() {
+        val state = contentState(
+            draftData = invoiceDraft(),
+            sources = listOf(source(matchType = DocumentMatchType.ExactFile)),
+            pendingMatchReview = null,
+        )
+
+        assertTrue(state.hasCrossMatchedSources)
+    }
+
+    @Test
+    fun `cross-match is hidden when pending review exists`() {
+        val state = contentState(
+            draftData = invoiceDraft(),
+            sources = listOf(source(matchType = DocumentMatchType.SameDocument)),
+            pendingMatchReview = pendingReview(),
+        )
+
+        assertFalse(state.hasCrossMatchedSources)
+    }
+
+    @Test
+    fun `cross-match is hidden when source is not linked`() {
+        val state = contentState(
+            draftData = invoiceDraft(),
+            sources = listOf(
+                source(
+                    matchType = DocumentMatchType.SameContent,
+                    status = DocumentSourceStatus.Detached,
+                )
+            ),
+        )
+
+        assertFalse(state.hasCrossMatchedSources)
+    }
+
     private fun contentState(
         draftData: DocumentDraftData,
         ingestionStatus: IngestionStatus? = null,
         isDocumentConfirmed: Boolean = false,
         cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
+        sources: List<DocumentSourceDto> = emptyList(),
+        pendingMatchReview: DocumentMatchReviewSummaryDto? = null,
     ): DocumentReviewState.Content {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
@@ -151,6 +211,8 @@ class DocumentReviewCanonicalStateTest {
             draft = draft,
             latestIngestion = ingestion,
             confirmedEntity = null,
+            pendingMatchReview = pendingMatchReview,
+            sources = sources,
         )
 
         return DocumentReviewState.Content(
@@ -166,10 +228,13 @@ class DocumentReviewCanonicalStateTest {
         )
     }
 
-    private fun invoiceDraft() = InvoiceDraftData(
+    private fun invoiceDraft(
+        issueDate: LocalDate = LocalDate(2026, 2, 10),
+        dueDate: LocalDate = LocalDate(2026, 2, 28),
+    ) = InvoiceDraftData(
         direction = DocumentDirection.Inbound,
-        issueDate = LocalDate(2026, 2, 10),
-        dueDate = LocalDate(2026, 2, 28),
+        issueDate = issueDate,
+        dueDate = dueDate,
         subtotalAmount = Money.from("100.00"),
         vatAmount = Money.from("21.00"),
         totalAmount = Money.from("121.00"),
@@ -207,5 +272,27 @@ class DocumentReviewCanonicalStateTest {
         contactId = null,
         createdAt = LocalDateTime(2026, 2, 11, 0, 0, 0),
         updatedAt = LocalDateTime(2026, 2, 11, 0, 0, 0),
+    )
+
+    private fun source(
+        matchType: DocumentMatchType?,
+        status: DocumentSourceStatus = DocumentSourceStatus.Linked,
+    ) = DocumentSourceDto(
+        id = DocumentSourceId.generate(),
+        tenantId = TenantId.generate(),
+        documentId = DocumentId.generate(),
+        blobId = DocumentBlobId.generate(),
+        sourceChannel = DocumentSource.Upload,
+        arrivalAt = LocalDateTime(2026, 2, 10, 0, 0, 0),
+        status = status,
+        matchType = matchType,
+        filename = "source.pdf",
+    )
+
+    private fun pendingReview() = DocumentMatchReviewSummaryDto(
+        reviewId = DocumentMatchReviewId.generate(),
+        reasonType = DocumentMatchReviewReasonType.MaterialConflict,
+        status = DocumentMatchReviewStatus.Pending,
+        createdAt = LocalDateTime(2026, 2, 10, 0, 0, 0),
     )
 }

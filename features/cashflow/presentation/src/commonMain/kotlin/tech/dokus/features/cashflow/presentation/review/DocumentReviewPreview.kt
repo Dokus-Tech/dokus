@@ -53,10 +53,11 @@ internal class DocumentReviewPreview(
             val source = document.sources.firstOrNull { it.id == sourceId } ?: return@withState
             updateState {
                 copy(
-                    sourceModalState = SourceEvidenceModalState(
+                    sourceViewerState = SourceEvidenceViewerState(
                         sourceId = source.id,
                         sourceName = source.filename ?: source.sourceChannel.name,
                         sourceType = source.sourceChannel,
+                        sourceReceivedAt = source.arrivalAt,
                         previewState = DocumentPreviewState.Loading,
                     )
                 )
@@ -76,20 +77,26 @@ internal class DocumentReviewPreview(
 
     suspend fun DocumentReviewCtx.handleCloseSourceModal() {
         withState<DocumentReviewState.Content, _> {
-            updateState { copy(sourceModalState = null) }
+            updateState { copy(sourceViewerState = null) }
         }
     }
 
-    suspend fun DocumentReviewCtx.handleToggleSourceRawView() {
+    suspend fun DocumentReviewCtx.handleToggleSourceTechnicalDetails() {
         withState<DocumentReviewState.Content, _> {
-            val modal = sourceModalState ?: return@withState
-            val next = !modal.showRawContent
-            updateState { copy(sourceModalState = modal.copy(showRawContent = next)) }
-            if (!next || modal.rawContent != null || modal.isLoadingRawContent) {
+            val viewer = sourceViewerState ?: return@withState
+            val next = !viewer.isTechnicalDetailsExpanded
+            updateState {
+                copy(
+                    sourceViewerState = viewer.copy(
+                        isTechnicalDetailsExpanded = next
+                    )
+                )
+            }
+            if (!next || viewer.rawContent != null || viewer.isLoadingRawContent) {
                 return@withState
             }
             launch {
-                loadSourceRawContent(documentId, modal.sourceId)
+                loadSourceRawContent(documentId, viewer.sourceId)
             }
         }
     }
@@ -105,10 +112,10 @@ internal class DocumentReviewPreview(
         val isPdf = contentType.contains("pdf", ignoreCase = true)
         if (!isPdf) {
             withState<DocumentReviewState.Content, _> {
-                val modal = sourceModalState ?: return@withState
+                val viewer = sourceViewerState ?: return@withState
                 updateState {
                     copy(
-                        sourceModalState = modal.copy(
+                        sourceViewerState = viewer.copy(
                             previewState = if (sourceType == DocumentSource.Peppol) {
                                 DocumentPreviewState.NoPreview
                             } else {
@@ -125,10 +132,10 @@ internal class DocumentReviewPreview(
             .fold(
                 onSuccess = { response ->
                     withState<DocumentReviewState.Content, _> {
-                        val modal = sourceModalState ?: return@withState
+                        val viewer = sourceViewerState ?: return@withState
                         updateState {
                             copy(
-                                sourceModalState = modal.copy(
+                                sourceViewerState = viewer.copy(
                                     previewState = if (response.pages.isEmpty()) {
                                         DocumentPreviewState.NoPreview
                                     } else {
@@ -149,10 +156,10 @@ internal class DocumentReviewPreview(
                     logger.e(error) { "Failed to load source preview pages for source=$sourceId" }
                     val exception = error.asDokusException
                     withState<DocumentReviewState.Content, _> {
-                        val modal = sourceModalState ?: return@withState
+                        val viewer = sourceViewerState ?: return@withState
                         updateState {
                             copy(
-                                sourceModalState = modal.copy(
+                                sourceViewerState = viewer.copy(
                                     previewState = DocumentPreviewState.Error(
                                         exception = if (exception is DokusException.Unknown) {
                                             DokusException.DocumentPreviewLoadFailed
@@ -174,10 +181,10 @@ internal class DocumentReviewPreview(
         sourceId: DocumentSourceId
     ) {
         withState<DocumentReviewState.Content, _> {
-            val modal = sourceModalState ?: return@withState
+            val viewer = sourceViewerState ?: return@withState
             updateState {
                 copy(
-                    sourceModalState = modal.copy(
+                    sourceViewerState = viewer.copy(
                         isLoadingRawContent = true,
                         rawContentError = null,
                     )
@@ -188,11 +195,11 @@ internal class DocumentReviewPreview(
         getDocumentSourceContent(documentId, sourceId).fold(
             onSuccess = { bytes ->
                 withState<DocumentReviewState.Content, _> {
-                    val modal = sourceModalState ?: return@withState
+                    val viewer = sourceViewerState ?: return@withState
                     val raw = runCatching { bytes.decodeToString() }.getOrNull()
                     updateState {
                         copy(
-                            sourceModalState = modal.copy(
+                            sourceViewerState = viewer.copy(
                                 rawContent = raw,
                                 isLoadingRawContent = false,
                                 rawContentError = null,
@@ -204,10 +211,10 @@ internal class DocumentReviewPreview(
             onFailure = { error ->
                 logger.e(error) { "Failed to load source raw content for source=$sourceId" }
                 withState<DocumentReviewState.Content, _> {
-                    val modal = sourceModalState ?: return@withState
+                    val viewer = sourceViewerState ?: return@withState
                     updateState {
                         copy(
-                            sourceModalState = modal.copy(
+                            sourceViewerState = viewer.copy(
                                 isLoadingRawContent = false,
                                 rawContentError = error.asDokusException,
                             )

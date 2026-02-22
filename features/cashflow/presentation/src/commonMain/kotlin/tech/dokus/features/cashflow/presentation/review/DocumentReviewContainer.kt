@@ -131,7 +131,7 @@ internal class DocumentReviewContainer(
                 is DocumentReviewIntent.RetryLoadPreview -> handleLoadPreviewPages()
                 is DocumentReviewIntent.OpenSourceModal -> handleOpenSourceModal(intent.sourceId)
                 is DocumentReviewIntent.CloseSourceModal -> handleCloseSourceModal()
-                is DocumentReviewIntent.ToggleSourceRawView -> handleToggleSourceRawView()
+                is DocumentReviewIntent.ToggleSourceTechnicalDetails -> handleToggleSourceTechnicalDetails()
                 is DocumentReviewIntent.LoadCashflowEntry -> handleLoadCashflowEntry()
                 is DocumentReviewIntent.OpenPaymentSheet -> handleOpenPaymentSheet()
                 is DocumentReviewIntent.ClosePaymentSheet -> handleClosePaymentSheet()

@@ -25,7 +25,7 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object RetryLoadPreview : DocumentReviewIntent
     data class OpenSourceModal(val sourceId: DocumentSourceId) : DocumentReviewIntent
     data object CloseSourceModal : DocumentReviewIntent
-    data object ToggleSourceRawView : DocumentReviewIntent
+    data object ToggleSourceTechnicalDetails : DocumentReviewIntent
     data object LoadCashflowEntry : DocumentReviewIntent
     data object OpenPaymentSheet : DocumentReviewIntent
     data object ClosePaymentSheet : DocumentReviewIntent

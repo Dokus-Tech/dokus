@@ -1,4 +1,4 @@
-package tech.dokus.features.cashflow.presentation.review.components
+package tech.dokus.features.cashflow.presentation.review.components.mobile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,84 +7,88 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.ArrowLeft
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.action_back
 import tech.dokus.aura.resources.document_source_original_document
-import tech.dokus.aura.resources.document_source_received_on
 import tech.dokus.aura.resources.document_source_technical_details
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
+import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceBody
+import tech.dokus.features.cashflow.presentation.review.components.previewReviewContentState
+import tech.dokus.features.cashflow.presentation.review.components.previewSourceEvidenceViewerState
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.colorized
 import tech.dokus.foundation.aura.extensions.localizedUppercase
-import tech.dokus.foundation.aura.extensions.viewerHeaderBackgroundColorized
+import tech.dokus.foundation.aura.extensions.sourceViewerSubtitleLocalized
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
-private const val SourceDialogMaxHeightScale = 1.45f
-
 @Composable
-internal fun SourceEvidenceDialog(
+internal fun MobileSourceViewerScreen(
     contentState: DocumentReviewState.Content,
     viewerState: SourceEvidenceViewerState,
-    onClose: () -> Unit,
+    onBack: () -> Unit,
     onToggleTechnicalDetails: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Dialog(onDismissRequest = onClose) {
-        Surface(
-            modifier = modifier
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        MobileSourceViewerHeader(
+            viewerState = viewerState,
+            onBack = onBack,
+            modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(
-                    min = Constraints.DialogSize.maxWidth,
-                    max = Constraints.DialogSize.maxWidth * SourceDialogMaxHeightScale,
+                .padding(
+                    horizontal = Constraints.Spacing.medium,
+                    vertical = Constraints.Spacing.small,
                 ),
-            shape = MaterialTheme.shapes.medium,
-            color = AlertDialogDefaults.containerColor,
+        )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        DokusCardSurface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(Constraints.Spacing.medium),
         ) {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(Constraints.Spacing.medium),
                 verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
-                SourceDialogHeader(
-                    viewerState = viewerState,
-                    onClose = onClose,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
                 SourceEvidenceBody(
                     contentState = contentState,
                     viewerState = viewerState,
                     onRetry = onRetry,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = Constraints.Spacing.medium),
+                        .weight(1f),
                 )
 
                 if (viewerState.sourceType == DocumentSource.Peppol) {
@@ -93,10 +97,7 @@ internal fun SourceEvidenceDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(onClick = onToggleTechnicalDetails)
-                            .padding(
-                                horizontal = Constraints.Spacing.medium,
-                                vertical = Constraints.Spacing.small,
-                            ),
+                            .padding(vertical = Constraints.Spacing.xSmall),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                     ) {
@@ -118,19 +119,14 @@ internal fun SourceEvidenceDialog(
 }
 
 @Composable
-private fun SourceDialogHeader(
+private fun MobileSourceViewerHeader(
     viewerState: SourceEvidenceViewerState,
-    onClose: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .background(viewerState.sourceType.viewerHeaderBackgroundColorized)
-            .padding(
-                horizontal = Constraints.Spacing.medium,
-                vertical = Constraints.Spacing.small,
-            ),
-        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -139,81 +135,57 @@ private fun SourceDialogHeader(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.clickable(onClick = onBack),
             ) {
-                SourceTypeChip(type = viewerState.sourceType)
-                Text(
-                    text = stringResource(Res.string.document_source_original_document),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-
-            IconButton(onClick = onClose) {
                 PIcon(
-                    icon = Icons.Outlined.Close,
-                    description = stringResource(Res.string.action_close),
-                    tint = MaterialTheme.colorScheme.textMuted,
+                    icon = FeatherIcons.ArrowLeft,
+                    description = stringResource(Res.string.action_back),
+                    tint = MaterialTheme.colorScheme.primary,
                 )
-            }
-        }
-
-        val receivedLabel = viewerState.sourceReceivedAt?.let { receivedAt ->
-            stringResource(
-                Res.string.document_source_received_on,
-                formatShortDate(receivedAt.date),
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = viewerState.sourceName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textMuted,
-            )
-            receivedLabel?.let { label ->
                 Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.textMuted,
+                    text = stringResource(Res.string.action_back),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = Constraints.Spacing.xSmall),
+                )
+            }
+
+            Surface(
+                color = viewerState.sourceType.colorized.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(
+                    text = viewerState.sourceType.localizedUppercase,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = viewerState.sourceType.colorized,
+                    modifier = Modifier.padding(
+                        horizontal = Constraints.Spacing.small,
+                        vertical = Constraints.Spacing.xSmall,
+                    ),
                 )
             }
         }
 
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-    }
-}
-
-@Composable
-private fun SourceTypeChip(type: DocumentSource) {
-    Surface(
-        color = type.viewerHeaderBackgroundColorized,
-        shape = MaterialTheme.shapes.small,
-    ) {
         Text(
-            text = type.localizedUppercase,
-            modifier = Modifier.padding(
-                horizontal = Constraints.Spacing.small,
-                vertical = Constraints.Spacing.xxSmall,
-            ),
-            style = MaterialTheme.typography.labelSmall,
-            color = type.colorized,
+            text = stringResource(Res.string.document_source_original_document),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = viewerState.sourceType.sourceViewerSubtitleLocalized,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.textMuted,
         )
     }
 }
 
 @Preview
 @Composable
-private fun SourceEvidenceDialogPdfPreview(
+private fun MobileSourceViewerPdfPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     TestWrapper(parameters) {
-        SourceEvidenceDialog(
+        MobileSourceViewerScreen(
             contentState = previewReviewContentState(),
             viewerState = previewSourceEvidenceViewerState(
                 sourceType = DocumentSource.Upload,
@@ -225,40 +197,42 @@ private fun SourceEvidenceDialogPdfPreview(
                     hasMore = false,
                 ),
             ),
-            onClose = {},
+            onBack = {},
             onToggleTechnicalDetails = {},
             onRetry = {},
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }
 
 @Preview
 @Composable
-private fun SourceEvidenceDialogPeppolCollapsedPreview(
+private fun MobileSourceViewerPeppolCollapsedPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     TestWrapper(parameters) {
-        SourceEvidenceDialog(
+        MobileSourceViewerScreen(
             contentState = previewReviewContentState(),
             viewerState = previewSourceEvidenceViewerState(
                 sourceType = DocumentSource.Peppol,
                 previewState = DocumentPreviewState.NotPdf,
                 isTechnicalDetailsExpanded = false,
             ),
-            onClose = {},
+            onBack = {},
             onToggleTechnicalDetails = {},
             onRetry = {},
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }
 
 @Preview
 @Composable
-private fun SourceEvidenceDialogPeppolTechnicalPreview(
+private fun MobileSourceViewerPeppolTechnicalPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     TestWrapper(parameters) {
-        SourceEvidenceDialog(
+        MobileSourceViewerScreen(
             contentState = previewReviewContentState(),
             viewerState = previewSourceEvidenceViewerState(
                 sourceType = DocumentSource.Peppol,
@@ -266,9 +240,10 @@ private fun SourceEvidenceDialogPeppolTechnicalPreview(
                 isTechnicalDetailsExpanded = true,
                 rawContent = "<Invoice>\\n  <ID>INV-8847291</ID>\\n</Invoice>",
             ),
-            onClose = {},
+            onBack = {},
             onToggleTechnicalDetails = {},
             onRetry = {},
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }

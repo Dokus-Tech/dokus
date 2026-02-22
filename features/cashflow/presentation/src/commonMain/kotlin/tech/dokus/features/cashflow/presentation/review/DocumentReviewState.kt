@@ -3,7 +3,9 @@ package tech.dokus.features.cashflow.presentation.review
 import androidx.compose.runtime.Immutable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIState
@@ -15,8 +17,10 @@ import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
@@ -28,6 +32,7 @@ import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -56,12 +61,13 @@ data class FeedbackDialogState(
 )
 
 @Immutable
-data class SourceEvidenceModalState(
+data class SourceEvidenceViewerState(
     val sourceId: DocumentSourceId,
     val sourceName: String,
     val sourceType: DocumentSource,
+    val sourceReceivedAt: LocalDateTime? = null,
     val previewState: DocumentPreviewState = DocumentPreviewState.Loading,
-    val showRawContent: Boolean = false,
+    val isTechnicalDetailsExpanded: Boolean = false,
     val rawContent: String? = null,
     val isLoadingRawContent: Boolean = false,
     val rawContentError: DokusException? = null,
@@ -128,7 +134,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val confirmedCashflowEntryId: CashflowEntryId? = null,
         val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
         val isEditMode: Boolean = false,
-        val sourceModalState: SourceEvidenceModalState? = null,
+        val sourceViewerState: SourceEvidenceViewerState? = null,
         val paymentSheetState: PaymentSheetState? = null,
         val rejectDialogState: RejectDialogState? = null,
         val feedbackDialogState: FeedbackDialogState? = null,
@@ -279,19 +285,28 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
             get() = draftData is InvoiceDraftData || draftData is CreditNoteDraftData
 
         val shouldUsePdfFallback: Boolean
-            get() = !canRenderCanonical
+            get() = !canRenderCanonical || isProcessing || isFailed
 
         val financialStatus: ReviewFinancialStatus
             get() {
                 if (isProcessing || hasAttention) return ReviewFinancialStatus.Review
                 val entry = (cashflowEntryState as? DokusState.Success<CashflowEntry>)?.data
+                val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                val isOverdueByDueDate = isDocumentConfirmed &&
+                    (resolvedDueDate?.let { it < today } == true)
                 return when (entry?.status) {
                     CashflowEntryStatus.Paid -> ReviewFinancialStatus.Paid
                     CashflowEntryStatus.Overdue -> ReviewFinancialStatus.Overdue
-                    CashflowEntryStatus.Open -> ReviewFinancialStatus.Unpaid
+                    CashflowEntryStatus.Open -> if (isOverdueByDueDate) {
+                        ReviewFinancialStatus.Overdue
+                    } else {
+                        ReviewFinancialStatus.Unpaid
+                    }
                     CashflowEntryStatus.Cancelled,
                     null -> {
-                        if (isDocumentConfirmed) {
+                        if (isOverdueByDueDate) {
+                            ReviewFinancialStatus.Overdue
+                        } else if (isDocumentConfirmed) {
                             ReviewFinancialStatus.Unpaid
                         } else {
                             ReviewFinancialStatus.Review
@@ -305,6 +320,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                 val entry = (cashflowEntryState as? DokusState.Success<CashflowEntry>)?.data ?: return false
                 return entry.status != CashflowEntryStatus.Paid && !entry.remainingAmount.isZero
             }
+
     }
 
     data class Error(

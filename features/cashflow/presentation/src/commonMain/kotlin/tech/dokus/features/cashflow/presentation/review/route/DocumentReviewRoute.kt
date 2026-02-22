@@ -1,5 +1,12 @@
 package tech.dokus.features.cashflow.presentation.review.route
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -8,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
@@ -39,6 +47,7 @@ import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialo
 import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
 import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceDialog
+import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileSourceViewerScreen
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.app.mvi.container
@@ -217,31 +226,59 @@ internal fun DocumentReviewRoute(
     val selectedDocumentId = state.selectedQueueDocumentIdOrDefault(initialDocumentId)
     val selectedDoc = queueState?.items?.firstOrNull { it.id == selectedDocumentId }
 
-    if (showDesktopSplit) {
-        DocumentReviewDesktopSplit(
-            documents = queueState?.items.orEmpty(),
-            selectedDocumentId = selectedDocumentId,
-            selectedDoc = selectedDoc,
-            hasMore = queueState?.hasMore == true,
-            isLoadingMore = queueState?.isLoadingMore == true,
-            onSelectDocument = { selectedDocumentIdCandidate ->
-                if (selectedDocumentIdCandidate != selectedDocumentId) {
-                    container.store.intent(
-                        DocumentReviewIntent.SelectQueueDocument(selectedDocumentIdCandidate)
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (showDesktopSplit) {
+            DocumentReviewDesktopSplit(
+                documents = queueState?.items.orEmpty(),
+                selectedDocumentId = selectedDocumentId,
+                selectedDoc = selectedDoc,
+                hasMore = queueState?.hasMore == true,
+                isLoadingMore = queueState?.isLoadingMore == true,
+                onSelectDocument = { selectedDocumentIdCandidate ->
+                    if (selectedDocumentIdCandidate != selectedDocumentId) {
+                        container.store.intent(
+                            DocumentReviewIntent.SelectQueueDocument(selectedDocumentIdCandidate)
+                        )
+                    }
+                },
+                onLoadMore = {
+                    container.store.intent(DocumentReviewIntent.LoadMoreQueue)
+                },
+                onExit = {
+                    markDocumentsRefreshRequired()
+                    navController.popBackStack()
+                },
+                content = reviewContent,
+            )
+        } else {
+            reviewContent()
+        }
+
+        if (!isLargeScreen) {
+            AnimatedVisibility(
+                visible = contentState?.sourceViewerState != null,
+                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                val activeContentState = contentState
+                val viewerState = activeContentState?.sourceViewerState
+                if (activeContentState != null && viewerState != null) {
+                    MobileSourceViewerScreen(
+                        contentState = activeContentState,
+                        viewerState = viewerState,
+                        onBack = { container.store.intent(DocumentReviewIntent.CloseSourceModal) },
+                        onToggleTechnicalDetails = {
+                            container.store.intent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
+                        },
+                        onRetry = {
+                            container.store.intent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId))
+                        },
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
-            },
-            onLoadMore = {
-                container.store.intent(DocumentReviewIntent.LoadMoreQueue)
-            },
-            onExit = {
-                markDocumentsRefreshRequired()
-                navController.popBackStack()
-            },
-            content = reviewContent,
-        )
-    } else {
-        reviewContent()
+            }
+        }
     }
 
     // Contact Edit Sheet
@@ -342,14 +379,16 @@ internal fun DocumentReviewRoute(
     }
 
     val content = state as? DocumentReviewState.Content
-    val modalState = content?.sourceModalState
-    if (content != null && modalState != null) {
+    val viewerState = content?.sourceViewerState
+    if (isLargeScreen && content != null && viewerState != null) {
         SourceEvidenceDialog(
             contentState = content,
-            modalState = modalState,
+            viewerState = viewerState,
             onClose = { container.store.intent(DocumentReviewIntent.CloseSourceModal) },
-            onToggleRawView = { container.store.intent(DocumentReviewIntent.ToggleSourceRawView) },
-            onRetry = { container.store.intent(DocumentReviewIntent.OpenSourceModal(modalState.sourceId)) },
+            onToggleTechnicalDetails = {
+                container.store.intent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
+            },
+            onRetry = { container.store.intent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
         )
     }
 

@@ -326,10 +326,25 @@
 
     <!-- Document Detail Mode -->
     <string name="document_detail_confirmed">Confirmed</string>
+    <string name="document_detail_locked">Locked</string>
     <string name="document_detail_needs_review">Needs review</string>
     <string name="document_detail_vendor_fallback">\u2014</string>
     <string name="document_queue_all_docs">All docs</string>
     <string name="document_queue_navigate">navigate</string>
+    <string name="document_source_original_document">Original document</string>
+    <string name="document_source_einvoice_data">E-invoice data</string>
+    <string name="document_source_uploaded_attachment">Uploaded attachment</string>
+    <string name="document_source_structured_einvoice_data">Structured e-invoice data</string>
+    <string name="document_source_technical_details">Technical details</string>
+    <string name="document_source_received_on">Received %1$s</string>
+    <string name="document_sources_independently_verified">Sources independently verified</string>
+    <string name="document_section_payment">Payment</string>
+    <string name="document_payment_paid_on">Paid %1$s</string>
+    <string name="document_payment_due_on">Due %1$s</string>
+    <string name="document_payment_awaiting">Awaiting payment</string>
+    <string name="document_overdue_with_days">Overdue \u00b7 %1$dd</string>
+    <string name="document_overdue_days_inline">%1$dd overdue</string>
+    <string name="document_payment_recorded">Payment recorded</string>
 
     <!-- Document Review -->
     <string name="cashflow_document_review_title">Document Review</string>
