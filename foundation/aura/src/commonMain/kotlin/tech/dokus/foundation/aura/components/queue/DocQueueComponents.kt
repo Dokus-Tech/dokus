@@ -34,6 +34,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.style.surfaceHover
+import tech.dokus.foundation.aura.style.statusConfirmed
+import tech.dokus.foundation.aura.style.statusError
+import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -95,7 +98,9 @@ fun DocQueueItemRow(
     vendorName: String,
     date: String,
     amount: String,
-    isConfirmed: Boolean,
+    statusDotType: StatusDotType,
+    statusTextColor: Color,
+    statusDetail: String?,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -126,7 +131,7 @@ fun DocQueueItemRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         StatusDot(
-            type = if (isConfirmed) StatusDotType.Confirmed else StatusDotType.Warning,
+            type = statusDotType,
             size = 5.dp,
         )
 
@@ -140,12 +145,27 @@ fun DocQueueItemRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(1.dp))
-            Text(
-                text = date,
-                fontSize = 9.sp,
-                fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
-                color = MaterialTheme.colorScheme.textMuted,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Text(
+                    text = date,
+                    fontSize = 9.sp,
+                    fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                    color = MaterialTheme.colorScheme.textMuted,
+                )
+                statusDetail?.takeIf { it.isNotBlank() }?.let { detail ->
+                    Text(
+                        text = detail,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = statusTextColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
 
         Text(
@@ -188,7 +208,9 @@ private fun DocQueueItemRowPreview(
                 vendorName = "Acme Corp",
                 date = "Feb 15",
                 amount = "1,250.00",
-                isConfirmed = false,
+                statusDotType = StatusDotType.Warning,
+                statusTextColor = MaterialTheme.colorScheme.statusWarning,
+                statusDetail = "Needs review",
                 isSelected = true,
                 onClick = {},
             )
@@ -196,7 +218,9 @@ private fun DocQueueItemRowPreview(
                 vendorName = "Tech Solutions",
                 date = "Feb 14",
                 amount = "890.50",
-                isConfirmed = true,
+                statusDotType = StatusDotType.Confirmed,
+                statusTextColor = MaterialTheme.colorScheme.statusConfirmed,
+                statusDetail = "Paid",
                 isSelected = false,
                 onClick = {},
             )

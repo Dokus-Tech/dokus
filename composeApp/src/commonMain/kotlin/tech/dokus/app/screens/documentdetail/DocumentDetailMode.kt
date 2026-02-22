@@ -25,12 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.foundation.app.shell.DocQueueItem
+import tech.dokus.foundation.app.shell.DocQueueStatus
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.document_detail_confirmed
-import tech.dokus.aura.resources.document_detail_needs_review
 import tech.dokus.aura.resources.document_detail_vendor_fallback
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
@@ -39,6 +38,9 @@ import tech.dokus.foundation.aura.style.glass
 import tech.dokus.foundation.aura.style.glassBorder
 import tech.dokus.foundation.aura.style.glassContent
 import tech.dokus.foundation.aura.style.glassHeader
+import tech.dokus.foundation.aura.style.statusConfirmed
+import tech.dokus.foundation.aura.style.statusError
+import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -117,7 +119,8 @@ internal fun DocumentDetailMode(
                     DetailModeTitleBar(
                         vendorName = selectedDoc?.vendorName ?: stringResource(Res.string.document_detail_vendor_fallback),
                         amount = selectedDoc?.amount ?: "",
-                        isConfirmed = selectedDoc?.isConfirmed ?: false,
+                        status = selectedDoc?.status ?: DocQueueStatus.Review,
+                        statusDetail = selectedDoc?.statusDetail,
                     )
 
                     // Content (NavHost rendering DocumentReviewRoute)
@@ -143,10 +146,12 @@ internal fun DocumentDetailMode(
 private fun DetailModeTitleBar(
     vendorName: String,
     amount: String,
-    isConfirmed: Boolean,
+    status: DocQueueStatus,
+    statusDetail: String?,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val statusColor = if (isConfirmed) colorScheme.tertiary else colorScheme.primary
+    val statusColor = status.color()
+    val statusText = statusDetail ?: status.defaultLabel()
 
     Row(
         modifier = Modifier
@@ -182,14 +187,11 @@ private fun DetailModeTitleBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             StatusDot(
-                type = if (isConfirmed) StatusDotType.Confirmed else StatusDotType.Warning,
+                type = status.dotType(),
                 size = 5.dp,
             )
             Text(
-                text = stringResource(
-                    if (isConfirmed) Res.string.document_detail_confirmed
-                    else Res.string.document_detail_needs_review
-                ),
+                text = statusText,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = statusColor,
@@ -219,14 +221,16 @@ private fun DocumentDetailModePreview(
             vendorName = "Acme Corp",
             amount = "1,250.00",
             date = "Feb 15",
-            isConfirmed = false,
+            status = DocQueueStatus.Review,
+            statusDetail = "Review",
         ),
         DocQueueItem(
             id = docId2,
             vendorName = "Tech Solutions",
             amount = "890.50",
             date = "Feb 14",
-            isConfirmed = true,
+            status = DocQueueStatus.Paid,
+            statusDetail = "Paid",
         ),
     )
     TestWrapper(parameters) {
@@ -245,4 +249,29 @@ private fun DocumentDetailModePreview(
             }
         )
     }
+}
+
+@Composable
+private fun DocQueueStatus.color() = when (this) {
+    DocQueueStatus.Paid -> MaterialTheme.colorScheme.statusConfirmed
+    DocQueueStatus.Overdue -> MaterialTheme.colorScheme.statusError
+    DocQueueStatus.Review -> MaterialTheme.colorScheme.statusWarning
+    DocQueueStatus.Unpaid -> MaterialTheme.colorScheme.textMuted
+    DocQueueStatus.Processing -> MaterialTheme.colorScheme.statusWarning
+}
+
+private fun DocQueueStatus.dotType(): StatusDotType = when (this) {
+    DocQueueStatus.Paid -> StatusDotType.Confirmed
+    DocQueueStatus.Overdue -> StatusDotType.Error
+    DocQueueStatus.Review -> StatusDotType.Warning
+    DocQueueStatus.Unpaid -> StatusDotType.Empty
+    DocQueueStatus.Processing -> StatusDotType.Warning
+}
+
+private fun DocQueueStatus.defaultLabel(): String = when (this) {
+    DocQueueStatus.Paid -> "Paid"
+    DocQueueStatus.Unpaid -> "Unpaid"
+    DocQueueStatus.Overdue -> "Overdue"
+    DocQueueStatus.Review -> "Review"
+    DocQueueStatus.Processing -> "Processing"
 }

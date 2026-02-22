@@ -36,7 +36,9 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
 import tech.dokus.features.cashflow.presentation.review.components.DocumentReviewDesktopSplit
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
+import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
+import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.app.mvi.container
@@ -336,6 +338,38 @@ internal fun DocumentReviewRoute(
             onDismiss = {
                 container.store.intent(DocumentReviewIntent.DismissRejectDialog)
             },
+        )
+    }
+
+    val content = state as? DocumentReviewState.Content
+    val modalState = content?.sourceModalState
+    if (content != null && modalState != null) {
+        SourceEvidenceDialog(
+            contentState = content,
+            modalState = modalState,
+            onClose = { container.store.intent(DocumentReviewIntent.CloseSourceModal) },
+            onToggleRawView = { container.store.intent(DocumentReviewIntent.ToggleSourceRawView) },
+            onRetry = { container.store.intent(DocumentReviewIntent.OpenSourceModal(modalState.sourceId)) },
+        )
+    }
+
+    content?.paymentSheetState?.let { paymentState ->
+        val currencySign = when (val data = content.draftData) {
+            is tech.dokus.domain.model.InvoiceDraftData -> data.currency.displaySign
+            is tech.dokus.domain.model.CreditNoteDraftData -> data.currency.displaySign
+            else -> "\u20AC"
+        }
+        RecordPaymentDialog(
+            sheetState = paymentState,
+            currencySign = currencySign,
+            onAmountChange = { amount ->
+                container.store.intent(DocumentReviewIntent.UpdatePaymentAmountText(amount))
+            },
+            onNoteChange = { note ->
+                container.store.intent(DocumentReviewIntent.UpdatePaymentNote(note))
+            },
+            onSubmit = { container.store.intent(DocumentReviewIntent.SubmitPayment) },
+            onDismiss = { container.store.intent(DocumentReviewIntent.ClosePaymentSheet) },
         )
     }
 }

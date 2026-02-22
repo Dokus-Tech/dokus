@@ -1,23 +1,31 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import pro.respawn.flowmvi.dsl.withState
+import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewActions(
@@ -27,11 +35,35 @@ internal class DocumentReviewActions(
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
     private val getDocumentRecord: GetDocumentRecordUseCase,
+    private val getCashflowEntry: GetCashflowEntryUseCase,
+    private val recordCashflowPayment: RecordCashflowPaymentUseCase,
     private val logger: Logger,
 ) {
+    suspend fun DocumentReviewCtx.handleEnterEditMode() {
+        withState<DocumentReviewState.Content, _> {
+            if (isDocumentConfirmed || isDocumentRejected || isProcessing) return@withState
+            updateState { copy(isEditMode = true) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleCancelEditMode() {
+        withState<DocumentReviewState.Content, _> {
+            updateState {
+                copy(
+                    draftData = if (hasUnsavedChanges) originalData else draftData,
+                    hasUnsavedChanges = false,
+                    isEditMode = false,
+                )
+            }
+        }
+    }
+
     suspend fun DocumentReviewCtx.handleSaveDraft() {
         withState<DocumentReviewState.Content, _> {
-            if (!hasUnsavedChanges) return@withState
+            if (!hasUnsavedChanges) {
+                updateState { copy(isEditMode = false) }
+                return@withState
+            }
 
             val updatedData = draftData
             if (updatedData == null) {
@@ -50,7 +82,13 @@ internal class DocumentReviewActions(
                     onSuccess = {
                         refreshAfterDraftUpdate(documentId)
                         withState<DocumentReviewState.Content, _> {
-                            updateState { copy(isSaving = false, hasUnsavedChanges = false) }
+                            updateState {
+                                copy(
+                                    isSaving = false,
+                                    hasUnsavedChanges = false,
+                                    isEditMode = false,
+                                )
+                            }
                         }
                         action(DocumentReviewAction.ShowSuccess(DocumentReviewSuccess.DraftSaved))
                     },
@@ -146,6 +184,7 @@ internal class DocumentReviewActions(
                                     originalData = draft?.extractedData,
                                     hasUnsavedChanges = false,
                                     isConfirming = false,
+                                    isEditMode = false,
                                     isDocumentConfirmed = isConfirmed,
                                     isDocumentRejected = isRejected,
                                     confirmedCashflowEntryId = cashflowEntryId,
@@ -158,6 +197,9 @@ internal class DocumentReviewActions(
                                     }
                                 )
                             }
+                        }
+                        if (cashflowEntryId != null) {
+                            intent(DocumentReviewIntent.LoadCashflowEntry)
                         }
                         action(DocumentReviewAction.ShowSuccess(DocumentReviewSuccess.DocumentConfirmed))
                     },
@@ -297,12 +339,161 @@ internal class DocumentReviewActions(
         }
     }
 
+    suspend fun DocumentReviewCtx.handleLoadCashflowEntry() {
+        withState<DocumentReviewState.Content, _> {
+            val entryId = confirmedCashflowEntryId ?: document.cashflowEntryId ?: return@withState
+            updateState { copy(cashflowEntryState = DokusState.loading()) }
+            launch {
+                getCashflowEntry(entryId).fold(
+                    onSuccess = { entry ->
+                        withState<DocumentReviewState.Content, _> {
+                            updateState {
+                                copy(
+                                    cashflowEntryState = DokusState.success(entry),
+                                    confirmedCashflowEntryId = entry.id,
+                                )
+                            }
+                        }
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Failed to load cashflow entry: $entryId" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState {
+                                copy(
+                                    cashflowEntryState = DokusState.error(
+                                        exception = error.asDokusException,
+                                        retryHandler = { intent(DocumentReviewIntent.LoadCashflowEntry) }
+                                    )
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleOpenPaymentSheet() {
+        withState<DocumentReviewState.Content, _> {
+            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? tech.dokus.domain.model.CashflowEntry ?: run {
+                intent(DocumentReviewIntent.LoadCashflowEntry)
+                return@withState
+            }
+            updateState {
+                copy(
+                    paymentSheetState = PaymentSheetState(
+                        amountText = entry.remainingAmount.toDisplayString(),
+                        amount = entry.remainingAmount
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleClosePaymentSheet() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(paymentSheetState = null) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleUpdatePaymentAmountText(text: String) {
+        withState<DocumentReviewState.Content, _> {
+            val sheet = paymentSheetState ?: return@withState
+            updateState {
+                copy(
+                    paymentSheetState = sheet.copy(
+                        amountText = text,
+                        amount = Money.from(text),
+                        amountError = null
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleUpdatePaymentPaidAt(date: LocalDate) {
+        withState<DocumentReviewState.Content, _> {
+            val sheet = paymentSheetState ?: return@withState
+            updateState { copy(paymentSheetState = sheet.copy(paidAt = date)) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleUpdatePaymentNote(note: String) {
+        withState<DocumentReviewState.Content, _> {
+            val sheet = paymentSheetState ?: return@withState
+            updateState { copy(paymentSheetState = sheet.copy(note = note)) }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleSubmitPayment() {
+        withState<DocumentReviewState.Content, _> {
+            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? tech.dokus.domain.model.CashflowEntry
+                ?: return@withState
+            val sheet = paymentSheetState ?: return@withState
+
+            val amount = sheet.amount
+            if (amount == null || !amount.isPositive) {
+                updateState {
+                    copy(paymentSheetState = sheet.copy(amountError = "Amount must be positive"))
+                }
+                return@withState
+            }
+            if (amount > entry.remainingAmount) {
+                updateState {
+                    copy(paymentSheetState = sheet.copy(amountError = "Amount exceeds remaining"))
+                }
+                return@withState
+            }
+
+            updateState { copy(paymentSheetState = sheet.copy(isSubmitting = true, amountError = null)) }
+            launch {
+                recordCashflowPayment(
+                    entryId = entry.id,
+                    request = CashflowPaymentRequest(
+                        amount = amount,
+                        paidAt = LocalDateTime(sheet.paidAt, LocalTime(0, 0)),
+                        note = sheet.note.ifBlank { null }
+                    )
+                ).fold(
+                    onSuccess = { updatedEntry ->
+                        withState<DocumentReviewState.Content, _> {
+                            updateState {
+                                copy(
+                                    cashflowEntryState = DokusState.success(updatedEntry),
+                                    paymentSheetState = null,
+                                )
+                            }
+                        }
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Failed to record payment: ${entry.id}" }
+                        withState<DocumentReviewState.Content, _> {
+                            val currentSheet = paymentSheetState
+                            if (currentSheet != null) {
+                                updateState {
+                                    copy(
+                                        paymentSheetState = currentSheet.copy(isSubmitting = false),
+                                    )
+                                }
+                            }
+                        }
+                        action(DocumentReviewAction.ShowError(error.asDokusException))
+                    }
+                )
+            }
+        }
+    }
+
     // === Feedback Dialog Handlers ===
 
     suspend fun DocumentReviewCtx.handleShowFeedbackDialog() {
         withState<DocumentReviewState.Content, _> {
             updateState { copy(feedbackDialogState = FeedbackDialogState()) }
         }
+    }
+
+    suspend fun DocumentReviewCtx.handleRequestAmendment() {
+        handleShowFeedbackDialog()
     }
 
     suspend fun DocumentReviewCtx.handleDismissFeedbackDialog() {
@@ -447,10 +638,14 @@ internal class DocumentReviewActions(
                             draftData = draft?.extractedData,
                             originalData = draft?.extractedData,
                             counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
+                            confirmedCashflowEntryId = record.cashflowEntryId,
                             isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
                             isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected
                         )
                     }
+                }
+                if (record.cashflowEntryId != null) {
+                    intent(DocumentReviewIntent.LoadCashflowEntry)
                 }
             },
             onFailure = { error ->

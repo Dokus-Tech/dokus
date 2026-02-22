@@ -675,15 +675,53 @@ internal class CashflowRemoteDataSourceImpl(
                 Documents.Id.Pages(parent = docIdRoute, dpi = dpi, maxPages = maxPages)
             ).body()
 
-            // Convert relative URLs to full URLs for authenticated image loading
-            val endpoint = endpointProvider.currentEndpointSnapshot()
-            val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
-            response.copy(
-                pages = response.pages.map { page ->
-                    page.copy(imageUrl = "$baseUrl${page.imageUrl}")
-                }
-            )
+            withAbsolutePageUrls(response)
         }
+    }
+
+    override suspend fun getDocumentSourceContent(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId
+    ): Result<ByteArray> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.get(
+                Documents.Id.SourceContent(
+                    parent = docIdRoute,
+                    sourceId = sourceId.toString()
+                )
+            ).body()
+        }
+    }
+
+    override suspend fun getDocumentSourcePages(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId,
+        dpi: Int,
+        maxPages: Int
+    ): Result<DocumentPagesResponse> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            val response: DocumentPagesResponse = httpClient.get(
+                Documents.Id.SourcePages(
+                    parent = docIdRoute,
+                    sourceId = sourceId.toString(),
+                    dpi = dpi,
+                    maxPages = maxPages
+                )
+            ).body()
+            withAbsolutePageUrls(response)
+        }
+    }
+
+    private fun withAbsolutePageUrls(response: DocumentPagesResponse): DocumentPagesResponse {
+        val endpoint = endpointProvider.currentEndpointSnapshot()
+        val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
+        return response.copy(
+            pages = response.pages.map { page ->
+                page.copy(imageUrl = "$baseUrl${page.imageUrl}")
+            }
+        )
     }
 
     // ============================================================================

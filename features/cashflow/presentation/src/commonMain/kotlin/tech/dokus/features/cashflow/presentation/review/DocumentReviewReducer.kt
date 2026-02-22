@@ -7,13 +7,18 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
+import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
@@ -32,12 +37,21 @@ internal class DocumentReviewReducer(
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
     private val getDocumentPages: GetDocumentPagesUseCase,
+    private val getDocumentSourcePages: GetDocumentSourcePagesUseCase,
+    private val getDocumentSourceContent: GetDocumentSourceContentUseCase,
+    private val getCashflowEntry: GetCashflowEntryUseCase,
+    private val recordCashflowPayment: RecordCashflowPaymentUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
     private val loader = DocumentReviewLoader(getDocumentRecord, getContact, logger)
     private val contactBinder = DocumentReviewContactBinder(updateDocumentDraftContact, getContact, logger)
-    private val preview = DocumentReviewPreview(getDocumentPages, logger)
+    private val preview = DocumentReviewPreview(
+        getDocumentPages = getDocumentPages,
+        getDocumentSourcePages = getDocumentSourcePages,
+        getDocumentSourceContent = getDocumentSourceContent,
+        logger = logger
+    )
     private val lineItems = DocumentReviewLineItems()
     private val provenance = DocumentReviewProvenance()
     private val actions = DocumentReviewActions(
@@ -47,6 +61,8 @@ internal class DocumentReviewReducer(
         reprocessDocument,
         resolveDocumentMatchReview,
         getDocumentRecord,
+        getCashflowEntry,
+        recordCashflowPayment,
         logger
     )
 
@@ -117,12 +133,6 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleSetCounterpartyIntent(intent: tech.dokus.domain.enums.CounterpartyIntent) =
         with(contactBinder) { handleSetCounterpartyIntent(intent) }
 
-    suspend fun DocumentReviewCtx.handleOpenPreviewSheet() =
-        with(preview) { handleOpenPreviewSheet() }
-
-    suspend fun DocumentReviewCtx.handleClosePreviewSheet() =
-        with(preview) { handleClosePreviewSheet() }
-
     // Contact sheet handlers
     suspend fun DocumentReviewCtx.handleOpenContactSheet() =
         with(contactBinder) { handleOpenContactSheet() }
@@ -139,6 +149,15 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleLoadMorePages(maxPages: Int) =
         with(preview) { handleLoadMorePages(maxPages) }
 
+    suspend fun DocumentReviewCtx.handleOpenSourceModal(sourceId: DocumentSourceId) =
+        with(preview) { handleOpenSourceModal(sourceId) }
+
+    suspend fun DocumentReviewCtx.handleCloseSourceModal() =
+        with(preview) { handleCloseSourceModal() }
+
+    suspend fun DocumentReviewCtx.handleToggleSourceRawView() =
+        with(preview) { handleToggleSourceRawView() }
+
     suspend fun DocumentReviewCtx.handleAddLineItem() =
         with(lineItems) { handleAddLineItem() }
 
@@ -150,6 +169,12 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleSelectFieldForProvenance(fieldPath: String?) =
         with(provenance) { handleSelectFieldForProvenance(fieldPath) }
+
+    suspend fun DocumentReviewCtx.handleEnterEditMode() =
+        with(actions) { handleEnterEditMode() }
+
+    suspend fun DocumentReviewCtx.handleCancelEditMode() =
+        with(actions) { handleCancelEditMode() }
 
     suspend fun DocumentReviewCtx.handleSaveDraft() =
         with(actions) { handleSaveDraft() }
@@ -188,6 +213,27 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleViewEntity() =
         with(actions) { handleViewEntity() }
 
+    suspend fun DocumentReviewCtx.handleLoadCashflowEntry() =
+        with(actions) { handleLoadCashflowEntry() }
+
+    suspend fun DocumentReviewCtx.handleOpenPaymentSheet() =
+        with(actions) { handleOpenPaymentSheet() }
+
+    suspend fun DocumentReviewCtx.handleClosePaymentSheet() =
+        with(actions) { handleClosePaymentSheet() }
+
+    suspend fun DocumentReviewCtx.handleUpdatePaymentAmountText(text: String) =
+        with(actions) { handleUpdatePaymentAmountText(text) }
+
+    suspend fun DocumentReviewCtx.handleUpdatePaymentPaidAt(date: kotlinx.datetime.LocalDate) =
+        with(actions) { handleUpdatePaymentPaidAt(date) }
+
+    suspend fun DocumentReviewCtx.handleUpdatePaymentNote(note: String) =
+        with(actions) { handleUpdatePaymentNote(note) }
+
+    suspend fun DocumentReviewCtx.handleSubmitPayment() =
+        with(actions) { handleSubmitPayment() }
+
     // Feedback dialog handlers
     suspend fun DocumentReviewCtx.handleShowFeedbackDialog() =
         with(actions) { handleShowFeedbackDialog() }
@@ -200,6 +246,9 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleSubmitFeedback() =
         with(actions) { handleSubmitFeedback() }
+
+    suspend fun DocumentReviewCtx.handleRequestAmendment() =
+        with(actions) { handleRequestAmendment() }
 
     // Failed analysis handlers
     suspend fun DocumentReviewCtx.handleRetryAnalysis() =

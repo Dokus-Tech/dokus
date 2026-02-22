@@ -6,12 +6,21 @@ import tech.dokus.domain.ids.DocumentId
 /**
  * Queue item for the document detail mode sidebar.
  */
+enum class DocQueueStatus {
+    Paid,
+    Unpaid,
+    Overdue,
+    Review,
+    Processing,
+}
+
 data class DocQueueItem(
     val id: DocumentId,
     val vendorName: String,
     val date: String,
     val amount: String,
-    val isConfirmed: Boolean,
+    val status: DocQueueStatus,
+    val statusDetail: String? = null,
 )
 
 /**

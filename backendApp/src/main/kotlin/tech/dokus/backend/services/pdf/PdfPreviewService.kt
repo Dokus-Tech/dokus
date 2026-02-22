@@ -22,7 +22,8 @@ import javax.imageio.ImageIO
  * provides pre-rendered page images via authenticated API endpoints.
  *
  * Caching:
- * - Rendered pages are cached in MinIO at: pdf_previews/{tenantId}/{documentId}/dpi-{dpi}/page-{page}.png
+ * - Rendered pages are cached in MinIO at:
+ *   pdf_previews/{tenantId}/{documentId}/{cacheScope}/dpi-{dpi}/page-{page}.png
  * - Cache is checked before rendering; repeat requests serve cached images
  * - No cache invalidation needed (PDFs are immutable)
  *
@@ -57,10 +58,19 @@ class PdfPreviewService(
 
     /**
      * Generate cache key for a rendered page.
-     * Format: pdf_previews/{tenantId}/{documentId}/dpi-{dpi}/page-{page}.png
+     * Format: pdf_previews/{tenantId}/{documentId}/{cacheScope}/dpi-{dpi}/page-{page}.png
      */
-    fun generateCacheKey(tenantId: TenantId, documentId: DocumentId, dpi: Int, page: Int): String {
-        return "$CACHE_PREFIX/$tenantId/$documentId/dpi-$dpi/page-$page.png"
+    fun generateCacheKey(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        dpi: Int,
+        page: Int,
+        cacheScope: String = "default"
+    ): String {
+        val normalizedScope = cacheScope
+            .lowercase()
+            .replace("[^a-z0-9._-]".toRegex(), "_")
+        return "$CACHE_PREFIX/$tenantId/$documentId/$normalizedScope/dpi-$dpi/page-$page.png"
     }
 
     /**
@@ -85,6 +95,7 @@ class PdfPreviewService(
      * @param storageKey Storage key to fetch original PDF
      * @param page 1-based page number
      * @param dpi Resolution for rendering
+     * @param cacheScope Cache namespace to avoid collisions between different source files
      * @return PNG image bytes
      * @throws IllegalArgumentException if page is out of bounds
      */
@@ -93,10 +104,17 @@ class PdfPreviewService(
         documentId: DocumentId,
         storageKey: String,
         page: Int,
-        dpi: Int
+        dpi: Int,
+        cacheScope: String = "default"
     ): ByteArray {
         val clampedDpi = clampDpi(dpi)
-        val cacheKey = generateCacheKey(tenantId, documentId, clampedDpi, page)
+        val cacheKey = generateCacheKey(
+            tenantId = tenantId,
+            documentId = documentId,
+            dpi = clampedDpi,
+            page = page,
+            cacheScope = cacheScope
+        )
 
         // Check cache first
         if (objectStorage.exists(cacheKey)) {
@@ -132,6 +150,7 @@ class PdfPreviewService(
      * @param storageKey Storage key to fetch original PDF
      * @param dpi Resolution for rendered pages
      * @param maxPages Maximum pages to include in response
+     * @param pageImageBasePath Base path for page image URLs (without trailing slash)
      * @return DocumentPagesResponse with page metadata and URLs
      */
     suspend fun listPages(
@@ -139,7 +158,8 @@ class PdfPreviewService(
         documentId: DocumentId,
         storageKey: String,
         dpi: Int,
-        maxPages: Int
+        maxPages: Int,
+        pageImageBasePath: String = "/api/v1/documents/$documentId/pages"
     ): DocumentPagesResponse {
         val clampedDpi = clampDpi(dpi)
         val clampedMaxPages = clampMaxPages(maxPages)
@@ -150,7 +170,7 @@ class PdfPreviewService(
         val pages = (1..renderedPages).map { pageNum ->
             DocumentPagePreviewDto(
                 page = pageNum,
-                imageUrl = "/api/v1/documents/$documentId/pages/$pageNum.png?dpi=$clampedDpi"
+                imageUrl = "$pageImageBasePath/$pageNum.png?dpi=$clampedDpi"
             )
         }
 

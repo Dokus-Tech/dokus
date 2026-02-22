@@ -34,6 +34,8 @@ import tech.dokus.features.cashflow.usecase.GetChatConfigurationUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetChatSessionHistoryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentPagesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentRecordUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetDocumentSourceContentUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetDocumentSourcePagesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetPeppolSettingsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetPeppolTransmissionForInvoiceUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ListChatSessionsUseCaseImpl
@@ -72,6 +74,8 @@ import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
 import tech.dokus.features.cashflow.usecases.GetChatSessionHistoryUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolSettingsUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolTransmissionForInvoiceUseCase
 import tech.dokus.features.cashflow.usecases.ListChatSessionsUseCase
@@ -157,6 +161,8 @@ val cashflowNetworkModule = module {
     singleOf(::ConfirmDocumentUseCaseImpl) bind ConfirmDocumentUseCase::class
     singleOf(::RejectDocumentUseCaseImpl) bind RejectDocumentUseCase::class
     singleOf(::GetDocumentPagesUseCaseImpl) bind GetDocumentPagesUseCase::class
+    singleOf(::GetDocumentSourcePagesUseCaseImpl) bind GetDocumentSourcePagesUseCase::class
+    singleOf(::GetDocumentSourceContentUseCaseImpl) bind GetDocumentSourceContentUseCase::class
     singleOf(::ReprocessDocumentUseCaseImpl) bind ReprocessDocumentUseCase::class
     singleOf(::ResolveDocumentMatchReviewUseCaseImpl) bind ResolveDocumentMatchReviewUseCase::class
 

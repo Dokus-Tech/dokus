@@ -524,6 +524,26 @@ interface CashflowRemoteDataSource {
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 
+    /**
+     * Download source bytes for a specific evidence source.
+     * GET /api/v1/documents/{id}/sources/{sourceId}/content
+     */
+    suspend fun getDocumentSourceContent(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId
+    ): Result<ByteArray>
+
+    /**
+     * Get available PDF pages for a specific source.
+     * GET /api/v1/documents/{id}/sources/{sourceId}/pages?dpi={dpi}&maxPages={maxPages}
+     */
+    suspend fun getDocumentSourcePages(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId,
+        dpi: Int = 150,
+        maxPages: Int = 10
+    ): Result<DocumentPagesResponse>
+
     // ============================================================================
     // PEPPOL E-INVOICING
     // ============================================================================

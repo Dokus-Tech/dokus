@@ -131,6 +131,7 @@ internal class DocumentReviewLoader(
                 isContactRequired = extractedData.isContactRequired,
                 isDocumentConfirmed = isDocumentConfirmed,
                 isDocumentRejected = isDocumentRejected,
+                confirmedCashflowEntryId = document.cashflowEntryId,
                 counterpartyIntent = counterpartyIntent,
                 queueState = queueSnapshot.queueState,
                 selectedQueueDocumentId = if (queueSnapshot.queueState != null) documentId else null,
@@ -138,6 +139,9 @@ internal class DocumentReviewLoader(
         }
 
         intent(DocumentReviewIntent.LoadPreviewPages)
+        if (document.cashflowEntryId != null) {
+            intent(DocumentReviewIntent.LoadCashflowEntry)
+        }
 
         if (selectedContactId != null && selectedContactSnapshot == null) {
             fetchContactSnapshot(selectedContactId)

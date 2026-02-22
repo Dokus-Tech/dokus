@@ -4,6 +4,7 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
@@ -51,6 +52,26 @@ internal class DocumentReviewGatewayImpl(
         documentId = documentId,
         dpi = dpi,
         maxPages = maxPages
+    )
+
+    override suspend fun getDocumentSourcePages(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId,
+        dpi: Int,
+        maxPages: Int
+    ) = cashflowRemoteDataSource.getDocumentSourcePages(
+        documentId = documentId,
+        sourceId = sourceId,
+        dpi = dpi,
+        maxPages = maxPages
+    )
+
+    override suspend fun getDocumentSourceContent(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId
+    ) = cashflowRemoteDataSource.getDocumentSourceContent(
+        documentId = documentId,
+        sourceId = sourceId
     )
 
     override suspend fun reprocessDocument(

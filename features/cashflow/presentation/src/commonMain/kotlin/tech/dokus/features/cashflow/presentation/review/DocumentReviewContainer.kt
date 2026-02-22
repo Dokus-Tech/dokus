@@ -12,9 +12,13 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.review.route.toDocQueueItem
 import tech.dokus.features.cashflow.presentation.review.route.toListFilter
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
+import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
@@ -54,6 +58,10 @@ internal class DocumentReviewContainer(
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
     private val getDocumentPages: GetDocumentPagesUseCase,
+    private val getDocumentSourcePages: GetDocumentSourcePagesUseCase,
+    private val getDocumentSourceContent: GetDocumentSourceContentUseCase,
+    private val getCashflowEntry: GetCashflowEntryUseCase,
+    private val recordCashflowPayment: RecordCashflowPaymentUseCase,
     private val getContact: GetContactUseCase,
     private val loadDocumentRecords: LoadDocumentRecordsUseCase,
     private val initialDocumentId: DocumentId,
@@ -70,6 +78,10 @@ internal class DocumentReviewContainer(
         reprocessDocument = reprocessDocument,
         resolveDocumentMatchReview = resolveDocumentMatchReview,
         getDocumentPages = getDocumentPages,
+        getDocumentSourcePages = getDocumentSourcePages,
+        getDocumentSourceContent = getDocumentSourceContent,
+        getCashflowEntry = getCashflowEntry,
+        recordCashflowPayment = recordCashflowPayment,
         getContact = getContact,
         logger = logger,
     )
@@ -117,8 +129,18 @@ internal class DocumentReviewContainer(
                 is DocumentReviewIntent.LoadPreviewPages -> handleLoadPreviewPages()
                 is DocumentReviewIntent.LoadMorePages -> handleLoadMorePages(intent.maxPages)
                 is DocumentReviewIntent.RetryLoadPreview -> handleLoadPreviewPages()
-                is DocumentReviewIntent.OpenPreviewSheet -> handleOpenPreviewSheet()
-                is DocumentReviewIntent.ClosePreviewSheet -> handleClosePreviewSheet()
+                is DocumentReviewIntent.OpenSourceModal -> handleOpenSourceModal(intent.sourceId)
+                is DocumentReviewIntent.CloseSourceModal -> handleCloseSourceModal()
+                is DocumentReviewIntent.ToggleSourceRawView -> handleToggleSourceRawView()
+                is DocumentReviewIntent.LoadCashflowEntry -> handleLoadCashflowEntry()
+                is DocumentReviewIntent.OpenPaymentSheet -> handleOpenPaymentSheet()
+                is DocumentReviewIntent.ClosePaymentSheet -> handleClosePaymentSheet()
+                is DocumentReviewIntent.UpdatePaymentAmountText ->
+                    handleUpdatePaymentAmountText(intent.text)
+                is DocumentReviewIntent.UpdatePaymentPaidAt ->
+                    handleUpdatePaymentPaidAt(intent.date)
+                is DocumentReviewIntent.UpdatePaymentNote -> handleUpdatePaymentNote(intent.note)
+                is DocumentReviewIntent.SubmitPayment -> handleSubmitPayment()
 
                 // === Contact Sheet ===
                 is DocumentReviewIntent.OpenContactSheet -> handleOpenContactSheet()
@@ -143,6 +165,8 @@ internal class DocumentReviewContainer(
                 )
 
                 // === Actions ===
+                is DocumentReviewIntent.EnterEditMode -> handleEnterEditMode()
+                is DocumentReviewIntent.CancelEditMode -> handleCancelEditMode()
                 is DocumentReviewIntent.SaveDraft -> handleSaveDraft()
                 is DocumentReviewIntent.DiscardChanges -> handleDiscardChanges()
                 is DocumentReviewIntent.ConfirmDiscardChanges -> handleConfirmDiscardChanges()
@@ -163,6 +187,7 @@ internal class DocumentReviewContainer(
                 is DocumentReviewIntent.DismissFeedbackDialog -> handleDismissFeedbackDialog()
                 is DocumentReviewIntent.UpdateFeedbackText -> handleUpdateFeedbackText(intent.text)
                 is DocumentReviewIntent.SubmitFeedback -> handleSubmitFeedback()
+                DocumentReviewIntent.RequestAmendment -> handleRequestAmendment()
 
                 // === Failed Analysis ===
                 is DocumentReviewIntent.RetryAnalysis -> handleRetryAnalysis()

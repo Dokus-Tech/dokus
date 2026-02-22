@@ -4,6 +4,7 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
@@ -69,6 +70,28 @@ interface GetDocumentPagesUseCase {
         dpi: Int = 150,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
+}
+
+/**
+ * Use case for loading PDF preview pages for a specific source.
+ */
+interface GetDocumentSourcePagesUseCase {
+    suspend operator fun invoke(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId,
+        dpi: Int = 150,
+        maxPages: Int = 10
+    ): Result<DocumentPagesResponse>
+}
+
+/**
+ * Use case for downloading raw content for a specific source.
+ */
+interface GetDocumentSourceContentUseCase {
+    suspend operator fun invoke(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId
+    ): Result<ByteArray>
 }
 
 /**

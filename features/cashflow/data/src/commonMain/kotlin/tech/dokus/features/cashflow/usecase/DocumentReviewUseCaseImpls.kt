@@ -4,6 +4,7 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
@@ -16,6 +17,8 @@ import tech.dokus.features.cashflow.gateway.DocumentReviewGateway
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
@@ -90,6 +93,38 @@ internal class GetDocumentPagesUseCaseImpl(
             documentId = documentId,
             dpi = dpi,
             maxPages = maxPages
+        )
+    }
+}
+
+internal class GetDocumentSourcePagesUseCaseImpl(
+    private val documentReviewGateway: DocumentReviewGateway
+) : GetDocumentSourcePagesUseCase {
+    override suspend fun invoke(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId,
+        dpi: Int,
+        maxPages: Int
+    ): Result<DocumentPagesResponse> {
+        return documentReviewGateway.getDocumentSourcePages(
+            documentId = documentId,
+            sourceId = sourceId,
+            dpi = dpi,
+            maxPages = maxPages
+        )
+    }
+}
+
+internal class GetDocumentSourceContentUseCaseImpl(
+    private val documentReviewGateway: DocumentReviewGateway
+) : GetDocumentSourceContentUseCase {
+    override suspend fun invoke(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId
+    ): Result<ByteArray> {
+        return documentReviewGateway.getDocumentSourceContent(
+            documentId = documentId,
+            sourceId = sourceId
         )
     }
 }
