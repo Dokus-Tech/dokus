@@ -189,11 +189,11 @@ val ColorScheme.surfaceHover: Color
 // Glass surface tokens (floating windows)
 // Opacity raised vs reference JSX to compensate for missing CSS backdrop-filter: blur(60px).
 val ColorScheme.glass: Color
-    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.82f)
-            else Color.White.copy(alpha = 0.78f)
-val ColorScheme.glassContent: Color
-    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.92f)
+    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.88f)
             else Color.White.copy(alpha = 0.90f)
+val ColorScheme.glassContent: Color
+    get() = if (isDark) Color(0xFF161412).copy(alpha = 0.95f)
+            else Color.White.copy(alpha = 0.95f)
 val ColorScheme.glassBorder: Color
     get() = if (isDark) Color.White.copy(alpha = 0.06f)
             else Color.White.copy(alpha = 0.30f)
