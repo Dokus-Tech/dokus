@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -19,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_awaiting_extraction
@@ -27,6 +28,8 @@ import tech.dokus.aura.resources.cashflow_loading_document
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileCanonicalContent
+import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileCanonicalHeader
+import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileDocumentDetailTopBar
 import tech.dokus.features.cashflow.presentation.review.components.mobile.PreviewTabContent
 import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -34,7 +37,6 @@ import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.withContentPadding
-import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
@@ -235,37 +237,31 @@ private fun MobileFallbackContent(
             .fillMaxSize()
             .withContentPadding(contentPadding, androidx.compose.ui.platform.LocalLayoutDirection.current),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Constraints.Spacing.medium),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Documents",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.statusWarning,
-                modifier = Modifier
-                    .padding(end = Constraints.Spacing.small)
-                    .clickable(onClick = onBackClick),
-            )
-            Text(
-                text = state.document.document.filename ?: "Original document",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        DokusCardSurface(
+        MobileDocumentDetailTopBar(
+            state = state,
+            onBackClick = onBackClick,
+        )
+
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Constraints.Spacing.medium, vertical = Constraints.Spacing.small),
+                .padding(horizontal = Constraints.Spacing.medium)
+                .padding(top = Constraints.Spacing.small),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
-            PreviewTabContent(
-                previewState = state.previewState,
-                showScanAnimation = state.isProcessing,
-                modifier = Modifier.fillMaxSize(),
-            )
+            MobileCanonicalHeader(state = state)
+            Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
+            DokusCardSurface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = Constraints.Spacing.small),
+            ) {
+                PreviewTabContent(
+                    previewState = state.previewState,
+                    showScanAnimation = state.isProcessing,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }

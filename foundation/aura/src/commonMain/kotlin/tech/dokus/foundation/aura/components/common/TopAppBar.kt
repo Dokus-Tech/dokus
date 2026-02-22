@@ -1,6 +1,7 @@
 package tech.dokus.foundation.aura.components.common
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,17 +34,21 @@ fun PTopAppBar(
     title: String,
     navController: NavController? = LocalNavController.current,
     showBackButton: Boolean = true,
+    onBackClick: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         TopAppBar(
             navigationIcon = {
-                val showNav = navController != null &&
-                    navController.previousBackStackEntry != null &&
-                    showBackButton
+                val canNavigateBack = navController != null &&
+                    navController.previousBackStackEntry != null
+                val showNav = showBackButton && (onBackClick != null || canNavigateBack)
                 if (!showNav) return@TopAppBar
                 IconButton(
-                    onClick = { navController.popBackStack() }
+                    onClick = {
+                        onBackClick?.invoke() ?: navController?.popBackStack()
+                    }
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -60,6 +65,7 @@ fun PTopAppBar(
                     overflow = TextOverflow.Ellipsis
                 )
             },
+            actions = actions,
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
                 scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
@@ -82,12 +88,16 @@ fun PTopAppBar(
     title: StringResource,
     navController: NavController? = LocalNavController.current,
     showBackButton: Boolean = true,
+    onBackClick: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     PTopAppBar(
         title = stringResource(resource = title),
         navController = navController,
         showBackButton = showBackButton,
+        onBackClick = onBackClick,
+        actions = actions,
         modifier = modifier
     )
 }

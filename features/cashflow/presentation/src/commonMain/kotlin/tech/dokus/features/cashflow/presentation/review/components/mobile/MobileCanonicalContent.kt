@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -40,50 +41,58 @@ internal fun MobileCanonicalContent(
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(Constraints.Spacing.medium),
-        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+        modifier = modifier.fillMaxSize(),
     ) {
-        MobileCanonicalHeader(
+        MobileDocumentDetailTopBar(
             state = state,
             onBackClick = onBackClick,
         )
 
-        MobileAmountHeroCard(state = state)
-        MobilePaymentStateCard(
-            state = state,
-            onIntent = onIntent,
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Constraints.Spacing.medium)
+                .padding(top = Constraints.Spacing.small),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+        ) {
+            MobileCanonicalHeader(state = state)
 
-        MobileItemsAccordion(
-            state = state,
-            expanded = accordionState["items"] == true,
-            onToggle = { accordionState["items"] = accordionState["items"] != true },
-        )
+            MobileAmountHeroCard(state = state)
+            MobilePaymentStateCard(
+                state = state,
+                onIntent = onIntent,
+            )
 
-        MobileSourcesAccordion(
-            state = state,
-            expanded = accordionState["sources"] == true,
-            onToggle = { accordionState["sources"] = accordionState["sources"] != true },
-            onIntent = onIntent,
-        )
+            MobileItemsAccordion(
+                state = state,
+                expanded = accordionState["items"] == true,
+                onToggle = { accordionState["items"] = accordionState["items"] != true },
+            )
 
-        MobileBankDetailsAccordion(
-            state = state,
-            expanded = accordionState["bank"] == true,
-            onToggle = { accordionState["bank"] = accordionState["bank"] != true },
-        )
+            MobileSourcesAccordion(
+                state = state,
+                expanded = accordionState["sources"] == true,
+                onToggle = { accordionState["sources"] = accordionState["sources"] != true },
+                onIntent = onIntent,
+            )
 
-        MobileNotesAccordion(
-            state = state,
-            expanded = accordionState["notes"] == true,
-            onToggle = { accordionState["notes"] = accordionState["notes"] != true },
-        )
+            MobileBankDetailsAccordion(
+                state = state,
+                expanded = accordionState["bank"] == true,
+                onToggle = { accordionState["bank"] = accordionState["bank"] != true },
+            )
 
-        MobilePagerDots()
-        Spacer(modifier = Modifier.height(Constraints.Spacing.large))
+            MobileNotesAccordion(
+                state = state,
+                expanded = accordionState["notes"] == true,
+                onToggle = { accordionState["notes"] = accordionState["notes"] != true },
+            )
+
+            MobilePagerDots()
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
+        }
     }
 }
 

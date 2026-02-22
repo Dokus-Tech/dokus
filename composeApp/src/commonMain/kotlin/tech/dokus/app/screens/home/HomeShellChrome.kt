@@ -422,7 +422,7 @@ private fun formattedCurrentDate(): String {
         kotlinx.datetime.Clock.System.todayIn(kotlinx.datetime.TimeZone.currentSystemDefault())
     }
     val monthName = shortMonthName(today.month)
-    return "${today.dayOfMonth} $monthName ${today.year}"
+    return "${today.day} $monthName ${today.year}"
 }
 
 @Composable

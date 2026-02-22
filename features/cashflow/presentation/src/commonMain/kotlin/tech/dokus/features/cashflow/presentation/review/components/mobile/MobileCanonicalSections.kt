@@ -2,7 +2,6 @@ package tech.dokus.features.cashflow.presentation.review.components.mobile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,8 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.ArrowLeft
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_needed_to_complete
@@ -59,51 +56,17 @@ private val HeroAccentWidth = 3.5.dp
 @Composable
 internal fun MobileCanonicalHeader(
     state: DocumentReviewState.Content,
-    onBackClick: () -> Unit,
 ) {
     val counterparty = counterpartyInfo(state)
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top,
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(onClick = onBackClick),
-            ) {
-                PIcon(icon = FeatherIcons.ArrowLeft, description = null, tint = MaterialTheme.colorScheme.primary)
-                Text(
-                    text = "Documents",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = Constraints.Spacing.xSmall),
-                )
-            }
-            Text(
-                text = counterparty.name ?: "Unknown vendor",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .background(
-                    color = state.financialStatus.financialStatusColorized.copy(alpha = 0.12f),
-                    shape = RoundedCornerShape(8.dp),
-                )
-                .padding(
-                    horizontal = Constraints.Spacing.small,
-                    vertical = Constraints.Spacing.xSmall,
-                )
-        ) {
-            Text(
-                text = state.statusBadgeLocalized,
-                style = MaterialTheme.typography.labelMedium,
-                color = state.financialStatus.financialStatusColorized,
-            )
-        }
+        Text(
+            text = counterparty.name ?: "Unknown vendor",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
