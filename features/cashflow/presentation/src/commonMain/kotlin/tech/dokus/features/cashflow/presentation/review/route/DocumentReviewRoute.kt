@@ -213,11 +213,13 @@ internal fun DocumentReviewRoute(
     val queueState = state.queueStateOrNull()
     val showDesktopSplit = isLargeScreen && queueState?.items?.isNotEmpty() == true
     val selectedDocumentId = state.selectedQueueDocumentIdOrDefault(initialDocumentId)
+    val selectedDoc = queueState?.items?.firstOrNull { it.id == selectedDocumentId }
 
     if (showDesktopSplit) {
         DocumentReviewDesktopSplit(
             documents = queueState?.items.orEmpty(),
             selectedDocumentId = selectedDocumentId,
+            selectedDoc = selectedDoc,
             hasMore = queueState?.hasMore == true,
             isLoadingMore = queueState?.isLoadingMore == true,
             onSelectDocument = { selectedDocumentIdCandidate ->
