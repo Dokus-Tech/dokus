@@ -72,7 +72,7 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
-import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -366,7 +366,7 @@ private fun RailNavigationLayout(
                         .fillMaxHeight()
                         .padding(16.dp)
                 ) {
-                    AppNameText(modifier = Modifier.padding(bottom = 28.dp))
+                    DokusLogo.Full(modifier = Modifier.padding(bottom = 28.dp))
 
                     DokusNavigationRailSectioned(
                         sections = navSections,

@@ -78,6 +78,7 @@ internal class BootstrapContainer(
         }
 
         // All checks passed, navigate to main
+        completeAllSteps()
         logger.i { "Bootstrap complete, navigating to main" }
         action(BootstrapAction.NavigateToMain)
     }
@@ -93,6 +94,20 @@ internal class BootstrapContainer(
                                 step.isCurrent -> step.copy(isCurrent = false)
                                 else -> step
                             }
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun BootstrapCtx.completeAllSteps() {
+        updateState {
+            when (this) {
+                is BootstrapState.Loading -> {
+                    copy(
+                        steps = steps.map { step ->
+                            step.copy(isActive = true, isCurrent = false)
                         }
                     )
                 }

@@ -45,7 +45,7 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
 import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
-import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
@@ -63,7 +63,7 @@ internal fun LoginScreen(
     val canLogin = state.email.isValid && state.password.isValid
 
     OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Primary) {
-        AppNameText()
+        DokusLogo.Full()
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.xxLarge))
 

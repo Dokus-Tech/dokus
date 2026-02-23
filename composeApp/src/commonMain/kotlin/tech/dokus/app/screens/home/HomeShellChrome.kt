@@ -72,7 +72,7 @@ import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.components.navigation.ProfilePopover
-import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.dokusEffects
 import tech.dokus.foundation.aura.style.dokusSizing
@@ -362,7 +362,7 @@ internal fun MobileShellTopBar(
             .background(MaterialTheme.colorScheme.glassHeader)
     ) {
         TopAppBar(
-            title = { AppNameText() },
+            title = { DokusLogo.Full() },
             actions = {
                 MonogramAvatar(
                     initials = profileData?.initials ?: "",

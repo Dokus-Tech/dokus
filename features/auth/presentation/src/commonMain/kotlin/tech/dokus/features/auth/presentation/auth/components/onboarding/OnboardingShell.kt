@@ -48,7 +48,7 @@ import tech.dokus.aura.resources.playfair_display_semibold
 import tech.dokus.foundation.aura.components.DokusGlassSurface
 import tech.dokus.foundation.aura.components.background.OnboardingBackground
 import tech.dokus.foundation.aura.components.background.OnboardingScene
-import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
@@ -159,7 +159,7 @@ internal fun OnboardingCenteredShell(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            AppNameText()
+            DokusLogo.Full()
 
             Column(
                 modifier = Modifier
@@ -327,7 +327,7 @@ private fun OnboardingSplitShellPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Primary) {
-            AppNameText()
+            DokusLogo.Full()
             Spacer(modifier = Modifier.height(Constraints.Spacing.large))
             Text(
                 text = "Preview content",
