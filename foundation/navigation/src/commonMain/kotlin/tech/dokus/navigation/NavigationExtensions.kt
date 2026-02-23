@@ -69,21 +69,6 @@ fun NavController.navigateTo(
     navigate(deepLink)
 }
 
-@MainThread
-fun <T : Any> NavController.replaceAll(
-    route: T,
-    builder: NavOptionsBuilder.() -> Unit = {},
-) {
-    navigate(route) {
-        currentBackStackEntry?.destination?.route?.let { currentRoute ->
-            popUpTo(route) {
-                inclusive = true
-            }
-        }
-        builder()
-    }
-}
-
 @Composable
 fun rememberSelectedDestination(
     navController: NavController,

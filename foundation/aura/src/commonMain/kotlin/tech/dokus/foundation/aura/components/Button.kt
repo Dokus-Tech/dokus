@@ -239,7 +239,7 @@ fun PBackButton(
 ) {
     Row(
         modifier = modifier
-            .defaultMinSize(minHeight = 44.dp)
+            .defaultMinSize(minHeight = Constraints.Height.button)
             .clickable(onClick = onBackPress)
             .padding(end = Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically,

@@ -6,7 +6,6 @@ import tech.dokus.app.screens.EmptyScreen
 import tech.dokus.app.screens.HomeRoute
 import tech.dokus.app.screens.SplashRoute
 import tech.dokus.app.screens.UnderDevelopmentScreen
-import tech.dokus.app.screens.AccountantScreen
 import tech.dokus.app.screens.settings.route.AppearanceSettingsRoute
 import tech.dokus.app.screens.settings.route.NotificationPreferencesRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
@@ -15,7 +14,6 @@ import tech.dokus.app.share.ShareImportRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.AppDestination
 import tech.dokus.navigation.destinations.CoreDestination
-import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 
 internal object AppNavigationProvider : NavigationProvider {
@@ -34,9 +32,6 @@ internal object AppNavigationProvider : NavigationProvider {
         }
         composable<AppDestination.ShareImport> {
             ShareImportRoute()
-        }
-        composable<HomeDestination.Accountant> {
-            AccountantScreen()
         }
         composable<SettingsDestination.WorkspaceSettings> {
             WorkspaceSettingsRoute()

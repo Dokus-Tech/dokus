@@ -12,18 +12,17 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.dp
 import tech.dokus.foundation.aura.local.LocalThemeManager
 import tech.dokus.foundation.platform.activePlatform
 import tech.dokus.foundation.platform.isWeb
 
-// Dokus Shape System
+// Dokus Shape System — sourced from DefaultDokusRadii to avoid value drift
 private val dokusShapes = Shapes(
-    extraSmall = RoundedCornerShape(4.dp),  // badges, tags
-    small = RoundedCornerShape(7.dp),       // buttons, inputs
-    medium = RoundedCornerShape(10.dp),     // cards, panels
-    large = RoundedCornerShape(16.dp),      // floating windows
-    extraLarge = RoundedCornerShape(16.dp), // floating windows
+    extraSmall = RoundedCornerShape(DefaultDokusRadii.badge),
+    small = RoundedCornerShape(DefaultDokusRadii.button),
+    medium = RoundedCornerShape(DefaultDokusRadii.card),
+    large = RoundedCornerShape(DefaultDokusRadii.window),
+    extraLarge = RoundedCornerShape(DefaultDokusRadii.window),
 )
 
 /**

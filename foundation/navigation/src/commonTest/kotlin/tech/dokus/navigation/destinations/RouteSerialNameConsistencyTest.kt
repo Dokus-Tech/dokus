@@ -28,6 +28,7 @@ class RouteSerialNameConsistencyTest {
         HomeDestination.AiChat,
         HomeDestination.Settings,
         HomeDestination.More,
+        HomeDestination.Profile,
         HomeDestination.UnderDevelopment,
         // Settings
         SettingsDestination.WorkspaceSettings,

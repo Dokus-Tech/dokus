@@ -49,6 +49,12 @@ private const val RedDarkHex = 0xFFE8435A               // red dark (brighter)
 private const val ErrorContainerLightHex = 0xFFFBF3F2   // redSoft on white
 private const val ErrorContainerDarkHex = 0xFF271818    // redSoft on dark page
 
+// ─── Glass / Table extras ───
+private const val GlassContentLightHex = 0xFFFCFBF9     // slightly lighter warm
+private const val AmberBorderLightHex = 0xFFB46400      // amber border accent
+private const val ThTextDarkHex = 0xFF9A928A            // table header text dark
+private const val ThTextLightHex = 0xFF4A443D           // table header text light
+
 // ─── Color Instances ───
 
 // Surfaces - Light
@@ -195,7 +201,7 @@ val ColorScheme.glass: Color
             else Color(WarmLightHex)                       // opaque #F8F7F4
 val ColorScheme.glassContent: Color
     get() = if (isDark) Color(PageDarkHex).copy(alpha = 0.95f)
-            else Color(0xFFFCFBF9)                         // opaque, slightly lighter warm
+            else Color(GlassContentLightHex)
 val ColorScheme.glassBorder: Color
     get() = if (isDark) Color.White.copy(alpha = 0.06f)
             else Color.White.copy(alpha = 0.30f)
@@ -213,11 +219,11 @@ val ColorScheme.amberWhisper: Color
             else Color(AmberLightHex).copy(alpha = 0.03f)
 val ColorScheme.borderAmber: Color
     get() = if (isDark) Color(AmberDarkHex).copy(alpha = 0.22f)
-            else Color(0xFFB46400).copy(alpha = 0.18f)
+            else Color(AmberBorderLightHex).copy(alpha = 0.18f)
 
 // Table & border tokens
 val ColorScheme.thText: Color
-    get() = if (isDark) Color(0xFF9A928A) else Color(0xFF4A443D)
+    get() = if (isDark) Color(ThTextDarkHex) else Color(ThTextLightHex)
 val ColorScheme.borderStrong: Color get() = outline
 
 // Soft semantic background aliases
