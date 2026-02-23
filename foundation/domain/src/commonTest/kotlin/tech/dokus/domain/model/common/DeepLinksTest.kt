@@ -59,4 +59,22 @@ class DeepLinksTest {
 
         assertEquals("legacy-doc", documentId)
     }
+
+    @Test
+    fun `extractVerifyEmailToken returns token for absolute https verify email link`() {
+        val deepLink = DeepLink("https://app.dokus.tech/auth/verify-email?token=verify-123")
+
+        val token = DeepLinks.extractVerifyEmailToken(deepLink)
+
+        assertEquals("verify-123", token)
+    }
+
+    @Test
+    fun `extractVerifyEmailToken returns null when token query param is missing`() {
+        val deepLink = DeepLink("https://app.dokus.tech/auth/verify-email")
+
+        val token = DeepLinks.extractVerifyEmailToken(deepLink)
+
+        assertNull(token)
+    }
 }
