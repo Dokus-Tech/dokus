@@ -17,9 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,12 +56,13 @@ import tech.dokus.aura.resources.bootstrap_state_app_version_check
 import tech.dokus.aura.resources.bootstrap_state_authenticating
 import tech.dokus.aura.resources.bootstrap_state_checking_account_status
 import tech.dokus.aura.resources.bootstrap_state_initializing
-import tech.dokus.aura.resources.bootstrap_state_ready
 import tech.dokus.aura.resources.bootstrap_version_footer
 import tech.dokus.aura.resources.subscription_tier_core
 import tech.dokus.domain.config.appVersion
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.background.BootstrapBackground
+import tech.dokus.foundation.aura.components.background.BootstrapBackgroundLayout
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.components.text.DokusLogoEmphasis
 import tech.dokus.foundation.aura.style.dokusSpacing
@@ -78,11 +76,7 @@ import tech.dokus.navigation.replace
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-private val ChecklistCompletionHold = 400.milliseconds
-private val ChecklistExitDuration = 300.milliseconds
-private val ReadyFadeInDuration = 200.milliseconds
-private val ReadyHoldDuration = 1_800.milliseconds
-private val ScreenFadeOutDuration = 400.milliseconds
+private val MainPathCompletionHold = 420.milliseconds
 private val StepRevealDelay = 220.milliseconds
 private val StepRevealDuration = 220.milliseconds
 private val ActivePulseDuration = 1_400.milliseconds
@@ -93,6 +87,10 @@ private const val BootstrapStepCount = 4
 private val StepRowWidth = 340.dp
 private val StepDotSize = 12.dp
 private val StepRingSize = 18.dp
+private val SplashLogoTopPaddingMobile = 56.dp
+private val SplashLogoTopPaddingDesktop = 68.dp
+private val SplashChecklistBottomPaddingMobile = 120.dp
+private val SplashChecklistBottomPaddingDesktop = 136.dp
 private fun Duration.toMillisInt(): Int = inWholeMilliseconds.toInt()
 
 private val BootstrapStepType.localized: String
@@ -109,10 +107,7 @@ internal fun SplashRoute(
 ) {
     val navController = LocalNavController.current
     val scope = rememberCoroutineScope()
-    var readyNavigationScheduled by remember { mutableStateOf(false) }
-    var checklistVisible by remember { mutableStateOf(true) }
-    var readyVisible by remember { mutableStateOf(false) }
-    var screenFadingOut by remember { mutableStateOf(false) }
+    var mainNavigationScheduled by remember { mutableStateOf(false) }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
@@ -123,16 +118,10 @@ internal fun SplashRoute(
             )
             BootstrapAction.NavigateToTenantSelection -> navController.replace(AuthDestination.WorkspaceSelect)
             BootstrapAction.NavigateToMain -> {
-                if (!readyNavigationScheduled) {
-                    readyNavigationScheduled = true
+                if (!mainNavigationScheduled) {
+                    mainNavigationScheduled = true
                     scope.launch {
-                        delay(ChecklistCompletionHold)
-                        checklistVisible = false
-                        delay(ChecklistExitDuration)
-                        readyVisible = true
-                        delay(ReadyFadeInDuration + ReadyHoldDuration)
-                        screenFadingOut = true
-                        delay(ScreenFadeOutDuration)
+                        delay(MainPathCompletionHold)
                         navController.replace(CoreDestination.Home)
                     }
                 }
@@ -144,26 +133,28 @@ internal fun SplashRoute(
         container.store.intent(BootstrapIntent.Load)
     }
 
-    val isReady = state.steps.size == BootstrapStepCount && state.steps.all { it.isActive && !it.isCurrent }
-
     SplashScreen(
         steps = state.steps,
-        isReady = isReady,
-        checklistVisible = checklistVisible,
-        readyVisible = readyVisible,
-        screenFadingOut = screenFadingOut,
     )
 }
 
 @Composable
 internal fun SplashScreen(
     steps: List<BootstrapStep>,
-    isReady: Boolean = false,
-    checklistVisible: Boolean = true,
-    readyVisible: Boolean = false,
-    screenFadingOut: Boolean = false,
 ) {
     val spacing = MaterialTheme.dokusSpacing
+    val isLargeScreen = LocalScreenSize.current.isLarge
+    val backgroundLayout = if (isLargeScreen) {
+        BootstrapBackgroundLayout.Desktop
+    } else {
+        BootstrapBackgroundLayout.Mobile
+    }
+    val logoTopPadding = if (isLargeScreen) SplashLogoTopPaddingDesktop else SplashLogoTopPaddingMobile
+    val checklistBottomPadding = if (isLargeScreen) {
+        SplashChecklistBottomPaddingDesktop
+    } else {
+        SplashChecklistBottomPaddingMobile
+    }
     val completedSteps = steps.count { it.isActive && !it.isCurrent }
     val progressTarget = (completedSteps.toFloat() / BootstrapStepCount.toFloat()).coerceIn(0f, 1f)
     val progress by animateFloatAsState(
@@ -171,87 +162,26 @@ internal fun SplashScreen(
         animationSpec = tween(durationMillis = ProgressAnimationDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "splashProgress",
     )
-    val logoAlpha by animateFloatAsState(
-        targetValue = if (isReady && !checklistVisible) 0.55f else 0.35f,
-        animationSpec = tween(durationMillis = ChecklistExitDuration.toMillisInt(), easing = FastOutSlowInEasing),
-        label = "logoAlpha",
-    )
-    val density = LocalDensity.current
-    val checklistExitTranslation = with(density) { 8.dp.toPx() }
-    val checklistAlpha by animateFloatAsState(
-        targetValue = if (checklistVisible) 1f else 0f,
-        animationSpec = tween(durationMillis = ChecklistExitDuration.toMillisInt(), easing = FastOutSlowInEasing),
-        label = "checklistAlpha",
-    )
-    val checklistOffsetY by animateFloatAsState(
-        targetValue = if (checklistVisible) 0f else -checklistExitTranslation,
-        animationSpec = tween(durationMillis = ChecklistExitDuration.toMillisInt(), easing = FastOutSlowInEasing),
-        label = "checklistOffsetY",
-    )
-    val readyEntryOffset = with(density) { 4.dp.toPx() }
-    val readyAlpha by animateFloatAsState(
-        targetValue = if (readyVisible) 1f else 0f,
-        animationSpec = tween(durationMillis = ReadyFadeInDuration.toMillisInt(), easing = FastOutSlowInEasing),
-        label = "readyAlpha",
-    )
-    val readyOffsetY by animateFloatAsState(
-        targetValue = if (readyVisible) 0f else readyEntryOffset,
-        animationSpec = tween(durationMillis = ReadyFadeInDuration.toMillisInt(), easing = FastOutSlowInEasing),
-        label = "readyOffsetY",
-    )
-    val screenAlpha by animateFloatAsState(
-        targetValue = if (screenFadingOut) 0f else 1f,
-        animationSpec = tween(durationMillis = ScreenFadeOutDuration.toMillisInt(), easing = FastOutSlowInEasing),
-        label = "screenAlpha",
-    )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .graphicsLayer(alpha = screenAlpha)
-    ) {
-        BootstrapBackground(progress = progress)
+    Box(modifier = Modifier.fillMaxSize()) {
+        BootstrapBackground(
+            progress = progress,
+            layout = backgroundLayout,
+        )
 
-        Column(
+        DokusLogo.Full(
+            emphasis = DokusLogoEmphasis.Hero,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = spacing.xxLarge),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .align(Alignment.TopCenter)
+                .padding(top = logoTopPadding),
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = checklistBottomPadding),
         ) {
-            DokusLogo.Full(
-                emphasis = DokusLogoEmphasis.Hero,
-                modifier = Modifier.graphicsLayer(
-                    alpha = logoAlpha,
-                ),
-            )
-
-            Box(
-                modifier = Modifier.height(24.dp),
-                contentAlignment = Alignment.BottomCenter,
-            ) {
-                Text(
-                    text = stringResource(Res.string.bootstrap_state_ready),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 0.18.em),
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.graphicsLayer(
-                        alpha = readyAlpha,
-                        translationY = readyOffsetY,
-                    ),
-                )
-            }
-
-            Spacer(modifier = Modifier.height(spacing.xxxLarge))
-
-            Box(
-                modifier = Modifier.graphicsLayer(
-                    alpha = checklistAlpha,
-                    translationY = checklistOffsetY,
-                ),
-            ) {
-                BootstrapStatesList(steps = steps)
-            }
+            BootstrapStatesList(steps = steps)
         }
 
         val tier = stringResource(Res.string.subscription_tier_core)

@@ -17,7 +17,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalInspectionMode
-import tech.dokus.foundation.aura.style.dokusEffects
 import tech.dokus.foundation.aura.style.isDark
 import kotlin.math.abs
 import kotlin.math.cos
@@ -32,31 +31,52 @@ private const val FaceCount = 6
 private const val ParticleCount = FaceGrid * FaceGrid * FaceCount
 
 private const val CubeProjectionDepth = 3.9f
-private const val CubeScale = 0.24f
 private const val CubeCenterX = 0.5f
-private const val CubeCenterY = 0.5f
 private const val CubePitchRad = 0.296706f // 17 degrees
 private const val CubeRotationSecondsPerTurn = 50f
 
-private const val ScatterDistanceMin = 0.82f
-private const val ScatterDistanceMax = 1.48f
-private const val WobbleDistanceMin = 0.05f
-private const val WobbleDistanceMax = 0.16f
+private const val ScatterDistanceMin = 0.48f
+private const val ScatterDistanceMax = 0.92f
+private const val WobbleDistanceMin = 0.03f
+private const val WobbleDistanceMax = 0.09f
 private const val DelayScale = 0.64f
-private const val DelayJitter = 0.08f
+private const val DelayJitter = 0.04f
 
-private const val ParticleSizeMin = 0.45f
-private const val ParticleSizeMax = 1.35f
+private const val ParticleSizeMin = 0.42f
+private const val ParticleSizeMax = 1.05f
 private const val GoldChance = 0.20f
-private const val BrightChance = 0.05f
+private const val BrightChance = 0.0f
 
-private const val WireframeGhostAlphaDark = 0.30f
-private const val WireframeGhostAlphaLight = 0.17f
-private const val WireframeSolidAlphaDark = 0.72f
-private const val WireframeSolidAlphaLight = 0.48f
+private const val WireframeGhostAlphaDark = 0.06f
+private const val WireframeGhostAlphaLight = 0.04f
+private const val WireframeSolidAlphaDark = 0.34f
+private const val WireframeSolidAlphaLight = 0.24f
 
 private const val BackgroundDarkHex = 0xFF070605
 private const val TwoPI = 6.2831855f
+
+enum class BootstrapBackgroundLayout {
+    Mobile,
+    Desktop,
+}
+
+private data class BootstrapBackgroundSpec(
+    val cubeWidthFraction: Float,
+    val centerY: Float,
+    val scatterMultiplier: Float,
+)
+
+private val MobileBackgroundSpec = BootstrapBackgroundSpec(
+    cubeWidthFraction = 0.35f,
+    centerY = 0.34f,
+    scatterMultiplier = 0.78f,
+)
+
+private val DesktopBackgroundSpec = BootstrapBackgroundSpec(
+    cubeWidthFraction = 0.42f,
+    centerY = 0.44f,
+    scatterMultiplier = 0.92f,
+)
 
 private enum class BootstrapParticleTone {
     Neutral,
@@ -126,14 +146,21 @@ private val CubeEdges = listOf(
 @Composable
 fun BootstrapBackground(
     progress: Float,
+    layout: BootstrapBackgroundLayout = BootstrapBackgroundLayout.Desktop,
     modifier: Modifier = Modifier,
 ) {
     val inspection = LocalInspectionMode.current
     val isDark = MaterialTheme.colorScheme.isDark
-    val effects = MaterialTheme.dokusEffects
+    val primary = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurface
     val adaptiveBackground = MaterialTheme.colorScheme.background
-    val adaptiveOnSurface = MaterialTheme.colorScheme.onSurface
-    val particles = remember { generateParticles(Random(83)) }
+    val spec = remember(layout) {
+        when (layout) {
+            BootstrapBackgroundLayout.Mobile -> MobileBackgroundSpec
+            BootstrapBackgroundLayout.Desktop -> DesktopBackgroundSpec
+        }
+    }
+    val particles = remember(layout) { generateParticles(Random(83), spec.scatterMultiplier) }
 
     var elapsedSeconds by remember { mutableFloatStateOf(0f) }
 
@@ -156,12 +183,11 @@ fun BootstrapBackground(
     Canvas(modifier = modifier.fillMaxSize()) {
         drawRect(color = baseColor)
 
-        val minDim = min(size.width, size.height)
         val center = Offset(
             x = size.width * CubeCenterX,
-            y = size.height * CubeCenterY,
+            y = size.height * spec.centerY,
         )
-        val scale = minDim * CubeScale
+        val scale = size.width * spec.cubeWidthFraction * 0.5f
 
         val timeSeconds = if (inspection) 0f else elapsedSeconds
         val yaw = (timeSeconds / CubeRotationSecondsPerTurn) * TwoPI
@@ -171,18 +197,15 @@ fun BootstrapBackground(
         val wireframeGhostAlpha = (1f - progressEased) * if (isDark) WireframeGhostAlphaDark else WireframeGhostAlphaLight
         val wireframeSolidAlpha = progressEased * if (isDark) WireframeSolidAlphaDark else WireframeSolidAlphaLight
 
-        drawCircle(
-            color = effects.ambientSweepColor.copy(alpha = if (isDark) 0.07f else 0.05f),
-            radius = minDim * 0.34f,
-            center = center,
-        )
+        val neutralParticleColor = if (isDark) onSurface.copy(alpha = 0.78f) else onSurface.copy(alpha = 0.56f)
+        val brightParticleColor = if (isDark) Color.White else onSurface
 
         drawCubeWireframe(
             center = center,
             scale = scale,
             yaw = yaw,
             pitch = pitch,
-            color = effects.ambientParticleNeutral,
+            color = onSurface,
             alpha = wireframeGhostAlpha,
             strokeScale = 0.92f,
         )
@@ -192,7 +215,7 @@ fun BootstrapBackground(
             scale = scale,
             yaw = yaw,
             pitch = pitch,
-            color = effects.ambientParticleGold,
+            color = primary,
             alpha = wireframeSolidAlpha,
             strokeScale = 1.12f,
         )
@@ -220,16 +243,16 @@ fun BootstrapBackground(
             ) ?: continue
 
             val toneColor = when (particle.tone) {
-                BootstrapParticleTone.Neutral -> effects.ambientParticleNeutral
-                BootstrapParticleTone.Gold -> effects.ambientParticleGold
-                BootstrapParticleTone.Bright -> if (isDark) Color.White else adaptiveOnSurface
+                BootstrapParticleTone.Neutral -> neutralParticleColor
+                BootstrapParticleTone.Gold -> primary
+                BootstrapParticleTone.Bright -> brightParticleColor
             }
             val toneBoost = when (particle.tone) {
                 BootstrapParticleTone.Neutral -> 0.92f
                 BootstrapParticleTone.Gold -> 1.08f
                 BootstrapParticleTone.Bright -> 1.24f
             }
-            val baseAlpha = if (isDark) 0.80f else 0.46f
+            val baseAlpha = if (isDark) 0.72f else 0.52f
             val depthAlpha = 0.34f + (projected.depth * 0.66f)
             val scatterAlpha = 0.70f + (scatter * 0.30f)
             val alpha = (baseAlpha * depthAlpha * scatterAlpha * toneBoost).coerceIn(0f, 1f)
@@ -298,7 +321,10 @@ private fun DrawScope.drawCubeWireframe(
     }
 }
 
-private fun generateParticles(random: Random): List<BootstrapParticle> {
+private fun generateParticles(
+    random: Random,
+    scatterMultiplier: Float,
+): List<BootstrapParticle> {
     val axisValues = (0 until FaceGrid).map { index ->
         val t = index / (FaceGrid - 1f)
         -1f + (2f * t)
@@ -337,9 +363,11 @@ private fun generateParticles(random: Random): List<BootstrapParticle> {
             tangentY = tangent.second,
             tangentZ = tangent.third,
             delay = delay,
-            scatterDistance = ScatterDistanceMin +
-                random.nextFloat() * (ScatterDistanceMax - ScatterDistanceMin) +
-                (faceDistance * 0.16f),
+            scatterDistance = (
+                ScatterDistanceMin +
+                    random.nextFloat() * (ScatterDistanceMax - ScatterDistanceMin) +
+                    (faceDistance * 0.08f)
+                ) * scatterMultiplier,
             wobbleDistance = WobbleDistanceMin + random.nextFloat() * (WobbleDistanceMax - WobbleDistanceMin),
             size = ParticleSizeMin + random.nextFloat() * (ParticleSizeMax - ParticleSizeMin),
             phase = random.nextFloat() * TwoPI,
