@@ -75,8 +75,10 @@ import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private val MainPathCompletionHold = 420.milliseconds
+private val PostBootstrapNavigationDelay = 1.seconds
 private val StepRevealDelay = 220.milliseconds
 private val StepRevealDuration = 220.milliseconds
 private val ActivePulseDuration = 1_400.milliseconds
@@ -121,7 +123,7 @@ internal fun SplashRoute(
                 if (!mainNavigationScheduled) {
                     mainNavigationScheduled = true
                     scope.launch {
-                        delay(MainPathCompletionHold)
+                        delay(MainPathCompletionHold + PostBootstrapNavigationDelay)
                         navController.replace(CoreDestination.Home)
                     }
                 }
