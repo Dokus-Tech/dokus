@@ -75,19 +75,25 @@ import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
-private const val ChecklistCompletionHoldMs = 400L
-private const val ChecklistExitDurationMs = 300
-private const val ReadyFadeInDurationMs = 200
-private const val ReadyHoldDurationMs = 1_800L
-private const val ScreenFadeOutDurationMs = 400
-private const val StepRevealDelayMs = 220L
-private const val StepRevealDurationMs = 220
-private const val ActivePulseDurationMs = 1_400
+private val ChecklistCompletionHold = 400.milliseconds
+private val ChecklistExitDuration = 300.milliseconds
+private val ReadyFadeInDuration = 200.milliseconds
+private val ReadyHoldDuration = 1_800.milliseconds
+private val ScreenFadeOutDuration = 400.milliseconds
+private val StepRevealDelay = 220.milliseconds
+private val StepRevealDuration = 220.milliseconds
+private val ActivePulseDuration = 1_400.milliseconds
+private val ProgressAnimationDuration = 650.milliseconds
+private val SettledTransitionDuration = 280.milliseconds
+private val DotScaleTransitionDuration = 220.milliseconds
 private const val BootstrapStepCount = 4
 private val StepRowWidth = 340.dp
 private val StepDotSize = 12.dp
 private val StepRingSize = 18.dp
+private fun Duration.toMillisInt(): Int = inWholeMilliseconds.toInt()
 
 private val BootstrapStepType.localized: String
     @Composable get() = when (this) {
@@ -120,13 +126,13 @@ internal fun SplashRoute(
                 if (!readyNavigationScheduled) {
                     readyNavigationScheduled = true
                     scope.launch {
-                        delay(ChecklistCompletionHoldMs)
+                        delay(ChecklistCompletionHold)
                         checklistVisible = false
-                        delay(ChecklistExitDurationMs.toLong())
+                        delay(ChecklistExitDuration)
                         readyVisible = true
-                        delay(ReadyFadeInDurationMs.toLong() + ReadyHoldDurationMs)
+                        delay(ReadyFadeInDuration + ReadyHoldDuration)
                         screenFadingOut = true
-                        delay(ScreenFadeOutDurationMs.toLong())
+                        delay(ScreenFadeOutDuration)
                         navController.replace(CoreDestination.Home)
                     }
                 }
@@ -162,40 +168,40 @@ internal fun SplashScreen(
     val progressTarget = (completedSteps.toFloat() / BootstrapStepCount.toFloat()).coerceIn(0f, 1f)
     val progress by animateFloatAsState(
         targetValue = progressTarget,
-        animationSpec = tween(durationMillis = 650, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = ProgressAnimationDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "splashProgress",
     )
     val logoAlpha by animateFloatAsState(
         targetValue = if (isReady && !checklistVisible) 0.55f else 0.35f,
-        animationSpec = tween(durationMillis = ChecklistExitDurationMs, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = ChecklistExitDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "logoAlpha",
     )
     val density = LocalDensity.current
     val checklistExitTranslation = with(density) { 8.dp.toPx() }
     val checklistAlpha by animateFloatAsState(
         targetValue = if (checklistVisible) 1f else 0f,
-        animationSpec = tween(durationMillis = ChecklistExitDurationMs, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = ChecklistExitDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "checklistAlpha",
     )
     val checklistOffsetY by animateFloatAsState(
         targetValue = if (checklistVisible) 0f else -checklistExitTranslation,
-        animationSpec = tween(durationMillis = ChecklistExitDurationMs, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = ChecklistExitDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "checklistOffsetY",
     )
     val readyEntryOffset = with(density) { 4.dp.toPx() }
     val readyAlpha by animateFloatAsState(
         targetValue = if (readyVisible) 1f else 0f,
-        animationSpec = tween(durationMillis = ReadyFadeInDurationMs, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = ReadyFadeInDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "readyAlpha",
     )
     val readyOffsetY by animateFloatAsState(
         targetValue = if (readyVisible) 0f else readyEntryOffset,
-        animationSpec = tween(durationMillis = ReadyFadeInDurationMs, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = ReadyFadeInDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "readyOffsetY",
     )
     val screenAlpha by animateFloatAsState(
         targetValue = if (screenFadingOut) 0f else 1f,
-        animationSpec = tween(durationMillis = ScreenFadeOutDurationMs, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = ScreenFadeOutDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "screenAlpha",
     )
 
@@ -275,7 +281,7 @@ private fun BootstrapStatesList(
         repeat(steps.size) { index ->
             visibleCount = index + 1
             if (index < steps.lastIndex) {
-                delay(StepRevealDelayMs)
+                delay(StepRevealDelay)
             }
         }
     }
@@ -287,9 +293,9 @@ private fun BootstrapStatesList(
         steps.forEachIndexed { index, step ->
             AnimatedVisibility(
                 visible = index < visibleCount,
-                enter = fadeIn(animationSpec = tween(StepRevealDurationMs, easing = FastOutSlowInEasing)) +
+                enter = fadeIn(animationSpec = tween(StepRevealDuration.toMillisInt(), easing = FastOutSlowInEasing)) +
                     slideInVertically(
-                        animationSpec = tween(StepRevealDurationMs, easing = FastOutSlowInEasing),
+                        animationSpec = tween(StepRevealDuration.toMillisInt(), easing = FastOutSlowInEasing),
                     ) { it / 2 },
             ) {
                 BootstrapStateItem(step = step)
@@ -312,7 +318,7 @@ private fun BootstrapStateItem(
         initialValue = 1f,
         targetValue = 1.7f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = ActivePulseDurationMs, easing = LinearEasing),
+            animation = tween(durationMillis = ActivePulseDuration.toMillisInt(), easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "ringScale",
@@ -321,7 +327,7 @@ private fun BootstrapStateItem(
         initialValue = 0.65f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = ActivePulseDurationMs, easing = LinearEasing),
+            animation = tween(durationMillis = ActivePulseDuration.toMillisInt(), easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "ringAlpha",
@@ -330,7 +336,7 @@ private fun BootstrapStateItem(
         initialValue = 0.74f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = ActivePulseDurationMs, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = ActivePulseDuration.toMillisInt(), easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "currentTextPulse",
@@ -341,7 +347,7 @@ private fun BootstrapStateItem(
             isCompleted -> accent.copy(alpha = 0.86f)
             else -> onSurface.copy(alpha = 0.20f)
         },
-        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = SettledTransitionDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "settledDotColor",
     )
     val settledTextColor by animateColorAsState(
@@ -349,7 +355,7 @@ private fun BootstrapStateItem(
             isCompleted -> onSurface.copy(alpha = 0.74f)
             else -> onSurface.copy(alpha = 0.36f)
         },
-        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = SettledTransitionDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "settledTextColor",
     )
     val dotScale by animateFloatAsState(
@@ -358,7 +364,7 @@ private fun BootstrapStateItem(
             isCompleted -> 0.96f
             else -> 0.90f
         },
-        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = DotScaleTransitionDuration.toMillisInt(), easing = FastOutSlowInEasing),
         label = "dotScale",
     )
 
