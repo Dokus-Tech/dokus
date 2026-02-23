@@ -46,7 +46,7 @@ fun Themed(
     val isSystemDark = isSystemInDarkTheme()
 
     val useDarkTheme = when (themeMode) {
-        ThemeMode.LIGHT -> false
+        ThemeMode.LIGHT -> true
         ThemeMode.DARK -> true
         ThemeMode.SYSTEM -> isSystemDark
     }

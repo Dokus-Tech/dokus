@@ -166,20 +166,32 @@ fun PPrimaryButton(
     isLoading: Boolean = false,
     onClick: () -> Unit,
 ) {
+    val primary = MaterialTheme.colorScheme.primary
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
+
     Button(
         onClick = onClick,
         modifier = modifier.height(Constraints.Height.button),
         shape = MaterialTheme.shapes.small,
         enabled = enabled && !isLoading,
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 8.dp,
+            pressedElevation = 4.dp,
+            focusedElevation = 10.dp,
+            hoveredElevation = 10.dp,
+            disabledElevation = 3.dp,
+        ),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = primary,
+            contentColor = onPrimary,
+            disabledContainerColor = primary.copy(alpha = 0.68f),
+            disabledContentColor = onPrimary.copy(alpha = 0.74f),
         )
     ) {
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(Constraints.IconSize.buttonLoading),
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = onPrimary,
                 strokeWidth = 2.dp
             )
         } else {

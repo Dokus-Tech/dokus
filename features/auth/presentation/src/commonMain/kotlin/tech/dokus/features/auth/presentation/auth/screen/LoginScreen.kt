@@ -37,10 +37,10 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.mvi.LoginIntent
 import tech.dokus.features.auth.mvi.LoginState
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
-import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingPrimaryButton
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
 import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.DokusGlassSurface
+import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
@@ -122,7 +122,7 @@ internal fun LoginScreen(
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
-        OnboardingPrimaryButton(
+        PPrimaryButton(
             text = stringResource(Res.string.auth_sign_in_button),
             enabled = canLogin && !isLoading,
             isLoading = isLoading,
