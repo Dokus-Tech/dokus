@@ -22,14 +22,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
-private val CardPadding = Constrains.Spacing.large
-private val HeaderSpacing = Constrains.Spacing.medium
-private val TabSpacing = Constrains.Spacing.large
+private val CardPadding = Constraints.Spacing.large
+private val HeaderSpacing = Constraints.Spacing.medium
+private val TabSpacing = Constraints.Spacing.large
 private val TabIndicatorHeight = 2.dp
-private val ContentSpacing = Constrains.Spacing.medium
+private val ContentSpacing = Constraints.Spacing.medium
 private const val ListItemBackgroundAlpha = 0.6f
 
 @Composable
@@ -72,12 +77,30 @@ fun <T> DokusTabbedPanel(
                     onTabSelected = onTabSelected,
                     tabLabel = tabLabel
                 )
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
 
             Spacer(modifier = Modifier.height(ContentSpacing))
             content()
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun DokusTabbedPanelPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusTabbedPanel(
+            title = "Activity",
+            tabs = listOf("All", "Invoices", "Bills"),
+            selectedTab = "All",
+            onTabSelected = {},
+            tabLabel = { it },
+        ) {
+            Text("Panel content")
         }
     }
 }
@@ -107,19 +130,19 @@ fun DokusPanelListItem(
             .background(backgroundColor)
             .then(clickableModifier)
             .padding(
-                horizontal = Constrains.Spacing.medium,
-                vertical = Constrains.Spacing.small
+                horizontal = Constraints.Spacing.medium,
+                vertical = Constraints.Spacing.small
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (leading != null) {
             leading()
-            Spacer(modifier = Modifier.width(Constrains.Spacing.medium))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.medium))
         }
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xxSmall)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)
         ) {
             Text(
                 text = title,
@@ -140,7 +163,7 @@ fun DokusPanelListItem(
         }
 
         if (trailing != null) {
-            Spacer(modifier = Modifier.width(Constrains.Spacing.medium))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.medium))
             trailing()
         }
     }
@@ -174,7 +197,7 @@ private fun DokusTab(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val indicatorColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+    val indicatorColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(alpha = 0f)
     val textColor = if (selected) {
         MaterialTheme.colorScheme.onSurface
     } else {
@@ -186,17 +209,17 @@ private fun DokusTab(
             .width(IntrinsicSize.Min)
             .clip(MaterialTheme.shapes.small)
             .clickable(onClick = onClick)
-            .padding(vertical = Constrains.Spacing.xxSmall),
+            .padding(vertical = Constraints.Spacing.xxSmall),
         horizontalAlignment = Alignment.Start
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             color = textColor
         )
         Box(
             modifier = Modifier
-                .padding(top = Constrains.Spacing.xSmall)
+                .padding(top = Constraints.Spacing.xSmall)
                 .height(TabIndicatorHeight)
                 .fillMaxWidth()
                 .background(indicatorColor)

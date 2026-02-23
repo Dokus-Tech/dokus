@@ -14,6 +14,12 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.User
 import tech.dokus.domain.Name
 import tech.dokus.domain.exceptions.DokusException
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.foundation.aura.tooling.mockName
 
 object PTextFieldNameDefaults {
     val icon = FeatherIcons.User
@@ -58,4 +64,18 @@ fun PTextFieldName(
         showClearButton = showClearButton,
         onValueChange = { value -> onValueChange(Name(value.capitalize(locale))) }
     )
+}
+
+@Preview
+@Composable
+private fun PTextFieldNamePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTextFieldName(
+            fieldName = "First Name",
+            value = mockName,
+            onValueChange = {}
+        )
+    }
 }

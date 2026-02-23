@@ -3,6 +3,13 @@ package tech.dokus.navigation.destinations
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/**
+ * Destinations reachable within the home NavHost (bottom bar / rail).
+ *
+ * `@SerialName` values use a `"home/"` prefix only when the bare name would
+ * collide with a destination in another sealed hierarchy (e.g. `"home/workspace_details"`
+ * vs [SettingsDestination.WorkspaceSettings]).
+ */
 sealed interface HomeDestination : NavigationDestination {
 
     @Serializable
@@ -30,6 +37,14 @@ sealed interface HomeDestination : NavigationDestination {
     data object Team : HomeDestination
 
     @Serializable
+    @SerialName("home/workspace_details")
+    data object WorkspaceDetails : HomeDestination
+
+    @Serializable
+    @SerialName("accountant")
+    data object Accountant : HomeDestination
+
+    @Serializable
     @SerialName("ai-chat")
     data object AiChat : HomeDestination
 
@@ -45,6 +60,10 @@ sealed interface HomeDestination : NavigationDestination {
     @SerialName("home/under_development")
     data object UnderDevelopment : HomeDestination
 
+    @Serializable
+    @SerialName("home/profile")
+    data object Profile : HomeDestination
+
 }
 
 /** Route string matching the @SerialName value for backstack matching. */
@@ -56,10 +75,13 @@ val NavigationDestination.route: String get() = when (this) {
         HomeDestination.Cashflow -> "cashflow"
         HomeDestination.Contacts -> "contacts"
         HomeDestination.Team -> "team"
+        HomeDestination.WorkspaceDetails -> "home/workspace_details"
+        HomeDestination.Accountant -> "accountant"
         HomeDestination.AiChat -> "ai-chat"
         HomeDestination.Settings -> "settings"
         HomeDestination.More -> "more"
         HomeDestination.UnderDevelopment -> "home/under_development"
+        HomeDestination.Profile -> "home/profile"
     }
     is SettingsDestination -> when (this) {
         SettingsDestination.WorkspaceSettings -> "settings/workspace"
@@ -68,5 +90,49 @@ val NavigationDestination.route: String get() = when (this) {
         SettingsDestination.NotificationPreferences -> "settings/notifications"
         SettingsDestination.PeppolRegistration -> "settings/peppol"
     }
-    else -> this::class.simpleName ?: "unknown"
+    is AuthDestination -> when (this) {
+        AuthDestination.Login -> "login"
+        AuthDestination.Register -> "register"
+        AuthDestination.ForgotPassword -> "forgot-password"
+        AuthDestination.PasswordChangeRequested -> "password-change-requested"
+        is AuthDestination.ResetPassword -> "reset-password"
+        is AuthDestination.VerifyEmail -> "verify-email"
+        AuthDestination.ChangePassword -> "change-password"
+        AuthDestination.WorkspaceSelect -> "workspace/select"
+        AuthDestination.WorkspaceCreate -> "workspace/create"
+        AuthDestination.ProfileSettings -> "profile_settings"
+        is AuthDestination.Profile -> "profile"
+        AuthDestination.SelectProfile -> "select_profile"
+        AuthDestination.PendingConfirmAccount -> "pending_confirm_account"
+        AuthDestination.PendingConfirmAccountInstructions -> "pending_confirm_account/instructions"
+        AuthDestination.MySessions -> "sessions"
+        AuthDestination.QrLoginDisplay -> "auth/qr/display"
+        AuthDestination.QrLoginDisplayInstructions -> "auth/qr/display/instructions"
+        is AuthDestination.QrLoginDecision -> "auth/qr/decision"
+        is AuthDestination.ServerConnection -> "server/connect"
+    }
+    is CashFlowDestination -> when (this) {
+        CashFlowDestination.AddDocument -> "cashflow/add_document"
+        CashFlowDestination.CreateInvoice -> "cashflow/create_invoice"
+        is CashFlowDestination.DocumentReview -> "cashflow/document_review"
+        is CashFlowDestination.DocumentSourceViewer -> "cashflow/document_source_viewer"
+        is CashFlowDestination.DocumentChat -> "cashflow/document_chat"
+        is CashFlowDestination.CashflowLedger -> "cashflow/ledger"
+    }
+    is ContactsDestination -> when (this) {
+        is ContactsDestination.CreateContact -> "contacts/create"
+        is ContactsDestination.EditContact -> "contacts/edit"
+        is ContactsDestination.ContactDetails -> "contacts/details"
+    }
+    is CoreDestination -> when (this) {
+        CoreDestination.Splash -> "splash"
+        CoreDestination.Home -> "home"
+        CoreDestination.UpdateRequired -> "update_required"
+    }
+    is AppDestination -> when (this) {
+        AppDestination.Notifications -> "notifications"
+        AppDestination.UnderDevelopment -> "app/under_development"
+        AppDestination.Empty -> "empty"
+        AppDestination.ShareImport -> "app/share_import"
+    }
 }

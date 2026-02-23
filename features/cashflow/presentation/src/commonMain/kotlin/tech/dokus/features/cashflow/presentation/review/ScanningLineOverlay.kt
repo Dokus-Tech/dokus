@@ -7,14 +7,22 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ScanningLineOverlay(modifier: Modifier = Modifier) {
@@ -31,6 +39,7 @@ internal fun ScanningLineOverlay(modifier: Modifier = Modifier) {
 
     val lineColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
     val glowColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+    val transparentColor = lineColor.copy(alpha = 0f)
 
     Canvas(modifier = modifier) {
         val y = progress.value * size.height
@@ -39,7 +48,7 @@ internal fun ScanningLineOverlay(modifier: Modifier = Modifier) {
 
         drawRect(
             brush = Brush.verticalGradient(
-                colors = listOf(Color.Transparent, glowColor, Color.Transparent),
+                colors = listOf(transparentColor, glowColor, transparentColor),
                 startY = y - glowHeight / 2f,
                 endY = y + glowHeight / 2f
             ),
@@ -52,5 +61,25 @@ internal fun ScanningLineOverlay(modifier: Modifier = Modifier) {
             topLeft = Offset(0f, y - lineHeight / 2f),
             size = Size(size.width, lineHeight)
         )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun ScanningLineOverlayPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        ) {
+            ScanningLineOverlay(modifier = Modifier.fillMaxSize())
+        }
     }
 }

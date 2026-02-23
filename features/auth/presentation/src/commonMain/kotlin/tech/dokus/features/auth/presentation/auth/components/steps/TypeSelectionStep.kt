@@ -2,9 +2,7 @@ package tech.dokus.features.auth.presentation.auth.components.steps
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +32,7 @@ import tech.dokus.aura.resources.workspace_type_freelancer
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.text.SectionTitle
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun TypeSelectionStep(
@@ -51,88 +49,47 @@ internal fun TypeSelectionStep(
         SectionTitle(
             text = stringResource(Res.string.auth_workspace_type_prompt),
             horizontalArrangement = Arrangement.Start,
-            onBackPress = onBackPress
+            onBackPress = onBackPress,
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
 
-        BoxWithConstraints(
+        TypeCard(
+            icon = Icons.Outlined.Business,
+            title = stringResource(Res.string.workspace_type_company),
+            description = stringResource(Res.string.auth_workspace_type_company_description),
+            isSelected = selectedType == TenantType.Company,
+            isEnabled = true,
+            onClick = { onTypeSelected(TenantType.Company) },
             modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            val isWide = maxWidth > Constrains.Breakpoint.SMALL.dp
+        )
 
-            if (isWide) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
-                ) {
-                    TypeCard(
-                        type = TenantType.Company,
-                        icon = Icons.Outlined.Business,
-                        title = stringResource(Res.string.workspace_type_company),
-                        description = stringResource(Res.string.auth_workspace_type_company_description),
-                        isSelected = selectedType == TenantType.Company,
-                        isEnabled = true,
-                        onClick = { onTypeSelected(TenantType.Company) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    TypeCard(
-                        type = TenantType.Freelancer,
-                        icon = Icons.Outlined.Person,
-                        title = stringResource(Res.string.workspace_type_freelancer),
-                        description = stringResource(Res.string.auth_workspace_type_freelancer_description),
-                        isSelected = selectedType == TenantType.Freelancer,
-                        isEnabled = !hasFreelancerWorkspace,
-                        onClick = { onTypeSelected(TenantType.Freelancer) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            } else {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TypeCard(
-                        type = TenantType.Company,
-                        icon = Icons.Outlined.Business,
-                        title = stringResource(Res.string.workspace_type_company),
-                        description = stringResource(Res.string.auth_workspace_type_company_description),
-                        isSelected = selectedType == TenantType.Company,
-                        isEnabled = true,
-                        onClick = { onTypeSelected(TenantType.Company) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    TypeCard(
-                        type = TenantType.Freelancer,
-                        icon = Icons.Outlined.Person,
-                        title = stringResource(Res.string.workspace_type_freelancer),
-                        description = stringResource(Res.string.auth_workspace_type_freelancer_description),
-                        isSelected = selectedType == TenantType.Freelancer,
-                        isEnabled = !hasFreelancerWorkspace,
-                        onClick = { onTypeSelected(TenantType.Freelancer) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
+
+        TypeCard(
+            icon = Icons.Outlined.Person,
+            title = stringResource(Res.string.workspace_type_freelancer),
+            description = stringResource(Res.string.auth_workspace_type_freelancer_description),
+            isSelected = selectedType == TenantType.Freelancer,
+            isEnabled = !hasFreelancerWorkspace,
+            onClick = { onTypeSelected(TenantType.Freelancer) },
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         if (hasFreelancerWorkspace) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
             Text(
                 text = stringResource(Res.string.auth_workspace_type_unavailable),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
     }
 }
 
-@Suppress("UnusedParameter") // Reserved for future use (e.g., analytics)
 @Composable
 private fun TypeCard(
-    type: TenantType,
     icon: ImageVector,
     title: String,
     description: String,
@@ -141,47 +98,72 @@ private fun TypeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val contentColor = if (!isEnabled) {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-    } else {
+    val contentColor = if (isEnabled) {
         MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
     }
 
     DokusCardSurface(
-        onClick = onClick,
-        enabled = isEnabled,
         modifier = if (isSelected) {
-            modifier.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
+            modifier.border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.primary,
+                shape = MaterialTheme.shapes.medium,
+            )
         } else {
             modifier
         },
+        onClick = onClick,
+        enabled = isEnabled,
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .padding(Constraints.Spacing.xLarge),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = title,
+                contentDescription = null,
                 tint = if (isSelected) MaterialTheme.colorScheme.primary else contentColor,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(46.dp),
             )
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
+
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.headlineMedium,
+                color = contentColor,
                 fontWeight = FontWeight.SemiBold,
-                color = contentColor
             )
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
+
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
+                style = MaterialTheme.typography.titleLarge,
+                color = contentColor.copy(alpha = 0.72f),
+                textAlign = TextAlign.Center,
             )
         }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun TypeSelectionStepPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        TypeSelectionStep(
+            selectedType = TenantType.Company,
+            hasFreelancerWorkspace = false,
+            onTypeSelected = {},
+            onBackPress = {},
+        )
     }
 }

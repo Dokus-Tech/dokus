@@ -41,4 +41,22 @@ class DeepLinksTest {
 
         assertNull(batchId)
     }
+
+    @Test
+    fun `extractDocumentReviewId returns id for document review deep link`() {
+        val deepLink = DeepLink("dokus://documents/review?documentId=doc-123")
+
+        val documentId = DeepLinks.extractDocumentReviewId(deepLink)
+
+        assertEquals("doc-123", documentId)
+    }
+
+    @Test
+    fun `extractDocumentReviewId supports legacy id query key`() {
+        val deepLink = DeepLink("dokus://cashflow/document_review?id=legacy-doc")
+
+        val documentId = DeepLinks.extractDocumentReviewId(deepLink)
+
+        assertEquals("legacy-doc", documentId)
+    }
 }

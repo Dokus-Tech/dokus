@@ -120,3 +120,25 @@ internal fun ContactsHeaderActions(
         )
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactsHeaderSearchPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactsHeaderSearch(
+            searchQuery = "Acme",
+            onSearchQueryChange = {},
+            isSearchExpanded = true,
+            isLargeScreen = true,
+            onExpandSearch = {}
+        )
+    }
+}

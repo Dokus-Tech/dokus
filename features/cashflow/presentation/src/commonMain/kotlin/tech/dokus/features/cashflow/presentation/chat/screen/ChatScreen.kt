@@ -1,18 +1,25 @@
 package tech.dokus.features.cashflow.presentation.chat.screen
 
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
 import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.features.cashflow.presentation.chat.components.ChatContent
 import tech.dokus.features.cashflow.presentation.chat.components.ChatTopBar
 import tech.dokus.features.cashflow.presentation.chat.components.ErrorContent
 import tech.dokus.features.cashflow.presentation.chat.components.LoadingContent
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ChatScreen(
@@ -67,5 +74,22 @@ internal fun ChatScreen(
                 contentPadding = contentPadding
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ChatScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ChatScreen(
+            state = ChatState.Loading,
+            listState = rememberLazyListState(),
+            isLargeScreen = false,
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+            onBackClick = {},
+        )
     }
 }

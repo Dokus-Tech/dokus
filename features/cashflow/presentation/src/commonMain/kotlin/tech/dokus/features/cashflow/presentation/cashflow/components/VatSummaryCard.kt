@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -30,6 +32,9 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Layout constants
 private val CardPadding = 16.dp
@@ -321,4 +326,39 @@ fun createVatSummary(
         predictedNetAmount = Money.parseOrThrow(predicted),
         quarterInfo = quarter
     )
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun VatSummaryCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        VatSummaryCard(
+            state = DokusState.success(
+                VatSummaryData(
+                    vatAmount = Money.parseOrThrow("3250.00"),
+                    netAmount = Money.parseOrThrow("12500.00"),
+                    predictedNetAmount = Money.parseOrThrow("15000.00"),
+                    quarterInfo = "Q2 2024"
+                )
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun VatSummaryCardLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        VatSummaryCard(
+            state = DokusState.loading()
+        )
+    }
 }

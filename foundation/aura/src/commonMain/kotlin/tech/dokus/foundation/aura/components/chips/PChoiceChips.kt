@@ -14,7 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import tech.dokus.foundation.aura.constrains.Constrains
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 fun <T> PChoiceChips(
@@ -29,7 +34,7 @@ fun <T> PChoiceChips(
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
     ) {
         if (label != null) {
             Text(
@@ -39,7 +44,7 @@ fun <T> PChoiceChips(
             )
         }
         Row(
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             modifier = Modifier.fillMaxWidth(),
         ) {
             options.forEach { option ->
@@ -66,5 +71,21 @@ fun <T> PChoiceChips(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PChoiceChipsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PChoiceChips(
+            options = listOf("Monthly", "Quarterly", "Yearly"),
+            selected = "Monthly",
+            onSelect = {},
+            optionLabel = { it },
+            label = "Period"
+        )
     }
 }

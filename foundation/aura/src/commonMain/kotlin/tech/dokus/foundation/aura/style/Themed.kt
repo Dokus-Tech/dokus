@@ -12,18 +12,17 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.dp
 import tech.dokus.foundation.aura.local.LocalThemeManager
 import tech.dokus.foundation.platform.activePlatform
 import tech.dokus.foundation.platform.isWeb
 
-// Dokus Design System v1 Shapes - locked at 2/4/6dp
+// Dokus Shape System — sourced from DefaultDokusRadii to avoid value drift
 private val dokusShapes = Shapes(
-    extraSmall = RoundedCornerShape(2.dp),  // radius-xs: rare, tiny elements
-    small = RoundedCornerShape(4.dp),       // radius-sm: panels/surfaces
-    medium = RoundedCornerShape(6.dp),      // radius-md: inputs, buttons, modals
-    large = RoundedCornerShape(6.dp),       // capped at 6dp per design system
-    extraLarge = RoundedCornerShape(6.dp),  // capped at 6dp per design system
+    extraSmall = RoundedCornerShape(DefaultDokusRadii.badge),
+    small = RoundedCornerShape(DefaultDokusRadii.button),
+    medium = RoundedCornerShape(DefaultDokusRadii.card),
+    large = RoundedCornerShape(DefaultDokusRadii.window),
+    extraLarge = RoundedCornerShape(DefaultDokusRadii.window),
 )
 
 /**
@@ -39,6 +38,7 @@ private val dokusShapes = Shapes(
  */
 @Composable
 fun Themed(
+    useDynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val themeManager = LocalThemeManager.current
@@ -53,12 +53,17 @@ fun Themed(
 
     SystemBarEffect(useDarkTheme)
 
-    val colorScheme = createColorScheme(useDarkTheme)
+    val colorScheme = resolvePlatformColorScheme(
+        useDarkTheme = useDarkTheme,
+        useDynamicColor = useDynamicColor,
+        fallback = createColorScheme(useDarkTheme),
+    )
+    val dokusEffects = createDokusEffects(colorScheme)
 
     val fontFamily = createFontFamily()
     val typography = if (activePlatform.isWeb) {
-        // Web rendering for custom fonts is unstable; keep sizing/weights while using default family.
-        createDokusTypography(FontFamily.Default)
+        // Web rendering for custom fonts is unstable; use platform monospace to preserve character.
+        createDokusTypography(FontFamily.Monospace)
     } else {
         createDokusTypography(fontFamily)
     }
@@ -70,6 +75,10 @@ fun Themed(
         hoveredAlpha = 0.06f
     )
     CompositionLocalProvider(
+        LocalDokusSpacing provides DefaultDokusSpacing,
+        LocalDokusSizing provides DefaultDokusSizing,
+        LocalDokusRadii provides DefaultDokusRadii,
+        LocalDokusEffects provides dokusEffects,
         LocalRippleConfiguration provides RippleConfiguration(
             color = colorScheme.rippleColor,
             rippleAlpha = calmRippleAlpha

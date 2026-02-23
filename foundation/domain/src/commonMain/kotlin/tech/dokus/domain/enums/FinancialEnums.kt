@@ -192,6 +192,14 @@ enum class SubscriptionTier(override val dbValue: String) : DbEnum {
     }
 }
 
+/** Maximum team seats per subscription tier. */
+val SubscriptionTier.maxSeats: Int
+    get() = when (this) {
+        SubscriptionTier.Core, SubscriptionTier.CoreFounder -> 3
+        SubscriptionTier.One -> 10
+        SubscriptionTier.SelfHosted -> Int.MAX_VALUE
+    }
+
 // ============================================================================
 // CLIENT ENUMS
 // ============================================================================

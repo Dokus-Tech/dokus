@@ -24,8 +24,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.local.LocalReduceMotion
-import tech.dokus.foundation.aura.style.isDark
+import tech.dokus.foundation.aura.style.dokusEffects
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
@@ -75,18 +80,6 @@ private const val MinPerspDivisor = 0.1f
 
 // Math
 private const val TwoPI = 6.2831853f
-
-// Dark theme colors
-private val DarkPrimary = Color(0xFFfbbf24)
-private val DarkSecondary = Color(0xFF71717a)
-private val DarkAccent = Color(0xFFf59e0b)
-private const val DarkBaseAlpha = 0.85f
-
-// Light theme colors
-private val LightPrimary = Color(0xFF78350f)
-private val LightSecondary = Color(0xFFa1a1aa)
-private val LightAccent = Color(0xFF451a03)
-private const val LightBaseAlpha = 0.70f
 
 // Reduced motion fallback
 private const val ReducedMotionPulseMin = 0.3f
@@ -169,14 +162,8 @@ private fun cubicEaseInOut(t: Float): Float {
 }
 
 /** Linearly interpolate between two colors. */
-private fun lerpColor(a: Color, b: Color, fraction: Float): Color {
-    return Color(
-        red = a.red + (b.red - a.red) * fraction,
-        green = a.green + (b.green - a.green) * fraction,
-        blue = a.blue + (b.blue - a.blue) * fraction,
-        alpha = a.alpha + (b.alpha - a.alpha) * fraction,
-    )
-}
+private fun lerpColor(a: Color, b: Color, fraction: Float): Color =
+    androidx.compose.ui.graphics.lerp(a, b, fraction)
 
 /**
  * Standard sizes for the Dokus loading animation.
@@ -221,14 +208,18 @@ fun DokusLoader(
         return
     }
 
-    val isDark = MaterialTheme.colorScheme.isDark
-    val colors = remember(isDark) {
-        if (isDark) LoaderColors(DarkPrimary, DarkSecondary, DarkAccent, DarkBaseAlpha)
-        else LoaderColors(LightPrimary, LightSecondary, LightAccent, LightBaseAlpha)
+    val effects = MaterialTheme.dokusEffects
+    val colors = remember(effects) {
+        LoaderColors(
+            primary = effects.loaderPrimary,
+            secondary = effects.loaderSecondary,
+            accent = effects.loaderAccent,
+            baseAlpha = effects.loaderBaseAlpha,
+        )
     }
 
     val particles = remember(particleCount) {
-        generateParticles(particleCount, Random)
+        generateParticles(particleCount, Random(seed = particleCount))
     }
 
     var elapsedSeconds by remember { mutableFloatStateOf(0f) }
@@ -332,13 +323,22 @@ fun DokusLoader(
     }
 }
 
+@Preview
+@Composable
+private fun DokusLoaderPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusLoader(size = DokusLoaderSize.Medium)
+    }
+}
+
 /**
  * Reduced-motion fallback: simple pulsing dots.
  */
 @Composable
 private fun ReducedMotionLoader(modifier: Modifier, size: Dp) {
-    val isDark = MaterialTheme.colorScheme.isDark
-    val color = if (isDark) DarkPrimary else LightPrimary
+    val color = MaterialTheme.dokusEffects.loaderPrimary
 
     val infinite = rememberInfiniteTransition(label = "DokusLoaderReduced")
     val alpha by infinite.animateFloat(
@@ -371,8 +371,7 @@ private fun ReducedMotionLoader(modifier: Modifier, size: Dp) {
  */
 @Composable
 private fun StaticLoaderPlaceholder(modifier: Modifier, size: Dp) {
-    val isDark = MaterialTheme.colorScheme.isDark
-    val color = if (isDark) DarkPrimary else LightPrimary
+    val color = MaterialTheme.dokusEffects.loaderPrimary
 
     Canvas(modifier = modifier.size(size)) {
         val cx = this.size.width / 2f

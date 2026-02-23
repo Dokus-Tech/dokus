@@ -55,10 +55,15 @@ import tech.dokus.foundation.aura.components.settings.SettingsSection
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.status.toColor
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val MaxContentWidth = 820.dp
 
@@ -172,20 +177,20 @@ private fun NotificationPreferencesContentScreen(
     ) {
         Column(
             modifier = Modifier.widthIn(max = MaxContentWidth),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
             Text(
                 text = stringResource(Res.string.settings_notifications),
                 style = MaterialTheme.typography.headlineMedium
             )
-            Spacer(Modifier.height(Constrains.Spacing.xxSmall))
+            Spacer(Modifier.height(Constraints.Spacing.xxSmall))
             Text(
                 text = stringResource(Res.string.notification_pref_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.textMuted
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.large))
+            Spacer(Modifier.height(Constraints.Spacing.large))
 
             NotificationSection(
                 title = stringResource(Res.string.notification_pref_section_peppol),
@@ -197,7 +202,7 @@ private fun NotificationPreferencesContentScreen(
                 hint = stringResource(Res.string.notification_pref_peppol_hint)
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Constraints.Spacing.small))
 
             NotificationSection(
                 title = stringResource(Res.string.notification_pref_section_compliance),
@@ -208,7 +213,7 @@ private fun NotificationPreferencesContentScreen(
                 onIntent = onIntent
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Constraints.Spacing.small))
 
             NotificationSection(
                 title = stringResource(Res.string.notification_pref_section_billing),
@@ -219,14 +224,14 @@ private fun NotificationPreferencesContentScreen(
                 onIntent = onIntent
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
             Text(
                 text = stringResource(Res.string.notification_pref_compliance_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.xLarge))
+            Spacer(Modifier.height(Constraints.Spacing.xLarge))
         }
     }
 }
@@ -246,7 +251,7 @@ private fun NotificationSection(
         expanded = expanded,
         onToggle = onToggle,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
             rows.forEach { type ->
                 NotificationPreferenceRow(
                     label = type.localized,
@@ -262,7 +267,7 @@ private fun NotificationSection(
                     text = hint,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
-                    modifier = Modifier.padding(top = Constrains.Spacing.xSmall)
+                    modifier = Modifier.padding(top = Constraints.Spacing.xSmall)
                 )
             }
         }
@@ -287,12 +292,12 @@ private fun NotificationPreferenceRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = Constrains.Spacing.xxSmall),
+                .padding(vertical = Constraints.Spacing.xxSmall),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(0.5f)
             )
             Text(
@@ -320,8 +325,8 @@ private fun NotificationPreferenceRow(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = Constrains.Spacing.xxSmall),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xxSmall)
+                .padding(vertical = Constraints.Spacing.xxSmall),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)
         ) {
             Text(
                 text = label,
@@ -355,7 +360,7 @@ private fun NotificationPreferenceRow(
 private fun RequiredBadge() {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         StatusDot(type = StatusDotType.Confirmed)
         Text(
@@ -367,3 +372,38 @@ private fun RequiredBadge() {
     }
 }
 
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun NotificationPreferencesContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val samplePreferences = mapOf(
+        NotificationType.PeppolReceived to NotificationPreferenceDto(
+            type = NotificationType.PeppolReceived,
+            emailEnabled = true,
+            emailLocked = false,
+        ),
+        NotificationType.ComplianceBlocker to NotificationPreferenceDto(
+            type = NotificationType.ComplianceBlocker,
+            emailEnabled = true,
+            emailLocked = true,
+        ),
+        NotificationType.PaymentConfirmed to NotificationPreferenceDto(
+            type = NotificationType.PaymentConfirmed,
+            emailEnabled = false,
+            emailLocked = false,
+        ),
+    )
+    TestWrapper(parameters) {
+        NotificationPreferencesContent(
+            state = NotificationPreferencesState.Content(
+                preferences = samplePreferences,
+            ),
+            onIntent = {},
+        )
+    }
+}

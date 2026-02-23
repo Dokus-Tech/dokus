@@ -41,8 +41,8 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.cashflow_add_document
 import tech.dokus.aura.resources.upload_instructions
-import tech.dokus.aura.resources.upload_no_documents
 import tech.dokus.aura.resources.upload_no_app_hint
+import tech.dokus.aura.resources.upload_no_documents
 import tech.dokus.aura.resources.upload_uploads_title
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle

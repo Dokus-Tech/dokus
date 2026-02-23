@@ -11,6 +11,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Briefcase
 import tech.dokus.domain.exceptions.DokusException
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 object PTextFieldWorkspaceNameDefaults {
     val icon = FeatherIcons.Briefcase
@@ -56,4 +61,18 @@ fun PTextFieldWorkspaceName(
         showClearButton = showClearButton,
         onValueChange = onValueChange
     )
+}
+
+@Preview
+@Composable
+private fun PTextFieldWorkspaceNamePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTextFieldWorkspaceName(
+            fieldName = "Workspace Name",
+            value = "My Company",
+            onValueChange = {}
+        )
+    }
 }

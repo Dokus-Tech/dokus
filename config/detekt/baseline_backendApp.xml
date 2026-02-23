@@ -1,6 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='UTF-8'?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues>
+    <ID>TooGenericExceptionCaught:TokenManager.kt$TokenManagerImpl$e: Exception</ID>
+  </ManuallySuppressedIssues>
   <CurrentIssues>
     <ID>ArgumentListWrapping:AttachmentRoutes.kt$(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)</ID>
     <ID>ArgumentListWrapping:AuthService.kt$AuthService$( Permission.InvoicesRead, Permission.ClientsRead, Permission.ReportsView )</ID>
@@ -22,7 +24,7 @@
     <ID>CyclomaticComplexMethod:AttachmentRoutes.kt$@OptIn(ExperimentalUuidApi::class) internal fun Route.attachmentRoutes()</ID>
     <ID>CyclomaticComplexMethod:InboundInvoiceService.kt$InboundInvoiceService$private fun categorizeSupplier(supplierName: String?): ExpenseCategory</ID>
     <ID>CyclomaticComplexMethod:ChatRoutes.kt$internal fun Route.chatRoutes()</ID>
-    <ID>CyclomaticComplexMethod:ContactEnrichmentService.kt$ContactEnrichmentService$private fun calculateEnrichmentFields( contact: ContactDto, data: EnrichmentData ): Pair&lt;List&lt;Pair&lt;String, String&gt;&gt;, List&lt;String&gt;&gt;</ID>
+    <ID>CyclomaticComplexMethod:ContactEnrichmentService.kt$ContactEnrichmentService$private fun calculateEnrichmentFields( contact: ContactDto, data: EnrichmentData ): Pair&lt;List&lt;Pair&lt;String, String>>, List&lt;String>></ID>
     <ID>CyclomaticComplexMethod:DocumentProcessingWorker.kt$DocumentProcessingWorker$private suspend fun processIngestionRun(ingestion: IngestionItemEntity)</ID>
     <ID>CyclomaticComplexMethod:DocumentRecordRoutes.kt$internal fun Route.documentRecordRoutes()</ID>
     <ID>CyclomaticComplexMethod:ExpenseService.kt$ExpenseService$fun categorizeExpense(merchant: String, description: String? = null): ExpenseCategory</ID>
@@ -91,11 +93,11 @@
     <ID>LongMethod:AttachmentRoutes.kt$@OptIn(ExperimentalUuidApi::class) internal fun Route.attachmentRoutes()</ID>
     <ID>LongMethod:AvatarRoutes.kt$internal fun Route.avatarRoutes()</ID>
     <ID>LongMethod:InboundInvoiceRoutes.kt$@OptIn(ExperimentalUuidApi::class) internal fun Route.inboundInvoiceRoutes()</ID>
-    <ID>LongMethod:CashflowOverviewService.kt$CashflowOverviewService$suspend fun getCashflowOverview( tenantId: TenantId, fromDate: LocalDate? = null, toDate: LocalDate? = null ): Result&lt;CashflowOverview&gt;</ID>
+    <ID>LongMethod:CashflowOverviewService.kt$CashflowOverviewService$suspend fun getCashflowOverview( tenantId: TenantId, fromDate: LocalDate? = null, toDate: LocalDate? = null ): Result&lt;CashflowOverview></ID>
     <ID>LongMethod:ChatRoutes.kt$internal fun Route.chatRoutes()</ID>
     <ID>LongMethod:ChatRoutes.kt$private suspend fun processChat( request: ChatRequest, tenantId: TenantId, userId: UserId, documentId: DocumentId?, chatAgent: ChatAgent, chatRepository: ChatRepository, aiConfig: AIConfig, logger: org.slf4j.Logger ): ChatResponse</ID>
-    <ID>LongMethod:ContactEnrichmentService.kt$ContactEnrichmentService$private fun calculateEnrichmentFields( contact: ContactDto, data: EnrichmentData ): Pair&lt;List&lt;Pair&lt;String, String&gt;&gt;, List&lt;String&gt;&gt;</ID>
-    <ID>LongMethod:ContactMatchingService.kt$ContactMatchingService$suspend fun findMatch( tenantId: TenantId, extracted: ExtractedCounterparty ): Result&lt;ContactSuggestion&gt;</ID>
+    <ID>LongMethod:ContactEnrichmentService.kt$ContactEnrichmentService$private fun calculateEnrichmentFields( contact: ContactDto, data: EnrichmentData ): Pair&lt;List&lt;Pair&lt;String, String>>, List&lt;String>></ID>
+    <ID>LongMethod:ContactMatchingService.kt$ContactMatchingService$suspend fun findMatch( tenantId: TenantId, extracted: ExtractedCounterparty ): Result&lt;ContactSuggestion></ID>
     <ID>LongMethod:ContactRoutes.kt$fun Route.contactRoutes()</ID>
     <ID>LongMethod:DocumentPageRoutes.kt$internal fun Route.documentPageRoutes()</ID>
     <ID>LongMethod:DocumentProcessingWorker.kt$DocumentProcessingWorker$private suspend fun chunkAndEmbedDocument( tenantId: String, documentId: String, rawText: String ): Int</ID>
@@ -191,13 +193,13 @@
     <ID>NoWildcardImports:DocumentUploadRoutes.kt$import io.ktor.server.request.*</ID>
     <ID>NoWildcardImports:DocumentUploadRoutes.kt$import io.ktor.server.response.*</ID>
     <ID>NoWildcardImports:DocumentUploadRoutes.kt$import io.ktor.server.routing.*</ID>
-    <ID>ReturnCount:AuthService.kt$AuthService$private fun resolveTenantScope( memberships: List&lt;TenantMembership&gt;, selectedTenantId: TenantId? = null ): TenantScope?</ID>
+    <ID>ReturnCount:AuthService.kt$AuthService$private fun resolveTenantScope( memberships: List&lt;TenantMembership>, selectedTenantId: TenantId? = null ): TenantScope?</ID>
     <ID>ReturnCount:DocumentProcessingWorker.kt$DocumentProcessingWorker$private suspend fun chunkAndEmbedDocument( tenantId: String, documentId: String, rawText: String ): Int</ID>
     <ID>ReturnCount:DocumentProcessingWorker.kt$DocumentProcessingWorker$private suspend fun processIngestionRun(ingestion: IngestionItemEntity)</ID>
-    <ID>ReturnCount:EmailVerificationService.kt$EmailVerificationService$suspend fun resendVerificationEmail(userId: UserId): Result&lt;Unit&gt;</ID>
-    <ID>ReturnCount:EmailVerificationService.kt$EmailVerificationService$suspend fun verifyEmail(token: String): Result&lt;Unit&gt;</ID>
-    <ID>ReturnCount:PasswordResetService.kt$PasswordResetService$suspend fun resetPassword(token: String, newPassword: String): Result&lt;Unit&gt;</ID>
-    <ID>ReturnCount:RedisRateLimitService.kt$RedisRateLimitService$override suspend fun checkLoginAttempts(email: String): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:EmailVerificationService.kt$EmailVerificationService$suspend fun resendVerificationEmail(userId: UserId): Result&lt;Unit></ID>
+    <ID>ReturnCount:EmailVerificationService.kt$EmailVerificationService$suspend fun verifyEmail(token: String): Result&lt;Unit></ID>
+    <ID>ReturnCount:PasswordResetService.kt$PasswordResetService$suspend fun resetPassword(token: String, newPassword: String): Result&lt;Unit></ID>
+    <ID>ReturnCount:RedisRateLimitService.kt$RedisRateLimitService$override suspend fun checkLoginAttempts(email: String): Result&lt;Unit></ID>
     <ID>SpreadOperator:RedisRateLimitService.kt$RedisRateLimitService$(*attemptKeys.toTypedArray())</ID>
     <ID>StringTemplate:DocumentProcessingWorker.kt$DocumentProcessingWorker$${isRagEnabled}</ID>
     <ID>SwallowedException:AttachmentRoutes.kt$e: Exception</ID>

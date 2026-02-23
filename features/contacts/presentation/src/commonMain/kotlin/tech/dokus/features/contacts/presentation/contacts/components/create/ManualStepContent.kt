@@ -45,7 +45,7 @@ import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 
 /**
@@ -61,7 +61,7 @@ fun ManualStepContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(Constrains.Spacing.large)
+            .padding(Constraints.Spacing.large)
     ) {
         // Header with back button
         ManualHeader(
@@ -69,14 +69,14 @@ fun ManualStepContent(
             onBack = { onIntent(CreateContactIntent.BackFromManual) }
         )
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
         // Scrollable content
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
         ) {
             Text(
                 text = stringResource(Res.string.contacts_add_contact_manually),
@@ -90,7 +90,7 @@ fun ManualStepContent(
                 onTypeSelected = { onIntent(CreateContactIntent.ManualTypeChanged(it)) }
             )
 
-            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
             // Form fields based on type
             if (state.contactType == ClientType.Business) {
@@ -123,7 +123,7 @@ fun ManualStepContent(
             onClick = { onIntent(CreateContactIntent.CreateManualContact) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(Constrains.Height.button)
+                .height(Constraints.Height.button)
         )
     }
 
@@ -171,7 +171,7 @@ private fun TypeSelector(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         FilterChip(
             selected = selectedType == ClientType.Business,
@@ -195,7 +195,7 @@ private fun BusinessFields(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
     ) {
         PTextFieldStandard(
             fieldName = stringResource(
@@ -245,7 +245,7 @@ private fun IndividualFields(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
     ) {
         PTextFieldStandard(
             fieldName = stringResource(
@@ -292,7 +292,7 @@ private fun CountrySelector(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         Country.entries.forEach { country ->
             FilterChip(
@@ -317,5 +317,30 @@ private fun isFormValid(type: ClientType, data: ManualContactFormData): Boolean 
         data.companyName.value.isNotBlank()
     } else {
         data.fullName.value.isNotBlank() && (data.personEmail.value.isNotBlank() || data.personPhone.value.isNotBlank())
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ManualStepContentPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ManualStepContent(
+            state = CreateContactState.ManualStep(
+                contactType = ClientType.Business,
+                formData = ManualContactFormData(
+                    companyName = tech.dokus.domain.LegalName("Acme Corp")
+                )
+            ),
+            headerTitle = "New Contact",
+            onIntent = {}
+        )
     }
 }

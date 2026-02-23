@@ -130,3 +130,45 @@ internal fun ContactsFiltersMobile(
         )
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactsFiltersPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactsFilters(
+            selectedSortOption = ContactSortOption.Default,
+            selectedRoleFilter = ContactRoleFilter.All,
+            selectedActiveFilter = ContactActiveFilter.All,
+            onSortOptionSelected = {},
+            onRoleFilterSelected = {},
+            onActiveFilterSelected = {}
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactsFiltersMobilePreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactsFiltersMobile(
+            selectedSortOption = ContactSortOption.Default,
+            selectedRoleFilter = ContactRoleFilter.All,
+            selectedActiveFilter = ContactActiveFilter.Active,
+            onSortOptionSelected = {},
+            onRoleFilterSelected = {},
+            onActiveFilterSelected = {}
+        )
+    }
+}

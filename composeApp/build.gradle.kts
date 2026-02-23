@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
-    alias(libs.plugins.paparazzi)
+    alias(libs.plugins.roborazzi)
     id("dokus.versioning")
 }
 
@@ -107,7 +107,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
-            implementation(compose.components.uiToolingPreview)
+            implementation(compose.preview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(compose.materialIconsExtended)
@@ -134,6 +134,11 @@ kotlin {
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlin.test.junit)
+            implementation(libs.junit)
+            implementation(libs.robolectric)
+            implementation(libs.bundles.roborazzi)
+            implementation(libs.bundles.roborazzi.scanner)
+            implementation(libs.androidx.ui.test.junit4)
             implementation(projects.foundation.aura)
         }
         desktopMain.dependencies {
@@ -206,7 +211,7 @@ compose.desktop {
             vendor = "Invoid Vision"
 
             macOS {
-                dockName = "D[#]kus"
+                dockName = "Dokus"
                 appStore = macAppStore
                 bundleID = bundleIds.macos
                 copyright = "Invoid Vision 2025"
@@ -229,5 +234,21 @@ compose.desktop {
 tasks.named("wasmJsBrowserDistribution") {
     doLast {
         WebCacheBuster.updateIndexFileForDistribution(project)
+    }
+}
+
+@OptIn(com.github.takahirom.roborazzi.ExperimentalRoborazziApi::class)
+roborazzi {
+    outputDir.set(file("src/androidUnitTest/snapshots"))
+    generateComposePreviewRobolectricTests {
+        enable = true
+        packages = listOf("tech.dokus.app")
+        includePrivatePreviews = true
+        testerQualifiedClassName = "tech.dokus.testing.DokusComposePreviewTester"
+        useScanOptionParametersInTester = true
+        robolectricConfig = mapOf(
+            "sdk" to "[34]",
+            "qualifiers" to "RobolectricDeviceQualifiers.Pixel5"
+        )
     }
 }

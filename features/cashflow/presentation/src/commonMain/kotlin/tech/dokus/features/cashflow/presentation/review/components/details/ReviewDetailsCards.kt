@@ -11,44 +11,44 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_contact_label
+import tech.dokus.aura.resources.cashflow_choose_different
 import tech.dokus.aura.resources.cashflow_contact_create_new
+import tech.dokus.aura.resources.cashflow_contact_label
+import tech.dokus.aura.resources.cashflow_credit_note_details_section
+import tech.dokus.aura.resources.cashflow_credit_note_number
 import tech.dokus.aura.resources.cashflow_direction
 import tech.dokus.aura.resources.cashflow_direction_in
 import tech.dokus.aura.resources.cashflow_direction_out
-import tech.dokus.aura.resources.cashflow_no_contact_selected
-import tech.dokus.aura.resources.cashflow_select_contact
-import tech.dokus.aura.resources.cashflow_suggested_contact
-import tech.dokus.aura.resources.cashflow_use_this_contact
-import tech.dokus.aura.resources.cashflow_choose_different
-import tech.dokus.aura.resources.cashflow_credit_note_details_section
-import tech.dokus.aura.resources.cashflow_credit_note_number
 import tech.dokus.aura.resources.cashflow_invoice_details_section
 import tech.dokus.aura.resources.cashflow_invoice_number
+import tech.dokus.aura.resources.cashflow_no_contact_selected
 import tech.dokus.aura.resources.cashflow_processing_identifying_type
 import tech.dokus.aura.resources.cashflow_receipt_details_section
 import tech.dokus.aura.resources.cashflow_receipt_number
+import tech.dokus.aura.resources.cashflow_select_contact
 import tech.dokus.aura.resources.cashflow_select_document_type
+import tech.dokus.aura.resources.cashflow_suggested_contact
+import tech.dokus.aura.resources.cashflow_use_this_contact
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_vat_number
-import tech.dokus.aura.resources.workspace_iban
 import tech.dokus.aura.resources.document_type_credit_note
 import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.document_type_receipt
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
+import tech.dokus.aura.resources.workspace_iban
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.features.cashflow.presentation.review.ContactSelectionState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.review.ContactSelectionState
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Counterparty display section - shows extracted counterparty info as facts.
@@ -90,7 +90,7 @@ internal fun CounterpartyCard(
             // Show extracted data as secondary info
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
             ) {
                 counterparty.vatNumber?.let { vat ->
                     FactField(
@@ -120,7 +120,7 @@ internal fun CounterpartyCard(
                     vatNumber = selection.vatNumber,
                     onAccept = { onIntent(DocumentReviewIntent.AcceptSuggestedContact) },
                     onChooseDifferent = onCorrectContact,
-                    modifier = Modifier.padding(top = Constrains.Spacing.small),
+                    modifier = Modifier.padding(top = Constraints.Spacing.small),
                 )
             }
             ContactSelectionState.NoContact -> {
@@ -131,7 +131,7 @@ internal fun CounterpartyCard(
                         iban = counterparty.iban,
                         onLinkExisting = onCorrectContact,
                         onCreateNew = onCreateContact,
-                        modifier = Modifier.padding(top = Constrains.Spacing.small),
+                        modifier = Modifier.padding(top = Constraints.Spacing.small),
                     )
                 }
             }
@@ -150,7 +150,7 @@ private fun SuggestedContactCard(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
     ) {
         MicroLabel(text = stringResource(Res.string.cashflow_suggested_contact))
         FactField(
@@ -163,7 +163,7 @@ private fun SuggestedContactCard(
                 value = vat
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
             PPrimaryButton(
                 text = stringResource(Res.string.cashflow_use_this_contact),
                 onClick = onAccept,
@@ -189,13 +189,13 @@ private fun PendingContactCard(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
     ) {
         MicroLabel(text = stringResource(Res.string.cashflow_no_contact_selected))
         name?.let { FactField(label = stringResource(Res.string.cashflow_contact_label), value = it) }
         vatNumber?.let { FactField(label = stringResource(Res.string.contacts_vat_number), value = it) }
         iban?.let { FactField(label = stringResource(Res.string.workspace_iban), value = it) }
-        Row(horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
             PPrimaryButton(
                 text = stringResource(Res.string.cashflow_select_contact),
                 onClick = onLinkExisting,
@@ -278,7 +278,7 @@ internal fun InvoiceDetailsCard(
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                     ) {
                         POutlinedButton(
                             text = stringResource(Res.string.document_type_invoice),
@@ -289,8 +289,8 @@ internal fun InvoiceDetailsCard(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = Constrains.Spacing.small),
-                        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                            .padding(top = Constraints.Spacing.small),
+                        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                     ) {
                         POutlinedButton(
                             text = stringResource(Res.string.document_type_receipt),
@@ -400,12 +400,12 @@ private fun DirectionSelector(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         MicroLabel(text = stringResource(Res.string.cashflow_direction))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
         ) {
             val isInbound = direction == DocumentDirection.Inbound
             val isOutbound = direction == DocumentDirection.Outbound

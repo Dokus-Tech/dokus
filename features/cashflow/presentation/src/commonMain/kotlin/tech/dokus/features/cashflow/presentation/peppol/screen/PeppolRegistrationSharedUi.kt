@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,19 +31,25 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.peppol_reg_copied
 import tech.dokus.aura.resources.peppol_reg_copy_email
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -64,12 +68,12 @@ internal fun PeppolCenteredFlow(
         modifier = modifier
             .limitWidthCenteredContent()
             .verticalScroll(rememberScrollState())
-            .padding(Constrains.Spacing.xxLarge),
+            .padding(Constraints.Spacing.xxLarge),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         icon()
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.xxLarge))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.xxLarge))
 
         Text(
             text = title,
@@ -78,7 +82,7 @@ internal fun PeppolCenteredFlow(
             textAlign = TextAlign.Center,
         )
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
         Text(
             text = subtitle,
@@ -87,21 +91,21 @@ internal fun PeppolCenteredFlow(
             textAlign = TextAlign.Center,
         )
         if (body != null) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
             body()
         }
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.xxLarge))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.xxLarge))
 
         primary()
 
         if (secondary != null) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
             secondary()
         }
 
         if (footnote != null) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.xLarge))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
             Text(
                 text = footnote,
                 style = MaterialTheme.typography.bodySmall,
@@ -111,7 +115,7 @@ internal fun PeppolCenteredFlow(
         }
 
         if (details != null) {
-            Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
             details()
         }
     }
@@ -208,12 +212,11 @@ internal fun TransferEmailCard(
                 text = template,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
-                fontFamily = FontFamily.Monospace,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 160.dp)
                     .verticalScroll(rememberScrollState())
-                    .padding(Constrains.Spacing.medium)
+                    .padding(Constraints.Spacing.medium)
             )
 
             Row(
@@ -224,7 +227,7 @@ internal fun TransferEmailCard(
                         MaterialTheme.colorScheme.outlineVariant,
                         MaterialTheme.shapes.small
                     )
-                    .padding(horizontal = Constrains.Spacing.medium),
+                    .padding(horizontal = Constraints.Spacing.medium),
                 horizontalArrangement = Arrangement.End,
             ) {
                 TextButton(
@@ -234,12 +237,47 @@ internal fun TransferEmailCard(
                     }
                 ) {
                     Text(
-                        text = if (copied) stringResource(Res.string.peppol_reg_copied) else stringResource(Res.string.peppol_reg_copy_email),
+                        text = if (copied) {
+                            stringResource(
+                                Res.string.peppol_reg_copied
+                            )
+                        } else {
+                            stringResource(Res.string.peppol_reg_copy_email)
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         color = if (copied) MaterialTheme.colorScheme.statusConfirmed else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun PeppolCirclePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PeppolCircle {
+            PeppolSpinner()
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun TransferEmailCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        TransferEmailCard(
+            companyName = "Acme Corporation",
+            peppolId = "0208:BE0123456789"
+        )
     }
 }

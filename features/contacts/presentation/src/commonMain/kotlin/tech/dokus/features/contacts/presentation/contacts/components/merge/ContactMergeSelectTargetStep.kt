@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_merge_from_label
@@ -31,6 +30,7 @@ import tech.dokus.aura.resources.contacts_merge_search_placeholder
 import tech.dokus.aura.resources.contacts_merge_select_target_prompt
 import tech.dokus.aura.resources.contacts_searching
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun ContactMergeSelectTargetStep(
@@ -42,7 +42,10 @@ internal fun ContactMergeSelectTargetStep(
     onTargetSelected: (ContactDto) -> Unit,
 ) {
     Column(
-        modifier = Modifier.heightIn(min = 200.dp, max = 400.dp)
+        modifier = Modifier.heightIn(
+            min = Constraints.SearchField.minWidth,
+            max = Constraints.DialogSize.maxWidth
+        )
     ) {
         Text(
             text = stringResource(Res.string.contacts_merge_from_label),
@@ -55,7 +58,7 @@ internal fun ContactMergeSelectTargetStep(
             onClick = null
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
         OutlinedTextField(
             value = searchQuery,
@@ -66,24 +69,24 @@ internal fun ContactMergeSelectTargetStep(
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(Constraints.IconSize.smallMedium)
                 )
             },
             singleLine = true
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
         when {
             isSearching -> {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp),
+                        .padding(vertical = Constraints.Spacing.large),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     DokusLoader(size = DokusLoaderSize.Small)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Constraints.Spacing.small))
                     Text(
                         text = stringResource(Res.string.contacts_searching),
                         style = MaterialTheme.typography.bodySmall,
@@ -94,17 +97,17 @@ internal fun ContactMergeSelectTargetStep(
             searchQuery.length < 2 -> {
                 Text(
                     text = stringResource(Res.string.contacts_merge_search_min_length),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 16.dp)
+                    modifier = Modifier.padding(vertical = Constraints.Spacing.large)
                 )
             }
             searchResults.isEmpty() -> {
                 Text(
                     text = stringResource(Res.string.contacts_merge_search_no_results, searchQuery),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 16.dp)
+                    modifier = Modifier.padding(vertical = Constraints.Spacing.large)
                 )
             }
             else -> {
@@ -113,11 +116,11 @@ internal fun ContactMergeSelectTargetStep(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = 200.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.heightIn(max = Constraints.SearchField.minWidth),
+                    verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
                 ) {
                     items(searchResults) { contact ->
                         ContactMergeMiniCard(
@@ -129,5 +132,36 @@ internal fun ContactMergeSelectTargetStep(
                 }
             }
         }
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactMergeSelectTargetStepPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactMergeSelectTargetStep(
+            sourceContact = ContactDto(
+                id = tech.dokus.domain.ids.ContactId.generate(),
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Old Company NV"),
+                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                createdAt = now,
+                updatedAt = now
+            ),
+            searchQuery = "",
+            searchResults = emptyList(),
+            isSearching = false,
+            onSearchQueryChange = {},
+            onTargetSelected = {}
+        )
     }
 }

@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.paparazzi)
+    alias(libs.plugins.roborazzi)
 }
 
 kotlin {
@@ -51,6 +51,8 @@ kotlin {
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.bundles.koin.compose)
 
+            implementation(compose.preview)
+
             // File picker for avatar selection
             implementation(libs.calf.filePicker)
         }
@@ -59,6 +61,11 @@ kotlin {
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlin.test.junit)
+            implementation(libs.junit)
+            implementation(libs.robolectric)
+            implementation(libs.bundles.roborazzi)
+            implementation(libs.bundles.roborazzi.scanner)
+            implementation(libs.androidx.ui.test.junit4)
             implementation(projects.foundation.aura)
         }
     }
@@ -109,5 +116,21 @@ compose.desktop {
                 }
             }
         }
+    }
+}
+
+@OptIn(com.github.takahirom.roborazzi.ExperimentalRoborazziApi::class)
+roborazzi {
+    outputDir.set(file("src/androidUnitTest/snapshots"))
+    generateComposePreviewRobolectricTests {
+        enable = true
+        packages = listOf("tech.dokus.features.auth.presentation")
+        includePrivatePreviews = true
+        testerQualifiedClassName = "tech.dokus.testing.DokusComposePreviewTester"
+        useScanOptionParametersInTester = true
+        robolectricConfig = mapOf(
+            "sdk" to "[34]",
+            "qualifiers" to "RobolectricDeviceQualifiers.Pixel5"
+        )
     }
 }

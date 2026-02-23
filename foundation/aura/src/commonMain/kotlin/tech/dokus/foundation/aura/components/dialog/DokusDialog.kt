@@ -38,8 +38,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.DokusGlassSurface
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Represents an action button in a DokusDialog.
@@ -111,8 +116,8 @@ fun DokusDialog(
     ) {
         DokusGlassSurface(
             modifier = modifier
-                .widthIn(max = Constrains.DialogSize.maxWidth)
-                .padding(horizontal = Constrains.Spacing.large)
+                .widthIn(max = Constraints.DialogSize.maxWidth)
+                .padding(horizontal = Constraints.Spacing.large)
                 .focusRequester(focusRequester)
                 .focusable()
                 .onKeyEvent { event ->
@@ -143,24 +148,23 @@ fun DokusDialog(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(Constrains.Spacing.xLarge),
+                    .padding(Constraints.Spacing.xLarge),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Icon (optional)
                 if (icon != null) {
                     icon()
-                    Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+                    Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
                 }
 
                 // Title
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
                 // Content (optionally scrollable)
                 Box(
@@ -177,7 +181,7 @@ fun DokusDialog(
                     content()
                 }
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.xLarge))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
 
                 // Actions
                 Row(
@@ -217,8 +221,8 @@ fun DokusDialog(
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier
-                                    .size(Constrains.IconSize.buttonLoading)
-                                    .padding(end = Constrains.Spacing.small),
+                                    .size(Constraints.IconSize.buttonLoading)
+                                    .padding(end = Constraints.Spacing.small),
                                 strokeWidth = 2.dp,
                                 color = if (primaryAction.isDestructive) {
                                     MaterialTheme.colorScheme.error
@@ -266,7 +270,7 @@ fun DokusConfirmDialog(
         content = {
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
@@ -284,4 +288,39 @@ fun DokusConfirmDialog(
         dismissOnBackPress = !isConfirming,
         dismissOnClickOutside = !isConfirming
     )
+}
+
+@Preview
+@Composable
+private fun DokusDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusDialog(
+            onDismissRequest = {},
+            title = "Confirm Action",
+            content = { Text("Are you sure you want to proceed?") },
+            primaryAction = DokusDialogAction(
+                text = "Confirm",
+                onClick = {},
+            ),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DokusConfirmDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusConfirmDialog(
+            onDismissRequest = {},
+            title = "Delete Item",
+            message = "This action cannot be undone.",
+            confirmText = "Delete",
+            cancelText = "Cancel",
+            onConfirm = {},
+        )
+    }
 }

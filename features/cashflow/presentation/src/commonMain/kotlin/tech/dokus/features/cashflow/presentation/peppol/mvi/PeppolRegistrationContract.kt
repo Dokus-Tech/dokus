@@ -105,4 +105,3 @@ sealed interface PeppolRegistrationAction : MVIAction {
     data class ShowError(val error: DokusException) : PeppolRegistrationAction
     data object NavigateToHome : PeppolRegistrationAction
 }
-

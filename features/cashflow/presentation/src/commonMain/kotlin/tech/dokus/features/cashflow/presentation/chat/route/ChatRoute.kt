@@ -26,7 +26,7 @@ import tech.dokus.navigation.local.LocalNavController
 
 @Composable
 internal fun ChatRoute(
-    documentId: DocumentId? = null,
+    documentId: String? = null,
     container: ChatContainer = container(),
 ) {
     val navController = LocalNavController.current
@@ -72,9 +72,11 @@ internal fun ChatRoute(
         }
     }
 
-    LaunchedEffect(documentId) {
-        if (documentId != null) {
-            container.store.intent(ChatIntent.InitSingleDocChat(documentId))
+    val parsedDocumentId = remember(documentId) { documentId?.let { DocumentId.parse(it) } }
+
+    LaunchedEffect(parsedDocumentId) {
+        if (parsedDocumentId != null) {
+            container.store.intent(ChatIntent.InitSingleDocChat(parsedDocumentId))
         } else {
             container.store.intent(ChatIntent.InitCrossDocChat)
         }

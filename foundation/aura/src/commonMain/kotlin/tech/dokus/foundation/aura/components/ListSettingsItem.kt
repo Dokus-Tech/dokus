@@ -18,7 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import tech.dokus.foundation.aura.constrains.Constrains
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * A settings list item with icon, text, and optional selection state.
@@ -38,10 +45,10 @@ fun ListSettingsItem(
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)
             .background(
-                if (isSelected) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
+                if (isSelected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface.copy(alpha = 0f)
             )
             .clickable { onClick() }
-            .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.small),
+            .padding(horizontal = Constraints.Spacing.large, vertical = Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
@@ -53,9 +60,9 @@ fun ListSettingsItem(
             } else {
                 MaterialTheme.colorScheme.onSurface
             },
-            modifier = Modifier.size(Constrains.IconSize.small)
+            modifier = Modifier.size(Constraints.IconSize.small)
         )
-        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.small))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
@@ -65,5 +72,15 @@ fun ListSettingsItem(
                 MaterialTheme.colorScheme.onSurface
             }
         )
+    }
+}
+
+@Preview
+@Composable
+private fun ListSettingsItemPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ListSettingsItem(text = "General", icon = Icons.Default.Settings, onClick = {})
     }
 }

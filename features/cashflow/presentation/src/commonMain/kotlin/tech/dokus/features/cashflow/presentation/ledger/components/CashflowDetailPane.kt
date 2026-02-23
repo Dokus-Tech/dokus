@@ -28,8 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.Button
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,17 +44,11 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
-import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CashflowDirection
-import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.CashflowEntry
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cancel
@@ -84,21 +76,29 @@ import tech.dokus.aura.resources.cashflow_ledger_due_date
 import tech.dokus.aura.resources.cashflow_ledger_net
 import tech.dokus.aura.resources.invoice_total
 import tech.dokus.aura.resources.invoice_vat
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.CashflowDirection
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.ledger.mvi.PaymentFormState
 import tech.dokus.foundation.aura.components.CashflowStatusBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.layout.DokusExpandableAction
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // UI dimension constants
-private val FormContentPadding = 16.dp
-private val FormContentSpacing = 16.dp
-private val HeaderPaddingStart = 16.dp
-private val HeaderPaddingEnd = 8.dp
-private val HeaderPaddingTop = 16.dp
-private val HeaderPaddingBottom = 8.dp
-private val PaneMinWidth = 400.dp
-private val PaneMaxWidth = 600.dp
+private val FormContentPadding = Constraints.Spacing.large
+private val FormContentSpacing = Constraints.Spacing.large
+private val HeaderPaddingStart = Constraints.Spacing.large
+private val HeaderPaddingEnd = Constraints.Spacing.small
+private val HeaderPaddingTop = Constraints.Spacing.large
+private val HeaderPaddingBottom = Constraints.Spacing.small
+private val PaneMinWidth = Constraints.DialogSize.maxWidth
+private val PaneMaxWidth = Constraints.DialogSize.maxWidth * 1.5f
 private const val AnimationDurationMs = 200
 private const val SlideAnimationDurationMs = 300
 private const val ScrimAlpha = 0.32f
@@ -285,7 +285,7 @@ private fun CashflowDetailContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
         }
 
         // Payment footer (if status != Paid)
@@ -354,8 +354,15 @@ private fun CashflowStatusBanner(
     val detail: String? = when {
         entry.status == CashflowEntryStatus.Paid -> null
         entry.status == CashflowEntryStatus.Cancelled -> null
-        entry.status == CashflowEntryStatus.Overdue -> stringResource(Res.string.cashflow_detail_days_overdue, -daysUntilDue)
-        isPartiallyPaid -> stringResource(Res.string.cashflow_detail_remaining, entry.currency.displaySign, entry.remainingAmount.toDisplayString())
+        entry.status == CashflowEntryStatus.Overdue -> stringResource(
+            Res.string.cashflow_detail_days_overdue,
+            -daysUntilDue
+        )
+        isPartiallyPaid -> stringResource(
+            Res.string.cashflow_detail_remaining,
+            entry.currency.displaySign,
+            entry.remainingAmount.toDisplayString()
+        )
         daysUntilDue >= 0 -> stringResource(Res.string.cashflow_detail_due_in_days, daysUntilDue)
         else -> null
     }
@@ -374,7 +381,7 @@ private fun CashflowAmountSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         Text(
             text = if (entry.direction == CashflowDirection.Out) {
@@ -401,7 +408,7 @@ private fun CashflowContactSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         Text(
             text = stringResource(Res.string.cashflow_ledger_contact),
@@ -424,10 +431,10 @@ private fun CashflowDetailsSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
     ) {
         // Due Date
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)) {
             Text(
                 text = stringResource(Res.string.cashflow_ledger_due_date),
                 style = MaterialTheme.typography.labelSmall,
@@ -435,14 +442,14 @@ private fun CashflowDetailsSection(
             )
             Text(
                 text = formatShortDate(entry.eventDate),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
 
         // Description
         entry.description?.let { description ->
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)) {
                 Text(
                     text = stringResource(Res.string.cashflow_ledger_description),
                     style = MaterialTheme.typography.labelSmall,
@@ -450,7 +457,7 @@ private fun CashflowDetailsSection(
                 )
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
@@ -469,7 +476,7 @@ private fun CashflowBreakdownSection(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         Text(
             text = stringResource(Res.string.cashflow_detail_breakdown),
@@ -485,7 +492,7 @@ private fun CashflowBreakdownSection(
             label = stringResource(Res.string.invoice_vat),
             value = "${entry.currency.displaySign}${entry.amountVat.toDisplayString()}"
         )
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall))
         BreakdownRow(
             label = stringResource(Res.string.invoice_total),
             value = "${entry.currency.displaySign}${entry.amountGross.toDisplayString()}",
@@ -527,7 +534,7 @@ private fun CashflowSourceDocumentCard(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         Text(
             text = stringResource(Res.string.cashflow_detail_source_document),
@@ -538,19 +545,19 @@ private fun CashflowSourceDocumentCard(
         Row(
             modifier = Modifier
                 .clickable(onClick = onClick)
-                .padding(vertical = 4.dp),
+                .padding(vertical = Constraints.Spacing.xSmall),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
         ) {
             Icon(
                 imageVector = Icons.Default.Description,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(Constraints.IconSize.small)
             )
             Text(
                 text = stringResource(Res.string.cashflow_action_view_document),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary
             )
         }
@@ -570,7 +577,10 @@ private fun CashflowPaymentFooter(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val defaultSubtext = stringResource(Res.string.cashflow_detail_amount_today, entry.remainingAmount.toDisplayString())
+    val defaultSubtext = stringResource(
+        Res.string.cashflow_detail_amount_today,
+        entry.remainingAmount.toDisplayString()
+    )
 
     DokusExpandableAction(
         isExpanded = formState.isOptionsExpanded,
@@ -623,8 +633,8 @@ private fun PaymentOptionsForm(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(top = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = modifier.padding(top = Constraints.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
     ) {
         // Date (read-only for now)
         Text(
@@ -662,7 +672,7 @@ private fun PaymentOptionsForm(
         // Action buttons - side by side
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small, Alignment.End)
         ) {
             TextButton(onClick = onCancel) {
                 Text(stringResource(Res.string.cancel))

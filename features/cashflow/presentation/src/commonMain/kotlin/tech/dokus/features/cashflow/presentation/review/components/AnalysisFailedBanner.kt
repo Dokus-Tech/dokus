@@ -15,6 +15,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_analysis_continue_manually
@@ -23,7 +25,10 @@ import tech.dokus.aura.resources.cashflow_analysis_retry
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Calm failure banner shown when AI extraction fails.
@@ -50,17 +55,17 @@ internal fun AnalysisFailedBanner(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Constrains.Spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                .padding(Constraints.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Info,
                     contentDescription = null,
-                    modifier = Modifier.size(Constrains.IconSize.medium),
+                    modifier = Modifier.size(Constraints.IconSize.medium),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
@@ -80,7 +85,7 @@ internal fun AnalysisFailedBanner(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
                 PPrimaryButton(
                     text = stringResource(Res.string.cashflow_analysis_retry),
@@ -100,5 +105,24 @@ internal fun AnalysisFailedBanner(
                 }
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun AnalysisFailedBannerPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AnalysisFailedBanner(
+            reason = "Could not extract document data",
+            isRetrying = false,
+            onRetry = {},
+            onContinueManually = {}
+        )
     }
 }

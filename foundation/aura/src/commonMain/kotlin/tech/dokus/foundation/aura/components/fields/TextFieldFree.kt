@@ -9,6 +9,11 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import tech.dokus.domain.exceptions.DokusException
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 object PTextFieldFreeDefaults {
     val icon = null
@@ -52,4 +57,18 @@ fun PTextFieldFree(
         showClearButton = showClearButton,
         onValueChange = onValueChange
     )
+}
+
+@Preview
+@Composable
+private fun PTextFieldFreePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTextFieldFree(
+            fieldName = "Notes",
+            value = "Some free text content",
+            onValueChange = {}
+        )
+    }
 }

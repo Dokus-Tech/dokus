@@ -20,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -36,7 +38,10 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun SessionPickerDialog(
@@ -61,7 +66,7 @@ internal fun SessionPickerDialog(
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
-                    Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+                    Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
                     Text(
                         text = stringResource(Res.string.chat_history_empty),
                         style = MaterialTheme.typography.bodyMedium,
@@ -70,7 +75,7 @@ internal fun SessionPickerDialog(
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                    verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
                 ) {
                     items(sessions) { session ->
                         SessionListItem(
@@ -109,8 +114,8 @@ private fun SessionListItem(
         onClick = onClick,
     ) {
         Column(
-            modifier = Modifier.padding(Constrains.Spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+            modifier = Modifier.padding(Constraints.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -143,5 +148,20 @@ private fun SessionListItem(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun SessionPickerDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        SessionPickerDialog(
+            sessions = emptyList(),
+            onSessionSelect = {},
+            onNewSession = {},
+            onDismiss = {},
+        )
     }
 }

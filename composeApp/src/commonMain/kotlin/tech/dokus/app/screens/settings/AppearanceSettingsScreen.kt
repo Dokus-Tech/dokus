@@ -37,6 +37,11 @@ import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.LocalThemeManager
 import tech.dokus.foundation.aura.style.ThemeMode
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Appearance settings screen with top bar.
@@ -138,4 +143,14 @@ private enum class ThemeOption(
     Light(ThemeMode.LIGHT, Res.string.appearance_theme_light),
     Dark(ThemeMode.DARK, Res.string.appearance_theme_dark),
     System(ThemeMode.SYSTEM, Res.string.appearance_theme_system)
+}
+
+@Preview
+@Composable
+private fun AppearanceSettingsContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AppearanceSettingsContent()
+    }
 }

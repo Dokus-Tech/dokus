@@ -14,12 +14,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_input_placeholder
 import tech.dokus.aura.resources.chat_message_too_long
 import tech.dokus.foundation.aura.components.chat.PChatInputField
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ChatInputSection(
@@ -42,7 +47,7 @@ internal fun ChatInputSection(
                 text = stringResource(Res.string.chat_message_too_long, maxLength),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(bottom = Constrains.Spacing.xSmall)
+                modifier = Modifier.padding(bottom = Constraints.Spacing.xSmall)
             )
         }
 
@@ -53,6 +58,28 @@ internal fun ChatInputSection(
             placeholder = stringResource(Res.string.chat_input_placeholder),
             enabled = !isSending,
             modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun ChatInputSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ChatInputSection(
+            inputText = "What is the total amount?",
+            canSend = true,
+            isSending = false,
+            isInputTooLong = false,
+            maxLength = 500,
+            onInputChange = {},
+            onSend = {}
         )
     }
 }

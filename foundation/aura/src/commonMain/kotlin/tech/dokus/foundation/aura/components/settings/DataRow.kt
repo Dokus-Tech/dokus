@@ -14,7 +14,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
+
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -23,9 +23,14 @@ import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.status.toColor
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Status configuration for a DataRow.
@@ -48,7 +53,6 @@ data class DataRowStatus(
  * @param label The field label
  * @param value The field value
  * @param modifier Optional modifier
- * @param mono Use monospace font for identifiers (IBAN, VAT numbers, etc.)
  * @param locked Show lock icon and hide edit action
  * @param status Optional status indicator
  * @param onEdit Edit action callback (hidden if locked or null)
@@ -58,7 +62,6 @@ fun DataRow(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    mono: Boolean = false,
     locked: Boolean = false,
     status: DataRowStatus? = null,
     onEdit: (() -> Unit)? = null,
@@ -69,7 +72,6 @@ fun DataRow(
         DataRowDesktop(
             label = label,
             value = value,
-            mono = mono,
             locked = locked,
             status = status,
             onEdit = onEdit,
@@ -79,7 +81,6 @@ fun DataRow(
         DataRowMobile(
             label = label,
             value = value,
-            mono = mono,
             locked = locked,
             status = status,
             onEdit = onEdit,
@@ -92,7 +93,6 @@ fun DataRow(
 private fun DataRowDesktop(
     label: String,
     value: String,
-    mono: Boolean,
     locked: Boolean,
     status: DataRowStatus?,
     onEdit: (() -> Unit)?,
@@ -101,7 +101,7 @@ private fun DataRowDesktop(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Constrains.Spacing.small),
+            .padding(vertical = Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Label (fixed width)
@@ -116,16 +116,15 @@ private fun DataRowDesktop(
         Text(
             text = value.ifEmpty { "-" },
             style = MaterialTheme.typography.bodyMedium,
-            fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default,
             modifier = Modifier.weight(1f),
         )
 
         // Status (if present)
         if (status != null) {
-            Spacer(Modifier.width(Constrains.Spacing.medium))
+            Spacer(Modifier.width(Constraints.Spacing.medium))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
             ) {
                 StatusDot(type = status.type)
                 Text(
@@ -137,7 +136,7 @@ private fun DataRowDesktop(
         }
 
         // Lock or Edit action
-        Spacer(Modifier.width(Constrains.Spacing.small))
+        Spacer(Modifier.width(Constraints.Spacing.small))
         if (locked) {
             LockIcon()
         } else if (onEdit != null) {
@@ -155,7 +154,6 @@ private fun DataRowDesktop(
 private fun DataRowMobile(
     label: String,
     value: String,
-    mono: Boolean,
     locked: Boolean,
     status: DataRowStatus?,
     onEdit: (() -> Unit)?,
@@ -170,7 +168,7 @@ private fun DataRowMobile(
     Column(
         modifier = rowModifier
             .fillMaxWidth()
-            .padding(vertical = Constrains.Spacing.small),
+            .padding(vertical = Constraints.Spacing.small),
     ) {
         // First line: Label + Status + Lock
         Row(
@@ -187,7 +185,7 @@ private fun DataRowMobile(
             if (status != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                 ) {
                     StatusDot(type = status.type)
                     Text(
@@ -199,7 +197,7 @@ private fun DataRowMobile(
             }
 
             if (locked) {
-                Spacer(Modifier.width(Constrains.Spacing.small))
+                Spacer(Modifier.width(Constraints.Spacing.small))
                 LockIcon()
             }
         }
@@ -208,8 +206,20 @@ private fun DataRowMobile(
         Text(
             text = value.ifEmpty { "-" },
             style = MaterialTheme.typography.bodyMedium,
-            fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default,
-            modifier = Modifier.padding(top = Constrains.Spacing.xxSmall),
+            modifier = Modifier.padding(top = Constraints.Spacing.xxSmall),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DataRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DataRow(
+            label = "Company Name",
+            value = "Dokus Tech BV"
         )
     }
 }

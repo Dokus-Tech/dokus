@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_active
@@ -56,6 +55,7 @@ import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.fields.PDropdownField
 import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 
 // ============================================================================
@@ -91,7 +91,7 @@ internal fun ContactFormFields(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xLarge)
     ) {
         // Basic Information Section
         ContactFormSection(title = stringResource(Res.string.contacts_basic_info)) {
@@ -104,7 +104,7 @@ internal fun ContactFormFields(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // Email
             PTextFieldStandard(
@@ -120,7 +120,7 @@ internal fun ContactFormFields(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // Phone
             PTextFieldPhone(
@@ -130,7 +130,7 @@ internal fun ContactFormFields(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // Contact Person
             PTextFieldStandard(
@@ -149,7 +149,7 @@ internal fun ContactFormFields(
                 onTypeSelected = onBusinessTypeChange
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // VAT Number
             PTextFieldStandard(
@@ -165,7 +165,7 @@ internal fun ContactFormFields(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // Company Number
             PTextFieldStandard(
@@ -186,7 +186,7 @@ internal fun ContactFormFields(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // Address Line 2
             PTextFieldStandard(
@@ -199,12 +199,12 @@ internal fun ContactFormFields(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // Postal Code and City (side by side)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
             ) {
                 PTextFieldStandard(
                     fieldName = stringResource(Res.string.contacts_postal_code),
@@ -221,7 +221,7 @@ internal fun ContactFormFields(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             // Country
             PTextFieldStandard(
@@ -240,7 +240,7 @@ internal fun ContactFormFields(
             // Default Payment Terms
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
             ) {
                 PTextFieldStandard(
                     fieldName = stringResource(Res.string.contacts_payment_terms),
@@ -305,7 +305,7 @@ internal fun ContactFormFields(
         ContactFormSection(title = stringResource(Res.string.contacts_status)) {
             FormField(label = stringResource(Res.string.contacts_active)) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
@@ -342,7 +342,7 @@ internal fun ContactFormFields(
                 text = error.localized,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(horizontal = 24.dp)
+                modifier = Modifier.padding(horizontal = Constraints.Spacing.xLarge)
             )
         }
     }
@@ -374,7 +374,7 @@ private fun ContactFormSection(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
             content()
         }
@@ -391,7 +391,7 @@ private fun FormField(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         Text(
             text = label,
@@ -421,4 +421,42 @@ private fun BusinessTypeSelector(
         placeholder = stringResource(Res.string.contacts_business_type),
         modifier = modifier,
     )
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactFormFieldsPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactFormFields(
+            formData = ContactFormData(
+                name = tech.dokus.domain.Name("Acme Corp"),
+                email = tech.dokus.domain.Email("info@acme.be"),
+            ),
+            onNameChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onContactPersonChange = {},
+            onVatNumberChange = {},
+            onCompanyNumberChange = {},
+            onBusinessTypeChange = {},
+            onAddressLine1Change = {},
+            onAddressLine2Change = {},
+            onCityChange = {},
+            onPostalCodeChange = {},
+            onCountryChange = {},
+            onDefaultPaymentTermsChange = {},
+            onDefaultVatRateChange = {},
+            onTagsChange = {},
+            onInitialNoteChange = {},
+            onIsActiveChange = {}
+        )
+    }
 }

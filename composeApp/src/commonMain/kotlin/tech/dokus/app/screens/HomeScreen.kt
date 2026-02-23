@@ -19,14 +19,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -35,23 +38,26 @@ import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.app.allNavItems
 import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.mobileTabConfigs
 import tech.dokus.app.navSectionsCombined
+import tech.dokus.app.navigation.HomeNavigationCommandBus
+import tech.dokus.app.navigation.executeHomeNavigationCommand
 import tech.dokus.app.navigation.local.HomeNavControllerProvided
-import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.DesktopShellTopBar
+import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.HomeShellProfileData
 import tech.dokus.app.screens.home.MobileShellTopBar
+import tech.dokus.app.screens.home.buildSortedRoutes
 import tech.dokus.app.screens.home.normalizeRoute
 import tech.dokus.app.screens.home.resolveHomeShellTopBarConfig
 import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
 import tech.dokus.app.viewmodel.HomeState
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
@@ -62,31 +68,37 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
-import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.components.text.DokusLogo
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.foundation.aura.model.ShellTopBarDefault
+import tech.dokus.foundation.aura.style.glass
+import tech.dokus.foundation.aura.style.glassBorder
+import tech.dokus.foundation.aura.style.glassContent
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
 import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.navigateToTopLevelTab
 
-/**
- * Home screen using FlowMVI Container pattern.
- * Main navigation shell containing bottom navigation (mobile) or navigation rail (desktop).
- */
 @Composable
-internal fun HomeScreen(
+internal fun HomeRoute(
     appModules: List<AppModule> = LocalAppModules.current,
     container: HomeContainer = container(),
 ) {
@@ -96,7 +108,9 @@ internal fun HomeScreen(
     val navSections = remember(appModules) { appModules.navSectionsCombined }
     val mobileTabs = remember(appModules) { appModules.mobileTabConfigs }
     val allNavItems = remember(appModules) { appModules.allNavItems }
+    val sortedRoutes = remember(allNavItems) { buildSortedRoutes(allNavItems) }
     val startDestination = remember(navSections) { navSections.first().items.first().destination }
+    val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val errorMessage = pendingError?.localized
@@ -104,16 +118,16 @@ internal fun HomeScreen(
     var fallbackSearchQuery by rememberSaveable { mutableStateOf("") }
     var isMobileSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
     val registeredTopBarConfigs = remember { mutableStateMapOf<String, HomeShellTopBarConfig>() }
-    val topBarHost = remember(allNavItems) {
+    val topBarHost = remember(allNavItems, sortedRoutes) {
         object : HomeShellTopBarHost {
             override fun update(route: String, config: HomeShellTopBarConfig) {
-                val normalizedRoute = normalizeRoute(route, allNavItems) ?: return
+                val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return
                 if (registeredTopBarConfigs[normalizedRoute] == config) return
                 registeredTopBarConfigs[normalizedRoute] = config
             }
 
             override fun clear(route: String) {
-                val normalizedRoute = normalizeRoute(route, allNavItems) ?: return
+                val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return
                 registeredTopBarConfigs.remove(normalizedRoute)
             }
         }
@@ -130,21 +144,25 @@ internal fun HomeScreen(
         isMobileSearchExpanded = isLargeScreen
     }
 
+    LaunchedEffect(pendingHomeCommand?.id, homeNavController) {
+        val pending = pendingHomeCommand ?: return@LaunchedEffect
+        homeNavController.executeHomeNavigationCommand(pending.command)
+        HomeNavigationCommandBus.consume(pending.id)
+    }
+
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is HomeAction.ShowError -> pendingError = action.error
         }
     }
 
-    // Notify container when screen appears
     LaunchedEffect(Unit) {
         container.store.intent(HomeIntent.ScreenAppeared)
     }
 
-    // Get current route directly from backstack
     val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val normalizedRoute = normalizeRoute(currentRoute, allNavItems)
+    val normalizedRoute = normalizeRoute(currentRoute, sortedRoutes)
 
     val shellState = state as? HomeState.Ready ?: HomeState.Ready()
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
@@ -160,6 +178,7 @@ internal fun HomeScreen(
     val topBarConfig = resolveHomeShellTopBarConfig(
         route = currentRoute,
         allNavItems = allNavItems,
+        sortedRoutes = sortedRoutes,
         registeredConfigs = registeredTopBarConfigs,
         fallback = { _, _ -> fallbackShellTopBarConfig }
     )
@@ -168,63 +187,100 @@ internal fun HomeScreen(
         tierLabel = tenant?.subscription?.localized
     )
 
+    val navHostContent: @Composable () -> Unit = {
+        HomeNavControllerProvided(homeNavController) {
+            CompositionLocalProvider(
+                LocalHomeShellTopBarHost provides topBarHost,
+            ) {
+                HomeNavHost(
+                    navHostController = homeNavController,
+                    homeNavProviders = homeNavProviders,
+                    startDestination = startDestination
+                )
+            }
+        }
+    }
+
+    HomeScreen(
+        navSections = navSections,
+        mobileTabs = mobileTabs,
+        selectedRoute = currentRoute,
+        topBarConfig = topBarConfig,
+        tenantState = shellState.tenantState,
+        profileData = profileData,
+        isLoggingOut = shellState.isLoggingOut,
+        snackbarHostState = snackbarHostState,
+        onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
+        onProfileClick = {
+            dispatchProfileNavigation(
+                isLargeScreen = isLargeScreen,
+                onNavigateHomeProfile = {
+                    homeNavController.navigateToTopLevelTab(HomeDestination.Profile)
+                },
+                onNavigateRootProfile = {
+                    navController.navigateTo(AuthDestination.ProfileSettings)
+                }
+            )
+        },
+        onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
+        onLogoutClick = { container.store.intent(HomeIntent.Logout) },
+        onNavItemClick = { navItem ->
+            homeNavController.navigateToTopLevelTab(navItem.destination)
+        },
+        onTabClick = { tab ->
+            tab.destination?.let { destination ->
+                homeNavController.navigateToTopLevelTab(destination)
+            }
+        },
+        content = navHostContent,
+    )
+}
+
+@Composable
+internal fun HomeScreen(
+    navSections: List<NavSection>,
+    mobileTabs: List<MobileTabConfig>,
+    selectedRoute: String?,
+    topBarConfig: HomeShellTopBarConfig?,
+    tenantState: DokusState<Tenant>,
+    profileData: HomeShellProfileData?,
+    isLoggingOut: Boolean,
+    snackbarHostState: SnackbarHostState,
+    onWorkspaceClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    onAppearanceClick: () -> Unit,
+    onLogoutClick: () -> Unit,
+    onNavItemClick: (NavItem) -> Unit,
+    onTabClick: (MobileTabConfig) -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val isLargeScreen = LocalScreenSize.current.isLarge
+
     Surface {
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLargeScreen) {
                 RailNavigationLayout(
                     navSections = navSections,
-                    selectedRoute = currentRoute,
+                    selectedRoute = selectedRoute,
                     topBarConfig = topBarConfig,
-                    tenantState = shellState.tenantState,
+                    tenantState = tenantState,
                     profileData = profileData,
-                    isLoggingOut = shellState.isLoggingOut,
-                    onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
-                    onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
-                    onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
-                    onLogoutClick = { container.store.intent(HomeIntent.Logout) },
-                    onNavItemClick = { navItem ->
-                        homeNavController.navigateTo(navItem.destination)
-                    },
-                    content = {
-                        HomeNavControllerProvided(homeNavController) {
-                            CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
-                                HomeNavHost(
-                                    navHostController = homeNavController,
-                                    homeNavProviders = homeNavProviders,
-                                    startDestination = startDestination
-                                )
-                            }
-                        }
-                    }
+                    isLoggingOut = isLoggingOut,
+                    onWorkspaceClick = onWorkspaceClick,
+                    onProfileClick = onProfileClick,
+                    onAppearanceClick = onAppearanceClick,
+                    onLogoutClick = onLogoutClick,
+                    onNavItemClick = onNavItemClick,
+                    content = content,
                 )
             } else {
                 BottomNavigationLayout(
                     mobileTabs = mobileTabs,
-                    selectedRoute = currentRoute,
-                    topBarConfig = topBarConfig,
-                    tenantState = shellState.tenantState,
+                    selectedRoute = selectedRoute,
                     profileData = profileData,
-                    isLoggingOut = shellState.isLoggingOut,
-                    onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
-                    onProfileClick = { navController.navigateTo(AuthDestination.ProfileSettings) },
-                    onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
-                    onLogoutClick = { container.store.intent(HomeIntent.Logout) },
-                    onTabClick = { tab ->
-                        tab.destination?.let { destination ->
-                            homeNavController.navigateTo(destination)
-                        }
-                    },
-                    content = {
-                        HomeNavControllerProvided(homeNavController) {
-                            CompositionLocalProvider(LocalHomeShellTopBarHost provides topBarHost) {
-                                HomeNavHost(
-                                    navHostController = homeNavController,
-                                    homeNavProviders = homeNavProviders,
-                                    startDestination = startDestination
-                                )
-                            }
-                        }
-                    }
+                    onProfileClick = onProfileClick,
+                    onTabClick = onTabClick,
+                    content = content,
                 )
             }
 
@@ -242,7 +298,10 @@ private fun HomeNavHost(
     homeNavProviders: List<NavigationProvider>,
     startDestination: NavigationDestination,
 ) {
-    val transitionsProvider: TransitionsProvider = remember { TransitionsProvider.forTabs() }
+    val isLargeScreen = LocalScreenSize.current.isLarge
+    val transitionsProvider: TransitionsProvider = remember(isLargeScreen) {
+        TransitionsProvider.forTabs(isLargeScreen)
+    }
     NavHost(
         navHostController,
         startDestination = startDestination,
@@ -275,7 +334,6 @@ private fun RailNavigationLayout(
     onNavItemClick: (NavItem) -> Unit,
     content: @Composable () -> Unit
 ) {
-    // Track expanded sections (accordion behavior: only one expanded at a time)
     val expandedSections = remember(navSections) {
         mutableStateMapOf<String, Boolean>().apply {
             navSections.forEach { section ->
@@ -284,87 +342,103 @@ private fun RailNavigationLayout(
         }
     }
 
-    // Detached, calm desktop shell (Revolut structure x Perplexity calm)
-    Row(
+    val colorScheme = MaterialTheme.colorScheme
+
+    Box(
         Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .background(colorScheme.background)
     ) {
-        // Detached glass rail panel
-        Surface(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(240.dp),
-            shape = MaterialTheme.shapes.large,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)),
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
-        ) {
-            Column(
+        AmbientBackground()
+        Row(Modifier.fillMaxSize().padding(Constraints.Shell.padding)) {
+            Surface(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(16.dp)
+                    .width(Constraints.Shell.sidebarWidth),
+                shape = MaterialTheme.shapes.large,
+                color = colorScheme.glass,
+                border = BorderStroke(1.dp, colorScheme.glassBorder),
+                tonalElevation = 0.dp,
+                shadowElevation = 2.dp,
             ) {
-                AppNameText(modifier = Modifier.padding(bottom = 24.dp))
-
-                DokusNavigationRailSectioned(
-                    sections = navSections,
-                    expandedSections = expandedSections,
-                    selectedRoute = selectedRoute,
-                    settingsItem = null,
-                    onSectionToggle = { sectionId ->
-                        // Accordion behavior: collapse all, expand clicked
-                        val currentlyExpanded = expandedSections[sectionId] ?: false
-                        if (!currentlyExpanded) {
-                            expandedSections.keys.forEach { id ->
-                                expandedSections[id] = (id == sectionId)
-                            }
-                        } else {
-                            expandedSections[sectionId] = false
-                        }
-                    },
-                    onItemClick = onNavItemClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                DesktopSidebarBottomControls(
-                    tenantState = tenantState,
-                    profileData = profileData,
-                    isLoggingOut = isLoggingOut,
-                    onWorkspaceClick = onWorkspaceClick,
-                    onProfileClick = onProfileClick,
-                    onAppearanceClick = onAppearanceClick,
-                    onLogoutClick = onLogoutClick
-                )
-            }
-        }
-
-        // Main content area — detached glass container (clips app bars to rounded corners)
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = 16.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
-            shape = MaterialTheme.shapes.large,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)),
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                if (topBarConfig != null) {
-                    DesktopShellTopBar(topBarConfig = topBarConfig)
-                }
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopStart
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(16.dp)
                 ) {
-                    content()
+                    DokusLogo.Full(modifier = Modifier.padding(bottom = 28.dp))
+
+                    DokusNavigationRailSectioned(
+                        sections = navSections,
+                        expandedSections = expandedSections,
+                        selectedRoute = selectedRoute,
+                        settingsItem = null,
+                        onSectionToggle = { sectionId ->
+                            val currentlyExpanded = expandedSections[sectionId] ?: false
+                            if (!currentlyExpanded) {
+                                expandedSections.keys.forEach { id ->
+                                    expandedSections[id] = (id == sectionId)
+                                }
+                            } else {
+                                expandedSections[sectionId] = false
+                            }
+                        },
+                        onItemClick = onNavItemClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    DesktopSidebarBottomControls(
+                        tenantState = tenantState,
+                        profileData = profileData,
+                        isLoggingOut = isLoggingOut,
+                        onWorkspaceClick = onWorkspaceClick,
+                        onProfileClick = onProfileClick,
+                        onAppearanceClick = onAppearanceClick,
+                        onLogoutClick = onLogoutClick
+                    )
                 }
             }
-        }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = Constraints.Shell.gap),
+                color = colorScheme.glassContent,
+                shape = MaterialTheme.shapes.large,
+                border = BorderStroke(1.dp, colorScheme.glassBorder),
+                tonalElevation = 0.dp,
+                shadowElevation = 2.dp,
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    if (topBarConfig != null) {
+                        DesktopShellTopBar(topBarConfig = topBarConfig)
+                    }
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopStart
+                    ) {
+                        content()
+                    }
+                }
+            }
+        } // Row
+    } // Box
+}
+
+/** Routes where the shell header (Dokus + avatar) is shown. Other tabs provide their own top bar. */
+private val ShellHeaderRoutes = setOf("today", "documents", "cashflow", "more")
+
+internal fun dispatchProfileNavigation(
+    isLargeScreen: Boolean,
+    onNavigateHomeProfile: () -> Unit,
+    onNavigateRootProfile: () -> Unit,
+) {
+    if (isLargeScreen) {
+        onNavigateHomeProfile()
+    } else {
+        onNavigateRootProfile()
     }
 }
 
@@ -372,36 +446,25 @@ private fun RailNavigationLayout(
 private fun BottomNavigationLayout(
     mobileTabs: List<MobileTabConfig>,
     selectedRoute: String?,
-    topBarConfig: HomeShellTopBarConfig?,
-    tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
-    isLoggingOut: Boolean,
-    onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
-    onAppearanceClick: () -> Unit,
-    onLogoutClick: () -> Unit,
     onTabClick: (MobileTabConfig) -> Unit,
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val showShellHeader = selectedRoute in ShellHeaderRoutes
+
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (topBarConfig != null) {
+            if (showShellHeader) {
                 MobileShellTopBar(
-                    topBarConfig = topBarConfig,
-                    tenantState = tenantState,
                     profileData = profileData,
-                    isLoggingOut = isLoggingOut,
-                    onWorkspaceClick = onWorkspaceClick,
                     onProfileClick = onProfileClick,
-                    onAppearanceClick = onAppearanceClick,
-                    onLogoutClick = onLogoutClick
                 )
             }
         },
         bottomBar = {
-            // Calm, "Dokus" bottom shell: no tinted slab; keep accent only for the selected item.
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
@@ -475,11 +538,39 @@ private fun rememberFallbackShellTopBarConfig(
         }
 
         ShellTopBarDefault.Title -> {
+            val subtitle = navItem.subtitleRes?.let { stringResource(it) }
             HomeShellTopBarConfig(
                 mode = HomeShellTopBarMode.Title(
-                    title = stringResource(navItem.titleRes)
+                    title = stringResource(navItem.titleRes),
+                    subtitle = subtitle
                 )
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun HomeScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        HomeScreen(
+            navSections = emptyList(),
+            mobileTabs = emptyList(),
+            selectedRoute = null,
+            topBarConfig = null,
+            tenantState = DokusState.loading(),
+            profileData = null,
+            isLoggingOut = false,
+            snackbarHostState = remember { SnackbarHostState() },
+            onWorkspaceClick = {},
+            onProfileClick = {},
+            onAppearanceClick = {},
+            onLogoutClick = {},
+            onNavItemClick = {},
+            onTabClick = {},
+            content = {},
+        )
     }
 }

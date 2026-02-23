@@ -21,7 +21,7 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Amounts display section - shows amounts as facts with tabular numbers.
@@ -94,7 +94,7 @@ private fun InvoiceAmountsDisplay(
         )
         // Subtle divider before total
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = Constrains.Spacing.xSmall),
+            modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall),
             color = MaterialTheme.colorScheme.outlineVariant
         )
         AmountRow(
@@ -118,7 +118,7 @@ private fun ReceiptAmountsDisplay(
         )
         // Subtle divider before total
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = Constrains.Spacing.xSmall),
+            modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall),
             color = MaterialTheme.colorScheme.outlineVariant
         )
         AmountRow(
@@ -146,7 +146,7 @@ private fun CreditNoteAmountsDisplay(
             value = vat
         )
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = Constrains.Spacing.xSmall),
+            modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall),
             color = MaterialTheme.colorScheme.outlineVariant
         )
         AmountRow(

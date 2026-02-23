@@ -1,13 +1,13 @@
 package tech.dokus.features.cashflow.presentation.ledger.screen
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,8 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Payment
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,11 +29,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -52,6 +50,7 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming
 import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
+import tech.dokus.aura.resources.cashflow_title
 import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
@@ -68,13 +67,20 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
+import tech.dokus.foundation.aura.components.text.MobilePageTitle
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CashflowLedgerScreen(
     state: CashflowLedgerState,
     onIntent: (CashflowLedgerIntent) -> Unit,
+    onCreateInvoiceClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -99,7 +105,8 @@ internal fun CashflowLedgerScreen(
                 is CashflowLedgerState.Content -> {
                     CashflowLedgerContent(
                         state = state,
-                        onIntent = onIntent
+                        onIntent = onIntent,
+                        onCreateInvoiceClick = onCreateInvoiceClick
                     )
                 }
 
@@ -121,18 +128,11 @@ internal fun CashflowLedgerScreen(
 @Composable
 private fun CashflowLedgerContent(
     state: CashflowLedgerState.Content,
-    onIntent: (CashflowLedgerIntent) -> Unit
+    onIntent: (CashflowLedgerIntent) -> Unit,
+    onCreateInvoiceClick: (() -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
     val isLargeScreen = LocalScreenSize.current.isLarge
-
-    // Derive compression state from scroll offset (mobile only)
-    // Stable threshold: compress when scrolled beyond first item or offset > 48dp
-    val isCompressed by remember {
-        derivedStateOf {
-            !isLargeScreen && (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 48)
-        }
-    }
 
     // Trigger load more when near bottom
     val shouldLoadMore = rememberLoadMoreTrigger(
@@ -151,30 +151,35 @@ private fun CashflowLedgerContent(
     // Resolve selected entry from list
     val selectedEntry = state.entries.data.find { it.id == state.selectedEntryId }
 
+    // Derive spark data from visible entries (up to 8 amounts)
+    val sparkData = remember(state.entries.data) {
+        state.entries.data
+            .take(8)
+            .map { kotlin.math.abs(it.amountGross.toDouble()) }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Summary section (outside surface)
+            // Summary hero card
             CashflowSummarySection(
                 summary = state.summary,
-                balance = state.balance,
                 viewMode = state.filters.viewMode,
-                isCompressed = isCompressed
+                sparkData = sparkData,
             )
 
-            // Filters (outside surface)
+            // Filter tabs
             CashflowViewModeFilter(
                 viewMode = state.filters.viewMode,
                 direction = state.filters.direction,
                 onViewModeChange = { onIntent(CashflowLedgerIntent.SetViewMode(it)) },
                 onDirectionChange = { onIntent(CashflowLedgerIntent.SetDirectionFilter(it)) },
-                isCompact = isCompressed
+                onCreateInvoiceClick = if (isLargeScreen) onCreateInvoiceClick else null,
             )
-
-            Spacer(Modifier.height(8.dp))
 
             // Table surface (data only)
             DokusTableSurface(
@@ -184,7 +189,9 @@ private fun CashflowLedgerContent(
                     .padding(bottom = 16.dp),
                 header = if (isLargeScreen) {
                     { CashflowLedgerHeaderRow() }
-                } else null
+                } else {
+                    null
+                }
             ) {
                 // Table body OR empty state
                 if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
@@ -343,7 +350,7 @@ private fun MobileActionItem(
         Spacer(Modifier.width(16.dp))
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
     }
@@ -373,5 +380,18 @@ private fun getEmptyStateTitle(
         DirectionFilter.All -> stringResource(Res.string.cashflow_empty_history)
         DirectionFilter.In -> stringResource(Res.string.cashflow_empty_history_in)
         DirectionFilter.Out -> stringResource(Res.string.cashflow_empty_history_out)
+    }
+}
+
+@Preview
+@Composable
+private fun CashflowLedgerScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowLedgerScreen(
+            state = CashflowLedgerState.Loading,
+            onIntent = {},
+        )
     }
 }

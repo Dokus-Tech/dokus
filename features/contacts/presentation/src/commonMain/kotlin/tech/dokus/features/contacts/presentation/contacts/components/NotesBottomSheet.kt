@@ -44,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_cancel
@@ -63,29 +62,34 @@ import tech.dokus.aura.resources.contacts_note_by
 import tech.dokus.aura.resources.contacts_note_content
 import tech.dokus.aura.resources.contacts_notes
 import tech.dokus.aura.resources.contacts_saving
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.fields.PTextFieldFree
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // UI dimension constants
-private val ContentPadding = 16.dp
-private val SpacingSmall = 8.dp
-private val SpacingMedium = 12.dp
-private val SpacingDefault = 16.dp
-private val DragHandlePadding = 12.dp
-private val DragHandleWidth = 32.dp
-private val DragHandleHeight = 4.dp
-private val DragHandleCornerRadius = 2.dp
-private val IconSizeSmall = 16.dp
-private val IconSizeMedium = 18.dp
-private val IconSizeLarge = 48.dp
-private val CardCornerRadius = 8.dp
-private val ButtonSpacing = 4.dp
-private val NoteItemPadding = 12.dp
-private val ContentMinHeight = 200.dp
+private val ContentPadding = Constraints.Spacing.large
+private val SpacingSmall = Constraints.Spacing.small
+private val SpacingMedium = Constraints.Spacing.medium
+private val SpacingDefault = Constraints.Spacing.large
+private val DragHandlePadding = Constraints.Spacing.medium
+private val DragHandleWidth = Constraints.Spacing.xxLarge
+private val DragHandleHeight = Constraints.Spacing.xSmall
+private val DragHandleCornerRadius = Constraints.Spacing.xxSmall
+private val IconSizeSmall = Constraints.IconSize.xSmall
+private val IconSizeMedium = Constraints.IconSize.small
+private val IconSizeLarge = Constraints.IconSize.xLarge
+private val CardCornerRadius = Constraints.Spacing.small
+private val ButtonSpacing = Constraints.Spacing.xSmall
+private val NoteItemPadding = Constraints.Spacing.medium
+private val ContentMinHeight = Constraints.SearchField.minWidth
 
 // Alpha constants
 private const val DragHandleAlpha = 0.4f
@@ -445,7 +449,7 @@ private fun NotesBottomSheetContent(
                         )
                         Text(
                             text = stringResource(Res.string.contacts_add_first_note_hint),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = TextAlphaSecondary)
                         )
                     }
@@ -525,13 +529,13 @@ private fun NotesBottomSheetListItem(
                         )
                         Text(
                             text = formatDateTime(note.createdAt),
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         note.authorName?.let { author ->
                             Text(
                                 text = stringResource(Res.string.contacts_note_by, author),
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -541,7 +545,7 @@ private fun NotesBottomSheetListItem(
 
                     Text(
                         text = note.content,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
 
@@ -594,11 +598,11 @@ private fun NotesBottomSheetDeleteConfirmation(
         },
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 Text(
                     text = stringResource(Res.string.contacts_delete_note_confirm),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = ContainerAlphaDefault),
@@ -615,7 +619,7 @@ private fun NotesBottomSheetDeleteConfirmation(
                 }
                 Text(
                     text = stringResource(Res.string.contacts_delete_note_warning),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -635,4 +639,28 @@ private fun NotesBottomSheetDeleteConfirmation(
         dismissOnBackPress = !isDeleting,
         dismissOnClickOutside = !isDeleting
     )
+}
+
+@Preview
+@Composable
+private fun NotesBottomSheetPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        NotesBottomSheet(
+            isVisible = true,
+            onDismiss = {},
+            notesState = DokusState.success(emptyList()),
+            noteContent = "",
+            onNoteContentChange = {},
+            isSavingNote = false,
+            isDeletingNote = false,
+            editingNote = null,
+            onAddNote = {},
+            onUpdateNote = {},
+            onDeleteNote = {},
+            onEditNoteClick = {},
+            onCancelEdit = {},
+        )
+    }
 }

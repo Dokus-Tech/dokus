@@ -1,6 +1,6 @@
 <resources>
     <!-- General -->
-    <string name="app_name">D[#]kus</string>
+    <string name="app_name">Dokus</string>
     <string name="app_slogan">Where sovereignty meets intelligence.</string>
     <string name="brand_motto">Intelligence. Autonomy. Silence.</string>
     <string name="copyright">©2025 Dokus</string>
@@ -10,6 +10,8 @@
     <string name="bootstrap_state_authenticating">Verifying authentication...</string>
     <string name="bootstrap_state_app_version_check">Verifying application version...</string>
     <string name="bootstrap_state_checking_account_status">Verifying account status...</string>
+    <string name="bootstrap_state_ready">Ready</string>
+    <string name="bootstrap_version_footer">v%1$s · %2$s</string>
 
     <!-- Home -->
     <string name="home_today">Today</string>
@@ -34,6 +36,13 @@
     <string name="key_cmd">CMD</string>
     <string name="key_ctrl">CTRL</string>
 
+    <!-- Navigation subtitles (desktop shell top bar) -->
+    <string name="today_subtitle">Financial overview</string>
+    <string name="documents_subtitle">Invoices &amp; receipts</string>
+    <string name="cashflow_subtitle">Money in &amp; out</string>
+    <string name="contacts_subtitle">Vendors &amp; clients</string>
+    <string name="profile_subtitle">Account settings</string>
+
     <!-- Navigation -->
     <string name="nav_simulations">Simulations</string>
     <string name="nav_items">Items</string>
@@ -51,6 +60,7 @@
     <string name="nav_team">Team</string>
     <string name="nav_vat">VAT</string>
     <string name="nav_reports">Reports</string>
+    <string name="nav_accountant">Accountant</string>
     <string name="nav_forecast">Forecast</string>
     <string name="nav_more">More</string>
     <string name="coming_soon">Coming soon</string>

@@ -13,9 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Check
@@ -46,8 +46,11 @@ import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.aura.resources.cashflow_view_cashflow
 import tech.dokus.aura.resources.cashflow_view_document
 import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Redesigned approval footer for Document Review screen.
@@ -153,7 +156,7 @@ private fun PendingFooter(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Constrains.Spacing.medium),
+            .padding(Constraints.Spacing.medium),
     ) {
         // Narrative hint when confirm is blocked (no alarm icon, subtle text)
         AnimatedVisibility(
@@ -165,7 +168,7 @@ private fun PendingFooter(
                 text = stringResource(Res.string.cashflow_needed_to_complete),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
-                modifier = Modifier.padding(bottom = Constrains.Spacing.small),
+                modifier = Modifier.padding(bottom = Constraints.Spacing.small),
             )
         }
 
@@ -189,7 +192,7 @@ private fun PendingFooter(
 
             // Save + Confirm buttons (right side)
             Row(
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
                 // Save button (only visible when there are unsaved changes)
                 AnimatedVisibility(visible = hasUnsavedChanges) {
@@ -254,12 +257,12 @@ private fun ConfirmedFooter(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Constrains.Spacing.medium),
+            .padding(Constraints.Spacing.medium),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // Success indicator
         Row(
-            modifier = Modifier.padding(bottom = Constrains.Spacing.small),
+            modifier = Modifier.padding(bottom = Constraints.Spacing.small),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -268,7 +271,7 @@ private fun ConfirmedFooter(
                 modifier = Modifier.size(20.dp),
                 tint = MaterialTheme.colorScheme.tertiary,
             )
-            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.small))
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
@@ -282,8 +285,8 @@ private fun ConfirmedFooter(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = Constrains.Spacing.small),
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                    .padding(bottom = Constraints.Spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
                 OutlinedButton(
                     onClick = onViewEntity,
@@ -313,9 +316,40 @@ private fun ConfirmedFooter(
                     description = null,
                     modifier = Modifier.size(18.dp),
                 )
-                Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.width(Constraints.Spacing.small))
                 Text(stringResource(Res.string.cashflow_chat_with_document))
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DocumentReviewFooterPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentReviewFooter(
+            canConfirm = true,
+            isConfirming = false,
+            isSaving = false,
+            isBindingContact = false,
+            isRejecting = false,
+            hasUnsavedChanges = false,
+            isDocumentConfirmed = false,
+            isDocumentRejected = false,
+            hasCashflowEntry = false,
+            confirmBlockedReason = null,
+            onConfirm = {},
+            onSaveChanges = {},
+            onReject = {},
+            onOpenChat = {},
+            onViewEntity = {},
+            onViewCashflowEntry = {}
+        )
     }
 }

@@ -1,11 +1,5 @@
 package tech.dokus.app.screens.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,43 +18,47 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Search
-import org.jetbrains.compose.resources.painterResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import kotlinx.datetime.Month
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_search
-import tech.dokus.aura.resources.profile_logout
-import tech.dokus.aura.resources.settings_appearance
+import tech.dokus.aura.resources.a11y_profile_menu
+import tech.dokus.aura.resources.date_month_short_apr
+import tech.dokus.aura.resources.date_month_short_aug
+import tech.dokus.aura.resources.date_month_short_dec
+import tech.dokus.aura.resources.date_month_short_feb
+import tech.dokus.aura.resources.date_month_short_jan
+import tech.dokus.aura.resources.date_month_short_jul
+import tech.dokus.aura.resources.date_month_short_jun
+import tech.dokus.aura.resources.date_month_short_mar
+import tech.dokus.aura.resources.date_month_short_may
+import tech.dokus.aura.resources.date_month_short_nov
+import tech.dokus.aura.resources.date_month_short_oct
+import tech.dokus.aura.resources.date_month_short_sep
 import tech.dokus.aura.resources.settings_current_workspace
-import tech.dokus.aura.resources.settings_profile
-import tech.dokus.aura.resources.user
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
@@ -69,20 +67,40 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
-import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
-import tech.dokus.foundation.aura.style.brandGold
-import tech.dokus.foundation.aura.style.statusError
+import tech.dokus.foundation.aura.components.navigation.ProfilePopover
+import tech.dokus.foundation.aura.components.text.DokusLogo
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.dokusEffects
+import tech.dokus.foundation.aura.style.dokusSizing
+import tech.dokus.foundation.aura.style.dokusSpacing
+import tech.dokus.foundation.aura.style.glassHeader
 import tech.dokus.foundation.aura.style.surfaceHover
+import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import kotlin.time.Clock
 
 internal data class HomeShellProfileData(
     val fullName: String,
     val email: String,
     val tierLabel: String?,
-)
+) {
+    val initials: String
+        get() = fullName
+            .split(" ")
+            .take(2)
+            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+            .joinToString("")
+}
+
+// Cashflow desktop baseline: 42dp control height + 12dp breathing room.
+private val DesktopShellTopBarHeight = Constraints.Height.button + Constraints.Spacing.medium
 
 @Composable
 internal fun DesktopSidebarBottomControls(
@@ -95,18 +113,20 @@ internal fun DesktopSidebarBottomControls(
     onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 10.dp)
+            .padding(top = spacing.medium)
             .border(
-                width = 1.dp,
+                width = sizing.strokeThin,
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                 shape = MaterialTheme.shapes.small
             )
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = spacing.small, vertical = spacing.small),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
         DesktopWorkspaceArea(
             tenantState = tenantState,
@@ -117,7 +137,6 @@ internal fun DesktopSidebarBottomControls(
             profileData = profileData,
             isLoggingOut = isLoggingOut,
             onProfileClick = onProfileClick,
-            onAppearanceClick = onAppearanceClick,
             onLogoutClick = onLogoutClick
         )
     }
@@ -129,6 +148,8 @@ private fun DesktopWorkspaceArea(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val tenant = (tenantState as? DokusState.Success<Tenant>)?.data
@@ -142,27 +163,27 @@ private fun DesktopWorkspaceArea(
                 if (isHovered) MaterialTheme.colorScheme.surfaceHover else MaterialTheme.colorScheme.surface
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = spacing.small, vertical = spacing.xSmall),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
         if (isLoading) {
             ShimmerBox(
                 modifier = Modifier
-                    .size(26.dp)
+                    .size(sizing.iconMedium)
                     .clip(MaterialTheme.shapes.extraSmall)
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(spacing.xSmall)
             ) {
                 ShimmerLine(
                     modifier = Modifier.fillMaxWidth(0.65f),
-                    height = 12.dp
+                    height = spacing.medium
                 )
                 ShimmerLine(
                     modifier = Modifier.fillMaxWidth(0.45f),
-                    height = 10.dp
+                    height = spacing.small
                 )
             }
         } else if (tenant != null) {
@@ -178,7 +199,7 @@ private fun DesktopWorkspaceArea(
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(spacing.xxSmall)
             ) {
                 Text(
                     text = workspaceName,
@@ -188,7 +209,7 @@ private fun DesktopWorkspaceArea(
                 )
                 Text(
                     text = workspaceVat,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -212,295 +233,153 @@ private fun DesktopProfileMenuButton(
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     onProfileClick: () -> Unit,
-    onAppearanceClick: () -> Unit,
     onLogoutClick: () -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    val sizing = MaterialTheme.dokusSizing
+    var popoverVisible by remember { mutableStateOf(false) }
+    val initials = profileData?.initials ?: ""
 
     Box {
-        Surface(
-            modifier = Modifier
-                .size(30.dp)
-                .clickable { expanded = true },
-            color = MaterialTheme.colorScheme.surface,
-            shape = MaterialTheme.shapes.small,
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    painter = painterResource(Res.drawable.user),
-                    contentDescription = stringResource(Res.string.settings_profile),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
+        MonogramAvatar(
+            initials = initials,
+            size = sizing.avatarExtraSmall,
+            radius = sizing.avatarExtraSmall / 4,
+            modifier = Modifier.clickable { popoverVisible = true },
+            contentDescription = stringResource(Res.string.a11y_profile_menu),
+        )
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            offset = DpOffset(x = 0.dp, y = (-8).dp),
-            modifier = Modifier.widthIn(min = 240.dp)
-        ) {
-            ProfileMenuHeader(profileData = profileData)
-            HorizontalDivider()
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.settings_profile)) },
-                onClick = {
-                    expanded = false
-                    onProfileClick()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.settings_appearance)) },
-                onClick = {
-                    expanded = false
-                    onAppearanceClick()
-                }
-            )
-            HorizontalDivider()
-            DropdownMenuItem(
-                enabled = !isLoggingOut,
-                text = {
-                    Text(
-                        text = stringResource(Res.string.profile_logout),
-                        color = MaterialTheme.colorScheme.statusError
-                    )
-                },
-                onClick = {
-                    expanded = false
-                    onLogoutClick()
-                }
-            )
-        }
+        ProfilePopover(
+            isVisible = popoverVisible,
+            onDismiss = { popoverVisible = false },
+            userName = profileData?.fullName ?: "",
+            userEmail = profileData?.email ?: "",
+            userInitials = initials,
+            tierLabel = profileData?.tierLabel ?: "",
+            onProfileClick = onProfileClick,
+            onLogoutClick = {
+                if (!isLoggingOut) onLogoutClick()
+            },
+        )
     }
 }
 
 @Composable
-private fun ProfileMenuHeader(
-    profileData: HomeShellProfileData?,
+private fun DesktopShellTopBarFrame(
+    actions: List<HomeShellTopBarAction>,
+    modifier: Modifier = Modifier,
+    leadingContent: @Composable RowScope.() -> Unit,
 ) {
-    val fullName = profileData?.fullName ?: stringResource(Res.string.settings_profile)
-    val email = profileData?.email ?: ""
+    val spacing = MaterialTheme.dokusSpacing
+    val effects = MaterialTheme.dokusEffects
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(DesktopShellTopBarHeight)
+                .background(MaterialTheme.colorScheme.glassHeader)
+                .padding(horizontal = spacing.xLarge),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            leadingContent()
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Surface(
-            modifier = Modifier.size(28.dp),
-            shape = MaterialTheme.shapes.extraSmall,
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
-            )
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    painter = painterResource(Res.drawable.user),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(14.dp)
-                )
-            }
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Actions slot
+            RouteTopBarActions(actions = actions)
+
+            // Date display
+            val dateText = formattedCurrentDate()
+            Spacer(modifier = Modifier.width(spacing.medium))
             Text(
-                text = fullName,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (email.isNotBlank()) {
-                Text(
-                    text = email,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.textMuted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        profileData?.tierLabel?.let { tier ->
-            Text(
-                text = tier,
-                color = MaterialTheme.colorScheme.brandGold,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                modifier = Modifier
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.brandGold.copy(alpha = 0.25f),
-                        shape = MaterialTheme.shapes.extraSmall
-                    )
-                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                text = dateText,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.textFaint,
             )
         }
+        HorizontalDivider(color = effects.railTrackLine)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DesktopShellTopBar(
     topBarConfig: HomeShellTopBarConfig,
     modifier: Modifier = Modifier,
 ) {
-    PTopAppBarSearchAction(
-        searchContent = {
-            when (val mode = topBarConfig.mode) {
-                is HomeShellTopBarMode.Search -> {
-                    PSearchFieldCompact(
-                        value = mode.query,
-                        onValueChange = mode.onQueryChange,
-                        placeholder = mode.placeholder,
-                        onClear = mode.onClear,
-                        modifier = Modifier.widthIn(min = 220.dp, max = 360.dp)
+    val sizing = MaterialTheme.dokusSizing
+    DesktopShellTopBarFrame(
+        actions = topBarConfig.actions,
+        modifier = modifier
+    ) {
+        // Search or title slot
+        when (val mode = topBarConfig.mode) {
+            is HomeShellTopBarMode.Search -> {
+                PSearchFieldCompact(
+                    value = mode.query,
+                    onValueChange = mode.onQueryChange,
+                    placeholder = mode.placeholder,
+                    onClear = mode.onClear,
+                    modifier = Modifier.widthIn(
+                        min = sizing.searchFieldMinWidth,
+                        max = sizing.searchFieldMaxWidth
                     )
-                }
+                )
+            }
 
-                is HomeShellTopBarMode.Title -> {
+            is HomeShellTopBarMode.Title -> {
+                Column {
                     Text(
                         text = mode.title,
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    mode.subtitle?.let { subtitle ->
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
-        },
-        actions = {
-            RouteTopBarActions(actions = topBarConfig.actions)
-        },
-        modifier = modifier
-    )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MobileShellTopBar(
-    topBarConfig: HomeShellTopBarConfig,
-    tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
-    isLoggingOut: Boolean,
-    onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
-    onAppearanceClick: () -> Unit,
-    onLogoutClick: () -> Unit,
 ) {
-    var showProfileSheet by rememberSaveable { mutableStateOf(false) }
-
-    PTopAppBarSearchAction(
-        searchContent = {
-            when (val mode = topBarConfig.mode) {
-                is HomeShellTopBarMode.Search -> {
-                    val onExpandSearch = mode.onExpandSearch
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        if (!mode.isSearchExpanded && onExpandSearch != null) {
-                            IconButton(
-                                onClick = onExpandSearch,
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = FeatherIcons.Search,
-                                    contentDescription = stringResource(Res.string.action_search)
-                                )
-                            }
-                        }
-                        AnimatedVisibility(
-                            visible = mode.isSearchExpanded,
-                            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
-                            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut()
-                        ) {
-                            PSearchFieldCompact(
-                                value = mode.query,
-                                onValueChange = mode.onQueryChange,
-                                onClear = mode.onClear,
-                                placeholder = mode.placeholder,
-                                modifier = Modifier.widthIn(min = 120.dp, max = 220.dp)
-                            )
-                        }
-                    }
-                }
-
-                is HomeShellTopBarMode.Title -> {
-                    Text(
-                        text = mode.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        },
-        actions = {
-            RouteTopBarActions(actions = topBarConfig.actions)
-            if (topBarConfig.actions.isNotEmpty()) {
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            MobileWorkspaceBadge(
-                tenantState = tenantState,
-                onClick = onWorkspaceClick
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            ProfileIconButton { showProfileSheet = true }
-        }
-    )
-
-    if (showProfileSheet) {
-        val sheetState = rememberModalBottomSheetState()
-        ModalBottomSheet(
-            onDismissRequest = { showProfileSheet = false },
-            sheetState = sheetState,
-            dragHandle = {
-                Box(
-                    modifier = Modifier
-                        .padding(top = 10.dp, bottom = 8.dp)
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(MaterialTheme.shapes.extraSmall)
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f))
+    val effects = MaterialTheme.dokusEffects
+    val sizing = MaterialTheme.dokusSizing
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.glassHeader)
+    ) {
+        TopAppBar(
+            title = { DokusLogo.Full() },
+            actions = {
+                MonogramAvatar(
+                    initials = profileData?.initials ?: "",
+                    size = sizing.avatarExtraSmall,
+                    radius = sizing.avatarExtraSmall / 4,
+                    modifier = Modifier.clickable(onClick = onProfileClick),
+                    contentDescription = stringResource(Res.string.a11y_profile_menu),
                 )
-            }
-        ) {
-            ProfileMenuHeader(profileData = profileData)
-            HorizontalDivider()
-            MobileMenuItem(
-                label = stringResource(Res.string.settings_profile),
-                onClick = {
-                    showProfileSheet = false
-                    onProfileClick()
-                }
-            )
-            MobileMenuItem(
-                label = stringResource(Res.string.settings_appearance),
-                onClick = {
-                    showProfileSheet = false
-                    onAppearanceClick()
-                }
-            )
-            HorizontalDivider()
-            MobileMenuItem(
-                label = stringResource(Res.string.profile_logout),
-                color = MaterialTheme.colorScheme.statusError,
-                enabled = !isLoggingOut,
-                onClick = {
-                    showProfileSheet = false
-                    onLogoutClick()
-                }
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-        }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.glassHeader,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+        )
+
+        HorizontalDivider(color = effects.railTrackLine)
     }
 }
 
@@ -508,13 +387,15 @@ internal fun MobileShellTopBar(
 private fun RowScope.RouteTopBarActions(
     actions: List<HomeShellTopBarAction>,
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     actions.forEachIndexed { index, action ->
         when (action) {
             is HomeShellTopBarAction.Icon -> {
                 IconButton(
                     onClick = action.onClick,
                     enabled = action.enabled,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(sizing.buttonHeight)
                 ) {
                     Icon(
                         imageVector = action.icon,
@@ -534,117 +415,110 @@ private fun RowScope.RouteTopBarActions(
         }
 
         if (index < actions.lastIndex) {
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(spacing.xSmall))
         }
     }
 }
 
+/** Format current date as "18 Feb 2026" using localized month names. */
 @Composable
-private fun RowScope.MobileWorkspaceBadge(
-    tenantState: DokusState<Tenant>,
-    onClick: () -> Unit,
-) {
-    val tenant = (tenantState as? DokusState.Success<Tenant>)?.data
-    val isLoading = tenantState is DokusState.Loading
-
-    Row(
-        modifier = Modifier
-            .clip(MaterialTheme.shapes.small)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
-                shape = MaterialTheme.shapes.small
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        if (isLoading) {
-            ShimmerBox(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(MaterialTheme.shapes.extraSmall)
-            )
-            ShimmerLine(
-                modifier = Modifier.width(90.dp),
-                height = 12.dp
-            )
-        } else if (tenant != null) {
-            val name = tenant.displayName.value
-            val initial = tenant.displayName.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D"
-
-            CompanyAvatarImage(
-                avatarUrl = tenant.avatar?.small,
-                initial = initial,
-                size = AvatarSize.ExtraSmall,
-                shape = AvatarShape.RoundedSquare
-            )
-            Text(
-                text = name,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 140.dp)
-            )
-        } else {
-            Text(
-                text = stringResource(Res.string.settings_current_workspace),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textMuted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 140.dp)
-            )
-        }
+private fun formattedCurrentDate(): String {
+    val today = remember {
+        Clock.System.todayIn(TimeZone.currentSystemDefault())
     }
+    val monthName = shortMonthName(today.month)
+    return "${today.day} $monthName ${today.year}"
 }
 
 @Composable
-private fun ProfileIconButton(
-    onClick: () -> Unit,
+private fun shortMonthName(month: Month): String = when (month) {
+    Month.JANUARY -> stringResource(Res.string.date_month_short_jan)
+    Month.FEBRUARY -> stringResource(Res.string.date_month_short_feb)
+    Month.MARCH -> stringResource(Res.string.date_month_short_mar)
+    Month.APRIL -> stringResource(Res.string.date_month_short_apr)
+    Month.MAY -> stringResource(Res.string.date_month_short_may)
+    Month.JUNE -> stringResource(Res.string.date_month_short_jun)
+    Month.JULY -> stringResource(Res.string.date_month_short_jul)
+    Month.AUGUST -> stringResource(Res.string.date_month_short_aug)
+    Month.SEPTEMBER -> stringResource(Res.string.date_month_short_sep)
+    Month.OCTOBER -> stringResource(Res.string.date_month_short_oct)
+    Month.NOVEMBER -> stringResource(Res.string.date_month_short_nov)
+    Month.DECEMBER -> stringResource(Res.string.date_month_short_dec)
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DesktopShellTopBarSearchPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
-    Surface(
-        modifier = Modifier
-            .size(30.dp)
-            .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.small,
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+    TestWrapper(parameters) {
+        DesktopShellTopBar(
+            topBarConfig = HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Search(
+                    query = "",
+                    placeholder = "Search documents",
+                    onQueryChange = {}
+                ),
+                actions = listOf(
+                    HomeShellTopBarAction.Icon(
+                        icon = Icons.Default.Upload,
+                        contentDescription = "Upload",
+                        onClick = {}
+                    )
+                )
+            )
         )
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                painter = painterResource(Res.drawable.user),
-                contentDescription = stringResource(Res.string.settings_profile),
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(16.dp)
-            )
-        }
     }
 }
 
+@Preview
 @Composable
-private fun MobileMenuItem(
-    label: String,
-    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
+private fun DesktopShellTopBarTitleOnlyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (enabled) color else color.copy(alpha = 0.45f)
+    TestWrapper(parameters) {
+        DesktopShellTopBar(
+            topBarConfig = HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title(title = "Accountant")
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DesktopShellTopBarTitleSubtitlePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DesktopShellTopBar(
+            topBarConfig = HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title(
+                    title = "Cashflow",
+                    subtitle = "Track incoming and outgoing payments"
+                )
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MobileShellTopBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MobileShellTopBar(
+            profileData = HomeShellProfileData(
+                fullName = "John Doe",
+                email = "john@dokus.be",
+                tierLabel = "Core"
+            ),
+            onProfileClick = {}
         )
     }
 }

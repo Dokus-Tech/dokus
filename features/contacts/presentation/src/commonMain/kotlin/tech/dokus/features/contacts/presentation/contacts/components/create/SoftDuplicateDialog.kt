@@ -30,7 +30,7 @@ import tech.dokus.features.contacts.mvi.SoftDuplicateUi
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * Dialog shown when soft duplicates are found during manual contact creation.
@@ -56,7 +56,7 @@ fun SoftDuplicateDialog(
         },
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 Text(
                     text = stringResource(Res.string.contacts_duplicate_list_hint),
@@ -64,7 +64,7 @@ fun SoftDuplicateDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                 duplicates.forEach { duplicate ->
                     DuplicateItem(
@@ -107,7 +107,7 @@ private fun DuplicateItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Constrains.Spacing.medium),
+                .padding(Constraints.Spacing.medium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -129,5 +129,37 @@ private fun DuplicateItem(
                 color = MaterialTheme.colorScheme.primary
             )
         }
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun SoftDuplicateDialogPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        SoftDuplicateDialog(
+            duplicates = listOf(
+                SoftDuplicateUi(
+                    contactId = tech.dokus.domain.ids.ContactId.generate(),
+                    displayName = "Acme Corporation NV",
+                    matchReason = SoftDuplicateReason.NameAndCountry
+                ),
+                SoftDuplicateUi(
+                    contactId = tech.dokus.domain.ids.ContactId.generate(),
+                    displayName = "ACME Corp",
+                    matchReason = SoftDuplicateReason.Name
+                )
+            ),
+            onDismiss = {},
+            onContinue = {},
+            onViewContact = {}
+        )
     }
 }

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -24,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -64,12 +65,16 @@ import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationSt
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PCopyRow
 import tech.dokus.foundation.aura.components.common.WaitingIndicator
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun PeppolRegistrationScreen(
@@ -106,7 +111,7 @@ internal fun PeppolRegistrationScreen(
                 is PeppolRegistrationState.Error -> DokusErrorContent(
                     exception = state.exception,
                     retryHandler = state.retryHandler,
-                    modifier = Modifier.fillMaxWidth().padding(Constrains.Spacing.large)
+                    modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large)
                 )
             }
         }
@@ -225,7 +230,7 @@ private fun BlockedContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = Constrains.Spacing.medium)
+                modifier = Modifier.padding(top = Constraints.Spacing.medium)
             )
         },
         primary = {
@@ -280,7 +285,7 @@ private fun WaitingTransferContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = Constrains.Spacing.large)
+                modifier = Modifier.padding(top = Constraints.Spacing.large)
             )
         },
         primary = {
@@ -401,4 +406,18 @@ private fun FailedContent(
         },
         footnote = stringResource(Res.string.peppol_reg_failed_footnote),
     )
+}
+
+@Preview
+@Composable
+private fun PeppolRegistrationScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PeppolRegistrationScreen(
+            state = PeppolRegistrationState.Loading,
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+        )
+    }
 }

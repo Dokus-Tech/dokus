@@ -1,7 +1,7 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model
 
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.enums.DocumentIntakeOutcome
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId

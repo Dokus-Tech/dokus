@@ -39,6 +39,15 @@
     <string name="team_role_update_success">Role updated</string>
     <string name="team_role_update_failed">Failed to update role</string>
 
+    <!-- Team Settings Screen v2 -->
+    <string name="team_load_failed">Failed to load team</string>
+    <string name="team_you">You</string>
+    <string name="team_pending_label">Pending</string>
+    <string name="team_since">since %1$s</string>
+    <string name="team_footer_note">Accountants get read-only export access.\nCore includes %1$d seats.</string>
+    <string name="team_seats_available">%1$d seats available</string>
+    <string name="team_cancel_invitation_confirm">Are you sure you want to cancel this invitation?</string>
+
     <!-- Role names and descriptions -->
     <string name="role_owner">Owner</string>
     <string name="role_admin">Admin</string>

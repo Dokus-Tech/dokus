@@ -25,7 +25,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronDown
-import tech.dokus.foundation.aura.constrains.Constrains
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 fun <T> PDropdownField(
@@ -42,7 +47,7 @@ fun <T> PDropdownField(
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
         Text(
             text = label,
@@ -56,14 +61,14 @@ fun <T> PDropdownField(
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.small)
                     .border(
-                        width = Constrains.Stroke.thin,
+                        width = Constraints.Stroke.thin,
                         color = MaterialTheme.colorScheme.outline,
                         shape = MaterialTheme.shapes.small,
                     )
                     .clickable(enabled = enabled) { expanded = true }
                     .padding(
-                        horizontal = Constrains.Spacing.large,
-                        vertical = Constrains.Spacing.medium,
+                        horizontal = Constraints.Spacing.large,
+                        vertical = Constraints.Spacing.medium,
                     ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
@@ -80,7 +85,7 @@ fun <T> PDropdownField(
                 Icon(
                     imageVector = FeatherIcons.ChevronDown,
                     contentDescription = placeholder,
-                    modifier = Modifier.size(Constrains.IconSize.small),
+                    modifier = Modifier.size(Constraints.IconSize.small),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -100,5 +105,22 @@ fun <T> PDropdownField(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PDropdownFieldPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PDropdownField(
+            label = "Currency",
+            value = "EUR",
+            onValueChange = {},
+            options = listOf("EUR", "USD", "GBP"),
+            optionLabel = { it },
+            placeholder = "Select currency",
+        )
     }
 }

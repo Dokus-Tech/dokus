@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.MessageRole
@@ -20,7 +23,10 @@ import tech.dokus.foundation.aura.components.chat.ChatMessageBubble
 import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.ChatSourceCitationList
 import tech.dokus.foundation.aura.components.chat.CitationDisplayData
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun MessagesList(
@@ -35,10 +41,10 @@ internal fun MessagesList(
         state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = if (isLargeScreen) Constrains.Spacing.xLarge else Constrains.Spacing.medium,
-            vertical = Constrains.Spacing.medium
+            horizontal = if (isLargeScreen) Constraints.Spacing.xLarge else Constraints.Spacing.medium,
+            vertical = Constraints.Spacing.medium
         ),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
     ) {
         items(
             items = messages,
@@ -63,7 +69,7 @@ private fun MessageItem(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         ChatMessageBubble(
             message = message.content,
@@ -91,7 +97,7 @@ private fun MessageItem(
             ChatSourceCitationList(
                 citations = citationDisplayData,
                 onDocumentClick = onDocumentClick,
-                modifier = Modifier.padding(start = Constrains.Spacing.large)
+                modifier = Modifier.padding(start = Constraints.Spacing.large)
             )
         }
     }
@@ -101,4 +107,21 @@ private fun formatTimestamp(dateTime: LocalDateTime): String {
     val hour = dateTime.hour.toString().padStart(2, '0')
     val minute = dateTime.minute.toString().padStart(2, '0')
     return "$hour:$minute"
+}
+
+@Preview
+@Composable
+private fun MessagesListPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MessagesList(
+            messages = emptyList(),
+            expandedCitationIds = emptySet(),
+            listState = rememberLazyListState(),
+            isLargeScreen = false,
+            onToggleCitation = {},
+            onDocumentClick = {},
+        )
+    }
 }

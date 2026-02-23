@@ -17,6 +17,13 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_cash_in
 import tech.dokus.aura.resources.cashflow_cash_out
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.style.positionNegative
+import tech.dokus.foundation.aura.style.positionPositive
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Type of cashflow transaction
@@ -28,7 +35,7 @@ enum class CashflowType {
 
 /**
  * Status indicator for cashflow transaction types (CASH-IN/CASH-OUT).
- * Uses dot + text pattern (Design System v1).
+ * Uses dot + text pattern.
  *
  * @param type The cashflow transaction type
  * @param modifier Optional modifier for the indicator
@@ -40,16 +47,16 @@ fun CashflowTypeBadge(
 ) {
     val (color, text) = when (type) {
         CashflowType.CashIn -> Pair(
-            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.positionPositive,
             stringResource(Res.string.cashflow_cash_in).uppercase()
         )
         CashflowType.CashOut -> Pair(
-            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.positionNegative,
             stringResource(Res.string.cashflow_cash_out).uppercase()
         )
     }
 
-    // Dot + text pattern (Design System v1)
+    // Dot + text pattern
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -65,5 +72,15 @@ fun CashflowTypeBadge(
             style = MaterialTheme.typography.labelMedium,
             color = color
         )
+    }
+}
+
+@Preview
+@Composable
+private fun CashflowTypeBadgePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowTypeBadge(type = CashflowType.CashIn)
     }
 }

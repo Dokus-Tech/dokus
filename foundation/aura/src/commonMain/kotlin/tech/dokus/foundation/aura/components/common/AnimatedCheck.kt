@@ -24,10 +24,15 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.style.statusConfirmed
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
- * Animated success indicator (Design System v1).
+ * Animated success indicator.
  *
  * Draws a circle stroke, then a checkmark. Intended to be generic (not Peppol-specific).
  */
@@ -42,6 +47,7 @@ fun AnimatedCheck(
     val circleProgress = remember { Animatable(0f) }
     val checkProgress = remember { Animatable(0f) }
     val glowAlpha = remember { Animatable(0f) }
+    val transparentColor = color.copy(alpha = 0f)
 
     LaunchedEffect(play) {
         circleProgress.snapTo(0f)
@@ -85,7 +91,7 @@ fun AnimatedCheck(
 
         val glowRadius = (minDim / 2f) + 20.dp.toPx()
         val glow = Brush.radialGradient(
-            colors = listOf(color.copy(alpha = 0.2f * glowAlpha.value), Color.Transparent),
+            colors = listOf(color.copy(alpha = 0.2f * glowAlpha.value), transparentColor),
             center = center,
             radius = glowRadius,
         )
@@ -130,5 +136,15 @@ fun AnimatedCheck(
                 join = StrokeJoin.Round
             )
         )
+    }
+}
+
+@Preview
+@Composable
+private fun AnimatedCheckPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AnimatedCheck(play = true)
     }
 }

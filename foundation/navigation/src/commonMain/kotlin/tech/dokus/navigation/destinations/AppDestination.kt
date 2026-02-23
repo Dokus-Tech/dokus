@@ -3,7 +3,7 @@ package tech.dokus.navigation.destinations
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-interface AppDestination : NavigationDestination {
+sealed interface AppDestination : NavigationDestination {
     @Serializable
     @SerialName("notifications")
     data object Notifications : AppDestination

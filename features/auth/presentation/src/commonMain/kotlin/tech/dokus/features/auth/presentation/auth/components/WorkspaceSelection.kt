@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
-import tech.dokus.foundation.aura.components.common.DokusLoader
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -19,12 +21,15 @@ import tech.dokus.aura.resources.workspace_select_title
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
 import tech.dokus.foundation.aura.components.tiles.CompanyTile
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Stable
-private fun Modifier.widthInWorkspaceItem(): Modifier = widthIn(min = 140.dp, max = 320.dp)
+@Composable
+private fun Modifier.widthInWorkspaceItem(): Modifier =
+    widthIn(min = 120.dp, max = 180.dp)
 
 @Composable
 fun WorkspaceSelectionBody(
@@ -32,17 +37,19 @@ fun WorkspaceSelectionBody(
     onTenantClick: (Tenant) -> Unit,
     onAddTenantClick: () -> Unit,
 ) {
-    SectionTitle(
+    Text(
         text = stringResource(Res.string.workspace_select_title),
-        horizontalArrangement = Arrangement.Center
+        style = MaterialTheme.typography.displaySmall,
+        color = MaterialTheme.colorScheme.onSurface,
+        textAlign = TextAlign.Center,
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.xxLarge))
 
     StateDrivenContent(
         state = state,
         onTenantClick = onTenantClick,
-        onAddTenantClick = onAddTenantClick
+        onAddTenantClick = onAddTenantClick,
     )
 }
 
@@ -56,37 +63,51 @@ private fun StateDrivenContent(
     when (state) {
         is DokusState.Success -> {
             val tenants = state.data
-            // FlowRow adapts to the available width, suitable for both mobile and desktop.
-            // Items use width constraints so they can expand when space allows.
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp, alignment = Alignment.CenterHorizontally),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                maxItemsInEachRow = Int.MAX_VALUE
+                horizontalArrangement = Arrangement.spacedBy(
+                    Constraints.Spacing.large,
+                    alignment = Alignment.CenterHorizontally,
+                ),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
+                maxItemsInEachRow = Int.MAX_VALUE,
             ) {
                 tenants.forEach { tenant ->
                     CompanyTile(
-                        // Let tiles grow but keep a sensible minimum so rows wrap nicely on mobile.
                         modifier = Modifier.widthInWorkspaceItem(),
                         initial = tenant.displayName.initialOrEmpty,
                         label = tenant.displayName.value,
-                        avatarUrl = tenant.avatar?.small
-                    ) { onTenantClick(tenant) }
+                        avatarUrl = tenant.avatar?.small,
+                    ) {
+                        onTenantClick(tenant)
+                    }
                 }
-                // Always provide an option to add a tenant; participates in the flow like others.
+
                 AddCompanyTile(
                     modifier = Modifier.widthInWorkspaceItem(),
-                    onClick = onAddTenantClick
+                    onClick = onAddTenantClick,
                 )
             }
         }
 
-        is DokusState.Error -> {
-            DokusErrorContent(state.exception, state.retryHandler)
-        }
+        is DokusState.Error -> DokusErrorContent(state.exception, state.retryHandler)
 
-        else -> {
-            DokusLoader()
-        }
+        else -> DokusLoader()
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun WorkspaceSelectionBodyPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        WorkspaceSelectionBody(
+            state = tech.dokus.foundation.app.state.DokusStateSimple.Success(emptyList()),
+            onTenantClick = {},
+            onAddTenantClick = {},
+        )
     }
 }

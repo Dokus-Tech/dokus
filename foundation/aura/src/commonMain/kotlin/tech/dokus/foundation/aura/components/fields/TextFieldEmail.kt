@@ -12,6 +12,12 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.AtSign
 import tech.dokus.domain.Email
 import tech.dokus.domain.exceptions.DokusException
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.foundation.aura.tooling.mockEmail
 
 object PTextFieldEmailDefaults {
     val icon = FeatherIcons.AtSign
@@ -55,4 +61,18 @@ fun PTextFieldEmail(
         showClearButton = showClearButton,
         onValueChange = { onValueChange(Email(it.lowercase())) }
     )
+}
+
+@Preview
+@Composable
+private fun PTextFieldEmailPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTextFieldEmail(
+            fieldName = "Email",
+            value = mockEmail,
+            onValueChange = {}
+        )
+    }
 }

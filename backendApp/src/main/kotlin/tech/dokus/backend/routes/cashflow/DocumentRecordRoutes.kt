@@ -25,10 +25,11 @@ import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
-import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
@@ -73,6 +74,7 @@ internal fun Route.documentRecordRoutes() {
     val expenseRepository by inject<ExpenseRepository>()
     val creditNoteRepository by inject<CreditNoteRepository>()
     val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
+    val documentSourceRepository by inject<DocumentSourceRepository>()
     val projectionReconciliationService by inject<CashflowProjectionReconciliationService>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
@@ -256,6 +258,56 @@ internal fun Route.documentRecordRoutes() {
 
             val contentType = runCatching { ContentType.parse(resolvedContentType) }
                 .getOrDefault(ContentType.Application.OctetStream)
+
+            call.response.header(
+                HttpHeaders.ContentDisposition,
+                ContentDisposition.Attachment
+                    .withParameter(ContentDisposition.Parameters.FileName, resolvedFilename)
+                    .toString()
+            )
+            call.respondOutputStream(contentType = contentType, status = HttpStatusCode.OK) {
+                stream.use { input ->
+                    input.copyTo(this)
+                }
+            }
+        }
+
+        /**
+         * GET /api/v1/documents/{id}/sources/{sourceId}/content
+         * Download raw source bytes through authenticated API.
+         */
+        get<Documents.Id.SourceContent> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val documentId = DocumentId.parse(route.parent.id)
+            val sourceId = DocumentSourceId.parse(route.sourceId)
+
+            logger.info("Downloading source content: source=$sourceId, document=$documentId, tenant=$tenantId")
+
+            if (!documentRepository.exists(tenantId, documentId)) {
+                throw DokusException.NotFound("Document not found")
+            }
+
+            val source = documentSourceRepository.getById(tenantId, sourceId)
+                ?: throw DokusException.NotFound("Source not found")
+            if (source.documentId != documentId || source.status != DocumentSourceStatus.Linked) {
+                throw DokusException.NotFound("Source not found")
+            }
+
+            val stream = try {
+                minioStorage.openDocumentStream(source.storageKey)
+            } catch (e: NoSuchElementException) {
+                logger.warn(
+                    "Document content object missing for source: sourceId=$sourceId, storageKey=${source.storageKey}"
+                )
+                throw DokusException.NotFound("Source content not found")
+            } catch (e: Exception) {
+                logger.error("Failed to open source stream: sourceId=$sourceId", e)
+                throw DokusException.InternalError("Failed to download source content")
+            }
+
+            val contentType = runCatching { ContentType.parse(source.contentType) }
+                .getOrDefault(ContentType.Application.OctetStream)
+            val resolvedFilename = source.filename ?: "${documentId}_${sourceId}"
 
             call.response.header(
                 HttpHeaders.ContentDisposition,

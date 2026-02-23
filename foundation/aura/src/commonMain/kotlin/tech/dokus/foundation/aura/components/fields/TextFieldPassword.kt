@@ -13,6 +13,11 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Key
 import tech.dokus.domain.Password
 import tech.dokus.domain.exceptions.DokusException
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 object PTextFieldPasswordDefaults {
     val icon = FeatherIcons.Key
@@ -58,4 +63,18 @@ fun PTextFieldPassword(
             onValueChange(Password(it))
         }
     )
+}
+
+@Preview
+@Composable
+private fun PTextFieldPasswordPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTextFieldPassword(
+            fieldName = "Password",
+            value = Password("secret123"),
+            onValueChange = {}
+        )
+    }
 }

@@ -14,7 +14,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,7 +36,6 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
-import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -56,9 +54,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
@@ -74,11 +72,16 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.DokusStateSimple
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Animation constants
 private const val AnimationDurationMs = 200
@@ -86,18 +89,18 @@ private const val SlideAnimationDurationMs = 300
 private const val ScrimAlpha = 0.32f
 
 // Sizing constants
-private val SidebarWidth = 420.dp
-private val ContentPadding = 16.dp
-private val ItemSpacing = 4.dp
-private val ListItemPadding = 12.dp
-private val ListItemSpacing = 12.dp
-private val ContactIconSize = 24.dp
-private val SelectedIndicatorSize = 20.dp
-private val DragHandleWidth = 32.dp
-private val DragHandleHeight = 4.dp
-private val DragHandlePadding = 12.dp
-private val ContentMinHeight = 200.dp
-private val SuggestionChipCornerRadius = 8.dp
+private val SidebarWidth = Constraints.centeredContentMaxWidth
+private val ContentPadding = Constraints.Spacing.large
+private val ItemSpacing = Constraints.Spacing.xSmall
+private val ListItemPadding = Constraints.Spacing.medium
+private val ListItemSpacing = Constraints.Spacing.medium
+private val ContactIconSize = Constraints.IconSize.medium
+private val SelectedIndicatorSize = Constraints.IconSize.smallMedium
+private val DragHandleWidth = Constraints.Spacing.xxLarge
+private val DragHandleHeight = Constraints.Spacing.xSmall
+private val DragHandlePadding = Constraints.Spacing.medium
+private val ContentMinHeight = Constraints.SearchField.minWidth
+private val SuggestionChipCornerRadius = Constraints.Spacing.small
 
 // Alpha constants
 private const val SelectedAlpha = 0.5f
@@ -375,7 +378,7 @@ private fun ContactSheetContent(
         // Create new contact button
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
-            modifier = Modifier.padding(vertical = Constrains.Spacing.small)
+            modifier = Modifier.padding(vertical = Constraints.Spacing.small)
         )
 
         TextButton(
@@ -385,10 +388,10 @@ private fun ContactSheetContent(
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(Constraints.IconSize.small),
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.small))
             Text(
                 text = stringResource(Res.string.cashflow_contact_create_new),
                 color = MaterialTheme.colorScheme.primary
@@ -435,7 +438,7 @@ private fun SuggestionsSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         Text(
             text = stringResource(Res.string.cashflow_contact_suggestions),
@@ -490,16 +493,14 @@ private fun SuggestionChip(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = suggestion.name,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 suggestion.vatNumber?.let { vat ->
                     Text(
                         text = vat,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -546,7 +547,7 @@ private fun ContactList(
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                    verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Warning,
@@ -670,7 +671,7 @@ private fun ContactListItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = contact.name.value,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -678,9 +679,7 @@ private fun ContactListItem(
             contact.vatNumber?.let { vat ->
                 Text(
                     text = vat.value,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = FontFamily.Monospace
-                    ),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -703,5 +702,25 @@ private fun ContactListItem(
                 modifier = Modifier.size(SelectedIndicatorSize)
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ContactEditSheetPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactEditSheet(
+            isVisible = true,
+            onDismiss = {},
+            suggestions = emptyList(),
+            contactsState = DokusStateSimple.Loading(),
+            selectedContactId = null,
+            searchQuery = "",
+            onSearchQueryChange = {},
+            onSelectContact = {},
+            onCreateNewContact = {},
+        )
     }
 }

@@ -38,7 +38,12 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import tech.dokus.foundation.aura.constrains.Constrains
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val SELECTED_ALPHA = 0.08f
 private const val FOCUS_RING_ALPHA = 0.12f
@@ -70,7 +75,7 @@ fun DokusSelectableRow(
         targetValue = when {
             isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = SELECTED_ALPHA)
             isFocused -> MaterialTheme.colorScheme.primary.copy(alpha = FOCUS_RING_ALPHA)
-            else -> Color.Transparent
+            else -> MaterialTheme.colorScheme.surface.copy(alpha = 0f)
         },
         label = "backgroundColor"
     )
@@ -95,8 +100,8 @@ fun DokusSelectableRow(
             )
             .focusable(interactionSource = interactionSource)
             .padding(
-                horizontal = Constrains.Spacing.large,
-                vertical = Constrains.Spacing.medium
+                horizontal = Constraints.Spacing.large,
+                vertical = Constraints.Spacing.medium
             )
             .semantics { selected = isSelected },
         verticalAlignment = Alignment.CenterVertically,
@@ -114,9 +119,23 @@ fun DokusSelectableRow(
                 imageVector = Icons.Filled.Check,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(Constrains.IconSize.small)
+                modifier = Modifier.size(Constraints.IconSize.small)
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun DokusSelectableRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusSelectableRow(
+            text = "Option A",
+            isSelected = true,
+            onClick = {}
+        )
     }
 }
 
@@ -187,7 +206,7 @@ fun <T> DokusSelectableRowGroup(
                     false
                 }
             },
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         items.forEachIndexed { index, item ->
             DokusSelectableRow(

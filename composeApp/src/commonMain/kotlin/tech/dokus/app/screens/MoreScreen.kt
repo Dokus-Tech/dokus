@@ -26,51 +26,48 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import tech.dokus.app.navigation.local.LocalHomeNavController
 import tech.dokus.app.navSectionsCombined
-import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.app.navigation.local.LocalRootNavController
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.coming_soon
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.foundation.app.local.LocalAppModules
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
-import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.navigateTo
 
-/**
- * More screen for mobile navigation.
- * Shows grouped navigation items that don't fit in the bottom bar.
- * Items requiring a higher tier than the user has are filtered out.
- */
 @Composable
-internal fun MoreScreen(
+internal fun MoreRoute(
     tokenManager: TokenManager = koinInject()
 ) {
-    val rootNavController = LocalNavController.current
-    val homeNavController = LocalHomeNavController.current ?: rootNavController
-    val scrollState = rememberScrollState()
+    val rootNavController = LocalRootNavController.current
     val appModules = LocalAppModules.current
     val navSections = remember(appModules) { appModules.navSectionsCombined }
 
-    // Get user's subscription tier from JWT claims
     var userTier by remember { mutableStateOf(SubscriptionTier.Core) }
     LaunchedEffect(Unit) {
-        userTier = tokenManager.getCurrentClaims()?.tenant?.subscriptionTier ?: SubscriptionTier.Core
+        userTier =
+            tokenManager.getCurrentClaims()?.tenant?.subscriptionTier ?: SubscriptionTier.Core
     }
 
-    // Filter sections to only show items the user has access to
     val filteredSections = remember(navSections, userTier) {
         navSections.mapNotNull { section ->
             val accessibleItems = section.items.filter { item ->
                 item.mobileTabOrder == null &&
-                    (item.requiredTier == null || SubscriptionTier.hasTomorrowAccess(userTier))
+                        (item.requiredTier == null || SubscriptionTier.hasTomorrowAccess(userTier))
             }
             if (accessibleItems.isNotEmpty()) {
                 section.copy(items = accessibleItems)
@@ -80,45 +77,60 @@ internal fun MoreScreen(
         }
     }
 
+    MoreScreen(
+        filteredSections = filteredSections,
+        onItemClick = { item ->
+            if (!item.comingSoon) {
+                dispatchMoreNavigation(
+                    destination = item.destination,
+                    onNavigateRoot = { rootNavController.navigateTo(it) },
+                )
+            }
+        }
+    )
+}
+
+@Composable
+internal fun MoreScreen(
+    filteredSections: List<NavSection>,
+    onItemClick: (NavItem) -> Unit,
+) {
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(Constrains.Spacing.large)
+            .padding(Constraints.Spacing.large)
     ) {
         filteredSections.forEach { section ->
             MoreSectionHeader(section = section)
-            Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
             section.items.forEach { item ->
                 MoreNavItem(
                     item = item,
-                    onClick = {
-                        if (!item.comingSoon) {
-                            val navController = when (resolveMoreNavigationTarget(item.destination)) {
-                                MoreNavigationTarget.Home -> homeNavController
-                                MoreNavigationTarget.Root -> rootNavController
-                            }
-                            navController.navigateTo(item.destination)
-                        }
-                    }
+                    onClick = { onItemClick(item) }
                 )
             }
 
-            Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
         }
     }
 }
 
-internal enum class MoreNavigationTarget {
-    Home,
-    Root,
+internal fun dispatchMoreNavigation(
+    destination: NavigationDestination,
+    onNavigateRoot: (NavigationDestination) -> Unit,
+) {
+    onNavigateRoot(resolveRootMoreDestination(destination))
 }
 
-internal fun resolveMoreNavigationTarget(destination: NavigationDestination): MoreNavigationTarget {
+internal fun resolveRootMoreDestination(destination: NavigationDestination): NavigationDestination {
     return when (destination) {
-        is HomeDestination -> MoreNavigationTarget.Home
-        else -> MoreNavigationTarget.Root
+        HomeDestination.WorkspaceDetails -> SettingsDestination.WorkspaceSettings
+        HomeDestination.Team -> SettingsDestination.TeamSettings
+        else -> destination
     }
 }
 
@@ -126,9 +138,9 @@ internal fun resolveMoreNavigationTarget(destination: NavigationDestination): Mo
 private fun MoreSectionHeader(section: NavSection) {
     Text(
         text = stringResource(section.titleRes),
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(vertical = Constrains.Spacing.small)
+        modifier = Modifier.padding(vertical = Constraints.Spacing.small)
     )
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
@@ -145,7 +157,7 @@ private fun MoreNavItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = !item.comingSoon, onClick = onClick)
-            .padding(vertical = Constrains.Spacing.medium)
+            .padding(vertical = Constraints.Spacing.medium)
             .alpha(alpha),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
@@ -153,14 +165,14 @@ private fun MoreNavItem(
         Icon(
             painter = painterResource(item.iconRes),
             contentDescription = null,
-            modifier = Modifier.size(Constrains.IconSize.medium),
+            modifier = Modifier.size(Constraints.IconSize.medium),
             tint = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(modifier = Modifier.width(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.medium))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(item.titleRes),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             if (item.comingSoon) {
@@ -171,5 +183,18 @@ private fun MoreNavItem(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun MoreScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MoreScreen(
+            filteredSections = emptyList(),
+            onItemClick = {},
+        )
     }
 }

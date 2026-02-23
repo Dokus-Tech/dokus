@@ -4,6 +4,7 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
@@ -44,6 +45,18 @@ interface DocumentReviewGateway {
         dpi: Int = 150,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
+
+    suspend fun getDocumentSourcePages(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId,
+        dpi: Int = 150,
+        maxPages: Int = 10
+    ): Result<DocumentPagesResponse>
+
+    suspend fun getDocumentSourceContent(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId
+    ): Result<ByteArray>
 
     suspend fun reprocessDocument(
         documentId: DocumentId,

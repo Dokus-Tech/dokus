@@ -1,6 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,13 +8,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -32,8 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_add_contact
 import tech.dokus.aura.resources.contacts_select_contact
-import tech.dokus.aura.resources.contacts_select_contact_hint
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
@@ -42,7 +44,6 @@ import tech.dokus.features.contacts.mvi.ContactRoleFilter
 import tech.dokus.features.contacts.mvi.ContactSortOption
 import tech.dokus.features.contacts.mvi.ContactsIntent
 import tech.dokus.features.contacts.mvi.ContactsState
-import tech.dokus.features.contacts.presentation.contacts.components.ContactsFilters
 import tech.dokus.features.contacts.presentation.contacts.components.ContactsFiltersMobile
 import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderActions
 import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderSearch
@@ -55,18 +56,11 @@ import tech.dokus.foundation.aura.local.isLarge
 
 // UI dimension constants
 private val ContentPaddingHorizontal = 16.dp
-private val SpacingSmall = 8.dp
 private val SpacingMedium = 12.dp
 private val SpacingDefault = 16.dp
-private val IconSize = 48.dp
+private val MasterPaneWidth = 240.dp
 private val DividerWidth = 1.dp
 private val BottomPadding = 16.dp
-
-// Layout weight constants
-private const val MasterPanelWeight = 0.4f
-private const val DetailPanelWeight = 0.6f
-private const val IconAlphaDisabled = 0.5f
-private const val TextAlphaSecondary = 0.7f
 
 /**
  * The main contacts screen showing a list of contacts with master-detail layout.
@@ -142,35 +136,27 @@ internal fun ContactsScreen(
         val contactsState: DokusState<PaginationState<ContactDto>> =
             when (state) {
                 is ContactsState.Loading -> DokusState.loading()
-                is ContactsState.Content -> DokusState.success((state as ContactsState.Content).contacts)
+                is ContactsState.Content -> DokusState.success(state.contacts)
                 is ContactsState.Error -> {
-                    val errorState = state as ContactsState.Error
-                    DokusState.error(errorState.exception, errorState.retryHandler)
+                    DokusState.error(state.exception, state.retryHandler)
                 }
             }
 
         if (isLargeScreen) {
-            // Desktop: Master-detail layout with inline create form
+            // Desktop: Master-detail layout with compact search + add
             DesktopContactsContent(
                 contactsState = contactsState,
                 selectedContactId = selectedContactId,
-                sortOption = sortOption,
-                roleFilter = roleFilter,
-                activeFilter = activeFilter,
+                searchQuery = searchQuery,
                 contentPadding = contentPadding,
                 onContactClick = { contact ->
                     onSelectContact(contact)
                 },
                 onLoadMore = { onIntent(ContactsIntent.LoadMore) },
                 onAddContactClick = {
-                    // Navigate to new CreateContactScreen (VAT-first flow)
                     onCreateContact()
                 },
-                onSortOptionSelected = { onIntent(ContactsIntent.UpdateSortOption(it)) },
-                onRoleFilterSelected = { onIntent(ContactsIntent.UpdateRoleFilter(it)) },
-                onActiveFilterSelected = {
-                    onIntent(ContactsIntent.UpdateActiveFilter(it))
-                },
+                onSearchQueryChange = { onIntent(ContactsIntent.UpdateSearchQuery(it)) },
             )
         } else {
             // Mobile: Full-screen list
@@ -210,39 +196,54 @@ internal fun ContactsScreen(
 private fun DesktopContactsContent(
     contactsState: DokusState<PaginationState<ContactDto>>,
     selectedContactId: ContactId?,
-    sortOption: ContactSortOption,
-    roleFilter: ContactRoleFilter,
-    activeFilter: ContactActiveFilter,
+    searchQuery: String,
     contentPadding: PaddingValues,
     onContactClick: (ContactDto) -> Unit,
     onLoadMore: () -> Unit,
     onAddContactClick: () -> Unit,
-    onSortOptionSelected: (ContactSortOption) -> Unit,
-    onRoleFilterSelected: (ContactRoleFilter) -> Unit,
-    onActiveFilterSelected: (ContactActiveFilter) -> Unit,
+    onSearchQueryChange: (String) -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
     ) {
-        // Left panel: Contacts list with filters (40%)
+        // Left panel: Contacts list with compact search + add (240dp)
         Column(
             modifier = Modifier
-                .weight(MasterPanelWeight)
+                .width(MasterPaneWidth)
                 .fillMaxHeight()
                 .padding(horizontal = ContentPaddingHorizontal)
         ) {
-            // Filter controls
             Spacer(modifier = Modifier.height(SpacingDefault))
-            ContactsFilters(
-                selectedSortOption = sortOption,
-                selectedRoleFilter = roleFilter,
-                selectedActiveFilter = activeFilter,
-                onSortOptionSelected = onSortOptionSelected,
-                onRoleFilterSelected = onRoleFilterSelected,
-                onActiveFilterSelected = onActiveFilterSelected
-            )
+
+            // Compact search + "+" button row
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                ContactsHeaderSearch(
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = onSearchQueryChange,
+                    isSearchExpanded = true,
+                    isLargeScreen = true,
+                    onExpandSearch = {},
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(
+                    onClick = onAddContactClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(Res.string.contacts_add_contact),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(SpacingMedium))
 
             // Contacts list
@@ -252,7 +253,9 @@ private fun DesktopContactsContent(
                 onLoadMore = onLoadMore,
                 onAddContactClick = onAddContactClick,
                 contentPadding = PaddingValues(bottom = BottomPadding),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                selectedContactId = selectedContactId,
+                isDesktop = true,
             )
         }
 
@@ -264,18 +267,16 @@ private fun DesktopContactsContent(
             color = MaterialTheme.colorScheme.outlineVariant
         )
 
-        // Right panel: Contact details or placeholder (60%)
-        // Create contact is now handled via CreateContactScreen navigation
+        // Right panel: Contact details or placeholder (flex)
         Box(
             modifier = Modifier
-                .weight(DetailPanelWeight)
+                .weight(1f)
                 .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
         ) {
             if (selectedContactId != null) {
                 // Show contact details
                 ContactDetailsRoute(
-                    contactId = selectedContactId,
+                    contactId = selectedContactId.toString(),
                     showBackButton = false
                 )
             } else {
@@ -344,30 +345,12 @@ private fun NoContactSelectedPlaceholder(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                modifier = Modifier
-                    .height(IconSize)
-                    .width(IconSize),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = IconAlphaDisabled)
-            )
-            Spacer(modifier = Modifier.height(SpacingDefault))
-            Text(
-                text = stringResource(Res.string.contacts_select_contact),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(SpacingSmall))
-            Text(
-                text = stringResource(Res.string.contacts_select_contact_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = TextAlphaSecondary)
-            )
-        }
+        Text(
+            text = stringResource(Res.string.contacts_select_contact),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
+
+// Preview skipped: Flaky IllegalStateException in parallel Roborazzi runs

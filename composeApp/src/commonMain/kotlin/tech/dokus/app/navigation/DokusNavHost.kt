@@ -7,8 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.referentialEqualityPolicy
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import tech.dokus.domain.asbtractions.AuthManager
+import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.model.auth.AuthEvent
 import tech.dokus.domain.model.common.DeepLinks
 import tech.dokus.domain.model.common.KnownDeepLinks
@@ -48,7 +51,26 @@ fun DokusNavHost(
     navigationProvider: List<NavigationProvider>,
     onNavHostReady: suspend (NavController) -> Unit = {},
     authManager: AuthManager = koinInject(),
+    tokenManager: TokenManager = koinInject(),
 ) {
+    var pendingPostAuthHomeCommand by remember { mutableStateOf<HomeNavigationCommand?>(null) }
+
+    fun navigateToHomeCommand(command: HomeNavigationCommand) {
+        if (!tokenManager.isAuthenticated.value) {
+            pendingPostAuthHomeCommand = command
+            navController.navigateTo(AuthDestination.Login) {
+                launchSingleTop = true
+            }
+            return
+        }
+
+        navController.navigateTo(CoreDestination.Home) {
+            launchSingleTop = true
+            restoreState = true
+        }
+        HomeNavigationCommandBus.dispatch(command)
+    }
+
     // Notify that NavHost is ready
     LaunchedEffect(navController) {
         onNavHostReady(navController)
@@ -96,35 +118,31 @@ fun DokusNavHost(
                         return@collect
                     }
 
-                    DeepLinks.extractResetPasswordToken(deepLink)?.let { token ->
-                        navController.navigateTo(AuthDestination.ResetPassword(token))
+                    // share/import without batch= is just an iOS foreground ping;
+                    // consume any pending files and stop — don't navigate by URI.
+                    if (deepLink.path.startsWith(KnownDeepLinks.ShareImport.path.path)) {
+                        PlatformShareImportBridge.consumeBatch(batchId = null)
+                            .onSuccess { files ->
+                                if (files.isNotEmpty()) {
+                                    ExternalShareImportHandler.onNewSharedFiles(files)
+                                }
+                            }
+                            .onFailure { error ->
+                                logger.e(error) { "Failed to consume pending share batch" }
+                            }
                         return@collect
                     }
 
-                    DeepLinks.extractVerifyEmailToken(deepLink)?.let { token ->
-                        navController.navigateTo(AuthDestination.VerifyEmail(token))
-                        return@collect
-                    }
-
-                    // Handle server connect deep links specially
-                    if (deepLink.path.startsWith(KnownDeepLinks.ServerConnect.path.path)) {
-                        val params = DeepLinks.extractServerConnect(deepLink)
-                        if (params != null) {
-                            val (host, port, protocol) = params
-                            navController.navigateTo(
-                                AuthDestination.ServerConnection(
-                                    host = host,
-                                    port = port,
-                                    protocol = protocol
-                                )
-                            )
-                        } else {
-                            // Invalid params, navigate to server connection without pre-fill
-                            navController.navigateTo(AuthDestination.ServerConnection())
+                    when (val target = resolveDeepLinkNavigationTarget(deepLink)) {
+                        is DeepLinkNavigationTarget.RootDestination -> {
+                            navController.navigateTo(target.destination)
                         }
-                    } else {
-                        // Handle other deep links normally
-                        navController.navigateTo(NavUri(deepLink.withAppScheme))
+                        is DeepLinkNavigationTarget.RootUri -> {
+                            navController.navigateTo(NavUri(target.uri))
+                        }
+                        is DeepLinkNavigationTarget.HomeCommand -> {
+                            navigateToHomeCommand(target.command)
+                        }
                     }
                 }
             }
@@ -136,6 +154,8 @@ fun DokusNavHost(
         authManager.authenticationEvents.collectLatest { event ->
             when (event) {
                 is AuthEvent.ForceLogout -> {
+                    pendingPostAuthHomeCommand = null
+                    HomeNavigationCommandBus.clear()
                     // Force navigation to login screen and clear backstack
                     navController.navigateTo(AuthDestination.Login) {
                         popUpTo(0) { inclusive = true }
@@ -143,13 +163,24 @@ fun DokusNavHost(
                 }
 
                 is AuthEvent.UserLogout -> {
+                    pendingPostAuthHomeCommand = null
+                    HomeNavigationCommandBus.clear()
                     // Navigate to login screen and clear backstack
                     navController.navigateTo(AuthDestination.Login) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
 
-                is AuthEvent.LoginSuccess -> {}
+                is AuthEvent.LoginSuccess -> {
+                    pendingPostAuthHomeCommand?.let { command ->
+                        pendingPostAuthHomeCommand = null
+                        navController.navigateTo(CoreDestination.Home) {
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                        HomeNavigationCommandBus.dispatch(command)
+                    }
+                }
             }
         }
     }

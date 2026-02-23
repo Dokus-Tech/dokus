@@ -6,13 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -38,24 +37,25 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_saved_successfully
 import tech.dokus.aura.resources.state_retry
 import tech.dokus.aura.resources.workspace_settings_load_failed
-import tech.dokus.aura.resources.workspace_company_settings
 import tech.dokus.aura.resources.workspace_settings_title
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.style.textMuted
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
-// Max content width for settings screen
-private val MaxContentWidth = 800.dp
+private val MaxContentWidth = 640.dp
+private val ContentPaddingH = 16.dp
 
 /**
  * Workspace/Company settings screen with top bar.
- * Pure UI composable that takes state and callbacks.
  */
 @Composable
 internal fun WorkspaceSettingsScreen(
@@ -79,28 +79,13 @@ internal fun WorkspaceSettingsScreen(
 }
 
 /**
- * Workspace settings content without scaffold.
- * Can be embedded in split-pane layout for desktop.
+ * Workspace settings content — collapsible sections with PEPPOL hero card.
  */
 @Composable
 fun WorkspaceSettingsContent(
     state: WorkspaceSettingsState,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
-) {
-    WorkspaceSettingsContentInternal(
-        state = state,
-        onIntent = onIntent,
-        modifier = modifier.padding(contentPadding)
-    )
-}
-
-@Composable
-internal fun WorkspaceSettingsContentInternal(
-    state: WorkspaceSettingsState,
-    onIntent: (WorkspaceSettingsIntent) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     // Image picker - uploads directly without cropping
     val avatarPicker = rememberImagePicker { pickedImage ->
@@ -164,8 +149,7 @@ private fun WorkspaceSettingsContentScreen(
     val editingSection = state.editingSection
     val isLegalIdentityLocked = state.isLegalIdentityLocked
 
-    // Section expansion state
-    var peppolExpanded by remember { mutableStateOf(true) }
+    // Section expansion state — PEPPOL always expanded
     var legalIdentityExpanded by remember { mutableStateOf(!isLegalIdentityLocked) }
     var bankingExpanded by remember { mutableStateOf(false) }
     var invoiceFormatExpanded by remember { mutableStateOf(false) }
@@ -174,41 +158,27 @@ private fun WorkspaceSettingsContentScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .withContentPaddingForScrollable(),
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(
-            modifier = Modifier.widthIn(max = MaxContentWidth),
-            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+            modifier = Modifier
+                .widthIn(max = MaxContentWidth)
+                .padding(horizontal = ContentPaddingH)
+                .padding(top = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
-            // Page Header with company info
-            Column {
-                Text(
-                    text = stringResource(Res.string.workspace_company_settings),
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-                Spacer(Modifier.height(Constrains.Spacing.xSmall))
-                Text(
-                    text = "${formState.legalName} · ${formState.vatNumber}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.textMuted,
-                )
-            }
-
-            Spacer(Modifier.height(Constrains.Spacing.large))
-
-            // 1. PEPPOL Connection Section (always first, primary visual weight)
+            // 1. PEPPOL Connection — always expanded hero card
             PeppolConnectionSection(
                 peppolRegistration = peppolRegistration,
                 peppolActivity = peppolActivity,
-                expanded = peppolExpanded,
-                onToggle = { peppolExpanded = !peppolExpanded },
+                expanded = true,
+                onToggle = { /* always expanded */ },
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
+            Spacer(Modifier.height(20.dp))
 
-            // 2. Legal Identity Section
+            // 2. Legal Identity
             LegalIdentitySection(
                 formState = formState,
                 isLocked = isLegalIdentityLocked,
@@ -232,9 +202,7 @@ private fun WorkspaceSettingsContentScreen(
                 avatarPicker = avatarPicker,
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
-
-            // 3. Banking Details Section
+            // 3. Banking Details
             BankingDetailsSection(
                 formState = formState,
                 expanded = bankingExpanded,
@@ -254,9 +222,7 @@ private fun WorkspaceSettingsContentScreen(
                 onIntent = onIntent,
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
-
-            // 4. Invoice Format Section
+            // 4. Invoice Format
             InvoiceFormatSection(
                 formState = formState,
                 expanded = invoiceFormatExpanded,
@@ -276,9 +242,7 @@ private fun WorkspaceSettingsContentScreen(
                 onIntent = onIntent,
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
-
-            // 5. Payment Terms Section
+            // 5. Payment Terms
             PaymentTermsSection(
                 formState = formState,
                 expanded = paymentTermsExpanded,
@@ -304,8 +268,25 @@ private fun WorkspaceSettingsContentScreen(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.xLarge))
+            Spacer(Modifier.height(24.dp))
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun WorkspaceSettingsContentLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        WorkspaceSettingsContent(
+            state = WorkspaceSettingsState.Loading,
+            onIntent = {},
+        )
     }
 }
 
@@ -323,7 +304,7 @@ private fun SaveStateFeedback(
 ) {
     when (saveState) {
         is WorkspaceSettingsState.Content.SaveState.Success -> {
-            Spacer(Modifier.height(Constrains.Spacing.medium))
+            Spacer(Modifier.height(12.dp))
             Text(
                 text = stringResource(Res.string.settings_saved_successfully),
                 color = MaterialTheme.colorScheme.primary,
@@ -332,7 +313,7 @@ private fun SaveStateFeedback(
         }
 
         is WorkspaceSettingsState.Content.SaveState.Error -> {
-            Spacer(Modifier.height(Constrains.Spacing.medium))
+            Spacer(Modifier.height(12.dp))
             Text(
                 text = saveState.error.localized,
                 color = MaterialTheme.colorScheme.error,

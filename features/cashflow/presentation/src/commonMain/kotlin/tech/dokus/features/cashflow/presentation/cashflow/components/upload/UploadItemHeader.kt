@@ -23,13 +23,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.upload_status_deleting
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
-private val UploadRowHeight = 60.dp
-private val UploadRowPadding = 10.dp
+private val UploadRowHeight = Constraints.IconSize.xxLarge - Constraints.Spacing.xSmall
+private val UploadRowPadding = Constraints.Spacing.small + Constraints.Spacing.xxSmall
 
 /**
  * File icon with a customizable overlay indicator.
@@ -46,13 +51,13 @@ fun FileIconWithOverlay(
     overlay: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit
 ) {
     Box(
-        modifier = Modifier.size(40.dp),
+        modifier = Modifier.size(Constraints.CropGuide.cornerLength),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
             contentDescription = null,
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(Constraints.AvatarSize.small),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         overlay()
@@ -65,8 +70,8 @@ fun FileIconWithOverlay(
 @Composable
 fun PendingOverlay() {
     CircularProgressIndicator(
-        modifier = Modifier.size(40.dp),
-        strokeWidth = 2.dp,
+        modifier = Modifier.size(Constraints.CropGuide.cornerLength),
+        strokeWidth = Constraints.Spacing.xxSmall,
         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
     )
 }
@@ -77,8 +82,8 @@ fun PendingOverlay() {
 @Composable
 fun UploadingOverlay() {
     CircularProgressIndicator(
-        modifier = Modifier.size(40.dp),
-        strokeWidth = 2.dp,
+        modifier = Modifier.size(Constraints.CropGuide.cornerLength),
+        strokeWidth = Constraints.Spacing.xxSmall,
         color = MaterialTheme.colorScheme.primary
     )
 }
@@ -99,7 +104,7 @@ fun androidx.compose.foundation.layout.BoxScope.StatusBadgeOverlay(
     Box(
         modifier = Modifier
             .align(Alignment.BottomEnd)
-            .size(16.dp)
+            .size(Constraints.IconSize.xSmall)
             .background(
                 MaterialTheme.colorScheme.surface,
                 MaterialTheme.shapes.extraSmall
@@ -108,7 +113,7 @@ fun androidx.compose.foundation.layout.BoxScope.StatusBadgeOverlay(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(Constraints.IconSize.xSmall),
             tint = tint
         )
     }
@@ -146,13 +151,13 @@ fun DeletingFileIcon(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier.size(40.dp),
+        modifier = modifier.size(Constraints.CropGuide.cornerLength),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
             contentDescription = null,
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(Constraints.AvatarSize.small),
             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
         )
     }
@@ -190,13 +195,13 @@ fun UploadItemRow(
             .padding(UploadRowPadding)
             .heightIn(min = UploadRowHeight, max = UploadRowHeight),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
     ) {
         icon()
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
         ) {
             Text(
                 text = fileName,
@@ -246,5 +251,34 @@ fun DeletingFileInfo(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error
         )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun UploadItemRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        UploadItemRow(
+            fileName = "invoice_2024_001.pdf",
+            subtitle = "1.2 MB",
+            icon = { FileIconWithOverlay { UploadingOverlay() } },
+            actions = { CancelUploadAction(onClick = {}) }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DeletingFileInfoPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DeletingFileInfo(fileName = "invoice_2024_001.pdf")
     }
 }

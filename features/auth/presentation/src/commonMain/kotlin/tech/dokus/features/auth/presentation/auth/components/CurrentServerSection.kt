@@ -157,3 +157,42 @@ private fun ServerInfoRow(
         )
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun CurrentServerSectionCloudPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        CurrentServerSection(
+            currentServer = ServerConfig.Cloud,
+            onChangeServer = {},
+            onResetToCloud = {},
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun CurrentServerSectionSelfHostedPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        CurrentServerSection(
+            currentServer = ServerConfig(
+                host = "192.168.1.100",
+                port = 8000,
+                protocol = "http",
+                name = "My Server",
+                version = "1.0.0",
+                isCloud = false,
+            ),
+            onChangeServer = {},
+            onResetToCloud = {},
+        )
+    }
+}

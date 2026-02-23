@@ -9,10 +9,15 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_tab_details
 import tech.dokus.aura.resources.cashflow_tab_preview
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Tab bar for mobile document detail screen.
@@ -54,3 +59,20 @@ internal const val TAB_PREVIEW = 0
 
 /** Tab index for Details tab (fact validation). */
 internal const val TAB_DETAILS = 1
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DocumentDetailTabBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentDetailTabBar(
+            selectedTab = TAB_PREVIEW,
+            onTabSelected = {}
+        )
+    }
+}

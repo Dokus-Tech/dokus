@@ -17,8 +17,8 @@ import tech.dokus.domain.enums.IngestionStatus
  * - POST /upload - Upload document (creates ingestion run with status=Queued)
  * - GET / - List documents with filters (uses Documents.List)
      * - GET /{id} - Get full DocumentRecordDto
-     * - GET /{id}/content - Download document bytes via API
-     * - DELETE /{id} - Delete document (cascades to drafts, runs)
+ * - GET /{id}/content - Download document bytes via API
+ * - DELETE /{id} - Delete document (cascades to drafts, runs)
  * - POST /{id}/reprocess - Reprocess document (idempotent: returns existing run unless force)
  * - GET /{id}/ingestions - Get ingestion history
  * - GET /{id}/draft - Get draft
@@ -27,6 +27,9 @@ import tech.dokus.domain.enums.IngestionStatus
  * - POST /{id}/chat - Document Q&A
  * - GET /{id}/pages - List PDF page previews
  * - GET /{id}/pages/{page}.png - Get rendered PDF page as PNG
+ * - GET /{id}/sources/{sourceId}/content - Download source bytes via API
+ * - GET /{id}/sources/{sourceId}/pages - List source PDF page previews
+ * - GET /{id}/sources/{sourceId}/pages/{page}.png - Get rendered source PDF page as PNG
  *
  * NOTE: Query parameters for listing are defined in Documents.List, NOT in the base class.
  * This prevents parameter leakage to single-document routes.
@@ -131,6 +134,43 @@ class Documents {
             val parent: Id,
             val sourceId: String,
             val confirm: Boolean = false
+        )
+
+        /**
+         * GET /api/v1/documents/{id}/sources/{sourceId}/content
+         * Download raw source bytes for authenticated clients.
+         */
+        @Serializable
+        @Resource("sources/{sourceId}/content")
+        class SourceContent(
+            val parent: Id,
+            val sourceId: String
+        )
+
+        /**
+         * GET /api/v1/documents/{id}/sources/{sourceId}/pages
+         * List available PDF pages for a specific source.
+         */
+        @Serializable
+        @Resource("sources/{sourceId}/pages")
+        class SourcePages(
+            val parent: Id,
+            val sourceId: String,
+            val dpi: Int = 150,
+            val maxPages: Int = 10
+        )
+
+        /**
+         * GET /api/v1/documents/{id}/sources/{sourceId}/pages/{page}.png
+         * Get a rendered PDF page as PNG image for a specific source.
+         */
+        @Serializable
+        @Resource("sources/{sourceId}/pages/{page}.png")
+        class SourcePageImage(
+            val parent: Id,
+            val sourceId: String,
+            val page: Int,
+            val dpi: Int = 150
         )
 
         /**

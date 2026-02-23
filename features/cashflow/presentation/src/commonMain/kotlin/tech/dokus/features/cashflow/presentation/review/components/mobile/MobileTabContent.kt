@@ -23,14 +23,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
-import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.SubcomposeAsyncImage
 import compose.icons.FeatherIcons
@@ -55,7 +53,8 @@ import tech.dokus.features.cashflow.presentation.review.components.details.Peppo
 import tech.dokus.features.cashflow.presentation.review.components.details.SourcesCard
 import tech.dokus.features.cashflow.presentation.review.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.constrains.Constraints
 
 private const val A4_ASPECT_RATIO = 0.707f
 
@@ -104,8 +103,8 @@ internal fun PreviewTabContent(
                     // Use LazyColumn for page list - only renders visible pages
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(Constrains.Spacing.small),
-                        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                        contentPadding = PaddingValues(Constraints.Spacing.small),
+                        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
                     ) {
                         itemsIndexed(pages, key = { _, page -> "page_${page.page}" }) { index, page ->
                             MobilePdfPageImage(
@@ -144,7 +143,7 @@ private fun MobilePdfPageImage(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(A4_ASPECT_RATIO)
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.surface),
                         contentAlignment = Alignment.Center
                     ) {
                         DokusLoader()
@@ -166,7 +165,7 @@ private fun MobilePdfPageImage(
                             )
                             Text(
                                 text = stringResource(Res.string.cashflow_preview_page_failed, page.page),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
                         }
@@ -189,14 +188,14 @@ private fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(Constrains.Spacing.xLarge),
+            .padding(Constraints.Spacing.xLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = Icons.Default.Description,
             contentDescription = null,
-            modifier = Modifier.padding(bottom = Constrains.Spacing.medium),
+            modifier = Modifier.padding(bottom = Constraints.Spacing.medium),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
@@ -228,8 +227,8 @@ internal fun DetailsTabContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(Constrains.Spacing.medium),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.large)
+            .padding(Constraints.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large)
     ) {
         // Show failure banner when extraction failed
         AnimatedVisibility(
@@ -281,11 +280,12 @@ internal fun DetailsTabContent(
 
         // Line items (if invoice with items)
         if (state.draftData is InvoiceDraftData &&
-            state.draftData.lineItems.isNotEmpty()) {
+            state.draftData.lineItems.isNotEmpty()
+        ) {
             // LineItemsSection would go here if needed
         }
 
         // Bottom padding for keyboard
-        Spacer(modifier = Modifier.height(Constrains.Spacing.xLarge))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
     }
 }

@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -43,6 +42,7 @@ import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.DokusGlassSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,31 +58,33 @@ internal fun EntityConfirmationDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
+            dismissOnClickOutside = true,
+        ),
     ) {
         DokusGlassSurface {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(Constraints.Spacing.xLarge)
                     .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 when (state) {
                     is EntityConfirmationState.SingleResult -> {
                         SingleResultContent(
                             entity = state.entity,
                             onConfirm = { onEntitySelected(state.entity) },
-                            onEnterManually = onEnterManually
+                            onEnterManually = onEnterManually,
                         )
                     }
+
                     is EntityConfirmationState.MultipleResults -> {
                         MultipleResultsContent(
                             entities = state.entities,
                             onEntitySelected = onEntitySelected,
-                            onEnterManually = onEnterManually
+                            onEnterManually = onEnterManually,
                         )
                     }
+
                     EntityConfirmationState.Hidden -> Unit
                 }
             }
@@ -100,40 +102,34 @@ private fun SingleResultContent(
         imageVector = Icons.Outlined.Business,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.height(48.dp)
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
     Text(
         text = stringResource(Res.string.auth_entity_single_prompt),
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.SemiBold,
-        textAlign = TextAlign.Center
+        style = MaterialTheme.typography.displaySmall,
+        textAlign = TextAlign.Center,
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
-    EntityCard(
-        entity = entity,
-        isClickable = false,
-        onClick = {}
-    )
+    EntityCard(entity = entity, isClickable = false, onClick = {})
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
     PPrimaryButton(
         text = stringResource(Res.string.auth_entity_single_confirm),
         onClick = onConfirm,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     )
 
-    Spacer(modifier = Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
     POutlinedButton(
         text = stringResource(Res.string.auth_entity_manual_entry),
         onClick = onEnterManually,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
@@ -145,56 +141,59 @@ private fun MultipleResultsContent(
 ) {
     Text(
         text = stringResource(Res.string.auth_entity_multiple_title),
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.SemiBold,
-        textAlign = TextAlign.Center
+        style = MaterialTheme.typography.displaySmall,
+        textAlign = TextAlign.Center,
     )
 
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
 
     Text(
         text = stringResource(Res.string.auth_entity_multiple_subtitle),
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center
+        textAlign = TextAlign.Center,
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 300.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .heightIn(
+                max = Constraints.DialogSize.cropAreaMax -
+                    Constraints.Spacing.large -
+                    Constraints.Spacing.xSmall,
+            ),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
         items(entities) { entity ->
             EntityCard(
                 entity = entity,
                 isClickable = true,
-                onClick = { onEntitySelected(entity) }
+                onClick = { onEntitySelected(entity) },
             )
         }
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = Icons.Outlined.Edit,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.colorScheme.primary,
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(Constraints.Spacing.small))
         Text(
             text = stringResource(Res.string.auth_entity_manual_entry),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.clickable { onEnterManually() }
+            modifier = Modifier.clickable(onClick = onEnterManually),
         )
     }
 }
@@ -213,40 +212,63 @@ private fun EntityCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
+                .padding(Constraints.Spacing.large)
+                .fillMaxWidth(),
         ) {
             Text(
                 text = entity.name.value,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
 
-            entity.vatNumber?.let { vat ->
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(Res.string.common_vat_value, vat.value),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
+            Text(
+                text = stringResource(Res.string.common_vat_value, entity.vatNumber.value),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
 
             entity.address?.let { address ->
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
                 Text(
                     text = buildString {
                         append(address.streetLine1)
                         address.streetLine2?.let { append(", $it") }
                         append(", ${address.postalCode} ${address.city}")
                     },
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun EntityConfirmationDialogPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        EntityConfirmationDialog(
+            state = EntityConfirmationState.SingleResult(
+                entity = EntityLookup(
+                    enterpriseNumber = "0123.456.789",
+                    vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                    name = tech.dokus.domain.LegalName("Acme Corporation"),
+                    address = null,
+                    status = tech.dokus.domain.model.entity.EntityStatus.Active,
+                ),
+            ),
+            onEntitySelected = {},
+            onEnterManually = {},
+            onDismiss = {},
+        )
     }
 }

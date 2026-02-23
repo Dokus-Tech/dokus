@@ -15,6 +15,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_action_keep_reviewing
@@ -32,7 +34,10 @@ import tech.dokus.features.cashflow.presentation.review.RejectDialogState
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Dialog for rejecting a document with reason selection.
@@ -67,7 +72,7 @@ internal fun RejectDocumentDialog(
         title = stringResource(Res.string.cashflow_reject_title),
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 Text(
                     text = stringResource(Res.string.cashflow_reject_prompt),
@@ -75,7 +80,7 @@ internal fun RejectDocumentDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                 DokusSelectableRowGroup(
                     items = reasons,
@@ -93,7 +98,7 @@ internal fun RejectDocumentDialog(
                     exit = shrinkVertically() + fadeOut()
                 ) {
                     Column {
-                        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+                        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
                         OutlinedTextField(
                             value = state.otherNote,
                             onValueChange = onNoteChanged,
@@ -135,5 +140,21 @@ private fun DocumentRejectReason.toDisplayString(): String {
         DocumentRejectReason.Spam -> stringResource(Res.string.cashflow_reject_reason_spam)
         DocumentRejectReason.Test -> stringResource(Res.string.cashflow_reject_reason_test)
         DocumentRejectReason.Other -> stringResource(Res.string.cashflow_reject_reason_other)
+    }
+}
+
+@Preview
+@Composable
+private fun RejectDocumentDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        RejectDocumentDialog(
+            state = RejectDialogState(),
+            onReasonSelected = {},
+            onNoteChanged = {},
+            onConfirm = {},
+            onDismiss = {},
+        )
     }
 }

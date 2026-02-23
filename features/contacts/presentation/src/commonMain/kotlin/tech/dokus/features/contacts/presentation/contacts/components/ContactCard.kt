@@ -2,176 +2,176 @@ package tech.dokus.features.contacts.presentation.contacts.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.stringResource
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_active
-import tech.dokus.aura.resources.contacts_customer
-import tech.dokus.aura.resources.contacts_inactive
-import tech.dokus.aura.resources.contacts_supplier
-import tech.dokus.aura.resources.contacts_vendor
+import androidx.compose.ui.unit.sp
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.DerivedContactRoles
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.MonogramAvatar
+import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
+import tech.dokus.foundation.aura.components.badges.RoleBadge
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.textFaint
+import tech.dokus.foundation.aura.style.textMuted
 
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * Mobile contact card with MonogramAvatar + name + RoleBadge + VAT + doc count.
+ * Bank/Accountant contacts get accent styling on the card.
+ */
 @Composable
 internal fun ContactCard(
     contact: ContactDto,
     modifier: Modifier = Modifier
 ) {
-    DokusCard(
+    val initials = remember(contact.name.value) { extractInitials(contact.name.value) }
+    val uiRole = remember(contact.derivedRoles) { mapToUiRole(contact.derivedRoles) }
+    val docCount = contact.invoiceCount + contact.inboundInvoiceCount + contact.expenseCount
+    val isAccent = uiRole == UiContactRole.Bank || uiRole == UiContactRole.Accountant
+
+    DokusCardSurface(
         modifier = modifier,
-        padding = DokusCardPadding.Default,
+        accent = isAccent,
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Constraints.Spacing.medium),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
         ) {
-            // Name and active status
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            MonogramAvatar(
+                initials = initials,
+                size = 38.dp,
+                radius = 10.dp,
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
             ) {
                 Text(
                     text = contact.name.value,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
                 )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // Active/Inactive badge
-                ContactStatusBadge(isActive = contact.isActive)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+                ) {
+                    if (uiRole != null) {
+                        RoleBadge(role = uiRole)
+                    }
+                    contact.vatNumber?.let { vat ->
+                        Text(
+                            text = vat.value,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                            ),
+                            color = MaterialTheme.colorScheme.textMuted,
+                            maxLines = 1,
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Email (if available)
-            contact.email?.let { email ->
+            // Right side: doc count
+            if (docCount > 0) {
                 Text(
-                    text = email.value,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    text = "$docCount docs",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                        fontSize = 9.sp,
+                    ),
+                    color = MaterialTheme.colorScheme.textMuted,
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+            } else {
+                Text(
+                    text = "No docs",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.sp,
+                    ),
+                    color = MaterialTheme.colorScheme.textFaint,
+                )
             }
 
-            // Role badges and tags
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                // Derived role badges
-                contact.derivedRoles?.let { roles ->
-                    ContactRoleBadges(roles = roles)
-                }
-
-                // NOTE: PEPPOL badge removed - PEPPOL status is now in PeppolDirectoryCacheTable
-                // To show PEPPOL status, use the /contacts/{id}/peppol-status endpoint
-
-                // Tags
-                contact.tags?.let { tagsString ->
-                    tagsString.split(",")
-                        .map { it.trim() }
-                        .filter { it.isNotEmpty() }
-                        .forEach { tag ->
-                            ContactBadge(
-                                text = tag,
-                                color = MaterialTheme.colorScheme.outline
-                            )
-                        }
-                }
-            }
+            // Chevron
+            Text(
+                text = "\u203A",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.textMuted,
+            )
         }
     }
 }
 
-@Composable
-private fun ContactStatusBadge(
-    isActive: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val (color, text) = if (isActive) {
-        MaterialTheme.colorScheme.tertiary to stringResource(Res.string.contacts_active)
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant to stringResource(Res.string.contacts_inactive)
-    }
+// =============================================================================
+// Helpers (shared with ContactsList.kt)
+// =============================================================================
 
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        color = color,
-        modifier = modifier
-    )
+/**
+ * Extract initials from a contact name (first letter of first two words).
+ */
+internal fun extractInitials(name: String): String {
+    val words = name.split(" ").filter { it.isNotBlank() }
+    return when {
+        words.size >= 2 -> "${words[0].first()}${words[1].first()}"
+        words.size == 1 -> words[0].take(2)
+        else -> "?"
+    }.uppercase()
 }
 
-@Composable
-private fun ContactRoleBadges(
-    roles: DerivedContactRoles,
-    modifier: Modifier = Modifier
-) {
-    if (roles.isCustomer) {
-        ContactBadge(
-            text = stringResource(Res.string.contacts_customer),
-            color = MaterialTheme.colorScheme.primary,
-            modifier = modifier
-        )
-    }
-    if (roles.isSupplier) {
-        ContactBadge(
-            text = stringResource(Res.string.contacts_supplier),
-            color = MaterialTheme.colorScheme.tertiary,
-            modifier = modifier
-        )
-    }
-    if (roles.isVendor) {
-        ContactBadge(
-            text = stringResource(Res.string.contacts_vendor),
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = modifier
-        )
+/**
+ * Map domain DerivedContactRoles to aura ContactRole for badge display.
+ * Only Vendor/Supplier maps to a badge; Customer has no UI badge.
+ */
+internal fun mapToUiRole(roles: DerivedContactRoles?): UiContactRole? {
+    if (roles == null) return null
+    return when {
+        roles.isSupplier || roles.isVendor -> UiContactRole.Vendor
+        else -> null
     }
 }
 
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
 @Composable
-private fun ContactBadge(
-    text: String,
-    color: Color,
-    modifier: Modifier = Modifier
+private fun ContactCardPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
 ) {
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = MaterialTheme.shapes.small,
-        modifier = modifier
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactCard(
+            contact = ContactDto(
+                id = tech.dokus.domain.ids.ContactId.generate(),
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Acme Corporation"),
+                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                derivedRoles = DerivedContactRoles(isSupplier = true),
+                invoiceCount = 5,
+                inboundInvoiceCount = 3,
+                expenseCount = 2,
+                createdAt = now,
+                updatedAt = now
+            )
         )
     }
 }

@@ -132,3 +132,37 @@ internal fun ContactDetailsTopBar(
         )
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactDetailsTopBarPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactDetailsTopBar(
+            contactState = DokusState.success(
+                ContactDto(
+                    id = tech.dokus.domain.ids.ContactId.generate(),
+                    tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                    name = tech.dokus.domain.Name("Acme Corporation"),
+                    createdAt = now,
+                    updatedAt = now
+                )
+            ),
+            showBackButton = true,
+            hasEnrichmentSuggestions = true,
+            onBackClick = {},
+            onEditClick = {},
+            onEnrichmentClick = {},
+            onMergeClick = {}
+        )
+    }
+}

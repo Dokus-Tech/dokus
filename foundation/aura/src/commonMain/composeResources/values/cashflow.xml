@@ -141,9 +141,9 @@
     <string name="documents_table_document">Document</string>
     <string name="documents_table_status">Status</string>
     <string name="documents_table_open">Open</string>
-    <string name="documents_table_description">Description</string>
-    <string name="documents_table_counterparty">Counterparty</string>
-    <string name="documents_filter_needs_attention">Needs attention</string>
+    <string name="documents_table_description">Reference</string>
+    <string name="documents_table_counterparty">Vendor</string>
+    <string name="documents_filter_needs_attention">Attention</string>
 
     <!-- Document Table -->
     <string name="document_table_invoice">Invoice</string>
@@ -323,6 +323,28 @@
     <string name="cashflow_document_number_inbound_invoice">Inbound Invoice %1$s</string>
     <string name="cashflow_amount_with_currency">%1$s %2$s</string>
     <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
+
+    <!-- Document Detail Mode -->
+    <string name="document_detail_confirmed">Confirmed</string>
+    <string name="document_detail_locked">Locked</string>
+    <string name="document_detail_needs_review">Needs review</string>
+    <string name="document_detail_vendor_fallback">\u2014</string>
+    <string name="document_queue_all_docs">All docs</string>
+    <string name="document_queue_navigate">navigate</string>
+    <string name="document_source_original_document">Original document</string>
+    <string name="document_source_einvoice_data">E-invoice data</string>
+    <string name="document_source_uploaded_attachment">Uploaded attachment</string>
+    <string name="document_source_structured_einvoice_data">Structured e-invoice data</string>
+    <string name="document_source_technical_details">Technical details</string>
+    <string name="document_source_received_on">Received %1$s</string>
+    <string name="document_sources_independently_verified">Sources independently verified</string>
+    <string name="document_section_payment">Payment</string>
+    <string name="document_payment_paid_on">Paid %1$s</string>
+    <string name="document_payment_due_on">Due %1$s</string>
+    <string name="document_payment_awaiting">Awaiting payment</string>
+    <string name="document_overdue_with_days">Overdue \u00b7 %1$dd</string>
+    <string name="document_overdue_days_inline">%1$dd overdue</string>
+    <string name="document_payment_recorded">Payment recorded</string>
 
     <!-- Document Review -->
     <string name="cashflow_document_review_title">Document Review</string>

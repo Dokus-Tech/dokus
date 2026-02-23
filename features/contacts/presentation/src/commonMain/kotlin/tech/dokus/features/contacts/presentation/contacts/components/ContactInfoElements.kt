@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -18,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_active
@@ -28,21 +29,26 @@ import tech.dokus.aura.resources.contacts_supplier
 import tech.dokus.aura.resources.contacts_vendor
 import tech.dokus.domain.model.contact.DerivedContactRoles
 import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // UI dimension constants
-private val InfoRowSpacing = 12.dp
-private val InfoIconSize = 20.dp
-private val SkeletonSpacerHeight = 4.dp
-private val SkeletonTitleHeight = 28.dp
-private val SkeletonIconWidth = 20.dp
-private val SkeletonIconHeight = 20.dp
-private val SkeletonLabelWidth = 60.dp
-private val SkeletonLabelHeight = 12.dp
-private val SkeletonValueWidth = 150.dp
-private val SkeletonValueHeight = 16.dp
-private val BadgeCornerRadius = 4.dp
-private val BadgePaddingHorizontal = 8.dp
-private val BadgePaddingVertical = 4.dp
+private val InfoRowSpacing = Constraints.Spacing.medium
+private val InfoIconSize = Constraints.IconSize.smallMedium
+private val SkeletonSpacerHeight = Constraints.Spacing.xSmall
+private val SkeletonTitleHeight = Constraints.IconSize.medium + Constraints.Spacing.xSmall
+private val SkeletonIconWidth = Constraints.IconSize.smallMedium
+private val SkeletonIconHeight = Constraints.IconSize.smallMedium
+private val SkeletonLabelWidth = Constraints.IconSize.xxLarge - Constraints.Spacing.xSmall
+private val SkeletonLabelHeight = Constraints.Spacing.medium
+private val SkeletonValueWidth =
+    Constraints.AvatarSize.large +
+        Constraints.Spacing.large +
+        Constraints.Spacing.xSmall +
+        Constraints.Spacing.xxSmall
+private val SkeletonValueHeight = Constraints.IconSize.xSmall
+private val BadgeCornerRadius = Constraints.CornerRadius.badge
+private val BadgePaddingHorizontal = Constraints.Spacing.small
+private val BadgePaddingVertical = Constraints.Spacing.xSmall
 private const val SkeletonRepeatCount = 4
 private const val BadgeBackgroundAlpha = 0.1f
 private const val SkeletonTitleWidthFraction = 0.6f
@@ -190,5 +196,75 @@ internal fun ContactInfoTagBadge(
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(horizontal = BadgePaddingHorizontal, vertical = BadgePaddingVertical)
         )
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactInfoRowPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactInfoRow(
+            icon = Icons.Filled.Email,
+            label = "Email",
+            value = "info@acme.be"
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactStatusLabelPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+            ContactStatusLabel(isActive = true)
+            ContactStatusLabel(isActive = false)
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactInfoRoleBadgesPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+            ContactInfoRoleBadges(
+                roles = DerivedContactRoles(
+                    isCustomer = true,
+                    isSupplier = true,
+                    isVendor = true
+                )
+            )
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactInfoTagBadgePreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+            ContactInfoTagBadge(text = "client")
+            ContactInfoTagBadge(text = "vip")
+        }
     }
 }

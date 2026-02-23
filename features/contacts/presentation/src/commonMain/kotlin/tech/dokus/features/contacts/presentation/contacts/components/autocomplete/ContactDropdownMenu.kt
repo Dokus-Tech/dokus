@@ -74,7 +74,7 @@ internal fun ContactDropdownMenu(
                         Spacer(modifier = Modifier.width(ContentSpacing))
                         Text(
                             text = stringResource(Res.string.contacts_searching),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -95,7 +95,7 @@ internal fun ContactDropdownMenu(
                         )
                         Text(
                             text = stringResource(Res.string.contacts_autocomplete_no_results_for, searchQuery),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -149,5 +149,27 @@ internal fun ContactDropdownMenu(
                 }
             }
         }
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactDropdownMenuPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactDropdownMenu(
+            searchQuery = "Acme",
+            searchResults = emptyList(),
+            isSearching = false,
+            onContactSelected = {},
+            onAddNewContact = {}
+        )
     }
 }

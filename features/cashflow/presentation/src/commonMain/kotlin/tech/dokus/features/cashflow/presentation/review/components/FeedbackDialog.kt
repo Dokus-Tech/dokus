@@ -9,6 +9,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_feedback_placeholder
@@ -18,7 +20,10 @@ import tech.dokus.aura.resources.cashflow_feedback_title
 import tech.dokus.features.cashflow.presentation.review.FeedbackDialogState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Dialog for providing correction feedback before re-analysis.
@@ -40,7 +45,7 @@ internal fun FeedbackDialog(
         title = stringResource(Res.string.cashflow_feedback_title),
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 OutlinedTextField(
                     value = state.feedbackText,
@@ -73,4 +78,20 @@ internal fun FeedbackDialog(
         dismissOnBackPress = !state.isSubmitting,
         dismissOnClickOutside = !state.isSubmitting,
     )
+}
+
+@Preview
+@Composable
+private fun FeedbackDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        FeedbackDialog(
+            state = FeedbackDialogState(),
+            onFeedbackChanged = {},
+            onSubmit = {},
+            onRejectInstead = {},
+            onDismiss = {},
+        )
+    }
 }

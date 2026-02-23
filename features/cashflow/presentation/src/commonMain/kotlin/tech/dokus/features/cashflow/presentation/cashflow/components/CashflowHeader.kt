@@ -15,8 +15,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
@@ -27,11 +30,16 @@ import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.cashflow_create_invoice
 import tech.dokus.aura.resources.cashflow_search_placeholder
 import tech.dokus.aura.resources.cashflow_upload_document
+import tech.dokus.foundation.app.network.LocalServerConnection
+import tech.dokus.foundation.app.network.ServerConnectionState
 import tech.dokus.foundation.app.network.rememberIsOnline
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PIconPosition
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Search content for the Cashflow screen top app bar.
@@ -141,6 +149,46 @@ fun CashflowHeaderActions(
             onClick = onCreateInvoiceClick,
             isEnabled = isOnline
         )
+    }
+}
 
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun CashflowHeaderSearchPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowHeaderSearch(
+            searchQuery = "",
+            onSearchQueryChange = {},
+            isSearchExpanded = true,
+            isLargeScreen = false,
+            onExpandSearch = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CashflowHeaderActionsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CompositionLocalProvider(
+            LocalServerConnection provides ServerConnectionState(
+                isConnected = true,
+                lastCheckTime = null,
+                onRetry = {}
+            )
+        ) {
+            CashflowHeaderActions(
+                onUploadClick = {},
+                onCreateInvoiceClick = {},
+            )
+        }
     }
 }

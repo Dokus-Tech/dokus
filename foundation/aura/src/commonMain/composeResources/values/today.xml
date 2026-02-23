@@ -11,6 +11,19 @@
     <string name="today_notifications_filter_peppol">PEPPOL</string>
     <string name="today_notifications_filter_compliance">Compliance</string>
 
+    <!-- Today stat cards -->
+    <string name="today_needs_review">Needs review</string>
+    <string name="today_overdue">Overdue</string>
+    <string name="today_due_this_week">Due this week</string>
+    <string name="today_documents">Documents</string>
+    <string name="today_awaiting_processing">awaiting processing</string>
+    <string name="today_invoice_pending">invoice pending</string>
+    <string name="today_invoices_pending">invoices pending</string>
+    <string name="today_review_button">Review</string>
+    <string name="today_document_needs_review">Document needs review</string>
+    <string name="today_recent">Recent</string>
+    <string name="today_view_all">View all \u2192</string>
+
     <!-- Notification categories -->
     <string name="today_notifications_category_peppol">PEPPOL</string>
     <string name="today_notifications_category_compliance">Compliance</string>

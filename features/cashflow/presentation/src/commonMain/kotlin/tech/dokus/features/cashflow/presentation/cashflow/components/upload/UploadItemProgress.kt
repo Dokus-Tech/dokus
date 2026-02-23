@@ -14,10 +14,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_percent_value
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Upload progress indicator showing a linear progress bar with percentage text.
@@ -85,4 +90,31 @@ fun DeletionProgressIndicator(
         trackColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
         strokeCap = StrokeCap.Round
     )
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun UploadProgressIndicatorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        UploadProgressIndicator(
+            progress = 0.65f,
+            progressPercent = 65
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DeletionProgressIndicatorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DeletionProgressIndicator(progress = 0.4f)
+    }
 }

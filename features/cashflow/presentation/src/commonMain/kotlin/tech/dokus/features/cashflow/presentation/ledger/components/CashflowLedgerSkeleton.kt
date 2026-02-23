@@ -15,12 +15,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
-private val SkeletonBorderRadius = 4.dp
+private val SkeletonBorderRadius = Constraints.CornerRadius.badge
 
 /**
  * A skeleton placeholder box with consistent styling.
@@ -51,16 +55,25 @@ internal fun CashflowSummarySkeleton(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(Constraints.Spacing.large)
     ) {
         // Period label skeleton
-        SkeletonBox(width = 80.dp, height = 12.dp)
-        Spacer(Modifier.height(4.dp))
+        SkeletonBox(
+            width = Constraints.Spacing.large * 5f,
+            height = Constraints.Spacing.medium
+        )
+        Spacer(Modifier.height(Constraints.Spacing.xSmall))
         // Net amount skeleton
-        SkeletonBox(width = 160.dp, height = 40.dp)
-        Spacer(Modifier.height(4.dp))
+        SkeletonBox(
+            width = Constraints.Spacing.large * 10f,
+            height = Constraints.Spacing.large * 2.5f
+        )
+        Spacer(Modifier.height(Constraints.Spacing.xSmall))
         // Breakdown line skeleton
-        SkeletonBox(width = 200.dp, height = 12.dp)
+        SkeletonBox(
+            width = Constraints.Spacing.large * 12.5f,
+            height = Constraints.Spacing.medium
+        )
     }
 }
 
@@ -75,32 +88,32 @@ private fun CashflowRowSkeleton(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .padding(horizontal = Constrains.Spacing.large),
+            .height(Constraints.Height.input)
+            .padding(horizontal = Constraints.Spacing.large),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         // Left section: date and contact
         Row(
-            horizontalArrangement = Arrangement.spacedBy(24.dp)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xLarge)
         ) {
             // Date placeholder
             SkeletonBox(
-                width = 60.dp,
-                height = 12.dp,
-                modifier = Modifier.padding(vertical = 22.dp)
+                width = Constraints.Spacing.large * 3.75f,
+                height = Constraints.Spacing.medium,
+                modifier = Modifier.padding(vertical = Constraints.Spacing.xLarge)
             )
             // Contact placeholder
             SkeletonBox(
-                width = 120.dp,
-                height = 12.dp,
-                modifier = Modifier.padding(vertical = 22.dp)
+                width = Constraints.Spacing.large * 7.5f,
+                height = Constraints.Spacing.medium,
+                modifier = Modifier.padding(vertical = Constraints.Spacing.xLarge)
             )
         }
         // Right section: amount
         SkeletonBox(
-            width = 80.dp,
-            height = 12.dp,
-            modifier = Modifier.padding(vertical = 22.dp)
+            width = Constraints.Spacing.large * 5f,
+            height = Constraints.Spacing.medium,
+            modifier = Modifier.padding(vertical = Constraints.Spacing.xLarge)
         )
     }
 }
@@ -124,7 +137,7 @@ internal fun CashflowLedgerSkeleton(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
+                .height(Constraints.AvatarSize.medium)
         )
         DokusTableDivider()
 
@@ -133,7 +146,7 @@ internal fun CashflowLedgerSkeleton(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(Constraints.Height.input)
             )
             DokusTableDivider()
         }
@@ -145,5 +158,22 @@ internal fun CashflowLedgerSkeleton(
                 DokusTableDivider()
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun CashflowLedgerSkeletonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowLedgerSkeleton(
+            showHeader = true,
+            rowCount = 3
+        )
     }
 }

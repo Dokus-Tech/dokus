@@ -30,10 +30,15 @@ import tech.dokus.domain.model.NotificationDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.layout.DokusPanelListItem
 import tech.dokus.foundation.aura.components.layout.DokusTabbedPanel
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.icon
 import tech.dokus.foundation.aura.extensions.iconTint
 import tech.dokus.foundation.aura.extensions.localized
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun TodayNotificationsPanel(
@@ -71,7 +76,7 @@ internal fun TodayNotificationsPanel(
                 } else {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
                     ) {
                         items.forEach { notification ->
                             DokusPanelListItem(
@@ -135,3 +140,22 @@ private val NotificationFilterTab.localized: String
         NotificationFilterTab.Peppol -> stringResource(Res.string.today_notifications_filter_peppol)
         NotificationFilterTab.Compliance -> stringResource(Res.string.today_notifications_filter_compliance)
     }
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun TodayNotificationsPanelEmptyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        TodayNotificationsPanel(
+            filter = NotificationFilterTab.All,
+            notificationsState = DokusState.success(emptyList()),
+            onFilterSelected = {},
+            onNotificationClick = {},
+        )
+    }
+}

@@ -22,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.auth_business_details
@@ -44,6 +43,7 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
 import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun VatAndAddressStep(
@@ -63,88 +63,82 @@ internal fun VatAndAddressStep(
         SectionTitle(
             text = stringResource(Res.string.auth_business_details),
             horizontalArrangement = Arrangement.Start,
-            onBackPress = onBackPress
+            onBackPress = onBackPress,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
         Text(
             text = stringResource(Res.string.auth_business_details_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
 
-        // VAT Number
         PTextFieldTaxNumber(
             fieldName = stringResource(Res.string.workspace_vat_number),
             value = vatNumber.value,
             modifier = Modifier.fillMaxWidth(),
-            onValueChange = { onVatNumberChanged(VatNumber(it)) }
+            onValueChange = { onVatNumberChanged(VatNumber(it)) },
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
-        // Address Section Header
         Text(
             text = stringResource(Res.string.workspace_address),
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
-        // Street Line 1
         PTextFieldStandard(
             fieldName = stringResource(Res.string.contacts_address_line1),
             value = address.streetLine1,
             modifier = Modifier.fillMaxWidth(),
-            onValueChange = { onAddressChanged(address.copy(streetLine1 = it)) }
+            onValueChange = { onAddressChanged(address.copy(streetLine1 = it)) },
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
-        // Street Line 2 (Optional)
         PTextFieldStandard(
             fieldName = stringResource(Res.string.contacts_address_line2),
             value = address.streetLine2,
             modifier = Modifier.fillMaxWidth(),
-            onValueChange = { onAddressChanged(address.copy(streetLine2 = it)) }
+            onValueChange = { onAddressChanged(address.copy(streetLine2 = it)) },
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
-        // Postal Code and City (side by side)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.contacts_postal_code),
                 value = address.postalCode,
                 modifier = Modifier.weight(1f),
-                onValueChange = { onAddressChanged(address.copy(postalCode = it)) }
+                onValueChange = { onAddressChanged(address.copy(postalCode = it)) },
             )
 
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.contacts_city),
                 value = address.city,
                 modifier = Modifier.weight(2f),
-                onValueChange = { onAddressChanged(address.copy(city = it)) }
+                onValueChange = { onAddressChanged(address.copy(city = it)) },
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
-        // Country Dropdown
         CountrySelector(
             selectedCountry = address.country,
             onCountrySelected = { onAddressChanged(address.copy(country = it)) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -160,12 +154,12 @@ private fun CountrySelector(
     Column(modifier = modifier) {
         Text(
             text = stringResource(Res.string.contacts_country),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
 
         Box {
             DokusCardSurface(
@@ -174,14 +168,14 @@ private fun CountrySelector(
             ) {
                 Text(
                     text = selectedCountry.localizedName(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(Constraints.Spacing.large),
                 )
             }
 
             DropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onDismissRequest = { expanded = false },
             ) {
                 Country.entries.forEach { country ->
                     DropdownMenuItem(
@@ -189,7 +183,7 @@ private fun CountrySelector(
                         onClick = {
                             onCountrySelected(country)
                             expanded = false
-                        }
+                        },
                     )
                 }
             }
@@ -204,3 +198,26 @@ private fun Country.localizedName(): String =
         Country.Netherlands -> stringResource(Res.string.country_netherlands)
         Country.France -> stringResource(Res.string.country_france)
     }
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun VatAndAddressStepPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        VatAndAddressStep(
+            vatNumber = VatNumber("BE0123456789"),
+            address = AddressFormState(
+                streetLine1 = "Rue de la Loi 16",
+                city = "Brussels",
+                postalCode = "1000",
+                country = Country.Belgium,
+            ),
+            onVatNumberChanged = {},
+            onAddressChanged = {},
+            onBackPress = {},
+        )
+    }
+}

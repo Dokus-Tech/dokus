@@ -33,28 +33,29 @@ class HomeShellTopBarResolverTest {
         NavItem("team", Res.string.nav_team, Res.drawable.users,
             HomeDestination.Team),
     )
+    private val testSortedRoutes = buildSortedRoutes(testNavItems)
 
     @Test
     fun `shell visibility is driven by NavItem shellTopBar field`() {
         // Items with shellTopBar set should resolve
         val todayResult = resolveHomeShellTopBarConfig(
-            "today", testNavItems, emptyMap(), ::fallbackConfig
+            "today", testNavItems, testSortedRoutes, emptyMap(), ::fallbackConfig
         )
         assertEquals("Search fallback", (todayResult?.mode as? HomeShellTopBarMode.Search)?.placeholder)
 
         val cashflowResult = resolveHomeShellTopBarConfig(
-            "cashflow", testNavItems, emptyMap(), ::fallbackConfig
+            "cashflow", testNavItems, testSortedRoutes, emptyMap(), ::fallbackConfig
         )
         assertEquals("Default Cashflow", (cashflowResult?.mode as? HomeShellTopBarMode.Title)?.title)
 
         // Items without shellTopBar should return null
         val contactsResult = resolveHomeShellTopBarConfig(
-            "contacts", testNavItems, emptyMap(), ::fallbackConfig
+            "contacts", testNavItems, testSortedRoutes, emptyMap(), ::fallbackConfig
         )
         assertNull(contactsResult)
 
         val nullResult = resolveHomeShellTopBarConfig(
-            null, testNavItems, emptyMap(), ::fallbackConfig
+            null, testNavItems, testSortedRoutes, emptyMap(), ::fallbackConfig
         )
         assertNull(nullResult)
     }
@@ -70,6 +71,7 @@ class HomeShellTopBarResolverTest {
         val resolved = resolveHomeShellTopBarConfig(
             route = "cashflow",
             allNavItems = testNavItems,
+            sortedRoutes = testSortedRoutes,
             registeredConfigs = registered,
             fallback = ::fallbackConfig
         )
@@ -93,6 +95,7 @@ class HomeShellTopBarResolverTest {
         val resolved = resolveHomeShellTopBarConfig(
             route = "cashflow",
             allNavItems = testNavItems,
+            sortedRoutes = testSortedRoutes,
             registeredConfigs = registered,
             fallback = ::fallbackConfig
         )
@@ -119,6 +122,7 @@ class HomeShellTopBarResolverTest {
         val resolved = resolveHomeShellTopBarConfig(
             route = "documents",
             allNavItems = testNavItems,
+            sortedRoutes = testSortedRoutes,
             registeredConfigs = registered,
             fallback = ::fallbackConfig
         )

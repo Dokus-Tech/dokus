@@ -7,7 +7,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.Name
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
@@ -18,6 +25,9 @@ import tech.dokus.features.contacts.presentation.contacts.components.ContactDeta
 import tech.dokus.features.contacts.presentation.contacts.components.ContactDetailsTopBar
 import tech.dokus.features.contacts.presentation.contacts.components.EnrichmentSuggestionsDialog
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,6 +131,35 @@ private fun ContactDetailsScreenContent(
                 onIntent(ContactDetailsIntent.ApplyEnrichmentSuggestions(selected))
             },
             onDismiss = { onIntent(ContactDetailsIntent.HideEnrichmentPanel) }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ContactDetailsScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val mockContactId = ContactId.generate()
+    val now = LocalDateTime(2026, 1, 1, 0, 0)
+    TestWrapper(parameters) {
+        ContactDetailsScreen(
+            state = ContactDetailsState.Content(
+                contactId = mockContactId,
+                contact = ContactDto(
+                    id = mockContactId,
+                    tenantId = TenantId.generate(),
+                    name = Name("Acme Corp"),
+                    createdAt = now,
+                    updatedAt = now
+                )
+            ),
+            showBackButton = true,
+            isOnline = true,
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+            onBackClick = {},
+            onEditClick = {}
         )
     }
 }

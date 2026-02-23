@@ -150,3 +150,39 @@ private fun ContactMergeReassignmentRow(
         )
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactMergeResultStepPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    val sourceId = tech.dokus.domain.ids.ContactId.generate()
+    val targetId = tech.dokus.domain.ids.ContactId.generate()
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactMergeResultStep(
+            result = ContactMergeResult(
+                sourceContactId = sourceId,
+                targetContactId = targetId,
+                invoicesReassigned = 5,
+                inboundInvoicesReassigned = 2,
+                expensesReassigned = 3,
+                notesReassigned = 4,
+                sourceArchived = true
+            ),
+            targetContact = tech.dokus.domain.model.contact.ContactDto(
+                id = targetId,
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Acme Corporation"),
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+    }
+}

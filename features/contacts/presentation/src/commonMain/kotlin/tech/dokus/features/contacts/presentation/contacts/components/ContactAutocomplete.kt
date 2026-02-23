@@ -36,7 +36,12 @@ import tech.dokus.features.contacts.presentation.contacts.components.autocomplet
 import tech.dokus.features.contacts.presentation.contacts.components.autocomplete.SearchLimit
 import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
 import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.foundation.platform.Logger
 
 /**
@@ -163,7 +168,7 @@ fun ContactAutocomplete(
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = Constrains.Spacing.small)
+            modifier = Modifier.padding(bottom = Constraints.Spacing.small)
         )
 
         // Input field with dropdown
@@ -242,7 +247,7 @@ fun ContactAutocomplete(
                 text = errorMessage,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = Constrains.Spacing.xSmall)
+                modifier = Modifier.padding(top = Constraints.Spacing.xSmall)
             )
         }
     }
@@ -294,4 +299,26 @@ fun ContactAutocompleteSimple(
         findContactsByName = findContactsByName,
         findContactsByVat = findContactsByVat
     )
+}
+
+@Preview
+@Composable
+private fun ContactAutocompletePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactAutocomplete(
+            value = "",
+            onValueChange = {},
+            selectedContact = null,
+            onContactSelected = {},
+            onAddNewContact = {},
+            findContactsByName = object : FindContactsByNameUseCase {
+                override suspend fun invoke(query: String, limit: Int) = Result.success(emptyList<ContactDto>())
+            },
+            findContactsByVat = object : FindContactsByVatUseCase {
+                override suspend fun invoke(vat: VatNumber, limit: Int) = Result.success(emptyList<ContactDto>())
+            },
+        )
+    }
 }

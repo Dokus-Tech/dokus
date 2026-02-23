@@ -47,8 +47,12 @@ import tech.dokus.aura.resources.action_clear
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.aura.components.PErrorText
 import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.foundation.aura.style.brandGold
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Suppress("LongParameterList") // UI styling function with necessary visual parameters
 private fun Modifier.dokusFocusGlow(
@@ -96,7 +100,7 @@ fun PTextField(
     val density = LocalDensity.current
     val iconSizeDp = with(density) { labelTextStyle.fontSize.toDp() }
 
-    val gold = MaterialTheme.colorScheme.brandGold
+    val gold = MaterialTheme.colorScheme.primary
 
     // Dokus Field tokens (glassy + calm)
     val fieldShape = MaterialTheme.shapes.medium
@@ -109,7 +113,7 @@ fun PTextField(
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         horizontalAlignment = Alignment.Start
     ) {
         Row(
@@ -120,7 +124,7 @@ fun PTextField(
                 PIcon(
                     it,
                     "",
-                    modifier = Modifier.padding(end = Constrains.Spacing.xSmall).size(iconSizeDp)
+                    modifier = Modifier.padding(end = Constraints.Spacing.xSmall).size(iconSizeDp)
                 )
             }
             Text(
@@ -152,7 +156,7 @@ fun PTextField(
                     width = when {
                         error != null -> 2.dp
                         isFocused -> 2.dp
-                        else -> Constrains.Stroke.thin
+                        else -> Constraints.Stroke.thin
                     },
                     color = when {
                         error != null -> errorBorder
@@ -162,11 +166,11 @@ fun PTextField(
                     shape = fieldShape
                 )
                 .padding(
-                    horizontal = Constrains.Spacing.large,
-                    vertical = Constrains.Spacing.medium
+                    horizontal = Constraints.Spacing.large,
+                    vertical = Constraints.Spacing.medium
                 ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
         ) {
             BasicTextField(
                 value = value,
@@ -204,7 +208,7 @@ fun PTextField(
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = stringResource(Res.string.action_clear),
-                        modifier = Modifier.size(Constrains.IconSize.xSmall),
+                        modifier = Modifier.size(Constraints.IconSize.xSmall),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
                     )
                 }
@@ -214,5 +218,26 @@ fun PTextField(
         if (error != null) {
             PErrorText(error)
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PTextFieldPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTextField(
+            fieldName = "Company Name",
+            value = "Dokus Tech",
+            icon = null,
+            singleLine = true,
+            minLines = 1,
+            onAction = {},
+            keyboardOptions = KeyboardOptions.Default,
+            error = null,
+            visualTransformation = VisualTransformation.None,
+            onValueChange = {}
+        )
     }
 }

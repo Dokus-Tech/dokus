@@ -122,6 +122,8 @@
     <string name="contacts_invalid_email">Invalid email format</string>
     <string name="contacts_invalid_peppol_id">Invalid Peppol ID format</string>
     <string name="contacts_load_more">Load more</string>
+    <string name="contacts_doc_count_single">doc</string>
+    <string name="contacts_doc_count_plural">docs</string>
 
     <!-- Contact Creation & Lookup -->
     <string name="contacts_add_contact_manually">Add contact manually</string>

@@ -12,23 +12,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import tech.dokus.foundation.aura.constrains.Constrains
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * A dashed horizontal divider line.
  *
  * @param modifier Modifier for the divider
  * @param color Color of the dashes (default: MaterialTheme.colorScheme.outlineVariant)
- * @param dashWidth Width of each dash (default: Constrains.Stroke.dashWidth)
- * @param dashHeight Height/thickness of the dashes (default: Constrains.Stroke.thin)
+ * @param dashWidth Width of each dash (default: Constraints.Stroke.dashWidth)
+ * @param dashHeight Height/thickness of the dashes (default: Constraints.Stroke.thin)
  * @param dashCount Number of dashes to display (default: 30)
  */
 @Composable
 fun PDashedDivider(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.outlineVariant,
-    dashWidth: Dp = Constrains.Stroke.dashWidth,
-    dashHeight: Dp = Constrains.Stroke.thin,
+    dashWidth: Dp = Constraints.Stroke.dashWidth,
+    dashHeight: Dp = Constraints.Stroke.thin,
     dashCount: Int = 30
 ) {
     Row(
@@ -43,5 +48,15 @@ fun PDashedDivider(
                     .background(color)
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PDashedDividerPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PDashedDivider()
     }
 }

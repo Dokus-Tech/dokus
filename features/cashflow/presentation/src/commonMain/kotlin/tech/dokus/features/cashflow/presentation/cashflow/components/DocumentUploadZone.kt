@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Description
-import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,12 +27,18 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.upload_drag_hint
 import tech.dokus.aura.resources.upload_drop_files
 import tech.dokus.aura.resources.upload_select_or_drag
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // UI dimensions
 private val ZoneMinHeight = 160.dp
@@ -158,7 +163,7 @@ fun DocumentUploadZone(
 
                 Text(
                     text = displayText,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleLarge,
                     color = borderColor,
                     textAlign = TextAlign.Center
                 )
@@ -252,7 +257,7 @@ fun DocumentUploadZone(
 
                 Text(
                     text = resolvedTitle,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleLarge,
                     color = borderColor,
                     textAlign = TextAlign.Center
                 )
@@ -277,4 +282,21 @@ fun DocumentUploadZone(
 enum class UploadIcon {
     Camera,
     Document
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun DocumentUploadZonePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentUploadZone(
+            onUploadClick = {},
+            isUploading = false,
+        )
+    }
 }

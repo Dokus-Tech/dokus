@@ -57,7 +57,7 @@ import tech.dokus.aura.resources.image_cropper_apply
 import tech.dokus.aura.resources.image_cropper_content_description
 import tech.dokus.aura.resources.image_cropper_hint
 import tech.dokus.aura.resources.image_cropper_title
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // Zoom constraints
 private const val MinZoom = 0.5f
@@ -99,15 +99,15 @@ fun ImageCropperDialog(
     ) {
         Surface(
             modifier = Modifier
-                .widthIn(max = Constrains.DialogSize.maxWidth)
+                .widthIn(max = Constraints.DialogSize.maxWidth)
                 .fillMaxWidth(DialogWidthFraction)
-                .padding(Constrains.Spacing.large),
+                .padding(Constraints.Spacing.large),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = Constrains.Elevation.modal
+            tonalElevation = Constraints.Elevation.modal
         ) {
             Column(
-                modifier = Modifier.padding(Constrains.Spacing.large),
+                modifier = Modifier.padding(Constraints.Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Title bar
@@ -126,22 +126,22 @@ fun ImageCropperDialog(
                         text = stringResource(Res.string.image_cropper_title),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    Spacer(modifier = Modifier.width(Constrains.Spacing.xxxLarge))
+                    Spacer(modifier = Modifier.width(Constraints.Spacing.xxxLarge))
                 }
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
                 // Image crop area
                 Box(
                     modifier = Modifier
                         .sizeIn(
-                            maxWidth = Constrains.DialogSize.cropAreaMax,
-                            maxHeight = Constrains.DialogSize.cropAreaMax
+                            maxWidth = Constraints.DialogSize.cropAreaMax,
+                            maxHeight = Constraints.DialogSize.cropAreaMax
                         )
                         .fillMaxWidth()
                         .aspectRatio(SquareAspectRatio)
                         .clip(MaterialTheme.shapes.small)
-                        .background(Color.Black)
+                        .background(MaterialTheme.colorScheme.scrim)
                         .onSizeChanged { containerSize = it }
                         .clipToBounds()
                         .pointerInput(Unit) {
@@ -155,6 +155,9 @@ fun ImageCropperDialog(
                         },
                     contentAlignment = Alignment.Center
                 ) {
+                    val overlayColor = MaterialTheme.colorScheme.scrim.copy(alpha = CropOverlayAlpha)
+                    val guideColor = MaterialTheme.colorScheme.onSurface
+
                     // Image with transformations
                     AsyncImage(
                         model = imageData,
@@ -172,15 +175,16 @@ fun ImageCropperDialog(
 
                     // Square crop overlay
                     Canvas(modifier = Modifier.fillMaxSize()) {
-                        val overlayColor = Color.Black.copy(alpha = CropOverlayAlpha)
-
                         // Draw semi-transparent overlay around crop area
                         // The visible area in center is the crop region
-                        drawCropOverlay(overlayColor)
+                        drawCropOverlay(
+                            overlayColor = overlayColor,
+                            guideColor = guideColor
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                 Text(
                     text = stringResource(Res.string.image_cropper_hint),
@@ -188,12 +192,12 @@ fun ImageCropperDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.large))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
@@ -213,9 +217,9 @@ fun ImageCropperDialog(
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = null,
-                            modifier = Modifier.size(Constrains.IconSize.small)
+                            modifier = Modifier.size(Constraints.IconSize.small)
                         )
-                        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+                        Spacer(modifier = Modifier.width(Constraints.Spacing.small))
                         Text(stringResource(Res.string.image_cropper_apply))
                     }
                 }
@@ -228,19 +232,19 @@ fun ImageCropperDialog(
  * Draw a semi-transparent overlay with a clear square in the center.
  */
 @Suppress("UnusedParameter") // Reserved for future overlay customization
-private fun DrawScope.drawCropOverlay(overlayColor: Color) {
+private fun DrawScope.drawCropOverlay(
+    overlayColor: Color,
+    guideColor: Color,
+) {
     // For a simple implementation, we just draw corner guides
-    val strokeWidth = Constrains.Stroke.cropGuide.toPx()
-    val cornerLength = Constrains.CropGuide.cornerLength.toPx()
-    val padding = Constrains.Spacing.xLarge.toPx()
+    val strokeWidth = Constraints.Stroke.cropGuide.toPx()
+    val cornerLength = Constraints.CropGuide.cornerLength.toPx()
+    val padding = Constraints.Spacing.xLarge.toPx()
 
     val left = padding
     val top = padding
     val right = size.width - padding
     val bottom = size.height - padding
-
-    // Draw corner guides (white lines at corners)
-    val guideColor = Color.White
 
     // Top-left corner
     drawLine(guideColor, Offset(left, top), Offset(left + cornerLength, top), strokeWidth)

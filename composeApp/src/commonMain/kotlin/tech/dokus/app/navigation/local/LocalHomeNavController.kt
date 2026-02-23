@@ -5,7 +5,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation.NavController
 
-internal val LocalHomeNavController = staticCompositionLocalOf<NavController?> { null }
+internal val LocalHomeNavController = staticCompositionLocalOf<NavController> {
+    error("No home NavController provided")
+}
 
 @Composable
 internal fun HomeNavControllerProvided(

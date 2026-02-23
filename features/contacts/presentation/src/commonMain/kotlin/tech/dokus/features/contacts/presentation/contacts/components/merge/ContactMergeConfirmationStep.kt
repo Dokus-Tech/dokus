@@ -149,3 +149,46 @@ private fun ContactMergeCountRow(label: String, count: Long) {
         )
     }
 }
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactMergeConfirmationStepPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    val sourceId = tech.dokus.domain.ids.ContactId.generate()
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactMergeConfirmationStep(
+            sourceContact = tech.dokus.domain.model.contact.ContactDto(
+                id = sourceId,
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Old Company"),
+                createdAt = now,
+                updatedAt = now
+            ),
+            targetContact = tech.dokus.domain.model.contact.ContactDto(
+                id = tech.dokus.domain.ids.ContactId.generate(),
+                tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                name = tech.dokus.domain.Name("Acme Corporation"),
+                createdAt = now,
+                updatedAt = now
+            ),
+            sourceActivity = ContactActivitySummary(
+                contactId = sourceId,
+                invoiceCount = 5,
+                invoiceTotal = "10,000.00",
+                inboundInvoiceCount = 2,
+                inboundInvoiceTotal = "3,000.00",
+                expenseCount = 3,
+                expenseTotal = "500.00"
+            ),
+            mergeError = null
+        )
+    }
+}

@@ -16,14 +16,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -33,8 +33,13 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.presentation.review.components.details.ContactBlock
 import tech.dokus.features.cashflow.presentation.review.components.details.MicroLabel
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // UI dimension constants
 private val ErrorSurfaceCornerRadius = 8.dp
@@ -85,13 +90,13 @@ fun ContactSelectionSection(
                 shape = RoundedCornerShape(ErrorSurfaceCornerRadius),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = Constrains.Spacing.small),
+                    .padding(bottom = Constraints.Spacing.small),
             ) {
                 Text(
                     text = validationError.localized,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.padding(Constrains.Spacing.small),
+                    modifier = Modifier.padding(Constraints.Spacing.small),
                 )
             }
         }
@@ -117,6 +122,28 @@ fun ContactSelectionSection(
     }
 }
 
+@Preview
+@Composable
+private fun ContactSelectionSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactSelectionSection(
+            documentType = DocumentType.Invoice,
+            selectionState = ContactSelectionState.NoContact,
+            selectedContactSnapshot = null,
+            isBindingContact = false,
+            isReadOnly = false,
+            validationError = null,
+            onAcceptSuggestion = {},
+            onChooseDifferent = {},
+            onSelectContact = {},
+            onClearContact = {},
+            onCreateNewContact = {},
+        )
+    }
+}
+
 @Composable
 private fun ContactLoadingState(
     modifier: Modifier = Modifier,
@@ -124,7 +151,7 @@ private fun ContactLoadingState(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Constrains.Spacing.medium),
+            .padding(Constraints.Spacing.medium),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -132,7 +159,7 @@ private fun ContactLoadingState(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             DokusLoader(size = DokusLoaderSize.Small)
-            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+            Spacer(modifier = Modifier.width(Constraints.Spacing.small))
             Text(
                 text = stringResource(Res.string.cashflow_saving_contact),
                 style = MaterialTheme.typography.bodyMedium,

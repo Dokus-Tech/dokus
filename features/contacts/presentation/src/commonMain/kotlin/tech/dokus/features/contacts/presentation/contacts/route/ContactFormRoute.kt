@@ -29,9 +29,10 @@ import tech.dokus.navigation.navigateTo
 
 @Composable
 internal fun ContactFormRoute(
-    contactId: ContactId,
+    contactId: String,
     container: ContactFormContainer = container {
-        parametersOf(ContactFormContainer.Companion.Params(contactId))
+        val parsedContactId = ContactId.parse(contactId)
+        parametersOf(ContactFormContainer.Companion.Params(parsedContactId))
     }
 ) {
     val navController = LocalNavController.current

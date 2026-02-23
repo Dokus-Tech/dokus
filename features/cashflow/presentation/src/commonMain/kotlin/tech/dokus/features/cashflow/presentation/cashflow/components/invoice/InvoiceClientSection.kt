@@ -18,14 +18,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_recipient
 import tech.dokus.aura.resources.invoice_click_to_change
 import tech.dokus.aura.resources.invoice_click_to_select_client
+import tech.dokus.aura.resources.invoice_recipient
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Clickable client section in the invoice document.
@@ -76,8 +81,7 @@ fun InvoiceClientSection(
             // Client selected - show details
             Text(
                 text = client.name.value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -107,7 +111,7 @@ fun InvoiceClientSection(
             // No client selected - show placeholder
             Text(
                 text = stringResource(Res.string.invoice_click_to_select_client),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -120,5 +124,35 @@ fun InvoiceClientSection(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             )
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceClientSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceClientSection(
+            client = Mocks.sampleClient,
+            onClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun InvoiceClientSectionEmptyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceClientSection(
+            client = null,
+            onClick = {}
+        )
     }
 }

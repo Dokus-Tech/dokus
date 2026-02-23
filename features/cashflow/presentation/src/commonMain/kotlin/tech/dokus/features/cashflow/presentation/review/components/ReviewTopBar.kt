@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -24,8 +23,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -39,9 +39,12 @@ import tech.dokus.aura.resources.state_confirming
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val StatusDotSize = 6.dp
 
@@ -65,7 +68,7 @@ internal fun ReviewTopBar(
                     Text(
                         text = content?.description
                             ?: stringResource(Res.string.cashflow_document_review_title),
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        style = MaterialTheme.typography.titleLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -94,7 +97,7 @@ internal fun ReviewTopBar(
                         content.isBindingContact ||
                         content.isRejecting
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // "Something's wrong" text link (replaces Reject button)
@@ -140,7 +143,7 @@ internal fun ReviewTopBar(
         )
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
-            thickness = Constrains.Stroke.thin
+            thickness = Constraints.Stroke.thin
         )
     }
 }
@@ -160,7 +163,7 @@ private fun UnderstandingLine(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         // Amount
         Text(
@@ -190,7 +193,7 @@ private fun UnderstandingLine(
                         .size(StatusDotSize)
                         .background(MaterialTheme.colorScheme.statusWarning, CircleShape)
                 )
-                Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                Spacer(Modifier.width(Constraints.Spacing.xSmall))
                 Text(
                     text = stringResource(Res.string.cashflow_needs_input),
                     style = MaterialTheme.typography.bodyMedium,
@@ -204,7 +207,7 @@ private fun UnderstandingLine(
                         .size(StatusDotSize)
                         .background(MaterialTheme.colorScheme.statusWarning.copy(alpha = 0.6f), CircleShape)
                 )
-                Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                Spacer(Modifier.width(Constraints.Spacing.xSmall))
                 Text(
                     text = stringResource(Res.string.cashflow_needs_attention),
                     style = MaterialTheme.typography.bodyMedium,
@@ -220,5 +223,22 @@ private fun UnderstandingLine(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ReviewTopBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ReviewTopBar(
+            state = DocumentReviewState.Loading(),
+            isLargeScreen = false,
+            onBackClick = {},
+            onChatClick = {},
+            onConfirmClick = {},
+            onRejectClick = {},
+        )
     }
 }

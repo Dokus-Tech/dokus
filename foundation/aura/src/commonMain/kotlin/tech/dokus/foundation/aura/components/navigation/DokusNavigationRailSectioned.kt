@@ -1,59 +1,62 @@
 package tech.dokus.foundation.aura.components.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.calculator
 import tech.dokus.aura.resources.coming_soon
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.aura.resources.file_text
+import tech.dokus.aura.resources.nav_contacts
+import tech.dokus.aura.resources.nav_documents
+import tech.dokus.aura.resources.nav_profile
+import tech.dokus.aura.resources.nav_section_accounting
+import tech.dokus.aura.resources.nav_section_company
+import tech.dokus.aura.resources.nav_vat
+import tech.dokus.aura.resources.settings
+import tech.dokus.aura.resources.users
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
+import tech.dokus.foundation.aura.style.dokusEffects
+import tech.dokus.foundation.aura.style.dokusRadii
+import tech.dokus.foundation.aura.style.dokusSizing
+import tech.dokus.foundation.aura.style.dokusSpacing
+import tech.dokus.foundation.aura.style.textFaint
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.route
 
-/**
- * Sectioned navigation rail with expandable/collapsible sections (Firstbase style).
- *
- * Features:
- * - Icons only on section headers (parent groups)
- * - Child items are text-only with tree connector lines
- * - Accordion behavior: only one section can be expanded at a time
- * - "Coming soon" items are disabled with reduced opacity
- * - Settings item pinned at bottom
- *
- * @param sections List of navigation sections
- * @param expandedSections Map of section ID to expanded state
- * @param selectedRoute Currently selected route
- * @param settingsItem Optional settings item to show at bottom
- * @param onSectionToggle Called when a section header is clicked
- * @param onItemClick Called when a nav item is clicked
- */
 @Composable
 fun ColumnScope.DokusNavigationRailSectioned(
     sections: List<NavSection>,
@@ -64,49 +67,59 @@ fun ColumnScope.DokusNavigationRailSectioned(
     onItemClick: (NavItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
         sections.forEach { section ->
             val isExpanded = expandedSections[section.id] ?: section.defaultExpanded
             val hasSelectedChild = section.items.any { it.destination.route == selectedRoute }
 
-            NavSectionHeader(
-                section = section,
-                isExpanded = isExpanded,
-                isSelected = hasSelectedChild,
-                onClick = { onSectionToggle(section.id) }
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(sizing.strokeThin)) {
+                NavSectionHeader(
+                    section = section,
+                    isExpanded = isExpanded,
+                    isSelected = hasSelectedChild,
+                    onClick = { onSectionToggle(section.id) }
+                )
 
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = expandVertically(),
-                exit = shrinkVertically()
-            ) {
-                Column(
-                    modifier = Modifier.padding(start = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
                 ) {
-                    section.items.forEachIndexed { index, item ->
-                        val isSelected = item.destination.route == selectedRoute
-                        val isLastItem = index == section.items.lastIndex
-
-                        NavItemRow(
-                            item = item,
-                            isSelected = isSelected,
-                            isLastItem = isLastItem,
-                            onClick = { if (!item.comingSoon) onItemClick(item) }
-                        )
+                    val trackColor = MaterialTheme.dokusEffects.railTrackLine
+                    Column(
+                        modifier = Modifier
+                            .padding(start = spacing.large)
+                            .drawBehind {
+                                // Left border track line
+                                drawLine(
+                                    color = trackColor,
+                                    start = Offset(0f, 0f),
+                                    end = Offset(0f, size.height),
+                                    strokeWidth = sizing.strokeThin.toPx()
+                                )
+                            },
+                        verticalArrangement = Arrangement.spacedBy(sizing.strokeThin)
+                    ) {
+                        section.items.forEach { item ->
+                            val isSelected = item.destination.route == selectedRoute
+                            NavItemRow(
+                                item = item,
+                                isSelected = isSelected,
+                                onClick = { if (!item.comingSoon) onItemClick(item) }
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // Push settings to bottom
         if (settingsItem != null) {
             Spacer(modifier = Modifier.weight(1f))
-
             SettingsRow(
                 item = settingsItem,
                 isSelected = settingsItem.destination.route == selectedRoute,
@@ -123,52 +136,53 @@ private fun NavSectionHeader(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
+    val rotation by animateFloatAsState(if (isExpanded) 90f else 0f)
+    val textColor = if (isSelected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    val iconTint = if (isSelected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(
-                horizontal = Constrains.Spacing.small,
-                vertical = Constrains.Spacing.small
-            ),
+            .padding(horizontal = spacing.small, vertical = spacing.medium),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Section icon
-        Icon(
-            painter = painterResource(section.iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-            tint = if (isSelected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            }
+        // Rotating chevron
+        Text(
+            text = "\u203A", // ›
+            style = MaterialTheme.typography.bodyLarge,
+            color = iconTint,
+            modifier = Modifier.rotate(rotation)
         )
 
-        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.width(spacing.xSmall))
+
+        // Section icon
+        androidx.compose.material3.Icon(
+            painter = painterResource(section.iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(sizing.iconXSmall),
+            tint = iconTint
+        )
+
+        Spacer(modifier = Modifier.width(spacing.small))
 
         // Section title
         Text(
             text = stringResource(section.titleRes),
             style = MaterialTheme.typography.bodyMedium,
-            color = if (isSelected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
+            color = textColor,
             modifier = Modifier.weight(1f)
-        )
-
-        // Chevron on the right
-        Icon(
-            imageVector = if (isExpanded) {
-                Icons.Default.KeyboardArrowDown
-            } else {
-                Icons.Default.KeyboardArrowRight
-            },
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -177,69 +191,70 @@ private fun NavSectionHeader(
 private fun NavItemRow(
     item: NavItem,
     isSelected: Boolean,
-    isLastItem: Boolean,
     onClick: () -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
+    val radii = MaterialTheme.dokusRadii
     val itemAlpha = if (item.comingSoon) 0.5f else 1f
+    val itemShape = RoundedCornerShape(topEnd = radii.button, bottomEnd = radii.button)
+    val activeBg = MaterialTheme.dokusEffects.railActiveBackground
+    val amberBorder = MaterialTheme.colorScheme.primary
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .alpha(itemAlpha)
+            .then(
+                if (isSelected && !item.comingSoon) {
+                    Modifier
+                        .clip(itemShape)
+                        .background(activeBg)
+                        .drawBehind {
+                            // 2px amber left border
+                            drawLine(
+                                color = amberBorder,
+                                start = Offset(0f, 0f),
+                                end = Offset(0f, size.height),
+                                strokeWidth = sizing.navigationIndicatorHeight.toPx()
+                            )
+                        }
+                } else {
+                    Modifier
+                }
+            )
             .clickable(enabled = !item.comingSoon, onClick = onClick)
-            .padding(vertical = 6.dp)
-            .alpha(itemAlpha),
+            .padding(
+                start = spacing.large,
+                top = spacing.medium,
+                bottom = spacing.medium,
+                end = spacing.small
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Tree connector
-        TreeConnector(isLastItem = isLastItem)
-
-        // Text only - NO ICON
         Text(
             text = stringResource(item.titleRes),
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isSelected && !item.comingSoon) FontWeight.SemiBold else FontWeight.Normal,
             color = if (isSelected && !item.comingSoon) {
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.onSurface
             } else {
                 MaterialTheme.colorScheme.onSurface
             }
         )
 
-        // Coming soon suffix
         if (item.comingSoon) {
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(spacing.xSmall))
             Text(
-                text = "· ${stringResource(Res.string.coming_soon)}",
+                text = stringResource(Res.string.coming_soon),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.textFaint,
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(MaterialTheme.dokusEffects.railBadgeBackground)
+                    .padding(horizontal = spacing.xSmall, vertical = spacing.xxSmall)
             )
         }
-    }
-}
-
-@Composable
-private fun TreeConnector(isLastItem: Boolean) {
-    Box(
-        modifier = Modifier
-            .width(24.dp)
-            .height(24.dp)
-    ) {
-        // Vertical line (extends full height if not last item, half if last)
-        Box(
-            modifier = Modifier
-                .width(1.dp)
-                .fillMaxHeight(if (isLastItem) 0.5f else 1f)
-                .align(Alignment.TopStart)
-                .background(MaterialTheme.colorScheme.outlineVariant)
-        )
-
-        // Horizontal branch to text
-        Box(
-            modifier = Modifier
-                .width(12.dp)
-                .height(1.dp)
-                .align(Alignment.CenterStart)
-                .background(MaterialTheme.colorScheme.outlineVariant)
-        )
     }
 }
 
@@ -249,21 +264,22 @@ private fun SettingsRow(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(
-                horizontal = Constrains.Spacing.small,
-                vertical = Constrains.Spacing.small
+                horizontal = spacing.small,
+                vertical = spacing.small
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Settings icon
-        Icon(
+        androidx.compose.material3.Icon(
             painter = painterResource(item.iconRes),
             contentDescription = null,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(sizing.iconSmall),
             tint = if (isSelected) {
                 MaterialTheme.colorScheme.primary
             } else {
@@ -271,9 +287,8 @@ private fun SettingsRow(
             }
         )
 
-        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+        Spacer(modifier = Modifier.width(spacing.small))
 
-        // Settings title
         Text(
             text = stringResource(item.titleRes),
             style = MaterialTheme.typography.bodyMedium,
@@ -283,5 +298,63 @@ private fun SettingsRow(
                 MaterialTheme.colorScheme.onSurface
             }
         )
+    }
+}
+
+@Preview
+@Composable
+private fun DokusNavigationRailSectionedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        Column {
+            DokusNavigationRailSectioned(
+                sections = listOf(
+                    NavSection(
+                        id = "accounting",
+                        titleRes = Res.string.nav_section_accounting,
+                        iconRes = Res.drawable.file_text,
+                        items = listOf(
+                            NavItem(
+                                id = "documents",
+                                titleRes = Res.string.nav_documents,
+                                iconRes = Res.drawable.file_text,
+                                destination = HomeDestination.Documents,
+                            ),
+                            NavItem(
+                                id = "vat",
+                                titleRes = Res.string.nav_vat,
+                                iconRes = Res.drawable.calculator,
+                                destination = HomeDestination.Tomorrow,
+                                comingSoon = true,
+                            ),
+                        ),
+                    ),
+                    NavSection(
+                        id = "company",
+                        titleRes = Res.string.nav_section_company,
+                        iconRes = Res.drawable.users,
+                        items = listOf(
+                            NavItem(
+                                id = "contacts",
+                                titleRes = Res.string.nav_contacts,
+                                iconRes = Res.drawable.users,
+                                destination = HomeDestination.Contacts,
+                            ),
+                        ),
+                    ),
+                ),
+                expandedSections = mapOf("accounting" to true, "company" to true),
+                selectedRoute = "documents",
+                settingsItem = NavItem(
+                    id = "settings",
+                    titleRes = Res.string.nav_profile,
+                    iconRes = Res.drawable.settings,
+                    destination = HomeDestination.Settings,
+                ),
+                onSectionToggle = {},
+                onItemClick = {},
+            )
+        }
     }
 }

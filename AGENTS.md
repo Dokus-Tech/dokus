@@ -32,7 +32,7 @@
 - Fast local: `./gradlew checkAll` + targeted module tests (e.g. `./gradlew :features:cashflow:presentation:testDebugUnitTest`).
 - Cross-target: `./gradlew allTests`.
 - Tests end with `*Test.kt`; keep fixtures beside code under `src/<platform>Test` where possible.
-- UI screenshots (Paparazzi): `./gradlew screenshotTests` (update baselines via `./gradlew recordScreenshots`).
+- UI screenshots (Roborazzi): `./gradlew verifyScreenshots` (update baselines via `./gradlew recordScreenshots`, clear with `./gradlew clearScreenshots`).
 
 ## Commit & Pull Request Guidelines
 - Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`); imperative, scoped messages.

@@ -17,11 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.upload_documents_absorbed
 import tech.dokus.aura.resources.upload_release_to_upload
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Animation constants
 private const val PulseAnimationDurationMs = 1200
@@ -79,8 +84,22 @@ fun UploadOverlayHeader(
         Text(
             text = stringResource(Res.string.upload_documents_absorbed),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = alpha * SubtitleAlphaMultiplier),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * SubtitleAlphaMultiplier),
             textAlign = TextAlign.Center
         )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun UploadOverlayHeaderPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        UploadOverlayHeader()
     }
 }

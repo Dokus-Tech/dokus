@@ -5,7 +5,6 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_unknown
-import tech.dokus.aura.resources.date_format_short
 import tech.dokus.aura.resources.date_month_short_apr
 import tech.dokus.aura.resources.date_month_short_aug
 import tech.dokus.aura.resources.date_month_short_dec
@@ -38,5 +37,5 @@ internal fun formatShortDate(date: LocalDate): String {
     val monthName = months.getOrElse(date.month.ordinal) {
         stringResource(Res.string.common_unknown)
     }
-    return stringResource(Res.string.date_format_short, monthName, date.day, date.year)
+    return "$monthName ${date.day}"
 }

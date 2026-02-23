@@ -1,6 +1,12 @@
 package tech.dokus.backend.services.documents
 
 import io.micrometer.core.instrument.Metrics
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.repository.cashflow.DocumentBlobCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
@@ -8,9 +14,12 @@ import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
+import tech.dokus.database.tables.documents.DocumentBlobsTable
+import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
+import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentIntakeOutcome
@@ -20,9 +29,11 @@ import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
@@ -31,23 +42,12 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentIntakeOutcomeDto
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.backend.util.runSuspendCatching
 import tech.dokus.foundation.backend.utils.loggerFor
-import org.jetbrains.exposed.v1.core.SortOrder
-import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import tech.dokus.database.tables.documents.DocumentBlobsTable
-import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
-import tech.dokus.database.tables.documents.DocumentSourcesTable
-import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.ids.IngestionRunId
 import java.security.MessageDigest
 import java.util.UUID
 
@@ -394,8 +394,13 @@ class DocumentTruthService(
                     logger.info(
                         "AUDIT review_resolved: decision=SAME tenant={} user={} review={} " +
                             "sourceId={} originalDocumentId={} mergedIntoDocumentId={} matchType={}",
-                        tenantId, userId, reviewId,
-                        source.id, source.documentId, review.documentId, source.matchType
+                        tenantId,
+                        userId,
+                        reviewId,
+                        source.id,
+                        source.documentId,
+                        review.documentId,
+                        source.matchType
                     )
                     Metrics.counter(
                         "dokus_review_resolution_count",
@@ -433,7 +438,7 @@ class DocumentTruthService(
                     matchType = null
                 )
                 source.extractedSnapshotJson?.let { snapshot ->
-                    runCatching {
+                    runSuspendCatching {
                         val draftData = json.decodeFromString<DocumentDraftData>(snapshot)
                         val runId = ingestionRepository.createRun(
                             documentId = newDocumentId,
@@ -476,8 +481,12 @@ class DocumentTruthService(
                     logger.info(
                         "AUDIT review_resolved: decision=DIFFERENT tenant={} user={} review={} " +
                             "sourceId={} originalDocumentId={} newDocumentId={}",
-                        tenantId, userId, reviewId,
-                        source.id, source.documentId, newDocumentId
+                        tenantId,
+                        userId,
+                        reviewId,
+                        source.id,
+                        source.documentId,
+                        newDocumentId
                     )
                     Metrics.counter(
                         "dokus_review_resolution_count",
@@ -850,5 +859,4 @@ class DocumentTruthService(
             DocumentIntakeOutcome.NewDocument -> Unit
         }
     }
-
 }

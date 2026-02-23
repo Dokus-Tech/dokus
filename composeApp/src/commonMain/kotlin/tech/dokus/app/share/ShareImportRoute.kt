@@ -5,11 +5,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.app.navigation.HomeNavigationCommand
+import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.navigation.destinations.AuthDestination
-import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
-import tech.dokus.navigation.replace
+import tech.dokus.navigation.navigateTo
 
 @Composable
 internal fun ShareImportRoute(
@@ -20,15 +22,25 @@ internal fun ShareImportRoute(
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is ShareImportAction.Finish -> {
-                navController.replace(HomeDestination.Documents)
+                navController.navigateTo(CoreDestination.Home) {
+                    launchSingleTop = true
+                    restoreState = true
+                }
+                HomeNavigationCommandBus.dispatch(HomeNavigationCommand.OpenDocuments)
             }
 
             ShareImportAction.NavigateToLogin -> {
-                navController.replace(AuthDestination.Login)
+                navController.navigateTo(AuthDestination.Login) {
+                    popUpTo(0) { inclusive = true }
+                }
             }
 
             ShareImportAction.OpenApp -> {
-                navController.replace(HomeDestination.Documents)
+                navController.navigateTo(CoreDestination.Home) {
+                    launchSingleTop = true
+                    restoreState = true
+                }
+                HomeNavigationCommandBus.dispatch(HomeNavigationCommand.OpenDocuments)
             }
         }
     }

@@ -1,5 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review.route
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -8,10 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
@@ -30,11 +33,15 @@ import tech.dokus.features.cashflow.presentation.documents.route.DOCUMENTS_REFRE
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
+import tech.dokus.features.cashflow.presentation.review.components.DocumentReviewDesktopSplit
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
+import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
+import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.app.mvi.container
@@ -54,12 +61,19 @@ private const val CONTACT_RESULT_KEY = "documentReview_contactId"
 
 @Composable
 internal fun DocumentReviewRoute(
-    documentId: DocumentId,
-    container: DocumentReviewContainer = container(),
-    listContacts: ListContactsUseCase = koinInject(),
+    route: CashFlowDestination.DocumentReview,
+    container: DocumentReviewContainer = container {
+        parametersOf(
+            DocumentId.parse(route.documentId),
+            route.toRouteContextOrNull(),
+        )
+    },
+    listContacts: ListContactsUseCase = org.koin.compose.koinInject(),
 ) {
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val initialDocumentId = remember(route.documentId) { DocumentId.parse(route.documentId) }
+
     fun markDocumentsRefreshRequired() {
         navController.previousBackStackEntry
             ?.savedStateHandle
@@ -136,10 +150,6 @@ internal fun DocumentReviewRoute(
         }
     }
 
-    LaunchedEffect(documentId) {
-        container.store.intent(DocumentReviewIntent.LoadDocument(documentId))
-    }
-
     // Auto-poll every 3s while processing so the UI transitions when extraction completes/fails
     val shouldPoll = when (state) {
         is DocumentReviewState.AwaitingExtraction -> true
@@ -169,39 +179,87 @@ internal fun DocumentReviewRoute(
                 onFailure = { error ->
                     contactsState = DokusState.error(
                         exception = tech.dokus.domain.exceptions.DokusException.Unknown(error),
-                        retryHandler = { /* no retry */ }
+                        retryHandler = { /* no retry */ },
                     )
-                }
+                },
             )
         }
     }
 
-    DocumentReviewScreen(
-        state = state,
-        isLargeScreen = isLargeScreen,
-        onIntent = { container.store.intent(it) },
-        onBackClick = {
-            markDocumentsRefreshRequired()
-            navController.popBackStack()
-        },
-        onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
-        onCorrectContact = { _ ->
-            // Open the contact sheet instead of navigating away
-            container.store.intent(DocumentReviewIntent.OpenContactSheet)
-        },
-        onCreateContact = { counterparty ->
-            container.store.intent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
-            navController.navigateTo(
-                ContactsDestination.CreateContact(
-                    prefillCompanyName = counterparty.name,
-                    prefillVat = counterparty.vatNumber,
-                    prefillAddress = counterparty.address,
-                    origin = ContactCreateOrigin.DocumentReview.name
+    val reviewContent: @Composable () -> Unit = {
+        DocumentReviewScreen(
+            state = state,
+            isLargeScreen = isLargeScreen,
+            onIntent = { container.store.intent(it) },
+            onBackClick = {
+                markDocumentsRefreshRequired()
+                navController.popBackStack()
+            },
+            onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
+            onOpenSource = { sourceId ->
+                val activeDocumentId = (state as? DocumentReviewState.Content)
+                    ?.documentId
+                    ?.toString()
+                    ?: route.documentId
+                navController.navigateTo(
+                    CashFlowDestination.DocumentSourceViewer(
+                        documentId = activeDocumentId,
+                        sourceId = sourceId.toString(),
+                    )
                 )
+            },
+            onCorrectContact = { _ ->
+                // Open the contact sheet instead of navigating away
+                container.store.intent(DocumentReviewIntent.OpenContactSheet)
+            },
+            onCreateContact = { counterparty ->
+                container.store.intent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
+                navController.navigateTo(
+                    ContactsDestination.CreateContact(
+                        prefillCompanyName = counterparty.name,
+                        prefillVat = counterparty.vatNumber,
+                        prefillAddress = counterparty.address,
+                        origin = ContactCreateOrigin.DocumentReview.name,
+                    )
+                )
+            },
+            snackbarHostState = snackbarHostState,
+        )
+    }
+
+    val queueState = state.queueStateOrNull()
+    val showDesktopSplit = isLargeScreen && queueState?.items?.isNotEmpty() == true
+    val selectedDocumentId = state.selectedQueueDocumentIdOrDefault(initialDocumentId)
+    val selectedDoc = queueState?.items?.firstOrNull { it.id == selectedDocumentId }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (showDesktopSplit) {
+            DocumentReviewDesktopSplit(
+                documents = queueState?.items.orEmpty(),
+                selectedDocumentId = selectedDocumentId,
+                selectedDoc = selectedDoc,
+                hasMore = queueState?.hasMore == true,
+                isLoadingMore = queueState?.isLoadingMore == true,
+                onSelectDocument = { selectedDocumentIdCandidate ->
+                    if (selectedDocumentIdCandidate != selectedDocumentId) {
+                        container.store.intent(
+                            DocumentReviewIntent.SelectQueueDocument(selectedDocumentIdCandidate)
+                        )
+                    }
+                },
+                onLoadMore = {
+                    container.store.intent(DocumentReviewIntent.LoadMoreQueue)
+                },
+                onExit = {
+                    markDocumentsRefreshRequired()
+                    navController.popBackStack()
+                },
+                content = reviewContent,
             )
-        },
-        snackbarHostState = snackbarHostState,
-    )
+        } else {
+            reviewContent()
+        }
+    }
 
     // Contact Edit Sheet
     contentState?.let { content ->
@@ -231,7 +289,7 @@ internal fun DocumentReviewRoute(
                         prefillCompanyName = counterparty.name,
                         prefillVat = counterparty.vatNumber,
                         prefillAddress = counterparty.address,
-                        origin = ContactCreateOrigin.DocumentReview.name
+                        origin = ContactCreateOrigin.DocumentReview.name,
                     )
                 )
             },
@@ -252,12 +310,12 @@ internal fun DocumentReviewRoute(
                     showDiscardDialog = false
                     container.store.intent(DocumentReviewIntent.ConfirmDiscardChanges)
                 },
-                isDestructive = true
+                isDestructive = true,
             ),
             secondaryAction = DokusDialogAction(
                 text = stringResource(Res.string.action_cancel),
-                onClick = { showDiscardDialog = false }
-            )
+                onClick = { showDiscardDialog = false },
+            ),
         )
     }
 
@@ -277,7 +335,7 @@ internal fun DocumentReviewRoute(
             },
             onDismiss = {
                 container.store.intent(DocumentReviewIntent.DismissFeedbackDialog)
-            }
+            },
         )
     }
 
@@ -296,7 +354,55 @@ internal fun DocumentReviewRoute(
             },
             onDismiss = {
                 container.store.intent(DocumentReviewIntent.DismissRejectDialog)
-            }
+            },
         )
     }
+
+    val content = state as? DocumentReviewState.Content
+    val viewerState = content?.sourceViewerState
+    if (isLargeScreen && content != null && viewerState != null) {
+        SourceEvidenceDialog(
+            contentState = content,
+            viewerState = viewerState,
+            onClose = { container.store.intent(DocumentReviewIntent.CloseSourceModal) },
+            onToggleTechnicalDetails = {
+                container.store.intent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
+            },
+            onRetry = { container.store.intent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
+        )
+    }
+
+    content?.paymentSheetState?.let { paymentState ->
+        val currencySign = when (val data = content.draftData) {
+            is tech.dokus.domain.model.InvoiceDraftData -> data.currency.displaySign
+            is tech.dokus.domain.model.CreditNoteDraftData -> data.currency.displaySign
+            else -> "\u20AC"
+        }
+        RecordPaymentDialog(
+            sheetState = paymentState,
+            currencySign = currencySign,
+            onAmountChange = { amount ->
+                container.store.intent(DocumentReviewIntent.UpdatePaymentAmountText(amount))
+            },
+            onNoteChange = { note ->
+                container.store.intent(DocumentReviewIntent.UpdatePaymentNote(note))
+            },
+            onSubmit = { container.store.intent(DocumentReviewIntent.SubmitPayment) },
+            onDismiss = { container.store.intent(DocumentReviewIntent.ClosePaymentSheet) },
+        )
+    }
+}
+
+private fun DocumentReviewState.queueStateOrNull(): DocumentReviewQueueState? = when (this) {
+    is DocumentReviewState.Loading -> queueState
+    is DocumentReviewState.AwaitingExtraction -> queueState
+    is DocumentReviewState.Content -> queueState
+    is DocumentReviewState.Error -> null
+}
+
+private fun DocumentReviewState.selectedQueueDocumentIdOrDefault(defaultDocumentId: DocumentId): DocumentId = when (this) {
+    is DocumentReviewState.Loading -> selectedQueueDocumentId ?: defaultDocumentId
+    is DocumentReviewState.AwaitingExtraction -> selectedQueueDocumentId ?: documentId
+    is DocumentReviewState.Content -> selectedQueueDocumentId ?: documentId
+    is DocumentReviewState.Error -> defaultDocumentId
 }

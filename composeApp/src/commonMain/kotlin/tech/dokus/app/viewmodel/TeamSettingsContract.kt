@@ -61,7 +61,11 @@ sealed interface TeamSettingsState : MVIState, DokusState<Nothing> {
         val inviteEmail: String = "",
         val inviteRole: UserRole = UserRole.Editor,
         val actionState: ActionState = ActionState.Idle,
+        val currentUserId: UserId? = null,
+        val maxSeats: Int = 3,
     ) : TeamSettingsState {
+
+        val availableSeats: Int get() = (maxSeats - members.size - invitations.size).coerceAtLeast(0)
 
         /**
          * State for team action operations.

@@ -117,6 +117,8 @@ internal val diModuleApp = module {
                 updateTeamMemberRole = get(),
                 removeTeamMember = get(),
                 transferWorkspaceOwnership = get(),
+                getCurrentUser = get(),
+                getCurrentTenant = get(),
             )
         )
     }

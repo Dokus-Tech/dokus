@@ -6,7 +6,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Filter controls for the Cashflow screen.
@@ -70,6 +75,23 @@ fun CashflowFiltersMobile(
         SortDropdown(
             selectedOption = selectedSortOption,
             onOptionSelected = onSortOptionSelected
+        )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun CashflowFiltersPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowFilters(
+            selectedSortOption = DocumentSortOption.Default,
+            onSortOptionSelected = {}
         )
     }
 }

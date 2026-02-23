@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -60,6 +59,8 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.foundation.aura.components.CashflowType
 import tech.dokus.foundation.aura.components.CashflowTypeBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.style.dokusSizing
+import tech.dokus.foundation.aura.style.dokusSpacing
 
 /**
  * Data class representing a financial document table row.
@@ -200,6 +201,7 @@ fun FinancialDocumentTable(
     onMoreClick: (FinancialDocumentDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val sizing = MaterialTheme.dokusSizing
     DokusCardSurface(modifier = modifier) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -220,7 +222,7 @@ fun FinancialDocumentTable(
                     if (index < documents.size - 1) {
                         HorizontalDivider(
                             color = MaterialTheme.colorScheme.outlineVariant,
-                            thickness = 1.dp
+                            thickness = sizing.strokeThin
                         )
                     }
                 }
@@ -236,12 +238,13 @@ fun FinancialDocumentTable(
 private fun FinancialDocumentTableHeader(
     modifier: Modifier = Modifier
 ) {
+    val spacing = MaterialTheme.dokusSpacing
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+            .padding(horizontal = spacing.xLarge, vertical = spacing.large),
+        horizontalArrangement = Arrangement.spacedBy(spacing.xLarge),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Invoice column
@@ -249,7 +252,7 @@ private fun FinancialDocumentTableHeader(
             text = stringResource(Res.string.document_table_invoice),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(140.dp)
+            modifier = Modifier.width(spacing.large * 8.75f)
         )
 
         // Contact column (grows to fill space)
@@ -265,7 +268,7 @@ private fun FinancialDocumentTableHeader(
             text = stringResource(Res.string.document_table_amount),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(100.dp)
+            modifier = Modifier.width(spacing.large * 6.25f)
         )
 
         // Date column
@@ -273,14 +276,14 @@ private fun FinancialDocumentTableHeader(
             text = stringResource(Res.string.document_table_date),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(120.dp)
+            modifier = Modifier.width(spacing.large * 7.5f)
         )
 
         // Type column (moved to second line based on Figma)
-        Spacer(modifier = Modifier.width(100.dp))
+        Spacer(modifier = Modifier.width(spacing.large * 6.25f))
 
         // Actions column
-        Spacer(modifier = Modifier.width(72.dp))
+        Spacer(modifier = Modifier.width(spacing.large * 4.5f))
     }
 }
 
@@ -294,26 +297,28 @@ private fun FinancialDocumentTableRow(
     onMoreClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 24.dp, vertical = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+            .padding(horizontal = spacing.xLarge, vertical = spacing.xLarge),
+        horizontalArrangement = Arrangement.spacedBy(spacing.xLarge),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Invoice column with alert indicator
         Row(
-            modifier = Modifier.width(140.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.width(spacing.large * 8.75f),
+            horizontalArrangement = Arrangement.spacedBy(spacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Alert dot if needed
             if (row.hasAlert) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(sizing.strokeCropGuide * 2f)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.error) // Red alert indicator
                 )
@@ -329,13 +334,13 @@ private fun FinancialDocumentTableRow(
         // Contact column with avatar and info
         Row(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(sizing.buttonHeight)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.secondaryContainer), // Light background
                 contentAlignment = Alignment.Center
@@ -344,13 +349,13 @@ private fun FinancialDocumentTableRow(
                     imageVector = Icons.Default.Person,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer, // Icon color
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(sizing.buttonLoadingIcon)
                 )
             }
 
             // Name and email
             Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(spacing.xxSmall)
             ) {
                 Text(
                     text = row.contactName.ifBlank {
@@ -376,13 +381,13 @@ private fun FinancialDocumentTableRow(
             text = row.amount,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(100.dp)
+            modifier = Modifier.width(spacing.large * 6.25f)
         )
 
         // Date column
         Column(
-            modifier = Modifier.width(120.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.width(spacing.large * 7.5f),
+            verticalArrangement = Arrangement.spacedBy(spacing.xSmall)
         ) {
             Text(
                 text = row.date,
@@ -393,7 +398,7 @@ private fun FinancialDocumentTableRow(
 
         // Type badge
         Box(
-            modifier = Modifier.width(100.dp),
+            modifier = Modifier.width(spacing.large * 6.25f),
             contentAlignment = Alignment.CenterStart
         ) {
             CashflowTypeBadge(type = row.cashflowType)
@@ -401,14 +406,14 @@ private fun FinancialDocumentTableRow(
 
         // Actions column
         Row(
-            modifier = Modifier.width(72.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.width(spacing.large * 4.5f),
+            horizontalArrangement = Arrangement.spacedBy(spacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // More menu button
             IconButton(
                 onClick = onMoreClick,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(sizing.iconMedium)
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
@@ -420,7 +425,7 @@ private fun FinancialDocumentTableRow(
             // Chevron right button
             IconButton(
                 onClick = onClick,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(sizing.iconMedium)
             ) {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
@@ -446,6 +451,7 @@ fun FinancialDocumentList(
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val sizing = MaterialTheme.dokusSizing
     DokusCardSurface(modifier = modifier) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -460,7 +466,7 @@ fun FinancialDocumentList(
                     if (index < documents.size - 1) {
                         HorizontalDivider(
                             color = MaterialTheme.colorScheme.outlineVariant,
-                            thickness = 1.dp
+                            thickness = sizing.strokeThin
                         )
                     }
                 }
@@ -479,25 +485,27 @@ private fun FinancialDocumentListItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = MaterialTheme.dokusSpacing
+    val sizing = MaterialTheme.dokusSizing
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = spacing.large, vertical = spacing.medium),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Left side: Invoice number with optional alert
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing.small),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f)
         ) {
             if (row.hasAlert) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(sizing.strokeCropGuide * 2f)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.error)
                 )
@@ -512,7 +520,7 @@ private fun FinancialDocumentListItem(
             )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(spacing.medium))
 
         // Amount
         Text(
@@ -521,19 +529,22 @@ private fun FinancialDocumentListItem(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(spacing.medium))
 
         // Type badge
         CashflowTypeBadge(type = row.cashflowType)
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(spacing.small))
 
         // Chevron
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = stringResource(Res.string.document_table_view_details),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(sizing.buttonLoadingIcon)
         )
     }
 }
+
+// Preview skipped: Flaky IllegalStateException in parallel Roborazzi runs
+// FinancialDocumentTable already has a preview in FinancialDocumentTablePreview.kt

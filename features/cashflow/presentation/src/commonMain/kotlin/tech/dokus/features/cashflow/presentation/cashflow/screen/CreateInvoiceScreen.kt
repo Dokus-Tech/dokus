@@ -7,6 +7,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.plus
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
@@ -19,8 +21,12 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.Int
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.InvoiceSendOptionsPanel
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.InvoiceSendOptionsStep
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.MobileInvoiceEditLayout
+import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.Mocks
 import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Screen for creating a new invoice using an interactive WYSIWYG editor.
@@ -239,5 +245,22 @@ internal fun CreateInvoiceScreen(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun CreateInvoiceScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CreateInvoiceScreen(
+            state = CreateInvoiceState.Editing(
+                formState = Mocks.emptyFormState,
+                uiState = Mocks.sampleUiState,
+            ),
+            onIntent = {},
+            onNavigateToCreateContact = {},
+        )
     }
 }

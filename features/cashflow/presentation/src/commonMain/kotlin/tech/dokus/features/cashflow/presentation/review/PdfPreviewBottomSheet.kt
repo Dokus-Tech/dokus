@@ -28,7 +28,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.cashflow_document_preview_title
 import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // UI dimensions
 private const val SheetHeightFraction = 0.9f
@@ -102,8 +102,8 @@ private fun SheetHeader(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                horizontal = Constrains.Spacing.medium,
-                vertical = Constrains.Spacing.small,
+                horizontal = Constraints.Spacing.medium,
+                vertical = Constraints.Spacing.small,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {

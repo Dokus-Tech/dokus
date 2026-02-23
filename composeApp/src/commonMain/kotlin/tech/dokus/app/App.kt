@@ -9,6 +9,7 @@ import tech.dokus.app.local.AppModulesInitializer
 import tech.dokus.app.local.AppModulesProvided
 import tech.dokus.app.local.KoinProvided
 import tech.dokus.app.navigation.DokusNavHost
+import tech.dokus.app.navigation.local.RootNavControllerProvided
 import tech.dokus.foundation.app.AppDataInitializer
 import tech.dokus.foundation.app.navigationProviders
 import tech.dokus.foundation.app.network.ServerConnectionMonitor
@@ -42,12 +43,14 @@ fun App(
                     Themed {
                         AppModulesInitializer(appDataInitializer) {
                             ScreenSizeProvided {
-                                NavControllerProvided(navController) {
-                                    DokusNavHost(
-                                        navController = navController,
-                                        navigationProvider = navigationProviders,
-                                        onNavHostReady = onNavHostReady
-                                    )
+                                RootNavControllerProvided(navController) {
+                                    NavControllerProvided(navController) {
+                                        DokusNavHost(
+                                            navController = navController,
+                                            navigationProvider = navigationProviders,
+                                            onNavHostReady = onNavHostReady
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -34,7 +34,12 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_send_message
-import tech.dokus.foundation.aura.constrains.Constrains
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Default values for ChatInputField components.
@@ -81,7 +86,7 @@ fun PChatInputField(
                 isFocused = focusState.hasFocus
             }
             .border(
-                width = Constrains.Stroke.thin,
+                width = Constraints.Stroke.thin,
                 color = when {
                     isFocused -> MaterialTheme.colorScheme.primary
                     else -> MaterialTheme.colorScheme.outline
@@ -93,18 +98,18 @@ fun PChatInputField(
                 shape = MaterialTheme.shapes.medium
             )
             .padding(
-                start = Constrains.Spacing.large,
-                end = Constrains.Spacing.small,
-                top = Constrains.Spacing.small,
-                bottom = Constrains.Spacing.small
+                start = Constraints.Spacing.large,
+                end = Constraints.Spacing.small,
+                top = Constraints.Spacing.small,
+                bottom = Constraints.Spacing.small
             ),
         verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(vertical = Constrains.Spacing.small)
+                .padding(vertical = Constraints.Spacing.small)
         ) {
             if (value.isEmpty() && placeholder.isNotEmpty()) {
                 Text(
@@ -152,7 +157,7 @@ fun PChatInputField(
                 }
             },
             enabled = canSend,
-            modifier = Modifier.size(Constrains.IconSize.large),
+            modifier = Modifier.size(Constraints.IconSize.large),
             colors = IconButtonDefaults.iconButtonColors(
                 contentColor = MaterialTheme.colorScheme.primary,
                 disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
@@ -161,8 +166,23 @@ fun PChatInputField(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Send,
                 contentDescription = stringResource(Res.string.chat_send_message),
-                modifier = Modifier.size(Constrains.IconSize.medium)
+                modifier = Modifier.size(Constraints.IconSize.medium)
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PChatInputFieldPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PChatInputField(
+            value = "",
+            onValueChange = {},
+            onSend = {},
+            placeholder = "Ask a question..."
+        )
     }
 }

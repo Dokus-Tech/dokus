@@ -102,7 +102,7 @@ class PdfPreviewServiceTest {
         val key = service.generateCacheKey(tenantId, documentId, 150, 1)
 
         assertEquals(
-            "pdf_previews/$tenantId/$documentId/dpi-150/page-1.png",
+            "pdf_previews/$tenantId/$documentId/default/dpi-150/page-1.png",
             key
         )
     }
@@ -116,11 +116,11 @@ class PdfPreviewServiceTest {
         val key2 = service.generateCacheKey(tenantId, documentId, 300, 10)
 
         assertEquals(
-            "pdf_previews/$tenantId/$documentId/dpi-72/page-1.png",
+            "pdf_previews/$tenantId/$documentId/default/dpi-72/page-1.png",
             key1
         )
         assertEquals(
-            "pdf_previews/$tenantId/$documentId/dpi-300/page-10.png",
+            "pdf_previews/$tenantId/$documentId/default/dpi-300/page-10.png",
             key2
         )
     }

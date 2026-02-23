@@ -1,6 +1,6 @@
 <resources>
     <!-- General -->
-    <string name="app_name">D[#]kus</string>
+    <string name="app_name">Dokus</string>
     <string name="app_slogan">Donde la soberanía encuentra la inteligencia.</string>
     <string name="brand_motto">Inteligencia. Autonomía. Silencio.</string>
     <string name="copyright">©2025 Dokus</string>
@@ -10,6 +10,8 @@
     <string name="bootstrap_state_authenticating">Verificando autenticación...</string>
     <string name="bootstrap_state_app_version_check">Verificando versión de la aplicación...</string>
     <string name="bootstrap_state_checking_account_status">Verificando estado de la cuenta...</string>
+    <string name="bootstrap_state_ready">Listo</string>
+    <string name="bootstrap_version_footer">v%1$s · %2$s</string>
 
     <!-- Home -->
     <string name="home_today">Hoy</string>

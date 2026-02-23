@@ -33,7 +33,7 @@ import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.contacts_selected
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 /**
  * The text input field for the autocomplete component.
@@ -67,18 +67,18 @@ internal fun ContactSearchField(
 
     Row(
         modifier = modifier
-            .height(Constrains.Height.button)
-            .border(Constrains.Stroke.thin, borderColor, shape)
+            .height(Constraints.Height.button)
+            .border(Constraints.Stroke.thin, borderColor, shape)
             .background(MaterialTheme.colorScheme.surface, shape)
-            .padding(horizontal = Constrains.Spacing.medium),
+            .padding(horizontal = Constraints.Spacing.medium),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         // Search icon
         PIcon(
             icon = FeatherIcons.Search,
             description = stringResource(Res.string.action_search),
-            modifier = Modifier.size(Constrains.IconSize.small)
+            modifier = Modifier.size(Constraints.IconSize.small)
         )
 
         // Text input
@@ -136,5 +136,30 @@ internal fun ContactSearchField(
                 )
             }
         }
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactSearchFieldPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactSearchField(
+            value = "Acme Corp",
+            onValueChange = {},
+            placeholder = "Search contacts...",
+            isError = false,
+            enabled = true,
+            selectedContact = null,
+            onClear = {},
+            onFocusChanged = {}
+        )
     }
 }

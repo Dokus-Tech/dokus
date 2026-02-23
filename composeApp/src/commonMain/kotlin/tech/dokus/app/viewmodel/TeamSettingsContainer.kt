@@ -13,8 +13,11 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
+import tech.dokus.domain.enums.maxSeats
 import tech.dokus.features.auth.usecases.CancelInvitationUseCase
 import tech.dokus.features.auth.usecases.CreateInvitationUseCase
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
+import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCase
 import tech.dokus.features.auth.usecases.ListTeamMembersUseCase
 import tech.dokus.features.auth.usecases.RemoveTeamMemberUseCase
@@ -32,6 +35,8 @@ internal data class TeamSettingsUseCases(
     val updateTeamMemberRole: UpdateTeamMemberRoleUseCase,
     val removeTeamMember: RemoveTeamMemberUseCase,
     val transferWorkspaceOwnership: TransferWorkspaceOwnershipUseCase,
+    val getCurrentUser: GetCurrentUserUseCase,
+    val getCurrentTenant: GetCurrentTenantUseCase,
 )
 
 /**
@@ -90,6 +95,8 @@ internal class TeamSettingsContainer(
         // Load members
         val membersResult = useCases.listTeamMembers()
         val invitationsResult = useCases.listPendingInvitations()
+        val currentUserId = useCases.getCurrentUser().getOrNull()?.id
+        val maxSeats = useCases.getCurrentTenant().getOrNull()?.subscription?.maxSeats ?: 3
 
         membersResult.fold(
             onSuccess = { members ->
@@ -103,6 +110,8 @@ internal class TeamSettingsContainer(
                                 membersLoading = false,
                                 invitations = invitations,
                                 invitationsLoading = false,
+                                currentUserId = currentUserId,
+                                maxSeats = maxSeats,
                             )
                         }
                     },

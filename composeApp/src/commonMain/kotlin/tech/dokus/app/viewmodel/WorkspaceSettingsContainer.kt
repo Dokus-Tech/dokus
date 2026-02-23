@@ -136,7 +136,7 @@ internal class WorkspaceSettingsContainer(
         return WorkspaceSettingsState.Content.FormState(
             companyName = settings.companyName ?: tenant.displayName.value,
             legalName = tenant.legalName.value,
-            vatNumber = tenant.vatNumber?.value ?: "",
+            vatNumber = tenant.vatNumber.value,
             iban = settings.companyIban?.value ?: "",
             bic = settings.companyBic?.value ?: "",
             address = address?.toDisplayString().orEmpty(),

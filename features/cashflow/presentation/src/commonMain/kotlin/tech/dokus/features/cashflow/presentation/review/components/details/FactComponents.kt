@@ -32,20 +32,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_tap_to_identify
 import tech.dokus.aura.resources.cashflow_who_issued_document
 import tech.dokus.features.cashflow.presentation.review.ContactSnapshot
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val ContactBlockCornerRadius = 6.dp
 private val StatusDotSize = 6.dp
@@ -118,7 +121,7 @@ private fun ContactFactDisplay(
                 if (isHovered && !isReadOnly) {
                     MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha)
                 } else {
-                    Color.Transparent
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
                 }
             )
             .hoverable(interactionSource)
@@ -129,7 +132,7 @@ private fun ContactFactDisplay(
                     Modifier
                 }
             )
-            .padding(Constrains.Spacing.small)
+            .padding(Constraints.Spacing.small)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -150,9 +153,7 @@ private fun ContactFactDisplay(
                 contact.vatNumber?.let { vat ->
                     Text(
                         text = vat,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -214,7 +215,7 @@ private fun ContactMissingPrompt(
                     Modifier
                 }
             )
-            .padding(Constrains.Spacing.small),
+            .padding(Constraints.Spacing.small),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -228,7 +229,7 @@ private fun ContactMissingPrompt(
                     .size(StatusDotSize)
                     .background(attentionColor, CircleShape)
             )
-            Spacer(Modifier.width(Constrains.Spacing.small))
+            Spacer(Modifier.width(Constraints.Spacing.small))
             Column {
                 Text(
                     text = stringResource(Res.string.cashflow_who_issued_document),
@@ -273,7 +274,7 @@ fun AmountRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Constrains.Spacing.xSmall),
+            .padding(vertical = Constraints.Spacing.xSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -320,7 +321,7 @@ fun MicroLabel(
         text = text,
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.textMuted,
-        modifier = modifier.padding(bottom = Constrains.Spacing.xSmall)
+        modifier = modifier.padding(bottom = Constraints.Spacing.xSmall)
     )
 }
 
@@ -347,12 +348,12 @@ fun FactField(
                 if (isHovered && isClickable) {
                     MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha)
                 } else {
-                    Color.Transparent
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
                 }
             )
             .then(if (isClickable) Modifier.hoverable(interactionSource) else Modifier)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = Constrains.Spacing.xSmall),
+            .padding(vertical = Constraints.Spacing.xSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -372,7 +373,7 @@ fun FactField(
                 }
             )
             if (isClickable && (!isLargeScreen || isHovered)) {
-                Spacer(Modifier.width(Constrains.Spacing.xSmall))
+                Spacer(Modifier.width(Constraints.Spacing.xSmall))
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = null,
@@ -381,5 +382,59 @@ fun FactField(
                 )
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun AmountRowPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AmountRow(
+            label = "Subtotal",
+            value = "1,250.00"
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MicroLabelPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MicroLabel(text = "AMOUNTS")
+    }
+}
+
+@Preview
+@Composable
+private fun FactFieldPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        FactField(
+            label = "Invoice Number",
+            value = "INV-2024-001",
+            onClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ContactBlockEmptyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactBlock(
+            contact = null,
+            onEditClick = {}
+        )
     }
 }

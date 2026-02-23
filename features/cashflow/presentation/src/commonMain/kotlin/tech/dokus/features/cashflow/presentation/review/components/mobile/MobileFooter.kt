@@ -16,6 +16,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Check
@@ -24,8 +26,11 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Simplified mobile footer for document review.
@@ -54,7 +59,7 @@ internal fun MobileFooter(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Constrains.Spacing.medium),
+                .padding(Constraints.Spacing.medium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -92,5 +97,25 @@ internal fun MobileFooter(
                 Text(stringResource(Res.string.action_confirm))
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun MobileFooterPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MobileFooter(
+            canConfirm = true,
+            isConfirming = false,
+            isBindingContact = false,
+            onConfirm = {},
+            onSomethingsWrong = {}
+        )
     }
 }

@@ -62,16 +62,6 @@ internal fun ContactDetailsContent(
                 )
 
                 OfflineOverlay(isOffline = !isOnline) {
-                    ActivitySummarySection(
-                        state = if (!isOnline && activityState is DokusState.Error) {
-                            DokusState.loading()
-                        } else {
-                            activityState
-                        }
-                    )
-                }
-
-                OfflineOverlay(isOffline = !isOnline) {
                     NotesSection(
                         state = if (!isOnline && notesState is DokusState.Error) {
                             DokusState.loading()
@@ -87,5 +77,54 @@ internal fun ContactDetailsContent(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactDetailsContentPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    val contactId = tech.dokus.domain.ids.ContactId.generate()
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ContactDetailsContent(
+            contactState = DokusState.success(
+                ContactDto(
+                    id = contactId,
+                    tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                    name = tech.dokus.domain.Name("Acme Corporation"),
+                    email = tech.dokus.domain.Email("info@acme.be"),
+                    vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                    defaultPaymentTerms = 30,
+                    isActive = true,
+                    createdAt = now,
+                    updatedAt = now
+                )
+            ),
+            activityState = DokusState.success(
+                ContactActivitySummary(
+                    contactId = contactId,
+                    invoiceCount = 5,
+                    invoiceTotal = "10,000.00",
+                    inboundInvoiceCount = 2,
+                    inboundInvoiceTotal = "3,000.00",
+                    expenseCount = 3,
+                    expenseTotal = "500.00"
+                )
+            ),
+            notesState = DokusState.success(emptyList()),
+            isOnline = true,
+            contentPadding = PaddingValues(0.dp),
+            onAddNote = {},
+            onEditNote = {},
+            onDeleteNote = {}
+        )
     }
 }

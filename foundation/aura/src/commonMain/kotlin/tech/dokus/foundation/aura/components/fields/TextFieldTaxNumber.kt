@@ -11,6 +11,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Hash
 import tech.dokus.domain.exceptions.DokusException
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 object PTextFieldTaxNumberDefaults {
     val icon = FeatherIcons.Hash
@@ -54,4 +59,18 @@ fun PTextFieldTaxNumber(
         showClearButton = showClearButton,
         onValueChange = onValueChange
     )
+}
+
+@Preview
+@Composable
+private fun PTextFieldTaxNumberPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTextFieldTaxNumber(
+            fieldName = "VAT Number",
+            value = "BE0123456789",
+            onValueChange = {}
+        )
+    }
 }

@@ -1,6 +1,10 @@
 package tech.dokus.foundation.aura.components
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -8,21 +12,23 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_back
-import tech.dokus.aura.resources.arrow_left
-import tech.dokus.foundation.aura.constrains.Constrains
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 enum class PButtonVariant {
     Default,
@@ -68,11 +74,11 @@ fun PButton(
             OutlinedButton(
                 onClick = onClick,
                 enabled = isEnabled && !isLoading,
-                modifier = modifier.height(Constrains.Height.button),
+                modifier = modifier.height(Constraints.Height.button),
                 shape = MaterialTheme.shapes.small,
                 contentPadding = PaddingValues(
-                    horizontal = Constrains.Spacing.large,
-                    vertical = Constrains.Spacing.small
+                    horizontal = Constraints.Spacing.large,
+                    vertical = Constraints.Spacing.small
                 ),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colorScheme.onSurface
@@ -80,7 +86,7 @@ fun PButton(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                        modifier = Modifier.size(Constraints.IconSize.buttonLoading),
                         color = MaterialTheme.colorScheme.primary,
                         strokeWidth = 2.dp
                     )
@@ -89,7 +95,7 @@ fun PButton(
                         Icon(
                             imageVector = icon,
                             contentDescription = contentDescription,
-                            modifier = Modifier.size(Constrains.IconSize.medium).padding(end = Constrains.Spacing.small)
+                            modifier = Modifier.size(Constraints.IconSize.medium).padding(end = Constraints.Spacing.small)
                         )
                     }
                     Text(
@@ -101,8 +107,8 @@ fun PButton(
                             imageVector = icon,
                             contentDescription = contentDescription,
                             modifier = Modifier.size(
-                                Constrains.IconSize.medium
-                            ).padding(start = Constrains.Spacing.small)
+                                Constraints.IconSize.medium
+                            ).padding(start = Constraints.Spacing.small)
                         )
                     }
                 }
@@ -129,7 +135,7 @@ private fun PButtonDefault(
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                modifier = Modifier.size(Constraints.IconSize.buttonLoading),
                 color = MaterialTheme.colorScheme.onPrimary,
                 strokeWidth = 2.dp
             )
@@ -137,15 +143,15 @@ private fun PButtonDefault(
             if (icon != null && iconPosition == PIconPosition.Leading) {
                 Icon(
                     icon,
-                    modifier = Modifier.padding(end = Constrains.Spacing.small),
+                    modifier = Modifier.padding(end = Constraints.Spacing.small),
                     contentDescription = contentDescription
                 )
             }
-            Text(text, modifier = Modifier.padding(Constrains.Spacing.xSmall))
+            Text(text, modifier = Modifier.padding(Constraints.Spacing.xSmall))
             if (icon != null && iconPosition == PIconPosition.Trailing) {
                 Icon(
                     icon,
-                    modifier = Modifier.padding(start = Constrains.Spacing.small),
+                    modifier = Modifier.padding(start = Constraints.Spacing.small),
                     contentDescription = contentDescription
                 )
             }
@@ -161,20 +167,34 @@ fun PPrimaryButton(
     isLoading: Boolean = false,
     onClick: () -> Unit,
 ) {
+    val primary = MaterialTheme.colorScheme.primary
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
+    val surface = MaterialTheme.colorScheme.surface
+    val disabledContainer = lerp(primary, surface, 0.24f)
+
     Button(
         onClick = onClick,
-        modifier = modifier.height(Constrains.Height.button),
+        modifier = modifier.height(Constraints.Height.button),
         shape = MaterialTheme.shapes.small,
         enabled = enabled && !isLoading,
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 8.dp,
+            pressedElevation = 4.dp,
+            focusedElevation = 10.dp,
+            hoveredElevation = 10.dp,
+            disabledElevation = 0.dp,
+        ),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = primary,
+            contentColor = onPrimary,
+            disabledContainerColor = disabledContainer,
+            disabledContentColor = onPrimary.copy(alpha = 0.74f),
         )
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(Constrains.IconSize.buttonLoading),
-                color = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(Constraints.IconSize.buttonLoading),
+                color = onPrimary,
                 strokeWidth = 2.dp
             )
         } else {
@@ -197,7 +217,7 @@ fun POutlinedButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(Constrains.Height.button),
+        modifier = modifier.height(Constraints.Height.button),
         shape = MaterialTheme.shapes.small,
         enabled = enabled && !isLoading,
         colors = ButtonDefaults.outlinedButtonColors(
@@ -206,7 +226,7 @@ fun POutlinedButton(
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                modifier = Modifier.size(Constraints.IconSize.buttonLoading),
                 color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 2.dp
             )
@@ -220,19 +240,93 @@ fun POutlinedButton(
     }
 }
 
+/**
+ * Back button with amber chevron and optional label text.
+ *
+ * @param label Optional text label (e.g. "All docs", "Contacts")
+ * @param onBackPress Back navigation callback
+ */
 @Composable
 fun PBackButton(
     modifier: Modifier = Modifier,
+    label: String? = null,
     onBackPress: () -> Unit,
 ) {
-    IconButton(
-        onClick = onBackPress,
+    Row(
         modifier = modifier
+            .defaultMinSize(minHeight = Constraints.Height.button)
+            .clickable(onClick = onBackPress)
+            .padding(end = Constraints.Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
     ) {
-        Icon(
-            painter = painterResource(Res.drawable.arrow_left),
-            contentDescription = stringResource(Res.string.action_back),
-            modifier = Modifier.size(Constrains.IconSize.medium)
+        Text(
+            text = "\u2039",  // ‹
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
         )
+        if (label != null) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PButtonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PButton(text = "Submit", onClick = {})
+    }
+}
+
+@Preview
+@Composable
+private fun PPrimaryButtonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PPrimaryButton(text = "Continue", onClick = {})
+    }
+}
+
+@Preview
+@Composable
+private fun PPrimaryButtonDisabledPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PPrimaryButton(
+            text = "Continue",
+            enabled = false,
+            onClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun POutlinedButtonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        POutlinedButton(text = "Cancel", onClick = {})
+    }
+}
+
+@Preview
+@Composable
+private fun PBackButtonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PBackButton(label = "All docs", onBackPress = {})
     }
 }

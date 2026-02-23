@@ -71,8 +71,13 @@ import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val SEARCH_DEBOUNCE_MS = 500L
 private const val MIN_SEARCH_LENGTH = 3
@@ -137,7 +142,7 @@ fun LookupStepContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(Constrains.Spacing.large)
+            .padding(Constraints.Spacing.large)
     ) {
         // Header
         LookupHeader(
@@ -145,7 +150,7 @@ fun LookupStepContent(
             onClose = { onIntent(CreateContactIntent.Cancel) }
         )
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
         // Search field - uses local state, NOT MVI state
         PTextFieldStandard(
@@ -164,7 +169,7 @@ fun LookupStepContent(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
 
         // Duplicate VAT warning (hard block)
         val duplicateVat = state.duplicateVat
@@ -174,7 +179,7 @@ fun LookupStepContent(
                 onViewContact = { onIntent(CreateContactIntent.ViewExistingContact(duplicateVat.contactId)) },
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
         }
 
         // Results area
@@ -221,7 +226,7 @@ fun LookupStepContent(
                 onClick = { onIntent(CreateContactIntent.GoToManualEntry) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(Constrains.Height.button)
+                    .height(Constraints.Height.button)
             )
         } else {
             TextButton(
@@ -256,7 +261,7 @@ private fun UnifiedResultsList(
     val isLoading = isExistingLoading || lookupState is LookupUiState.Loading
     LazyColumn(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         when {
             isLoading && !hasResults -> {
@@ -285,7 +290,7 @@ private fun UnifiedResultsList(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Constrains.Spacing.xLarge),
+                            .padding(Constraints.Spacing.xLarge),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -356,7 +361,7 @@ private fun LookupHint(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Constrains.Spacing.xLarge),
+            .padding(Constraints.Spacing.xLarge),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
@@ -365,7 +370,7 @@ private fun LookupHint(
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.size(48.dp)
         )
-        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
         Text(
             text = stringResource(Res.string.contacts_lookup_hint),
             style = MaterialTheme.typography.bodyLarge,
@@ -394,7 +399,7 @@ private fun LookupUnifiedRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Constrains.Spacing.medium),
+                .padding(Constraints.Spacing.medium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -424,7 +429,7 @@ private fun LookupErrorState(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(Constrains.Spacing.xLarge),
+        modifier = modifier.padding(Constraints.Spacing.xLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -438,7 +443,7 @@ private fun LookupErrorState(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
         TextButton(onClick = onRetry) {
             Text(stringResource(Res.string.state_retry))
         }
@@ -614,5 +619,26 @@ private fun nameScore(query: String?, name: String): Int {
         normalizedName.startsWith(normalizedQuery) -> 2
         normalizedName.contains(normalizedQuery) -> 1
         else -> 0
+    }
+}
+
+@Preview
+@Composable
+private fun LookupStepContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        LookupStepContent(
+            state = CreateContactState.LookupStep(),
+            onIntent = {},
+            headerTitle = "Add Contact",
+            isResolveFlow = false,
+            findContactsByName = object : FindContactsByNameUseCase {
+                override suspend fun invoke(query: String, limit: Int) = Result.success(emptyList<ContactDto>())
+            },
+            findContactsByVat = object : FindContactsByVatUseCase {
+                override suspend fun invoke(vat: VatNumber, limit: Int) = Result.success(emptyList<ContactDto>())
+            },
+        )
     }
 }

@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -28,6 +30,9 @@ import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Main form card for creating an invoice.
@@ -123,5 +128,32 @@ fun InvoiceFormCard(
                 )
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceFormCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceFormCard(
+            formState = Mocks.sampleFormState,
+            clientsState = DokusState.success<List<ContactDto>>(listOf(Mocks.sampleClient)),
+            saveState = DokusState.idle<Unit>(),
+            onSelectClient = {},
+            onUpdateNotes = {},
+            onAddLineItem = {},
+            onRemoveLineItem = {},
+            onUpdateItemDescription = { _, _ -> },
+            onUpdateItemQuantity = { _, _ -> },
+            onUpdateItemUnitPrice = { _, _ -> },
+            onUpdateItemVatRate = { _, _ -> },
+            onSaveAsDraft = {}
+        )
     }
 }

@@ -34,6 +34,7 @@ internal fun NewPasswordRoute(
 
     NewPasswordScreen(
         state = state,
-        onIntent = { container.store.intent(it) }
+        onIntent = { container.store.intent(it) },
+        onNavigateUp = { navController.navigateUp() },
     )
 }

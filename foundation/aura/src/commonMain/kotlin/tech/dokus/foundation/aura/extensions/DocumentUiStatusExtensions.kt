@@ -52,21 +52,7 @@ val DocumentUiStatus.color: Color
     }
 
 /**
- * Extension property to get the text/content color for a DocumentUiStatus badge.
- * @deprecated Use statusColor for Design System v1 dot + text pattern
- */
-@Deprecated("Use statusColor for Design System v1 dot + text pattern")
-val DocumentUiStatus.onColor: Color
-    @Composable get() = when (this) {
-        DocumentUiStatus.Queued -> MaterialTheme.colorScheme.onSurfaceVariant
-        DocumentUiStatus.Processing -> MaterialTheme.colorScheme.onPrimaryContainer
-        DocumentUiStatus.Review -> MaterialTheme.colorScheme.onSecondaryContainer
-        DocumentUiStatus.Ready -> MaterialTheme.colorScheme.onTertiaryContainer
-        DocumentUiStatus.Failed -> MaterialTheme.colorScheme.onErrorContainer
-    }
-
-/**
- * Extension property to get the status color for Design System v1 dot + text pattern.
+ * Extension property to get the status color for the dot + text pattern.
  * Uses primary colors (not container colors) for better visibility.
  *
  * Color mapping:

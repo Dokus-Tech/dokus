@@ -19,6 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -29,7 +31,10 @@ import tech.dokus.aura.resources.app_download_qr_code
 import tech.dokus.aura.resources.app_download_title
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Dialog showing a QR code for downloading the mobile application.
@@ -50,7 +55,7 @@ fun AppDownloadQrDialog(
         content = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
             ) {
                 Text(
                     text = stringResource(Res.string.app_download_description),
@@ -76,6 +81,23 @@ fun AppDownloadQrDialog(
             onClick = onDismiss
         )
     )
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun AppDownloadQrDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        AppDownloadQrDialog(
+            isVisible = true,
+            onDismiss = {}
+        )
+    }
 }
 
 @Composable

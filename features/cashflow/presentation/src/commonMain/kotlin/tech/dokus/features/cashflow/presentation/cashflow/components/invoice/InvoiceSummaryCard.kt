@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
@@ -26,13 +28,13 @@ import tech.dokus.aura.resources.cashflow_amount_with_currency
 import tech.dokus.aura.resources.common_empty_value
 import tech.dokus.aura.resources.currency_symbol_eur
 import tech.dokus.aura.resources.invoice_amount
-import tech.dokus.aura.resources.invoice_recipient
 import tech.dokus.aura.resources.invoice_description
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.invoice_no_items
 import tech.dokus.aura.resources.invoice_price
 import tech.dokus.aura.resources.invoice_qty
+import tech.dokus.aura.resources.invoice_recipient
 import tech.dokus.aura.resources.invoice_select_client
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total
@@ -42,6 +44,9 @@ import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PDashedDivider
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Card spacing
 private val CardOuterPadding = 8.dp
@@ -111,8 +116,7 @@ fun InvoiceSummaryCard(
                         ?: stringResource(Res.string.invoice_select_client)
                     Text(
                         text = clientName,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleLarge,
                         color = if (formState.selectedClient != null) {
                             MaterialTheme.colorScheme.onSurface
                         } else {
@@ -346,4 +350,18 @@ private fun formatDecimal(value: Double): String {
     val intPart = rounded.toLong()
     val decPart = ((kotlin.math.abs(rounded - intPart) * CentsMultiplier) + RoundingOffset).toInt()
     return "$intPart.${decPart.toString().padStart(DecimalPadLength, '0')}"
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+private fun InvoiceSummaryCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceSummaryCard(formState = Mocks.sampleFormState)
+    }
 }

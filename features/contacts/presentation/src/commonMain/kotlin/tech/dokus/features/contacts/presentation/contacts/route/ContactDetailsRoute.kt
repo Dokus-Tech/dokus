@@ -36,13 +36,15 @@ import tech.dokus.navigation.navigateTo
 
 @Composable
 internal fun ContactDetailsRoute(
-    contactId: ContactId,
+    contactId: String,
     showBackButton: Boolean = false,
     container: ContactDetailsContainer = container {
-        parametersOf(ContactDetailsContainer.Companion.Params(contactId))
+        val parsedContactId = ContactId.parse(contactId)
+        parametersOf(ContactDetailsContainer.Companion.Params(parsedContactId))
     },
 ) {
     val navController = LocalNavController.current
+    val parsedContactId = remember(contactId) { ContactId.parse(contactId) }
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingSuccess by remember { mutableStateOf<ContactDetailsSuccess?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
@@ -98,8 +100,8 @@ internal fun ContactDetailsRoute(
         }
     }
 
-    LaunchedEffect(contactId) {
-        container.store.intent(ContactDetailsIntent.LoadContact(contactId))
+    LaunchedEffect(parsedContactId) {
+        container.store.intent(ContactDetailsIntent.LoadContact(parsedContactId))
     }
 
     val isOnline = rememberIsOnline()
@@ -112,7 +114,7 @@ internal fun ContactDetailsRoute(
         onIntent = { container.store.intent(it) },
         onBackClick = { navController.popBackStack() },
         onEditClick = {
-            navController.navigateTo(ContactsDestination.EditContact(contactId.toString()))
+            navController.navigateTo(ContactsDestination.EditContact(contactId))
         },
     )
 

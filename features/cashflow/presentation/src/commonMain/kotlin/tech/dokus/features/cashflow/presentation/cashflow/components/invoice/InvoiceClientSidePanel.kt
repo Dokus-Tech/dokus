@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
-import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +45,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -58,8 +59,13 @@ import tech.dokus.aura.resources.invoice_search_clients
 import tech.dokus.aura.resources.invoice_select_client
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.DokusStateSimple
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val AnimationDurationMs = 200
 private const val SlideAnimationDurationMs = 300
@@ -349,7 +355,7 @@ private fun ClientListItem(
             ) {
                 Text(
                     text = client.name.value,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -381,5 +387,23 @@ private fun ClientListItem(
                 modifier = Modifier.size(SelectedIndicatorSize)
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun InvoiceClientSidePanelPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceClientSidePanel(
+            isVisible = true,
+            onDismiss = {},
+            clientsState = DokusStateSimple.Loading(),
+            selectedClient = null,
+            searchQuery = "",
+            onSearchQueryChange = {},
+            onSelectClient = {}
+        )
     }
 }

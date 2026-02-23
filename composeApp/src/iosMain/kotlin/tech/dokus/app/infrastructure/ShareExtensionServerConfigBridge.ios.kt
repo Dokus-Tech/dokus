@@ -18,7 +18,7 @@ internal actual object ShareExtensionServerConfigBridge {
             ?.takeIf { it.isNotEmpty() }
             ?: DefaultAppGroupIdentifier
 
-        val defaults = NSUserDefaults(suiteName = appGroupIdentifier) ?: return
+        val defaults = NSUserDefaults(suiteName = appGroupIdentifier)
         defaults.setObject(trimmedBaseUrl, forKey = ShareServerBaseUrlKey)
         defaults.synchronize()
     }

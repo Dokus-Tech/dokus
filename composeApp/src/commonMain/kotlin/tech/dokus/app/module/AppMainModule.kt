@@ -14,7 +14,10 @@ import tech.dokus.aura.resources.bar_chart
 import tech.dokus.aura.resources.calculator
 import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.file_text
+import tech.dokus.aura.resources.documents_subtitle
 import tech.dokus.aura.resources.home_today
+import tech.dokus.aura.resources.today_subtitle
+import tech.dokus.aura.resources.nav_accountant
 import tech.dokus.aura.resources.nav_documents
 import tech.dokus.aura.resources.nav_reports
 import tech.dokus.aura.resources.nav_section_accounting
@@ -30,6 +33,7 @@ import tech.dokus.aura.resources.settings_team
 import tech.dokus.aura.resources.settings_workspace_details
 import tech.dokus.aura.resources.user
 import tech.dokus.aura.resources.users
+import tech.dokus.aura.resources.wallet_2
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
 import tech.dokus.foundation.app.AppModule
@@ -41,6 +45,7 @@ import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.SettingsPriority
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.ShellTopBarDefault
+import tech.dokus.navigation.NavSectionIds
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 
@@ -50,7 +55,7 @@ internal object AppMainModule : AppModule {
     override val homeNavigationProvider = HomeNavigationProvider
     override val navGroups: List<ModuleNavGroup> = listOf(
         ModuleNavGroup(
-            sectionId = "accounting",
+            sectionId = NavSectionIds.ACCOUNTING,
             sectionTitle = Res.string.nav_section_accounting,
             sectionIcon = Res.drawable.chart_bar_trend_up,
             sectionOrder = 0,
@@ -63,7 +68,8 @@ internal object AppMainModule : AppModule {
                     destination = HomeDestination.Today,
                     priority = 0,
                     mobileTabOrder = 0,
-                    shellTopBar = ShellTopBarDefault.Search,
+                    shellTopBar = ShellTopBarDefault.Title,
+                    subtitleRes = Res.string.today_subtitle,
                 ),
                 NavItem(
                     id = "documents",
@@ -72,7 +78,16 @@ internal object AppMainModule : AppModule {
                     destination = HomeDestination.Documents,
                     priority = 10,
                     mobileTabOrder = 1,
-                    shellTopBar = ShellTopBarDefault.Search,
+                    shellTopBar = ShellTopBarDefault.Title,
+                    subtitleRes = Res.string.documents_subtitle,
+                ),
+                NavItem(
+                    id = "accountant",
+                    titleRes = Res.string.nav_accountant,
+                    iconRes = Res.drawable.wallet_2,
+                    destination = HomeDestination.Accountant,
+                    priority = 25,
+                    shellTopBar = ShellTopBarDefault.Title,
                 ),
                 NavItem(
                     id = "vat",
@@ -93,7 +108,7 @@ internal object AppMainModule : AppModule {
             ),
         ),
         ModuleNavGroup(
-            sectionId = "company",
+            sectionId = NavSectionIds.COMPANY,
             sectionTitle = Res.string.nav_section_company,
             sectionIcon = Res.drawable.users,
             sectionOrder = 1,
@@ -102,7 +117,7 @@ internal object AppMainModule : AppModule {
                     id = "company_details",
                     titleRes = Res.string.settings_workspace_details,
                     iconRes = Res.drawable.user,
-                    destination = SettingsDestination.WorkspaceSettings,
+                    destination = HomeDestination.WorkspaceDetails,
                     priority = 0,
                 ),
                 NavItem(

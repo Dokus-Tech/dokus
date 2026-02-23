@@ -25,10 +25,11 @@ internal fun CreateContactRoute(
     prefillCompanyName: String? = null,
     prefillVat: String? = null,
     prefillAddress: String? = null,
-    origin: ContactCreateOrigin? = null,
+    origin: String? = null,
     container: CreateContactContainer = container(),
 ) {
     val navController = LocalNavController.current
+    val parsedOrigin = remember(origin) { ContactCreateOrigin.fromString(origin) }
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val resultKey = remember { "documentReview_contactId" }
@@ -43,7 +44,7 @@ internal fun CreateContactRoute(
     }
 
     val onExistingContactSelected: (String) -> Unit = { contactId ->
-        if (origin == ContactCreateOrigin.DocumentReview) {
+        if (parsedOrigin == ContactCreateOrigin.DocumentReview) {
             navController.previousBackStackEntry
                 ?.savedStateHandle
                 ?.set(resultKey, contactId)
@@ -58,7 +59,7 @@ internal fun CreateContactRoute(
                 navController.navigateTo(ContactsDestination.ContactDetails(action.contactId.toString()))
             }
             is CreateContactAction.ContactCreated -> {
-                if (origin == ContactCreateOrigin.DocumentReview) {
+                if (parsedOrigin == ContactCreateOrigin.DocumentReview) {
                     navController.previousBackStackEntry
                         ?.savedStateHandle
                         ?.set(resultKey, action.contactId.toString())
@@ -76,7 +77,7 @@ internal fun CreateContactRoute(
         prefillCompanyName = prefillCompanyName,
         prefillVat = prefillVat,
         prefillAddress = prefillAddress,
-        origin = origin,
+        origin = parsedOrigin,
         snackbarHostState = snackbarHostState,
         onIntent = { container.store.intent(it) },
         onExistingContactSelected = onExistingContactSelected

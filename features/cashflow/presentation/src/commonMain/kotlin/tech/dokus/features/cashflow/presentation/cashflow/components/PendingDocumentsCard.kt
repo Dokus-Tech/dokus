@@ -17,8 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
@@ -40,28 +37,36 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.features.cashflow.presentation.model.toUiStatus
-import tech.dokus.foundation.aura.components.DocumentStatusBadge
 import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DocumentStatusBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localizedUppercase
 
 // UI dimensions
-private val CardPadding = 16.dp
-private val DividerSpacing = 12.dp
-private val DividerHeight = 1.dp
-private val ItemVerticalPadding = 8.dp
-private val ItemCornerRadius = 8.dp
-private val ItemSpacing = 16.dp
-private val ShimmerNameWidth = 180.dp
-private val ShimmerNameHeight = 16.dp
-private val ShimmerBadgeWidth = 100.dp
-private val ShimmerBadgeHeight = 22.dp
-private val BadgeCornerRadius = 16.dp
+private val CardPadding = Constraints.Spacing.large
+private val DividerSpacing = Constraints.Spacing.medium
+private val DividerHeight = Constraints.Stroke.thin
+private val ItemVerticalPadding = Constraints.Spacing.small
+private val ItemCornerRadius = Constraints.Spacing.small
+private val ItemSpacing = Constraints.Spacing.large
+private val ShimmerNameWidth =
+    Constraints.AvatarSize.large +
+        Constraints.AvatarSize.small +
+        Constraints.Spacing.large +
+        Constraints.Spacing.xSmall
+private val ShimmerNameHeight = Constraints.IconSize.xSmall
+private val ShimmerBadgeWidth =
+    Constraints.IconSize.xxLarge + Constraints.IconSize.medium + Constraints.Spacing.medium
+private val ShimmerBadgeHeight = Constraints.IconSize.smallMedium + Constraints.Spacing.xxSmall
+private val BadgeCornerRadius = Constraints.CornerRadius.window
 
 // Pagination constants
 private const val SkeletonRowCount = 4
@@ -147,7 +152,7 @@ private fun PendingDocumentsLoadingContent(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Elevation.none)
     ) {
         // Show skeleton rows
         repeat(SkeletonRowCount) { index ->
@@ -269,7 +274,7 @@ private fun PendingDocumentsLazyList(
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Elevation.none)
     ) {
         itemsIndexed(
             items = documents,
@@ -332,7 +337,7 @@ private fun PendingDocumentItem(
         // Document name
         Text(
             text = documentName,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -345,7 +350,6 @@ private fun PendingDocumentItem(
         DocumentStatusBadge(status = processing.toUiStatus())
     }
 }
-
 
 /**
  * Get a display name for a pending document.
@@ -385,3 +389,5 @@ private fun getDocumentDisplayName(record: DocumentRecordDto): String {
         }
     }
 }
+
+// Previews are in PendingDocumentsCardPreview.kt

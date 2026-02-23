@@ -1,6 +1,7 @@
 package tech.dokus.foundation.aura.components.common
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,11 +16,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.navigation.NavController
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.back
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.local.LocalNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,17 +34,21 @@ fun PTopAppBar(
     title: String,
     navController: NavController? = LocalNavController.current,
     showBackButton: Boolean = true,
+    onBackClick: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         TopAppBar(
             navigationIcon = {
-                val showNav = navController != null &&
-                    navController.currentBackStackEntry != null &&
-                    showBackButton
+                val canNavigateBack = navController != null &&
+                    navController.previousBackStackEntry != null
+                val showNav = showBackButton && (onBackClick != null || canNavigateBack)
                 if (!showNav) return@TopAppBar
                 IconButton(
-                    onClick = { navController.popBackStack() }
+                    onClick = {
+                        onBackClick?.invoke() ?: navController?.popBackStack()
+                    }
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -55,6 +65,7 @@ fun PTopAppBar(
                     overflow = TextOverflow.Ellipsis
                 )
             },
+            actions = actions,
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
                 scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
@@ -77,12 +88,26 @@ fun PTopAppBar(
     title: StringResource,
     navController: NavController? = LocalNavController.current,
     showBackButton: Boolean = true,
+    onBackClick: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     PTopAppBar(
         title = stringResource(resource = title),
         navController = navController,
         showBackButton = showBackButton,
+        onBackClick = onBackClick,
+        actions = actions,
         modifier = modifier
     )
+}
+
+@Preview
+@Composable
+private fun PTopAppBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PTopAppBar(title = "Settings")
+    }
 }

@@ -14,11 +14,12 @@ plugins {
     alias(libs.plugins.composeHotReload) apply false
     alias(libs.plugins.buildKonfig) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.roborazzi) apply false
 }
 
 subprojects {
     val detektConfig = files("$rootDir/config/detekt/detekt.yml")
-    fun org.gradle.api.Project.configureDetekt() {
+    fun Project.configureDetekt() {
         extensions.configure<DetektExtension> {
             buildUponDefaultConfig = true
             config.setFrom(detektConfig)
@@ -147,27 +148,27 @@ tasks.register("detektKmp") {
 tasks.register("checkAll") {
     group = "verification"
     description = "Runs detekt and custom guardrails."
-    dependsOn("detektAll", "detektKmp", "checkKotlinFileSize", "checkNoNavInComponents")
+    dependsOn(
+        "detektAll",
+        "detektKmp",
+        "checkKotlinFileSize",
+        "checkNoNavInComponents"
+    )
 }
 
-// Screenshot Testing Tasks (Paparazzi)
+// Screenshot Testing Tasks (Roborazzi)
 tasks.register("clearScreenshots") {
     group = "verification"
     description = "Delete all screenshot baseline images."
     doLast {
-        val snapshotDirs = listOf(
-            "composeApp/src/test/snapshots/images",
-            "foundation/aura/src/test/snapshots/images",
-            "features/auth/presentation/src/test/snapshots/images",
-            "features/cashflow/presentation/src/test/snapshots/images",
-            "features/contacts/presentation/src/test/snapshots/images"
-        )
-        snapshotDirs.forEach { dir ->
-            val folder = file(dir)
-            if (folder.exists()) {
-                val deleted = folder.listFiles()?.filter { it.extension == "png" }?.count { it.delete() } ?: 0
-                println("Deleted $deleted screenshots from $dir")
-            }
+        listOf(
+            "composeApp/src/androidUnitTest/snapshots",
+            "foundation/aura/src/androidUnitTest/snapshots",
+            "features/auth/presentation/src/androidUnitTest/snapshots",
+            "features/cashflow/presentation/src/androidUnitTest/snapshots",
+            "features/contacts/presentation/src/androidUnitTest/snapshots"
+        ).forEach { path ->
+            delete(file(path))
         }
     }
 }
@@ -176,11 +177,11 @@ tasks.register("recordScreenshots") {
     group = "verification"
     description = "Record new baseline screenshots for all modules."
     dependsOn(
-        ":composeApp:recordPaparazziDebug",
-        ":foundation:aura:recordPaparazziDebug",
-        ":features:auth:presentation:recordPaparazziDebug",
-        ":features:cashflow:presentation:recordPaparazziDebug",
-        ":features:contacts:presentation:recordPaparazziDebug"
+        ":composeApp:recordRoborazziDebug",
+        ":foundation:aura:recordRoborazziDebug",
+        ":features:auth:presentation:recordRoborazziDebug",
+        ":features:cashflow:presentation:recordRoborazziDebug",
+        ":features:contacts:presentation:recordRoborazziDebug"
     )
 }
 
@@ -188,22 +189,10 @@ tasks.register("verifyScreenshots") {
     group = "verification"
     description = "Verify screenshots against baselines for all modules."
     dependsOn(
-        ":composeApp:verifyPaparazziDebug",
-        ":foundation:aura:verifyPaparazziDebug",
-        ":features:auth:presentation:verifyPaparazziDebug",
-        ":features:cashflow:presentation:verifyPaparazziDebug",
-        ":features:contacts:presentation:verifyPaparazziDebug"
-    )
-}
-
-tasks.register("screenshotTests") {
-    group = "verification"
-    description = "Run all Paparazzi screenshot tests across modules."
-    dependsOn(
-        ":composeApp:testDebugUnitTest",
-        ":foundation:aura:testDebugUnitTest",
-        ":features:auth:presentation:testDebugUnitTest",
-        ":features:cashflow:presentation:testDebugUnitTest",
-        ":features:contacts:presentation:testDebugUnitTest"
+        ":composeApp:verifyRoborazziDebug",
+        ":foundation:aura:verifyRoborazziDebug",
+        ":features:auth:presentation:verifyRoborazziDebug",
+        ":features:cashflow:presentation:verifyRoborazziDebug",
+        ":features:contacts:presentation:verifyRoborazziDebug"
     )
 }

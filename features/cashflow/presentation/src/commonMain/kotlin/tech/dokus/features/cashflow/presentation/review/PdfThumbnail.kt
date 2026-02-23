@@ -12,12 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Description
-import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,10 +22,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -38,7 +33,16 @@ import tech.dokus.aura.resources.cashflow_page_plural
 import tech.dokus.aura.resources.cashflow_page_single
 import tech.dokus.aura.resources.state_loading
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusLoaderSize
+import tech.dokus.foundation.aura.constrains.Constraints
+
+private val ThumbnailWidth = Constraints.IconSize.xxLarge + Constraints.Spacing.large
+private val ThumbnailHeight =
+    Constraints.IconSize.xxLarge +
+        Constraints.AvatarSize.small +
+        Constraints.Spacing.large +
+        Constraints.Stroke.thin
 
 /**
  * Small clickable thumbnail preview for mobile Document Review.
@@ -64,13 +68,13 @@ fun PdfThumbnail(
     DokusCardSurface(
         modifier = modifier
             .clickable(onClick = onClick)
-            .width(80.dp)
-            .height(113.dp),
+            .width(ThumbnailWidth)
+            .height(ThumbnailHeight),
     ) {
         Box(
             modifier = Modifier
-                .size(80.dp, 113.dp)
-                .background(Color.White),
+                .size(ThumbnailWidth, ThumbnailHeight)
+                .background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center,
         ) {
             when {
@@ -90,8 +94,8 @@ fun PdfThumbnail(
                         },
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .size(80.dp, 113.dp)
-                            .clip(RoundedCornerShape(4.dp)),
+                            .size(ThumbnailWidth, ThumbnailHeight)
+                            .clip(MaterialTheme.shapes.extraSmall),
                     )
                 }
                 else -> {
@@ -104,12 +108,15 @@ fun PdfThumbnail(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(4.dp)
+                        .padding(Constraints.Spacing.xSmall)
                         .background(
                             color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f),
-                            shape = RoundedCornerShape(4.dp),
+                            shape = MaterialTheme.shapes.extraSmall,
                         )
-                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                        .padding(
+                            horizontal = Constraints.Spacing.xSmall,
+                            vertical = Constraints.Spacing.xxSmall
+                        ),
                 ) {
                     Text(
                         text = totalPages.toString(),
@@ -128,7 +135,7 @@ private fun PlaceholderIcon() {
     Icon(
         imageVector = Icons.Default.Description,
         contentDescription = null,
-        modifier = Modifier.size(32.dp),
+        modifier = Modifier.size(Constraints.AvatarSize.small),
         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
     )
 }
@@ -159,9 +166,9 @@ fun PdfPreviewRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(Constrains.Spacing.medium),
+            .padding(Constraints.Spacing.medium),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
         PdfThumbnail(
             firstPageUrl = firstPageUrl,
@@ -177,7 +184,7 @@ fun PdfPreviewRow(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.xxSmall))
             Text(
                 text = when {
                     isLoading -> stringResource(Res.string.state_loading)
@@ -195,7 +202,7 @@ fun PdfPreviewRow(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(Constrains.IconSize.medium),
+            modifier = Modifier.size(Constraints.IconSize.medium),
         )
     }
 }

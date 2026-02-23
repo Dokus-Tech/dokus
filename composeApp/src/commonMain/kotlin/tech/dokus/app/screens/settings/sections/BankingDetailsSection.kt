@@ -15,7 +15,12 @@ import tech.dokus.aura.resources.workspace_iban
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.settings.DataRow
 import tech.dokus.foundation.aura.components.settings.SettingsSection
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun BankingDetailsSection(
@@ -50,7 +55,7 @@ internal fun BankingDetailsSection(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(Constrains.Spacing.small))
+            Spacer(Modifier.height(Constraints.Spacing.small))
 
             PTextFieldStandard(
                 fieldName = stringResource(Res.string.workspace_bic),
@@ -62,14 +67,34 @@ internal fun BankingDetailsSection(
             DataRow(
                 label = stringResource(Res.string.workspace_iban),
                 value = formState.iban,
-                mono = true,
             )
 
             DataRow(
                 label = stringResource(Res.string.workspace_bic),
                 value = formState.bic,
-                mono = true,
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun BankingDetailsSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        BankingDetailsSection(
+            formState = WorkspaceSettingsState.Content.FormState(
+                iban = "BE68 5390 0754 7034",
+                bic = "TRIOBEBB",
+            ),
+            expanded = true,
+            onToggle = {},
+            editMode = false,
+            onEdit = {},
+            onSave = {},
+            onCancel = {},
+            onIntent = {},
+        )
     }
 }

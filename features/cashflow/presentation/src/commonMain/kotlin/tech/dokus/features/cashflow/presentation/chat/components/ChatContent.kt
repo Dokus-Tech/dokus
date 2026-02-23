@@ -8,11 +8,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
 import tech.dokus.features.cashflow.presentation.chat.ChatState
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ChatContent(
@@ -40,8 +48,8 @@ internal fun ChatContent(
                     }
                 },
                 modifier = Modifier.padding(
-                    horizontal = Constrains.Spacing.medium,
-                    vertical = Constrains.Spacing.small
+                    horizontal = Constraints.Spacing.medium,
+                    vertical = Constraints.Spacing.small
                 )
             )
         }
@@ -76,7 +84,7 @@ internal fun ChatContent(
                 isSending = state.isSending,
                 modifier = Modifier
                     .align(androidx.compose.ui.Alignment.BottomCenter)
-                    .padding(bottom = Constrains.Spacing.medium)
+                    .padding(bottom = Constraints.Spacing.medium)
             )
         }
 
@@ -90,7 +98,7 @@ internal fun ChatContent(
             onSend = { onIntent(ChatIntent.SendMessage) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Constrains.Spacing.medium)
+                .padding(Constraints.Spacing.medium)
         )
     }
 
@@ -102,6 +110,25 @@ internal fun ChatContent(
             },
             onNewSession = { onIntent(ChatIntent.StartNewConversation) },
             onDismiss = { onIntent(ChatIntent.HideSessionPicker) }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ChatContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ChatContent(
+            state = ChatState.Content(
+                scope = ChatScope.AllDocs,
+                messages = emptyList(),
+            ),
+            contentPadding = PaddingValues(0.dp),
+            listState = rememberLazyListState(),
+            isLargeScreen = false,
+            onIntent = {},
         )
     }
 }

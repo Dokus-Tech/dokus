@@ -11,7 +11,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -20,6 +23,9 @@ import tech.dokus.aura.resources.auth_last_name_label
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
 import tech.dokus.foundation.aura.components.fields.PTextFieldName
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun RegisterProfileFields(
@@ -53,6 +59,23 @@ internal fun RegisterProfileFields(
             onAction = { onSubmit() },
             onValueChange = { onFieldsUpdate(fields.copy(lastName = it)) },
             modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun RegisterProfileFieldsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        val focusManager = LocalFocusManager.current
+        RegisterProfileFields(
+            focusManager = focusManager,
+            fields = RegisterFormFields(),
+            onFieldsUpdate = {},
+            error = null,
+            onSubmit = {},
         )
     }
 }

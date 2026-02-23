@@ -1,4 +1,8 @@
 <resources>
+    <!-- Accessibility -->
+    <string name="a11y_profile_menu">Profile menu</string>
+    <string name="a11y_back_to_all_documents">Back to all documents</string>
+
     <!-- Common Actions -->
     <string name="action_back">Back</string>
     <string name="action_save">Save</string>

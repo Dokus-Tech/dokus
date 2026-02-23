@@ -38,7 +38,7 @@ import tech.dokus.aura.resources.contacts_select_all
 import tech.dokus.features.contacts.mvi.EnrichmentSuggestion
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constraints
 
 // UI dimension constants
 private val SpacingSmall = 4.dp
@@ -80,7 +80,7 @@ internal fun EnrichmentSuggestionsDialog(
         },
         content = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
                 Text(
                     text = stringResource(Res.string.contacts_enrichment_hint),
@@ -88,7 +88,7 @@ internal fun EnrichmentSuggestionsDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                 suggestions.forEach { suggestion ->
                     val isSelected = suggestion in selectedSuggestions
@@ -107,7 +107,7 @@ internal fun EnrichmentSuggestionsDialog(
                 }
 
                 if (suggestions.size > 1) {
-                    Spacer(modifier = Modifier.height(Constrains.Spacing.xSmall))
+                    Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
@@ -280,5 +280,40 @@ private fun SourceBadge(source: String) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun EnrichmentSuggestionsDialogPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        EnrichmentSuggestionsDialog(
+            suggestions = listOf(
+                EnrichmentSuggestion(
+                    field = "Phone",
+                    currentValue = "+32 2 123 45 67",
+                    suggestedValue = "+32 2 987 65 43",
+                    source = "KBO/BCE",
+                    confidence = 0.92f
+                ),
+                EnrichmentSuggestion(
+                    field = "Address",
+                    currentValue = null,
+                    suggestedValue = "Rue de la Loi 16, 1000 Brussels",
+                    source = "KBO/BCE",
+                    confidence = 0.85f
+                )
+            ),
+            onApply = {},
+            onDismiss = {}
+        )
     }
 }

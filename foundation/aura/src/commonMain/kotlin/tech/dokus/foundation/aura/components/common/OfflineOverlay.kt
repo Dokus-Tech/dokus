@@ -14,9 +14,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Text
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.state_offline
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * A reusable overlay component that blurs content when offline and shows an indicator.
@@ -86,6 +92,18 @@ fun OfflineOverlay(
                     )
                 }
             }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun OfflineOverlayPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        OfflineOverlay(isOffline = true) {
+            Text("Content behind overlay")
         }
     }
 }

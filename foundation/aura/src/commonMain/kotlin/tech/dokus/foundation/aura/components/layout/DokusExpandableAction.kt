@@ -18,10 +18,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.Text
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_collapse
 import tech.dokus.aura.resources.action_expand
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * A slot-based layout component for primary actions with expandable options.
@@ -84,5 +90,20 @@ fun DokusExpandableAction(
         ) {
             expandedContent()
         }
+    }
+}
+
+@Preview
+@Composable
+private fun DokusExpandableActionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusExpandableAction(
+            isExpanded = true,
+            onToggleExpand = {},
+            primaryAction = { Text("Primary Action") },
+            expandedContent = { Text("Expanded content here") }
+        )
     }
 }
