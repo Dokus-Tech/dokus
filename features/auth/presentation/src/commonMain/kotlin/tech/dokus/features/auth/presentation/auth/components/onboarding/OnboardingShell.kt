@@ -119,7 +119,7 @@ internal fun OnboardingSplitShell(
 
                     OnboardingBottomFooter(
                         modifier = Modifier.fillMaxWidth(),
-                        alignCenter = !isLarge,
+                        alignCenter = true,
                     )
                 }
             }

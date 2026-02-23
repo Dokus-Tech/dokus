@@ -27,19 +27,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_add_contact
 import tech.dokus.aura.resources.contacts_select_contact
-import tech.dokus.aura.resources.nav_contacts
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
@@ -57,9 +53,6 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // UI dimension constants
 private val ContentPaddingHorizontal = 16.dp
@@ -143,10 +136,9 @@ internal fun ContactsScreen(
         val contactsState: DokusState<PaginationState<ContactDto>> =
             when (state) {
                 is ContactsState.Loading -> DokusState.loading()
-                is ContactsState.Content -> DokusState.success((state as ContactsState.Content).contacts)
+                is ContactsState.Content -> DokusState.success(state.contacts)
                 is ContactsState.Error -> {
-                    val errorState = state as ContactsState.Error
-                    DokusState.error(errorState.exception, errorState.retryHandler)
+                    DokusState.error(state.exception, state.retryHandler)
                 }
             }
 

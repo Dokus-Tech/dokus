@@ -10,6 +10,8 @@
     <string name="auth_sign_in_button">Sign In</string>
     <string name="auth_no_account_prefix">Don't have an account? </string>
     <string name="auth_sign_up_link">Sign up</string>
+    <string name="auth_new_to_dokus_prefix">New to Dokus? </string>
+    <string name="auth_create_account_link">Create account</string>
 
     <!-- Register Screen -->
     <string name="auth_register_title">Create Account</string>

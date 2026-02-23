@@ -23,24 +23,24 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_or
 import tech.dokus.aura.resources.auth_email_label
+import tech.dokus.aura.resources.auth_new_to_dokus_prefix
 import tech.dokus.aura.resources.auth_forgot_password
-import tech.dokus.aura.resources.auth_no_account_prefix
 import tech.dokus.aura.resources.auth_onboarding_belgian_infrastructure
 import tech.dokus.aura.resources.auth_onboarding_connect_own_server
 import tech.dokus.aura.resources.auth_onboarding_data_encrypted
 import tech.dokus.aura.resources.auth_onboarding_self_hosted_subtitle
 import tech.dokus.aura.resources.auth_onboarding_welcome_back
 import tech.dokus.aura.resources.auth_password_label
+import tech.dokus.aura.resources.auth_create_account_link
 import tech.dokus.aura.resources.auth_sign_in_button
-import tech.dokus.aura.resources.auth_sign_up_link
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.mvi.LoginIntent
 import tech.dokus.features.auth.mvi.LoginState
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingPrimaryButton
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
 import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.DokusGlassSurface
-import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
@@ -122,7 +122,7 @@ internal fun LoginScreen(
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
-        PPrimaryButton(
+        OnboardingPrimaryButton(
             text = stringResource(Res.string.auth_sign_in_button),
             enabled = canLogin && !isLoading,
             isLoading = isLoading,
@@ -191,7 +191,7 @@ internal fun LoginScreen(
                             fontWeight = FontWeight.Normal,
                         ),
                     ) {
-                        append(stringResource(Res.string.auth_no_account_prefix))
+                        append(stringResource(Res.string.auth_new_to_dokus_prefix))
                     }
                     withStyle(
                         SpanStyle(
@@ -199,7 +199,7 @@ internal fun LoginScreen(
                             fontWeight = FontWeight.Medium,
                         ),
                     ) {
-                        append(stringResource(Res.string.auth_sign_up_link))
+                        append(stringResource(Res.string.auth_create_account_link))
                     }
                 },
                 style = MaterialTheme.typography.titleLarge,

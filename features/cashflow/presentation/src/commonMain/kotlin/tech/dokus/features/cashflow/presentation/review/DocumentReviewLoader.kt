@@ -107,7 +107,7 @@ internal class DocumentReviewLoader(
         val documentStatus = draft.documentStatus
         val isDocumentConfirmed = documentStatus == DocumentStatus.Confirmed
         val isDocumentRejected = documentStatus == DocumentStatus.Rejected
-        val counterpartyIntent = draft.counterpartyIntent ?: tech.dokus.domain.enums.CounterpartyIntent.None
+        val counterpartyIntent = draft.counterpartyIntent
 
         val (contactSelectionState, selectedContactId, selectedContactSnapshot) =
             buildContactSelectionState(document, draft.contactSuggestions)
