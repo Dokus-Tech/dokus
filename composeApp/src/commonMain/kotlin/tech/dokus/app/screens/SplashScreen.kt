@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -75,7 +76,11 @@ import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
 
-private const val ReadyHoldDurationMs = 2_000L
+private const val ChecklistCompletionHoldMs = 400L
+private const val ChecklistExitDurationMs = 300
+private const val ReadyFadeInDurationMs = 200
+private const val ReadyHoldDurationMs = 1_800L
+private const val ScreenFadeOutDurationMs = 400
 private const val StepRevealDelayMs = 220L
 private const val StepRevealDurationMs = 220
 private const val ActivePulseDurationMs = 1_400
@@ -99,6 +104,9 @@ internal fun SplashRoute(
     val navController = LocalNavController.current
     val scope = rememberCoroutineScope()
     var readyNavigationScheduled by remember { mutableStateOf(false) }
+    var checklistVisible by remember { mutableStateOf(true) }
+    var readyVisible by remember { mutableStateOf(false) }
+    var screenFadingOut by remember { mutableStateOf(false) }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
@@ -112,7 +120,13 @@ internal fun SplashRoute(
                 if (!readyNavigationScheduled) {
                     readyNavigationScheduled = true
                     scope.launch {
-                        delay(ReadyHoldDurationMs)
+                        delay(ChecklistCompletionHoldMs)
+                        checklistVisible = false
+                        delay(ChecklistExitDurationMs.toLong())
+                        readyVisible = true
+                        delay(ReadyFadeInDurationMs.toLong() + ReadyHoldDurationMs)
+                        screenFadingOut = true
+                        delay(ScreenFadeOutDurationMs.toLong())
                         navController.replace(CoreDestination.Home)
                     }
                 }
@@ -129,6 +143,9 @@ internal fun SplashRoute(
     SplashScreen(
         steps = state.steps,
         isReady = isReady,
+        checklistVisible = checklistVisible,
+        readyVisible = readyVisible,
+        screenFadingOut = screenFadingOut,
     )
 }
 
@@ -136,6 +153,9 @@ internal fun SplashRoute(
 internal fun SplashScreen(
     steps: List<BootstrapStep>,
     isReady: Boolean = false,
+    checklistVisible: Boolean = true,
+    readyVisible: Boolean = false,
+    screenFadingOut: Boolean = false,
 ) {
     val spacing = MaterialTheme.dokusSpacing
     val completedSteps = steps.count { it.isActive && !it.isCurrent }
@@ -146,17 +166,44 @@ internal fun SplashScreen(
         label = "splashProgress",
     )
     val logoAlpha by animateFloatAsState(
-        targetValue = if (isReady) 1f else 0.92f,
-        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+        targetValue = if (isReady && !checklistVisible) 0.55f else 0.35f,
+        animationSpec = tween(durationMillis = ChecklistExitDurationMs, easing = FastOutSlowInEasing),
         label = "logoAlpha",
     )
-    val logoScale by animateFloatAsState(
-        targetValue = if (isReady) 1.03f else 1f,
-        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
-        label = "logoScale",
+    val density = LocalDensity.current
+    val checklistExitTranslation = with(density) { 8.dp.toPx() }
+    val checklistAlpha by animateFloatAsState(
+        targetValue = if (checklistVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = ChecklistExitDurationMs, easing = FastOutSlowInEasing),
+        label = "checklistAlpha",
+    )
+    val checklistOffsetY by animateFloatAsState(
+        targetValue = if (checklistVisible) 0f else -checklistExitTranslation,
+        animationSpec = tween(durationMillis = ChecklistExitDurationMs, easing = FastOutSlowInEasing),
+        label = "checklistOffsetY",
+    )
+    val readyEntryOffset = with(density) { 4.dp.toPx() }
+    val readyAlpha by animateFloatAsState(
+        targetValue = if (readyVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = ReadyFadeInDurationMs, easing = FastOutSlowInEasing),
+        label = "readyAlpha",
+    )
+    val readyOffsetY by animateFloatAsState(
+        targetValue = if (readyVisible) 0f else readyEntryOffset,
+        animationSpec = tween(durationMillis = ReadyFadeInDurationMs, easing = FastOutSlowInEasing),
+        label = "readyOffsetY",
+    )
+    val screenAlpha by animateFloatAsState(
+        targetValue = if (screenFadingOut) 0f else 1f,
+        animationSpec = tween(durationMillis = ScreenFadeOutDurationMs, easing = FastOutSlowInEasing),
+        label = "screenAlpha",
     )
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer(alpha = screenAlpha)
+    ) {
         BootstrapBackground(progress = progress)
 
         Column(
@@ -170,30 +217,35 @@ internal fun SplashScreen(
                 emphasis = DokusLogoEmphasis.Hero,
                 modifier = Modifier.graphicsLayer(
                     alpha = logoAlpha,
-                    scaleX = logoScale,
-                    scaleY = logoScale,
                 ),
             )
 
-            AnimatedVisibility(
-                visible = isReady,
-                enter = fadeIn(animationSpec = tween(durationMillis = 260, delayMillis = 120)) +
-                    slideInVertically(
-                        animationSpec = tween(durationMillis = 260, delayMillis = 120, easing = FastOutSlowInEasing),
-                    ) { it / 2 },
+            Box(
+                modifier = Modifier.height(24.dp),
+                contentAlignment = Alignment.BottomCenter,
             ) {
                 Text(
                     text = stringResource(Res.string.bootstrap_state_ready),
                     color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(top = spacing.small),
+                    style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 0.18.em),
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.graphicsLayer(
+                        alpha = readyAlpha,
+                        translationY = readyOffsetY,
+                    ),
                 )
             }
 
             Spacer(modifier = Modifier.height(spacing.xxxLarge))
 
-            BootstrapStatesList(steps = steps)
+            Box(
+                modifier = Modifier.graphicsLayer(
+                    alpha = checklistAlpha,
+                    translationY = checklistOffsetY,
+                ),
+            ) {
+                BootstrapStatesList(steps = steps)
+            }
         }
 
         val tier = stringResource(Res.string.subscription_tier_core)
