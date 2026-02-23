@@ -91,4 +91,25 @@
     <string name="auth_port_required">Port is required</string>
     <string name="auth_port_invalid_number">Port must be a number</string>
     <string name="auth_port_out_of_range">Port must be between 1 and 65535</string>
+
+    <!-- Onboarding V2 -->
+    <string name="auth_onboarding_welcome_back">Welcome back</string>
+    <string name="auth_onboarding_belgian_infrastructure">Belgian-compliant financial infrastructure</string>
+    <string name="auth_onboarding_data_encrypted">Data encrypted. Hosted in EU.</string>
+    <string name="auth_onboarding_connect_own_server">Connect to own server</string>
+    <string name="auth_onboarding_self_hosted_subtitle">For self-hosted installations</string>
+    <string name="auth_onboarding_use_cloud_instead">Use Dokus Cloud instead</string>
+    <string name="auth_onboarding_connect_server_title">Connect to your server</string>
+    <string name="auth_onboarding_connect_server_subtitle">Self-hosted Dokus instance</string>
+    <string name="auth_onboarding_copyright_format">©%1$d Dokus</string>
+
+    <string name="auth_onboarding_primary_headline_line_1">Certainty,</string>
+    <string name="auth_onboarding_primary_headline_line_2">reconstructed.</string>
+    <string name="auth_onboarding_primary_subline_1">Even when scattered, the structure remembers.</string>
+    <string name="auth_onboarding_primary_subline_2">Every particle finds its place.</string>
+
+    <string name="auth_onboarding_alt_headline_line_1">Where sovereignty</string>
+    <string name="auth_onboarding_alt_headline_line_2">meets intelligence.</string>
+    <string name="auth_onboarding_alt_subline_1">Crafted for those who build tomorrow.</string>
+    <string name="auth_onboarding_alt_subline_2">Trusted by those who own today.</string>
 </resources>

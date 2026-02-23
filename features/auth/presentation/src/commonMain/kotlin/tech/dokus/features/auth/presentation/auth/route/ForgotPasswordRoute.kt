@@ -24,6 +24,7 @@ internal fun ForgotPasswordRoute(
 
     ForgotPasswordScreen(
         state = state,
-        onIntent = { container.store.intent(it) }
+        onIntent = { container.store.intent(it) },
+        onNavigateUp = { navController.navigateUp() },
     )
 }
