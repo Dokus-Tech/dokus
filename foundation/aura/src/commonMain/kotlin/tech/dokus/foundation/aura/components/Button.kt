@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -168,6 +169,8 @@ fun PPrimaryButton(
 ) {
     val primary = MaterialTheme.colorScheme.primary
     val onPrimary = MaterialTheme.colorScheme.onPrimary
+    val surface = MaterialTheme.colorScheme.surface
+    val disabledContainer = lerp(primary, surface, 0.24f)
 
     Button(
         onClick = onClick,
@@ -179,12 +182,12 @@ fun PPrimaryButton(
             pressedElevation = 4.dp,
             focusedElevation = 10.dp,
             hoveredElevation = 10.dp,
-            disabledElevation = 3.dp,
+            disabledElevation = 0.dp,
         ),
         colors = ButtonDefaults.buttonColors(
             containerColor = primary,
             contentColor = onPrimary,
-            disabledContainerColor = primary.copy(alpha = 0.68f),
+            disabledContainerColor = disabledContainer,
             disabledContentColor = onPrimary.copy(alpha = 0.74f),
         )
     ) {
@@ -291,6 +294,20 @@ private fun PPrimaryButtonPreview(
 ) {
     TestWrapper(parameters) {
         PPrimaryButton(text = "Continue", onClick = {})
+    }
+}
+
+@Preview
+@Composable
+private fun PPrimaryButtonDisabledPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PPrimaryButton(
+            text = "Continue",
+            enabled = false,
+            onClick = {},
+        )
     }
 }
 
