@@ -65,9 +65,9 @@ private const val CubeRadialOuter = 0.62f
 private const val Pi2 = 6.2831855f
 
 /**
- * Visual scene presets for the onboarding C5 background.
+ * Visual scene presets for the onboarding background.
  */
-enum class OnboardingC5Scene {
+enum class OnboardingScene {
     Split,
     Centered,
 }
@@ -83,15 +83,15 @@ private data class CubePoint(
 )
 
 /**
- * C5 onboarding background: rotating deterministic cube field with light grain.
+ * Onboarding background: rotating deterministic cube field with light grain.
  *
  * This component is intentionally independent from [AmbientBackground] so onboarding can evolve
  * without changing document/home visual behavior.
  */
 @Composable
-fun OnboardingC5Background(
+fun OnboardingBackground(
     modifier: Modifier = Modifier,
-    scene: OnboardingC5Scene = OnboardingC5Scene.Split,
+    scene: OnboardingScene = OnboardingScene.Split,
     showCube: Boolean = true,
     showGrain: Boolean = true,
 ) {
@@ -100,7 +100,7 @@ fun OnboardingC5Background(
     val effects = MaterialTheme.dokusEffects
     val isDark = colors.isDark
 
-    val infinite = rememberInfiniteTransition(label = "onboarding-c5")
+    val infinite = rememberInfiniteTransition(label = "onboarding-background")
     val rotation by infinite.animateFloat(
         initialValue = 0f,
         targetValue = CubeAngleRange,
@@ -143,7 +143,7 @@ fun OnboardingC5Background(
             drawRect(color = colors.background)
 
             val center = Offset(
-                x = size.width * if (scene == OnboardingC5Scene.Split) CubeSplitCenterX else CubeCenteredCenterX,
+                x = size.width * if (scene == OnboardingScene.Split) CubeSplitCenterX else CubeCenteredCenterX,
                 y = size.height * CubeCenterY
             )
 
@@ -306,20 +306,20 @@ private fun generateCubePoints(random: Random): List<CubePoint> {
 
 @Preview
 @Composable
-private fun OnboardingC5BackgroundSplitPreview(
+private fun OnboardingBackgroundSplitPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        OnboardingC5Background(scene = OnboardingC5Scene.Split)
+        OnboardingBackground(scene = OnboardingScene.Split)
     }
 }
 
 @Preview
 @Composable
-private fun OnboardingC5BackgroundCenteredPreview(
+private fun OnboardingBackgroundCenteredPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        OnboardingC5Background(scene = OnboardingC5Scene.Centered)
+        OnboardingBackground(scene = OnboardingScene.Centered)
     }
 }

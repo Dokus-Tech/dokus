@@ -21,7 +21,7 @@ import kotlinx.coroutines.delay
 import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
 import tech.dokus.features.auth.mvi.WorkspaceSelectState
 import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingCenteredShell
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingCenteredShell
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
 
 private const val ContentFadeOutDurationMs = 600

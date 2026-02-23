@@ -18,8 +18,8 @@ import tech.dokus.aura.resources.auth_verify_email_retry
 import tech.dokus.aura.resources.auth_verify_email_success
 import tech.dokus.aura.resources.auth_verify_email_title
 import tech.dokus.features.auth.mvi.VerifyEmailState
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingBrandVariant
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingSplitShell
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.text.SectionTitle

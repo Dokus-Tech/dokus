@@ -1,4 +1,4 @@
-package tech.dokus.features.auth.presentation.auth.components.v2
+package tech.dokus.features.auth.presentation.auth.components.onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,8 +46,8 @@ import tech.dokus.aura.resources.playfair_display_bold
 import tech.dokus.aura.resources.playfair_display_regular
 import tech.dokus.aura.resources.playfair_display_semibold
 import tech.dokus.foundation.aura.components.DokusGlassSurface
-import tech.dokus.foundation.aura.components.background.OnboardingC5Background
-import tech.dokus.foundation.aura.components.background.OnboardingC5Scene
+import tech.dokus.foundation.aura.components.background.OnboardingBackground
+import tech.dokus.foundation.aura.components.background.OnboardingScene
 import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -89,7 +89,7 @@ internal fun OnboardingSplitShell(
     val scrollState = rememberScrollState()
 
     Box(modifier = modifier.fillMaxSize()) {
-        OnboardingC5Background(scene = OnboardingC5Scene.Split)
+        OnboardingBackground(scene = OnboardingScene.Split)
 
         Row(modifier = Modifier.fillMaxSize()) {
             Box(
@@ -150,7 +150,7 @@ internal fun OnboardingCenteredShell(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        OnboardingC5Background(scene = OnboardingC5Scene.Centered)
+        OnboardingBackground(scene = OnboardingScene.Centered)
 
         Column(
             modifier = Modifier

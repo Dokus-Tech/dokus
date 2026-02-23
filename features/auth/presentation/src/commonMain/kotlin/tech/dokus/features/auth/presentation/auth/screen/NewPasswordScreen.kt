@@ -20,8 +20,8 @@ import tech.dokus.aura.resources.profile_confirm_password
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.mvi.NewPasswordIntent
 import tech.dokus.features.auth.mvi.NewPasswordState
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingBrandVariant
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingSplitShell
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
 import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword

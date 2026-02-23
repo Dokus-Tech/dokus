@@ -16,7 +16,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_continue
 import tech.dokus.aura.resources.auth_register_success_title
 import tech.dokus.aura.resources.registration_success_message
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingCenteredShell
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingCenteredShell
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constraints
 

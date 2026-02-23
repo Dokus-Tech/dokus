@@ -1,8 +1,8 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
 import androidx.compose.runtime.Composable
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingBrandPanel
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingBrandVariant
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandPanel
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
 
 @Composable
 internal fun SloganScreen(

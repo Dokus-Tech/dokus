@@ -30,8 +30,8 @@ import tech.dokus.features.auth.mvi.ServerConnectionIntent
 import tech.dokus.features.auth.mvi.ServerConnectionState
 import tech.dokus.features.auth.presentation.auth.components.ProtocolSelector
 import tech.dokus.features.auth.presentation.auth.components.ServerConfirmationDialog
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingBrandVariant
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingSplitShell
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard

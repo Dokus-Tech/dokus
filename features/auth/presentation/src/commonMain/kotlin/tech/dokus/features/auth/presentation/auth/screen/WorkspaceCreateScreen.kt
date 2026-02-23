@@ -42,7 +42,7 @@ import tech.dokus.features.auth.presentation.auth.components.EntityConfirmationD
 import tech.dokus.features.auth.presentation.auth.components.steps.CompanyNameStep
 import tech.dokus.features.auth.presentation.auth.components.steps.TypeSelectionStep
 import tech.dokus.features.auth.presentation.auth.components.steps.VatAndAddressStep
-import tech.dokus.features.auth.presentation.auth.components.v2.OnboardingCenteredShell
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingCenteredShell
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
