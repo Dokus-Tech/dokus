@@ -9,6 +9,7 @@ RUN rm -rf /usr/share/nginx/html/*
 # When building from root: docker build -f composeApp/Dockerfile .
 # Output from wasmJsBrowserDistribution task
 COPY composeApp/build/dist/wasmJs/productionExecutable/ /usr/share/nginx/html/
+COPY composeApp/src/wasmJsMain/resources/.well-known/ /usr/share/nginx/html/.well-known/
 
 # Copy nginx configuration
 COPY composeApp/default.conf /etc/nginx/conf.d/default.conf

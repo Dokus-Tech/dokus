@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "V2V9U9A3MG.vision.invoid.dokus",
+        "paths": [
+          "/auth/*"
+        ]
+      }
+    ]
+  }
+}

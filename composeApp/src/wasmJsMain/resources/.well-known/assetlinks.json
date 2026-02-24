@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "vision.invoid.dokus",
+      "sha256_cert_fingerprints": [
+        "AD:66:29:41:2E:96:9A:5F:C4:8E:73:B6:42:40:2C:DB:93:AE:EF:E1:3F:AC:EC:42:B2:C9:27:A7:76:CA:62:6A"
+      ]
+    }
+  }
+]
