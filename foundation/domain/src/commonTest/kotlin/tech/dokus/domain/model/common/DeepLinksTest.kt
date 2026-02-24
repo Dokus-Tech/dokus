@@ -70,8 +70,35 @@ class DeepLinksTest {
     }
 
     @Test
+    fun `extractVerifyEmailToken returns token for absolute http verify email link`() {
+        val deepLink = DeepLink("http://localhost:8081/auth/verify-email?token=verify-123")
+
+        val token = DeepLinks.extractVerifyEmailToken(deepLink)
+
+        assertEquals("verify-123", token)
+    }
+
+    @Test
+    fun `extractResetPasswordToken returns token for absolute http reset password link`() {
+        val deepLink = DeepLink("http://localhost:8081/auth/reset-password?token=reset-123")
+
+        val token = DeepLinks.extractResetPasswordToken(deepLink)
+
+        assertEquals("reset-123", token)
+    }
+
+    @Test
     fun `extractVerifyEmailToken returns null when token query param is missing`() {
         val deepLink = DeepLink("https://app.dokus.tech/auth/verify-email")
+
+        val token = DeepLinks.extractVerifyEmailToken(deepLink)
+
+        assertNull(token)
+    }
+
+    @Test
+    fun `extractVerifyEmailToken returns null for absolute http verify email link without token`() {
+        val deepLink = DeepLink("http://localhost:8081/auth/verify-email")
 
         val token = DeepLinks.extractVerifyEmailToken(deepLink)
 
