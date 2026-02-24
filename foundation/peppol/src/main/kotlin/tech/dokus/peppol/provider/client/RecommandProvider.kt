@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.basicAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -11,10 +12,10 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolProviderConfig
-import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolReceivedDocument
@@ -31,6 +32,7 @@ import tech.dokus.peppol.provider.client.recommand.model.RecommandMarkAsReadRequ
 import tech.dokus.peppol.provider.client.recommand.model.RecommandSearchPeppolDirectoryRequest
 import tech.dokus.peppol.provider.client.recommand.model.RecommandSearchPeppolDirectoryResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandSendDocumentResponse
+import java.security.MessageDigest
 
 /**
  * Peppol provider implementation for Recommand.eu
@@ -76,7 +78,10 @@ class RecommandProvider(
      * Send a document via Peppol network.
      * POST /api/v1/{companyId}/send
      */
-    override suspend fun sendDocument(request: PeppolSendRequest): Result<PeppolSendResponse> =
+    override suspend fun sendDocument(
+        request: PeppolSendRequest,
+        idempotencyKey: String?
+    ): Result<PeppolSendResponse> =
         runCatching {
             ensureConfigured()
             logger.info("Sending document to Peppol via Recommand. Recipient: ${request.recipientPeppolId}")
@@ -86,12 +91,19 @@ class RecommandProvider(
             val response = httpClient.post("$baseUrl/api/v1/${credentials.companyId}/send") {
                 contentType(ContentType.Application.Json)
                 basicAuth(credentials.apiKey, credentials.apiSecret)
+                if (!idempotencyKey.isNullOrBlank()) {
+                    header("Idempotency-Key", idempotencyKey)
+                }
                 setBody(recommandRequest)
             }
 
             if (!response.status.isSuccess()) {
                 val errorBody = response.bodyAsText()
-                logger.error("Recommand API error: ${response.status} - $errorBody")
+                logApiError(
+                    operation = "sendDocument",
+                    statusCode = response.status.value,
+                    body = errorBody
+                )
                 throw RecommandApiException(response.status.value, errorBody)
             }
 
@@ -150,7 +162,11 @@ class RecommandProvider(
 
         if (!response.status.isSuccess()) {
             val errorBody = response.bodyAsText()
-            logger.error("Recommand API error: ${response.status} - $errorBody")
+            logApiError(
+                operation = "getInbox",
+                statusCode = response.status.value,
+                body = errorBody
+            )
             throw RecommandApiException(response.status.value, errorBody)
         }
 
@@ -176,18 +192,22 @@ class RecommandProvider(
                 basicAuth(credentials.apiKey, credentials.apiSecret)
             }
 
-        if (!response.status.isSuccess()) {
-            val errorBody = response.bodyAsText()
-            logger.error("Recommand API error: ${response.status} - $errorBody")
-            throw RecommandApiException(response.status.value, errorBody)
+            if (!response.status.isSuccess()) {
+                val errorBody = response.bodyAsText()
+                logApiError(
+                    operation = "getDocument",
+                    statusCode = response.status.value,
+                    body = errorBody
+                )
+                throw RecommandApiException(response.status.value, errorBody)
+            }
+
+            val detail = response.body<RecommandGetDocumentResponse>().document
+
+            RecommandMapper.fromRecommandDocumentDetail(detail)
+        }.onFailure { e ->
+            logger.error("Failed to fetch Peppol document: $documentId", e)
         }
-
-        val detail = response.body<RecommandGetDocumentResponse>().document
-
-        RecommandMapper.fromRecommandDocumentDetail(detail)
-    }.onFailure { e ->
-        logger.error("Failed to fetch Peppol document: $documentId", e)
-    }
 
     /**
      * Get raw document detail including attachments.
@@ -205,7 +225,11 @@ class RecommandProvider(
 
             if (!response.status.isSuccess()) {
                 val errorBody = response.bodyAsText()
-                logger.error("Recommand API error: ${response.status} - $errorBody")
+                logApiError(
+                    operation = "getDocumentDetail",
+                    statusCode = response.status.value,
+                    body = errorBody
+                )
                 throw RecommandApiException(response.status.value, errorBody)
             }
 
@@ -230,7 +254,11 @@ class RecommandProvider(
 
         if (!response.status.isSuccess()) {
             val errorBody = response.bodyAsText()
-            logger.error("Recommand API error: ${response.status} - $errorBody")
+            logApiError(
+                operation = "markAsRead",
+                statusCode = response.status.value,
+                body = errorBody
+            )
             throw RecommandApiException(response.status.value, errorBody)
         }
 
@@ -280,7 +308,11 @@ class RecommandProvider(
 
         if (!response.status.isSuccess()) {
             val errorBody = response.bodyAsText()
-            logger.error("Recommand API error: ${response.status} - $errorBody")
+            logApiError(
+                operation = "listDocuments",
+                statusCode = response.status.value,
+                body = errorBody
+            )
             throw RecommandApiException(response.status.value, errorBody)
         }
 
@@ -344,7 +376,11 @@ class RecommandProvider(
 
             if (!response.status.isSuccess()) {
                 val errorBody = response.bodyAsText()
-                logger.error("Recommand API error: ${response.status} - $errorBody")
+                logApiError(
+                    operation = "searchDirectory",
+                    statusCode = response.status.value,
+                    body = errorBody
+                )
                 throw RecommandApiException(response.status.value, errorBody)
             }
 
@@ -361,6 +397,24 @@ class RecommandProvider(
         }.onFailure { e ->
             logger.error("Failed to search PEPPOL directory: $query", e)
         }
+
+    private fun logApiError(
+        operation: String,
+        statusCode: Int,
+        body: String
+    ) {
+        logger.error(
+            "Recommand API {} failed. status={} bodySha256={}",
+            operation,
+            statusCode,
+            body.sha256Hex()
+        )
+    }
+
+    private fun String.sha256Hex(): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest(toByteArray())
+        return digest.joinToString("") { "%02x".format(it) }
+    }
 }
 
 /**
@@ -378,4 +432,4 @@ data class PeppolDirectorySearchResult(
 class RecommandApiException(
     val statusCode: Int,
     val responseBody: String
-) : Exception("Recommand API error (HTTP $statusCode): $responseBody")
+) : Exception("Recommand API error (HTTP $statusCode)")

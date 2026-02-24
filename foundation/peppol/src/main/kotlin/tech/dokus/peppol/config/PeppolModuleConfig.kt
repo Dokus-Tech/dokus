@@ -22,7 +22,10 @@ data class PeppolModuleConfig(
     val globalTestMode: Boolean,
 
     /** Master credentials (required for all deployments) */
-    val masterCredentials: MasterCredentialsConfig
+    val masterCredentials: MasterCredentialsConfig,
+
+    /** Recommand webhook configuration */
+    val webhook: WebhookConfig
 ) {
     companion object {
         /**
@@ -42,9 +45,49 @@ data class PeppolModuleConfig(
                 defaultProvider = peppolConfig.getString("defaultProvider"),
                 inbox = InboxConfig.fromConfig(peppolConfig.getConfig("inbox")),
                 globalTestMode = peppolConfig.getBoolean("globalTestMode"),
-                masterCredentials = MasterCredentialsConfig.fromConfig(peppolConfig.getConfig("master"))
+                masterCredentials = MasterCredentialsConfig.fromConfig(peppolConfig.getConfig("master")),
+                webhook = if (peppolConfig.hasPath("webhook")) {
+                    WebhookConfig.fromConfig(peppolConfig.getConfig("webhook"))
+                } else {
+                    WebhookConfig.defaults()
+                }
             )
         }
+    }
+}
+
+data class WebhookConfig(
+    val publicBaseUrl: String,
+    val callbackPath: String,
+    val pollDebounceSeconds: Long
+) {
+    companion object {
+        fun fromConfig(config: Config): WebhookConfig {
+            val publicBaseUrl = config.getString("publicBaseUrl").trim().trimEnd('/')
+            val callbackPath = config.getString("callbackPath").trim().let {
+                if (it.startsWith("/")) it else "/$it"
+            }
+            val pollDebounceSeconds = config.getLong("pollDebounceSeconds")
+
+            if (publicBaseUrl.isBlank()) {
+                throw IllegalStateException("peppol.webhook.publicBaseUrl must be configured")
+            }
+            if (pollDebounceSeconds < 1) {
+                throw IllegalStateException("peppol.webhook.pollDebounceSeconds must be >= 1")
+            }
+
+            return WebhookConfig(
+                publicBaseUrl = publicBaseUrl,
+                callbackPath = callbackPath,
+                pollDebounceSeconds = pollDebounceSeconds
+            )
+        }
+
+        fun defaults(): WebhookConfig = WebhookConfig(
+            publicBaseUrl = "https://dokus.invoid.vision",
+            callbackPath = "/api/v1/peppol/webhook",
+            pollDebounceSeconds = 60
+        )
     }
 }
 

@@ -94,6 +94,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutinesTest)
     testImplementation(libs.h2)
     testImplementation(libs.mockk)
+    testImplementation(libs.ktor.server.tests)
 }
 
 tasks.test {

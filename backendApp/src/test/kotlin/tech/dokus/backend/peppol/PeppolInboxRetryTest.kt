@@ -38,13 +38,18 @@ import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolMonetaryTotals
 import tech.dokus.peppol.model.PeppolReceivedDocument
+import tech.dokus.peppol.model.PeppolSendRequest
+import tech.dokus.peppol.model.PeppolSendResponse
 import tech.dokus.peppol.model.PeppolTaxTotal
+import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.peppol.provider.PeppolCredentials
 import tech.dokus.peppol.provider.PeppolProvider
 import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandCredentials
 import tech.dokus.peppol.service.PeppolCredentialResolver
+import tech.dokus.peppol.service.PeppolOutboundErrorClassifier
 import tech.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.service.PeppolTransmissionStateMachine
 import tech.dokus.peppol.validator.PeppolValidator
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -163,7 +168,9 @@ class PeppolInboxRetryTest {
             providerFactory = providerFactory,
             mapper = PeppolMapper(),
             validator = PeppolValidator(),
-            credentialResolver = credentialResolver
+            credentialResolver = credentialResolver,
+            outboundErrorClassifier = PeppolOutboundErrorClassifier(),
+            transmissionStateMachine = PeppolTransmissionStateMachine()
         )
 
         runBlocking {
@@ -223,6 +230,7 @@ class PeppolInboxRetryTest {
         val deliveredTransmission = transmissionRepository.getByExternalDocumentId(tenantId, "ext-1").getOrThrow()
         assertNotNull(deliveredTransmission)
         assertEquals(PeppolStatus.Delivered, deliveredTransmission.status)
+        assertEquals(null, deliveredTransmission.errorMessage)
 
         // Third poll: delivered transmission is skipped (no callback), markAsRead is best-effort.
         peppolService.pollInbox(tenantId) { _, _, _, _ ->
@@ -262,10 +270,13 @@ class PeppolInboxRetryTest {
 
         override fun configure(credentials: PeppolCredentials) = Unit
 
-        override suspend fun sendDocument(request: tech.dokus.peppol.model.PeppolSendRequest): Result<tech.dokus.peppol.model.PeppolSendResponse> =
+        override suspend fun sendDocument(
+            request: PeppolSendRequest,
+            idempotencyKey: String?
+        ): Result<PeppolSendResponse> =
             Result.failure(NotImplementedError())
 
-        override suspend fun verifyRecipient(peppolId: String): Result<tech.dokus.peppol.model.PeppolVerifyResponse> =
+        override suspend fun verifyRecipient(peppolId: String): Result<PeppolVerifyResponse> =
             Result.failure(NotImplementedError())
 
         override suspend fun getInbox(): Result<List<PeppolInboxItem>> = Result.success(listOf(inboxItem))
@@ -293,6 +304,6 @@ class PeppolInboxRetryTest {
 
         override suspend fun testConnection(): Result<Boolean> = Result.success(true)
 
-        override fun serializeRequest(request: tech.dokus.peppol.model.PeppolSendRequest): String = "{}"
+        override fun serializeRequest(request: PeppolSendRequest): String = "{}"
     }
 }

@@ -1,15 +1,22 @@
 package tech.dokus.backend.routes.cashflow
 
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
+import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.peppol.config.PeppolModuleConfig
+import tech.dokus.peppol.service.PeppolService
+import java.security.MessageDigest
 
 private val logger = loggerFor("PeppolWebhook")
 
@@ -25,6 +32,8 @@ private val logger = loggerFor("PeppolWebhook")
 internal fun Route.peppolWebhookRoutes() {
     val peppolSettingsRepository by inject<PeppolSettingsRepository>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()
+    val peppolService by inject<PeppolService>()
+    val peppolModuleConfig by inject<PeppolModuleConfig>()
 
     /**
      * POST /api/v1/peppol/webhook?token={tenantToken}
@@ -35,6 +44,7 @@ internal fun Route.peppolWebhookRoutes() {
      * Rate limit: 10 requests/minute per token (TODO: implement rate limiting)
      */
     post("/api/v1/peppol/webhook") {
+        val rawBody = call.receiveText()
         val token = call.request.queryParameters["token"]
 
         if (token.isNullOrBlank()) {
@@ -43,10 +53,23 @@ internal fun Route.peppolWebhookRoutes() {
             return@post
         }
 
-        // Look up tenant by webhook token
-        val tenantId = peppolSettingsRepository.getTenantIdByWebhookToken(token)
+        val payload = runCatching { json.decodeFromString<WebhookPayload>(rawBody) }.getOrNull()
+        if (payload == null) {
+            logger.warn("Webhook payload parse failed, ignoring event body")
+            call.respond(HttpStatusCode.OK, WebhookResponse(success = true, message = "Notification ignored"))
+            return@post
+        }
+
+        val companyId = payload.companyId?.trim()
+        if (companyId.isNullOrBlank()) {
+            logger.warn("Webhook payload missing companyId, ignoring")
+            call.respond(HttpStatusCode.OK, WebhookResponse(success = true, message = "Notification ignored"))
+            return@post
+        }
+
+        val settings = peppolSettingsRepository.getEnabledSettingsByCompanyId(companyId)
             .getOrElse {
-                logger.error("Failed to look up tenant by webhook token", it)
+                logger.error("Failed to resolve tenant by companyId {}", companyId, it)
                 call.respond(
                     HttpStatusCode.InternalServerError,
                     WebhookResponse(success = false, message = "Internal error")
@@ -54,27 +77,67 @@ internal fun Route.peppolWebhookRoutes() {
                 return@post
             }
 
-        if (tenantId == null) {
-            logger.warn("Webhook called with invalid token")
+        if (settings == null) {
+            logger.warn("Webhook received for unknown/disabled companyId {}, ignored", companyId)
+            call.respond(HttpStatusCode.OK, WebhookResponse(success = true, message = "Notification ignored"))
+            return@post
+        }
+
+        val expectedToken = settings.webhookToken?.trim()
+        val tokenMatch = !expectedToken.isNullOrBlank() &&
+            MessageDigest.isEqual(
+                token.toByteArray(Charsets.UTF_8),
+                expectedToken.toByteArray(Charsets.UTF_8)
+            )
+        if (!tokenMatch) {
+            logger.warn(
+                "Webhook token mismatch for tenant {} companyId {}",
+                settings.tenantId,
+                companyId
+            )
             call.respond(HttpStatusCode.Unauthorized, WebhookResponse(success = false, message = "Invalid token"))
             return@post
         }
 
-        // Parse webhook payload (optional - we may not need it)
-        val payload = runCatching { call.receive<WebhookPayload>() }.getOrNull()
-
-        logger.info("Webhook received for tenant $tenantId, event: ${payload?.eventType ?: "unknown"}")
-
-        // Trigger immediate poll for this tenant
-        val pollTriggered = peppolPollingWorker.pollNow(tenantId)
-
-        if (pollTriggered) {
-            logger.info("Poll triggered for tenant $tenantId")
-        } else {
-            logger.debug("Poll skipped for tenant $tenantId (too recent)")
+        payload.documentId?.takeIf { it.isNotBlank() }?.let { externalDocumentId ->
+            peppolService.reconcileOutboundByExternalDocumentId(settings.tenantId, externalDocumentId)
+                .onFailure { error ->
+                    logger.warn(
+                        "Failed outbound reconciliation on webhook for tenant {} and document {}",
+                        settings.tenantId,
+                        externalDocumentId,
+                        error
+                    )
+                }
         }
 
-        // Always return 200 OK to the provider
+        logger.info("Webhook received for tenant {}, event: {}", settings.tenantId, payload.eventType ?: "unknown")
+
+        val debounceGranted = peppolSettingsRepository.tryAcquireWebhookPollSlot(
+            tenantId = settings.tenantId,
+            now = Clock.System.now().toLocalDateTime(TimeZone.UTC),
+            debounceSeconds = peppolModuleConfig.webhook.pollDebounceSeconds
+        ).getOrElse {
+            logger.error("Failed webhook debounce check for tenant {}", settings.tenantId, it)
+            call.respond(HttpStatusCode.InternalServerError, WebhookResponse(success = false, message = "Internal error"))
+            return@post
+        }
+
+        if (!debounceGranted) {
+            logger.debug(
+                "Webhook poll debounced for tenant {} companyId {}",
+                settings.tenantId,
+                companyId
+            )
+        } else {
+            val pollTriggered = peppolPollingWorker.pollNow(settings.tenantId) // inbound safety net
+            if (pollTriggered) {
+                logger.info("Poll triggered for tenant {}", settings.tenantId)
+            } else {
+                logger.debug("Poll skipped for tenant {} (in-memory guard)", settings.tenantId)
+            }
+        }
+
         call.respond(HttpStatusCode.OK, WebhookResponse(success = true, message = "Notification received"))
     }
 }
@@ -83,6 +146,8 @@ internal fun Route.peppolWebhookRoutes() {
 private data class WebhookPayload(
     val eventType: String? = null,
     val documentId: String? = null,
+    val companyId: String? = null,
+    val teamId: String? = null,
     val timestamp: String? = null
 )
 

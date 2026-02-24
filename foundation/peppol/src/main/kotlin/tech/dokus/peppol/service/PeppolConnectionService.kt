@@ -23,6 +23,7 @@ class PeppolConnectionService(
     private val settingsRepository: PeppolSettingsRepository,
     private val recommandCompaniesClient: RecommandCompaniesClient,
     private val moduleConfig: PeppolModuleConfig,
+    private val webhookSyncService: PeppolWebhookSyncService
 ) {
     private val logger = loggerFor()
 
@@ -89,6 +90,8 @@ class PeppolConnectionService(
             isEnabled = true,
             testMode = testMode
         ).getOrThrow()
+
+        webhookSyncService.ensureSingleWebhookForSettings(savedSettings).getOrThrow()
 
         logger.info("Tenant ${tenant.id} connected to Peppol with company ${resolvedCompany.id}")
 

@@ -29,6 +29,7 @@
     <string name="exception_invalid_api_credentials">Credenciales API no válidas. Comprueba tu clave y secreto API.</string>
     <string name="exception_missing_vat_number">Configura primero tu número de IVA en los ajustes del espacio de trabajo</string>
     <string name="exception_missing_company_address">Configura primero la dirección de tu empresa en los ajustes del espacio de trabajo</string>
+    <string name="exception_peppol_send_requires_confirmed_document">La factura debe confirmarse antes de enviarla por PEPPOL</string>
 
     <!-- 401 Authentication Errors -->
     <string name="exception_not_authenticated">Inicia sesión para continuar</string>

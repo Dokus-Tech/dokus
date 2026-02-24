@@ -2,9 +2,13 @@ package tech.dokus.database.repository.peppol
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -16,11 +20,15 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 /**
  * Repository for Peppol settings.
  * Credentials are managed via environment variables, not stored in the database.
  */
+@OptIn(ExperimentalUuidApi::class)
 class PeppolSettingsRepository {
 
     /**
@@ -29,7 +37,7 @@ class PeppolSettingsRepository {
     suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> = runCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
-                .where { PeppolSettingsTable.tenantId eq UUID.fromString(tenantId.toString()) }
+                .where { PeppolSettingsTable.tenantId eq tenantId.value.toJavaUuid() }
                 .map { it.toDto() }
                 .singleOrNull()
         }
@@ -46,7 +54,7 @@ class PeppolSettingsRepository {
         testMode: Boolean = false
     ): Result<PeppolSettingsDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = tenantId.value.toJavaUuid()
 
         dbQuery {
             val existing = PeppolSettingsTable.selectAll()
@@ -54,12 +62,17 @@ class PeppolSettingsRepository {
                 .singleOrNull()
 
             if (existing != null) {
+                val existingWebhookToken = existing[PeppolSettingsTable.webhookToken]
+                val webhookToken = existingWebhookToken.takeIf { it.isNotBlank() }
+                    ?: UUID.randomUUID().toString().replace("-", "")
+
                 // Update existing
                 PeppolSettingsTable.update({ PeppolSettingsTable.tenantId eq tenantUuid }) {
                     it[PeppolSettingsTable.companyId] = companyId
                     it[PeppolSettingsTable.peppolId] = peppolId
                     it[PeppolSettingsTable.isEnabled] = isEnabled
                     it[PeppolSettingsTable.testMode] = testMode
+                    it[PeppolSettingsTable.webhookToken] = webhookToken
                     it[updatedAt] = now
                 }
 
@@ -97,7 +110,7 @@ class PeppolSettingsRepository {
     suspend fun deleteSettings(tenantId: TenantId): Result<Boolean> = runCatching {
         dbQuery {
             val deleted = PeppolSettingsTable.deleteWhere {
-                PeppolSettingsTable.tenantId eq UUID.fromString(tenantId.toString())
+                PeppolSettingsTable.tenantId eq tenantId.value.toJavaUuid()
             }
             deleted > 0
         }
@@ -113,6 +126,47 @@ class PeppolSettingsRepository {
                 .where { PeppolSettingsTable.webhookToken eq token }
                 .map { TenantId.parse(it[PeppolSettingsTable.tenantId].toString()) }
                 .singleOrNull()
+        }
+    }
+
+    suspend fun getEnabledSettingsByCompanyId(companyId: String): Result<PeppolSettingsDto?> = runCatching {
+        dbQuery {
+            PeppolSettingsTable.selectAll()
+                .where {
+                    (PeppolSettingsTable.companyId eq companyId) and
+                        (PeppolSettingsTable.isEnabled eq true)
+                }
+                .map { it.toDto() }
+                .singleOrNull()
+        }
+    }
+
+    /**
+     * Debounce webhook-triggered poll requests across all app instances.
+     *
+     * @return true when the slot is acquired and poll may proceed; false when debounced.
+     */
+    suspend fun tryAcquireWebhookPollSlot(
+        tenantId: TenantId,
+        now: kotlinx.datetime.LocalDateTime,
+        debounceSeconds: Long
+    ): Result<Boolean> = runCatching {
+        val threshold = now.toInstant(TimeZone.UTC)
+            .minus(debounceSeconds.seconds)
+            .toLocalDateTime(TimeZone.UTC)
+        dbQuery {
+            val updated = PeppolSettingsTable.update({
+                (PeppolSettingsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                    (PeppolSettingsTable.isEnabled eq true) and
+                    (
+                        (PeppolSettingsTable.lastWebhookPollTriggeredAt eq null) or
+                            (PeppolSettingsTable.lastWebhookPollTriggeredAt lessEq threshold)
+                        )
+            }) {
+                it[PeppolSettingsTable.lastWebhookPollTriggeredAt] = now
+                it[updatedAt] = now
+            }
+            updated > 0
         }
     }
 
@@ -134,7 +188,7 @@ class PeppolSettingsRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolSettingsTable.update({
-                PeppolSettingsTable.tenantId eq UUID.fromString(tenantId.toString())
+                PeppolSettingsTable.tenantId eq tenantId.value.toJavaUuid()
             }) {
                 it[lastFullSyncAt] = now
                 it[updatedAt] = now
