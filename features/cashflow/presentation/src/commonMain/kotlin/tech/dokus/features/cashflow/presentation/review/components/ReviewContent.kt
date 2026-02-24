@@ -43,6 +43,7 @@ import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.withContentPadding
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
@@ -235,6 +236,7 @@ private fun MobileReviewContent(
             .fillMaxSize()
             .withContentPadding(adjustedContentPadding, layoutDirection)
             .imePadding()
+            .dismissKeyboardOnTapOutside()
             .navigationBarsPadding(),
     )
 }

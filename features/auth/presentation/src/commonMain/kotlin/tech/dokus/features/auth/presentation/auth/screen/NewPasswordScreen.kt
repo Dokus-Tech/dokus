@@ -28,6 +28,7 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
 import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 
 @Composable
 internal fun NewPasswordScreen(
@@ -40,7 +41,10 @@ internal fun NewPasswordScreen(
     val passwordsMatch = state.password.value == state.passwordConfirmation.value
     val canSubmit = state.password.isValid && state.passwordConfirmation.isValid && passwordsMatch && !isSubmitting
 
-    OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Alt) {
+    OnboardingSplitShell(
+        brandVariant = OnboardingBrandVariant.Alt,
+        modifier = Modifier.dismissKeyboardOnTapOutside()
+    ) {
         SectionTitle(
             text = stringResource(Res.string.auth_reset_password_title),
             horizontalArrangement = Arrangement.Start,

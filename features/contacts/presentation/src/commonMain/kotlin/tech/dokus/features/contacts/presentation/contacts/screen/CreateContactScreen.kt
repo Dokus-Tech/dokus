@@ -32,6 +32,7 @@ import tech.dokus.features.contacts.presentation.contacts.components.create.Conf
 import tech.dokus.features.contacts.presentation.contacts.components.create.LookupStepContent
 import tech.dokus.features.contacts.presentation.contacts.components.create.ManualStepContent
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -150,6 +151,7 @@ private fun CreateContactFullScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .imePadding()
+            .dismissKeyboardOnTapOutside()
     ) {
         CreateContactContent(
             state = state,

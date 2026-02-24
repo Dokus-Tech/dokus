@@ -38,6 +38,7 @@ import tech.dokus.features.auth.presentation.auth.model.RegisterPage
 import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 
 private val FieldsContentMinHeight = 280.dp
 
@@ -85,7 +86,10 @@ internal fun RegisterScreen(
         }
     }
 
-    OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Alt) {
+    OnboardingSplitShell(
+        brandVariant = OnboardingBrandVariant.Alt,
+        modifier = Modifier.dismissKeyboardOnTapOutside()
+    ) {
         SectionTitle(
             text = when (currentPage) {
                 RegisterPage.Profile -> stringResource(Res.string.auth_register_profile_title)

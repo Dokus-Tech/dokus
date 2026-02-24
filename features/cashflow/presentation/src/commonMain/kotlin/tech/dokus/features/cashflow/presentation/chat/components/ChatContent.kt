@@ -18,6 +18,7 @@ import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
 import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -35,6 +36,7 @@ internal fun ChatContent(
             .fillMaxSize()
             .padding(contentPadding)
             .imePadding()
+            .dismissKeyboardOnTapOutside()
     ) {
         if (state.isCrossDocMode) {
             ScopeSelectorChips(

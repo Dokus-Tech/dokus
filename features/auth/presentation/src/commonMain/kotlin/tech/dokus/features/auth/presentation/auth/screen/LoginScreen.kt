@@ -47,6 +47,7 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
 import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 
 @Composable
 internal fun LoginScreen(
@@ -62,7 +63,10 @@ internal fun LoginScreen(
     val isLoading = state is LoginState.Authenticating
     val canLogin = state.email.isValid && state.password.isValid
 
-    OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Primary) {
+    OnboardingSplitShell(
+        brandVariant = OnboardingBrandVariant.Primary,
+        modifier = Modifier.dismissKeyboardOnTapOutside()
+    ) {
         DokusLogo.Full()
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.xxLarge))

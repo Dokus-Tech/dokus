@@ -36,6 +36,7 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.constrains.withContentPadding
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 
 @Composable
 internal fun ChangePasswordScreen(
@@ -79,7 +80,8 @@ private fun ChangePasswordContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .withContentPadding(),
+            .withContentPadding()
+            .dismissKeyboardOnTapOutside(),
         verticalArrangement = Arrangement.Center
     ) {
         Column(modifier = Modifier.limitWidthCenteredContent()) {
