@@ -34,8 +34,10 @@ import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.utils.json
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
-private const val DefaultConnectTimeoutMillis = 3_000L
+private val DefaultConnectTimeout: Duration = 3.seconds
 
 fun HttpClientConfig<*>.withJsonContentNegotiation() {
     install(ContentNegotiation) {
@@ -44,10 +46,10 @@ fun HttpClientConfig<*>.withJsonContentNegotiation() {
 }
 
 fun HttpClientConfig<*>.withDefaultTimeouts(
-    connectTimeoutMillis: Long = DefaultConnectTimeoutMillis
+    connectTimeout: Duration = DefaultConnectTimeout
 ) {
     install(HttpTimeout) {
-        this.connectTimeoutMillis = connectTimeoutMillis
+        this.connectTimeoutMillis = connectTimeout.inWholeMilliseconds
     }
 }
 
