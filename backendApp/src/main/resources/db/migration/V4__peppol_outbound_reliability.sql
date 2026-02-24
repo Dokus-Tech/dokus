@@ -4,7 +4,7 @@ ALTER TABLE peppol_transmissions
     ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128);
 
 UPDATE peppol_transmissions
-SET idempotency_key = COALESCE(idempotency_key, 'legacy-' || id::text);
+SET idempotency_key = COALESCE(idempotency_key, 'tx-' || id::text);
 
 ALTER TABLE peppol_transmissions
     ALTER COLUMN idempotency_key SET NOT NULL;

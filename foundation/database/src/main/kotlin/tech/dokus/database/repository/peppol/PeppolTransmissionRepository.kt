@@ -96,7 +96,7 @@ class PeppolTransmissionRepository {
                 it[PeppolTransmissionsTable.direction] = direction
                 it[PeppolTransmissionsTable.documentType] = documentType
                 it[status] = PeppolStatus.Pending
-                it[PeppolTransmissionsTable.idempotencyKey] = idempotencyKey ?: "legacy-$newId"
+                it[PeppolTransmissionsTable.idempotencyKey] = idempotencyKey ?: "tx-$newId"
                 it[PeppolTransmissionsTable.invoiceId] = invoiceId?.let { inv -> UUID.fromString(inv.toString()) }
                 it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId
                 it[PeppolTransmissionsTable.recipientPeppolId] = recipientPeppolId?.value

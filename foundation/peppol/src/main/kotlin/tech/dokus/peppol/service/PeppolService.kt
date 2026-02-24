@@ -215,27 +215,6 @@ class PeppolService(
     }
 
     /**
-     * Legacy API retained for compatibility; now delegates to enqueue-only flow.
-     */
-    suspend fun sendInvoice(
-        invoice: FinancialDocumentDto.InvoiceDto,
-        contact: ContactDto,
-        tenant: Tenant,
-        companyAddress: Address?,
-        tenantSettings: TenantSettings,
-        tenantId: TenantId,
-        recipientPeppolId: String
-    ): Result<SendInvoiceViaPeppolResponse> = enqueueInvoiceTransmission(
-        invoice = invoice,
-        contact = contact,
-        tenant = tenant,
-        companyAddress = companyAddress,
-        tenantSettings = tenantSettings,
-        tenantId = tenantId,
-        recipientPeppolId = recipientPeppolId
-    )
-
-    /**
      * Process one outbound transmission already claimed by the worker.
      * The transmission must be in SENDING state.
      */
