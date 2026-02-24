@@ -24,7 +24,7 @@ fun createDynamicBaseHttpClient(
 ) = createDokusHttpClient {
     expectSuccess = false
     withJsonContentNegotiation()
-    withDefaultTimeouts()
+    withConnectTimeout()
     withResources()
     withDynamicDokusEndpoint(endpointProvider)
     withLogging()

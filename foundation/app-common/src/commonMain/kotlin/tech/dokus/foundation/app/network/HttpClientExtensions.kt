@@ -45,7 +45,7 @@ fun HttpClientConfig<*>.withJsonContentNegotiation() {
     }
 }
 
-fun HttpClientConfig<*>.withDefaultTimeouts(
+fun HttpClientConfig<*>.withConnectTimeout(
     connectTimeout: Duration = DefaultConnectTimeout
 ) {
     install(HttpTimeout) {

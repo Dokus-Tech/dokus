@@ -61,20 +61,41 @@ class TokenManagerImplTest {
     }
 
     @Test
-    fun `initialize with missing or invalid local session is unauthenticated`() = runTest {
-        val missingStorage = TokenStorage(InMemorySecureStorage())
-        val missingManager = TokenManagerImpl(missingStorage)
+    fun `initialize with stale expired token is unauthenticated`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
 
-        missingManager.initialize()
-        assertFalse(missingManager.isAuthenticated.value)
+        val now = Clock.System.now().epochSeconds
+        // Expired 8 days ago — beyond the 7-day staleness bound
+        val eightDaysInSeconds = 8 * 24 * 3600L
+        tokenStorage.saveAccessToken(jwtToken(exp = now - eightDaysInSeconds))
+        tokenStorage.saveRefreshToken("refresh-token")
 
-        val invalidStorage = TokenStorage(InMemorySecureStorage())
-        val invalidManager = TokenManagerImpl(invalidStorage)
-        invalidStorage.saveAccessToken("invalid-token")
-        invalidStorage.saveRefreshToken("refresh-token")
+        manager.initialize()
 
-        invalidManager.initialize()
-        assertFalse(invalidManager.isAuthenticated.value)
+        assertFalse(manager.isAuthenticated.value)
+    }
+
+    @Test
+    fun `initialize with no stored tokens is unauthenticated`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
+
+        manager.initialize()
+
+        assertFalse(manager.isAuthenticated.value)
+    }
+
+    @Test
+    fun `initialize with unparseable access token is unauthenticated`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
+        tokenStorage.saveAccessToken("invalid-token")
+        tokenStorage.saveRefreshToken("refresh-token")
+
+        manager.initialize()
+
+        assertFalse(manager.isAuthenticated.value)
     }
 
     @Test
@@ -83,10 +104,17 @@ class TokenManagerImplTest {
         val manager = TokenManagerImpl(tokenStorage)
 
         val now = Clock.System.now().epochSeconds
+        // 60s until expiry is within the 300s REFRESH_THRESHOLD → REFRESH_NEEDED
         val refreshNeededToken = jwtToken(exp = now + 60)
         tokenStorage.saveAccessToken(refreshNeededToken)
         tokenStorage.saveRefreshToken("refresh-token")
 
+        manager.initialize()
+        assertTrue(manager.isAuthenticated.value)
+
+        // In commonTest we can't use Ktor's ConnectTimeoutException (platform-specific),
+        // so we use IllegalStateException with a network-error message that matches
+        // the hasNetworkExceptionMessage() fallback path.
         manager.onTokenRefreshNeeded = { _, _ ->
             throw IllegalStateException("Connect timeout has expired")
         }
@@ -95,6 +123,81 @@ class TokenManagerImplTest {
 
         assertEquals(refreshNeededToken, token)
         assertEquals(refreshNeededToken, tokenStorage.getAccessToken())
+        assertTrue(manager.isAuthenticated.value)
+    }
+
+    @Test
+    fun `getValidAccessToken returns null when expired and network error occurs`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
+
+        val now = Clock.System.now().epochSeconds
+        val expiredToken = jwtToken(exp = now - 60)
+        tokenStorage.saveAccessToken(expiredToken)
+        tokenStorage.saveRefreshToken("refresh-token")
+
+        manager.initialize()
+        assertTrue(manager.isAuthenticated.value)
+
+        manager.onTokenRefreshNeeded = { _, _ ->
+            throw IllegalStateException("Connect timeout has expired")
+        }
+
+        val token = manager.getValidAccessToken()
+
+        // Expired tokens must NOT fall back — refresh is required
+        assertNull(token)
+        // User stays authenticated (network error, not auth failure)
+        assertTrue(manager.isAuthenticated.value)
+    }
+
+    @Test
+    fun `refreshToken with network exception preserves auth state and tokens`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
+
+        val now = Clock.System.now().epochSeconds
+        val accessToken = jwtToken(exp = now + 60)
+        tokenStorage.saveAccessToken(accessToken)
+        tokenStorage.saveRefreshToken("refresh-token")
+
+        manager.initialize()
+        assertTrue(manager.isAuthenticated.value)
+
+        manager.onTokenRefreshNeeded = { _, _ ->
+            throw IllegalStateException("Connect timeout has expired")
+        }
+
+        val refreshed = manager.refreshToken(force = true)
+
+        assertNull(refreshed)
+        assertTrue(manager.isAuthenticated.value)
+        assertEquals(accessToken, tokenStorage.getAccessToken())
+        assertEquals("refresh-token", tokenStorage.getRefreshToken())
+    }
+
+    @Test
+    fun `refreshToken with non-network exception triggers logout`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
+
+        val now = Clock.System.now().epochSeconds
+        tokenStorage.saveAccessToken(jwtToken(exp = now + 60))
+        tokenStorage.saveRefreshToken("refresh-token")
+
+        manager.initialize()
+        assertTrue(manager.isAuthenticated.value)
+
+        manager.onTokenRefreshNeeded = { _, _ ->
+            throw NullPointerException("unexpected error")
+        }
+
+        val refreshed = manager.refreshToken(force = true)
+
+        assertNull(refreshed)
+        assertFalse(manager.isAuthenticated.value)
+        assertNull(tokenStorage.getAccessToken())
+        assertNull(tokenStorage.getRefreshToken())
     }
 
     @Test
