@@ -44,7 +44,6 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.search_contacts_count
 import tech.dokus.aura.resources.search_documents_count
 import tech.dokus.aura.resources.search_from_anywhere
@@ -78,7 +77,6 @@ import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
-import tech.dokus.foundation.aura.components.text.MobilePageTitle
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -87,6 +85,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 private val SearchHorizontalPaddingDesktop = 32.dp
 private val SearchHorizontalPaddingMobile = 16.dp
 private val SearchInputTopPaddingDesktop = 28.dp
+private val SearchInputTopPaddingMobile = 8.dp
 private val SearchInputUnderlineThickness = 2.dp
 
 @Composable
@@ -140,12 +139,11 @@ internal fun SearchScreen(
                 .fillMaxSize()
                 .padding(horizontal = horizontalPadding)
         ) {
-            if (!isLargeScreen) {
-                Spacer(modifier = Modifier.height(16.dp))
-                MobilePageTitle(title = stringResource(Res.string.action_search))
-            } else {
-                Spacer(modifier = Modifier.height(SearchInputTopPaddingDesktop))
-            }
+            Spacer(
+                modifier = Modifier.height(
+                    if (isLargeScreen) SearchInputTopPaddingDesktop else SearchInputTopPaddingMobile
+                )
+            )
 
             SearchInputField(
                 value = textFieldValue,
