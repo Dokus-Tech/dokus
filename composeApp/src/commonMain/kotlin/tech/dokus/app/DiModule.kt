@@ -1,5 +1,6 @@
 package tech.dokus.app
 
+import io.ktor.client.HttpClient
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -7,6 +8,12 @@ import tech.dokus.app.notifications.CashflowInvoiceLookupDataSource
 import tech.dokus.app.notifications.InvoiceLookupDataSource
 import tech.dokus.app.notifications.NotificationRemoteDataSource
 import tech.dokus.app.notifications.NotificationRemoteDataSourceImpl
+import tech.dokus.app.screens.search.SearchAction
+import tech.dokus.app.screens.search.SearchContainer
+import tech.dokus.app.screens.search.SearchIntent
+import tech.dokus.app.screens.search.SearchRemoteDataSource
+import tech.dokus.app.screens.search.SearchRemoteDataSourceImpl
+import tech.dokus.app.screens.search.SearchState
 import tech.dokus.app.infrastructure.ServerConfigManagerImpl
 import tech.dokus.app.local.DefaultLocalDatabaseCleaner
 import tech.dokus.app.share.ShareImportAction
@@ -86,6 +93,11 @@ internal val diModuleApp = module {
             logoutUseCase = get(),
         )
     }
+    container<SearchContainer, SearchState, SearchIntent, SearchAction> {
+        SearchContainer(
+            remoteDataSource = get()
+        )
+    }
     container<SettingsContainer, SettingsState, SettingsIntent, SettingsAction> {
         SettingsContainer(getCurrentTenantUseCase = get())
     }
@@ -133,6 +145,9 @@ internal val diModuleApp = module {
     }
 
     singleOf(::CashflowInvoiceLookupDataSource) bind InvoiceLookupDataSource::class
+    single<SearchRemoteDataSource> {
+        SearchRemoteDataSourceImpl(httpClient = get<HttpClient>())
+    }
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
     singleOf(::NotificationRemoteDataSourceImpl) bind NotificationRemoteDataSource::class
     singleOf(::DefaultLocalDatabaseCleaner) bind LocalDatabaseCleaner::class

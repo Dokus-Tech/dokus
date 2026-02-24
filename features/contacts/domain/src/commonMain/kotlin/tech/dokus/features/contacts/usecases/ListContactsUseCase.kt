@@ -9,7 +9,15 @@ import tech.dokus.domain.model.contact.ContactDto
  */
 interface ListContactsUseCase {
     suspend operator fun invoke(
-        search: String? = null,
+        isActive: Boolean? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<List<ContactDto>>
+}
+
+interface LookupContactsUseCase {
+    suspend operator fun invoke(
+        query: String,
         isActive: Boolean? = null,
         limit: Int = 50,
         offset: Int = 0

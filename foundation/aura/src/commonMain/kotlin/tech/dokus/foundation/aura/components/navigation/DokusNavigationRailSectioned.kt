@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +34,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.calculator
 import tech.dokus.aura.resources.coming_soon
 import tech.dokus.aura.resources.file_text
@@ -60,6 +62,7 @@ import tech.dokus.navigation.destinations.route
 @Composable
 fun ColumnScope.DokusNavigationRailSectioned(
     sections: List<NavSection>,
+    pinnedItems: List<NavItem>,
     expandedSections: Map<String, Boolean>,
     selectedRoute: String?,
     settingsItem: NavItem?,
@@ -73,6 +76,22 @@ fun ColumnScope.DokusNavigationRailSectioned(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
+        if (pinnedItems.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(sizing.strokeThin)) {
+                pinnedItems.forEach { item ->
+                    PinnedNavItemRow(
+                        item = item,
+                        isSelected = item.destination.route == selectedRoute,
+                        onClick = { if (!item.comingSoon) onItemClick(item) }
+                    )
+                }
+            }
+            HorizontalDivider(
+                color = MaterialTheme.dokusEffects.railTrackLine,
+                modifier = Modifier.padding(horizontal = spacing.small)
+            )
+        }
+
         sections.forEach { section ->
             val isExpanded = expandedSections[section.id] ?: section.defaultExpanded
             val hasSelectedChild = section.items.any { it.destination.route == selectedRoute }
@@ -124,6 +143,65 @@ fun ColumnScope.DokusNavigationRailSectioned(
                 item = settingsItem,
                 isSelected = settingsItem.destination.route == selectedRoute,
                 onClick = { onItemClick(settingsItem) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun PinnedNavItemRow(
+    item: NavItem,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val spacing = MaterialTheme.dokusSpacing
+    val radii = MaterialTheme.dokusRadii
+    val backgroundColor = if (isSelected) {
+        MaterialTheme.dokusEffects.railActiveBackground
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val titleColor = if (isSelected) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(radii.button))
+            .background(backgroundColor)
+            .clickable(enabled = !item.comingSoon, onClick = onClick)
+            .padding(horizontal = spacing.small, vertical = spacing.small),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        androidx.compose.material3.Icon(
+            painter = painterResource(item.iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(MaterialTheme.dokusSizing.iconXSmall),
+            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.width(spacing.small))
+
+        Text(
+            text = stringResource(item.titleRes),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = titleColor,
+            modifier = Modifier.weight(1f)
+        )
+
+        item.desktopShortcutHint?.let { hint ->
+            Text(
+                text = hint,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.textFaint,
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(MaterialTheme.dokusEffects.railBadgeBackground)
+                    .padding(horizontal = spacing.xSmall, vertical = spacing.xxSmall)
             )
         }
     }
@@ -343,6 +421,15 @@ private fun DokusNavigationRailSectionedPreview(
                             ),
                         ),
                     ),
+                ),
+                pinnedItems = listOf(
+                    NavItem(
+                        id = "search",
+                        titleRes = Res.string.action_search,
+                        iconRes = Res.drawable.file_text,
+                        destination = HomeDestination.Search,
+                        desktopShortcutHint = "⌘K",
+                    )
                 ),
                 expandedSections = mapOf("accounting" to true, "company" to true),
                 selectedRoute = "documents",

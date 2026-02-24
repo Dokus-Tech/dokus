@@ -10,6 +10,7 @@ import tech.dokus.app.diModuleUseCases
 import tech.dokus.app.navigation.AppNavigationProvider
 import tech.dokus.app.navigation.HomeNavigationProvider
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.bar_chart
 import tech.dokus.aura.resources.calculator
 import tech.dokus.aura.resources.chart_bar_trend_up
@@ -31,6 +32,8 @@ import tech.dokus.aura.resources.settings_group_workspace
 import tech.dokus.aura.resources.settings_notifications
 import tech.dokus.aura.resources.settings_team
 import tech.dokus.aura.resources.settings_workspace_details
+import tech.dokus.aura.resources.search
+import tech.dokus.aura.resources.search_subtitle
 import tech.dokus.aura.resources.user
 import tech.dokus.aura.resources.users
 import tech.dokus.aura.resources.wallet_2
@@ -43,6 +46,7 @@ import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.SettingsPriority
+import tech.dokus.foundation.aura.model.DesktopNavPlacement
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.ShellTopBarDefault
 import tech.dokus.navigation.NavSectionIds
@@ -61,6 +65,18 @@ internal object AppMainModule : AppModule {
             sectionOrder = 0,
             sectionDefaultExpanded = true,
             items = listOf(
+                NavItem(
+                    id = "search",
+                    titleRes = Res.string.action_search,
+                    iconRes = Res.drawable.search,
+                    destination = HomeDestination.Search,
+                    priority = -10,
+                    mobileTabOrder = 2,
+                    shellTopBar = ShellTopBarDefault.Title,
+                    subtitleRes = Res.string.search_subtitle,
+                    desktopPlacement = DesktopNavPlacement.PinnedTop,
+                    desktopShortcutHint = "⌘K",
+                ),
                 NavItem(
                     id = "today",
                     titleRes = Res.string.home_today,

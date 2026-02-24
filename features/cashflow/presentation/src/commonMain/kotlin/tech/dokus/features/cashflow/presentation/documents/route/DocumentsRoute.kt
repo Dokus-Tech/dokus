@@ -11,7 +11,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -19,8 +18,9 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.documents_subtitle
 import tech.dokus.aura.resources.documents_upload
-import tech.dokus.aura.resources.search_placeholder
+import tech.dokus.aura.resources.nav_documents
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.mvi.AddDocumentContainer
 import tech.dokus.features.cashflow.presentation.cashflow.components.AppDownloadQrDialog
@@ -39,7 +39,6 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
@@ -57,8 +56,6 @@ internal fun DocumentsRoute(
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var isUploadSidebarVisible by remember { mutableStateOf(false) }
     var isQrDialogVisible by remember { mutableStateOf(false) }
-    val isLargeScreen = LocalScreenSize.current.isLarge
-    var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
 
     val errorMessage = pendingError?.localized
 
@@ -80,54 +77,24 @@ internal fun DocumentsRoute(
         }
     }
 
-    LaunchedEffect(isLargeScreen) {
-        if (isLargeScreen) {
-            isSearchExpanded = true
-        }
-    }
-
-    val searchPlaceholder = stringResource(Res.string.search_placeholder)
+    val title = stringResource(Res.string.nav_documents)
+    val subtitle = stringResource(Res.string.documents_subtitle)
     val uploadContentDescription = stringResource(Res.string.documents_upload)
-    val searchQuery = (state as? DocumentsState.Content)?.searchQuery.orEmpty()
-    val onSearchQueryChange = remember(documentsContainer) {
-        {
-                query: String ->
-            documentsContainer.store.intent(DocumentsIntent.UpdateSearchQuery(query))
-        }
-    }
-    val onClearSearchQuery = remember(documentsContainer) {
-        {
-            documentsContainer.store.intent(DocumentsIntent.UpdateSearchQuery(""))
-        }
-    }
-    val onExpandSearch = remember {
-        {
-            isSearchExpanded = true
-        }
-    }
     val onUploadActionClick = remember {
         {
             isUploadSidebarVisible = true
         }
     }
     val topBarConfig = remember(
-        searchQuery,
-        searchPlaceholder,
+        title,
+        subtitle,
         uploadContentDescription,
-        isSearchExpanded,
-        onSearchQueryChange,
-        onClearSearchQuery,
-        onExpandSearch,
         onUploadActionClick
     ) {
         HomeShellTopBarConfig(
-            mode = HomeShellTopBarMode.Search(
-                query = searchQuery,
-                placeholder = searchPlaceholder,
-                onQueryChange = onSearchQueryChange,
-                onClear = onClearSearchQuery,
-                isSearchExpanded = isSearchExpanded,
-                onExpandSearch = onExpandSearch
+            mode = HomeShellTopBarMode.Title(
+                title = title,
+                subtitle = subtitle
             ),
             actions = listOf(
                 HomeShellTopBarAction.Icon(
@@ -219,7 +186,6 @@ internal fun toDocumentReviewDestination(
     return CashFlowDestination.DocumentReview(
         documentId = action.documentId.toString(),
         sourceFilter = action.sourceFilter.toRouteFilterToken(),
-        sourceSearch = action.sourceSearch,
         sourceSort = action.sourceSort.token,
     )
 }

@@ -41,6 +41,8 @@ import tech.dokus.features.contacts.usecases.ListCustomersUseCase
 import tech.dokus.features.contacts.usecases.ListCustomersUseCaseImpl
 import tech.dokus.features.contacts.usecases.ListVendorsUseCase
 import tech.dokus.features.contacts.usecases.ListVendorsUseCaseImpl
+import tech.dokus.features.contacts.usecases.LookupContactsUseCase
+import tech.dokus.features.contacts.usecases.LookupContactsUseCaseImpl
 import tech.dokus.features.contacts.usecases.MergeContactsUseCase
 import tech.dokus.features.contacts.usecases.MergeContactsUseCaseImpl
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
@@ -72,6 +74,7 @@ val contactsDataModule = module {
 val contactsDomainModule = module {
     // List use cases
     single<ListContactsUseCase> { ListContactsUseCaseImpl(get()) }
+    single<LookupContactsUseCase> { LookupContactsUseCaseImpl(get()) }
     single<ListCustomersUseCase> { ListCustomersUseCaseImpl(get()) }
     single<ListVendorsUseCase> { ListVendorsUseCaseImpl(get()) }
     single<FindContactsByNameUseCase> { FindContactsByNameUseCaseImpl(get()) }

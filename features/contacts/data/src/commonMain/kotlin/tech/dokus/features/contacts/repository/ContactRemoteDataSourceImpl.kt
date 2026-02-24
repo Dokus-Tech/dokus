@@ -35,16 +35,14 @@ internal class ContactRemoteDataSourceImpl(
 
     // NOTE: peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
     override suspend fun listContacts(
-        search: String?,
         isActive: Boolean?,
         limit: Int,
         offset: Int
     ): Result<List<ContactDto>> {
-        logger.d { "Listing contacts: search=$search, active=$isActive, limit=$limit, offset=$offset" }
+        logger.d { "Listing contacts: active=$isActive, limit=$limit, offset=$offset" }
         return runCatching {
             val response = httpClient.get(
                 Contacts(
-                    search = search,
                     active = isActive,
                     limit = limit,
                     offset = offset
@@ -55,6 +53,30 @@ internal class ContactRemoteDataSourceImpl(
             logger.i { "Listed ${contacts.size} contacts" }
         }.onFailure { error ->
             logger.e(error) { "Failed to list contacts" }
+        }
+    }
+
+    override suspend fun lookupContacts(
+        query: String,
+        isActive: Boolean?,
+        limit: Int,
+        offset: Int
+    ): Result<List<ContactDto>> {
+        logger.d { "Lookup contacts: queryLength=${query.length}, active=$isActive, limit=$limit, offset=$offset" }
+        return runCatching {
+            val response = httpClient.get(
+                Contacts.Lookup(
+                    query = query,
+                    active = isActive,
+                    limit = limit,
+                    offset = offset
+                )
+            ).body<PaginatedResponse<ContactDto>>()
+            response.items
+        }.onSuccess { contacts ->
+            logger.i { "Lookup returned ${contacts.size} contacts" }
+        }.onFailure { error ->
+            logger.e(error) { "Failed to lookup contacts" }
         }
     }
 

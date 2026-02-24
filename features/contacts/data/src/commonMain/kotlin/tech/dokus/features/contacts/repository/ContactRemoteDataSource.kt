@@ -22,7 +22,13 @@ interface ContactRemoteDataSource {
     // CRUD Operations
     // NOTE: peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
     suspend fun listContacts(
-        search: String? = null,
+        isActive: Boolean? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<List<ContactDto>>
+
+    suspend fun lookupContacts(
+        query: String,
         isActive: Boolean? = null,
         limit: Int = 50,
         offset: Int = 0

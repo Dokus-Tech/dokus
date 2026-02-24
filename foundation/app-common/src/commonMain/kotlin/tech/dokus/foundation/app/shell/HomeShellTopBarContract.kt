@@ -18,15 +18,6 @@ data class HomeShellTopBarConfig(
 )
 
 sealed interface HomeShellTopBarMode {
-    data class Search(
-        val query: String,
-        val placeholder: String,
-        val onQueryChange: (String) -> Unit,
-        val onClear: (() -> Unit)? = null,
-        val isSearchExpanded: Boolean = true,
-        val onExpandSearch: (() -> Unit)? = null,
-    ) : HomeShellTopBarMode
-
     data class Title(
         val title: String,
         val subtitle: String? = null,

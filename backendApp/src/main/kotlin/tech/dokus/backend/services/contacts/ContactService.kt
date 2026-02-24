@@ -56,7 +56,6 @@ class ContactService(
     suspend fun listContacts(
         tenantId: TenantId,
         isActive: Boolean? = null,
-        searchQuery: String? = null,
         limit: Int = 50,
         offset: Int = 0
     ): Result<PaginatedResponse<ContactDto>> {
@@ -67,12 +66,33 @@ class ContactService(
         return contactRepository.listContacts(
             tenantId,
             isActive,
-            searchQuery,
             limit,
             offset
         )
             .onSuccess { logger.debug("Retrieved ${it.items.size} contacts (total=${it.total})") }
             .onFailure { logger.error("Failed to list contacts for tenant: $tenantId", it) }
+    }
+
+    suspend fun lookupContacts(
+        tenantId: TenantId,
+        query: String,
+        isActive: Boolean? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<PaginatedResponse<ContactDto>> {
+        logger.debug(
+            "Lookup contacts for tenant: $tenantId " +
+                "(queryLength=${query.length}, isActive=$isActive, limit=$limit, offset=$offset)"
+        )
+        return contactRepository.lookupContacts(
+            tenantId = tenantId,
+            query = query,
+            isActive = isActive,
+            limit = limit,
+            offset = offset
+        )
+            .onSuccess { logger.debug("Lookup returned ${it.items.size} contacts (total=${it.total})") }
+            .onFailure { logger.error("Failed contact lookup for tenant: $tenantId", it) }
     }
 
     /**

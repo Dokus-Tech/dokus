@@ -15,7 +15,7 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.presentation.contacts.model.MergeDialogStep
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.features.contacts.usecases.LookupContactsUseCase
 import tech.dokus.features.contacts.usecases.MergeContactsUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -30,7 +30,7 @@ internal class ContactMergeContainer(
     private val sourceContact: ContactDto,
     private val sourceActivity: ContactActivitySummary?,
     private val preselectedTarget: ContactDto?,
-    private val listContacts: ListContactsUseCase,
+    private val lookupContacts: LookupContactsUseCase,
     private val mergeContacts: MergeContactsUseCase,
 ) : Container<ContactMergeState, ContactMergeIntent, ContactMergeAction> {
 
@@ -106,8 +106,8 @@ internal class ContactMergeContainer(
         searchJob = launch {
             delay(SearchDebounceMs)
             updateState { copy(isSearching = true) }
-            listContacts(
-                search = query,
+            lookupContacts(
+                query = query,
                 isActive = true,
                 limit = SearchResultLimit
             ).fold(

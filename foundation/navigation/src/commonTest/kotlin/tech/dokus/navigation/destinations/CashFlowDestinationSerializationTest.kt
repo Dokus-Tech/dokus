@@ -14,7 +14,6 @@ class CashFlowDestinationSerializationTest {
         val destination = CashFlowDestination.DocumentReview(
             documentId = "doc-101",
             sourceFilter = CashFlowDestination.DocumentReviewSourceFilter.NeedsAttention.token,
-            sourceSearch = "acme",
             sourceSort = CashFlowDestination.DocumentReviewSourceSort.NewestFirst.token,
         )
 
@@ -35,7 +34,6 @@ class CashFlowDestinationSerializationTest {
         val destination = CashFlowDestination.DocumentReview(documentId = "doc-102")
 
         assertNull(destination.sourceFilter)
-        assertNull(destination.sourceSearch)
         assertEquals(
             CashFlowDestination.DocumentReviewSourceSort.NewestFirst.token,
             destination.sourceSort,

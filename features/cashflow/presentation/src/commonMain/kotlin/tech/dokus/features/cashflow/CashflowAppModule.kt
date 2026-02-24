@@ -50,7 +50,7 @@ object CashflowAppModule : AppModule {
                     iconRes = Res.drawable.cashflow,
                     destination = HomeDestination.Cashflow,
                     priority = 20,
-                    mobileTabOrder = 2,
+                    mobileTabOrder = 3,
                     shellTopBar = ShellTopBarDefault.Title,
                     subtitleRes = Res.string.cashflow_subtitle,
                 ),

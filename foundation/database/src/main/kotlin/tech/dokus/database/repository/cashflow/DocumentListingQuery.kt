@@ -3,7 +3,6 @@
 package tech.dokus.database.repository.cashflow
 
 import org.jetbrains.exposed.v1.core.JoinType
-import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
@@ -13,7 +12,6 @@ import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
-import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.neq
@@ -52,12 +50,10 @@ internal object DocumentListingQuery {
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,
-        search: String?,
         page: Int,
         limit: Int
     ): DocumentListPage<DocumentWithDraftAndIngestion> = newSuspendedTransaction {
         val tenantIdUuid = UUID.fromString(tenantId.toString())
-        val trimmedSearch = search?.trim()?.takeIf { it.isNotEmpty() }
 
         // Precedence: when using the high-level filter, ignore lower-level status filters.
         val effectiveDocumentStatus = if (filter != null) null else documentStatus
@@ -258,14 +254,6 @@ internal object DocumentListingQuery {
             (finishedRunStatusExpr eq IngestionStatus.Succeeded)
 
         var whereOp = DocumentsTable.tenantId eq tenantIdUuid
-
-        if (trimmedSearch != null) {
-            val escaped = trimmedSearch.lowercase()
-                .replace("\\", "\\\\")
-                .replace("%", "\\%")
-                .replace("_", "\\_")
-            whereOp = whereOp and (LowerCase(DocumentsTable.filename) like "%${escaped}%")
-        }
 
         val requiresDraft = effectiveDocumentStatus != null || documentType != null
         if (requiresDraft) {

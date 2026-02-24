@@ -23,9 +23,9 @@ class HomeShellTopBarResolverTest {
 
     private val testNavItems = listOf(
         NavItem("today", Res.string.home_today, Res.drawable.chart_bar_trend_up,
-            HomeDestination.Today, shellTopBar = ShellTopBarDefault.Search),
+            HomeDestination.Today, shellTopBar = ShellTopBarDefault.Title),
         NavItem("documents", Res.string.nav_documents, Res.drawable.file_text,
-            HomeDestination.Documents, shellTopBar = ShellTopBarDefault.Search),
+            HomeDestination.Documents, shellTopBar = ShellTopBarDefault.Title),
         NavItem("cashflow", Res.string.cashflow_title, Res.drawable.cashflow,
             HomeDestination.Cashflow, shellTopBar = ShellTopBarDefault.Title),
         NavItem("contacts", Res.string.nav_contacts, Res.drawable.users,
@@ -41,12 +41,12 @@ class HomeShellTopBarResolverTest {
         val todayResult = resolveHomeShellTopBarConfig(
             "today", testNavItems, testSortedRoutes, emptyMap(), ::fallbackConfig
         )
-        assertEquals("Search fallback", (todayResult?.mode as? HomeShellTopBarMode.Search)?.placeholder)
+        assertEquals("Default Title", (todayResult?.mode as? HomeShellTopBarMode.Title)?.title)
 
         val cashflowResult = resolveHomeShellTopBarConfig(
             "cashflow", testNavItems, testSortedRoutes, emptyMap(), ::fallbackConfig
         )
-        assertEquals("Default Cashflow", (cashflowResult?.mode as? HomeShellTopBarMode.Title)?.title)
+        assertEquals("Default Title", (cashflowResult?.mode as? HomeShellTopBarMode.Title)?.title)
 
         // Items without shellTopBar should return null
         val contactsResult = resolveHomeShellTopBarConfig(
@@ -101,7 +101,7 @@ class HomeShellTopBarResolverTest {
         )
 
         assertEquals(
-            expected = "Default Cashflow",
+            expected = "Default Title",
             actual = (resolved?.mode as HomeShellTopBarMode.Title).title
         )
     }
@@ -111,11 +111,7 @@ class HomeShellTopBarResolverTest {
         val registered = mapOf(
             "documents" to HomeShellTopBarConfig(
                 enabled = false,
-                mode = HomeShellTopBarMode.Search(
-                    query = "ignored",
-                    placeholder = "Search",
-                    onQueryChange = {}
-                )
+                mode = HomeShellTopBarMode.Title("Disabled")
             )
         )
 
@@ -131,16 +127,10 @@ class HomeShellTopBarResolverTest {
     }
 
     private fun fallbackConfig(normalizedRoute: String, default: ShellTopBarDefault): HomeShellTopBarConfig? {
+        require(normalizedRoute.isNotBlank())
         return when (default) {
-            ShellTopBarDefault.Search -> HomeShellTopBarConfig(
-                mode = HomeShellTopBarMode.Search(
-                    query = "",
-                    placeholder = "Search fallback",
-                    onQueryChange = {}
-                )
-            )
             ShellTopBarDefault.Title -> HomeShellTopBarConfig(
-                mode = HomeShellTopBarMode.Title("Default Cashflow")
+                mode = HomeShellTopBarMode.Title("Default Title")
             )
         }
     }

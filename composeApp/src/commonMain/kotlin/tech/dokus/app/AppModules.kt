@@ -20,6 +20,7 @@ import tech.dokus.features.contacts.contactsNetworkModule
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.diModules
+import tech.dokus.foundation.aura.model.DesktopNavPlacement
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
@@ -66,17 +67,28 @@ val List<AppModule>.navSectionsCombined: List<NavSection>
             .groupBy { it.sectionId }
             .map { (_, groups) ->
                 val first = groups.minByOrNull { it.sectionOrder } ?: groups.first()
+                val sectionItems = groups
+                    .flatMap { it.items }
+                    .filter { it.desktopPlacement == DesktopNavPlacement.Section }
+                    .sortedBy { it.priority }
                 NavSection(
                     id = first.sectionId,
                     titleRes = first.sectionTitle,
                     iconRes = first.sectionIcon,
                     order = first.sectionOrder,
-                    items = groups.flatMap { it.items }.sortedBy { it.priority },
+                    items = sectionItems,
                     defaultExpanded = groups.any { it.sectionDefaultExpanded },
                 )
             }
+            .filter { it.items.isNotEmpty() }
             .sortedBy { it.order }
     }
+
+/** Desktop pinned items rendered above sectioned groups. */
+val List<AppModule>.desktopPinnedItems: List<NavItem>
+    get() = allNavItems
+        .filter { it.desktopPlacement == DesktopNavPlacement.PinnedTop }
+        .sortedBy { it.priority }
 
 /** Mobile bottom tabs — items with mobileTabOrder + "More" appended */
 val List<AppModule>.mobileTabConfigs: List<MobileTabConfig>

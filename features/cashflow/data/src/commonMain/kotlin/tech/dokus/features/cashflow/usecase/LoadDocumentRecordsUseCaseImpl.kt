@@ -21,7 +21,6 @@ internal class LoadDocumentRecordsUseCaseImpl(
         filter: DocumentListFilter?,
         documentStatus: DocumentStatus?,
         ingestionStatus: IngestionStatus?,
-        search: String?
     ): Result<PaginatedResponse<DocumentRecordDto>> {
         require(page >= 0) { "Page must be non-negative" }
         require(pageSize > 0) { "Page size must be positive" }
@@ -30,7 +29,6 @@ internal class LoadDocumentRecordsUseCaseImpl(
             filter = filter,
             documentStatus = documentStatus,
             ingestionStatus = ingestionStatus,
-            search = search?.takeIf { it.isNotBlank() },
             page = page,
             limit = pageSize
         )

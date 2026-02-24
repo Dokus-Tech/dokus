@@ -236,7 +236,6 @@ internal class DocumentReviewContainer(
             page = nextPage,
             pageSize = DocumentsState.PAGE_SIZE,
             filter = context.filter.toListFilter(),
-            search = context.search,
         ).fold(
             onSuccess = { response ->
                 val loadedItems = response.items.map { it.toDocQueueItem() }

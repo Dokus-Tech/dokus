@@ -5,6 +5,7 @@ import androidx.navigation.compose.composable
 import tech.dokus.app.screens.AccountantScreen
 import tech.dokus.app.screens.MoreRoute
 import tech.dokus.app.screens.UnderDevelopmentScreen
+import tech.dokus.app.screens.search.SearchRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
 import tech.dokus.app.screens.today.TodayRoute
@@ -25,6 +26,9 @@ internal object HomeNavigationProvider : NavigationProvider {
         }
         composable<HomeDestination.Accountant> {
             AccountantScreen()
+        }
+        composable<HomeDestination.Search> {
+            SearchRoute()
         }
         composable<HomeDestination.More> {
             MoreRoute()

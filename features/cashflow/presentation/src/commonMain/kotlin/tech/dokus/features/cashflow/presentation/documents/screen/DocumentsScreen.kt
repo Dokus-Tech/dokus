@@ -141,7 +141,7 @@ private fun DocumentsContent(
 
         // Documents list or empty state
         when {
-            documents.isEmpty() && state.searchQuery.isEmpty() && state.filter == DocumentFilter.All -> {
+            documents.isEmpty() && state.filter == DocumentFilter.All -> {
                 DokusEmptyState(
                     title = stringResource(Res.string.documents_empty_title),
                     subtitle = stringResource(Res.string.documents_empty_upload_cta),

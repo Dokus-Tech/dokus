@@ -20,6 +20,7 @@ class RouteSerialNameConsistencyTest {
         HomeDestination.Today,
         HomeDestination.Tomorrow,
         HomeDestination.Documents,
+        HomeDestination.Search,
         HomeDestination.Cashflow,
         HomeDestination.Contacts,
         HomeDestination.Team,

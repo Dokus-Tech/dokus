@@ -53,7 +53,6 @@ sealed interface CashFlowDestination : NavigationDestination {
     data class DocumentReview(
         val documentId: String,
         val sourceFilter: String? = null,
-        val sourceSearch: String? = null,
         val sourceSort: String = DocumentReviewSourceSort.NewestFirst.token,
     ) : CashFlowDestination
 
