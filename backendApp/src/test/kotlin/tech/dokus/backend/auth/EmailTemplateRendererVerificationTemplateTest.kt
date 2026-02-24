@@ -46,7 +46,11 @@ class EmailTemplateRendererVerificationTemplateTest {
         assertContains(template.textBody, "Confirm your email address")
         assertContains(template.textBody, "To activate your Dokus workspace, please confirm your email address.")
         assertContains(template.textBody, expectedUrl)
+        assertContains(template.textBody, "Confirm your email address by opening the following link:")
+        assertContains(template.textBody, "expires in 24 hour(s)")
+        assertFalse(template.textBody.contains("Click the button below"))
 
+        assertContains(template.htmlBody, "expires in 24 hour(s)")
         assertFalse(template.htmlBody.contains("background:#0f1115"))
         assertFalse(template.htmlBody.contains("Open in Dokus"))
         assertFalse(template.htmlBody.contains("Notification preferences"))

@@ -151,6 +151,8 @@ class EmailTemplateRenderer(
                         <!-- Fallback -->
                         <tr>
                           <td style="font-size:13px; line-height:1.6; color:#555555;">
+                            This link expires in $expirationHours hour(s).
+                            <br/><br/>
                             If the button does not work, copy and paste the link below into your browser:
                             <br/><br/>
                             <span style="word-break:break-all;">
@@ -187,16 +189,13 @@ class EmailTemplateRenderer(
             appendLine()
             appendLine("To activate your Dokus workspace, please confirm your email address.")
             appendLine()
-            appendLine("Click the button below to continue.")
-            appendLine("Confirm email: $verificationUrl")
-            appendLine()
-            appendLine("If the button does not work, copy and paste the link below into your browser:")
+            appendLine("Confirm your email address by opening the following link:")
             appendLine(verificationUrl)
+            appendLine()
+            appendLine("This link expires in $expirationHours hour(s).")
             appendLine()
             appendLine("Dokus")
             appendLine("dokus.tech")
-            appendLine()
-            appendLine("This link expires in $expirationHours hour(s).")
         }
 
         return EmailTemplate(
@@ -242,6 +241,9 @@ class EmailTemplateRenderer(
         val safeDetails = details.map(::escapeHtml)
         val detailsHtml = safeDetails.joinToString(separator = "<br><br>")
         val preferencesUrl = absoluteUrl(config.notificationPreferencesPath)
+        val safeCtaUrl = escapeHtml(ctaUrl)
+        val safeCtaText = escapeHtml(ctaText)
+        val safePreferencesUrl = escapeHtml(preferencesUrl)
 
         val html = """
             <!doctype html>
@@ -261,9 +263,9 @@ class EmailTemplateRenderer(
                           <div style="font-size:18px;font-weight:600;letter-spacing:0.2px;margin-bottom:20px;">Dokus</div>
                           <div style="font-size:20px;line-height:1.35;font-weight:600;margin-bottom:16px;">$safeSubject</div>
                           <div style="color:#c8ceda;margin-bottom:24px;">$detailsHtml</div>
-                          <a href="$ctaUrl" style="display:inline-block;background:#dce7ff;color:#101522;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">$ctaText</a>
+                          <a href="$safeCtaUrl" style="display:inline-block;background:#dce7ff;color:#101522;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">$safeCtaText</a>
                           <div style="margin-top:28px;padding-top:14px;border-top:1px solid #252b38;color:#9aa3b2;font-size:12px;">
-                            dokus.tech - <a href="$preferencesUrl" style="color:#9fb3ff;text-decoration:none;">Notification preferences</a>
+                            dokus.tech - <a href="$safePreferencesUrl" style="color:#9fb3ff;text-decoration:none;">Notification preferences</a>
                           </div>
                         </td>
                       </tr>

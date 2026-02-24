@@ -27,5 +27,6 @@ private fun emitStartupAuthDeepLink() {
 
     if (hasTokenizedAuthRoute) {
         ExternalUriHandler.onNewUri(currentUrl)
+        window.history.replaceState(null, "", window.location.pathname)
     }
 }
