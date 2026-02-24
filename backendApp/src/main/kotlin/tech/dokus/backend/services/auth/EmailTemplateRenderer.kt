@@ -89,17 +89,119 @@ class EmailTemplateRenderer(
     }
 
     fun renderEmailVerification(verificationToken: String, expirationHours: Int): EmailTemplate {
-        val subject = "Verify your email address"
+        val subject = "Confirm your email address"
         val verificationUrl = absoluteUrl("/auth/verify-email?token=$verificationToken")
-        val details = listOf(
-            "Confirm this email address to continue using Dokus.",
-            "This link expires in $expirationHours hour(s)."
-        )
-        return renderTemplate(
+        val safeVerificationUrl = escapeHtml(verificationUrl)
+
+        val html = """
+            <!DOCTYPE html>
+            <html>
+              <body style="margin:0; padding:0; background-color:#ffffff;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;">
+                  <tr>
+                    <td align="center">
+                      <table width="600" cellpadding="0" cellspacing="0" border="0"
+                             style="padding:40px 20px; font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif; color:#111111;">
+
+                        <!-- Title -->
+                        <tr>
+                          <td style="font-size:20px; font-weight:600; padding-bottom:24px;">
+                            Confirm your email address
+                          </td>
+                        </tr>
+
+                        <!-- Body -->
+                        <tr>
+                          <td style="font-size:16px; line-height:1.6;">
+                            To activate your Dokus workspace, please confirm your email address.
+                            <br/><br/>
+                            Click the button below to continue.
+                          </td>
+                        </tr>
+
+                        <!-- Spacing -->
+                        <tr>
+                          <td height="32"></td>
+                        </tr>
+
+                        <!-- Button -->
+                        <tr>
+                          <td align="left">
+                            <a href="$safeVerificationUrl"
+                               style="
+                                 display:inline-block;
+                                 padding:12px 20px;
+                                 font-size:14px;
+                                 font-weight:500;
+                                 text-decoration:none;
+                                 color:#ffffff;
+                                 background-color:#111111;
+                                 border-radius:6px;
+                               ">
+                              Confirm email
+                            </a>
+                          </td>
+                        </tr>
+
+                        <!-- Spacing -->
+                        <tr>
+                          <td height="32"></td>
+                        </tr>
+
+                        <!-- Fallback -->
+                        <tr>
+                          <td style="font-size:13px; line-height:1.6; color:#555555;">
+                            This link expires in $expirationHours hour(s).
+                            <br/><br/>
+                            If the button does not work, copy and paste the link below into your browser:
+                            <br/><br/>
+                            <span style="word-break:break-all;">
+                              $safeVerificationUrl
+                            </span>
+                          </td>
+                        </tr>
+
+                        <!-- Footer spacing -->
+                        <tr>
+                          <td height="48"></td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                          <td style="font-size:13px; color:#777777;">
+                            Dokus<br/>
+                            <a href="https://dokus.tech" style="color:#777777; text-decoration:none;">
+                              dokus.tech
+                            </a>
+                          </td>
+                        </tr>
+
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </body>
+            </html>
+        """.trimIndent()
+
+        val text = buildString {
+            appendLine(subject)
+            appendLine()
+            appendLine("To activate your Dokus workspace, please confirm your email address.")
+            appendLine()
+            appendLine("Confirm your email address by opening the following link:")
+            appendLine(verificationUrl)
+            appendLine()
+            appendLine("This link expires in $expirationHours hour(s).")
+            appendLine()
+            appendLine("Dokus")
+            appendLine("dokus.tech")
+        }
+
+        return EmailTemplate(
             subject = subject,
-            details = details,
-            ctaText = "Open in Dokus",
-            ctaUrl = verificationUrl
+            htmlBody = html,
+            textBody = text
         )
     }
 
@@ -139,6 +241,9 @@ class EmailTemplateRenderer(
         val safeDetails = details.map(::escapeHtml)
         val detailsHtml = safeDetails.joinToString(separator = "<br><br>")
         val preferencesUrl = absoluteUrl(config.notificationPreferencesPath)
+        val safeCtaUrl = escapeHtml(ctaUrl)
+        val safeCtaText = escapeHtml(ctaText)
+        val safePreferencesUrl = escapeHtml(preferencesUrl)
 
         val html = """
             <!doctype html>
@@ -158,9 +263,9 @@ class EmailTemplateRenderer(
                           <div style="font-size:18px;font-weight:600;letter-spacing:0.2px;margin-bottom:20px;">Dokus</div>
                           <div style="font-size:20px;line-height:1.35;font-weight:600;margin-bottom:16px;">$safeSubject</div>
                           <div style="color:#c8ceda;margin-bottom:24px;">$detailsHtml</div>
-                          <a href="$ctaUrl" style="display:inline-block;background:#dce7ff;color:#101522;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">$ctaText</a>
+                          <a href="$safeCtaUrl" style="display:inline-block;background:#dce7ff;color:#101522;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">$safeCtaText</a>
                           <div style="margin-top:28px;padding-top:14px;border-top:1px solid #252b38;color:#9aa3b2;font-size:12px;">
-                            dokus.tech - <a href="$preferencesUrl" style="color:#9fb3ff;text-decoration:none;">Notification preferences</a>
+                            dokus.tech - <a href="$safePreferencesUrl" style="color:#9fb3ff;text-decoration:none;">Notification preferences</a>
                           </div>
                         </td>
                       </tr>

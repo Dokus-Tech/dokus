@@ -6,6 +6,10 @@
     <array>
         <string>group.vision.invoid.dokus.share</string>
     </array>
+    <key>com.apple.developer.associated-domains</key>
+    <array>
+        <string>applinks:app.dokus.tech</string>
+    </array>
     <key>keychain-access-groups</key>
     <array>
         <string>$(AppIdentifierPrefix)vision.invoid.dokus.shared</string>
