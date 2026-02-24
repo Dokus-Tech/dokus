@@ -16,6 +16,7 @@ import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.service.PeppolService
+import java.security.MessageDigest
 
 private val logger = loggerFor("PeppolWebhook")
 
@@ -83,7 +84,12 @@ internal fun Route.peppolWebhookRoutes() {
         }
 
         val expectedToken = settings.webhookToken?.trim()
-        if (expectedToken.isNullOrBlank() || token != expectedToken) {
+        val tokenMatch = !expectedToken.isNullOrBlank() &&
+            MessageDigest.isEqual(
+                token.toByteArray(Charsets.UTF_8),
+                expectedToken.toByteArray(Charsets.UTF_8)
+            )
+        if (!tokenMatch) {
             logger.warn(
                 "Webhook token mismatch for tenant {} companyId {}",
                 settings.tenantId,

@@ -27,6 +27,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
+import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
@@ -162,8 +163,13 @@ class PeppolTransmissionRepository {
                     it[PeppolTransmissionsTable.createdAt] = now
                     it[PeppolTransmissionsTable.updatedAt] = now
                 }
-            } catch (duplicate: Exception) {
+            } catch (e: ExposedSQLException) {
                 // Concurrent insert with same (tenant_id, idempotency_key): reload existing row.
+                // SQLSTATE 23505 = unique_violation
+                val isUniqueViolation = e.cause?.let { cause ->
+                    (cause as? java.sql.SQLException)?.sqlState == "23505"
+                } ?: false
+                if (!isUniqueViolation) throw e
                 logger.debug(
                     "Concurrent PEPPOL idempotency insert detected for tenant={} key={}",
                     tenantId,
@@ -393,6 +399,7 @@ class PeppolTransmissionRepository {
         transmissionId: PeppolTransmissionId,
         tenantId: TenantId,
         status: PeppolStatus,
+        canTransition: (from: PeppolStatus, to: PeppolStatus) -> Boolean,
         externalDocumentId: String? = null,
         providerErrorCode: String? = null,
         providerErrorMessage: String? = null,
@@ -410,7 +417,7 @@ class PeppolTransmissionRepository {
                 .singleOrNull()
                 ?: return@dbQuery false
 
-            if (!isMonotonicTransition(current.status, status)) {
+            if (!canTransition(current.status, status)) {
                 return@dbQuery false
             }
 
@@ -551,9 +558,9 @@ class PeppolTransmissionRepository {
 
             query
                 .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.DESC)
-                .limit(limit + offset)
+                .limit(limit)
+                .offset(offset.toLong())
                 .map { it.toDto() }
-                .drop(offset)
         }
     }
 
@@ -611,64 +618,6 @@ class PeppolTransmissionRepository {
                 .single()
         }
     }
-
-    private fun isMonotonicTransition(from: PeppolStatus, to: PeppolStatus): Boolean {
-        if (from == to) return true
-        if (from in terminalStatuses) return false
-
-        return when (from) {
-            PeppolStatus.Pending -> to in setOf(
-                PeppolStatus.Queued,
-                PeppolStatus.Sending,
-                PeppolStatus.Sent,
-                PeppolStatus.FailedRetryable,
-                PeppolStatus.Failed,
-                PeppolStatus.Delivered,
-                PeppolStatus.Rejected
-            )
-
-            PeppolStatus.Queued -> to in setOf(
-                PeppolStatus.Sending,
-                PeppolStatus.Sent,
-                PeppolStatus.FailedRetryable,
-                PeppolStatus.Failed,
-                PeppolStatus.Delivered,
-                PeppolStatus.Rejected
-            )
-
-            PeppolStatus.Sending -> to in setOf(
-                PeppolStatus.Sent,
-                PeppolStatus.FailedRetryable,
-                PeppolStatus.Failed,
-                PeppolStatus.Delivered,
-                PeppolStatus.Rejected
-            )
-
-            PeppolStatus.Sent -> to in setOf(
-                PeppolStatus.Delivered,
-                PeppolStatus.Rejected,
-                PeppolStatus.Failed
-            )
-
-            PeppolStatus.FailedRetryable -> to in setOf(
-                PeppolStatus.Sending,
-                PeppolStatus.Sent,
-                PeppolStatus.Delivered,
-                PeppolStatus.Rejected,
-                PeppolStatus.Failed
-            )
-
-            PeppolStatus.Failed,
-            PeppolStatus.Delivered,
-            PeppolStatus.Rejected -> false
-        }
-    }
-
-    private val terminalStatuses = setOf(
-        PeppolStatus.Delivered,
-        PeppolStatus.Rejected,
-        PeppolStatus.Failed
-    )
 
     private fun ResultRow.toDto(): PeppolTransmissionDto = PeppolTransmissionDto(
         id = PeppolTransmissionId.parse(this[PeppolTransmissionsTable.id].value.toString()),

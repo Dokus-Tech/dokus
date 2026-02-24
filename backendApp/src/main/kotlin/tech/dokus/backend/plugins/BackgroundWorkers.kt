@@ -3,8 +3,7 @@ package tech.dokus.backend.plugins
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopping
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.getKoin
@@ -32,6 +31,8 @@ fun Application.configureBackgroundWorkers() {
     val cashflowProjectionReconciliationWorker by inject<CashflowProjectionReconciliationWorker>()
     val welcomeEmailWorker by inject<WelcomeEmailWorker>()
 
+    var webhookSyncJob: Job? = null
+
     monitor.subscribe(ApplicationStarted) {
         rateLimitCleanupWorker.start()
         logger.info("Starting document processing worker")
@@ -47,7 +48,7 @@ fun Application.configureBackgroundWorkers() {
         logger.info("Starting welcome email worker")
         welcomeEmailWorker.start()
 
-        CoroutineScope(Dispatchers.Default).launch {
+        webhookSyncJob = launch {
             peppolWebhookSyncService.syncAllEnabledTenants()
                 .onSuccess { summary ->
                     logger.info(
@@ -66,6 +67,7 @@ fun Application.configureBackgroundWorkers() {
     }
 
     monitor.subscribe(ApplicationStopping) {
+        webhookSyncJob?.cancel()
         processingWorker.stop()
         peppolPollingWorker.stop()
         peppolOutboundWorker.stop()

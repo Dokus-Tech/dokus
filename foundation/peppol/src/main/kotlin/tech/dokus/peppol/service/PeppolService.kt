@@ -606,6 +606,7 @@ class PeppolService(
             transmissionId = transmission.id,
             tenantId = transmission.tenantId,
             status = mappedStatus,
+            canTransition = transmissionStateMachine::canTransition,
             externalDocumentId = detail.id,
             providerErrorCode = if (mappedStatus == PeppolStatus.Rejected || mappedStatus == PeppolStatus.Failed) {
                 "PROVIDER_SIGNAL"
@@ -631,10 +632,10 @@ class PeppolService(
     private fun mapRecommandOutboundStatus(detail: RecommandDocumentDetail): PeppolStatus? {
         val signal = detail.receivedPeppolSignalMessage?.lowercase()
         if (signal != null) {
-            if (signal.contains("reject") || signal.contains("negative") || signal.contains("error")) {
+            if (signal.contains("rejected") || signal.contains("negative")) {
                 return PeppolStatus.Rejected
             }
-            if (signal.contains("accept") || signal.contains("ack") || signal.contains("delivered")) {
+            if (signal.contains("accepted") || signal.contains("acknowledgement") || signal.contains("delivered")) {
                 return PeppolStatus.Delivered
             }
         }

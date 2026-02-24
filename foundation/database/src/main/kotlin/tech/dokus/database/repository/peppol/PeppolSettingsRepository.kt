@@ -63,7 +63,7 @@ class PeppolSettingsRepository {
 
             if (existing != null) {
                 val existingWebhookToken = existing[PeppolSettingsTable.webhookToken]
-                val webhookToken = existingWebhookToken?.takeIf { it.isNotBlank() }
+                val webhookToken = existingWebhookToken.takeIf { it.isNotBlank() }
                     ?: UUID.randomUUID().toString().replace("-", "")
 
                 // Update existing

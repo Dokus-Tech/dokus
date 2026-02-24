@@ -35,7 +35,7 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
     val testMode = bool("test_mode").default(true)
 
     // Webhook configuration
-    val webhookToken = varchar("webhook_token", 64).nullable().uniqueIndex()
+    val webhookToken = varchar("webhook_token", 64).uniqueIndex()
     val lastWebhookPollTriggeredAt = datetime("last_webhook_poll_triggered_at").nullable()
 
     // Sync tracking - used for initial sync and weekly full sync
