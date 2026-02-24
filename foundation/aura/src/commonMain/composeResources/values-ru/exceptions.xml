@@ -29,6 +29,7 @@
     <string name="exception_invalid_api_credentials">Недействительные учётные данные API. Проверьте свой API-ключ и секрет.</string>
     <string name="exception_missing_vat_number">Сначала настройте номер НДС вашей компании в настройках рабочего пространства</string>
     <string name="exception_missing_company_address">Сначала настройте адрес вашей компании в настройках рабочего пространства</string>
+    <string name="exception_peppol_send_requires_confirmed_document">Счет должен быть подтвержден перед отправкой через PEPPOL</string>
 
     <!-- 401 Authentication Errors -->
     <string name="exception_not_authenticated">Пожалуйста, войдите, чтобы продолжить</string>

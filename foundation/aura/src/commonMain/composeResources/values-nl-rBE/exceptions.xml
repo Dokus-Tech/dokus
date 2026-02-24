@@ -29,6 +29,7 @@
     <string name="exception_invalid_api_credentials">Ongeldige API-referenties. Controleer uw API-sleutel en geheim.</string>
     <string name="exception_missing_vat_number">Configureer eerst uw BTW-nummer in de werkruimte-instellingen</string>
     <string name="exception_missing_company_address">Configureer eerst uw bedrijfsadres in de werkruimte-instellingen</string>
+    <string name="exception_peppol_send_requires_confirmed_document">Factuur moet bevestigd zijn voordat deze via PEPPOL wordt verzonden</string>
 
     <!-- 401 Authenticatiefouten -->
     <string name="exception_not_authenticated">Log in om verder te gaan</string>

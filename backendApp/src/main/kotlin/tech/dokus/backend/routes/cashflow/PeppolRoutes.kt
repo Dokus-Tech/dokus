@@ -200,14 +200,10 @@ internal fun Route.peppolRoutes() {
                     documentId = sourceDocumentId
                 )
                 if (!isConfirmed) {
-                    throw DokusException.BadRequest(
-                        "Invoice source document must be confirmed before PEPPOL send"
-                    )
+                    throw DokusException.PeppolSendRequiresConfirmedDocument
                 }
             } else if (invoice.status == InvoiceStatus.Draft) {
-                throw DokusException.BadRequest(
-                    "Invoice must be confirmed before PEPPOL send"
-                )
+                throw DokusException.PeppolSendRequiresConfirmedDocument
             }
 
             // Enqueue-only outbound flow.

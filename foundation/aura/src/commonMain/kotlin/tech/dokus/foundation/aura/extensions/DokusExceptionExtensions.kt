@@ -71,6 +71,7 @@ import tech.dokus.aura.resources.exception_not_authenticated
 import tech.dokus.aura.resources.exception_not_authorized
 import tech.dokus.aura.resources.exception_not_found
 import tech.dokus.aura.resources.exception_not_implemented
+import tech.dokus.aura.resources.exception_peppol_send_requires_confirmed_document
 import tech.dokus.aura.resources.exception_password_do_not_match
 import tech.dokus.aura.resources.exception_payment_amount_exceeds_remaining
 import tech.dokus.aura.resources.exception_payment_amount_must_be_positive
@@ -184,6 +185,9 @@ val DokusException.localized: String
         is DokusException.Validation.MissingVatNumber -> stringResource(Res.string.exception_missing_vat_number)
         is DokusException.Validation.MissingCompanyAddress -> stringResource(
             Res.string.exception_missing_company_address
+        )
+        is DokusException.PeppolSendRequiresConfirmedDocument -> stringResource(
+            Res.string.exception_peppol_send_requires_confirmed_document
         )
         is DokusException.Validation -> stringResource(Res.string.exception_validation_error)
         is DokusException.BadRequest -> message
