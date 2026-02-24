@@ -134,11 +134,10 @@ internal fun SearchScreen(
     Scaffold(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .padding(horizontal = horizontalPadding)
         ) {
             if (!isLargeScreen) {
