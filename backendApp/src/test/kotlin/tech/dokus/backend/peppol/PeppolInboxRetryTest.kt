@@ -230,6 +230,7 @@ class PeppolInboxRetryTest {
         val deliveredTransmission = transmissionRepository.getByExternalDocumentId(tenantId, "ext-1").getOrThrow()
         assertNotNull(deliveredTransmission)
         assertEquals(PeppolStatus.Delivered, deliveredTransmission.status)
+        assertEquals(null, deliveredTransmission.errorMessage)
 
         // Third poll: delivered transmission is skipped (no callback), markAsRead is best-effort.
         peppolService.pollInbox(tenantId) { _, _, _, _ ->

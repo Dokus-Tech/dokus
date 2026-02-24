@@ -580,7 +580,8 @@ class PeppolTransmissionRepository {
         providerErrorMessage: String? = null,
         attemptCount: Int? = null,
         nextRetryAt: LocalDateTime? = null,
-        lastAttemptAt: LocalDateTime? = null
+        lastAttemptAt: LocalDateTime? = null,
+        clearFailureDetails: Boolean = false
     ): Result<PeppolTransmissionDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
@@ -599,15 +600,30 @@ class PeppolTransmissionRepository {
             }) {
                 it[PeppolTransmissionsTable.status] = status
                 it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId ?: current[PeppolTransmissionsTable.externalDocumentId]
-                it[PeppolTransmissionsTable.errorMessage] = errorMessage ?: current[PeppolTransmissionsTable.errorMessage]
+                it[PeppolTransmissionsTable.errorMessage] = when {
+                    clearFailureDetails -> errorMessage
+                    errorMessage != null -> errorMessage
+                    else -> current[PeppolTransmissionsTable.errorMessage]
+                }
                 it[PeppolTransmissionsTable.rawRequest] = rawRequest ?: current[PeppolTransmissionsTable.rawRequest]
                 it[PeppolTransmissionsTable.rawResponse] = rawResponse ?: current[PeppolTransmissionsTable.rawResponse]
                 it[PeppolTransmissionsTable.transmittedAt] = transmittedAt ?: current[PeppolTransmissionsTable.transmittedAt]
-                it[PeppolTransmissionsTable.providerErrorCode] = providerErrorCode ?: current[PeppolTransmissionsTable.providerErrorCode]
-                it[PeppolTransmissionsTable.providerErrorMessage] =
-                    providerErrorMessage ?: current[PeppolTransmissionsTable.providerErrorMessage]
+                it[PeppolTransmissionsTable.providerErrorCode] = when {
+                    clearFailureDetails -> providerErrorCode
+                    providerErrorCode != null -> providerErrorCode
+                    else -> current[PeppolTransmissionsTable.providerErrorCode]
+                }
+                it[PeppolTransmissionsTable.providerErrorMessage] = when {
+                    clearFailureDetails -> providerErrorMessage
+                    providerErrorMessage != null -> providerErrorMessage
+                    else -> current[PeppolTransmissionsTable.providerErrorMessage]
+                }
                 it[PeppolTransmissionsTable.attemptCount] = attemptCount ?: current[PeppolTransmissionsTable.attemptCount]
-                it[PeppolTransmissionsTable.nextRetryAt] = nextRetryAt ?: current[PeppolTransmissionsTable.nextRetryAt]
+                it[PeppolTransmissionsTable.nextRetryAt] = when {
+                    clearFailureDetails -> nextRetryAt
+                    nextRetryAt != null -> nextRetryAt
+                    else -> current[PeppolTransmissionsTable.nextRetryAt]
+                }
                 it[PeppolTransmissionsTable.lastAttemptAt] = lastAttemptAt ?: current[PeppolTransmissionsTable.lastAttemptAt]
                 it[updatedAt] = now
             }

@@ -425,7 +425,8 @@ class PeppolService(
                         tenantId = tenantId,
                         status = PeppolStatus.Delivered,
                         externalDocumentId = inboxItem.id,
-                        transmittedAt = now
+                        transmittedAt = now,
+                        clearFailureDetails = true
                     ).getOrThrow()
 
                     // Mark as read in provider

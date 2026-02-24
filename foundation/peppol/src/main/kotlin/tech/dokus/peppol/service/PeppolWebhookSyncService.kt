@@ -95,7 +95,7 @@ class PeppolWebhookSyncService(
         var updated = 0
         var deleted = 0
 
-        val keeper = if (existing.isEmpty()) {
+        if (existing.isEmpty()) {
             created++
             webhooksClient.createWebhook(
                 apiKey = creds.apiKey,
@@ -130,8 +130,6 @@ class PeppolWebhookSyncService(
                 }
                 deleted++
             }
-
-            candidate
         }
 
         val finalState = webhooksClient.listWebhooks(
