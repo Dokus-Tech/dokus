@@ -36,7 +36,10 @@ interface PeppolProvider {
      * @param request The document to send
      * @return Result containing the send response or error
      */
-    suspend fun sendDocument(request: PeppolSendRequest): Result<PeppolSendResponse>
+    suspend fun sendDocument(
+        request: PeppolSendRequest,
+        idempotencyKey: String? = null
+    ): Result<PeppolSendResponse>
 
     /**
      * Verify if a recipient is registered on the Peppol network.

@@ -43,8 +43,11 @@ import tech.dokus.backend.services.notifications.NotificationPreferencesService
 import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
+import tech.dokus.backend.routes.cashflow.PeppolWebhookSignatureVerifier
 import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
+import tech.dokus.backend.worker.PeppolOutboundReconciliationWorker
+import tech.dokus.backend.worker.PeppolOutboundWorker
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.backend.worker.WelcomeEmailWorker
@@ -92,8 +95,10 @@ import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolCredentialResolver
 import tech.dokus.peppol.service.PeppolCredentialResolverImpl
+import tech.dokus.peppol.service.PeppolOutboundErrorClassifier
 import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.service.PeppolTransmissionStateMachine
 import tech.dokus.peppol.service.PeppolTransferPollingService
 import tech.dokus.peppol.service.PeppolVerificationService
 import tech.dokus.peppol.validator.PeppolValidator
@@ -272,15 +277,18 @@ private fun cashflowModule() = module {
 
     // Peppol
     single { PeppolModuleConfig.fromConfig(get<Config>()) }
+    single { PeppolWebhookSignatureVerifier(get<PeppolModuleConfig>().webhookSecurity) }
     single { PeppolProviderFactory(get()) }
     single { RecommandCompaniesClient(get()) }
     single { RecommandProvider(get()) } // For directory lookups
     single { PeppolMapper() }
     single { PeppolValidator() }
+    single { PeppolOutboundErrorClassifier() }
+    single { PeppolTransmissionStateMachine() }
     // Centralized credential resolver - ALL Peppol operations use this
     single<PeppolCredentialResolver> { PeppolCredentialResolverImpl(get(), get()) }
     single { PeppolConnectionService(get(), get(), get()) }
-    single { PeppolService(get(), get(), get(), get(), get(), get()) }
+    single { PeppolService(get(), get(), get(), get(), get(), get(), get(), get()) }
 
     // PEPPOL Directory Cache - resolves recipients via cache-first lookup
     single { PeppolRecipientResolver(get(), get(), get(), get()) }
@@ -293,6 +301,8 @@ private fun cashflowModule() = module {
 
     // Peppol Polling Worker
     singleOf(::PeppolPollingWorker)
+    singleOf(::PeppolOutboundWorker)
+    singleOf(::PeppolOutboundReconciliationWorker)
 }
 
 private val contactsModule = module {

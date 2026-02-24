@@ -44,7 +44,9 @@ import tech.dokus.peppol.provider.PeppolProvider
 import tech.dokus.peppol.provider.PeppolProviderFactory
 import tech.dokus.peppol.provider.client.RecommandCredentials
 import tech.dokus.peppol.service.PeppolCredentialResolver
+import tech.dokus.peppol.service.PeppolOutboundErrorClassifier
 import tech.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.service.PeppolTransmissionStateMachine
 import tech.dokus.peppol.validator.PeppolValidator
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -163,7 +165,9 @@ class PeppolInboxRetryTest {
             providerFactory = providerFactory,
             mapper = PeppolMapper(),
             validator = PeppolValidator(),
-            credentialResolver = credentialResolver
+            credentialResolver = credentialResolver,
+            outboundErrorClassifier = PeppolOutboundErrorClassifier(),
+            transmissionStateMachine = PeppolTransmissionStateMachine()
         )
 
         runBlocking {
@@ -262,7 +266,10 @@ class PeppolInboxRetryTest {
 
         override fun configure(credentials: PeppolCredentials) = Unit
 
-        override suspend fun sendDocument(request: tech.dokus.peppol.model.PeppolSendRequest): Result<tech.dokus.peppol.model.PeppolSendResponse> =
+        override suspend fun sendDocument(
+            request: tech.dokus.peppol.model.PeppolSendRequest,
+            idempotencyKey: String?
+        ): Result<tech.dokus.peppol.model.PeppolSendResponse> =
             Result.failure(NotImplementedError())
 
         override suspend fun verifyRecipient(peppolId: String): Result<tech.dokus.peppol.model.PeppolVerifyResponse> =

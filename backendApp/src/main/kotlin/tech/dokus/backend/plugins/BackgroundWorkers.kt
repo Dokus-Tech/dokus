@@ -8,6 +8,8 @@ import org.koin.ktor.ext.getKoin
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
+import tech.dokus.backend.worker.PeppolOutboundReconciliationWorker
+import tech.dokus.backend.worker.PeppolOutboundWorker
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.backend.worker.WelcomeEmailWorker
@@ -20,6 +22,8 @@ fun Application.configureBackgroundWorkers() {
     val processingWorker by inject<DocumentProcessingWorker>()
     val rateLimitCleanupWorker by inject<RateLimitCleanupWorker>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()
+    val peppolOutboundWorker by inject<PeppolOutboundWorker>()
+    val peppolOutboundReconciliationWorker by inject<PeppolOutboundReconciliationWorker>()
     val cashflowProjectionReconciliationWorker by inject<CashflowProjectionReconciliationWorker>()
     val welcomeEmailWorker by inject<WelcomeEmailWorker>()
 
@@ -29,6 +33,10 @@ fun Application.configureBackgroundWorkers() {
         processingWorker.start()
         logger.info("Starting Peppol polling worker")
         peppolPollingWorker.start()
+        logger.info("Starting PEPPOL outbound worker")
+        peppolOutboundWorker.start()
+        logger.info("Starting PEPPOL outbound reconciliation worker")
+        peppolOutboundReconciliationWorker.start()
         logger.info("Starting cashflow projection reconciliation worker")
         cashflowProjectionReconciliationWorker.start()
         logger.info("Starting welcome email worker")
@@ -38,6 +46,8 @@ fun Application.configureBackgroundWorkers() {
     monitor.subscribe(ApplicationStopping) {
         processingWorker.stop()
         peppolPollingWorker.stop()
+        peppolOutboundWorker.stop()
+        peppolOutboundReconciliationWorker.stop()
         cashflowProjectionReconciliationWorker.stop()
         welcomeEmailWorker.stop()
 

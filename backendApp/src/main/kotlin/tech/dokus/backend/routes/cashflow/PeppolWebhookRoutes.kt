@@ -1,7 +1,7 @@
 package tech.dokus.backend.routes.cashflow
 
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
+import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
@@ -9,7 +9,9 @@ import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.peppol.service.PeppolService
 
 private val logger = loggerFor("PeppolWebhook")
 
@@ -25,6 +27,8 @@ private val logger = loggerFor("PeppolWebhook")
 internal fun Route.peppolWebhookRoutes() {
     val peppolSettingsRepository by inject<PeppolSettingsRepository>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()
+    val peppolService by inject<PeppolService>()
+    val signatureVerifier by inject<PeppolWebhookSignatureVerifier>()
 
     /**
      * POST /api/v1/peppol/webhook?token={tenantToken}
@@ -35,6 +39,7 @@ internal fun Route.peppolWebhookRoutes() {
      * Rate limit: 10 requests/minute per token (TODO: implement rate limiting)
      */
     post("/api/v1/peppol/webhook") {
+        val rawBody = call.receiveText()
         val token = call.request.queryParameters["token"]
 
         if (token.isNullOrBlank()) {
@@ -60,13 +65,30 @@ internal fun Route.peppolWebhookRoutes() {
             return@post
         }
 
-        // Parse webhook payload (optional - we may not need it)
-        val payload = runCatching { call.receive<WebhookPayload>() }.getOrNull()
+        if (!signatureVerifier.verify(call.request.headers, rawBody)) {
+            logger.warn("Webhook signature validation failed for tenant {}", tenantId)
+            call.respond(HttpStatusCode.Unauthorized, WebhookResponse(success = false, message = "Invalid signature"))
+            return@post
+        }
+
+        val payload = runCatching { json.decodeFromString<WebhookPayload>(rawBody) }.getOrNull()
+
+        payload?.documentId?.takeIf { it.isNotBlank() }?.let { externalDocumentId ->
+            peppolService.reconcileOutboundByExternalDocumentId(tenantId, externalDocumentId)
+                .onFailure { error ->
+                    logger.warn(
+                        "Failed outbound reconciliation on webhook for tenant {} and document {}",
+                        tenantId,
+                        externalDocumentId,
+                        error
+                    )
+                }
+        }
 
         logger.info("Webhook received for tenant $tenantId, event: ${payload?.eventType ?: "unknown"}")
 
         // Trigger immediate poll for this tenant
-        val pollTriggered = peppolPollingWorker.pollNow(tenantId)
+        val pollTriggered = peppolPollingWorker.pollNow(tenantId) // inbound safety net
 
         if (pollTriggered) {
             logger.info("Poll triggered for tenant $tenantId")

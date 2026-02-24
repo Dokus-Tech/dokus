@@ -22,7 +22,10 @@ data class PeppolModuleConfig(
     val globalTestMode: Boolean,
 
     /** Master credentials (required for all deployments) */
-    val masterCredentials: MasterCredentialsConfig
+    val masterCredentials: MasterCredentialsConfig,
+
+    /** Inbound webhook authenticity checks */
+    val webhookSecurity: WebhookSecurityConfig
 ) {
     companion object {
         /**
@@ -42,9 +45,52 @@ data class PeppolModuleConfig(
                 defaultProvider = peppolConfig.getString("defaultProvider"),
                 inbox = InboxConfig.fromConfig(peppolConfig.getConfig("inbox")),
                 globalTestMode = peppolConfig.getBoolean("globalTestMode"),
-                masterCredentials = MasterCredentialsConfig.fromConfig(peppolConfig.getConfig("master"))
+                masterCredentials = MasterCredentialsConfig.fromConfig(peppolConfig.getConfig("master")),
+                webhookSecurity = if (peppolConfig.hasPath("webhookSecurity")) {
+                    WebhookSecurityConfig.fromConfig(peppolConfig.getConfig("webhookSecurity"))
+                } else {
+                    WebhookSecurityConfig.disabled()
+                }
             )
         }
+    }
+}
+
+data class WebhookSecurityConfig(
+    val enabled: Boolean,
+    val sharedSecret: String,
+    val timestampHeader: String,
+    val signatureHeader: String,
+    val maxSkewSeconds: Long
+) {
+    companion object {
+        fun fromConfig(config: Config): WebhookSecurityConfig {
+            val enabled = config.getBoolean("enabled")
+            val sharedSecret = if (config.hasPath("sharedSecret")) config.getString("sharedSecret") else ""
+            val timestampHeader = config.getString("timestampHeader")
+            val signatureHeader = config.getString("signatureHeader")
+            val maxSkewSeconds = config.getLong("maxSkewSeconds")
+
+            if (enabled && sharedSecret.isBlank()) {
+                throw IllegalStateException("peppol.webhookSecurity.enabled=true requires non-empty sharedSecret")
+            }
+
+            return WebhookSecurityConfig(
+                enabled = enabled,
+                sharedSecret = sharedSecret,
+                timestampHeader = timestampHeader,
+                signatureHeader = signatureHeader,
+                maxSkewSeconds = maxSkewSeconds
+            )
+        }
+
+        fun disabled(): WebhookSecurityConfig = WebhookSecurityConfig(
+            enabled = false,
+            sharedSecret = "",
+            timestampHeader = "X-Recommand-Timestamp",
+            signatureHeader = "X-Recommand-Signature",
+            maxSkewSeconds = 300
+        )
     }
 }
 

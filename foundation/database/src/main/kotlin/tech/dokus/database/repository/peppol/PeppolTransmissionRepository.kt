@@ -8,6 +8,10 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -26,11 +30,42 @@ import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 
 /**
+ * Internal transmission projection used by workers/reconciliation.
+ * Includes fields that are intentionally hidden from public DTOs.
+ */
+data class PeppolTransmissionInternal(
+    val id: PeppolTransmissionId,
+    val tenantId: TenantId,
+    val direction: PeppolTransmissionDirection,
+    val documentType: PeppolDocumentType,
+    val status: PeppolStatus,
+    val invoiceId: InvoiceId? = null,
+    val externalDocumentId: String? = null,
+    val idempotencyKey: String,
+    val recipientPeppolId: PeppolId? = null,
+    val senderPeppolId: PeppolId? = null,
+    val errorMessage: String? = null,
+    val providerErrorCode: String? = null,
+    val providerErrorMessage: String? = null,
+    val attemptCount: Int = 0,
+    val nextRetryAt: LocalDateTime? = null,
+    val lastAttemptAt: LocalDateTime? = null,
+    val rawRequest: String? = null,
+    val rawResponse: String? = null,
+    val rawUblXmlKey: String? = null,
+    val transmittedAt: LocalDateTime? = null,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
+)
+
+/**
  * Repository for Peppol transmissions.
- * CRITICAL: All queries MUST filter by tenantId.
+ * CRITICAL: All tenant-scoped queries MUST filter by tenantId.
  */
 class PeppolTransmissionRepository {
     private val logger = loggerFor()
+
+    private val outboundClaimableStatuses = listOf(PeppolStatus.Queued, PeppolStatus.FailedRetryable)
 
     /**
      * Create a new transmission record.
@@ -42,22 +77,27 @@ class PeppolTransmissionRepository {
         invoiceId: InvoiceId? = null,
         externalDocumentId: String? = null,
         recipientPeppolId: PeppolId? = null,
-        senderPeppolId: PeppolId? = null
+        senderPeppolId: PeppolId? = null,
+        idempotencyKey: String? = null,
+        rawUblXmlKey: String? = null
     ): Result<PeppolTransmissionDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val newId = UUID.randomUUID()
+        val tenantUuid = UUID.fromString(tenantId.toString())
 
         dbQuery {
             PeppolTransmissionsTable.insert {
                 it[id] = newId
-                it[PeppolTransmissionsTable.tenantId] = UUID.fromString(tenantId.toString())
+                it[PeppolTransmissionsTable.tenantId] = tenantUuid
                 it[PeppolTransmissionsTable.direction] = direction
                 it[PeppolTransmissionsTable.documentType] = documentType
                 it[status] = PeppolStatus.Pending
+                it[PeppolTransmissionsTable.idempotencyKey] = idempotencyKey ?: "legacy-$newId"
                 it[PeppolTransmissionsTable.invoiceId] = invoiceId?.let { inv -> UUID.fromString(inv.toString()) }
                 it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId
                 it[PeppolTransmissionsTable.recipientPeppolId] = recipientPeppolId?.value
                 it[PeppolTransmissionsTable.senderPeppolId] = senderPeppolId?.value
+                it[PeppolTransmissionsTable.rawUblXmlKey] = rawUblXmlKey
                 it[createdAt] = now
                 it[updatedAt] = now
             }
@@ -66,6 +106,331 @@ class PeppolTransmissionRepository {
                 .where { PeppolTransmissionsTable.id eq newId }
                 .map { it.toDto() }
                 .single()
+        }
+    }
+
+    /**
+     * Idempotent enqueue for outbound sends.
+     * If (tenantId, idempotencyKey) already exists, returns the existing row.
+     */
+    suspend fun upsertOutboundQueued(
+        tenantId: TenantId,
+        documentType: PeppolDocumentType,
+        invoiceId: InvoiceId,
+        recipientPeppolId: PeppolId,
+        idempotencyKey: String,
+        rawRequest: String,
+        rawUblXmlKey: String? = null
+    ): Result<PeppolTransmissionInternal> = runCatching {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val invoiceUuid = UUID.fromString(invoiceId.toString())
+
+        dbQuery {
+            val existing = PeppolTransmissionsTable.selectAll()
+                .where {
+                    (PeppolTransmissionsTable.tenantId eq tenantUuid) and
+                        (PeppolTransmissionsTable.idempotencyKey eq idempotencyKey)
+                }
+                .singleOrNull()
+                ?.toInternal()
+            if (existing != null) {
+                return@dbQuery existing
+            }
+
+            try {
+                PeppolTransmissionsTable.insert {
+                    it[PeppolTransmissionsTable.tenantId] = tenantUuid
+                    it[PeppolTransmissionsTable.direction] = PeppolTransmissionDirection.Outbound
+                    it[PeppolTransmissionsTable.documentType] = documentType
+                    it[PeppolTransmissionsTable.status] = PeppolStatus.Queued
+                    it[PeppolTransmissionsTable.idempotencyKey] = idempotencyKey
+                    it[PeppolTransmissionsTable.invoiceId] = invoiceUuid
+                    it[PeppolTransmissionsTable.recipientPeppolId] = recipientPeppolId.value
+                    it[PeppolTransmissionsTable.rawRequest] = rawRequest
+                    it[PeppolTransmissionsTable.rawUblXmlKey] = rawUblXmlKey
+                    it[PeppolTransmissionsTable.attemptCount] = 0
+                    it[PeppolTransmissionsTable.nextRetryAt] = null
+                    it[PeppolTransmissionsTable.lastAttemptAt] = null
+                    it[PeppolTransmissionsTable.providerErrorCode] = null
+                    it[PeppolTransmissionsTable.providerErrorMessage] = null
+                    it[PeppolTransmissionsTable.errorMessage] = null
+                    it[PeppolTransmissionsTable.transmittedAt] = null
+                    it[PeppolTransmissionsTable.createdAt] = now
+                    it[PeppolTransmissionsTable.updatedAt] = now
+                }
+            } catch (duplicate: Exception) {
+                // Concurrent insert with same (tenant_id, idempotency_key): reload existing row.
+                logger.debug(
+                    "Concurrent PEPPOL idempotency insert detected for tenant={} key={}",
+                    tenantId,
+                    idempotencyKey
+                )
+            }
+
+            PeppolTransmissionsTable.selectAll()
+                .where {
+                    (PeppolTransmissionsTable.tenantId eq tenantUuid) and
+                        (PeppolTransmissionsTable.idempotencyKey eq idempotencyKey)
+                }
+                .map { it.toInternal() }
+                .single()
+        }
+    }
+
+    /**
+     * Claim due outbound transmissions with CAS semantics.
+     * Only QUEUED and FAILED_RETRYABLE are claimable.
+     */
+    suspend fun claimDueOutbound(
+        now: LocalDateTime,
+        limit: Int
+    ): Result<List<PeppolTransmissionInternal>> = runCatching {
+        dbQuery {
+            val candidates = PeppolTransmissionsTable.selectAll()
+                .where {
+                        (PeppolTransmissionsTable.direction eq PeppolTransmissionDirection.Outbound) and
+                        (PeppolTransmissionsTable.status inList outboundClaimableStatuses) and
+                        (
+                            (PeppolTransmissionsTable.nextRetryAt eq null) or
+                                (PeppolTransmissionsTable.nextRetryAt lessEq now)
+                            )
+                }
+                .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.ASC)
+                .limit(limit)
+                .map { it.toInternal() }
+
+            val claimed = mutableListOf<PeppolTransmissionInternal>()
+            for (candidate in candidates) {
+                val updated = PeppolTransmissionsTable.update({
+                    (PeppolTransmissionsTable.id eq UUID.fromString(candidate.id.toString())) and
+                        (PeppolTransmissionsTable.direction eq PeppolTransmissionDirection.Outbound) and
+                        (PeppolTransmissionsTable.status inList outboundClaimableStatuses) and
+                        (
+                            (PeppolTransmissionsTable.nextRetryAt eq null) or
+                                (PeppolTransmissionsTable.nextRetryAt lessEq now)
+                            )
+                }) {
+                    it[status] = PeppolStatus.Sending
+                    it[lastAttemptAt] = now
+                    it[attemptCount] = candidate.attemptCount + 1
+                    it[nextRetryAt] = null
+                    it[updatedAt] = now
+                }
+
+                if (updated > 0) {
+                    claimed += candidate.copy(
+                        status = PeppolStatus.Sending,
+                        attemptCount = candidate.attemptCount + 1,
+                        lastAttemptAt = now,
+                        nextRetryAt = null,
+                        updatedAt = now
+                    )
+                }
+            }
+
+            claimed
+        }
+    }
+
+    /**
+     * Recover rows that are stuck in SENDING due to worker crash or lease expiration.
+     */
+    suspend fun recoverStaleOutboundSending(
+        staleBefore: LocalDateTime,
+        retryAt: LocalDateTime
+    ): Result<Int> = runCatching {
+        dbQuery {
+            PeppolTransmissionsTable.update({
+                (PeppolTransmissionsTable.direction eq PeppolTransmissionDirection.Outbound) and
+                    (PeppolTransmissionsTable.status eq PeppolStatus.Sending) and
+                    (PeppolTransmissionsTable.updatedAt lessEq staleBefore)
+            }) {
+                it[status] = PeppolStatus.FailedRetryable
+                it[nextRetryAt] = retryAt
+                it[providerErrorCode] = "LEASE_RECOVERED"
+                it[providerErrorMessage] = "Recovered stale outbound sending lease"
+                it[errorMessage] = "Recovered stale outbound sending lease"
+                it[updatedAt] = retryAt
+            }
+        }
+    }
+
+    suspend fun markOutboundSent(
+        transmissionId: PeppolTransmissionId,
+        tenantId: TenantId,
+        externalDocumentId: String?,
+        rawResponse: String?,
+        transmittedAt: LocalDateTime
+    ): Result<Boolean> = runCatching {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        dbQuery {
+            val updated = PeppolTransmissionsTable.update({
+                (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.status eq PeppolStatus.Sending)
+            }) {
+                it[status] = PeppolStatus.Sent
+                it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId
+                it[PeppolTransmissionsTable.rawResponse] = rawResponse
+                it[PeppolTransmissionsTable.transmittedAt] = transmittedAt
+                it[PeppolTransmissionsTable.errorMessage] = null
+                it[PeppolTransmissionsTable.providerErrorCode] = null
+                it[PeppolTransmissionsTable.providerErrorMessage] = null
+                it[PeppolTransmissionsTable.nextRetryAt] = null
+                it[updatedAt] = now
+            }
+            updated > 0
+        }
+    }
+
+    suspend fun markOutboundRetryable(
+        transmissionId: PeppolTransmissionId,
+        tenantId: TenantId,
+        providerErrorCode: String,
+        providerErrorMessage: String,
+        retryAt: LocalDateTime,
+        rawResponse: String? = null
+    ): Result<Boolean> = runCatching {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        dbQuery {
+            val updated = PeppolTransmissionsTable.update({
+                (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.status eq PeppolStatus.Sending)
+            }) {
+                it[status] = PeppolStatus.FailedRetryable
+                it[PeppolTransmissionsTable.providerErrorCode] = providerErrorCode.take(100)
+                it[PeppolTransmissionsTable.providerErrorMessage] = providerErrorMessage.take(4000)
+                it[PeppolTransmissionsTable.errorMessage] = providerErrorMessage.take(4000)
+                it[PeppolTransmissionsTable.nextRetryAt] = retryAt
+                if (rawResponse != null) {
+                    it[PeppolTransmissionsTable.rawResponse] = rawResponse
+                }
+                it[updatedAt] = now
+            }
+            updated > 0
+        }
+    }
+
+    suspend fun markOutboundPermanentFailure(
+        transmissionId: PeppolTransmissionId,
+        tenantId: TenantId,
+        providerErrorCode: String,
+        providerErrorMessage: String,
+        rawResponse: String? = null
+    ): Result<Boolean> = runCatching {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        dbQuery {
+            val updated = PeppolTransmissionsTable.update({
+                (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.status eq PeppolStatus.Sending)
+            }) {
+                it[status] = PeppolStatus.Failed
+                it[PeppolTransmissionsTable.providerErrorCode] = providerErrorCode.take(100)
+                it[PeppolTransmissionsTable.providerErrorMessage] = providerErrorMessage.take(4000)
+                it[PeppolTransmissionsTable.errorMessage] = providerErrorMessage.take(4000)
+                it[PeppolTransmissionsTable.nextRetryAt] = null
+                if (rawResponse != null) {
+                    it[PeppolTransmissionsTable.rawResponse] = rawResponse
+                }
+                it[updatedAt] = now
+            }
+            updated > 0
+        }
+    }
+
+    suspend fun listOutboundForReconciliation(
+        olderThan: LocalDateTime,
+        limit: Int
+    ): Result<List<PeppolTransmissionInternal>> = runCatching {
+        val reconcilable = listOf(
+            PeppolStatus.Pending,
+            PeppolStatus.Queued,
+            PeppolStatus.Sending,
+            PeppolStatus.Sent,
+            PeppolStatus.FailedRetryable
+        )
+
+        dbQuery {
+            PeppolTransmissionsTable.selectAll()
+                .where {
+                    (PeppolTransmissionsTable.direction eq PeppolTransmissionDirection.Outbound) and
+                        (PeppolTransmissionsTable.status inList reconcilable) and
+                        (PeppolTransmissionsTable.externalDocumentId neq null) and
+                        (PeppolTransmissionsTable.updatedAt lessEq olderThan)
+                }
+                .orderBy(PeppolTransmissionsTable.updatedAt to SortOrder.ASC)
+                .limit(limit)
+                .map { it.toInternal() }
+        }
+    }
+
+    suspend fun getOutboundByExternalDocumentIdInternal(
+        tenantId: TenantId,
+        externalDocumentId: String
+    ): Result<PeppolTransmissionInternal?> = runCatching {
+        dbQuery {
+            PeppolTransmissionsTable.selectAll()
+                .where {
+                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                        (PeppolTransmissionsTable.direction eq PeppolTransmissionDirection.Outbound) and
+                        (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
+                }
+                .map { it.toInternal() }
+                .singleOrNull()
+        }
+    }
+
+    suspend fun applyProviderStatusMonotonic(
+        transmissionId: PeppolTransmissionId,
+        tenantId: TenantId,
+        status: PeppolStatus,
+        externalDocumentId: String? = null,
+        providerErrorCode: String? = null,
+        providerErrorMessage: String? = null,
+        transmittedAt: LocalDateTime? = null
+    ): Result<Boolean> = runCatching {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        dbQuery {
+            val current = PeppolTransmissionsTable.selectAll()
+                .where {
+                    (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
+                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                }
+                .map { it.toInternal() }
+                .singleOrNull()
+                ?: return@dbQuery false
+
+            if (!isMonotonicTransition(current.status, status)) {
+                return@dbQuery false
+            }
+
+            val updated = PeppolTransmissionsTable.update({
+                (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.status eq current.status)
+            }) {
+                it[PeppolTransmissionsTable.status] = status
+                it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId ?: current.externalDocumentId
+                it[PeppolTransmissionsTable.providerErrorCode] = providerErrorCode ?: current.providerErrorCode
+                it[PeppolTransmissionsTable.providerErrorMessage] =
+                    providerErrorMessage?.take(4000) ?: current.providerErrorMessage
+                it[PeppolTransmissionsTable.errorMessage] =
+                    providerErrorMessage?.take(4000) ?: current.errorMessage
+                it[PeppolTransmissionsTable.transmittedAt] = transmittedAt ?: current.transmittedAt
+                if (status == PeppolStatus.Delivered || status == PeppolStatus.Rejected || status == PeppolStatus.Sent) {
+                    it[PeppolTransmissionsTable.nextRetryAt] = null
+                }
+                it[updatedAt] = now
+            }
+
+            updated > 0
         }
     }
 
@@ -125,6 +490,21 @@ class PeppolTransmissionRepository {
         }
     }
 
+    suspend fun getTransmissionInternal(
+        transmissionId: PeppolTransmissionId,
+        tenantId: TenantId
+    ): Result<PeppolTransmissionInternal?> = runCatching {
+        dbQuery {
+            PeppolTransmissionsTable.selectAll()
+                .where {
+                    (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
+                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                }
+                .map { it.toInternal() }
+                .singleOrNull()
+        }
+    }
+
     /**
      * Get transmission by invoice ID.
      */
@@ -175,7 +555,7 @@ class PeppolTransmissionRepository {
     }
 
     /**
-     * Update transmission status and details after sending.
+     * Update transmission status and details.
      */
     suspend fun updateTransmissionResult(
         transmissionId: PeppolTransmissionId,
@@ -185,21 +565,40 @@ class PeppolTransmissionRepository {
         errorMessage: String? = null,
         rawRequest: String? = null,
         rawResponse: String? = null,
-        transmittedAt: LocalDateTime? = null
+        transmittedAt: LocalDateTime? = null,
+        providerErrorCode: String? = null,
+        providerErrorMessage: String? = null,
+        attemptCount: Int? = null,
+        nextRetryAt: LocalDateTime? = null,
+        lastAttemptAt: LocalDateTime? = null
     ): Result<PeppolTransmissionDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         dbQuery {
+            val current = PeppolTransmissionsTable.selectAll()
+                .where {
+                    (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
+                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                }
+                .singleOrNull()
+                ?: throw IllegalStateException("Transmission not found: $transmissionId")
+
             PeppolTransmissionsTable.update({
                 (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
                     (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[PeppolTransmissionsTable.status] = status
-                it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId
-                it[PeppolTransmissionsTable.errorMessage] = errorMessage
-                it[PeppolTransmissionsTable.rawRequest] = rawRequest
-                it[PeppolTransmissionsTable.rawResponse] = rawResponse
-                it[PeppolTransmissionsTable.transmittedAt] = transmittedAt
+                it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId ?: current[PeppolTransmissionsTable.externalDocumentId]
+                it[PeppolTransmissionsTable.errorMessage] = errorMessage ?: current[PeppolTransmissionsTable.errorMessage]
+                it[PeppolTransmissionsTable.rawRequest] = rawRequest ?: current[PeppolTransmissionsTable.rawRequest]
+                it[PeppolTransmissionsTable.rawResponse] = rawResponse ?: current[PeppolTransmissionsTable.rawResponse]
+                it[PeppolTransmissionsTable.transmittedAt] = transmittedAt ?: current[PeppolTransmissionsTable.transmittedAt]
+                it[PeppolTransmissionsTable.providerErrorCode] = providerErrorCode ?: current[PeppolTransmissionsTable.providerErrorCode]
+                it[PeppolTransmissionsTable.providerErrorMessage] =
+                    providerErrorMessage ?: current[PeppolTransmissionsTable.providerErrorMessage]
+                it[PeppolTransmissionsTable.attemptCount] = attemptCount ?: current[PeppolTransmissionsTable.attemptCount]
+                it[PeppolTransmissionsTable.nextRetryAt] = nextRetryAt ?: current[PeppolTransmissionsTable.nextRetryAt]
+                it[PeppolTransmissionsTable.lastAttemptAt] = lastAttemptAt ?: current[PeppolTransmissionsTable.lastAttemptAt]
                 it[updatedAt] = now
             }
 
@@ -209,6 +608,64 @@ class PeppolTransmissionRepository {
                 .single()
         }
     }
+
+    private fun isMonotonicTransition(from: PeppolStatus, to: PeppolStatus): Boolean {
+        if (from == to) return true
+        if (from in terminalStatuses) return false
+
+        return when (from) {
+            PeppolStatus.Pending -> to in setOf(
+                PeppolStatus.Queued,
+                PeppolStatus.Sending,
+                PeppolStatus.Sent,
+                PeppolStatus.FailedRetryable,
+                PeppolStatus.Failed,
+                PeppolStatus.Delivered,
+                PeppolStatus.Rejected
+            )
+
+            PeppolStatus.Queued -> to in setOf(
+                PeppolStatus.Sending,
+                PeppolStatus.Sent,
+                PeppolStatus.FailedRetryable,
+                PeppolStatus.Failed,
+                PeppolStatus.Delivered,
+                PeppolStatus.Rejected
+            )
+
+            PeppolStatus.Sending -> to in setOf(
+                PeppolStatus.Sent,
+                PeppolStatus.FailedRetryable,
+                PeppolStatus.Failed,
+                PeppolStatus.Delivered,
+                PeppolStatus.Rejected
+            )
+
+            PeppolStatus.Sent -> to in setOf(
+                PeppolStatus.Delivered,
+                PeppolStatus.Rejected,
+                PeppolStatus.Failed
+            )
+
+            PeppolStatus.FailedRetryable -> to in setOf(
+                PeppolStatus.Sending,
+                PeppolStatus.Sent,
+                PeppolStatus.Delivered,
+                PeppolStatus.Rejected,
+                PeppolStatus.Failed
+            )
+
+            PeppolStatus.Failed,
+            PeppolStatus.Delivered,
+            PeppolStatus.Rejected -> false
+        }
+    }
+
+    private val terminalStatuses = setOf(
+        PeppolStatus.Delivered,
+        PeppolStatus.Rejected,
+        PeppolStatus.Failed
+    )
 
     private fun ResultRow.toDto(): PeppolTransmissionDto = PeppolTransmissionDto(
         id = PeppolTransmissionId.parse(this[PeppolTransmissionsTable.id].value.toString()),
@@ -221,8 +678,36 @@ class PeppolTransmissionRepository {
         recipientPeppolId = this[PeppolTransmissionsTable.recipientPeppolId]?.let { PeppolId(it) },
         senderPeppolId = this[PeppolTransmissionsTable.senderPeppolId]?.let { PeppolId(it) },
         errorMessage = this[PeppolTransmissionsTable.errorMessage],
+        attemptCount = this[PeppolTransmissionsTable.attemptCount],
+        nextRetryAt = this[PeppolTransmissionsTable.nextRetryAt],
+        lastAttemptAt = this[PeppolTransmissionsTable.lastAttemptAt],
+        providerErrorCode = this[PeppolTransmissionsTable.providerErrorCode],
+        providerErrorMessage = this[PeppolTransmissionsTable.providerErrorMessage],
+        transmittedAt = this[PeppolTransmissionsTable.transmittedAt],
+        createdAt = this[PeppolTransmissionsTable.createdAt],
+        updatedAt = this[PeppolTransmissionsTable.updatedAt]
+    )
+
+    private fun ResultRow.toInternal(): PeppolTransmissionInternal = PeppolTransmissionInternal(
+        id = PeppolTransmissionId.parse(this[PeppolTransmissionsTable.id].value.toString()),
+        tenantId = TenantId.parse(this[PeppolTransmissionsTable.tenantId].toString()),
+        direction = this[PeppolTransmissionsTable.direction],
+        documentType = this[PeppolTransmissionsTable.documentType],
+        status = this[PeppolTransmissionsTable.status],
+        invoiceId = this[PeppolTransmissionsTable.invoiceId]?.let { InvoiceId.parse(it.toString()) },
+        externalDocumentId = this[PeppolTransmissionsTable.externalDocumentId],
+        idempotencyKey = this[PeppolTransmissionsTable.idempotencyKey],
+        recipientPeppolId = this[PeppolTransmissionsTable.recipientPeppolId]?.let { PeppolId(it) },
+        senderPeppolId = this[PeppolTransmissionsTable.senderPeppolId]?.let { PeppolId(it) },
+        errorMessage = this[PeppolTransmissionsTable.errorMessage],
+        providerErrorCode = this[PeppolTransmissionsTable.providerErrorCode],
+        providerErrorMessage = this[PeppolTransmissionsTable.providerErrorMessage],
+        attemptCount = this[PeppolTransmissionsTable.attemptCount],
+        nextRetryAt = this[PeppolTransmissionsTable.nextRetryAt],
+        lastAttemptAt = this[PeppolTransmissionsTable.lastAttemptAt],
         rawRequest = this[PeppolTransmissionsTable.rawRequest],
         rawResponse = this[PeppolTransmissionsTable.rawResponse],
+        rawUblXmlKey = this[PeppolTransmissionsTable.rawUblXmlKey],
         transmittedAt = this[PeppolTransmissionsTable.transmittedAt],
         createdAt = this[PeppolTransmissionsTable.createdAt],
         updatedAt = this[PeppolTransmissionsTable.updatedAt]

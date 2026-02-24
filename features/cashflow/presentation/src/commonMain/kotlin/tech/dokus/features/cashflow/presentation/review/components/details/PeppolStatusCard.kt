@@ -44,9 +44,12 @@ internal fun PeppolStatusCard(
 }
 
 private fun PeppolStatus.displayLabel(): String = when (this) {
+    PeppolStatus.Queued -> "Queued"
+    PeppolStatus.Sending -> "Sending"
     PeppolStatus.Pending -> "Pending"
     PeppolStatus.Sent -> "Sent"
     PeppolStatus.Delivered -> "Delivered"
+    PeppolStatus.FailedRetryable -> "Retry scheduled"
     PeppolStatus.Failed -> "Failed"
     PeppolStatus.Rejected -> "Rejected"
 }
