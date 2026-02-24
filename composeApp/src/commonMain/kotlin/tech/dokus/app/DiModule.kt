@@ -1,6 +1,5 @@
 package tech.dokus.app
 
-import io.ktor.client.HttpClient
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -145,9 +144,7 @@ internal val diModuleApp = module {
     }
 
     singleOf(::CashflowInvoiceLookupDataSource) bind InvoiceLookupDataSource::class
-    single<SearchRemoteDataSource> {
-        SearchRemoteDataSourceImpl(httpClient = get<HttpClient>())
-    }
+    singleOf(::SearchRemoteDataSourceImpl) bind SearchRemoteDataSource::class
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
     singleOf(::NotificationRemoteDataSourceImpl) bind NotificationRemoteDataSource::class
     singleOf(::DefaultLocalDatabaseCleaner) bind LocalDatabaseCleaner::class
