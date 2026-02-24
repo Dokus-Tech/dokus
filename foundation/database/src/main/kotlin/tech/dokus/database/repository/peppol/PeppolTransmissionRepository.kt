@@ -28,6 +28,8 @@ import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 /**
  * Internal transmission projection used by workers/reconciliation.
@@ -62,6 +64,7 @@ data class PeppolTransmissionInternal(
  * Repository for Peppol transmissions.
  * CRITICAL: All tenant-scoped queries MUST filter by tenantId.
  */
+@OptIn(ExperimentalUuidApi::class)
 class PeppolTransmissionRepository {
     private val logger = loggerFor()
 
@@ -83,7 +86,7 @@ class PeppolTransmissionRepository {
     ): Result<PeppolTransmissionDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val newId = UUID.randomUUID()
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = tenantId.value.toJavaUuid()
 
         dbQuery {
             PeppolTransmissionsTable.insert {
@@ -123,7 +126,7 @@ class PeppolTransmissionRepository {
         rawUblXmlKey: String? = null
     ): Result<PeppolTransmissionInternal> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = UUID.fromString(tenantId.toString())
+        val tenantUuid = tenantId.value.toJavaUuid()
         val invoiceUuid = UUID.fromString(invoiceId.toString())
 
         dbQuery {
@@ -268,7 +271,7 @@ class PeppolTransmissionRepository {
         dbQuery {
             val updated = PeppolTransmissionsTable.update({
                 (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (PeppolTransmissionsTable.status eq PeppolStatus.Sending)
             }) {
                 it[status] = PeppolStatus.Sent
@@ -298,7 +301,7 @@ class PeppolTransmissionRepository {
         dbQuery {
             val updated = PeppolTransmissionsTable.update({
                 (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (PeppolTransmissionsTable.status eq PeppolStatus.Sending)
             }) {
                 it[status] = PeppolStatus.FailedRetryable
@@ -327,7 +330,7 @@ class PeppolTransmissionRepository {
         dbQuery {
             val updated = PeppolTransmissionsTable.update({
                 (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (PeppolTransmissionsTable.status eq PeppolStatus.Sending)
             }) {
                 it[status] = PeppolStatus.Failed
@@ -377,7 +380,7 @@ class PeppolTransmissionRepository {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
-                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                         (PeppolTransmissionsTable.direction eq PeppolTransmissionDirection.Outbound) and
                         (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
                 }
@@ -401,7 +404,7 @@ class PeppolTransmissionRepository {
             val current = PeppolTransmissionsTable.selectAll()
                 .where {
                     (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
                 .map { it.toInternal() }
                 .singleOrNull()
@@ -413,7 +416,7 @@ class PeppolTransmissionRepository {
 
             val updated = PeppolTransmissionsTable.update({
                 (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (PeppolTransmissionsTable.status eq current.status)
             }) {
                 it[PeppolTransmissionsTable.status] = status
@@ -445,7 +448,7 @@ class PeppolTransmissionRepository {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
-                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                         (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
                 }
                 .limit(1)
@@ -464,7 +467,7 @@ class PeppolTransmissionRepository {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
-                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                         (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
                 }
                 .map { it.toDto() }
@@ -483,7 +486,7 @@ class PeppolTransmissionRepository {
             PeppolTransmissionsTable.selectAll()
                 .where {
                     (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
                 .map { it.toDto() }
                 .singleOrNull()
@@ -498,7 +501,7 @@ class PeppolTransmissionRepository {
             PeppolTransmissionsTable.selectAll()
                 .where {
                     (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
                 .map { it.toInternal() }
                 .singleOrNull()
@@ -516,7 +519,7 @@ class PeppolTransmissionRepository {
             PeppolTransmissionsTable.selectAll()
                 .where {
                     (PeppolTransmissionsTable.invoiceId eq UUID.fromString(invoiceId.toString())) and
-                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
                 .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.DESC)
                 .map { it.toDto() }
@@ -536,7 +539,7 @@ class PeppolTransmissionRepository {
     ): Result<List<PeppolTransmissionDto>> = runCatching {
         dbQuery {
             var query = PeppolTransmissionsTable.selectAll()
-                .where { PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()) }
+                .where { PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid() }
 
             direction?.let {
                 query = query.andWhere { PeppolTransmissionsTable.direction eq it }
@@ -578,14 +581,14 @@ class PeppolTransmissionRepository {
             val current = PeppolTransmissionsTable.selectAll()
                 .where {
                     (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                        (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
                 .singleOrNull()
                 ?: throw IllegalStateException("Transmission not found: $transmissionId")
 
             PeppolTransmissionsTable.update({
                 (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                    (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
             }) {
                 it[PeppolTransmissionsTable.status] = status
                 it[PeppolTransmissionsTable.externalDocumentId] = externalDocumentId ?: current[PeppolTransmissionsTable.externalDocumentId]

@@ -4,9 +4,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import tech.dokus.domain.enums.PeppolStatus
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.peppol_status_card_last_update
+import tech.dokus.aura.resources.peppol_status_card_not_sent
+import tech.dokus.aura.resources.peppol_status_card_recipient_id
+import tech.dokus.aura.resources.peppol_status_card_title
+import tech.dokus.aura.resources.peppol_status_card_transmission
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.foundation.aura.extensions.localized
 
 @Composable
 internal fun PeppolStatusCard(
@@ -20,36 +27,25 @@ internal fun PeppolStatusCard(
     if (!shouldShow) return
 
     Column(modifier = modifier.fillMaxWidth()) {
-        MicroLabel(text = "PEPPOL Status")
+        MicroLabel(text = stringResource(Res.string.peppol_status_card_title))
 
         FactField(
-            label = "Transmission",
-            value = invoice.peppolStatus?.displayLabel() ?: "Not sent"
+            label = stringResource(Res.string.peppol_status_card_transmission),
+            value = invoice.peppolStatus?.localized ?: stringResource(Res.string.peppol_status_card_not_sent)
         )
 
         invoice.peppolId?.let { peppolId ->
             FactField(
-                label = "Recipient PEPPOL ID",
+                label = stringResource(Res.string.peppol_status_card_recipient_id),
                 value = peppolId.toString()
             )
         }
 
         invoice.peppolSentAt?.let { sentAt ->
             FactField(
-                label = "Last update",
+                label = stringResource(Res.string.peppol_status_card_last_update),
                 value = sentAt.toString()
             )
         }
     }
-}
-
-private fun PeppolStatus.displayLabel(): String = when (this) {
-    PeppolStatus.Queued -> "Queued"
-    PeppolStatus.Sending -> "Sending"
-    PeppolStatus.Pending -> "Pending"
-    PeppolStatus.Sent -> "Sent"
-    PeppolStatus.Delivered -> "Delivered"
-    PeppolStatus.FailedRetryable -> "Retry scheduled"
-    PeppolStatus.Failed -> "Failed"
-    PeppolStatus.Rejected -> "Rejected"
 }

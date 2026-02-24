@@ -53,4 +53,21 @@
     <string name="peppol_reg_transfer_request">Transfer request</string>
     <string name="peppol_reg_copy_email">Copy email</string>
     <string name="peppol_reg_copied">Copied to clipboard</string>
+
+    <!-- PEPPOL transmission statuses -->
+    <string name="peppol_status_queued">Queued</string>
+    <string name="peppol_status_sending">Sending</string>
+    <string name="peppol_status_pending">Pending</string>
+    <string name="peppol_status_sent">Sent</string>
+    <string name="peppol_status_delivered">Delivered</string>
+    <string name="peppol_status_failed_retryable">Retry scheduled</string>
+    <string name="peppol_status_failed">Failed</string>
+    <string name="peppol_status_rejected">Rejected</string>
+
+    <!-- PEPPOL status card -->
+    <string name="peppol_status_card_title">PEPPOL Status</string>
+    <string name="peppol_status_card_transmission">Transmission</string>
+    <string name="peppol_status_card_not_sent">Not sent</string>
+    <string name="peppol_status_card_recipient_id">Recipient PEPPOL ID</string>
+    <string name="peppol_status_card_last_update">Last update</string>
 </resources>

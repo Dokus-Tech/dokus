@@ -38,7 +38,10 @@ import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolInboxItem
 import tech.dokus.peppol.model.PeppolMonetaryTotals
 import tech.dokus.peppol.model.PeppolReceivedDocument
+import tech.dokus.peppol.model.PeppolSendRequest
+import tech.dokus.peppol.model.PeppolSendResponse
 import tech.dokus.peppol.model.PeppolTaxTotal
+import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.peppol.provider.PeppolCredentials
 import tech.dokus.peppol.provider.PeppolProvider
 import tech.dokus.peppol.provider.PeppolProviderFactory
@@ -267,12 +270,12 @@ class PeppolInboxRetryTest {
         override fun configure(credentials: PeppolCredentials) = Unit
 
         override suspend fun sendDocument(
-            request: tech.dokus.peppol.model.PeppolSendRequest,
+            request: PeppolSendRequest,
             idempotencyKey: String?
-        ): Result<tech.dokus.peppol.model.PeppolSendResponse> =
+        ): Result<PeppolSendResponse> =
             Result.failure(NotImplementedError())
 
-        override suspend fun verifyRecipient(peppolId: String): Result<tech.dokus.peppol.model.PeppolVerifyResponse> =
+        override suspend fun verifyRecipient(peppolId: String): Result<PeppolVerifyResponse> =
             Result.failure(NotImplementedError())
 
         override suspend fun getInbox(): Result<List<PeppolInboxItem>> = Result.success(listOf(inboxItem))
@@ -300,6 +303,6 @@ class PeppolInboxRetryTest {
 
         override suspend fun testConnection(): Result<Boolean> = Result.success(true)
 
-        override fun serializeRequest(request: tech.dokus.peppol.model.PeppolSendRequest): String = "{}"
+        override fun serializeRequest(request: PeppolSendRequest): String = "{}"
     }
 }
