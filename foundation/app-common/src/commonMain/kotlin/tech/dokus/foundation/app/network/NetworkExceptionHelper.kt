@@ -27,6 +27,8 @@ internal fun hasNetworkExceptionMessage(throwable: Throwable): Boolean {
     val message = throwable.message?.lowercase() ?: return false
     return message.contains("connection refused") ||
         message.contains("connect timed out") ||
+        message.contains("connect timeout has expired") ||
+        message.contains("connect timeout") ||
         message.contains("socket timeout") ||
         message.contains("unknown host") ||
         message.contains("no route to host") ||
