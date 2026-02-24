@@ -36,6 +36,7 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
 
     // Webhook configuration
     val webhookToken = varchar("webhook_token", 64).nullable().uniqueIndex()
+    val lastWebhookPollTriggeredAt = datetime("last_webhook_poll_triggered_at").nullable()
 
     // Sync tracking - used for initial sync and weekly full sync
     val lastFullSyncAt = datetime("last_full_sync_at").nullable()
@@ -46,5 +47,6 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
 
     init {
         uniqueIndex(tenantId, providerId)
+        index(false, isEnabled, companyId)
     }
 }

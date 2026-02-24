@@ -24,8 +24,8 @@ data class PeppolModuleConfig(
     /** Master credentials (required for all deployments) */
     val masterCredentials: MasterCredentialsConfig,
 
-    /** Inbound webhook authenticity checks */
-    val webhookSecurity: WebhookSecurityConfig
+    /** Recommand webhook configuration */
+    val webhook: WebhookConfig
 ) {
     companion object {
         /**
@@ -46,50 +46,47 @@ data class PeppolModuleConfig(
                 inbox = InboxConfig.fromConfig(peppolConfig.getConfig("inbox")),
                 globalTestMode = peppolConfig.getBoolean("globalTestMode"),
                 masterCredentials = MasterCredentialsConfig.fromConfig(peppolConfig.getConfig("master")),
-                webhookSecurity = if (peppolConfig.hasPath("webhookSecurity")) {
-                    WebhookSecurityConfig.fromConfig(peppolConfig.getConfig("webhookSecurity"))
+                webhook = if (peppolConfig.hasPath("webhook")) {
+                    WebhookConfig.fromConfig(peppolConfig.getConfig("webhook"))
                 } else {
-                    WebhookSecurityConfig.disabled()
+                    WebhookConfig.defaults()
                 }
             )
         }
     }
 }
 
-data class WebhookSecurityConfig(
-    val enabled: Boolean,
-    val sharedSecret: String,
-    val timestampHeader: String,
-    val signatureHeader: String,
-    val maxSkewSeconds: Long
+data class WebhookConfig(
+    val publicBaseUrl: String,
+    val callbackPath: String,
+    val pollDebounceSeconds: Long
 ) {
     companion object {
-        fun fromConfig(config: Config): WebhookSecurityConfig {
-            val enabled = config.getBoolean("enabled")
-            val sharedSecret = if (config.hasPath("sharedSecret")) config.getString("sharedSecret") else ""
-            val timestampHeader = config.getString("timestampHeader")
-            val signatureHeader = config.getString("signatureHeader")
-            val maxSkewSeconds = config.getLong("maxSkewSeconds")
+        fun fromConfig(config: Config): WebhookConfig {
+            val publicBaseUrl = config.getString("publicBaseUrl").trim().trimEnd('/')
+            val callbackPath = config.getString("callbackPath").trim().let {
+                if (it.startsWith("/")) it else "/$it"
+            }
+            val pollDebounceSeconds = config.getLong("pollDebounceSeconds")
 
-            if (enabled && sharedSecret.isBlank()) {
-                throw IllegalStateException("peppol.webhookSecurity.enabled=true requires non-empty sharedSecret")
+            if (publicBaseUrl.isBlank()) {
+                throw IllegalStateException("peppol.webhook.publicBaseUrl must be configured")
+            }
+            if (pollDebounceSeconds < 1) {
+                throw IllegalStateException("peppol.webhook.pollDebounceSeconds must be >= 1")
             }
 
-            return WebhookSecurityConfig(
-                enabled = enabled,
-                sharedSecret = sharedSecret,
-                timestampHeader = timestampHeader,
-                signatureHeader = signatureHeader,
-                maxSkewSeconds = maxSkewSeconds
+            return WebhookConfig(
+                publicBaseUrl = publicBaseUrl,
+                callbackPath = callbackPath,
+                pollDebounceSeconds = pollDebounceSeconds
             )
         }
 
-        fun disabled(): WebhookSecurityConfig = WebhookSecurityConfig(
-            enabled = false,
-            sharedSecret = "",
-            timestampHeader = "X-Recommand-Timestamp",
-            signatureHeader = "X-Recommand-Signature",
-            maxSkewSeconds = 300
+        fun defaults(): WebhookConfig = WebhookConfig(
+            publicBaseUrl = "https://dokus.invoid.vision",
+            callbackPath = "/api/v1/peppol/webhook",
+            pollDebounceSeconds = 60
         )
     }
 }
