@@ -5,6 +5,7 @@ package tech.dokus.domain.model.common
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.common.DeepLink.Companion.APP_SCHEME
+import tech.dokus.domain.model.common.DeepLink.Companion.HTTP_SCHEME
 import tech.dokus.domain.model.common.DeepLink.Companion.HTTPS_SCHEME
 import kotlin.jvm.JvmInline
 
@@ -18,6 +19,7 @@ value class DeepLink(val value: String) {
     val path: String
         get() = value
             .replace("$APP_SCHEME://", "")
+            .replace("$HTTP_SCHEME://", "")
             .replace("$HTTPS_SCHEME://", "")
 
     val withAppScheme: String
@@ -30,16 +32,18 @@ value class DeepLink(val value: String) {
 
     companion object {
         const val APP_SCHEME = "dokus"
+        const val HTTP_SCHEME = "http"
         const val HTTPS_SCHEME = "https"
 
         /**
          * Builds the string.
-         * If for some reason [APP_SCHEME] or [HTTPS_SCHEME] is included, it will be removed.
+         * If for some reason [APP_SCHEME], [HTTP_SCHEME], or [HTTPS_SCHEME] is included, it will be removed.
          * Use [withHttpsScheme] or [withAppScheme] if needed
          */
         fun build(builder: StringBuilder.() -> Unit): DeepLink {
             val string = buildString(builder)
                 .replace("$APP_SCHEME://", "")
+                .replace("$HTTP_SCHEME://", "")
                 .replace("$HTTPS_SCHEME://", "")
             return DeepLink(string)
         }
@@ -158,12 +162,13 @@ object DeepLinks {
     }
 
     /**
-     * Normalizes deep link paths so both custom scheme links and absolute https links
+     * Normalizes deep link paths so both custom scheme links and absolute http/https links
      * can be matched against KnownDeepLinks.
      *
      * Examples:
      * - auth/reset-password?token=abc -> auth/reset-password?token=abc
      * - dokus.ai/auth/reset-password?token=abc -> auth/reset-password?token=abc
+     * - http://localhost:8081/auth/verify-email?token=abc -> auth/verify-email?token=abc
      * - localhost:8080/auth/verify-email?token=abc -> auth/verify-email?token=abc
      */
     private fun normalizeRoutePath(path: String): String {

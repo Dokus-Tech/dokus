@@ -65,7 +65,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="dokus.ai"
+                    android:host="app.dokus.tech"
                     android:pathPrefix="/auth"
                     android:scheme="https" />
             </intent-filter>

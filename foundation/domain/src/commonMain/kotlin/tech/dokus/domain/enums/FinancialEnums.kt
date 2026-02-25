@@ -329,6 +329,12 @@ enum class Currency(
 
 @Serializable
 enum class PeppolStatus(override val dbValue: String) : DbEnum {
+    @SerialName("QUEUED")
+    Queued("QUEUED"),
+
+    @SerialName("SENDING")
+    Sending("SENDING"),
+
     @SerialName("PENDING")
     Pending("PENDING"),
 
@@ -337,6 +343,9 @@ enum class PeppolStatus(override val dbValue: String) : DbEnum {
 
     @SerialName("DELIVERED")
     Delivered("DELIVERED"),
+
+    @SerialName("FAILED_RETRYABLE")
+    FailedRetryable("FAILED_RETRYABLE"),
 
     @SerialName("FAILED")
     Failed("FAILED"),

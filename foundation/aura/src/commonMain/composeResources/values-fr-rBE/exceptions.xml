@@ -29,6 +29,7 @@
     <string name="exception_invalid_api_credentials">Identifiants API invalides. Veuillez vérifier votre clé et secret API.</string>
     <string name="exception_missing_vat_number">Veuillez d\'abord configurer votre numéro de TVA dans les paramètres de l\'espace de travail</string>
     <string name="exception_missing_company_address">Veuillez d\'abord configurer l\'adresse de votre entreprise dans les paramètres de l\'espace de travail</string>
+    <string name="exception_peppol_send_requires_confirmed_document">La facture doit être confirmée avant l\'envoi via PEPPOL</string>
 
     <!-- 401 Erreurs d'authentification -->
     <string name="exception_not_authenticated">Veuillez vous connecter pour continuer</string>

@@ -20,6 +20,39 @@ class DeepLinkRoutingPolicyTest {
     }
 
     @Test
+    fun `auth verify email deep link resolves to root destination`() {
+        val target = resolveDeepLinkNavigationTarget(
+            DeepLink("https://app.dokus.tech/auth/verify-email?token=mail-123")
+        )
+
+        assertEquals(DeepLinkTargetOwner.Root, target.owner)
+        val rootTarget = assertIs<DeepLinkNavigationTarget.RootDestination>(target)
+        assertEquals(AuthDestination.VerifyEmail("mail-123"), rootTarget.destination)
+    }
+
+    @Test
+    fun `auth verify email http deep link resolves to root destination`() {
+        val target = resolveDeepLinkNavigationTarget(
+            DeepLink("http://localhost:8081/auth/verify-email?token=mail-123")
+        )
+
+        assertEquals(DeepLinkTargetOwner.Root, target.owner)
+        val rootTarget = assertIs<DeepLinkNavigationTarget.RootDestination>(target)
+        assertEquals(AuthDestination.VerifyEmail("mail-123"), rootTarget.destination)
+    }
+
+    @Test
+    fun `auth reset password http deep link resolves to root destination`() {
+        val target = resolveDeepLinkNavigationTarget(
+            DeepLink("http://localhost:8081/auth/reset-password?token=abc")
+        )
+
+        assertEquals(DeepLinkTargetOwner.Root, target.owner)
+        val rootTarget = assertIs<DeepLinkNavigationTarget.RootDestination>(target)
+        assertEquals(AuthDestination.ResetPassword("abc"), rootTarget.destination)
+    }
+
+    @Test
     fun `document review deep link resolves to home command`() {
         val target = resolveDeepLinkNavigationTarget(
             DeepLink("dokus://documents/review?documentId=doc-9")

@@ -1,5 +1,7 @@
 package tech.dokus.peppol.validator
 
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolSettingsDto
@@ -86,48 +88,14 @@ class PeppolValidator {
         }
 
         // Seller (Tenant) Validation
-        if (tenantSettings.companyName.isNullOrBlank()) {
-            errors.add(
-                PeppolValidationError(
-                    code = "MISSING_SELLER_NAME",
-                    message = "Company name is required in tenant settings",
-                    field = "tenantSettings.companyName"
-                )
-            )
-        }
-
-        if (tenant.vatNumber == null) {
-            warnings.add(
-                PeppolValidationWarning(
-                    code = "MISSING_SELLER_VAT",
-                    message = "Company VAT number is recommended for Peppol compliance",
-                    field = "tenant.vatNumber"
-                )
-            )
-        }
-
-        if (companyAddress == null) {
-            warnings.add(
-                PeppolValidationWarning(
-                    code = "MISSING_SELLER_ADDRESS",
-                    message = "Company address is recommended for Peppol compliance",
-                    field = "tenantAddress"
-                )
-            )
-        }
+        validateSellerRequiredFields(tenant, tenantSettings, companyAddress, errors)
 
         // Buyer (Contact) Validation
-        if (contact.name.value.isBlank()) {
-            errors.add(
-                PeppolValidationError(
-                    code = "MISSING_BUYER_NAME",
-                    message = "Contact name is required",
-                    field = "contact.name"
-                )
-            )
-        }
+        validateBuyerRequiredFields(contact, errors)
 
         // Invoice Validation
+        validateInvoiceDirection(invoice, errors)
+
         if (invoice.invoiceNumber.value.isBlank()) {
             errors.add(
                 PeppolValidationError(
@@ -137,6 +105,9 @@ class PeppolValidator {
                 )
             )
         }
+
+        validateNonZeroTotals(invoice, errors)
+        validateVatMath(invoice, errors)
 
         if (invoice.items.isEmpty()) {
             errors.add(
@@ -187,6 +158,211 @@ class PeppolValidator {
             errors = errors,
             warnings = warnings
         )
+    }
+
+    private fun validateInvoiceDirection(
+        invoice: FinancialDocumentDto.InvoiceDto,
+        errors: MutableList<PeppolValidationError>
+    ) {
+        if (invoice.direction != DocumentDirection.Outbound) {
+            errors.add(
+                PeppolValidationError(
+                    code = "INVALID_DOCUMENT_DIRECTION",
+                    message = "Only outbound invoices can be sent via PEPPOL",
+                    field = "invoice.direction"
+                )
+            )
+        }
+    }
+
+    private fun validateNonZeroTotals(
+        invoice: FinancialDocumentDto.InvoiceDto,
+        errors: MutableList<PeppolValidationError>
+    ) {
+        if (!invoice.totalAmount.isPositive) {
+            errors.add(
+                PeppolValidationError(
+                    code = "INVALID_TOTAL_AMOUNT",
+                    message = "Invoice total must be greater than zero",
+                    field = "invoice.totalAmount"
+                )
+            )
+        }
+        if (!invoice.subtotalAmount.isPositive) {
+            errors.add(
+                PeppolValidationError(
+                    code = "INVALID_SUBTOTAL_AMOUNT",
+                    message = "Invoice subtotal must be greater than zero",
+                    field = "invoice.subtotalAmount"
+                )
+            )
+        }
+    }
+
+    private fun validateVatMath(
+        invoice: FinancialDocumentDto.InvoiceDto,
+        errors: MutableList<PeppolValidationError>
+    ) {
+        val computedSubtotal = Money(invoice.items.sumOf { it.lineTotal.minor })
+        if (computedSubtotal != invoice.subtotalAmount) {
+            errors.add(
+                PeppolValidationError(
+                    code = "SUBTOTAL_MISMATCH",
+                    message = "Invoice subtotal does not match line totals",
+                    field = "invoice.subtotalAmount"
+                )
+            )
+        }
+
+        val computedVat = Money(invoice.items.sumOf { it.vatAmount.minor })
+        if (computedVat != invoice.vatAmount) {
+            errors.add(
+                PeppolValidationError(
+                    code = "VAT_MISMATCH",
+                    message = "Invoice VAT amount does not match line VAT totals",
+                    field = "invoice.vatAmount"
+                )
+            )
+        }
+
+        val computedTotal = computedSubtotal + computedVat
+        if (computedTotal != invoice.totalAmount) {
+            errors.add(
+                PeppolValidationError(
+                    code = "TOTAL_MISMATCH",
+                    message = "Invoice total does not equal subtotal plus VAT",
+                    field = "invoice.totalAmount"
+                )
+            )
+        }
+    }
+
+    private fun validateSellerRequiredFields(
+        tenant: Tenant,
+        tenantSettings: TenantSettings,
+        companyAddress: Address?,
+        errors: MutableList<PeppolValidationError>
+    ) {
+        if (tenantSettings.companyName.isNullOrBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_SELLER_NAME",
+                    message = "Company name is required in tenant settings",
+                    field = "tenantSettings.companyName"
+                )
+            )
+        }
+
+        if (tenant.vatNumber.value.isBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_SELLER_VAT",
+                    message = "Company VAT number is required for PEPPOL sending",
+                    field = "tenant.vatNumber"
+                )
+            )
+        }
+
+        if (companyAddress == null) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_SELLER_ADDRESS",
+                    message = "Company address is required for PEPPOL sending",
+                    field = "tenantAddress"
+                )
+            )
+            return
+        }
+
+        if (companyAddress.streetLine1.isNullOrBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_SELLER_STREET",
+                    message = "Company street address is required",
+                    field = "tenantAddress.streetLine1"
+                )
+            )
+        }
+        if (companyAddress.city.isNullOrBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_SELLER_CITY",
+                    message = "Company city is required",
+                    field = "tenantAddress.city"
+                )
+            )
+        }
+        if (companyAddress.postalCode.isNullOrBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_SELLER_POSTAL_CODE",
+                    message = "Company postal code is required",
+                    field = "tenantAddress.postalCode"
+                )
+            )
+        }
+        if (companyAddress.country.isNullOrBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_SELLER_COUNTRY",
+                    message = "Company country is required",
+                    field = "tenantAddress.country"
+                )
+            )
+        }
+    }
+
+    private fun validateBuyerRequiredFields(
+        contact: ContactDto,
+        errors: MutableList<PeppolValidationError>
+    ) {
+        if (contact.name.value.isBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_BUYER_NAME",
+                    message = "Contact name is required",
+                    field = "contact.name"
+                )
+            )
+        }
+
+        val defaultAddress = contact.addresses.firstOrNull { it.isDefault } ?: contact.addresses.firstOrNull()
+        if (defaultAddress?.address?.streetLine1.isNullOrBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_BUYER_STREET",
+                    message = "Buyer street address is required",
+                    field = "contact.addresses[].streetLine1"
+                )
+            )
+        }
+        if (defaultAddress?.address?.city.isNullOrBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_BUYER_CITY",
+                    message = "Buyer city is required",
+                    field = "contact.addresses[].city"
+                )
+            )
+        }
+        if (defaultAddress?.address?.postalCode.isNullOrBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_BUYER_POSTAL_CODE",
+                    message = "Buyer postal code is required",
+                    field = "contact.addresses[].postalCode"
+                )
+            )
+        }
+        if (defaultAddress?.address?.country.isNullOrBlank()) {
+            errors.add(
+                PeppolValidationError(
+                    code = "MISSING_BUYER_COUNTRY",
+                    message = "Buyer country is required",
+                    field = "contact.addresses[].country"
+                )
+            )
+        }
     }
 
     /**

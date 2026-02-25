@@ -26,6 +26,7 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     val direction = dbEnumeration<PeppolTransmissionDirection>("direction")
     val documentType = dbEnumeration<PeppolDocumentType>("document_type")
     val status = dbEnumeration<PeppolStatus>("status").default(PeppolStatus.Pending)
+    val idempotencyKey = varchar("idempotency_key", 128)
 
     // Local document references
     val invoiceId = uuid("invoice_id").references(
@@ -42,6 +43,11 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
 
     // Error tracking
     val errorMessage = text("error_message").nullable()
+    val providerErrorCode = varchar("provider_error_code", 100).nullable()
+    val providerErrorMessage = text("provider_error_message").nullable()
+    val attemptCount = integer("attempt_count").default(0)
+    val nextRetryAt = datetime("next_retry_at").nullable()
+    val lastAttemptAt = datetime("last_attempt_at").nullable()
 
     // Raw data for debugging/audit
     val rawRequest = text("raw_request").nullable()
@@ -59,5 +65,6 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
         // Composite index for common queries
         index(false, tenantId, direction, status)
         uniqueIndex(tenantId, externalDocumentId)
+        uniqueIndex("ux_peppol_transmissions_tenant_idempotency", tenantId, idempotencyKey)
     }
 }

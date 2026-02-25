@@ -338,6 +338,17 @@ sealed class DokusException(
         )
     }
 
+    // 400 Bad Request - PEPPOL Outbound Preconditions
+    @Serializable
+    @SerialName("DokusException.PeppolSendRequiresConfirmedDocument")
+    data object PeppolSendRequiresConfirmedDocument : DokusException(
+        httpStatusCode = 400,
+        errorCode = "PEPPOL_SEND_REQUIRES_CONFIRMED_DOCUMENT",
+        recoverable = false,
+    ) {
+        override val message: String = "Invoice source document must be confirmed before PEPPOL send"
+    }
+
     // 401 Unauthorized - Authentication Errors
     @Serializable
     @SerialName("DokusException.NotAuthenticated")

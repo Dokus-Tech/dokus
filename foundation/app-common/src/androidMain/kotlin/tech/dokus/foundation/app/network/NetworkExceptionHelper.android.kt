@@ -1,5 +1,6 @@
 package tech.dokus.foundation.app.network
 
+import io.ktor.client.network.sockets.ConnectTimeoutException
 import java.net.ConnectException
 import java.net.NoRouteToHostException
 import java.net.SocketException
@@ -14,6 +15,7 @@ import javax.net.ssl.SSLException
 actual fun isNetworkException(throwable: Throwable): Boolean {
     return when (throwable) {
         is ConnectException -> true
+        is ConnectTimeoutException -> true
         is SocketTimeoutException -> true
         is UnknownHostException -> true
         is NoRouteToHostException -> true

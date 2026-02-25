@@ -144,6 +144,16 @@ data class PeppolTransmissionDto(
     /** Raw response from Recommand (internal only, excluded from API serialization) */
     @Transient
     val rawResponse: String? = null,
+    /** Worker attempt count for outbound retries */
+    val attemptCount: Int = 0,
+    /** Next retry timestamp for retryable outbound errors */
+    val nextRetryAt: LocalDateTime? = null,
+    /** Last attempt timestamp for outbound sends */
+    val lastAttemptAt: LocalDateTime? = null,
+    /** Stable provider error code for diagnostics */
+    val providerErrorCode: String? = null,
+    /** Provider-facing error message (not raw payload) */
+    val providerErrorMessage: String? = null,
     val transmittedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime

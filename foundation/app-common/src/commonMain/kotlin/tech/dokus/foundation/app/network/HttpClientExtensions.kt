@@ -9,6 +9,7 @@ package tech.dokus.foundation.app.network
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.Sender
@@ -33,10 +34,22 @@ import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.utils.json
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
+private val DefaultConnectTimeout: Duration = 3.seconds
 
 fun HttpClientConfig<*>.withJsonContentNegotiation() {
     install(ContentNegotiation) {
         json(json)
+    }
+}
+
+fun HttpClientConfig<*>.withConnectTimeout(
+    connectTimeout: Duration = DefaultConnectTimeout
+) {
+    install(HttpTimeout) {
+        this.connectTimeoutMillis = connectTimeout.inWholeMilliseconds
     }
 }
 
