@@ -92,7 +92,8 @@ internal class SearchContainer(
 
     private suspend fun SearchCtx.handleSuggestionSelected(suggestion: SearchSuggestion) {
         val nextQuery = suggestion.actionQuery?.takeIf { it.isNotBlank() } ?: suggestion.label
-        val currentScope = withState<SearchState, _> { scope }
+        var currentScope: UnifiedSearchScope = UnifiedSearchScope.All
+        withState { currentScope = scope }
         val nextScope = suggestion.actionScope ?: currentScope
         val nextPreset = suggestion.actionPreset
 
@@ -113,15 +114,13 @@ internal class SearchContainer(
             )
         )
 
-        withState<SearchState, _> {
-            fetch(
-                query = nextQuery,
-                scope = nextScope,
-                preset = nextPreset,
-                debounce = false,
-                trackQueryCommit = false,
-            )
-        }
+        fetch(
+            query = nextQuery,
+            scope = nextScope,
+            preset = nextPreset,
+            debounce = false,
+            trackQueryCommit = false,
+        )
     }
 
     private suspend fun SearchCtx.handleRetry() {
