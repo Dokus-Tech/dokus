@@ -8,10 +8,11 @@ import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.core.longLiteral
+import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.upsert
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -48,40 +49,26 @@ class SearchSignalRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         dbQuery {
-            val existingCount = SearchSignalStatsTable.select(SearchSignalStatsTable.count)
-                .where {
-                    (SearchSignalStatsTable.tenantId eq tenantUuid) and
-                        (SearchSignalStatsTable.userId eq userUuid) and
-                        (SearchSignalStatsTable.signalType eq signalType) and
-                        (SearchSignalStatsTable.normalizedText eq normalizedText)
+            SearchSignalStatsTable.upsert(
+                SearchSignalStatsTable.tenantId,
+                SearchSignalStatsTable.userId,
+                SearchSignalStatsTable.signalType,
+                SearchSignalStatsTable.normalizedText,
+                onUpdate = { stmt ->
+                    stmt[SearchSignalStatsTable.count] = SearchSignalStatsTable.count + longLiteral(1L)
+                    stmt[SearchSignalStatsTable.displayText] = displayText
+                    stmt[SearchSignalStatsTable.lastSeenAt] = now
                 }
-                .limit(1)
-                .firstOrNull()
-                ?.get(SearchSignalStatsTable.count)
-
-            val updated = SearchSignalStatsTable.update({
-                (SearchSignalStatsTable.tenantId eq tenantUuid) and
-                    (SearchSignalStatsTable.userId eq userUuid) and
-                    (SearchSignalStatsTable.signalType eq signalType) and
-                    (SearchSignalStatsTable.normalizedText eq normalizedText)
-            }) {
-                it[SearchSignalStatsTable.count] = (existingCount ?: 0L) + 1L
+            ) {
+                it[id] = UUID.randomUUID()
+                it[SearchSignalStatsTable.tenantId] = tenantUuid
+                it[SearchSignalStatsTable.userId] = userUuid
+                it[SearchSignalStatsTable.signalType] = signalType
+                it[SearchSignalStatsTable.normalizedText] = normalizedText
                 it[SearchSignalStatsTable.displayText] = displayText
+                it[SearchSignalStatsTable.count] = 1L
                 it[SearchSignalStatsTable.lastSeenAt] = now
-            }
-
-            if (updated == 0) {
-                SearchSignalStatsTable.insert {
-                    it[id] = UUID.randomUUID()
-                    it[SearchSignalStatsTable.tenantId] = tenantUuid
-                    it[SearchSignalStatsTable.userId] = userUuid
-                    it[SearchSignalStatsTable.signalType] = signalType
-                    it[SearchSignalStatsTable.normalizedText] = normalizedText
-                    it[SearchSignalStatsTable.displayText] = displayText
-                    it[SearchSignalStatsTable.count] = 1L
-                    it[SearchSignalStatsTable.lastSeenAt] = now
-                    it[SearchSignalStatsTable.createdAt] = now
-                }
+                it[SearchSignalStatsTable.createdAt] = now
             }
         }
     }

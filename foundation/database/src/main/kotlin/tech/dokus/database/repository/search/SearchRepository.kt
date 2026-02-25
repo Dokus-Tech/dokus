@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.core.exists
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
@@ -201,26 +202,30 @@ class SearchRepository(
         tenantId: TenantId,
         pattern: String,
     ): SearchAggregates = dbQuery {
-        val rows = transactionQuery(tenantId, pattern).toList()
-        var total = Money.ZERO
-        var incoming = Money.ZERO
-        var outgoing = Money.ZERO
-
-        rows.forEach { row ->
-            val amount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
-            total += amount
-            when (row[CashflowEntriesTable.direction]) {
-                CashflowDirection.In -> incoming += amount
-                CashflowDirection.Out -> outgoing += amount
-                else -> Unit
-            }
-        }
-
+        val total = sumTransactionAmount(tenantId, pattern, direction = null)
+        val incoming = sumTransactionAmount(tenantId, pattern, direction = CashflowDirection.In)
+        val outgoing = sumTransactionAmount(tenantId, pattern, direction = CashflowDirection.Out)
         SearchAggregates(
             transactionTotal = total,
             incomingTotal = incoming,
             outgoingTotal = outgoing,
         )
+    }
+
+    private fun sumTransactionAmount(
+        tenantId: TenantId,
+        pattern: String,
+        direction: CashflowDirection?,
+    ): Money {
+        val amountSum = CashflowEntriesTable.amountGross.sum()
+        val query = transactionQuery(tenantId, pattern).apply {
+            if (direction != null) {
+                andWhere { CashflowEntriesTable.direction eq direction }
+            }
+            adjustSelect { select(amountSum) }
+        }
+        val sum = query.firstOrNull()?.get(amountSum) ?: return Money.ZERO
+        return Money.fromDbDecimal(sum)
     }
 
     private fun documentQuery(tenantId: TenantId, pattern: String): Query {

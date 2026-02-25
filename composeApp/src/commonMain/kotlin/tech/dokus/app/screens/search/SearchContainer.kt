@@ -273,6 +273,8 @@ internal class SearchContainer(
                     logger.e(error) { "Search request failed" }
                     updateState {
                         copy(
+                            response = null,
+                            suggestions = emptyList(),
                             isLoading = false,
                             hasInitialized = true,
                         )

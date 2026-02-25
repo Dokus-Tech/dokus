@@ -128,6 +128,28 @@ class SearchContainerTest {
     }
 
     @Test
+    fun `search failure clears stale response and suggestions`() = runTest {
+        val remote = FakeSearchRemoteDataSource()
+        val container = SearchContainer(remote)
+
+        container.store.subscribeAndTest {
+            advanceUntilIdle() // init suggestions loaded
+            assertTrue(states.value.suggestions.isNotEmpty())
+
+            remote.nextSearchFailure = IllegalStateException("boom")
+            emit(SearchIntent.QueryChanged("kbc"))
+            advanceUntilIdle()
+
+            val state = states.value
+            assertEquals("kbc", state.query)
+            assertNull(state.response)
+            assertTrue(state.suggestions.isEmpty())
+            assertTrue(state.hasInitialized)
+            assertTrue(!state.isLoading)
+        }
+    }
+
+    @Test
     fun `manual query edit clears active preset`() = runTest {
         val remote = FakeSearchRemoteDataSource()
         val container = SearchContainer(remote)
@@ -190,6 +212,7 @@ class SearchContainerTest {
 private class FakeSearchRemoteDataSource : SearchRemoteDataSource {
     val requests = mutableListOf<SearchRequest>()
     val signals = mutableListOf<SearchSignalEventRequest>()
+    var nextSearchFailure: Throwable? = null
 
     override suspend fun search(
         query: String,
@@ -199,6 +222,11 @@ private class FakeSearchRemoteDataSource : SearchRemoteDataSource {
         suggestionLimit: Int,
     ): Result<UnifiedSearchResponse> {
         requests += SearchRequest(query, scope, preset)
+        nextSearchFailure?.let { pendingFailure ->
+            nextSearchFailure = null
+            return Result.failure(pendingFailure)
+        }
+
         return Result.success(
             if (query.isBlank()) {
                 UnifiedSearchResponse(
