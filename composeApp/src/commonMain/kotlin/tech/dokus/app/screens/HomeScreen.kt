@@ -117,7 +117,10 @@ internal fun HomeRoute(
     val mobileTabs = remember(appModules) { appModules.mobileTabConfigs }
     val allNavItems = remember(appModules) { appModules.allNavItems }
     val sortedRoutes = remember(allNavItems) { buildSortedRoutes(allNavItems) }
-    val startDestination = remember(navSections) { navSections.first().items.first().destination }
+    val startDestination = remember(allNavItems) {
+        allNavItems.firstOrNull { it.id == "today" }?.destination
+            ?: allNavItems.first().destination
+    }
     val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }

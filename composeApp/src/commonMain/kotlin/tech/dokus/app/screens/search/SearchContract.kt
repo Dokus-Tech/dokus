@@ -4,8 +4,6 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.enums.CashflowDirection
-import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -60,12 +58,3 @@ sealed interface SearchAction : MVIAction {
     data class NavigateToContactDetails(val contactId: ContactId) : SearchAction
     data class NavigateToCashflowEntry(val entryId: CashflowEntryId) : SearchAction
 }
-
-internal data class SearchTransactionRowUi(
-    val id: CashflowEntryId,
-    val title: String,
-    val subtitle: String,
-    val amountText: String,
-    val direction: CashflowDirection,
-    val status: CashflowEntryStatus,
-)

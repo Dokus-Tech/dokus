@@ -19,6 +19,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.NotificationReferenceType
 import tech.dokus.domain.enums.NotificationType
+import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
@@ -26,6 +27,7 @@ import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.security.requirePermission
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
@@ -158,6 +160,7 @@ internal fun Route.peppolRoutes() {
          * The invoice must have a contactId that matches a contact with a valid peppolId.
          */
         post<Peppol.Transmissions> { route ->
+            requirePermission(Permission.InvoicesEdit)
             val tenantId = dokusPrincipal.requireTenantId()
             val invoiceIdStr = route.invoiceId
                 ?: throw DokusException.BadRequest("invoiceId query parameter is required")

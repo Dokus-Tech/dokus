@@ -54,7 +54,7 @@ class EmailVerificationService(
             userRepository.setEmailVerificationToken(userId, token, expiry)
 
             logger.info("Email verification token generated for user: ${userId.value}")
-            logger.debug("Verification link: /auth/verify-email?token=$token")
+            logger.debug("Verification token generated for user: ${userId.value} (expires in 24h)")
 
             // Send verification email (async, outside transaction)
             // Note: Email failures don't prevent registration (graceful degradation)

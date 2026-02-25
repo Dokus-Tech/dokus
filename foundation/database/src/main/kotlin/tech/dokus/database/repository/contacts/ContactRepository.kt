@@ -181,9 +181,9 @@ class ContactRepository {
             val total = dbQuery.count()
             val items = dbQuery
                 .orderBy(ContactsTable.name to SortOrder.ASC)
-                .limit(limit + offset)
+                .limit(limit)
+                .offset(offset.toLong())
                 .map { row -> mapRowToContactDto(row) }
-                .drop(offset)
 
             PaginatedResponse(
                 items = items,

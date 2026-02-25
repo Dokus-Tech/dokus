@@ -415,6 +415,11 @@ class SearchRepository(
         )
     }
 
+    /**
+     * Escapes LIKE wildcards using backslash as the escape character.
+     * Note: Relies on PostgreSQL's default `standard_conforming_strings = on` behavior
+     * where `\` is treated as the LIKE escape character without an explicit ESCAPE clause.
+     */
     private fun escapeLike(input: String): String {
         return input
             .replace("\\", "\\\\")

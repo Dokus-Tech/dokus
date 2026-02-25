@@ -65,7 +65,7 @@ class SearchService(
             return Result.success(Unit)
         }
 
-        val displayText = normalizedInput.ifBlank { normalized }
+        val displayText = normalizedInput.ifBlank { normalized }.take(120)
 
         return searchSignalRepository.upsertSignal(
             tenantId = tenantId,
@@ -102,7 +102,12 @@ class SearchService(
 
     private fun isSignalTextTrackable(normalized: String): Boolean {
         if (normalized.length !in 2..80) return false
-        if (normalized == "overdue" || normalized == "paid") return false
+        if (normalized in BLOCKED_SIGNAL_TERMS) return false
         return true
+    }
+
+    companion object {
+        /** Preset chip labels that should not be tracked as user search signals. */
+        val BLOCKED_SIGNAL_TERMS = setOf("overdue", "paid", "upcoming", "open")
     }
 }

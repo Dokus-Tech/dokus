@@ -195,15 +195,13 @@ internal fun SearchScreen(
                         DokusLoader(size = DokusLoaderSize.Small)
                     }
                 } else if (state.visibleResultCount == 0L || response == null) {
-                    Box(
+                    Column(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 28.dp),
-                        contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
                             text = stringResource(Res.string.search_no_results),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.clickable(onClick = onRetry)
                         )
                     }
                 } else {
@@ -457,7 +455,7 @@ private fun SearchSectionHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "${stringResource(titleRes).uppercase()} ${count.toInt()}",
+            text = "${stringResource(titleRes).uppercase()} $count",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -471,7 +469,7 @@ private fun SearchSectionHeader(
         }
         if (trailing.isNullOrBlank()) {
             Text(
-                text = stringResource(countLabelRes, count.toInt()),
+                text = stringResource(countLabelRes, count),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -563,13 +561,13 @@ private fun SearchSimpleRow(
 }
 
 @Composable
-private fun SearchKeyboardHint() {
+private fun SearchKeyboardHint(shortcutHint: String = "⌘K") {
     Row(
         modifier = Modifier.padding(top = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "⌘K",
+            text = shortcutHint,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier

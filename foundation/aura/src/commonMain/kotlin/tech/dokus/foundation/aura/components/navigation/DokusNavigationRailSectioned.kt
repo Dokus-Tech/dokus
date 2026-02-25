@@ -35,6 +35,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_search
+import tech.dokus.aura.resources.search
 import tech.dokus.aura.resources.calculator
 import tech.dokus.aura.resources.coming_soon
 import tech.dokus.aura.resources.file_text
@@ -161,11 +162,7 @@ private fun PinnedNavItemRow(
     } else {
         MaterialTheme.colorScheme.surface
     }
-    val titleColor = if (isSelected) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
+    val titleColor = MaterialTheme.colorScheme.onSurface
 
     Row(
         modifier = Modifier
@@ -426,7 +423,7 @@ private fun DokusNavigationRailSectionedPreview(
                     NavItem(
                         id = "search",
                         titleRes = Res.string.action_search,
-                        iconRes = Res.drawable.file_text,
+                        iconRes = Res.drawable.search,
                         destination = HomeDestination.Search,
                         desktopShortcutHint = "⌘K",
                     )

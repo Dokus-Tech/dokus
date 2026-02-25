@@ -16,6 +16,7 @@ import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
@@ -107,20 +108,22 @@ class SearchPersonalizationQueries {
         tenantId: TenantId,
         preset: SearchPreset,
     ): SearchAggregates = dbQuery {
-        val rows = presetTransactionQuery(tenantId, preset).toList()
-        var total = Money.ZERO
-        var incoming = Money.ZERO
-        var outgoing = Money.ZERO
+        val amountSum = CashflowEntriesTable.amountGross.sum()
 
-        rows.forEach { row ->
-            val amount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
-            total += amount
-            when (row[CashflowEntriesTable.direction]) {
-                CashflowDirection.In -> incoming += amount
-                CashflowDirection.Out -> outgoing += amount
-                else -> Unit
+        fun sumForDirection(direction: CashflowDirection?): Money {
+            val query = presetTransactionQuery(tenantId, preset).apply {
+                if (direction != null) {
+                    andWhere { CashflowEntriesTable.direction eq direction }
+                }
+                adjustSelect { select(amountSum) }
             }
+            val sum = query.firstOrNull()?.get(amountSum) ?: return Money.ZERO
+            return Money.fromDbDecimal(sum)
         }
+
+        val total = sumForDirection(null)
+        val incoming = sumForDirection(CashflowDirection.In)
+        val outgoing = sumForDirection(CashflowDirection.Out)
 
         SearchAggregates(
             transactionTotal = total,

@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -110,7 +111,10 @@ class PeppolSettingsRepository {
     suspend fun getTenantIdByWebhookToken(token: String): Result<TenantId?> = runCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
-                .where { PeppolSettingsTable.webhookToken eq token }
+                .where {
+                    (PeppolSettingsTable.webhookToken eq token) and
+                        (PeppolSettingsTable.isEnabled eq true)
+                }
                 .map { TenantId.parse(it[PeppolSettingsTable.tenantId].toString()) }
                 .singleOrNull()
         }

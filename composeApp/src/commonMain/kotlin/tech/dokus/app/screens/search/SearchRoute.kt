@@ -5,7 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.navigation.SearchFocusRequestBus
@@ -22,9 +24,11 @@ internal fun SearchRoute(
     val navController = LocalNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
     val focusRequestId by SearchFocusRequestBus.focusRequestId.collectAsState()
+    var lastSeenFocusId by remember { mutableLongStateOf(focusRequestId) }
 
     LaunchedEffect(focusRequestId) {
-        if (focusRequestId > 0L) {
+        if (focusRequestId > 0L && focusRequestId != lastSeenFocusId) {
+            lastSeenFocusId = focusRequestId
             container.store.intent(SearchIntent.FocusRequested(focusRequestId))
         }
     }

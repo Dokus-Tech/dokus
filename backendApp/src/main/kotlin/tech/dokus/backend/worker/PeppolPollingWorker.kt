@@ -128,7 +128,9 @@ class PeppolPollingWorker(
 
     // Polling configuration
     private val pollInterval = 20.minutes // Base interval between checks
-    private val minTimeBetweenPolls = 5.minutes // Minimum time between polls per tenant
+    // In-memory debounce for webhook bursts and manual poll triggers.
+    // 5 minutes is acceptable since outbound sends are now synchronous (no queue).
+    private val minTimeBetweenPolls = 5.minutes
     private val tenantPollDelay = 30.seconds // Stagger delay between tenants
 
     /**

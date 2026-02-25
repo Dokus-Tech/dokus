@@ -48,11 +48,13 @@ class TokenManagerImpl(
             return
         }
 
+        // A user is considered authenticated if both tokens exist and the access token
+        // is a parseable JWT — even if it is expired. This allows the app to start in
+        // authenticated UI while offline. Actual token validity is enforced lazily by
+        // getValidAccessToken() before every API call.
         when (jwtDecoder.validateToken(accessToken)) {
-            TokenStatus.VALID -> updateAuthenticationState(true)
-            TokenStatus.REFRESH_NEEDED, TokenStatus.EXPIRED -> {
-                val refreshed = runCatching { refreshToken(force = false) }.getOrNull()
-                updateAuthenticationState(refreshed != null)
+            TokenStatus.VALID, TokenStatus.REFRESH_NEEDED, TokenStatus.EXPIRED -> {
+                updateAuthenticationState(true)
             }
 
             TokenStatus.INVALID -> updateAuthenticationState(false)

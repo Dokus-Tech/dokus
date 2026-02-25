@@ -21,6 +21,9 @@ fun Route.searchRoutes() {
         get<Search> { route ->
             val principal = dokusPrincipal
             val tenantId = principal.requireTenantId()
+            if (route.query.length > 200) {
+                throw DokusException.BadRequest("Search query too long")
+            }
             if (route.limit < 1 || route.limit > 100) {
                 throw DokusException.BadRequest("Limit must be between 1 and 100")
             }
@@ -37,7 +40,7 @@ fun Route.searchRoutes() {
                 limit = route.limit,
                 suggestionLimit = route.suggestionLimit,
             ).getOrElse {
-                throw DokusException.InternalError("Failed to execute search: ${it.message}")
+                throw DokusException.InternalError("Search failed. Please try again later.")
             }
 
             call.respond(HttpStatusCode.OK, response)
@@ -53,7 +56,7 @@ fun Route.searchRoutes() {
                 userId = principal.userId,
                 request = request,
             ).getOrElse {
-                throw DokusException.InternalError("Failed to record search signal: ${it.message}")
+                throw DokusException.InternalError("Failed to record search event.")
             }
 
             call.respond(HttpStatusCode.NoContent)

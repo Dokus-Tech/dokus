@@ -168,9 +168,9 @@ class PeppolTransmissionRepository {
 
             query
                 .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.DESC)
-                .limit(limit + offset)
+                .limit(limit)
+                .offset(offset.toLong())
                 .map { it.toDto() }
-                .drop(offset)
         }
     }
 
@@ -204,7 +204,10 @@ class PeppolTransmissionRepository {
             }
 
             PeppolTransmissionsTable.selectAll()
-                .where { PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString()) }
+                .where {
+                    (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
+                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                }
                 .map { it.toDto() }
                 .single()
         }

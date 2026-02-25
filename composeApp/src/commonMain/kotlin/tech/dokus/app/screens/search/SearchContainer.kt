@@ -91,28 +91,29 @@ internal class SearchContainer(
     }
 
     private suspend fun SearchCtx.handleSuggestionSelected(suggestion: SearchSuggestion) {
-        withState<SearchState, _> {
-            val nextQuery = suggestion.actionQuery?.takeIf { it.isNotBlank() } ?: suggestion.label
-            val nextScope = suggestion.actionScope ?: scope
-            val nextPreset = suggestion.actionPreset
+        val nextQuery = suggestion.actionQuery?.takeIf { it.isNotBlank() } ?: suggestion.label
+        val currentScope = withState<SearchState, _> { scope }
+        val nextScope = suggestion.actionScope ?: currentScope
+        val nextPreset = suggestion.actionPreset
 
-            updateState {
-                copy(
-                    query = nextQuery,
-                    scope = nextScope,
-                    activePreset = nextPreset,
-                )
-            }
-
-            recordSignalFireAndForget(
-                SearchSignalEventRequest(
-                    eventType = SearchSignalEventType.SuggestionSelected,
-                    query = nextQuery,
-                    scope = nextScope,
-                    suggestionLabel = suggestion.label,
-                )
+        updateState {
+            copy(
+                query = nextQuery,
+                scope = nextScope,
+                activePreset = nextPreset,
             )
+        }
 
+        recordSignalFireAndForget(
+            SearchSignalEventRequest(
+                eventType = SearchSignalEventType.SuggestionSelected,
+                query = nextQuery,
+                scope = nextScope,
+                suggestionLabel = suggestion.label,
+            )
+        )
+
+        withState<SearchState, _> {
             fetch(
                 query = nextQuery,
                 scope = nextScope,
